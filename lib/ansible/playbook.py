@@ -110,7 +110,8 @@ class PlayBook(object):
            host_list = self.host_list
 
         instructions = task['do']
-        (comment, module_name, module_args) = instructions
+        (comment, module_details) = instructions
+        (module_name, module_args) = module_details
 
         namestr = "%s/%s" % (pattern, comment)
         if conditional:

@@ -1,28 +1,22 @@
 - pattern: '*'
   tasks:
   - do:
-    - copy a file
-    - copy
-    - [ "/srv/a", "/srv/b" ]
-  - do:
     - configure template & module variables
-    - setup
-    - [ "a=2", "b=3", "c=4" ]
+    - [ setup, [ "a=2", "b=3", "c=4" ] ]
+  - do:
+    - copy a file
+    - [ copy, [ "/srv/a", "/srv/b" ] ]
   - do:
     - template from local file template.j2 to remote location /srv/file.out
-    - template
-    - [ '/srv/template.j2', '/srv/file.out' ]
+    - [ template, [ '/srv/template.j2', '/srv/file.out' ] ]
   - do:
     - update apache
-    - command
-    - [/usr/bin/yum, update, apache]
+    - [ command, [/usr/bin/yum, update, apache] ]
     onchange:
     - do:
       - restart apache
-      - command
-      - [/sbin/service, apache, restart]
+      - [ command, [/sbin/service, apache, restart] ]
     - do:
       - run bin false
-      - command
-      - [/bin/false]
+      - [ command, [/bin/false] ]
 
