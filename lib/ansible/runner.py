@@ -24,11 +24,8 @@ import multiprocessing
 import os
 import json
 import traceback
-
-# non-core 
-import paramiko
-
-import constants as C
+import paramiko # non-core dependency
+import ansible.constants as C 
 
 def _executor_hook(x):
     ''' callback used by multiprocessing pool '''
@@ -48,10 +45,17 @@ class Runner(object):
        remote_user=C.DEFAULT_REMOTE_USER,
        remote_pass=C.DEFAULT_REMOTE_PASS,
        verbose=False):
-      
-
-       '''
-       Constructor.
+    
+       ''' 
+       Constructor
+       host_list   -- file on disk listing hosts to manage, or an array of hostnames
+       pattern ------ a fnmatch pattern selecting some of the hosts in host_list
+       module_path -- location of ansible library on disk
+       module_name -- which module to run
+       module_args -- arguments to pass to module
+       forks -------- how parallel should we be? 1 is extra debuggable.
+       remote_user -- who to login as (default root)
+       remote_pass -- provide only if you don't want to use keys or ssh-agent
        '''
 
        self.host_list   = self._parse_hosts(host_list)
@@ -109,44 +113,52 @@ class Runner(object):
        for filename in files:
            self._exec_command(conn, "rm -f %s" % filename)
 
+   def _transfer_file(self, conn, source, dest):
+       self.remote_log(conn, 'COPY remote:%s local:%s' % (source, dest))
+       ftp = conn.open_sftp()
+       ftp.put(source, dest)
+       ftp.close()
+
+   def _transfer_module(self, conn):
+       outpath = self._copy_module(conn)
+       self._exec_command(conn, "chmod +x %s" % outpath)
+       return outpath
+
+   def _execute_module(self, conn, outpath):
+       cmd = self._command(outpath)
+       result = self._exec_command(conn, cmd)
+       self._delete_remote_files(conn, [ outpath ])
+       return result
+
    def _execute_normal_module(self, conn, host):
        ''' transfer a module, set it executable, and run it '''
 
-       outpath = self._copy_module(conn)
-       self._exec_command(conn, "chmod +x %s" % outpath)
-       cmd = self._command(outpath)
-       result = self._exec_command(conn, cmd)
-       self._delete_remote_files(conn, outpath)
+       module = self._transfer_module(conn)
+       result = self._execute_module(conn, module)
        return self._return_from_module(conn, host, result)
 
    def _execute_copy(self, conn, host):
-       ''' transfer a file + copy module, run copy module, clean up '''
+       ''' handler for file transfer operations '''
 
-       self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
+       # transfer the file to a remote tmp location
        source = self.module_args[0]
        dest   = self.module_args[1]
        tmp_dest = self._get_tmp_path(conn, dest.split("/")[-1])
-
-       ftp = conn.open_sftp()
-       ftp.put(source, tmp_dest)
-       ftp.close()
+       self._transfer_file(conn, source, tmp_dest)
 
        # install the copy  module
-
        self.module_name = 'copy'
-       outpath = self._copy_module(conn)
-       self._exec_command(conn, "chmod +x %s" % outpath)
+       module = self._transfer_module(conn)
 
        # run the copy module
-
        self.module_args = [ tmp_dest, dest ]
-       cmd = self._command(outpath)
-       result = self._exec_command(conn, cmd)
-       self._delete_remote_files(conn, [outpath, tmp_dest])
-
+       result = self._execute_module(conn, module)
+       self._delete_remote_files(conn, tmp_dest)
        return self._return_from_module(conn, host, result)
 
    def _execute_template(self, conn, host):
+       ''' handler for template operations '''
+
        source   = self.module_args[0]
        dest     = self.module_args[1]
        metadata = '/etc/ansible/setup'
@@ -154,21 +166,16 @@ class Runner(object):
        # first copy the source template over
        tempname = os.path.split(source)[-1]
        temppath = self._get_tmp_path(conn, tempname)
-       self.remote_log(conn, 'COPY remote:%s local:%s' % (source, temppath))
-       ftp = conn.open_sftp()
-       ftp.put(source, temppath)
-       ftp.close()
+       self._transfer_file(conn, source, temppath)
 
        # install the template module
        self.module_name = 'template'
-       outpath = self._copy_module(conn)
-       self._exec_command(conn, "chmod +x %s" % outpath)
+       module = self._transfer_module(conn)
 
        # run the template module
        self.module_args = [ temppath, dest, metadata ]
-       result = self._exec_command(conn, self._command(outpath))
-       # clean up
-       self._delete_remote_files(conn, [ outpath, temppath ])
+       result = self._execute_module(conn, module)
+       self._delete_remote_files(conn, [ temppath ])
        return self._return_from_module(conn, host, result)
 
 

@@ -4,30 +4,22 @@ TODO list and plans
 Playbook TODO:
 
    * error codes and failure summaries
-   * create modules that return 'changed' attributes
+   * handle 'changed' attributes
    * fail nodes on errors, i.e. remove from host list, rather than continuing to pound them
    * further improve output
-   * more conditional capability
+   * more conditional capability (if statement) (?)
    * very good logging
 
 Command module:
-   * allow additional key/value options to be passed to any module (via ENV vars?)
-   * allow this to be expressed in playbook as a 4th option after the array options list
-   * use this to pass timeout and async params to the command module
-     default timeouts will be infinite, async False
-
+   * magic to pull async & timeout options off of the command line and not feed them
+     to the app we're executing
+ 
 General:
 
-   * logging
+   * better logging
    * async options
    * modules for users, groups, and files, using puppet style ensure mechanics
-   * very simple option constructing/parsing for modules
-   * templating module (how might this work syntax wise?) with facter/ohai awareness
-      * probably could lay down a values.json file 
-      * use copy capabilities to move files to tmp, run python templating
-      * maybe support templating engine of choice
-   * think about how to build idempotency guards around command module?
-   * think about how to feed extra JSON data onto system
+   * think about how to build idempotency (aka Puppet-style 'creates') around command module?
 
 Bonus utilities:
 
