@@ -23,6 +23,7 @@ import ansible.runner
 import ansible.constants as C
 import json
 import yaml
+import shlex
 
 # TODO: make a constants file rather than
 # duplicating these
@@ -111,7 +112,9 @@ class PlayBook(object):
 
         instructions = task['do']
         (comment, module_details) = instructions
-        (module_name, module_args) = module_details
+        tokens = shlex.split(module_details)
+        module_name = tokens[0]
+        module_args = tokens[1:]
 
         namestr = "%s/%s" % (pattern, comment)
         if conditional:
