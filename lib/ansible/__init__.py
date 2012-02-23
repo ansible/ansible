@@ -1,5 +1,3 @@
-# core
-from optparse import OptionParser
 import fnmatch
 from multiprocessing import Process, Pipe
 from itertools import izip
@@ -8,6 +6,9 @@ import json
 
 # non-core 
 import paramiko
+
+# TODO -- library should have defaults, not just CLI
+# update Runner constructor below to use
 
 DEFAULT_HOST_LIST      = '~/.ansible_hosts'
 DEFAULT_MODULE_PATH    = '~/ansible'
@@ -34,43 +35,6 @@ class Pooler(object):
         [p.start() for p in proc]
         [p.join() for p in proc]
         return [p.recv() for (p,c) in pipe]
-
-class Cli(object):
-
-    def __init__(self):
-        pass
-
-    def runner(self):
-        parser = OptionParser()
-        parser.add_option("-H", "--host-list", dest="host_list",
-            help="path to hosts list", default=DEFAULT_HOST_LIST)
-        parser.add_option("-L", "--library", dest="module_path",
-            help="path to module library", default=DEFAULT_MODULE_PATH)
-        parser.add_option("-F", "--forks", dest="forks",
-            help="level of parallelism", default=DEFAULT_FORKS)
-        parser.add_option("-n", "--name", dest="module_name",
-            help="module name to execute", default=DEFAULT_MODULE_NAME)
-        parser.add_option("-a", "--args", dest="module_args",
-            help="module arguments", default=DEFAULT_MODULE_ARGS)
-        parser.add_option("-p", "--pattern", dest="pattern",
-            help="hostname pattern", default=DEFAULT_PATTERN)
-
-        options, args = parser.parse_args()
-        host_list      = self._host_list(options.host_list)
-
-        return Runner(
-            module_name=options.module_name,
-            module_path=options.module_path,
-            module_args=options.module_args,
-            host_list=host_list, 
-            forks=options.forks,
-            pattern=options.pattern,
-        )
-
-    def _host_list(self, host_list):
-        host_list = os.path.expanduser(host_list)
-        return file(host_list).read().split("\n")
-
 
 class Runner(object):
 
@@ -144,22 +108,18 @@ class Runner(object):
 
 if __name__ == '__main__':
 
-    # comamnd line usage example: 
-    
-    result = Cli().runner().run()
-    print json.dumps(result, sort_keys=True, indent=4)   
 
-    # API usage example:
+    # TODO: if host list is string load from file
 
-    #r = Runner(
-    #   host_list = [ '127.0.0.1' ],
-    #   module_path='~/.ansible',
-    #   module_name='ping',
-    #   module_args='',
-    #   pattern='*',
-    #   forks=3
-    #)   
-    #print r.run()
+    r = Runner(
+       host_list = [ '127.0.0.1' ],
+       module_path='~/ansible',
+       module_name='ping',
+       module_args='',
+       pattern='*',
+       forks=3
+    )   
+    print r.run()
 
  
 
