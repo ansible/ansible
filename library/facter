@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+# things that must be installed to use this
+#    facter
+#    ruby-json
+
+/usr/bin/facter --json
