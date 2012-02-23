@@ -124,12 +124,14 @@ Existing library modules
    * command -- runs commands, giving output, return codes, and run time info
    * ping - just returns if the system is up or not
    * facter - retrieves facts about the host OS
+   * copy - add files to remote systems
 
 Future plans
 ============
 
    * modules for users, groups, and files, using puppet style ensure mechanics
-   * inventory gathering (w/ accompanying ansible-inventory & RSS)
+   * ansible-inventory -- gathering fact/hw info, storing in git, adding RSS
+   * ansible-slurp ------ recursively rsync file trees for each host
    * very simple option constructing/parsing for modules
    * Dead-simple declarative configuration management engine using
      a runbook style recipe file, written in JSON or YAML
