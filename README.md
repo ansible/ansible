@@ -121,18 +121,14 @@ up around the library scripts.
 Existing library modules
 ========================
 
-   * ping
-   * facter
-
-Modules in Progress
-===================
-
-   * command -- gives output, return code, and time
-   * many others -- users, groups, files
+   * command -- runs commands, giving output, return codes, and run time info
+   * ping - just returns if the system is up or not
+   * facter - retrieves facts about the host OS
 
 Future plans
 ============
 
+   * modules for users, groups, and files, using puppet style ensure mechanics
    * inventory gathering (w/ accompanying ansible-inventory & RSS)
    * very simple option constructing/parsing for modules
    * Dead-simple declarative configuration management engine using
