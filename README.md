@@ -3,9 +3,9 @@ Ansible
 
 Ansible is a extra-simple Python API for doing 'remote things' over SSH.  
 
-While Func, which I co-wrote, aspired to avoid using SSH and have it's own daemon infrastructure, Ansible aspires to be quite different and more minimal, but still able to grow more modularly over time. 
+While [Func](http://fedorahosted.org/func), which I co-wrote, aspired to avoid using SSH and have it's own daemon infrastructure, Ansible aspires to be quite different and more minimal, but still able to grow more modularly over time.  This is based on talking to a lot of users of various tools and wishing to eliminate problems with connectivity and long running daemons, or not picking tool X because they preferred to code in Y.
 
-Why use Ansible versus something else?  (Fabric, Capistrano, mCollective, Func, SaltStack, etc?) It will have far less code, it will be more correct, and it will be the easiest thing to hack on and use you'll ever see -- regardless of your favorite language of choice.
+Why use Ansible versus something else?  (Fabric, Capistrano, mCollective, Func, SaltStack, etc?) It will have far less code, it will be more correct, and it will be the easiest thing to hack on and use you'll ever see -- regardless of your favorite language of choice.  Want to only code plugins in bash or clojure?  Ansible doesn't care.  The docs will fit on one page and the source will be blindingly obvious.
 
 Principles
 ==========
@@ -51,7 +51,10 @@ Example:
 This list is further filtered by the pattern wildcard (-P) to target
 specific hosts.  This is covered below.
 
-Comamnd line usage example
+You can organize groups of systems by having multiple inventory
+files (i.e. keeping webservers different from dbservers, etc)
+
+Command line usage example
 ==========================
 
 Run a module by name with arguments
@@ -66,7 +69,11 @@ API Example
 The API is simple and returns basic datastructures.
 
     import ansible
-    runner = ansible.Runner(command='inventory', host_list=['xyz.example.com', '...'])
+    runner = ansible.Runner(
+        pattern='*',
+        module_name='inventory', 
+        host_list=['xyz.example.com', '...']
+    )
     data = runner.run()
 
     {
@@ -75,8 +82,8 @@ The API is simple and returns basic datastructures.
         ...
     }
 
-Additional options to runner include the number of forks, hostname
-exclusion pattern, library path, and so on.  Read the source, it's not
+Additional options to Runner include the number of forks, hostname
+exclusion pattern, library path, arguments, and so on.  Read the source, it's not
 complicated.
 
 Patterns
@@ -85,7 +92,6 @@ Patterns
 To target only hosts starting with "rtp", for example:
 
    * ansible "rtp*" -n command -a "yum update apache"
-
 
 Parallelism
 ===========
@@ -99,9 +105,9 @@ Specify the number of forks to use, to run things in greater parallelism.
 File Transfer
 =============
 
-Yeah, it does that too.
+Ansible can SCP lots of files to lots of places in parallel.
 
-   * ansible -n copy -a "/etc/hosts /tmp/hosts"
+   * ansible -f 10 -n copy -a "/etc/hosts /tmp/hosts"
 
 Bundled Modules
 ===============
@@ -112,37 +118,40 @@ specified with the "-L" flag should you wish to use a different location
 than "~/ansible".  There is potential for a sizeable community to build
 up around the library scripts.
 
-Features not supported from Func (yet?)
-============================================
-
-   * Delegation for treeish topologies
-   * Asynchronous modes for polling long running operations
-
 Existing library modules
 ========================
 
    * ping
    * facter
 
+Modules in Progress
+===================
+
+   * command -- gives output, return code, and time
+   * many others -- users, groups, files
+
 Future plans
 ============
 
-   * modules including:
-       * a command execution module
-       * users, groups, files, permissions, etc
-       * inventory gathering (w/ accompanying ansible-inventory & RSS)
+   * inventory gathering (w/ accompanying ansible-inventory & RSS)
    * very simple option constructing/parsing for modules
    * Dead-simple declarative configuration management engine using
      a runbook style recipe file, written in JSON or YAML
    * maybe it's own fact engine, not required, that also feeds from facter
    * add/remove/list hosts from the command line
    * list available modules from command line
+   * filter exclusion (run this only if fact is true/false)
+
+License
+=======
+
+   * MIT
 
 Author
 ======
 
-    Michael DeHaan <michael.dehaan@gmail.com> 
+    Michael DeHaan -- michael.dehaan@gmail.com
 
-    http://michaeldehaan.net/
+    [http://michaeldehaan.net](http://michaeldehaan.net/)
 
 
