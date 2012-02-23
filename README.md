@@ -35,6 +35,8 @@ Comamnd line usage example
 
 Run a module by name with arguments
 
+ssh-agent bash
+ssh-add ~/.ssh/id_rsa.pub
 ansible -p "*.example.com" -m modName -a "arg1 arg2"
 
 API Example
