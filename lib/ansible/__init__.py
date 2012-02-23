@@ -39,7 +39,7 @@ class Pooler(object):
 class Runner(object):
 
    def __init__(self, host_list=[], module_path=None,
-       module_name=None, module_args='', 
+       module_name=None, module_args=[], 
        forks=3, timeout=60, pattern='*'):
 
        self.host_list   = host_list
@@ -73,15 +73,22 @@ class Runner(object):
        conn = self._connect(host)
        if not conn:
            return [ host, None ]
-       outpath = self._copy_module(conn)
-       self._exec_command(conn, "chmod +x %s" % outpath)
-       cmd = self._command(outpath)
-       result = self._exec_command(conn, cmd)
-       result = json.loads(result)
+       if self.module_name != "copy":
+           outpath = self._copy_module(conn)
+           self._exec_command(conn, "chmod +x %s" % outpath)
+           cmd = self._command(outpath)
+           result = self._exec_command(conn, cmd)
+           result = json.loads(result)
+       else:
+           ftp = conn.open_sftp()
+           ftp.put(self.module_args[0], self.module_args[1])
+           ftp.close()
+           return [ host, 1 ]
+           
        return [ host, result ]
 
    def _command(self, outpath):
-       cmd = "%s %s" % (outpath, self.module_args)
+       cmd = "%s %s" % (outpath, " ".join(self.module_args))
        return cmd
 
    def _exec_command(self, conn, cmd):

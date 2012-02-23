@@ -35,10 +35,13 @@ class Cli(object):
         options, args = parser.parse_args()
         host_list      = self._host_list(options.host_list)
 
+        # TODO: more shell like splitting on module_args would
+        # be a good idea
+
         return ansible.Runner(
             module_name=options.module_name,
             module_path=options.module_path,
-            module_args=options.module_args,
+            module_args=options.module_args.split(' '),
             host_list=host_list,
             forks=options.forks,
             pattern=options.pattern,

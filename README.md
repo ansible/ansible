@@ -41,8 +41,15 @@ The default inventory file (-H) is ~/.ansible_hosts and is a list
 of all hostnames to target with ansible, one per line.  These
 can be hostnames or IPs
 
+Example:
+
+    abc.example.com
+    def.example.com
+    192.168.10.50
+    192.168.10.51
+
 This list is further filtered by the pattern wildcard (-P) to target
-specific hosts.
+specific hosts.  This is covered below.
 
 Comamnd line usage example
 ==========================
@@ -51,35 +58,50 @@ Run a module by name with arguments
  
    * ssh-agent bash
    * ssh-add ~/.ssh/id_rsa.pub
-   * ansible -p "*.example.com" -m modName -a "arg1 arg2"
+   * ansible -p "*.example.com" -n modName -a "arg1 arg2"
 
 API Example
 ===========
 
 The API is simple and returns basic datastructures.
 
-import ansible
-runner = ansible.Runner(command='inventory', host_list=['xyz.example.com', '...'])
-data = runner.run()
+    import ansible
+    runner = ansible.Runner(command='inventory', host_list=['xyz.example.com', '...'])
+    data = runner.run()
 
-{
-    'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
-    'foo.example.com' : None, # failed to connect,
-    ...
-}
+    {
+        'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
+        'foo.example.com' : None, # failed to connect,
+        ...
+    }
 
 Additional options to runner include the number of forks, hostname
 exclusion pattern, library path, and so on.  Read the source, it's not
 complicated.
+
+Patterns
+========
+
+To target only hosts starting with "rtp", for example:
+
+   * ansible "rtp*" -n command -a "yum update apache"
+
 
 Parallelism
 ===========
 
 Specify the number of forks to use, to run things in greater parallelism.
 
-    * ansible -f 10 "*.example.com" -m modName -a "arg1 arg2"
+    * ansible -f 10 "*.example.com" -n command -a "yum update apache"
 
 10 forks.  The default is 3.  5 is right out.
+
+File Transfer
+=============
+
+Yeah, it does that too.
+
+   * ansible -n copy -a "/etc/hosts /tmp/hosts"
 
 Bundled Modules
 ===============
@@ -119,8 +141,8 @@ Future plans
 Author
 ======
 
-Michael DeHaan <michael.dehaan@gmail.com> 
+    Michael DeHaan <michael.dehaan@gmail.com> 
 
-http://michaeldehaan.net/
+    http://michaeldehaan.net/
 
 
