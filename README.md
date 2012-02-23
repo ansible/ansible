@@ -96,16 +96,25 @@ Features not supported from Func (yet?)
    * Delegation for treeish topologies
    * Asynchronous modes for polling long running operations
 
+Existing library modules
+========================
+
+   * ping
+   * facter
+
 Future plans
 ============
 
    * modules including:
+       * a command execution module
        * users, groups, files, permissions, etc
        * inventory gathering (w/ accompanying ansible-inventory & RSS)
-       * a command execution module
+   * very simple option constructing/parsing for modules
    * Dead-simple declarative configuration management engine using
      a runbook style recipe file, written in JSON or YAML
-   * facts engine, including exec'ing facter if present
+   * maybe it's own fact engine, not required, that also feeds from facter
+   * add/remove/list hosts from the command line
+   * list available modules from command line
 
 Author
 ======
