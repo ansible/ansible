@@ -36,6 +36,7 @@ DEFAULT_FORKS          = 3
 DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 60
 DEFAULT_REMOTE_USER    = 'root'
+DEFAULT_REMOTE_PASS    = None
 
 def _executor_hook(x):
     ''' callback used by multiprocessing pool '''
@@ -53,6 +54,7 @@ class Runner(object):
        timeout=DEFAULT_TIMEOUT, 
        pattern=DEFAULT_PATTERN,
        remote_user=DEFAULT_REMOTE_USER,
+       remote_pass=DEFAULT_REMOTE_PASS,
        verbose=False):
       
 
@@ -69,6 +71,7 @@ class Runner(object):
        self.timeout     = timeout
        self.verbose     = verbose
        self.remote_user = remote_user
+       self.remote_pass = remote_pass
 
    def _parse_hosts(self, host_list):
         ''' parse the host inventory file if not sent as an array '''
@@ -95,8 +98,8 @@ class Runner(object):
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
        try:
-          ssh.connect(host, username=self.remote_user,
-              allow_agent=True, look_for_keys=True)
+          ssh.connect(host, username=self.remote_user, allow_agent=True, 
+              look_for_keys=True, password=self.remote_pass)
           return [ True, ssh ]
        except:
           return [ False, traceback.format_exc() ]
