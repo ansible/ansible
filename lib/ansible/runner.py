@@ -122,16 +122,46 @@ class Runner(object):
            try:
                return [ host, True, json.loads(result) ]
            except:
-               traceback.print_exc()
                return [ host, False, result ]
 
        elif self.module_name == 'copy':
-           # SFTP file copy module is not really a module
+
+           # TODO: major refactoring pending
+           # do sftp then run actual copy module to get change info
+
            self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
+           source = self.module_args[0]
+           dest   = self.module_args[1]
+           tmp_dest = self._get_tmp_path(conn, dest.split("/")[-1])
+
            ftp = conn.open_sftp()
-           ftp.put(self.module_args[0], self.module_args[1])
+           ftp.put(source, tmp_dest)
            ftp.close()
+
+           # install the copy  module
+
+           self.module_name = 'copy'
+           outpath = self._copy_module(conn)
+           self._exec_command(conn, "chmod +x %s" % outpath)
+
+           # run the copy module
+
+           self.module_args = [ tmp_dest, dest ]
+           cmd = self._command(outpath)
+           result = self._exec_command(conn, cmd)
+ 
+           # remove the module 
+           self._exec_command(conn, "rm -f %s" % outpath)
+           # remove the temp file
+           self._exec_command(conn, "rm -f %s" % tmp_dest)
+
            conn.close()
+           try:
+               return [ host, True, json.loads(result) ]
+           except:
+               traceback.print_exc()
+               return [ host, False, result ]
+
            return [ host, True, 1 ]
 
        elif self.module_name == 'template':
@@ -155,17 +185,16 @@ class Runner(object):
 
            # install the template module
            self.module_name = 'template'
-           self.module_args = [ source, temppath ]
            outpath = self._copy_module(conn)
+           self._exec_command(conn, "chmod +x %s" % outpath)
 
            # run the template module
            self.module_args = [ temppath, dest, metadata ]
-           self._exec_command(conn, "chmod +x %s" % outpath)
            result = self._exec_command(conn, self._command(outpath))
+           # clean up
            self._exec_command(conn, "rm -f %s" % outpath)
            self._exec_command(conn, "rm -f %s" % temppath)
 
-           # TODO: remove tmppath
            conn.close()
            try:
                return [ host, True, json.loads(result) ]
@@ -219,9 +248,12 @@ class Runner(object):
        hosts = self.match_hosts()
 
        # attack pool of hosts in N forks
-       pool = multiprocessing.Pool(self.forks)
        hosts = [ (self,x) for x in hosts ]
-       results = pool.map(_executor_hook, hosts)
+       if self.forks > 1:
+          pool = multiprocessing.Pool(self.forks)
+          results = pool.map(_executor_hook, hosts)
+       else:
+          results = [ _executor_hook(x) for x in hosts ]
 
        # sort hosts by ones we successfully contacted
        # and ones we did not

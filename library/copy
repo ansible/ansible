@@ -1,1 +1,40 @@
-# copy is built-in to ansible's core, so the module here is just a placeholder
+#!/usr/bin/python
+
+import sys
+import os
+
+try:
+     import json
+except ImportError:
+     import simplejson as json
+
+source   = sys.argv[1]
+dest     = sys.argv[2]
+ 
+# raise an error if there is no source file
+if not os.path.exists(source):
+    print json.dumps({
+        "failed" : 1,
+        "msg"    : "Source %s failed to transfer" % source
+    })
+    sys.exit(1)
+
+md5sum = None
+changed = False
+if os.path.exists(dest):
+   md5sum = os.popen("md5sum %s" % dest).read()
+
+os.system("cp %s %s" % (source, dest))
+
+md5sum2 = os.popen("md5sum %s" % dest).read()
+
+if md5sum != md5sum2:
+   changed = True
+
+# mission accomplished
+print json.dumps({
+   "md5sum"   : md5sum2,
+   "changed"  : changed 
+})
+
+
