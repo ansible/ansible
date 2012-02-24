@@ -1,0 +1,16 @@
+- pattern: '*.prod.example.com'
+  tasks:
+  - do:
+    - update apache (note: service module TBD)
+    - command
+    - [/usr/bin/yum, update, apache]
+    onchange:
+    - do:
+      - restart apache (note: service module TBD)
+      - command
+      - [/sbin/service, apache, restart]
+    - do:
+      - run bin false
+      - command
+      - [/bin/false]
+
