@@ -127,12 +127,14 @@ class Runner(object):
            self._exec_command(conn, "chmod +x %s" % outpath)
            cmd = self._command(outpath)
            result = self._exec_command(conn, cmd)
+           conn.close()
            return [ host, True, json.loads(result) ]
        else:
            # SFTP file copy module is not really a module
            ftp = conn.open_sftp()
            ftp.put(self.module_args[0], self.module_args[1])
            ftp.close()
+           conn.close()
            return [ host, True, 1 ]
            
 
