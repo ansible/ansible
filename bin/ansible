@@ -25,7 +25,7 @@ from optparse import OptionParser
 import json
 import os
 import getpass
-import ansible
+import ansible.runner
 import ansible.playbook
 import ansible.constants as C
 
@@ -65,7 +65,7 @@ class Cli(object):
             sshpass = getpass.getpass(prompt="SSH password: ")
 
         if options.playbook is None:
-            return ansible.Runner(
+            return ansible.runner.Runner(
                 module_name=options.module_name,
                 module_path=options.module_path,
                 module_args=options.module_args.split(' '),

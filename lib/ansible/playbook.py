@@ -19,7 +19,7 @@
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import ansible
+import ansible.runner
 import ansible.constants as C
 import json
 import yaml
@@ -45,7 +45,7 @@ class PlayBook(object):
 
         # runner is reused between calls
 
-        self.runner = ansible.Runner(
+        self.runner = ansible.runner.Runner(
             host_list=host_list,
             module_path=module_path,
             forks=forks,
