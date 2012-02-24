@@ -1,6 +1,10 @@
 - pattern: '*'
   tasks:
   - do:
+    - configure template & module variables
+    - setup
+    - [ "a=2", "b=3", "c=4" ]
+  - do:
     - update apache
     - command
     - [/usr/bin/yum, update, apache]
