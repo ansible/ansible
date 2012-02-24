@@ -24,6 +24,7 @@
 from optparse import OptionParser
 import json
 import os
+import getpass
 import ansible
 
 DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
@@ -41,6 +42,8 @@ class Cli(object):
 
     def runner(self):
         parser = OptionParser()
+        parser.add_option("-P", "--askpass", default=False, action="store_true",
+            help="ask the user to input the ssh password for connecting")
         parser.add_option("-H", "--host-list", dest="host_list",
             help="path to hosts list", default=DEFAULT_HOST_LIST)
         parser.add_option("-L", "--library", dest="module_path",
@@ -61,11 +64,16 @@ class Cli(object):
         # TODO: more shell like splitting on module_args would
         # be a good idea
 
+        sshpass = None
+        if options.askpass:
+            sshpass = getpass.getpass(prompt="SSH password: ")
+
         return ansible.Runner(
             module_name=options.module_name,
             module_path=options.module_path,
             module_args=options.module_args.split(' '),
             remote_user=options.remote_user,
+            remote_pass=sshpass,
             host_list=options.host_list,
             forks=options.forks,
             pattern=options.pattern,
