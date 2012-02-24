@@ -11,7 +11,7 @@ import datetime
 args = sys.argv[1:]
 startd = datetime.datetime.now()
 
-cmd = subprocess.Popen(args, shell=True, 
+cmd = subprocess.Popen(args, shell=False, 
     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 out, err = cmd.communicate()
