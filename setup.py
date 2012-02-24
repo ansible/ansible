@@ -14,10 +14,12 @@ setup(name='ansible',
          'ansible',
       ],
       data_files=[ 
-         ('/usr/share/ancible', 'library/ping'),
-         ('/usr/share/ancible', 'library/command'),
-         ('/usr/share/ancible', 'library/facter'),
-         ('/usr/share/ancible', 'library/copy'),
+         ('/usr/share/ansible', [ 
+             'library/ping',
+             'library/command',
+             'library/facter',
+             'library/copy',
+         ])
       ],
       scripts=[
          'bin/ansible',
