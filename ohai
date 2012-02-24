@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+# requires 'ohai' to be installed
+
+import json
+import subprocess
+
+cmd = subprocess.Popen("/usr/bin/ohai", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+out, err = cmd.communicate()
+
+# try to cleanup the JSON, for some reason facter --json doesn't need this hack
+print json.dumps(json.loads(out))
