@@ -68,6 +68,10 @@ class PlayBook(object):
 
         for pattern in self.playbook:
             self._run_pattern(pattern)
+
+        # TODO: return a summary of success & failure counts per node
+        # TODO: in bin/ancible, ensure return codes are appropriate
+
         return "complete"
 
     def _get_task_runner(self, 
@@ -75,8 +79,6 @@ class PlayBook(object):
         host_list=None,
         module_name=None, 
         module_args=None):
-
-        print "GET TASK RUNNER FOR HL=%s" % host_list
 
         ''' 
         return a runner suitable for running this task, using
@@ -98,7 +100,7 @@ class PlayBook(object):
             timeout=self.timeout
         )
 
-    def _run_task(self, pattern, task, host_list=None):
+    def _run_task(self, pattern, task, host_list=None, conditional=False):
         ''' 
         run a single task in the playbook and
         recursively run any subtasks.
@@ -107,10 +109,14 @@ class PlayBook(object):
         if host_list is None:
            host_list = self.host_list
 
-        print "TASK=%s" % task
         instructions = task['do']
         (comment, module_name, module_args) = instructions
-        print "running task: (%s) on hosts matching (%s)" % (comment, pattern)
+
+        namestr = "%s/%s" % (pattern, comment)
+        if conditional:
+            namestr = "subset/%s" % namestr
+        print "TASK [%s]" % namestr
+
         runner = self._get_task_runner(
             pattern=pattern,
             host_list=host_list, 
@@ -118,9 +124,9 @@ class PlayBook(object):
             module_args=module_args
         )
         results = runner.run()
-        print "RESULTS=%s" % results
  
         dark = results.get("dark", [])
+        
         contacted = results.get("contacted", [])
 
         # TODO: filter based on values that indicate
@@ -132,14 +138,20 @@ class PlayBook(object):
         ok_hosts = contacted.keys()
 
         for host, msg in dark.items():
-            print "contacting %s failed -- %s" % (host, msg)
+            print "DARK: [%s] => %s" % (host, msg)
+
+        for host, results in contacted.items():
+            if module_name == "command":
+               if results.get("rc", 0) != 0:
+                  print "FAIL: [%s/%s] => %s" % (host, comment, results)
+            elif results.get("failed", 0) == 1:
+                  print "FAIL: [%s/%s]" % (host, comment, results)
+ 
 
         subtasks = task.get('onchange', [])
         if len(subtasks) > 0:
-            print "the following hosts have registered change events"
-            print ok_hosts
             for subtask in subtasks:
-                self._run_task(pattern, subtask, ok_hosts)
+                self._run_task(pattern, subtask, ok_hosts, conditional=True)
 
         # TODO: if a host fails in task 1, add it to an excludes
         # list such that no other tasks in the list ever execute
@@ -154,10 +166,7 @@ class PlayBook(object):
 
         pattern = pg['pattern']
         tasks   = pg['tasks']
-        print "PATTERN=%s" % pattern
-        print "TASKS=%s" % tasks
         for task in tasks:
-            print "*** RUNNING A TASK (%s)***" % task
             self._run_task(pattern, task)
 
 
