@@ -38,6 +38,7 @@ DEFAULT_TIMEOUT        = 60
 DEFAULT_REMOTE_USER    = 'root'
 
 def _executor_hook(x):
+    ''' callback used by multiprocessing pool '''
     (runner, host) = x
     return runner._executor(host)
 
@@ -86,7 +87,11 @@ class Runner(object):
        return False
 
    def _connect(self, host):
-       ''' obtains a paramiko connection to the host '''
+       ''' 
+       obtains a paramiko connection to the host.
+       on success, returns (True, connection) 
+       on failure, returns (False, traceback str)
+       '''
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
        try:
@@ -97,8 +102,13 @@ class Runner(object):
           return [ False, traceback.format_exc() ]
 
    def _executor(self, host):
-       ''' callback executed in parallel for each host '''
-       # TODO: try/catch returning none
+       ''' 
+       callback executed in parallel for each host.
+       returns (hostname, connected_ok, extra)
+       where extra is the result of a successful connect
+       or a traceback string
+       '''
+       # TODO: try/catch around JSON handling
 
        ok, conn = self._connect(host)
        if not ok:
@@ -148,10 +158,17 @@ class Runner(object):
 
    def run(self):
        ''' xfer & run module on all matched hosts '''
+
+       # find hosts that match the pattern
        hosts = [ h for h in self.host_list if self._matches(h) ]
+
+       # attack pool of hosts in N forks
        pool = multiprocessing.Pool(self.forks)
        hosts = [ (self,x) for x in hosts ]
        results = pool.map(_executor_hook, hosts)
+
+       # sort hosts by ones we successfully contacted
+       # and ones we did not
        results2 = {
           "contacted" : {},
           "dark"      : {}
@@ -159,9 +176,10 @@ class Runner(object):
        for x in results:
            (host, is_ok, result) = x
            if not is_ok:
-               results2["failed"][host] = result
+               results2["dark"][host] = result
            else:
-               results2["successful"][host] = result
+               results2["contacted"][host] = result
+
        return results2
 
 
