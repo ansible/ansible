@@ -1,7 +1,9 @@
 Ansible
 =======
 
-Ansible is a extra-simple Python API for doing 'remote things' over SSH.  
+Ansible is a extra-simple tool/API for doing 'parallel remote things' over SSH -- whether
+executing commands, running declarative 'modules', or executing larger 'playbooks' that 
+can serve as a configuration management or deployment system.
 
 While [Func](http://fedorahosted.org/func), which I co-wrote, 
 aspired to avoid using SSH and have it's own daemon infrastructure, 
