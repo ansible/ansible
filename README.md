@@ -85,10 +85,14 @@ The API is simple and returns basic datastructures.
     )
     data = runner.run()
 
-    {
-        'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
-        'foo.example.com' : None, # failed to connect,
-        ...
+    { 
+        'successful' : {
+            'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
+            'foo.example.com' : [ '...' ]
+        },
+        'failed' : {
+            'bar.example.com' : [ 'failure message' ]
+        }
     }
 
 Additional options to Runner include the number of forks, hostname

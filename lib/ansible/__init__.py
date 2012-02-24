@@ -20,7 +20,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import fnmatch
-from multiprocessing import Process, Pipe
+import multiprocessing
 from itertools import izip
 import os
 import json
@@ -39,24 +39,9 @@ DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 60
 DEFAULT_REMOTE_USER    = 'root'
 
-class Pooler(object):
-
-    # credit: http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
-
-    @classmethod
-    def spawn(cls, f):
-        def fun(pipe,x):
-            pipe.send(f(x))
-            pipe.close()
-        return fun
-
-    @classmethod
-    def parmap(cls, f, X):
-        pipe=[Pipe() for x in X]
-        proc=[Process(target=cls.spawn(f),args=(c,x)) for x,(p,c) in izip(X,pipe)]
-        [p.start() for p in proc]
-        [p.join() for p in proc]
-        return [p.recv() for (p,c) in pipe]
+def _executor_hook(x):
+    (runner, host) = x
+    return runner._executor(host)
 
 class Runner(object):
 
@@ -166,9 +151,9 @@ class Runner(object):
    def run(self):
        ''' xfer & run module on all matched hosts '''
        hosts = [ h for h in self.host_list if self._matches(h) ]
-       def executor(x):
-           return self._executor(x)
-       results = Pooler.parmap(executor, hosts)
+       pool = multiprocessing.Pool(self.forks)
+       hosts = [ (self,x) for x in hosts ]
+       results = pool.map(_executor_hook, hosts)
        results2 = {
           "successful" : {},
           "failed"     : {}
