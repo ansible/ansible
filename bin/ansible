@@ -42,7 +42,7 @@ class Cli(object):
             help="path to hosts list", default=C.DEFAULT_HOST_LIST)
         parser.add_option("-L", "--library", dest="module_path",
             help="path to module library", default=C.DEFAULT_MODULE_PATH)
-        parser.add_option("-f", "--forks", dest="forks",
+        parser.add_option("-f", "--forks", dest="forks", type="int",
             help="level of parallelism", default=C.DEFAULT_FORKS)
         parser.add_option("-n", "--name", dest="module_name",
             help="module name to execute", default=C.DEFAULT_MODULE_NAME)
