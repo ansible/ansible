@@ -28,15 +28,7 @@ import traceback
 # non-core 
 import paramiko
 
-DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
-DEFAULT_MODULE_PATH    = '/usr/share/ansible'
-DEFAULT_MODULE_NAME    = 'ping'
-DEFAULT_PATTERN        = '*'
-DEFAULT_FORKS          = 3
-DEFAULT_MODULE_ARGS    = ''
-DEFAULT_TIMEOUT        = 60
-DEFAULT_REMOTE_USER    = 'root'
-DEFAULT_REMOTE_PASS    = None
+import constants as C
 
 def _executor_hook(x):
     ''' callback used by multiprocessing pool '''
@@ -46,15 +38,15 @@ def _executor_hook(x):
 class Runner(object):
 
    def __init__(self, 
-       host_list=DEFAULT_HOST_LIST, 
-       module_path=DEFAULT_MODULE_PATH,
-       module_name=DEFAULT_MODULE_NAME, 
-       module_args=DEFAULT_MODULE_ARGS, 
-       forks=DEFAULT_FORKS, 
-       timeout=DEFAULT_TIMEOUT, 
-       pattern=DEFAULT_PATTERN,
-       remote_user=DEFAULT_REMOTE_USER,
-       remote_pass=DEFAULT_REMOTE_PASS,
+       host_list=C.DEFAULT_HOST_LIST, 
+       module_path=C.DEFAULT_MODULE_PATH,
+       module_name=C.DEFAULT_MODULE_NAME, 
+       module_args=C.DEFAULT_MODULE_ARGS, 
+       forks=C.DEFAULT_FORKS, 
+       timeout=C.DEFAULT_TIMEOUT, 
+       pattern=C.DEFAULT_PATTERN,
+       remote_user=C.DEFAULT_REMOTE_USER,
+       remote_pass=C.DEFAULT_REMOTE_PASS,
        verbose=False):
       
 

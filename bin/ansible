@@ -26,14 +26,8 @@ import json
 import os
 import getpass
 import ansible
-
-DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
-DEFAULT_MODULE_PATH    = '/usr/share/ansible'
-DEFAULT_MODULE_NAME    = 'ping'
-DEFAULT_PATTERN        = '*'
-DEFAULT_FORKS          = 3
-DEFAULT_MODULE_ARGS    = ''
-DEFAULT_REMOTE_USER    = 'root'
+import ansible.playbook
+import ansible.constants as C
 
 class Cli(object):
 
@@ -45,19 +39,21 @@ class Cli(object):
         parser.add_option("-P", "--askpass", default=False, action="store_true",
             help="ask the user to input the ssh password for connecting")
         parser.add_option("-H", "--host-list", dest="host_list",
-            help="path to hosts list", default=DEFAULT_HOST_LIST)
+            help="path to hosts list", default=C.DEFAULT_HOST_LIST)
         parser.add_option("-L", "--library", dest="module_path",
-            help="path to module library", default=DEFAULT_MODULE_PATH)
+            help="path to module library", default=C.DEFAULT_MODULE_PATH)
         parser.add_option("-f", "--forks", dest="forks",
-            help="level of parallelism", default=DEFAULT_FORKS)
+            help="level of parallelism", default=C.DEFAULT_FORKS)
         parser.add_option("-n", "--name", dest="module_name",
-            help="module name to execute", default=DEFAULT_MODULE_NAME)
+            help="module name to execute", default=C.DEFAULT_MODULE_NAME)
         parser.add_option("-a", "--args", dest="module_args",
-            help="module arguments", default=DEFAULT_MODULE_ARGS)
+            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option("-p", "--pattern", dest="pattern",
-            help="hostname pattern", default=DEFAULT_PATTERN)
+            help="hostname pattern", default=C.DEFAULT_PATTERN)
         parser.add_option("-u", "--remote-user", dest="remote_user",
-            help="remote username", default=DEFAULT_REMOTE_USER)
+            help="remote username", default=C.DEFAULT_REMOTE_USER)
+        parser.add_option("-r", "--run-playbook", dest="playbook",
+            help="playbook file, instead of -n and -a", default=None)
 
         options, args = parser.parse_args()
 
@@ -68,17 +64,27 @@ class Cli(object):
         if options.askpass:
             sshpass = getpass.getpass(prompt="SSH password: ")
 
-        return ansible.Runner(
-            module_name=options.module_name,
-            module_path=options.module_path,
-            module_args=options.module_args.split(' '),
-            remote_user=options.remote_user,
-            remote_pass=sshpass,
-            host_list=options.host_list,
-            forks=options.forks,
-            pattern=options.pattern,
-            verbose=False,
-        )
+        if options.playbook is None:
+            return ansible.Runner(
+                module_name=options.module_name,
+                module_path=options.module_path,
+                module_args=options.module_args.split(' '),
+                remote_user=options.remote_user,
+                remote_pass=sshpass,
+                host_list=options.host_list,
+                forks=options.forks,
+                pattern=options.pattern,
+                verbose=False,
+            )
+        else:
+            return ansible.playbook.PlayBook(
+                module_path=options.module_path,
+                remote_user=options.remote_user,
+                remote_pass=sshpass,
+                host_list=options.host_list,
+                forks=options.forks,
+                verbose=False,
+            )
 
 if __name__ == '__main__':
 

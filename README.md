@@ -37,6 +37,7 @@ Requirements
 For the server the tool is running from, *only*:
 
     * python 2.6 -- or the 2.4/2.5 backport of the multiprocessing module
+    * PyYAML (if using playbooks)
     * paramiko
 
 Inventory file
@@ -144,6 +145,15 @@ Modules include:
    * ping - just returns if the system is up or not
    * facter - retrieves facts about the host OS
    * copy - add files to remote systems
+
+Playbooks
+=========
+
+Playbooks are loosely equivalent to recipes or manifests in most configuration
+management or deployment tools and describe a set of operations to run on
+a set of hosts.  Some tasks can choose to only fire when certain
+conditions are true, and if a task in a chain fails the dependent tasks
+will not proceed.  Playbooks are described in (YAML)[http://yaml.org] format.
 
 Future plans
 ============
