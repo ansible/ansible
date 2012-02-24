@@ -1,3 +1,72 @@
 #!/usr/bin/python
 
-print {}
+import sys
+import os
+import jinja2
+try:
+     import json
+except ImportError:
+     import simplejson as json
+
+source   = sys.argv[1]
+dest     = sys.argv[2]
+metadata = sys.argv[3]
+ 
+# raise an error if there is no template metadata
+if not os.path.exists(metadata):
+    print json.dumps({
+        "failed" : 1,
+        "msg"    : "Missing %s, did you run the setup module yet?" % metadata
+    })
+    sys.exit(1)
+
+# raise an error if we can't parse the template metadata
+try:
+   f = open(metadata)
+   data = json.loads(f.read())
+   f.close()
+except:
+   print json.dumps({
+       "failed" : 1,
+       "msg"    : "Failed to parse/load %s, rerun the setup module?" % metadata
+   })
+   sys.exit(1)
+
+if not os.path.exists(source):
+    print json.dumps({
+        "failed" : 1,
+        "msg"    : "Source template could not be read: %s" % source
+    })
+    sys.exit(1)
+
+source = file(source).read()
+
+# record md5sum of original source file so we can report if it changed
+changed = False
+md5sum = None
+if os.path.exists(dest):
+   md5sum = os.popen("md5sum %s" % dest).read()
+
+# call Jinja2 here and save the new template file
+template = jinja2.Template(source)
+data_out = template.render(data)
+f = open(dest, "w+")
+f.write(data_out)
+f.close()
+
+# TODO: catch templating errors and do not clobber the file on the
+# other end unless things were successful
+
+# record m5sum and return success and whether things have changed
+md5sum2 = os.popen("md5sum %s" % dest).read()
+
+if md5sum != md5sum2:
+   changed = True
+
+# mission accomplished
+print json.dumps({
+   "md5sum"   : md5sum2,
+   "changed"  : changed 
+})
+
+

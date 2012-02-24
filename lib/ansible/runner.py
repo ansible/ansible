@@ -119,7 +119,12 @@ class Runner(object):
            result = self._exec_command(conn, cmd)
            self._exec_command(conn, "rm -f %s" % outpath)
            conn.close()
-           return [ host, True, json.loads(result) ]
+           try:
+               return [ host, True, json.loads(result) ]
+           except:
+               traceback.print_exc()
+               return [ host, False, result ]
+
        elif self.module_name == 'copy':
            # SFTP file copy module is not really a module
            self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
@@ -128,25 +133,47 @@ class Runner(object):
            ftp.close()
            conn.close()
            return [ host, True, 1 ]
+
        elif self.module_name == 'template':
            # template runs COPY then the template module
            # TODO: DRY/refactor these
            # TODO: things like _copy_module should take the name as a param
-           tempname = os.path.split(self.module_args[0])[-1]
+           # TODO: make it possible to override the /etc/ansible/setup file
+           #       location for templating files as non-root
+
+           source   = self.module_args[0]
+           dest     = self.module_args[1]
+           metadata = '/etc/ansible/setup'
+
+           # first copy the source template over
+           tempname = os.path.split(source)[-1]
            temppath = self._get_tmp_path(conn, tempname)
-           self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], temppath))
+           self.remote_log(conn, 'COPY remote:%s local:%s' % (source, temppath))
            ftp = conn.open_sftp()
-           ftp.put(self.module_args[0], temppath)
+           ftp.put(source, temppath)
            ftp.close()
+
+           # install the template module
            self.module_name = 'template'
-           self.module_args = [ self.module_args[0], temppath ]
+           self.module_args = [ source, temppath ]
            outpath = self._copy_module(conn)
+
+           # run the template module
+           self.module_args = [ temppath, dest, metadata ]
            self._exec_command(conn, "chmod +x %s" % outpath)
            result = self._exec_command(conn, self._command(outpath))
            self._exec_command(conn, "rm -f %s" % outpath)
+           self._exec_command(conn, "rm -f %s" % temppath)
+
+           # TODO: remove tmppath
            conn.close()
-           return [ host, True, json.loads(result) ]
-           
+           try:
+               return [ host, True, json.loads(result) ]
+           except:
+               traceback.print_exc()
+               return [ host, False, result ]
+
+           return [ host, False, 1 ]
 
    def _command(self, outpath):
        ''' form up a command string '''

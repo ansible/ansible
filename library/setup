@@ -2,7 +2,6 @@
 
 ANSIBLE_DIR       = "/etc/ansible"
 ANSIBLE_SETUP     = "/etc/ansible/setup"
-ANSIBLE_TEMPLATES = "/srv/ansible/templates"
 
 import sys
 import os
@@ -17,12 +16,6 @@ except ImportError:
 
 input_data = sys.argv[1:]
 new_options = dict([ x.split("=") for x in input_data ])
-
-# make a directory to store templates
-# if it does not already exist
-
-if not os.path.exists(ANSIBLE_TEMPLATES):
-    os.makedirs(ANSIBLE_TEMPLATES)
 
 # create the config dir if it doesn't exist
 

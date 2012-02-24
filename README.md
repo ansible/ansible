@@ -39,8 +39,12 @@ Requirements
 For the server the tool is running from, *only*:
 
     * python 2.6 -- or the 2.4/2.5 backport of the multiprocessing module
-    * PyYAML (if using playbooks)
+    * PyYAML (install on 'overlord' if using playbooks)
     * paramiko
+
+Optional -- If you want to push templates, the nodes need:
+
+    * python-jinja2 
 
 Inventory file
 ==============
