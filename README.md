@@ -146,6 +146,7 @@ Modules include:
    * command -- runs commands, giving output, return codes, and run time info
    * ping - just returns if the system is up or not
    * facter - retrieves facts about the host OS
+   * ohai - similar to facter, but returns structured data
    * copy - add files to remote systems
 
 Playbooks
