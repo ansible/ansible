@@ -25,6 +25,7 @@ from itertools import izip
 import os
 import json
 import traceback
+import select
 
 # non-core 
 import paramiko
@@ -143,7 +144,7 @@ class Runner(object):
    def _exec_command(self, conn, cmd):
        ''' execute a command over SSH '''
        stdin, stdout, stderr = conn.exec_command(cmd)
-       results = stdout.read()
+       results = "\n".join(stdout.readlines())
        return results
 
    def _copy_module(self, conn):
