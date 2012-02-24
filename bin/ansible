@@ -78,6 +78,7 @@ class Cli(object):
             )
         else:
             return ansible.playbook.PlayBook(
+                playbook=options.playbook,
                 module_path=options.module_path,
                 remote_user=options.remote_user,
                 remote_pass=sshpass,
