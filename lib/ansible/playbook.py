@@ -112,7 +112,8 @@ class PlayBook(object):
         (comment, module_name, module_args) = instructions
         print "running task: (%s) on hosts matching (%s)" % (comment, pattern)
         runner = self._get_task_runner(
-            pattern=pattern, 
+            pattern=pattern,
+            host_list=host_list, 
             module_name=module_name,
             module_args=module_args
         )
