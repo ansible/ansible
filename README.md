@@ -82,7 +82,7 @@ that had communication problems.  The format of the return, if successful,
 is entirely up to the module.
 
     import ansible
-    runner = ansible.Runner(
+    runner = ansible.runner.Runner(
         pattern='*',
         module_name='inventory',
         module_args='...' 
