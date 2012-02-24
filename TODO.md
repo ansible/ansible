@@ -10,6 +10,12 @@ Playbook TODO:
    * more conditional capability
    * very good logging
 
+Command module:
+   * allow additional key/value options to be passed to any module (via ENV vars?)
+   * allow this to be expressed in playbook as a 4th option after the array options list
+   * use this to pass timeout and async params to the command module
+     default timeouts will be infinite, async False
+
 General:
 
    * logging
