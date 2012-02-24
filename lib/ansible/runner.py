@@ -111,7 +111,7 @@ class Runner(object):
        if not ok:
            return [ host, False, conn ]
 
-       if self.module_name != "copy":
+       if self.module_name not in [ 'copy', 'template' ]:
            # transfer a module, set it executable, and run it
            outpath = self._copy_module(conn)
            self._exec_command(conn, "chmod +x %s" % outpath)
@@ -120,7 +120,7 @@ class Runner(object):
            self._exec_command(conn, "rm -f %s" % outpath)
            conn.close()
            return [ host, True, json.loads(result) ]
-       else:
+       elif self.module_name == 'copy':
            # SFTP file copy module is not really a module
            self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
            ftp = conn.open_sftp()
@@ -128,6 +128,24 @@ class Runner(object):
            ftp.close()
            conn.close()
            return [ host, True, 1 ]
+       elif self.module_name == 'template':
+           # template runs COPY then the template module
+           # TODO: DRY/refactor these
+           # TODO: things like _copy_module should take the name as a param
+           tempname = os.path.split(self.module_args[0])[-1]
+           temppath = self._get_tmp_path(conn, tempname)
+           self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], temppath))
+           ftp = conn.open_sftp()
+           ftp.put(self.module_args[0], temppath)
+           ftp.close()
+           self.module_name = 'template'
+           self.module_args = [ self.module_args[0], temppath ]
+           outpath = self._copy_module(conn)
+           self._exec_command(conn, "chmod +x %s" % outpath)
+           result = self._exec_command(conn, self._command(outpath))
+           self._exec_command(conn, "rm -f %s" % outpath)
+           conn.close()
+           return [ host, True, json.loads(result) ]
            
 
    def _command(self, outpath):

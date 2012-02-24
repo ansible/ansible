@@ -5,6 +5,10 @@
     - setup
     - [ "a=2", "b=3", "c=4" ]
   - do:
+    - template from local file template.j2 to remote location /srv/file.out
+    - template
+    - [ '/srv/template.j2', '/srv/file.out' ]
+  - do:
     - update apache
     - command
     - [/usr/bin/yum, update, apache]
