@@ -1,0 +1,56 @@
+#!/usr/bin/python
+
+ANSIBLE_DIR       = "/etc/ansible"
+ANSIBLE_SETUP     = "/etc/ansible/setup"
+ANSIBLE_TEMPLATES = "/srv/ansible/templates"
+
+import sys
+import os
+import shlex
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+# load config & template variables
+
+input_data = sys.argv[1:]
+new_options = dict([ x.split("=") for x in input_data ])
+
+# make a directory to store templates
+# if it does not already exist
+
+if not os.path.exists(ANSIBLE_TEMPLATES):
+    os.makedirs(ANSIBLE_TEMPLATES)
+
+# create the config dir if it doesn't exist
+
+if not os.path.exists(ANSIBLE_DIR):
+    os.makedirs(ANSIBLE_DIR)
+
+changed = False
+if not os.path.exists(ANSIBLE_SETUP):
+    changed = True
+else:
+    md5sum = os.popen("md5sum %s" % ANSIBLE_SETUP).read()
+
+# write the template/settings file using
+# instructions from server
+
+f = open(ANSIBLE_SETUP, "w+")
+reformat = json.dumps(new_options)
+f.write(reformat)
+f.close()
+
+md5sum2 = os.popen("md5sum %s" % ANSIBLE_SETUP).read()
+
+if md5sum != md5sum2:
+   changed = True
+
+result = {
+   "changed" : changed,
+   "md5sum"  : md5sum
+}
+
+print json.dumps(result)
