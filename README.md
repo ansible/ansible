@@ -75,7 +75,10 @@ Run a module by name with arguments
 API Example
 ===========
 
-The API is simple and returns basic datastructures.
+The API is simple and returns basic datastructures.  Ansible will keep
+track of which hosts were successfully contacted seperately from hosts
+that had communication problems.  The format of the return, if successful,
+is entirely up to the module.
 
     import ansible
     runner = ansible.Runner(
@@ -86,17 +89,18 @@ The API is simple and returns basic datastructures.
     data = runner.run()
 
     { 
-        'successful' : {
+        'contacted' : {
             'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
             'foo.example.com' : [ '...' ]
         },
-        'failed' : {
+        'dark' : {
             'bar.example.com' : [ 'failure message' ]
         }
     }
 
 Additional options to Runner include the number of forks, hostname
 exclusion pattern, library path, arguments, and so on.  
+
 Read the source, it's not complicated.
 
 Patterns

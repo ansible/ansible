@@ -155,8 +155,8 @@ class Runner(object):
        hosts = [ (self,x) for x in hosts ]
        results = pool.map(_executor_hook, hosts)
        results2 = {
-          "successful" : {},
-          "failed"     : {}
+          "contacted" : {},
+          "dark"      : {}
        }
        for x in results:
            (host, is_ok, result) = x
