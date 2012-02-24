@@ -2,7 +2,11 @@
 
 # requires 'ohai' to be installed
 
-import json
+try:
+   import json
+except ImportError:
+   import simplejson as json
+
 import subprocess
 
 cmd = subprocess.Popen("/usr/bin/ohai", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
