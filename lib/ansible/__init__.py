@@ -36,6 +36,7 @@ DEFAULT_PATTERN        = '*'
 DEFAULT_FORKS          = 3
 DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 60
+DEFAULT_REMOTE_USER    = 'root'
 
 class Pooler(object):
 
@@ -66,6 +67,7 @@ class Runner(object):
        forks=DEFAULT_FORKS, 
        timeout=DEFAULT_TIMEOUT, 
        pattern=DEFAULT_PATTERN,
+       remote_user=DEFAULT_REMOTE_USER,
        verbose=False):
       
 
@@ -81,6 +83,7 @@ class Runner(object):
        self.module_args = module_args
        self.timeout     = timeout
        self.verbose     = verbose
+       self.remote_user = remote_user
 
    def _parse_hosts(self, host_list):
         ''' parse the host inventory file if not sent as an array '''
@@ -103,23 +106,19 @@ class Runner(object):
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
        try:
-          ssh.connect(host, username='root',
+          ssh.connect(host, username=self.remote_user,
               allow_agent=True, look_for_keys=True)
-          return ssh
+          return [ True, ssh ]
        except:
-          # TODO -- just convert traceback to string
-          # and return a seperate hash of failed hosts
-          if self.verbose:
-             traceback.print_exc()
-          return None
+          return [ False, traceback.format_exc() ]
 
    def _executor(self, host):
        ''' callback executed in parallel for each host '''
        # TODO: try/catch returning none
 
-       conn = self._connect(host)
-       if not conn:
-           return [ host, None ]
+       ok, conn = self._connect(host)
+       if not ok:
+           return [ host, False, conn ]
 
        if self.module_name != "copy":
            # transfer a module, set it executable, and run it
@@ -127,15 +126,14 @@ class Runner(object):
            self._exec_command(conn, "chmod +x %s" % outpath)
            cmd = self._command(outpath)
            result = self._exec_command(conn, cmd)
-           result = json.loads(result)
+           return [ host, True, json.loads(result) ]
        else:
            # SFTP file copy module is not really a module
            ftp = conn.open_sftp()
            ftp.put(self.module_args[0], self.module_args[1])
            ftp.close()
-           return [ host, 1 ]
+           return [ host, True, 1 ]
            
-       return [ host, result ]
 
    def _command(self, outpath):
        ''' form up a command string '''
@@ -168,8 +166,17 @@ class Runner(object):
        def executor(x):
            return self._executor(x)
        results = Pooler.parmap(executor, hosts)
-       by_host = dict(results)
-       return by_host
+       results2 = {
+          "successful" : {},
+          "failed"     : {}
+       }
+       for x in results:
+           (host, is_ok, result) = x
+           if not is_ok:
+               results2["failed"][host] = result
+           else:
+               results2["successful"][host] = result
+       return results2
 
 
 if __name__ == '__main__':
