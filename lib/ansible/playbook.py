@@ -101,7 +101,7 @@ class PlayBook(object):
         '''
 
         if host_list is None:
-           host_list = self.host_list
+            host_list = self.host_list
 
         return ansible.runner.Runner(
             pattern=pattern,
@@ -122,7 +122,7 @@ class PlayBook(object):
         '''
 
         if host_list is None:
-           host_list = self.host_list
+            host_list = self.host_list
 
         instructions = task['do']
         (comment, module_details) = instructions
@@ -161,10 +161,10 @@ class PlayBook(object):
             self.processed[host] = 1
             failed = False
             if module_name == "command":
-               if results.get("rc", 0) != 0:
-                  failed=True
+                if results.get("rc", 0) != 0:
+                    failed=True
             elif results.get("failed", 0) == 1:
-                  failed=True
+                    failed=True
    
             if failed:
                 if self.verbose:
@@ -191,9 +191,9 @@ class PlayBook(object):
         subtasks = task.get('notify', [])
         if len(subtasks) > 0:
             for host, results in contacted.items():
-               if results.get('changed', False):
-                  for subtask in subtasks:
-                      self._flag_handler(handlers, subtask, host)
+                if results.get('changed', False):
+                    for subtask in subtasks:
+                         self._flag_handler(handlers, subtask, host)
 
         # TODO: if a host fails in any task, remove it from
         # the host list immediately
@@ -208,9 +208,9 @@ class PlayBook(object):
             attribs = x["do"]
             name = attribs[0]
             if match_name == name:
-               if not x.has_key("run"):
-                  x['run'] = []
-               x['run'].append(host)
+                if not x.has_key("run"):
+                    x['run'] = []
+                x['run'].append(host)
 
     def _run_pattern(self, pg):
         '''
