@@ -120,6 +120,7 @@ class Runner(object):
            return [ host, True, json.loads(result) ]
        else:
            # SFTP file copy module is not really a module
+           self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
            ftp = conn.open_sftp()
            ftp.put(self.module_args[0], self.module_args[1])
            ftp.close()
@@ -132,8 +133,14 @@ class Runner(object):
        cmd = "%s %s" % (outpath, " ".join(self.module_args))
        return cmd
 
+   
+   def remote_log(self, conn, msg):
+       stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info %r' % msg)
+
    def _exec_command(self, conn, cmd):
        ''' execute a command over SSH '''
+       msg = '%s: %s' % (self.module_name, cmd)
+       self.remote_log(conn, msg)
        stdin, stdout, stderr = conn.exec_command(cmd)
        results = "\n".join(stdout.readlines())
        return results
