@@ -145,29 +145,44 @@ than "/usr/share/ansible".  This means anyone can use Ansible, even without
 root permissions.
 
 There is potential for a sizeable community to build 
-up around the library scripts.
+up around the library scripts, and you can easily write your own.
 
-Modules include:
+Current modules include:
 
    * command -- runs commands, giving output, return codes, and run time info
    * ping - just returns if the system is up or not
    * facter - retrieves facts about the host OS
    * ohai - similar to facter, but returns structured data
    * copy - add files to remote systems
+   * setup - pushes key/value data onto the system for use in templating
+   * template - takes a local template file and saves a templated version remotely
+
+Service, package, and user modules, supporting puppet-like ensure semantics
+are coming soon.
 
 Playbooks
 =========
 
-Playbooks are loosely equivalent to recipes or manifests in most configuration
-management or deployment tools and describe a set of operations to run on
-a set of hosts.  Some tasks can choose to only fire when certain
-conditions are true, and if a task in a chain fails the dependent tasks
-will not proceed.  Playbooks are described in (YAML)[http://yaml.org] format.
+Playbooks are particularly awesome.  Playbooks can batch ansible commands
+together, and run some commands only when ansible modifies certain higher
+level resources -- such as restarting apache when a configuration file is 
+replaced.  They generate detailed reports of what happend on each node.
+
+See examples/playbook.yml for what the syntax looks like.
+
+To run a playbook:
+
+ansible -r playbook.yml
+
+An ansible-playbook CLI command is pending.  Until then, remember that when
+using playbooks, the pattern and host list options come from the playbook
+and are ignored.  Other options still apply.
+
 
 Future plans
 ============
 
-   * see TODO.md
+   * see github's issue tracker for what we're thinking about
 
 License
 =======
