@@ -19,10 +19,12 @@ setup(name='ansible',
              'library/command',
              'library/facter',
              'library/copy',
+         ]),
+         ('man/man1', [
+                'docs/man/man1/ansible.1'
          ])
       ],
       scripts=[
          'bin/ansible',
       ]
 )
-

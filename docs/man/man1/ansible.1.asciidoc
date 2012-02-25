@@ -1,0 +1,109 @@
+ansible(1)
+=========
+:doctype:manpage
+:man source:   Ansible
+:man version:  0.0.1
+:man manual:   System administration commands
+
+NAME
+----
+ansible - run a command somewhere else
+
+
+SYNOPSIS
+--------
+ansible [-H hosts_path] [-L library_path] [-f forks] [-n module_name]
+        [-a [args1 [args2 ...]]] [-p host_pattern] [-u remote_user]
+
+
+DESCRIPTION
+-----------
+
+*Ansible* is an extra-simple Python API for doing \'remote things' over
+SSH.
+
+
+OPTIONS
+-------
+
+*-P*, *--askpass*::
+
+Ask the user to input the ssh password for connecting.
+
+
+*-H*, *--host-list*::
+
+Path to hosts list.
+
+
+*-L*, *--library*::
+
+Path to module library.
+
+
+*-f*, *--forks*::
+
+Level of parallelism. Specify as an integer.
+
+
+*-n*, *--name*::
+
+Module name to execute.
+
+
+*-a*, *--args*::
+
+Arguments to module.
+
+
+*-p*, *--pattern*::
+
+Hostname pattern. Accepts shell-like globs.
+
+
+*-r*, *--run-playbook*::
+
+Playbook file to run. Replaces the *-n* and *-a* options.
+
+
+*-u*, *--remote-user*::
+
+Remote user to connect as. Uses __root__ by default.
+
+
+INVENTORY
+---------
+
+Ansible stores the hosts it can potentially operate on in an inventory
+file. The syntax is simple: one host per line. Organize your hosts
+into multiple groups by separating them into multiple inventory files.
+
+
+FILES
+-----
+
+/etc/ansible/hosts -- Default hosts file
+
+/usr/share/ansible -- Default module library
+
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.
+
+
+COPYRIGHT
+---------
+
+Copyright © 2012, Michael DeHaan
+
+Ansible is released under the terms of the MIT license.
+
+
+
+SEE ALSO
+--------
+
+Ansible home page: <https://github.com/mpdehaan/ansible/>
