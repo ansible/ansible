@@ -83,8 +83,10 @@ class Runner(object):
             return False
         if not pattern:
             pattern = self.pattern
-        if fnmatch.fnmatch(host_name, pattern):
-            return True
+        subpatterns = pattern.split(";")
+        for subpattern in subpatterns:
+            if fnmatch.fnmatch(host_name, subpattern):
+                return True
         return False
 
     def _connect(self, host):
