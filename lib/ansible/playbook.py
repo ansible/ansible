@@ -101,7 +101,7 @@ class PlayBook(object):
             timeout=self.timeout
         )
 
-    def _run_task(self, pattern, task, host_list=None, conditional=False):
+    def _run_task(self, pattern=None, task=None, host_list=None, handlers=None, conditional=False):
         ''' 
         run a single task in the playbook and
         recursively run any subtasks.
@@ -118,7 +118,7 @@ class PlayBook(object):
 
         namestr = "%s/%s" % (pattern, comment)
         if conditional:
-            namestr = "subset/%s" % namestr
+            namestr = "notified/%s" % namestr
         print "TASK [%s]" % namestr
 
         runner = self._get_task_runner(
@@ -130,15 +130,7 @@ class PlayBook(object):
         results = runner.run()
  
         dark = results.get("dark", [])
-        
         contacted = results.get("contacted", [])
-
-        # TODO: filter based on values that indicate
-        # they have changed events to emulate Puppet
-        # 'notify' behavior, super easy -- just
-        # a list comprehension -- but we need complaint
-        # modules first
-
         ok_hosts = contacted.keys()
 
         for host, msg in dark.items():
@@ -152,27 +144,51 @@ class PlayBook(object):
                   print "FAIL: [%s/%s]" % (host, comment, results)
  
 
-        subtasks = task.get('onchange', [])
+        # flag which notify handlers need to be run
+        subtasks = task.get('notify', [])
         if len(subtasks) > 0:
-            for subtask in subtasks:
-                self._run_task(pattern, subtask, ok_hosts, conditional=True)
+            for host, results in contacted.items():
+               if results.get('changed', False):
+                  for subtask in subtasks:
+                      self._flag_handler(handlers, subtask, host)
 
-        # TODO: if a host fails in task 1, add it to an excludes
-        # list such that no other tasks in the list ever execute
-        # unlike Puppet, do not allow partial failure of the tree
-        # and continuing as far as possible.  Fail fast.
+        # TODO: if a host fails in any task, remove it from
+        # the host list immediately
 
+    def _flag_handler(self, handlers, match_name, host):
+        ''' 
+        if a task has any notify elements, flag handlers for run
+        at end of execution cycle for hosts that have indicated
+        changes have been made
+        '''
+        for x in handlers:
+            attribs = x["do"]
+            name = attribs[0]
+            if match_name == name:
+               if not x.has_key("run"):
+                  x['run'] = []
+               x['run'].append(host)
 
     def _run_pattern(self, pg):
         '''
         run a list of tasks for a given pattern, in order
         '''
 
-        pattern = pg['pattern']
-        tasks   = pg['tasks']
-        for task in tasks:
-            self._run_task(pattern, task)
+        pattern  = pg['pattern']
+        tasks    = pg['tasks']
+        handlers = pg['handlers']
 
+        for task in tasks:
+            self._run_task(pattern=pattern, task=task, handlers=handlers)
+        for task in handlers:
+            if type(task.get("run", None)) == list:
+                self._run_task(
+                   pattern=pattern, 
+                   task=task, 
+                   handlers=handlers,
+                   host_list=task.get('run',[]),
+                   conditional=True
+                )
 
 
  

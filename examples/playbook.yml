@@ -6,17 +6,18 @@
   - do:
     - copy a file
     - copy /srv/a /srv/b
+    notify: 
+    - restart apache
   - do:
     - template from local file template.j2 to remote location /srv/file.out
     - template /srv/template.j2 /srv/file.out
-  - do:
-    - update apache
-    - command /usr/bin/yum update apache
-    onchange:
+    notify:
+    - restart apache
+    - quack like a duck
+  handlers:
     - do:
       - restart apache
-      - command /sbin/service apache restart
+      - command /sbin/service httpd restart
     - do:
-      - run bin false
-      - command /bin/false
-
+      - quack like a duck
+      - command /bin/true
