@@ -73,11 +73,13 @@ class Runner(object):
         return host_list
 
 
-   def _matches(self, host_name):
+   def _matches(self, host_name, pattern=None):
        ''' returns if a hostname is matched by the pattern '''
        if host_name == '':
            return False
-       if fnmatch.fnmatch(host_name, self.pattern):
+       if not pattern:
+           pattern = self.pattern
+       if fnmatch.fnmatch(host_name, pattern):
            return True
        return False
 
@@ -120,6 +122,7 @@ class Runner(object):
            return [ host, True, json.loads(result) ]
        else:
            # SFTP file copy module is not really a module
+           self.remote_log(conn, 'COPY remote:%s local:%s' % (self.module_args[0], self.module_args[1]))
            ftp = conn.open_sftp()
            ftp.put(self.module_args[0], self.module_args[1])
            ftp.close()
@@ -132,8 +135,14 @@ class Runner(object):
        cmd = "%s %s" % (outpath, " ".join(self.module_args))
        return cmd
 
+   
+   def remote_log(self, conn, msg):
+       stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info %r' % msg)
+
    def _exec_command(self, conn, cmd):
        ''' execute a command over SSH '''
+       msg = '%s: %s' % (self.module_name, cmd)
+       self.remote_log(conn, msg)
        stdin, stdout, stderr = conn.exec_command(cmd)
        results = "\n".join(stdout.readlines())
        return results
@@ -154,11 +163,15 @@ class Runner(object):
        sftp.close()
        return out_path
 
+   def match_hosts(self, pattern=None):
+       ''' return all matched hosts '''
+       return [ h for h in self.host_list if self._matches(h, pattern) ]
+
    def run(self):
        ''' xfer & run module on all matched hosts '''
 
        # find hosts that match the pattern
-       hosts = [ h for h in self.host_list if self._matches(h) ]
+       hosts = self.match_hosts()
 
        # attack pool of hosts in N forks
        pool = multiprocessing.Pool(self.forks)

@@ -83,7 +83,8 @@ track of which hosts were successfully contacted seperately from hosts
 that had communication problems.  The format of the return, if successful,
 is entirely up to the module.
 
-    import ansible
+
+    import ansible.runner
     runner = ansible.runner.Runner(
         pattern='*',
         module_name='inventory',
@@ -91,6 +92,7 @@ is entirely up to the module.
     )
     data = runner.run()
 
+data is a dictionary:
     { 
         'contacted' : {
             'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
