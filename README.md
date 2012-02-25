@@ -171,7 +171,7 @@ License
 Mailing List
 ============
 
-    * (ansible-project)[http://groups.google.com/group/ansible-project]
+   * [ansible-project](http://groups.google.com/group/ansible-project)
 
 Author
 ======
