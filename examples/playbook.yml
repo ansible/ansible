@@ -14,6 +14,9 @@
     notify:
     - restart apache
     - quack like a duck
+  - do:
+    - something that will fail
+    - command /bin/false
   handlers:
     - do:
       - restart apache

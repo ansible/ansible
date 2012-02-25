@@ -75,7 +75,7 @@ class Cli(object):
                 host_list=options.host_list,
                 forks=options.forks,
                 pattern=options.pattern,
-                verbose=False,
+                verbose=True,
             )
         else:
             return ansible.playbook.PlayBook(
@@ -85,7 +85,7 @@ class Cli(object):
                 remote_pass=sshpass,
                 host_list=options.host_list,
                 forks=options.forks,
-                verbose=False,
+                verbose=True
             )
 
 if __name__ == '__main__':

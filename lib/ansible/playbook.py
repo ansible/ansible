@@ -60,6 +60,13 @@ class PlayBook(object):
         self.remote_pass = remote_pass
         self.verbose     = verbose
 
+        # list of changes/invocations/failure counts per host
+        self.processed    = {}
+        self.dark         = {}
+        self.changed      = {}
+        self.invocations  = {}
+        self.failures     = {}
+
         if type(playbook) == str:
             playbook = yaml.load(file(playbook).read())
         self.playbook = playbook
@@ -69,11 +76,18 @@ class PlayBook(object):
 
         for pattern in self.playbook:
             self._run_pattern(pattern)
+        if self.verbose:
+            print "\n"
 
-        # TODO: return a summary of success & failure counts per node
-        # TODO: in bin/ancible, ensure return codes are appropriate
-
-        return "complete"
+        results = {}
+        for host in self.processed.keys():
+            results[host]  = {
+                'resources'   : self.invocations.get(host, 0),
+                'changed'     : self.changed.get(host, 0),
+                'dark'        : self.dark.get(host, 0),
+                'failed'      : self.failures.get(host, 0)
+            } 
+        return results
 
     def _get_task_runner(self, 
         pattern=None, 
@@ -116,10 +130,11 @@ class PlayBook(object):
         module_name = tokens[0]
         module_args = tokens[1:]
 
-        namestr = "%s/%s" % (pattern, comment)
-        if conditional:
-            namestr = "notified/%s" % namestr
-        print "TASK [%s]" % namestr
+        if self.verbose:
+            if not conditional:
+                print "\nTASK [%s]" % (comment)
+            else:
+                print "\nNOTIFIED [%s]" % (comment)
 
         runner = self._get_task_runner(
             pattern=pattern,
@@ -134,15 +149,43 @@ class PlayBook(object):
         ok_hosts = contacted.keys()
 
         for host, msg in dark.items():
-            print "DARK: [%s] => %s" % (host, msg)
+            self.processed[host] = 1
+            if self.verbose:
+                print "unreachable: [%s] => %s" % (host, msg)
+            if not self.dark.has_key(host):
+                self.dark[host] = 1
+            else:
+                self.dark[host] = self.dark[host] + 1
 
         for host, results in contacted.items():
+            self.processed[host] = 1
+            failed = False
             if module_name == "command":
                if results.get("rc", 0) != 0:
-                  print "FAIL: [%s/%s] => %s" % (host, comment, results)
+                  failed=True
             elif results.get("failed", 0) == 1:
-                  print "FAIL: [%s/%s]" % (host, comment, results)
- 
+                  failed=True
+   
+            if failed:
+                if self.verbose:
+                    print "failure: [%s] => %s" % (host, results)
+                if not self.failures.has_key(host):
+                    self.failures[host] = 1
+                else:
+                    self.failures[host] = self.failures[host] + 1
+            else:
+                if self.verbose:
+                    print "ok: [%s]" % host
+                if not self.invocations.has_key(host):
+                    self.invocations[host] = 1
+                else:
+                    self.invocations[host] = self.invocations[host] + 1
+                if results.get('changed', False):
+                    if not self.changed.has_key(host):
+                        self.changed[host] = 1
+                    else:
+                        self.changes[host] = self.changed[host] + 1
+
 
         # flag which notify handlers need to be run
         subtasks = task.get('notify', [])
@@ -178,6 +221,11 @@ class PlayBook(object):
         tasks    = pg['tasks']
         handlers = pg['handlers']
 
+        self.host_list = pg.get('hosts', '/etc/ansible/hosts')
+
+        if self.verbose:
+            print "PLAY: [%s] from [%s] ********** " % (pattern, self.host_list)
+
         for task in tasks:
             self._run_task(pattern=pattern, task=task, handlers=handlers)
         for task in handlers:
@@ -189,7 +237,6 @@ class PlayBook(object):
                    host_list=task.get('run',[]),
                    conditional=True
                 )
-
 
  
 
