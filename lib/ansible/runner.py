@@ -73,11 +73,13 @@ class Runner(object):
         return host_list
 
 
-   def _matches(self, host_name):
+   def _matches(self, host_name, pattern=None):
        ''' returns if a hostname is matched by the pattern '''
        if host_name == '':
            return False
-       if fnmatch.fnmatch(host_name, self.pattern):
+       if not pattern:
+           pattern = self.pattern
+       if fnmatch.fnmatch(host_name, pattern):
            return True
        return False
 
@@ -161,11 +163,15 @@ class Runner(object):
        sftp.close()
        return out_path
 
+   def match_hosts(self, pattern=None):
+       ''' return all matched hosts '''
+       return [ h for h in self.host_list if self._matches(h, pattern) ]
+
    def run(self):
        ''' xfer & run module on all matched hosts '''
 
        # find hosts that match the pattern
-       hosts = [ h for h in self.host_list if self._matches(h) ]
+       hosts = self.match_hosts()
 
        # attack pool of hosts in N forks
        pool = multiprocessing.Pool(self.forks)
