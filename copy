@@ -4,9 +4,9 @@ import sys
 import os
 
 try:
-     import json
+    import json
 except ImportError:
-     import simplejson as json
+    import simplejson as json
 
 source   = sys.argv[1]
 dest     = sys.argv[2]
@@ -22,14 +22,14 @@ if not os.path.exists(source):
 md5sum = None
 changed = False
 if os.path.exists(dest):
-   md5sum = os.popen("md5sum %s" % dest).read()
+    md5sum = os.popen("md5sum %s" % dest).read()
 
 os.system("cp %s %s" % (source, dest))
 
 md5sum2 = os.popen("md5sum %s" % dest).read()
 
 if md5sum != md5sum2:
-   changed = True
+    changed = True
 
 # mission accomplished
 print json.dumps({
