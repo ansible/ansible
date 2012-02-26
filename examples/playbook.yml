@@ -21,7 +21,7 @@
   handlers:
     - do:
       - restart apache
-      - command /sbin/service httpd restart
+      - service name=httpd ensure=restarted
     - do:
       - quack like a duck
       - command /bin/true

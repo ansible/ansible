@@ -21,7 +21,6 @@
 
 import ansible.runner
 import ansible.constants as C
-import json
 import yaml
 import shlex
 
