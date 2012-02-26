@@ -73,7 +73,8 @@ if changed:
 if rc != 0:
     # yeah, should probably include output of failure...
     print json.dumps({
-        "failed" : 1
+        "failed" : 1,
+        "rc"     : rc
     })
     sys.exit(1)
 
