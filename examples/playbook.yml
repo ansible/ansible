@@ -1,4 +1,5 @@
 - pattern: '*'
+  hosts: '/etc/ansible/hosts'
   tasks:
   - do:
     - configure template & module variables
