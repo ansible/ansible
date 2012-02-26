@@ -45,7 +45,7 @@ source = file(source).read()
 changed = False
 md5sum = None
 if os.path.exists(dest):
-    md5sum = os.popen("md5sum %s" % dest).read()
+    md5sum = os.popen("md5sum %s" % dest).read().split()[0]
 
 # call Jinja2 here and save the new template file
 template = jinja2.Template(source)
@@ -58,7 +58,7 @@ f.close()
 # other end unless things were successful
 
 # record m5sum and return success and whether things have changed
-md5sum2 = os.popen("md5sum %s" % dest).read()
+md5sum2 = os.popen("md5sum %s" % dest).read().split()[0]
 
 if md5sum != md5sum2:
     changed = True

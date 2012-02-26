@@ -183,7 +183,7 @@ class PlayBook(object):
                     if not self.changed.has_key(host):
                         self.changed[host] = 1
                     else:
-                        self.changes[host] = self.changed[host] + 1
+                        self.changed[host] = self.changed[host] + 1
 
 
         # flag which notify handlers need to be run
