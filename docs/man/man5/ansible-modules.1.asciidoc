@@ -1,0 +1,195 @@
+ansible-modules(5)
+=================
+:doctype:manpage
+:man source: Ansible-modules
+:man version: 0.0.1
+:man manual: System administration commands
+
+
+NAME
+----
+ansible-modules - stock modules shipped with ansible
+
+
+DESCRIPTION
+-----------
+
+Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.
+
+
+IDEMPOTENCE
+-----------
+
+Most modules other than command are idempotent, meaning they will seek to avoid changes
+unless a change needs to be made.  When using ansible playbooks, these modules can
+trigger change events.  Unless otherwise noted, all modules support change hooks.
+
+
+command
+-------
+
+The command module takes the command name followed by a list of arguments, space delimited.
+This is the only module that does not use key=value style parameters.
+
+Example usage:
+
+"/sbin/shutdown -t now"
+
+This module does not support change hooks.
+
+Returns the return code from the program as well as timing information.
+
+Async command running and command execution time limits are in plan.
+
+
+copy
+----
+
+The copy module takes a list of source files
+
+*src=*::
+
+Local absolute path to a file to copy to the remote server
+
+
+*dest=*::
+
+Remote absolute path where the file should end up
+
+
+This module also returns md5sum information about the resultant file.
+
+
+facter
+------
+
+Runs the discovery program 'facter' on the remote system, returning
+JSON data that can be useful for inventory purposes.  It makes
+no changes on the remote system.
+
+Requires that 'facter' and 'ruby-json' be installed on the remote end.
+
+This module takes no parameters & does not support change hooks.
+
+
+git
+---
+
+Deploys software from git checkouts.
+
+This module is in plan.
+
+
+ohai
+----
+
+Similar to the facter module, this returns JSON inventory data but
+makes no changes on the remote system.
+
+Requires that 'ohai' be installed on the remote end.
+
+This module takes no parameters & does not support change hooks.
+
+
+ping
+----
+
+A trivial test module, this module always returns the integer '1' on
+successful contact.  It makes no changes on the remote system.
+
+This module does not support change hooks.
+
+
+service
+-------
+
+Controls services on remote machines.
+
+*ensure=*::
+
+Values are 'started', 'stopped', or 'restarted'.   Started/stopped
+are idempotent actions that will not run commands unless neccessary.
+'restarted' will always bounce the service
+
+
+*name=*::
+
+The name of the service
+
+
+setup
+-----
+
+Writes a JSON file containing key/value data, for use in templating.
+Call this once before using the template modules, usually as the very
+first step in your playbook. 
+
+*metadata=*::
+
+Optionally overrides the default JSON file location of /etc/ansible/setup.
+If used, also supply the metadata parameter to 'template'.
+
+
+Does not support change hooks yet, but in plan.
+
+
+template
+--------
+
+Templates a file out to a remote server.  Call the setup module prior to usage.
+
+*src=*::
+
+path of a Jinja2 formatted template on the local server
+
+
+*dest*::
+
+location to render the template on the remote server
+
+
+*metadata*::
+
+location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
+which can be easily created using the 'setup' module.
+
+
+This module also returns md5sum information about the resultant file.
+
+
+user
+----
+
+This module is in plan.
+
+
+yum
+---
+
+This module is in plan.
+
+
+WRITING YOUR OWN MODULES
+------------------------
+
+To write your own modules, simply follow the convention of those already available in
+/usr/share/ansible.  Modules must return JSON but can be written in any language.
+To support change hooks, modules should return hashes, with a changed: True/False
+element at the top level.  Modules can also choose to indicate a failure scenario
+by returning a top level 'failure' element with a True value.
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.
+
+SEE ALSO
+--------
+
+ansible(1)
+
+ansible-playbook(1) - pending
+
+Ansible home page: <https://github.com/mpdehaan/ansible/>
