@@ -49,8 +49,11 @@ class PlayBook(object):
         remote_pass  =C.DEFAULT_REMOTE_PASS,
         verbose=False):
 
-        # runner is reused between calls
- 
+        # TODO, once ansible-playbook is it's own script this will
+        # have much LESS parameters to the constructor and will
+        # read most everything per pattern from the playbook
+        # and this will be greatly simplified
+
         self.host_list   = host_list
         self.module_path = module_path
         self.forks       = forks
@@ -59,25 +62,32 @@ class PlayBook(object):
         self.remote_pass = remote_pass
         self.verbose     = verbose
 
-        # list of changes/invocations/failure counts per host
+        # store the list of changes/invocations/failure counts
+        # as a dictionary of integers keyed off the hostname
+
         self.processed    = {}
         self.dark         = {}
         self.changed      = {}
         self.invocations  = {}
         self.failures     = {}
 
+        # playbook file can be passed in as a path or
+        # as file contents (to support API usage)
+
         if type(playbook) == str:
             playbook = yaml.load(file(playbook).read())
         self.playbook = playbook
         
     def run(self):
-        ''' run against all patterns in the playbook '''
+        ''' run all patterns in the playbook '''
 
+        # loop through all patterns and run them
         for pattern in self.playbook:
             self._run_pattern(pattern)
         if self.verbose:
             print "\n"
 
+        # summarize the results
         results = {}
         for host in self.processed.keys():
             results[host]  = {
@@ -96,19 +106,32 @@ class PlayBook(object):
         '''
 
         if host_list is None:
+            # pruned host lists occur when running triggered
+            # actions where not all hosts have changed
+            # though top-level tasks will pass in "None" here
             host_list = self.host_list
 
+        # load the module name and parameters from the task
+        # entry
         instructions = task['do']
         (comment, module_details) = instructions
         tokens = shlex.split(module_details)
         module_name = tokens[0]
         module_args = tokens[1:]
 
+        # tasks can be direct (run on all nodes matching
+        # the pattern) or conditional, where they ran
+        # as the result of a change handler on a subset
+        # of all of the hosts
+
         if self.verbose:
             if not conditional:
                 print "\nTASK [%s]" % (comment)
             else:
                 print "\nNOTIFIED [%s]" % (comment)
+
+        # load up an appropriate ansible runner to
+        # run the task in parallel
 
         runner = ansible.runner.Runner(
             pattern=pattern,
@@ -123,6 +146,10 @@ class PlayBook(object):
         )
         results = runner.run()
  
+        # walk through the results and build up
+        # summary information about successes and
+        # failures.  TODO: split into subfunction
+
         dark = results.get("dark", [])
         contacted = results.get("contacted", [])
         ok_hosts = contacted.keys()
@@ -165,8 +192,11 @@ class PlayBook(object):
                     else:
                         self.changed[host] = self.changed[host] + 1
 
-
         # flag which notify handlers need to be run
+        # this will be on a SUBSET of the actual host list.  For instance
+        # a file might need to be written on only half of the nodes so
+        # we would only trigger restarting Apache on half of the nodes
+
         subtasks = task.get('notify', [])
         if len(subtasks) > 0:
             for host, results in contacted.items():
@@ -174,19 +204,22 @@ class PlayBook(object):
                     for subtask in subtasks:
                          self._flag_handler(handlers, subtask, host)
 
-        # TODO: if a host fails in any task, remove it from
-        # the host list immediately
-
     def _flag_handler(self, handlers, match_name, host):
         ''' 
         if a task has any notify elements, flag handlers for run
         at end of execution cycle for hosts that have indicated
         changes have been made
         '''
+
+        # for all registered handlers in the ansible playbook
+        # for this particular pattern group
+
         for x in handlers:
             attribs = x["do"]
             name = attribs[0]
             if match_name == name:
+                # flag the handler with the list of hosts
+                # it needs to be run on, it will be run later
                 if not x.has_key("run"):
                     x['run'] = []
                 x['run'].append(host)
@@ -196,15 +229,17 @@ class PlayBook(object):
         run a list of tasks for a given pattern, in order
         '''
 
+        # get configuration information about the pattern
         pattern  = pg['pattern']
         tasks    = pg['tasks']
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
-
         self.host_list = pg.get('hosts', '/etc/ansible/hosts')
 
         if self.verbose:
             print "PLAY: [%s] from [%s] ********** " % (pattern, self.host_list)
+
+        # run all the top level tasks, these get run on every node
 
         for task in tasks:
             self._run_task(
@@ -212,6 +247,13 @@ class PlayBook(object):
                 task=task, 
                 handlers=handlers,
                 remote_user=user)
+
+        # handlers only run on certain nodes, they are flagged by _flag_handlers
+        # above.  They only run on nodes when things mark them as changed, and
+        # handlers only get run once.  For instance, the system is designed
+        # such that multiple config files if changed can ask for an Apache restart
+        # but Apache will only be restarted once (at the end).
+
         for task in handlers:
             if type(task.get("run", None)) == list:
                 self._run_task(
@@ -222,6 +264,9 @@ class PlayBook(object):
                    conditional=True,
                    remote_user=user
                 )
+
+        # end of execution for this particular pattern.  Multiple patterns
+        # can be in a single playbook file
 
  
 
