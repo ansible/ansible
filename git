@@ -16,7 +16,7 @@ import shlex
 import subprocess
 
 # ===========================================
-# convert arguments of form ensure=running name=foo
+# convert arguments of form a=b c=d
 # to a dictionary
 # FIXME: make more idiomatic
 
