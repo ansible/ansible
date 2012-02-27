@@ -108,6 +108,8 @@ class Runner(object):
             ssh.connect(host, username=self.remote_user, allow_agent=True, 
               look_for_keys=True, password=self.remote_pass)
             return [ True, ssh ]
+        except paramiko.AuthenticationException, e:
+            return [ False, str(e) ]
         except:
             # it failed somehow, return the failure string
             return [ False, traceback.format_exc() ]
