@@ -3,6 +3,7 @@
 import sys
 import os
 import jinja2
+import shlex
 try:
     import json
 except ImportError:

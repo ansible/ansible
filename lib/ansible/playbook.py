@@ -88,32 +88,6 @@ class PlayBook(object):
             } 
         return results
 
-    def _get_task_runner(self, 
-        pattern=None, 
-        host_list=None,
-        module_name=None, 
-        module_args=None):
-
-        ''' 
-        return a runner suitable for running this task, using
-        preferences from the constructor 
-        '''
-
-        if host_list is None:
-            host_list = self.host_list
-
-        return ansible.runner.Runner(
-            pattern=pattern,
-            module_name=module_name,
-            module_args=module_args,
-            host_list=host_list,
-            forks=self.forks,
-            remote_user=self.remote_user,
-            remote_pass=self.remote_pass,
-            module_path=self.module_path,
-            timeout=self.timeout
-        )
-
     def _run_task(self, pattern=None, task=None, host_list=None, handlers=None, conditional=False):
         ''' 
         run a single task in the playbook and
@@ -135,11 +109,16 @@ class PlayBook(object):
             else:
                 print "\nNOTIFIED [%s]" % (comment)
 
-        runner = self._get_task_runner(
+        runner = ansible.runner.Runner(
             pattern=pattern,
-            host_list=host_list, 
             module_name=module_name,
-            module_args=module_args
+            module_args=module_args,
+            host_list=host_list,
+            forks=self.forks,
+            remote_user=self.remote_user, # FIXME: read from playbook
+            remote_pass=self.remote_pass,
+            module_path=self.module_path,
+            timeout=self.timeout
         )
         results = runner.run()
  

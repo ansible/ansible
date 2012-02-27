@@ -1,6 +1,9 @@
 - pattern: '*'
-  hosts: '/etc/ansible/hosts'
+  hosts: /etc/ansible/hosts
   tasks:
+  - do:
+    - restart apache for kicks
+    - command /sbin/service apache restart
   - do:
     - configure template & module variables for future template calls
     - setup a=2 b=3 c=4

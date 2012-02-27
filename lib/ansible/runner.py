@@ -154,17 +154,17 @@ class Runner(object):
         options = self._parse_kv(self.module_args)
         source = options['src']
         dest   = options['dest']
-        tmp_dest = self._get_tmp_path(conn, dest.split("/")[-1])
-        self._transfer_file(conn, source, tmp_dest)
+        tmp_src = self._get_tmp_path(conn, dest.split("/")[-1])
+        self._transfer_file(conn, source, tmp_src)
 
         # install the copy  module
         self.module_name = 'copy'
         module = self._transfer_module(conn)
 
         # run the copy module
-        self.module_args = [ tmp_dest, dest ]
+        self.module_args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
         result = self._execute_module(conn, module)
-        self._delete_remote_files(conn, tmp_dest)
+        self._delete_remote_files(conn, tmp_src)
         return self._return_from_module(conn, host, result)
 
     def _execute_template(self, conn, host):
@@ -185,7 +185,7 @@ class Runner(object):
         module = self._transfer_module(conn)
 
         # run the template module
-        self.module_args = [ temppath, dest, metadata ]
+        self.module_args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
         result = self._execute_module(conn, module)
         self._delete_remote_files(conn, [ temppath ])
         return self._return_from_module(conn, host, result)
