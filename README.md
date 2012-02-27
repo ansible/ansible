@@ -28,7 +28,6 @@ Design Principles
     * No server or client daemons, uses existing SSHd
     * No additional software required on client boxes
     * Everything is self updating on the clients  
-    * Encourages use of ssh-agent
     * Plugins can be written in ANY language
     * API usage is an equal citizen to CLI usage
     * Can be controlled/installed/used as non-root
@@ -49,12 +48,10 @@ Optional -- If you want to push templates, the nodes need:
 Inventory file
 ==============
 
-The inventory file is a required list of hostnames that can be 
-potentially managed by ansible.  Eventually this file may be editable 
-via the CLI, but for now, is edited with your favorite text editor.
+To use ansible you must have a list of hosts somewhere.
 
 The default inventory file (-H) is /etc/ansible/hosts and is a list
-of all hostnames to target with ansible, one per line.  These
+of all hostnames to manage with ansible, one per line.  These
 can be hostnames or IPs
 
 Example:
@@ -70,63 +67,14 @@ specific hosts.  This is covered below.
 You can organize groups of systems by having multiple inventory
 files (i.e. keeping webservers different from dbservers, etc)
 
-Command line usage example
-==========================
+Massive Parallelism, Pattern Matching, and a Usage Example
+==========================================================
 
-Run a module by name with arguments
+Reboot all web servers in Atlanta, 10 at a time:
  
    * ssh-agent bash
    * ssh-add ~/.ssh/id_rsa.pub
-   * ansible -p "*.example.com" -n modName -a "arg1 arg2"
-
-API Example
-===========
-
-The API is simple and returns basic datastructures.  Ansible will keep
-track of which hosts were successfully contacted seperately from hosts
-that had communication problems.  The format of the return, if successful,
-is entirely up to the module.
-
-
-    import ansible.runner
-    runner = ansible.runner.Runner(
-        pattern='*',
-        module_name='inventory',
-        module_args='...' 
-    )
-    data = runner.run()
-
-data is a dictionary:
-    { 
-        'contacted' : {
-            'xyz.example.com' : [ 'any kind of datastructure is returnable' ],
-            'foo.example.com' : [ '...' ]
-        },
-        'dark' : {
-            'bar.example.com' : [ 'failure message' ]
-        }
-    }
-
-Additional options to Runner include the number of forks, hostname
-exclusion pattern, library path, arguments, and so on.  
-
-Read the source, it's not complicated.
-
-Patterns
-========
-
-To target only hosts starting with "rtp", for example:
-
-   * ansible -p "rtp*" -n command -a "yum update apache"
-
-Parallelism
-===========
-
-Specify the number of forks to use, to run things in greater parallelism.
-
-    * ansible -f 10 "*.example.com" -n command -a "yum update apache"
-
-10 forks.  The default is 3.  5 is right out.
+   * ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
 
 File Transfer
 =============
@@ -135,38 +83,45 @@ Ansible can SCP lots of files to lots of places in parallel.
 
    * ansible -p "web-*.acme.net" -f 10 -n copy -a "/etc/hosts /tmp/hosts"
 
-Ansible Library (Bundled Modules)
-=================================
+Templating
+==========
 
-See the example library for modules, they can be written in any language
-and simply return JSON to stdout.  The path to your ansible library is
-specified with the "-L" flag should you wish to use a different location
-than "/usr/share/ansible".  This means anyone can use Ansible, even without
-root permissions.
+JSON files can be placed for template metadata using Jinja2.  Variables
+placed by 'setup' can be reused between ansible runs.
 
-There is potential for a sizeable community to build 
-up around the library scripts, and you can easily write your own.
+   * ansible -p "*" -n setup -a "ntp_server=192.168.1.1"
+   * ansible -p "*" -n template /srv/motd.j2 /etc/motd 
+   * ansible -p "*" -n template /srv/foo.j2 /etc/foo
 
-Current modules include:
+Git Deployments
+===============
 
-   * command - runs commands, giving output, return codes, and run time info
-   * ping - just returns if the system is up or not
-   * facter - retrieves facts about the host OS
-   * ohai - similar to facter, but returns structured data
-   * copy - add files to remote systems
-   * setup - pushes key/value data onto the system for use in templating
-   * template - takes a local template file and saves a templated version remotely
-   * git - deploy simple apps directly from source control
+Deploy your webapp straight from git
 
-More coming soon!  Contributions welcome!
+  * ansible -p "web*" -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
+
+Take Inventory
+==============
+
+Run popular open-source data discovery tools across a wide number of hosts.
+This is best used from API scripts.
+
+  * ansible -p "dbserver*" -n facter
+  * ansible -p "dbserver"" -n ohai
+
+Other Modules
+=============
+
+See the library directory for lots of extras.  There's also a manpage,
+ansible-modules(5).
 
 Playbooks
 =========
 
 Playbooks are particularly awesome.  Playbooks can batch ansible commands
-together, and run some commands only when ansible modifies certain higher
-level resources -- such as restarting apache when a configuration file is 
-replaced.  They generate detailed reports of what happend on each node.
+together, and can even fire off triggers when certain commands report changes.
+They are the basis for a really simple configuration management system, unlike
+any that already exist.  Powerful, concise, but dead simple.
 
 See examples/playbook.yml for what the syntax looks like.
 
@@ -174,10 +129,7 @@ To run a playbook:
 
 ansible -r playbook.yml
 
-An ansible-playbook CLI command is pending.  Until then, remember that when
-using playbooks, the pattern and host list options come from the playbook
-and are ignored.  Other options still apply.
-
+Read ansible-playbook(5) for more details.
 
 Future plans
 ============
@@ -192,6 +144,7 @@ License
 Mailing List
 ============
 
+   * Join the mailing list to talk about Ansible!
    * [ansible-project](http://groups.google.com/group/ansible-project)
 
 Author
