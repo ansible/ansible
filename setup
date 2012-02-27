@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-ANSIBLE_DIR       = "/etc/ansible"
-ANSIBLE_SETUP     = "/etc/ansible/setup"
+DEFAULT_ANSIBLE_SETUP     = "/etc/ansible/setup"
 
 import sys
 import os
@@ -15,28 +14,30 @@ except ImportError:
 # load config & template variables
 
 input_data = sys.argv[1:]
-new_options = dict([ x.split("=") for x in input_data ])
+new_options = dict([ x.split('=') for x in input_data ])
+ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
+ansible_dir = os.path.dirname(metadata)
 
 # create the config dir if it doesn't exist
 
-if not os.path.exists(ANSIBLE_DIR):
-    os.makedirs(ANSIBLE_DIR)
+if not os.path.exists(ansible_dir):
+    os.makedirs(ansible_dir)
 
 changed = False
-if not os.path.exists(ANSIBLE_SETUP):
+if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = os.popen("md5sum %s" % ANSIBLE_SETUP).read()
+    md5sum = os.popen("md5sum %s" % ansible_file).read()
 
 # write the template/settings file using
 # instructions from server
 
-f = open(ANSIBLE_SETUP, "w+")
+f = open(ansible_file, "w+")
 reformat = json.dumps(new_options)
 f.write(reformat)
 f.close()
 
-md5sum2 = os.popen("md5sum %s" % ANSIBLE_SETUP).read()
+md5sum2 = os.popen("md5sum %s" % ansible_file).read()
 
 if md5sum != md5sum2:
    changed = True

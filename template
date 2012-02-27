@@ -8,9 +8,22 @@ try:
 except ImportError:
     import simplejson as json
 
-source   = sys.argv[1]
-dest     = sys.argv[2]
-metadata = sys.argv[3]
+# ===========================================
+# convert arguments of form ensure=running name=foo
+# to a dictionary
+# FIXME: make more idiomatic
+
+args = " ".join(sys.argv[1:])
+items = shlex.split(args)
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+source  = params['src']
+dest    = params['dest']
+metadata = params.get('metadata', '/etc/ansible/setup') 
+
  
 # raise an error if there is no template metadata
 if not os.path.exists(metadata):

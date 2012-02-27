@@ -8,14 +8,27 @@ try:
 except ImportError:
     import simplejson as json
 
-source   = sys.argv[1]
-dest     = sys.argv[2]
+# ===========================================
+# convert arguments of form ensure=running name=foo
+# to a dictionary
+# FIXME: make more idiomatic
+
+args = " ".join(sys.argv[1:])
+items = shlex.split(args)
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+src  = params['src']
+dest = params['dest']
+
  
-# raise an error if there is no source file
-if not os.path.exists(source):
+# raise an error if there is no src file
+if not os.path.exists(src):
     print json.dumps({
         "failed" : 1,
-        "msg"    : "Source %s failed to transfer" % source
+        "msg"    : "Source %s failed to transfer" % src
     })
     sys.exit(1)
 
@@ -24,7 +37,7 @@ changed = False
 if os.path.exists(dest):
     md5sum = os.popen("md5sum %s" % dest).read().split()[0]
 
-os.system("cp %s %s" % (source, dest))
+os.system("cp %s %s" % (src, dest))
 
 md5sum2 = os.popen("md5sum %s" % dest).read().split()[0]
 
