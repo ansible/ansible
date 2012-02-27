@@ -32,9 +32,9 @@ command
 The command module takes the command name followed by a list of arguments, space delimited.
 This is the only module that does not use key=value style parameters.
 
-Example usage:
+Example usage::
 
-"/sbin/shutdown -t now"
+/sbin/shutdown -t now
 
 This module does not support change hooks.
 
@@ -70,7 +70,7 @@ JSON data that can be useful for inventory purposes.
 
 Requires that 'facter' and 'ruby-json' be installed on the remote end.
 
-This module is information only - it takes no parameters & does not support change hooks,
+This module is informative only - it takes no parameters & does not support change hooks,
 nor does it make any changes on the system.
 
 
@@ -95,13 +95,13 @@ This module is in plan.
 ohai
 ----
 
-Similar to the facter module, this returns JSON inventory data.  Ohai data
-is a bit more verbose and nested than facter.
+Similar to the facter module, this returns JSON inventory data.  Ohai
+data is a bit more verbose and nested than facter.
 
 Requires that 'ohai' be installed on the remote end.
 
-This module is information only - it takes no parameters & does not support change hooks,
-nor does it make any changes on the system.
+This module is information only - it takes no parameters & does not
+support change hooks, nor does it make any changes on the system.
 
 
 ping
@@ -112,8 +112,8 @@ successful contact.
 
 This module does not support change hooks.
 
-This module is information only - it takes no parameters & does not support change hooks,
-nor does it make any changes on the system.
+This module is informative only - it takes no parameters & does not
+support change hooks, nor does it make any changes on the system.
 
 
 service
@@ -204,6 +204,6 @@ SEE ALSO
 
 ansible(1)
 
-ansible-playbook(1) - pending
+ansible-playbook(5) - pending
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>
