@@ -2,7 +2,7 @@ Ansible
 =======
 
 Ansible is a extra-simple tool/API for doing 'parallel remote things' over SSH -- whether
-executing commands, running declarative 'modules', or executing larger 'playbooks' that 
+executing commands, running "modules", or executing larger 'playbooks' that 
 can serve as a configuration management or deployment system.
 
 While [Func](http://fedorahosted.org/func), which I co-wrote, 
@@ -11,7 +11,8 @@ Ansible aspires to be quite different and more minimal, but still able
 to grow more modularly over time.  This is based on talking to a lot of 
 users of various tools and wishing to eliminate problems with connectivity 
 and long running daemons, or not picking tool X because they preferred to 
-code in Y.
+code in Y. Further, playbooks take things a whole step further, building the config
+and deployment system I always wanted to build.
 
 Why use Ansible versus something else?  (Fabric, Capistrano, mCollective, 
 Func, SaltStack, etc?) It will have far less code, it will be more correct, 
@@ -25,34 +26,31 @@ Design Principles
 
     * Dead simple setup
     * Super fast & parallel by default
-    * No server or client daemons, uses existing SSHd
+    * No server or client daemons; use existing SSHd
     * No additional software required on client boxes
-    * Everything is self updating on the clients  
-    * Plugins can be written in ANY language
-    * API usage is an equal citizen to CLI usage
-    * Can be controlled/installed/used as non-root
+    * Modules can be written in ANY language
+    * Awesome API for creating very powerful distributed scripts
+    * Be usable as non-root
+    * Create the easiest config management system to use, ever.
 
 Requirements
 ============
 
 For the server the tool is running from, *only*:
 
-    * python 2.6 -- or the 2.4/2.5 backport of the multiprocessing module
-    * PyYAML (install on 'overlord' if using playbooks)
     * paramiko
+    * python 2.6 (or the 2.4/2.5 backport of the multiprocessing module)
+    * PyYAML (only if using playbooks)
 
-Optional -- If you want to push templates, the nodes need:
+Optional -- If you want to push templates, the nodes need a template library,
+which for bonus points you can install with ansible!  Easy enough.
 
     * python-jinja2 
 
 Inventory file
 ==============
 
-To use ansible you must have a list of hosts somewhere.
-
-The default inventory file (-H) is /etc/ansible/hosts and is a list
-of all hostnames to manage with ansible, one per line.  These
-can be hostnames or IPs
+To use ansible you must have a list of hosts somewhere.  The default inventory file (override with -H) is /etc/ansible/hosts and is a list of all hostnames to manage with ansible, one per line.  These can be hostnames or IPs.
 
 Example:
 
@@ -61,11 +59,8 @@ Example:
     192.168.10.50
     192.168.10.51
 
-This list is further filtered by the pattern wildcard (-P) to target
-specific hosts.  This is covered below.
-
-You can organize groups of systems by having multiple inventory
-files (i.e. keeping webservers different from dbservers, etc)
+This list is further filtered by the pattern wildcard (-p) to target
+specific hosts.  This is covered below.  You can also organize groups of systems by having multiple inventory files (i.e. keeping webservers different from dbservers, etc)
 
 Massive Parallelism, Pattern Matching, and a Usage Example
 ==========================================================
@@ -75,6 +70,10 @@ Reboot all web servers in Atlanta, 10 at a time:
    * ssh-agent bash
    * ssh-add ~/.ssh/id_rsa.pub
    * ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
+
+Other than the comamnd module, though, ansible modules are not scripts.  They make
+the remote system look like you state, and run the commands neccessary to get it 
+there.
 
 File Transfer
 =============
@@ -93,6 +92,9 @@ placed by 'setup' can be reused between ansible runs.
    * ansible -p "*" -n template /srv/motd.j2 /etc/motd 
    * ansible -p "*" -n template /srv/foo.j2 /etc/foo
 
+Very soon, templates will be able to also include facter and ohai
+variables.
+
 Git Deployments
 ===============
 
@@ -104,7 +106,7 @@ Take Inventory
 ==============
 
 Run popular open-source data discovery tools across a wide number of hosts.
-This is best used from API scripts.
+This is best used from API scripts that want to learn about remote systems.
 
   * ansible -p "dbserver*" -n facter
   * ansible -p "dbserver"" -n ohai
@@ -113,7 +115,8 @@ Other Modules
 =============
 
 See the library directory for lots of extras.  There's also a manpage,
-ansible-modules(5).
+ansible-modules(5) that covers all the options they take.  You can
+read the asciidoc in github in the 'docs' directory.
 
 Playbooks
 =========
