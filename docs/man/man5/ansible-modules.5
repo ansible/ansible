@@ -38,7 +38,7 @@ This module does not support change hooks\&.
 .sp
 Returns the return code from the program as well as timing information\&.
 .sp
-Async command running and command execution time limits are in plan\&.
+Async command running and command execution time limits are in plan\&. These will probably be special keyvalue parameters expressed on the end of the command line, like ANSTIMEOUT=1 and ANS_ASYNC=1 or similar\&.
 .SH "COPY"
 .sp
 The copy module takes a list of source files
@@ -56,11 +56,18 @@ Remote absolute path where the file should end up
 This module also returns md5sum information about the resultant file\&.
 .SH "FACTER"
 .sp
-Runs the discovery program \fIfacter\fR on the remote system, returning JSON data that can be useful for inventory purposes\&. It makes no changes on the remote system\&.
+Runs the discovery program \fIfacter\fR on the remote system, returning JSON data that can be useful for inventory purposes\&.
 .sp
 Requires that \fIfacter\fR and \fIruby\-json\fR be installed on the remote end\&.
 .sp
-This module takes no parameters & does not support change hooks\&.
+This module is information only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
+.SH "FILE"
+.sp
+Ensures the ownership and permissions of files are as desired\&.
+.sp
+Use copy or template first if you need to make sure a file is on the box\&.
+.sp
+In plan\&.
 .SH "GIT"
 .sp
 Deploys software from git checkouts\&.
@@ -68,16 +75,18 @@ Deploys software from git checkouts\&.
 This module is in plan\&.
 .SH "OHAI"
 .sp
-Similar to the facter module, this returns JSON inventory data but makes no changes on the remote system\&.
+Similar to the facter module, this returns JSON inventory data\&. Ohai data is a bit more verbose and nested than facter\&.
 .sp
 Requires that \fIohai\fR be installed on the remote end\&.
 .sp
-This module takes no parameters & does not support change hooks\&.
+This module is information only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
 .SH "PING"
 .sp
-A trivial test module, this module always returns the integer \fI1\fR on successful contact\&. It makes no changes on the remote system\&.
+A trivial test module, this module always returns the integer \fI1\fR on successful contact\&.
 .sp
 This module does not support change hooks\&.
+.sp
+This module is information only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
 .SH "SERVICE"
 .sp
 Controls services on remote machines\&.
@@ -103,10 +112,8 @@ Writes a JSON file containing key/value data, for use in templating\&. Call this
 \fBmetadata=\fR
 .RS 4
 Optionally overrides the default JSON file location of /etc/ansible/setup\&. If used, also supply the metadata parameter to
-\fItemplate\fR\&.
+\fItemplate\fR\&. Change if running as a non\-root remote user who does not have permissions on /etc/ansible\&.
 .RE
-.sp
-Does not support change hooks yet, but in plan\&.
 .SH "TEMPLATE"
 .sp
 Templates a file out to a remote server\&. Call the setup module prior to usage\&.
@@ -123,9 +130,7 @@ location to render the template on the remote server
 .PP
 \fBmetadata\fR
 .RS 4
-location of a JSON file to use to supply template data\&. Default is /etc/ansible/setup which can be easily created using the
-\fIsetup\fR
-module\&.
+location of a JSON file to use to supply template data\&. Default is /etc/ansible/setup which is the same as the default for the setup module\&. Change if running as a non\-root remote user who does not have permissions on /etc/ansible\&.
 .RE
 .sp
 This module also returns md5sum information about the resultant file\&.

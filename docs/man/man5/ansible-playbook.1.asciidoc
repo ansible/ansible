@@ -1,0 +1,113 @@
+ansible-modules(5)
+=================
+:doctype:manpage
+:man source: Ansible-playbook
+:man version: 0.0.1
+:man manual: System administration commands
+
+
+NAME
+----
+ansible-playbook - format and function of an ansible playbook file
+
+
+DESCRIPTION
+-----------
+
+Ansible ships with a ansible-playbook tool for running playbooks.  Playbooks can represent
+frequent tasks, desired system configurations, or deployment processes.
+
+
+FORMAT
+------
+
+Playbooks are currently writeable in YAML.  Other formats (JSON?) may be supported in the future.
+
+
+EXAMPLE
+-------
+
+- pattern: '*'
+  hosts: '/etc/ansible/hosts'
+  tasks:
+  - do:
+    - configure template & module variables for future template calls
+    - setup http_port=80 max_clients=200
+  - do:
+    - write the apache config file
+    - template src=/srv/mytemplates/httpd.j2 dest=/etc/httpd/conf
+    notify:
+    - restart apache
+  - do
+    - ensure apache is running
+    - service name=httpd ensure=started
+  handlers:
+    - do:
+      - restart apache
+      - service name=httpd ensure=restarted
+
+
+WHAT THE EXAMPLE MEANS
+-----------------------
+
+Here's what the above example will do.
+
+For all hosts in /etc/ansible/hosts (one host per line) that are named 'webserver-anything', first
+write a JSON file into /etc/ansible/setup on each remote system with the values
+max_clients and http_port.
+
+Next, use a Jinja2 template locally residing 
+at /srv/mytemplates/httpd.j2 to write the Apache config file on each host
+to the path /etc/httpd/conf, using the previous values.
+
+Ensure that apache is running if stopped.
+
+If and only if the config file changed, note that we need to restart apache at the end of
+the run, otherwise, don't bother because we already know it is running.
+
+
+HIGH LEVEL EXPLANATION
+----------------------
+
+Playbooks are executed top down and can contain multiple references to patterns.
+For instance, a playbook could do something to all webservers, then do something
+to all database servers, then do something different to all webservers again.
+
+For each pattern, the tasks in the 'tasks' list are executed in order for all
+hosts in the host file matching the pattern.
+
+For each task, a "do" statement describes what the task is and what ansible
+module to use to accomplish the task, along with any arguments.  The first
+line in the "do" is the name of the task -- this will appear in any log output.
+
+The second line in each "do" is the module name followed by module arguments.
+
+Most modules accept key=value format arguments.
+
+Handlers are like tasks, but are conditionally executed.  If a module reports
+a 'change', it can choose to notify a handler by name.  If notified, it will
+run only for hosts that changed.
+
+
+FUTURE BEHAVIOR
+---------------
+
+What the playbook run does with a host when an error is detected is currently being refined
+and is subject to change. 
+
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.
+
+
+SEE ALSO
+--------
+
+ansible(1)
+
+ansible-playbook(1) - pending
+
+Ansible home page: <https://github.com/mpdehaan/ansible/>

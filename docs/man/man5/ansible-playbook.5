@@ -1,0 +1,221 @@
+'\" t
+.\"     Title: ansible-modules
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 02/26/2012
+.\"    Manual: System administration commands
+.\"    Source: Ansible-playbook 0.0.1
+.\"  Language: English
+.\"
+.TH "ANSIBLE\-MODULES" "5" "02/26/2012" "Ansible\-playbook 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ansible-playbook \- format and function of an ansible playbook file
+.SH "DESCRIPTION"
+.sp
+Ansible ships with a ansible\-playbook tool for running playbooks\&. Playbooks can represent frequent tasks, desired system configurations, or deployment processes\&.
+.SH "FORMAT"
+.sp
+Playbooks are currently writeable in YAML\&. Other formats (JSON?) may be supported in the future\&.
+.SH "EXAMPLE"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+pattern:
+\fI*\fR
+hosts:
+\fI/etc/ansible/hosts\fR
+tasks:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+do:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+configure template & module variables for future template calls
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+setup http_port=80 max_clients=200
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+do:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+write the apache config file
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+template src=/srv/mytemplates/httpd\&.j2 dest=/etc/httpd/conf notify:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+restart apache
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+do
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ensure apache is running
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+service name=httpd ensure=started handlers:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+do:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+restart apache
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+service name=httpd ensure=restarted
+.RE
+.SH "WHAT THE EXAMPLE MEANS"
+.sp
+Here\(cqs what the above example will do\&.
+.sp
+For all hosts in /etc/ansible/hosts (one host per line) that are named \fIwebserver\-anything\fR, first write a JSON file into /etc/ansible/setup on each remote system with the values max_clients and http_port\&.
+.sp
+Next, use a Jinja2 template locally residing at /srv/mytemplates/httpd\&.j2 to write the Apache config file on each host to the path /etc/httpd/conf, using the previous values\&.
+.sp
+Ensure that apache is running if stopped\&.
+.sp
+If and only if the config file changed, note that we need to restart apache at the end of the run, otherwise, don\(cqt bother because we already know it is running\&.
+.SH "HIGH LEVEL EXPLANATION"
+.sp
+Playbooks are executed top down and can contain multiple references to patterns\&. For instance, a playbook could do something to all webservers, then do something to all database servers, then do something different to all webservers again\&.
+.sp
+For each pattern, the tasks in the \fItasks\fR list are executed in order for all hosts in the host file matching the pattern\&.
+.sp
+For each task, a "do" statement describes what the task is and what ansible module to use to accomplish the task, along with any arguments\&. The first line in the "do" is the name of the task \(em this will appear in any log output\&.
+.sp
+The second line in each "do" is the module name followed by module arguments\&.
+.sp
+Most modules accept key=value format arguments\&.
+.sp
+Handlers are like tasks, but are conditionally executed\&. If a module reports a \fIchange\fR, it can choose to notify a handler by name\&. If notified, it will run only for hosts that changed\&.
+.SH "FUTURE BEHAVIOR"
+.sp
+What the playbook run does with a host when an error is detected is currently being refined and is subject to change\&.
+.SH "SEE ALSO"
+.sp
+ansible(1)
+.sp
+ansible\-playbook(1) \- pending
+.sp
+Ansible home page: https://github\&.com/mpdehaan/ansible/
