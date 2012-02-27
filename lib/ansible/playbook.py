@@ -113,9 +113,11 @@ class PlayBook(object):
 
         # load the module name and parameters from the task
         # entry
-        instructions = task['do']
-        (comment, module_details) = instructions
-        tokens = shlex.split(module_details)
+        name    = task['name']
+        action  = task['action']
+        comment = task.get('comment', '')
+
+        tokens = shlex.split(action)
         module_name = tokens[0]
         module_args = tokens[1:]
 
@@ -126,9 +128,9 @@ class PlayBook(object):
 
         if self.verbose:
             if not conditional:
-                print "\nTASK [%s]" % (comment)
+                print "\nTASK [%s]" % (name)
             else:
-                print "\nNOTIFIED [%s]" % (comment)
+                print "\nNOTIFIED [%s]" % (name)
 
         # load up an appropriate ansible runner to
         # run the task in parallel
