@@ -202,8 +202,8 @@ for a complete list of contributors.
 SEE ALSO
 --------
 
-ansible(1)
+*ansible*(1)
 
-ansible-playbook(5) - pending
+*ansible-playbook*(5) - pending
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>

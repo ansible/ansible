@@ -106,8 +106,6 @@ Ansible is released under the terms of the MIT license.
 SEE ALSO
 --------
 
-ansible-modules (5)
-
-ansible-playbook (5)
+*ansible-modules*(5), *ansible-playbook*(5)
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>
