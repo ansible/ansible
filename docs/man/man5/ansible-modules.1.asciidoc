@@ -66,12 +66,22 @@ facter
 ------
 
 Runs the discovery program 'facter' on the remote system, returning
-JSON data that can be useful for inventory purposes.  It makes
-no changes on the remote system.
+JSON data that can be useful for inventory purposes.
 
 Requires that 'facter' and 'ruby-json' be installed on the remote end.
 
-This module takes no parameters & does not support change hooks.
+This module is information only - it takes no parameters & does not support change hooks,
+nor does it make any changes on the system.
+
+
+file
+----
+
+Ensures the ownership and permissions of files are as desired.
+
+Use copy or template first if you need to make sure a file is on the box.
+
+In plan.
 
 
 git
@@ -85,21 +95,25 @@ This module is in plan.
 ohai
 ----
 
-Similar to the facter module, this returns JSON inventory data but
-makes no changes on the remote system.
+Similar to the facter module, this returns JSON inventory data.  Ohai data
+is a bit more verbose and nested than facter.
 
 Requires that 'ohai' be installed on the remote end.
 
-This module takes no parameters & does not support change hooks.
+This module is information only - it takes no parameters & does not support change hooks,
+nor does it make any changes on the system.
 
 
 ping
 ----
 
 A trivial test module, this module always returns the integer '1' on
-successful contact.  It makes no changes on the remote system.
+successful contact.
 
 This module does not support change hooks.
+
+This module is information only - it takes no parameters & does not support change hooks,
+nor does it make any changes on the system.
 
 
 service
