@@ -29,26 +29,24 @@ be supported in the future.
 EXAMPLE
 -------
 
+FIXME: verify this is correct below
+
 [literal]
 ---
 - pattern: '*'
   hosts: '/etc/ansible/hosts'
   tasks:
-  - do:
-    - configure template & module variables for future template calls
-    - setup http_port=80 max_clients=200
-  - do:
-    - write the apache config file
-    - template src=/srv/mytemplates/httpd.j2 dest=/etc/httpd/conf
+  - name:configure template & module variables for future template calls
+    action: setup http_port=80 max_clients=200
+  - name: write the apache config file
+    action: template src=/srv/mytemplates/httpd.j2 dest=/etc/httpd/conf
     notify:
     - restart apache
-  - do
-    - ensure apache is running
-    - service name=httpd ensure=started
+  - name: ensure apache is running
+    action: service name=httpd ensure=started
   handlers:
-    - do:
-      - restart apache
-      - service name=httpd ensure=restarted
+    - name: restart apache
+    - action: service name=httpd ensure=restarted
 
 
 WHAT THE EXAMPLE MEANS
@@ -82,13 +80,10 @@ something different to all webservers again.
 For each pattern, the tasks in the 'tasks' list are executed in order
 for all hosts in the host file matching the pattern.
 
-For each task, a "do" statement describes what the task is and what
+For each task, a name/action pair describes what the task is and what
 ansible module to use to accomplish the task, along with any
-arguments.  The first line in the "do" is the name of the task -- this
-will appear in any log output.
-
-The second line in each "do" is the module name followed by module
-arguments.
+arguments.   Additional fields like 'comment:' can be added and will
+be ignored.
 
 Most modules accept key=value format arguments.
 

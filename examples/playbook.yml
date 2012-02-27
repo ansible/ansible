@@ -17,4 +17,4 @@
     action: command /bin/false
   handlers:
     - name: restart apache
-      action: service name=httpd ensure=restarted
+      action: service name=httpd state=restarted

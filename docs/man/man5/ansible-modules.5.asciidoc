@@ -121,7 +121,7 @@ service
 
 Controls services on remote machines.
 
-*ensure=*::
+*state=*::
 
 Values are 'started', 'stopped', or 'restarted'.   Started/stopped
 are idempotent actions that will not run commands unless neccessary.

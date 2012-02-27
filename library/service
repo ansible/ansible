@@ -10,7 +10,7 @@ import shlex
 import subprocess
 
 # ===========================================
-# convert arguments of form ensure=running name=foo
+# convert arguments of form a=b c=d
 # to a dictionary
 # FIXME: make more idiomatic
 
@@ -22,7 +22,7 @@ for x in items:
     params[k] = v
 
 name = params['name']
-ensure = params.get('ensure','running')
+state = params.get('state','running')
 
 # ===========================================
 # get service status
@@ -43,11 +43,11 @@ elif name == 'iptables' and status.find("ACCEPT") != -1:
     running = True
 
 changed = False
-if not running and ensure == "started":
+if not running and state == "started":
     changed = True
-elif running and ensure == "stopped":
+elif running and state == "stopped":
     changed = True
-elif ensure == "restarted":
+elif state == "restarted":
     changed = True
 
 # ===========================================
@@ -61,11 +61,11 @@ def _run(cmd):
 
 rc = 0
 if changed:
-    if ensure == 'started':
+    if state == 'started':
         rc = _run("/sbin/service %s start" %  name)
-    elif ensure == 'stopped':
+    elif state == 'stopped':
         rc = _run("/sbin/service %s stop" % name)
-    elif ensure == 'restarted':
+    elif state == 'restarted':
         rc1 = _run("/sbin/service %s stop" % name)
         rc2 = _run("/sbin/service %s start" % name)
         rc  = rc1 and rc2

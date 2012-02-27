@@ -10,7 +10,7 @@ except ImportError:
     import simplejson as json
 
 # ===========================================
-# convert arguments of form ensure=running name=foo
+# convert arguments of form a=b c=d
 # to a dictionary
 # FIXME: make more idiomatic
 

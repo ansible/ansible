@@ -149,16 +149,16 @@ up around the library scripts, and you can easily write your own.
 
 Current modules include:
 
-   * command -- runs commands, giving output, return codes, and run time info
+   * command - runs commands, giving output, return codes, and run time info
    * ping - just returns if the system is up or not
    * facter - retrieves facts about the host OS
    * ohai - similar to facter, but returns structured data
    * copy - add files to remote systems
    * setup - pushes key/value data onto the system for use in templating
    * template - takes a local template file and saves a templated version remotely
+   * git - deploy simple apps directly from source control
 
-Service, package, and user modules, supporting puppet-like ensure semantics
-are coming soon.
+More coming soon!  Contributions welcome!
 
 Playbooks
 =========
