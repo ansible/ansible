@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-modules
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
 .\"      Date: 02/26/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible-modules 0.0.1
 .\"  Language: English
 .\"
 .TH "ANSIBLE\-MODULES" "5" "02/26/2012" "Ansible\-modules 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -29,10 +38,11 @@ Most modules other than command are idempotent, meaning they will seek to avoid 
 .SH "COMMAND"
 .sp
 The command module takes the command name followed by a list of arguments, space delimited\&. This is the only module that does not use key=value style parameters\&.
-.sp
-Example usage:
-.sp
-"/sbin/shutdown \-t now"
+.PP
+Example usage
+.RS 4
+/sbin/shutdown \-t now
+.RE
 .sp
 This module does not support change hooks\&.
 .sp
@@ -60,7 +70,7 @@ Runs the discovery program \fIfacter\fR on the remote system, returning JSON dat
 .sp
 Requires that \fIfacter\fR and \fIruby\-json\fR be installed on the remote end\&.
 .sp
-This module is information only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
+This module is informative only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
 .SH "FILE"
 .sp
 Ensures the ownership and permissions of files are as desired\&.
@@ -86,7 +96,7 @@ A trivial test module, this module always returns the integer \fI1\fR on success
 .sp
 This module does not support change hooks\&.
 .sp
-This module is information only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
+This module is informative only \- it takes no parameters & does not support change hooks, nor does it make any changes on the system\&.
 .SH "SERVICE"
 .sp
 Controls services on remote machines\&.
@@ -148,8 +158,8 @@ To write your own modules, simply follow the convention of those already availab
 Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
 .SH "SEE ALSO"
 .sp
-ansible(1)
+\fBansible\fR(1)
 .sp
-ansible\-playbook(1) \- pending
+\fBansible\-playbook\fR(5) \- pending
 .sp
 Ansible home page: https://github\&.com/mpdehaan/ansible/
