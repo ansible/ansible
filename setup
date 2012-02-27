@@ -16,7 +16,7 @@ except ImportError:
 input_data = sys.argv[1:]
 new_options = dict([ x.split('=') for x in input_data ])
 ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
-ansible_dir = os.path.dirname(metadata)
+ansible_dir = os.path.dirname(ansible_file)
 
 # create the config dir if it doesn't exist
 
@@ -24,6 +24,7 @@ if not os.path.exists(ansible_dir):
     os.makedirs(ansible_dir)
 
 changed = False
+md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:

@@ -2,6 +2,7 @@
 
 import sys
 import os
+import shlex
 
 try:
     import json
