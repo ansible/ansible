@@ -1,3 +1,4 @@
+# control side (aka 'overlord')
 DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
 DEFAULT_MODULE_PATH    = '/usr/share/ansible'
 DEFAULT_MODULE_NAME    = 'ping'

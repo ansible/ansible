@@ -2,21 +2,27 @@
   hosts: '/etc/ansible/hosts'
   tasks:
   - do:
-    - configure template & module variables
+    - configure template & module variables for future template calls
     - setup a=2 b=3 c=4
   - do:
-    - copy a file
-    - copy /srv/a /srv/b
+    - copy a file from the local disk to the remote
+    - copy src=/srv/a dest=/srv/b
     notify: 
     - restart apache
   - do:
     - template from local file template.j2 to remote location /srv/file.out
-    - template /srv/template.j2 /srv/file.out
+    - template src=/srv/template.j2 dest=/srv/file.out
     notify:
     - restart apache
     - quack like a duck
   - do:
-    - something that will fail
+    - if running as non-root whne you template, you should specify the MD file (1)
+    - setup a=3 b=4 c=5 metadata=/tmp/metadata.json 
+  - do:
+    - if running as non-root when you template, you should specify the MD file (2)
+    - template src=/srv/template.j2 dest=/srv/file2.out metadata=/tmp/metadata.json
+  - do:
+    - call something that will fail just to demo failure counts and such
     - command /bin/false
   handlers:
     - do:

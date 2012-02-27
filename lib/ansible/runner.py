@@ -139,12 +139,21 @@ class Runner(object):
         result = self._execute_module(conn, module)
         return self._return_from_module(conn, host, result)
 
+    def _parse_kv(self, args):
+        options = {}
+        for x in args:
+            if x.find("=") != -1:
+               k, v = x.split("=")
+               options[k]=v
+        return options
+
     def _execute_copy(self, conn, host):
         ''' handler for file transfer operations '''
 
         # transfer the file to a remote tmp location
-        source = self.module_args[0]
-        dest   = self.module_args[1]
+        options = self._parse_kv(self.module_args)
+        source = options['src']
+        dest   = options['dest']
         tmp_dest = self._get_tmp_path(conn, dest.split("/")[-1])
         self._transfer_file(conn, source, tmp_dest)
 
@@ -161,9 +170,10 @@ class Runner(object):
     def _execute_template(self, conn, host):
         ''' handler for template operations '''
 
-        source   = self.module_args[0]
-        dest     = self.module_args[1]
-        metadata = '/etc/ansible/setup'
+        options  = self._parse_kv(self.module_args)
+        source   = options['src']
+        dest     = options['dest']
+        metadata = options.get('metadata', '/etc/ansible/setup')
 
         # first copy the source template over
         tempname = os.path.split(source)[-1]

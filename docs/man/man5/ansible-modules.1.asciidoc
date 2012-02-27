@@ -40,8 +40,9 @@ This module does not support change hooks.
 
 Returns the return code from the program as well as timing information.
 
-Async command running and command execution time limits are in plan.
-
+Async command running and command execution time limits are in plan.  These will probably
+be special keyvalue parameters expressed on the end of the command line, like ANSTIMEOUT=1
+and ANS_ASYNC=1 or similar.
 
 copy
 ----
@@ -128,10 +129,8 @@ first step in your playbook.
 *metadata=*::
 
 Optionally overrides the default JSON file location of /etc/ansible/setup.
-If used, also supply the metadata parameter to 'template'.
-
-
-Does not support change hooks yet, but in plan.
+If used, also supply the metadata parameter to 'template'.  Change if
+running as a non-root remote user who does not have permissions on /etc/ansible.
 
 
 template
@@ -152,7 +151,8 @@ location to render the template on the remote server
 *metadata*::
 
 location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
-which can be easily created using the 'setup' module.
+which is the same as the default for the setup module.   Change if running as a non-root
+remote user who does not have permissions on /etc/ansible.
 
 
 This module also returns md5sum information about the resultant file.
