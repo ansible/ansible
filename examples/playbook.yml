@@ -1,3 +1,4 @@
+---
 - pattern: '*'
   hosts: /etc/ansible/hosts
   tasks:

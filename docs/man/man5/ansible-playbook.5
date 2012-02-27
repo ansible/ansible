@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-modules
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
 .\"      Date: 02/26/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible-playbook 0.0.1
 .\"  Language: English
 .\"
 .TH "ANSIBLE\-MODULES" "5" "02/26/2012" "Ansible\-playbook 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -28,163 +37,33 @@ Ansible ships with a ansible\-playbook tool for running playbooks\&. Playbooks c
 Playbooks are currently writeable in YAML\&. Other formats (JSON?) may be supported in the future\&.
 .SH "EXAMPLE"
 .sp
+.if n \{\
 .RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
 .\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-pattern:
-\fI*\fR
-hosts:
-\fI/etc/ansible/hosts\fR
-tasks:
+.nf
+\-\-\-
+\- pattern: \*(Aq*\*(Aq
+  hosts: \*(Aq/etc/ansible/hosts\*(Aq
+  tasks:
+  \- do:
+    \- configure template & module variables for future template calls
+    \- setup http_port=80 max_clients=200
+  \- do:
+    \- write the apache config file
+    \- template src=/srv/mytemplates/httpd\&.j2 dest=/etc/httpd/conf
+    notify:
+    \- restart apache
+  \- do
+    \- ensure apache is running
+    \- service name=httpd ensure=started
+  handlers:
+    \- do:
+      \- restart apache
+      \- service name=httpd ensure=restarted
+.fi
+.if n \{\
 .RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
 .\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-do:
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-configure template & module variables for future template calls
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-setup http_port=80 max_clients=200
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-do:
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-write the apache config file
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-template src=/srv/mytemplates/httpd\&.j2 dest=/etc/httpd/conf notify:
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-restart apache
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-do
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-ensure apache is running
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-service name=httpd ensure=started handlers:
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-do:
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-restart apache
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-service name=httpd ensure=restarted
-.RE
 .SH "WHAT THE EXAMPLE MEANS"
 .sp
 Here\(cqs what the above example will do\&.
@@ -212,10 +91,13 @@ Handlers are like tasks, but are conditionally executed\&. If a module reports a
 .SH "FUTURE BEHAVIOR"
 .sp
 What the playbook run does with a host when an error is detected is currently being refined and is subject to change\&.
+.SH "AUTHOR"
+.sp
+Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
 .SH "SEE ALSO"
 .sp
-ansible(1)
+\fBansible\fR(1)
 .sp
-ansible\-playbook(1) \- pending
+\fBansible\-playbook\fR(5) \- pending
 .sp
 Ansible home page: https://github\&.com/mpdehaan/ansible/
