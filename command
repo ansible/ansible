@@ -17,6 +17,12 @@ try:
     cmd = subprocess.Popen(args, shell=False, 
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = cmd.communicate()
+except (OSError, IOError), e:
+    print json.dumps({
+        "failed": 1,
+        "error": str(e),
+        })
+    sys.exit(1)
 except:
     print json.dumps({
         "failed" : 1,
