@@ -88,7 +88,8 @@ class PlayBook(object):
             } 
         return results
 
-    def _run_task(self, pattern=None, task=None, host_list=None, handlers=None, conditional=False):
+    def _run_task(self, pattern=None, task=None, host_list=None, 
+        remote_user=None, handlers=None, conditional=False):
         ''' 
         run a single task in the playbook and
         recursively run any subtasks.
@@ -115,10 +116,10 @@ class PlayBook(object):
             module_args=module_args,
             host_list=host_list,
             forks=self.forks,
-            remote_user=self.remote_user, # FIXME: read from playbook
             remote_pass=self.remote_pass,
             module_path=self.module_path,
-            timeout=self.timeout
+            timeout=self.timeout,
+            remote_user=remote_user
         )
         results = runner.run()
  
@@ -198,6 +199,7 @@ class PlayBook(object):
         pattern  = pg['pattern']
         tasks    = pg['tasks']
         handlers = pg['handlers']
+        user     = pg.get('user', C.DEFAULT_REMOTE_USER)
 
         self.host_list = pg.get('hosts', '/etc/ansible/hosts')
 
@@ -205,7 +207,11 @@ class PlayBook(object):
             print "PLAY: [%s] from [%s] ********** " % (pattern, self.host_list)
 
         for task in tasks:
-            self._run_task(pattern=pattern, task=task, handlers=handlers)
+            self._run_task(
+                pattern=pattern, 
+                task=task, 
+                handlers=handlers,
+                remote_user=user)
         for task in handlers:
             if type(task.get("run", None)) == list:
                 self._run_task(
@@ -213,7 +219,8 @@ class PlayBook(object):
                    task=task, 
                    handlers=handlers,
                    host_list=task.get('run',[]),
-                   conditional=True
+                   conditional=True,
+                   remote_user=user
                 )
 
  
