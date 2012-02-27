@@ -22,6 +22,9 @@ setup(name='ansible',
          ]),
          ('man/man1', [
                 'docs/man/man1/ansible.1'
+         ]),
+         ('man/man5', [
+                'docs/man/man5/ansible-modules.5'
          ])
       ],
       scripts=[
