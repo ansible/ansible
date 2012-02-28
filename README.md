@@ -24,28 +24,28 @@ and the source will be blindingly obvious.
 Design Principles
 =================
 
-    * Dead simple setup
-    * Super fast & parallel by default
-    * No server or client daemons; use existing SSHd
-    * No additional software required on client boxes
-    * Modules can be written in ANY language
-    * Awesome API for creating very powerful distributed scripts
-    * Be usable as non-root
-    * Create the easiest config management system to use, ever.
+   * Dead simple setup
+   * Super fast & parallel by default
+   * No server or client daemons; use existing SSHd
+   * No additional software required on client boxes
+   * Modules can be written in ANY language
+   * Awesome API for creating very powerful distributed scripts
+   * Be usable as non-root
+   * Create the easiest config management system to use, ever.
 
 Requirements
 ============
 
 For the server the tool is running from, *only*:
 
-    * paramiko
-    * python 2.6 (or the 2.4/2.5 backport of the multiprocessing module)
-    * PyYAML (only if using playbooks)
+   * paramiko
+   * python 2.6 (or the 2.4/2.5 backport of the multiprocessing module)
+   * PyYAML (only if using playbooks)
 
 Optional -- If you want to push templates, the nodes need a template library,
 which for bonus points you can install with ansible!  Easy enough.
 
-    * python-jinja2 
+   * python-jinja2 
 
 Inventory file
 ==============
