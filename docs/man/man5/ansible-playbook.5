@@ -28,29 +28,7 @@ Ansible ships with a ansible\-playbook tool for running playbooks\&. Playbooks c
 Playbooks are currently writeable in YAML\&. Other formats (JSON?) may be supported in the future\&.
 .SH "EXAMPLE"
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
-\-\-\-
-\- pattern: \'*\'
-  hosts: \'/etc/ansible/hosts\'
-  tasks:
-  \- name: configure template & module variables for future template calls
-    action: setup http_port=80 max_clients=200
-  \- name: write the apache config file
-    action: template src=/srv/templates/httpd\&.j2 dest=/etc/httpd/conf
-    notify:
-    \- restart apache
-  \- name: ensure apache is running
-    action: service name=httpd state=started
-  handlers:
-    \- name: restart apache
-    \- action: service name=httpd state=restarted
-.fi
-.if n \{\
-.RE
-.\}
+see https://github\&.com/mpdehaan/ansible/blob/master/examples/playbook\&.yml
 .SH "WHAT THE EXAMPLE MEANS"
 .sp
 Here\(cqs what the above example will do\&.
