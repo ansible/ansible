@@ -29,8 +29,10 @@ be supported in the future.
 EXAMPLE
 -------
 
-[source,yaml]
-----
+Remove the '# before pasting in the file, it's not part of the format and is only here to
+make github render properly
+
+[source]
 - pattern: '*'
   hosts: '/etc/ansible/hosts'
   tasks:
@@ -45,7 +47,6 @@ EXAMPLE
   handlers:
     - name: restart apache
     - action: service name=httpd state=restarted
-----
 
 
 WHAT THE EXAMPLE MEANS
