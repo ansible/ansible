@@ -5,6 +5,7 @@ DEFAULT_ANSIBLE_SETUP     = "/etc/ansible/setup"
 import sys
 import os
 import shlex
+import subprocess
 
 try:
     import json
@@ -30,11 +31,27 @@ if not os.path.exists(ansible_file):
 else:
     md5sum = os.popen("md5sum %s" % ansible_file).read()
 
+# if facter is installed, and we can use --json because
+# ruby-json is ALSO installed, include facter data in the JSON
+
+if os.path.exists("/usr/bin/facter"):
+   cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
+       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   out, err = cmd.communicate()
+   facter = True
+   try:
+       facter_ds = json.loads(out)
+   except:
+       facter = False
+   if facter:
+       for (k,v) in facter_ds.items():
+           new_options["facter_%s" % k] = v
+
 # write the template/settings file using
 # instructions from server
 
 f = open(ansible_file, "w+")
-reformat = json.dumps(new_options)
+reformat = json.dumps(new_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
