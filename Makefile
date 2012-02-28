@@ -5,6 +5,8 @@ ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
 MANPAGES := docs/man/man1/ansible.1 docs/man/man5/ansible-modules.5 docs/man/man5/ansible-playbook.5
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
+all: clean python
+
 docs: manuals
 
 manuals: $(MANPAGES)
@@ -28,5 +30,13 @@ clean:
 	find ./docs/ -type f -name "*.xml" -delete
 	find . -type f -name "#*" -delete
 
+python: docs
+	python setup.py build
+
+install: docs
+	python setup.py install
+
 .PHONEY: docs manual clean pep8
 vpath %.asciidoc docs/man/man1
+
+
