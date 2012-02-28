@@ -67,9 +67,9 @@ Massive Parallelism, Pattern Matching, and a Usage Example
 
 Reboot all web servers in Atlanta, 10 at a time:
  
-   * ssh-agent bash
-   * ssh-add ~/.ssh/id_rsa.pub
-   * ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
+    ssh-agent bash
+    ssh-add ~/.ssh/id_rsa.pub
+    ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
 
 Other than the comamnd module, though, ansible modules are not scripts.  They make
 the remote system look like you state, and run the commands neccessary to get it 
@@ -80,7 +80,7 @@ File Transfer
 
 Ansible can SCP lots of files to lots of places in parallel.
 
-   * ansible -p "web-*.acme.net" -f 10 -n copy -a "/etc/hosts /tmp/hosts"
+    ansible -p "web-*.acme.net" -f 10 -n copy -a "/etc/hosts /tmp/hosts"
 
 Templating
 ==========
@@ -88,9 +88,9 @@ Templating
 JSON files can be placed for template metadata using Jinja2.  Variables
 placed by 'setup' can be reused between ansible runs.
 
-   * ansible -p "*" -n setup -a "favcolor=red ntp_server=192.168.1.1"
-   * ansible -p "*" -n template /srv/motd.j2 /etc/motd 
-   * ansible -p "*" -n template /srv/ntp.j2 /etc/ntp.conf
+    ansible -p "*" -n setup -a "favcolor=red ntp_server=192.168.1.1"
+    ansible -p "*" -n template /srv/motd.j2 /etc/motd 
+    ansible -p "*" -n template /srv/ntp.j2 /etc/ntp.conf
 
 Very soon, templates will be able to also include facter and ohai
 variables.
@@ -100,7 +100,7 @@ Git Deployments
 
 Deploy your webapp straight from git
 
-  * ansible -p "web*" -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
+    ansible -p "web*" -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
 
 Take Inventory
 ==============
@@ -108,8 +108,8 @@ Take Inventory
 Run popular open-source data discovery tools across a wide number of hosts.
 This is best used from API scripts that want to learn about remote systems.
 
-  * ansible -p "dbserver*" -n facter
-  * ansible -p "dbserver"" -n ohai
+    ansible -p "dbserver*" -n facter
+    ansible -p "dbserver"" -n ohai
 
 Other Modules
 =============
@@ -136,18 +136,19 @@ To run a playbook:
 Future plans
 ============
 
-   * see github's issue tracker for what we're thinking about
+See github's issue tracker for what we're thinking about
 
 License
 =======
 
-   * MIT
+MIT
 
 Mailing List
 ============
 
-   * Join the mailing list to talk about Ansible!
-   * [ansible-project](http://groups.google.com/group/ansible-project)
+Join the mailing list to talk about Ansible!
+
+[ansible-project](http://groups.google.com/group/ansible-project)
 
 Author
 ======
