@@ -22,30 +22,32 @@
 ansible \- run a command somewhere else
 .SH "SYNOPSIS"
 .sp
-ansible [\-H hosts_path] [\-L library_path] [\-f forks] [\-n module_name] [\-a [args1 [args2 \&...]]] [\-p host_pattern] [\-u remote_user]
+ansible [\-f forks] [\-p pattern ] [\-u remote_user] [\-n module_name] [\-a [args1 [args2 \&...]]]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple Python API for doing \'remote things\' over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .SH "OPTIONS"
 .PP
-\fB\-P\fR, \fB\-\-askpass\fR
+\fB\-k\fR, \fB\-\-ask\-pass\fR
 .RS 4
-Ask the user to input the ssh password for connecting\&.
+Ask the user to input the ssh password for connecting\&. Generally using ssh\-agent instead is preferred\&.
 .RE
 .PP
-\fB\-H\fR, \fB\-\-host\-list\fR
+\fB\-l\fR, \fB\-\-host\-list\fR
 .RS 4
-Path to hosts list\&.
+Path to hosts list, which defaults to /etc/ansible/hosts\&. Users can use multiple files to emulate groups of systems\&.
 .RE
 .PP
-\fB\-L\fR, \fB\-\-library\fR
+\fB\-m\fR, \fB\-\-module\-path\fR
 .RS 4
-Path to module library\&.
+Override the path to module library, which defaults to /usr/share/ansible\&. The module library contains runnable modules that do
+\fIthings\fR
+to remote hosts\&. See ansible\-modules(5) for a list of those that bundled with Ansible\&.
 .RE
 .PP
 \fB\-f\fR, \fB\-\-forks\fR
 .RS 4
-Level of parallelism\&. Specify as an integer\&.
+Level of parallelism\&. Specify as an integer, the default is 3\&. If set to "1" debugging for certain classes of internal errors may become easier\&.
 .RE
 .PP
 \fB\-n\fR, \fB\-\-name\fR
@@ -55,21 +57,12 @@ Module name to execute\&.
 .PP
 \fB\-a\fR, \fB\-\-args\fR
 .RS 4
-Arguments to module\&.
+Arguments to module, as a single string\&. Be sure to observe proper shell quoting rules\&. How these are handled are up to the module, but most modules take "key=value" pairs delimited by spaces\&.
 .RE
 .PP
 \fB\-p\fR, \fB\-\-pattern\fR
 .RS 4
-Hostname pattern\&. Accepts shell\-like globs\&.
-.RE
-.PP
-\fB\-r\fR, \fB\-\-run\-playbook\fR
-.RS 4
-Playbook file to run\&. Replaces the
-\fB\-n\fR
-and
-\fB\-a\fR
-options\&.
+Hostname pattern\&. Accepts shell\-like globs which can be seperated with ";" The default is "*" which matches all hosts in the ansible hosts file\&.
 .RE
 .PP
 \fB\-u\fR, \fB\-\-remote\-user\fR
@@ -96,6 +89,8 @@ Copyright \(co 2012, Michael DeHaan
 Ansible is released under the terms of the GPLv3 License\&.
 .SH "SEE ALSO"
 .sp
-\fBansible\-modules\fR(5), \fBansible\-playbook\fR(5)
+\fBansible\-modules\fR(5),
+.sp
+\fBansible\-playbook\fR(5),
 .sp
 Ansible home page: https://github\&.com/mpdehaan/ansible/
