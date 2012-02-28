@@ -126,10 +126,32 @@ Playbooks
 
 Playbooks are particularly awesome.  Playbooks can batch ansible commands
 together, and can even fire off triggers when certain commands report changes.
-They are the basis for a really simple configuration management system, unlike
-any that already exist.  Powerful, concise, but dead simple.
 
-See examples/playbook.yml for what the syntax looks like, and the manpage -- [ansible-playbook(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc) for more details.
+They are the basis for a really simple configuration management system, unlike
+any that already exist, and one that is very well suited to deploying complex
+multi-machine applications.  
+
+An example showing just once pattern in a playbook is below.  Playbooks can contain
+multple patterns in a single file.
+
+    ---
+    - pattern: 'webservers*'
+      comment: webserver setup steps
+      hosts: '/etc/ansible/hosts'
+      tasks:
+      - name: configure template & module variables for future template calls
+        action: setup http_port=80 max_clients=200
+      - name: write the apache config file
+        action: template src=/srv/templates/httpd.j2 dest=/etc/httpd/conf
+        notify:
+        - restart apache
+      - name: ensure apache is running
+        action: service name=httpd state=started
+      handlers:
+        - name: restart apache
+        - action: service name=httpd state=restarted
+
+See the playbook format manpage -- [ansible-playbook(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc) for more details.
 
 To run a playbook:
 
