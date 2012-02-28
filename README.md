@@ -88,9 +88,9 @@ Templating
 JSON files can be placed for template metadata using Jinja2.  Variables
 placed by 'setup' can be reused between ansible runs.
 
-   * ansible -p "*" -n setup -a "ntp_server=192.168.1.1"
+   * ansible -p "*" -n setup -a "favcolor=red ntp_server=192.168.1.1"
    * ansible -p "*" -n template /srv/motd.j2 /etc/motd 
-   * ansible -p "*" -n template /srv/foo.j2 /etc/foo
+   * ansible -p "*" -n template /srv/ntp.j2 /etc/ntp.conf
 
 Very soon, templates will be able to also include facter and ohai
 variables.
