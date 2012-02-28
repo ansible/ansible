@@ -67,8 +67,6 @@ def main(args):
 
     mycmd = ' '.join(args)
    
-    print "FORKS=%s" % options.forks
- 
     runner = ansible.runner.Runner(
                 module_name='command',
                 module_path=options.module_path,

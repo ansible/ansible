@@ -18,7 +18,11 @@ setup(name='ansible',
              'library/ping',
              'library/command',
              'library/facter',
+             'library/ohai',
              'library/copy',
+             'library/setup',
+             'library/template',
+             'library/git',
          ]),
          ('man/man1', [
                 'docs/man/man1/ansible.1'
