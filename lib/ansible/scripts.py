@@ -20,15 +20,15 @@ import constants as C
 
 def base_ans_parser():
     parser = OptionParser()
-    parser.add_option("-H", "--host-list", dest="host_list",
+    parser.add_option("-l", "--host-list", dest="host_list",
         help="path to hosts list", default=C.DEFAULT_HOST_LIST)
-    parser.add_option("-L", "--library", dest="module_path",
+    parser.add_option("-m", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
     parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, 
         dest='remote_user', help='set the default username')
     parser.add_option("-p", "--pattern", dest="pattern",
         help="hostname pattern", default=C.DEFAULT_PATTERN)
-    parser.add_option("-P", "--askpass", default=False, action="store_true",
+    parser.add_option("-k", "--askpass", default=False, action="store_true",
         help="ask the user to input the ssh password for connecting")
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')

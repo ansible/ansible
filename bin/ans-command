@@ -37,10 +37,10 @@ def main(args):
     parser = base_ans_parser()
     parser.usage = "ans-command [options] command-to-run"
 
-    parser.add_option('-1', '--one-line', dest='one_line', action='store_true', 
+    parser.add_option('-o', '--one-line', dest='one_line', action='store_true', 
         help="output results on one line to make grepping easier, however will \
             not remove newlines from command output")
-    parser.add_option('-o', '--output-dir', dest='output_dest', default=None,
+    parser.add_option('-t', '--tree', dest='output_dest', default=None,
         help="if specified, a directory name to save output to, one file per host")
 
     options, args = parser.parse_args(args)
