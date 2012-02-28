@@ -94,16 +94,6 @@ def main(args):
             error_print(msg)
             continue
 
-        if options.output_dest:
-            fo = open(options.output_dest + '/' + hn +'.output', 'w')
-            fo.write(mycmd + '\n')
-            fo.write('%s:\n' % hn)
-            if options.return_codes:
-                fo.write('return code: %s\n' % d['rc'])
-            fo.write('%s\nErrors:\n%s\n' % (d['stdout'], d['stderr']))
-            fo.close()
-            continue
-
         if options.one_line:
             if options.return_codes:
                 print '%s:%s:%s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
@@ -122,10 +112,6 @@ def main(args):
         for hn in sorted(results['dark']):
             error_print(hn)
         print ''
-
-
-    if options.output_dest:
-        print "output written to %s" % options.output_dest
 
     
 if __name__ == "__main__":
