@@ -80,30 +80,44 @@ def main(args):
 
     results = runner.run()
 
-    for hn in sorted(results['contacted']):
-        d = results['contacted'][hn]
-        if d.get('rc', 0) != 0 or d.get('failed', 0):
-            msg = 'Error: %s: ' % hn
+    for hostname in sorted(results['contacted']):
+
+        result    = results['contacted'][hostname]
+        rc        = result.get('rc',0)
+        failed    = result.get('failed', 0)
+        stdout    = result.get('stdout', '')
+        stderr    = result.get('stderr', '')
+        traceback = result.get('traceback', '')
+        error     = result.get('error', '')
+
+        if rc != 0 or failed:
+            msg = 'Error: %s: ' % hostname
             # too bad stdout/stderr is not interleaved :(
-            msg += d.get('stdout', '')
-            msg += d.get('stderr', '')
-            msg += d.get('traceback', '')
-            msg += d.get('error', '')
+            msg += stdout
+            msg += stderr
+            msg += traceback
+            msg += error
             error_print(msg)
             continue
 
         if options.one_line:
-            print '%s | rc=%s | %s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
+            msg = "(stdout) %s" % stdout
+            if stderr.rstrip() != '':
+                msg = "(stdout) %s (stderr) %s" % (stdout,stderr)
+            print "%s | rc=%s | %s" % (
+                hostname, rc, msg
+            )
         else:
-            print "%s: => rc=%s" % (hn, d['rc'])
-            print '%s' % d['stdout']
-            if d.get('stderr', None):
-                print '%s' % d['stderr']
+            print "%s | rc=%s >>" % (hostname, rc)
+            print stdout
+            if stderr:
+                print stderr
 
     if results['dark']:
         error_print('Hosts which could not be contacted or did not respond:')
-        for hn in sorted(results['dark']):
-            error_print(hn)
+        failed_hosts = results['dark'].keys()
+        for hostname in keys:
+            error_print("%s:%s" % (hostname, results['dark'][hostname]))
         print ''
 
     
