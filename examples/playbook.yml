@@ -15,6 +15,9 @@
   - name: execute bin false
     comment: call something that will fail just to demo failure counts and such
     action: command /bin/false
+  - name: execute bin true
+    comment: this will never be executed because previous will fail
+    action: command /bin/true
   handlers:
     - name: restart apache
       action: service name=httpd state=restarted

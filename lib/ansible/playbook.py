@@ -110,6 +110,14 @@ class PlayBook(object):
             # actions where not all hosts have changed
             # though top-level tasks will pass in "None" here
             host_list = self.host_list
+        host_list = ansible.runner.Runner.parse_hosts(host_list)
+
+        # do not continue to run tasks on hosts that have had failures
+        new_hosts = []
+        for x in host_list:
+            if not self.failures.has_key(x):
+                new_hosts.append(x)
+        host_list = new_hosts
 
         # load the module name and parameters from the task
         # entry
