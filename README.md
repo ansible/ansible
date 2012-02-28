@@ -75,7 +75,7 @@ Other than the comamnd module, though, ansible modules are not scripts.  They ma
 the remote system look like you state, and run the commands neccessary to get it 
 there.
 
-(Read the manpage)[https://github.com/mpdehaan/ansible/blob/master/docs/man/man1/ansible.1.asciidoc]
+[Read the manpage](https://github.com/mpdehaan/ansible/blob/master/docs/man/man1/ansible.1.asciidoc)
 
 File Transfer
 =============
@@ -118,7 +118,7 @@ Other Modules
 =============
 
 See the library directory for lots of extras.  There's also a manpage,
-(ansible-modules(5))[https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-modules.5.asciidoc] that covers all the options they take.  You can
+[ansible-modules(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-modules.5.asciidoc) that covers all the options they take.  You can
 read the asciidoc in github in the 'docs' directory.
 
 Playbooks
@@ -129,7 +129,7 @@ together, and can even fire off triggers when certain commands report changes.
 They are the basis for a really simple configuration management system, unlike
 any that already exist.  Powerful, concise, but dead simple.
 
-See examples/playbook.yml for what the syntax looks like, and the manpage -- (ansible-playbook(5))[https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc] for more details.
+See examples/playbook.yml for what the syntax looks like, and the manpage -- [ansible-playbook(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc) for more details.
 
 To run a playbook:
 
