@@ -126,13 +126,12 @@ together, and can even fire off triggers when certain commands report changes.
 They are the basis for a really simple configuration management system, unlike
 any that already exist.  Powerful, concise, but dead simple.
 
-See examples/playbook.yml for what the syntax looks like.
+See examples/playbook.yml for what the syntax looks like, and the manpage -- ansible-playbook(5) for more details.
 
 To run a playbook:
 
-ansible -r playbook.yml
+    ansible -r playbook.yml
 
-Read ansible-playbook(5) for more details.
 
 Future plans
 ============
