@@ -66,7 +66,7 @@ class Runner(object):
         '''
 
         # save input values
-        self.host_list   = self._parse_hosts(host_list)
+        self.host_list   = self.parse_hosts(host_list)
         self.module_path = module_path
         self.module_name = module_name
         self.forks       = forks
@@ -78,7 +78,8 @@ class Runner(object):
         self.remote_pass = remote_pass
         self._tmp_paths = {}
 
-    def _parse_hosts(self, host_list):
+    @classmethod
+    def parse_hosts(cls, host_list):
         ''' parse the host inventory file if not sent as an array '''
 
         # if the host list is given as a string load the host list
