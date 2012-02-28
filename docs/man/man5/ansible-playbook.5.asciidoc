@@ -42,7 +42,7 @@ on each remote system with the values max_clients and http_port.
 
 Next, use a Jinja2 template locally residing at
 /srv/templates/httpd.j2 to write the Apache config file on each host
-to the path /etc/httpd/conf, using the previous values.
+to the path /etc/httpd.conf, using the previous values.
 
 We'll ensure that apache is running if stopped.
 
