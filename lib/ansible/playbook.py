@@ -111,7 +111,7 @@ class PlayBook(object):
         # do not continue to run tasks on hosts that have had failures
         new_hosts = []
         for x in host_list:
-            if not self.failures.has_key(x):
+            if not self.failures.has_key(x) and not self.dark.has_key(x):
                 new_hosts.append(x)
         host_list = new_hosts
 
