@@ -47,6 +47,25 @@ if os.path.exists("/usr/bin/facter"):
        for (k,v) in facter_ds.items():
            new_options["facter_%s" % k] = v
 
+# ditto for ohai, but just top level string keys
+# because it contains a lot of nested stuff we can't use for
+# templating w/o making a nicer key for it (TODO)
+
+if os.path.exists("/usr/bin/ohai"):
+   cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   out, err = cmd.communicate()
+   ohai = True
+   try:
+       ohai_ds = json.loads(out)
+   except:
+       ohai = False
+   if ohai:
+       for (k,v) in ohai_ds.items():
+           if type(v) == str or type(v) == unicode:
+               k2 = "ohai_%s" % k
+               new_options[k2] = v
+
 # write the template/settings file using
 # instructions from server
 
