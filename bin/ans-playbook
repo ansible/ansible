@@ -19,11 +19,16 @@
 
 import sys
 import ansible.playbook
-from ansible.scripts import base_ans_parser, error_print
+import ansible.constants as C
+from optparse import OptionParser
 
 def main(args):
-    parser = base_ans_parser(output_path=False)
-    parser.usage = "ans-playbook playbook.yml"
+    parser = OptionParser()
+    parser.usage = "ans-playbook playbook.yml ..."
+    parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+        help='set the number of forks to start up')
+    parser.add_option("-L", "--library", dest="module_path",
+        help="path to module library", default=C.DEFAULT_MODULE_PATH)
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
@@ -34,7 +39,6 @@ def main(args):
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             module_path=options.module_path,
-            remote_user=options.remote_user,
             forks=options.forks,
             verbose=True
         )
