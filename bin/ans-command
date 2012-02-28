@@ -30,7 +30,7 @@ from ansible.scripts import base_ans_parser, error_print
 
 def main(args):
 
-    parser = base_ans_parser(output_path=False)
+    parser = base_ans_parser()
     parser.usage = "ans-command [options] command-to-run"
 
     parser.add_option('-c', '--return-codes', dest='return_codes', action='store_true', 
