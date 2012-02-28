@@ -23,7 +23,9 @@ IDEMPOTENCE
 
 Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
-trigger change events.  Unless otherwise noted, all modules support change hooks.
+trigger change events, as described in ansible-playbooks (5).  
+
+Unless otherwise noted, all modules support change hooks.
 
 
 command
@@ -40,14 +42,12 @@ This module does not support change hooks.
 
 Returns the return code from the program as well as timing information.
 
-Async command running and command execution time limits are in plan.  These will probably
-be special keyvalue parameters expressed on the end of the command line, like ANSTIMEOUT=1
-and ANS_ASYNC=1 or similar.
+(Async command running and command execution time limits are in plan.)
 
 copy
 ----
 
-The copy module takes a list of source files
+The copy module moves a file on the local box to remote locations.
 
 *src=*::
 
@@ -89,7 +89,17 @@ git
 
 Deploys software from git checkouts.
 
-This module is in plan.
+*repo=*::
+
+git or http protocol address of the repo to checkout
+
+*dest=*::
+
+where to check it out, an absolute directory path
+
+*version=*::
+
+what version to check out -- either the git SHA, the literal string 'HEAD', or a tag name
 
 
 ohai
@@ -145,6 +155,11 @@ first step in your playbook.
 Optionally overrides the default JSON file location of /etc/ansible/setup.
 If used, also supply the metadata parameter to 'template'.  Change if
 running as a non-root remote user who does not have permissions on /etc/ansible.
+
+*anything=*::
+
+any other parameters can be named basically anything, and set a key=value
+pair in the JSON file for use in templating.
 
 
 template
