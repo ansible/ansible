@@ -51,6 +51,11 @@ except:
 endd = datetime.datetime.now()
 delta = endd - startd
 
+if out is None:
+   out = ''
+if err is None:
+   err = ''
+
 result = {
    "stdout" : out,
    "stderr" : err,

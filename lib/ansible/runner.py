@@ -24,6 +24,7 @@ import json
 import traceback
 import paramiko # non-core dependency
 import ansible.constants as C 
+import Queue
 
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
