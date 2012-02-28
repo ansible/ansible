@@ -92,8 +92,9 @@ placed by 'setup' can be reused between ansible runs.
     ansible -p "*" -n template /srv/motd.j2 /etc/motd 
     ansible -p "*" -n template /srv/ntp.j2 /etc/ntp.conf
 
-Very soon, templates will be able to also include facter and ohai
-variables.
+Need something like the fqdn in a template?  If facter or ohai are installed, data from these projects
+will also be made available to the template engine, using 'facter_' and 'ohai_'
+prefixes for each.
 
 Git Deployments
 ===============
