@@ -25,7 +25,7 @@ import shlex
 import ansible.runner
 import ansible.playbook
 import ansible.constants as C
-from ansible.scripts import base_ans_parser
+from ansible.scripts import base_ans_parser, error_print
 
 class Cli(object):
 
@@ -38,16 +38,24 @@ class Cli(object):
             help="module name to execute", default=C.DEFAULT_MODULE_NAME)
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+        parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
+        help="output results on one line to make grepping easier, however will \
+            not remove newlines from command output")
+        parser.add_option('-t', '--tree', dest='output_dest', default=None,
+            help="if specified, a directory name to save output to, one file per host")
+
         options, args = parser.parse_args()
 
         # TODO: more shell like splitting on module_args would
         # be a good idea
 
         sshpass = None
-        if options.askpass:
+        if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
 
-        return ansible.runner.Runner(
+        self.options = options
+
+        runner = ansible.runner.Runner(
             module_name=options.module_name,
             module_path=options.module_path,
             module_args=shlex.split(options.module_args),
@@ -58,10 +66,102 @@ class Cli(object):
             pattern=options.pattern,
             verbose=True,
         )
+        return runner
+
+    def output(self, results):
+
+        # if specifying output destination (aka tree output saves), create the
+        # directory to output to
+
+        options = self.options
+
+        # TODO: split into function 
+        if options.output_dest:
+            if options.output_dest[0] != '/':
+                options.output_dest = os.path.realpath(os.path.expanduser(options.output_dest))
+            if not os.path.exists(options.output_dest):
+                try:
+                    os.makedirs(options.output_dest)
+                except (IOError, OSError), e:
+                    print >> sys.stderr, "Could not make dir %s: %s" % (options.output_dest, e)
+                    sys.exit(1)
+            if not os.access(options.output_dest, os.W_OK):
+                print >> sys.stderr, "Cannot write to path %s" % options.output_dest
+                sys.exit(1)
+
+        # now walk results and print output
+
+        module_name = self.options.module_name
+        
+        for hostname in sorted(results['contacted']):
+            result    = results['contacted'][hostname]
+            rc        = 0
+            failed    = False
+            stdout    = None
+            stderr    = None
+            traceback = None
+            error     = None
+            if type(result) == dict:
+                failed    = result.get('failed', 0)
+                if module_name == 'command':
+                    rc        = result.get('rc',0)
+                    stdout    = result.get('stdout', '')
+                    stderr    = result.get('stderr', '')
+                    traceback = result.get('traceback', '')
+                    error     = result.get('error', '')
+
+            # detect and show failures, if any
+            if rc != 0 or failed:
+                msg = "Error: %s: \n" % hostname
+                if stdout:
+                    msg += stdout
+                if stderr:
+                    msg += stderr
+                if traceback:
+                    msg += traceback
+                if error:
+                    msg += error
+                error_print(msg)
+                continue
+
+            if options.one_line:
+                # try to print everything on one line, but don't strip newlines
+                # if the command output happend to be too long
+                if module_name == 'command':
+                    msg = "(stdout) %s" % stdout
+                    if stderr.rstrip() != '':
+                        msg = "(stdout) %s (stderr) %s" % (stdout,stderr)
+                    print "%s | rc=%s | %s" % (
+                        hostname, rc, msg
+                    ) 
+                else:
+                    print "%s | %s" % (hostname, result)
+            else:
+                # summarize response from command in multiple lines
+                if module_name == 'command':
+                    buf = ''
+                    buf += "%s | rc=%s >>\n" % (hostname, rc)
+                    buf += stdout
+                    if stderr:
+                        buf += stderr
+                    print buf
+                    if options.output_dest:
+                        path = os.path.join(options.output_dest, hostname)
+                        fd = open(path, "w+")
+                        fd.write(buf)
+                        fd.close()
+                else:
+                    print "%s >>" % hostname
+                    print json.dumps(result, indent=4, sort_keys=True)
+
+        if len(results['dark'].keys()) > 0:
+            error_print('*** Hosts which could not be contacted or did not respond: ***')
+            failed_hosts = results['dark'].keys()
+            for hostname in failed_hosts:
+                error_print("%s:\n%s\n" % (hostname, results['dark'][hostname]))
+                print ''
 
 if __name__ == '__main__':
-
-    result = Cli().runner().run()
-    print json.dumps(result, sort_keys=True, indent=4)
-
-
+    cli = Cli()
+    cli.output(cli.runner().run())
+    
