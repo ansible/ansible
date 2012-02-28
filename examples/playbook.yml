@@ -1,23 +1,15 @@
 ---
 - pattern: '*'
-  hosts: /etc/ansible/hosts
+  hosts: '/etc/ansible/hosts'
   tasks:
-  - name: config step
-    action: setup a=2 b=3 c=4
-  - name: copy comand
-    action: copy src=/srv/a dest=/srv/b
-    notify: 
-    - restart apache
-  - name: template step
-    action: template src=/srv/template.j2 dest=/srv/file.out
+  - name: configure template & module variables for future template calls
+    action: setup http_port=80 max_clients=200
+  - name: write the apache config file
+    action: template src=/srv/httpd.j2 dest=/etc/httpd/conf
     notify:
     - restart apache
-  - name: execute bin false
-    comment: call something that will fail just to demo failure counts and such
-    action: command /bin/false
-  - name: execute bin true
-    comment: this will never be executed because previous will fail
-    action: command /bin/true
+  - name: ensure apache is running
+    action: service name=httpd state=started
   handlers:
     - name: restart apache
-      action: service name=httpd state=restarted
+    - action: service name=httpd state=restarted

@@ -29,24 +29,22 @@ be supported in the future.
 EXAMPLE
 -------
 
-FIXME: verify this is correct below
-
 [literal]
 ---
 - pattern: '*'
   hosts: '/etc/ansible/hosts'
   tasks:
-  - name:configure template & module variables for future template calls
+  - name: configure template & module variables for future template calls
     action: setup http_port=80 max_clients=200
   - name: write the apache config file
-    action: template src=/srv/mytemplates/httpd.j2 dest=/etc/httpd/conf
+    action: template src=/srv/templates/httpd.j2 dest=/etc/httpd/conf
     notify:
     - restart apache
   - name: ensure apache is running
-    action: service name=httpd ensure=started
+    action: service name=httpd state=started
   handlers:
     - name: restart apache
-    - action: service name=httpd ensure=restarted
+    - action: service name=httpd state=restarted
 
 
 WHAT THE EXAMPLE MEANS
@@ -59,10 +57,10 @@ For all hosts in /etc/ansible/hosts (one host per line) that are named
 on each remote system with the values max_clients and http_port.
 
 Next, use a Jinja2 template locally residing at
-/srv/mytemplates/httpd.j2 to write the Apache config file on each host
+/srv/templates/httpd.j2 to write the Apache config file on each host
 to the path /etc/httpd/conf, using the previous values.
 
-Ensure that apache is running if stopped.
+We'll ensure that apache is running if stopped.
 
 If and only if the config file changed, note that we need to restart
 apache at the end of the run, otherwise, don't bother because we
@@ -83,20 +81,20 @@ for all hosts in the host file matching the pattern.
 For each task, a name/action pair describes what the task is and what
 ansible module to use to accomplish the task, along with any
 arguments.   Additional fields like 'comment:' can be added and will
-be ignored.
+be ignored, so feel free to take notes in the file.
 
 Most modules accept key=value format arguments.
 
 Handlers are like tasks, but are conditionally executed.  If a module
-reports a 'change', it can choose to notify a handler by name.  If
+reports a 'change', it can notify one or more handler by name.  If
 notified, it will run only for hosts that changed.
 
 
-FUTURE BEHAVIOR
----------------
+ERROR HANDLING
+--------------
 
-What the playbook run does with a host when an error is detected is
-currently being refined and is subject to change.
+If a host has a failure, the host will be ignored for the remainder
+of the playbook execution.
 
 
 AUTHOR
