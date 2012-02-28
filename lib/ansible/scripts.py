@@ -18,7 +18,7 @@ from optparse import OptionParser
 import sys
 import constants as C
 
-def base_ans_parser(opthosts=True, outputpath=True, forkdef=C.DEFAULT_FORKS):
+def base_ans_parser(opthosts=True, output_path=True, forkdef=C.DEFAULT_FORKS):
     parser = OptionParser()
     if opthosts:
         parser.add_option('--host', default=[], action='append',
@@ -30,11 +30,11 @@ def base_ans_parser(opthosts=True, outputpath=True, forkdef=C.DEFAULT_FORKS):
     parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, 
         dest='remote_user', help='set the default username')
     parser.add_option("-P", "--askpass", default=False, action="store_true",
-         help="ask the user to input the ssh password for connecting")
-    parser.add_option('-f','--forks', default=forkdef, type='int',
-               help='set the number of forks to start up')
-    if outputpath:
-        parser.add_option('--outputpath', default='/tmp/ansible', dest="outputpath",
+        help="ask the user to input the ssh password for connecting")
+    parser.add_option('-f','--forks', dest='forks', default=forkdef, type='int',
+        help='set the number of forks to start up')
+    if output_path:
+        parser.add_option('--output-path', default='/tmp/ansible', dest="output_path",
                    help="basepath to store results/errors output.")
     return parser
 
@@ -42,6 +42,6 @@ def base_ans_parser(opthosts=True, outputpath=True, forkdef=C.DEFAULT_FORKS):
 # to things people might be more inclined to deal with at a bash prompt
 
 
-def errorprint(msg):
+def error_print(msg):
     print >> sys.stderr, msg
     

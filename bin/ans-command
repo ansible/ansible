@@ -25,19 +25,19 @@ import os
 import getpass
 import ansible.runner
 import shlex
-from ansible.scripts import base_ans_parser, errorprint
+from ansible.scripts import base_ans_parser, error_print
 
 
 def main(args):
-    parser = base_ans_parser(outputpath=False)
+    parser = base_ans_parser(output_path=False)
     parser.usage = "ans-command [options] command-to-run"
-    parser.add_option('--returncodes', action='store_true', 
+    parser.add_option('-c', '--return-codes', dest='return_codes', action='store_true', 
             help="prefix each line with the commands returncode")
-    parser.add_option('-1', '--oneline', action='store_true', 
+    parser.add_option('-1', '--one-line', dest='one_line', action='store_true', 
             help="output all things as one line - to make grepping easier, will \
                   not remove \\n's from output of commands, though")
-    parser.add_option('-o', '--output-to-dir', dest='output_dest', default=None,
-          help="output each hosts results to a file in a dir named for the host")
+    parser.add_option('-o', '--output-dir', dest='output_dest', default=None,
+          help="output each host's results to a file in a dir named for the host")
     options, args = parser.parse_args(args)
 
     sshpass = None
@@ -61,7 +61,14 @@ def main(args):
             print >> sys.stderr, "Cannot write to path %s" % options.output_dest
             sys.exit(1)
 
+    if len(args) == 0:
+       print >> sys.stderr, "Missing argument.  What should be executed?"
+       sys.exit(1)
+
     mycmd = ' '.join(args)
+   
+    print "FORKS=%s" % options.forks
+ 
     runner = ansible.runner.Runner(
                 module_name='command',
                 module_path=options.module_path,
@@ -86,36 +93,36 @@ def main(args):
             msg += d.get('stderr', '')
             msg += d.get('traceback', '')
             msg += d.get('error', '')
-            errorprint(msg)
+            error_print(msg)
             continue
 
         if options.output_dest:
             fo = open(options.output_dest + '/' + hn +'.output', 'w')
             fo.write(mycmd + '\n')
             fo.write('%s:\n' % hn)
-            if options.returncodes:
+            if options.return_codes:
                 fo.write('return code: %s\n' % d['rc'])
             fo.write('%s\nErrors:\n%s\n' % (d['stdout'], d['stderr']))
             fo.close()
             continue
 
-        if options.oneline:
-            if options.returncodes:
+        if options.one_line:
+            if options.return_codes:
                 print '%s:%s:%s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
             else:
                 print '%s:%s:%s' % (hn, d['stdout'], d['stderr'])
         else:
             print '%s:' % hn
-            if options.returncodes:
+            if options.return_codes:
                 print 'return code:%s\n' % d['rc']
             print '%s' % d['stdout']
             if d.get('stderr', None):
                 print '%s' % d['stderr']
 
     if results['dark']:
-        errorprint('Hosts which could not be contacted or did not respond:')
+        error_print('Hosts which could not be contacted or did not respond:')
         for hn in sorted(results['dark']):
-            errorprint(hn)
+            error_print(hn)
         print ''
 
 
