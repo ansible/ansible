@@ -115,11 +115,9 @@ class Runner(object):
             ssh.connect(host, username=self.remote_user, allow_agent=True, 
               look_for_keys=True, password=self.remote_pass)
             return [ True, ssh ]
-        except paramiko.AuthenticationException, e:
-            return [ False, str(e) ]
-        except:
+        except Exception, e:
             # it failed somehow, return the failure string
-            return [ False, traceback.format_exc() ]
+            return [ False, str(e) ]
 
     def _return_from_module(self, conn, host, result):
         ''' helper function to handle JSON parsing of results '''
