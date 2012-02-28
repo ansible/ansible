@@ -39,9 +39,8 @@ class Cli(object):
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-        help="output results on one line to make grepping easier, however will \
-            not remove newlines from command output")
-        parser.add_option('-t', '--tree', dest='output_dest', default=None,
+            help="try to print output on one line")
+        parser.add_option('-t', '--tree', dest='tree', default=None,
             help="if specified, a directory name to save output to, one file per host")
 
         options, args = parser.parse_args()
@@ -76,17 +75,17 @@ class Cli(object):
         options = self.options
 
         # TODO: split into function 
-        if options.output_dest:
-            if options.output_dest[0] != '/':
-                options.output_dest = os.path.realpath(os.path.expanduser(options.output_dest))
-            if not os.path.exists(options.output_dest):
+        if options.tree:
+            if options.tree[0] != '/':
+                options.tree = os.path.realpath(os.path.expanduser(options.tree))
+            if not os.path.exists(options.tree):
                 try:
-                    os.makedirs(options.output_dest)
+                    os.makedirs(options.tree)
                 except (IOError, OSError), e:
-                    print >> sys.stderr, "Could not make dir %s: %s" % (options.output_dest, e)
+                    print >> sys.stderr, "Could not make dir %s: %s" % (options.tree, e)
                     sys.exit(1)
-            if not os.access(options.output_dest, os.W_OK):
-                print >> sys.stderr, "Cannot write to path %s" % options.output_dest
+            if not os.access(options.tree, os.W_OK):
+                print >> sys.stderr, "Cannot write to path %s" % options.tree
                 sys.exit(1)
 
         # now walk results and print output
@@ -145,8 +144,8 @@ class Cli(object):
                     if stderr:
                         buf += stderr
                     print buf
-                    if options.output_dest:
-                        path = os.path.join(options.output_dest, hostname)
+                    if options.tree:
+                        path = os.path.join(options.tree, hostname)
                         fd = open(path, "w+")
                         fd.write(buf)
                         fd.close()
