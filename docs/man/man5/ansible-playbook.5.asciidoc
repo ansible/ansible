@@ -29,8 +29,8 @@ be supported in the future.
 EXAMPLE
 -------
 
-[literal]
----
+[source,yaml]
+----
 - pattern: '*'
   hosts: '/etc/ansible/hosts'
   tasks:
@@ -45,6 +45,7 @@ EXAMPLE
   handlers:
     - name: restart apache
     - action: service name=httpd state=restarted
+----
 
 
 WHAT THE EXAMPLE MEANS
