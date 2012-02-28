@@ -1,5 +1,7 @@
 #!/usr/bin/python -tt
-#skvidal, (c) Red Hat, Inc 2012
+
+# skvidal, (c) Red Hat, Inc 2012
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
 #
@@ -17,8 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#todo
-# add 'execution time' option output to the output
+# TODO: add 'execution time' option output to the output
 
 import sys
 import os
@@ -30,6 +31,9 @@ from ansible.scripts import base_ans_parser, error_print
 
 def main(args):
 
+
+    # ==================================
+    # parse options
     parser = base_ans_parser()
     parser.usage = "ans-command [options] command-to-run"
 
@@ -37,14 +41,18 @@ def main(args):
         help="output results on one line to make grepping easier, however will \
             not remove newlines from command output")
     parser.add_option('-o', '--output-dir', dest='output_dest', default=None,
-        help="output each host's results to a file in a dir named for the host")
+        help="if specified, a directory name to save output to, one file per host")
 
     options, args = parser.parse_args(args)
 
-    # TODO: move into lib/ansible/scripts.py
+    # get user's password if not supplied
+    # TODO: move into lib/ansible/scripts.py (?)
     sshpass = None
     if options.askpass:
         sshpass = getpass.getpass(prompt="SSH password: ")
+
+    # if specifying output destination (aka tree output saves), create the 
+    # directory to output to
 
     if options.output_dest:
         if options.output_dest[0] != '/':
@@ -55,17 +63,19 @@ def main(args):
             except (IOError, OSError), e:
                 print >> sys.stderr, "Could not make dir %s: %s" % (options.output_dest, e)
                 sys.exit(1)
-        
         if not os.access(options.output_dest, os.W_OK):
             print >> sys.stderr, "Cannot write to path %s" % options.output_dest
             sys.exit(1)
+
+    # if no arguments are specified, error out
 
     if len(args) == 0:
        print >> sys.stderr, "Missing argument.  What should be executed?"
        sys.exit(1)
 
+    # make the actual ansible API call
+
     mycmd = ' '.join(args)
-   
     runner = ansible.runner.Runner(
                 module_name='command',
                 module_path=options.module_path,
@@ -77,8 +87,9 @@ def main(args):
                 pattern=options.pattern,
                 verbose=True,
             )
-
     results = runner.run()
+
+    # walk through results and summarize them neatly
 
     for hostname in sorted(results['contacted']):
 
@@ -90,9 +101,10 @@ def main(args):
         traceback = result.get('traceback', '')
         error     = result.get('error', '')
 
+        # detect and show failures, if any
+
         if rc != 0 or failed:
-            msg = 'Error: %s: ' % hostname
-            # too bad stdout/stderr is not interleaved :(
+            msg = "Error: %s: \n" % hostname
             msg += stdout
             msg += stderr
             msg += traceback
@@ -101,6 +113,8 @@ def main(args):
             continue
 
         if options.one_line:
+            # try to print everything on one line, but don't strip newlines
+            # if the command output happend to be too long
             msg = "(stdout) %s" % stdout
             if stderr.rstrip() != '':
                 msg = "(stdout) %s (stderr) %s" % (stdout,stderr)
@@ -108,6 +122,7 @@ def main(args):
                 hostname, rc, msg
             )
         else:
+            # summarize response from command in multiple lines
             buf = ''
             buf += "%s | rc=%s >>\n" % (hostname, rc)
             buf += stdout
@@ -120,11 +135,13 @@ def main(args):
                 fd.write(buf)
                 fd.close()
 
+    # print errors for hosts we could not reach
     if results['dark']:
+        print ''
         error_print('Hosts which could not be contacted or did not respond:')
         failed_hosts = results['dark'].keys()
-        for hostname in keys:
-            error_print("%s:%s" % (hostname, results['dark'][hostname]))
+        for hostname in failed_hosts:
+            error_print("%s:\n%s\n" % (hostname, results['dark'][hostname]))
         print ''
 
     
