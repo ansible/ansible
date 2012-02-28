@@ -72,6 +72,13 @@ if not os.path.exists(source):
 
 source = file(source).read()
 
+if os.path.isdir(dest):
+    print json.dumps({
+         "failed" : 1,
+         "msg"    : "Destination is a directory"
+    })
+    sys.exit(1)
+
 # record md5sum of original source file so we can report if it changed
 changed = False
 md5sum = None
