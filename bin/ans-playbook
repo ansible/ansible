@@ -27,7 +27,7 @@ def main(args):
     parser.usage = "ans-playbook playbook.yml ..."
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')
-    parser.add_option("-L", "--library", dest="module_path",
+    parser.add_option("-m", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
     options, args = parser.parse_args(args)
 

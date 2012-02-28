@@ -28,7 +28,7 @@ def base_ans_parser():
         dest='remote_user', help='set the default username')
     parser.add_option("-p", "--pattern", dest="pattern",
         help="hostname pattern", default=C.DEFAULT_PATTERN)
-    parser.add_option("-k", "--askpass", default=False, action="store_true",
+    parser.add_option("-k", "--ask-pass", default=False, action="store_true",
         help="ask the user to input the ssh password for connecting")
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')
