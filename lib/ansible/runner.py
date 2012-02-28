@@ -76,6 +76,7 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
+        self._tmp_paths = {}
 
     def _parse_hosts(self, host_list):
         ''' parse the host inventory file if not sent as an array '''
@@ -189,7 +190,8 @@ class Runner(object):
         dest   = options['dest']
         
         # transfer the file to a remote tmp location
-        tmp_src = self._get_tmp_path(conn, dest.split("/")[-1])
+        tmp_path = self._get_tmp_path(conn)
+        tmp_src = tmp_path + source.split('/')[-1]
         self._transfer_file(conn, source, tmp_src)
 
         # install the copy  module
@@ -213,7 +215,7 @@ class Runner(object):
 
         # first copy the source template over
         tempname = os.path.split(source)[-1]
-        temppath = self._get_tmp_path(conn, tempname)
+        temppath = self._get_tmp_path(conn) + tempname
         self._transfer_file(conn, source, temppath)
 
         # install the template module
@@ -261,7 +263,6 @@ class Runner(object):
     def remote_log(self, conn, msg):
         ''' this is the function we use to log things '''
         stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info %r' % msg)
-        # TODO: doesn't actually call logger on the remote box, should though
         # TODO: maybe make that optional
 
     def _exec_command(self, conn, cmd):
@@ -272,18 +273,21 @@ class Runner(object):
         results = "\n".join(stdout.readlines())
         return results
 
-    def _get_tmp_path(self, conn, file_name):
+    def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
-        output = self._exec_command(conn, "mktemp /tmp/%s.XXXXXX" % file_name)
-        return output.split("\n")[0]
+
+        if conn not in self._tmp_paths:
+            output = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
+            self._tmp_paths[conn] = output.split("\n")[0] + '/'
+            
+        return self._tmp_paths[conn]
 
     def _copy_module(self, conn):
         ''' transfer a module over SFTP, does not run it '''
         in_path = os.path.expanduser(
             os.path.join(self.module_path, self.module_name)
         )
-        out_path = self._get_tmp_path(conn, "ansible_%s" % self.module_name)
-
+        out_path = self._get_tmp_path(conn) + self.module_name
         sftp = conn.open_sftp()
         sftp.put(in_path, out_path)
         sftp.close()
