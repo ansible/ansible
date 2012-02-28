@@ -12,38 +12,44 @@ ansible - run a command somewhere else
 
 SYNOPSIS
 --------
-ansible [-H hosts_path] [-L library_path] [-f forks] [-n module_name]
-        [-a [args1 [args2 ...]]] [-p host_pattern] [-u remote_user]
+ansible [-f forks] [-p pattern ] [-u remote_user]
+        [-n module_name] [-a [args1 [args2 ...]]]
 
 
 DESCRIPTION
 -----------
 
-*Ansible* is an extra-simple Python API for doing \'remote things' over
+*Ansible* is an extra-simple tool/framework/API for doing \'remote things' over
 SSH.
 
 
 OPTIONS
 -------
 
-*-P*, *--askpass*::
+*-k*, *--ask-pass*::
 
-Ask the user to input the ssh password for connecting.
-
-
-*-H*, *--host-list*::
-
-Path to hosts list.
+Ask the user to input the ssh password for connecting.  Generally using
+ssh-agent instead is preferred.
 
 
-*-L*, *--library*::
+*-l*, *--host-list*::
 
-Path to module library.
+Path to hosts list, which defaults to /etc/ansible/hosts.  Users can use
+multiple files to emulate groups of systems.
+
+
+*-m*, *--module-path*::
+
+Override the path to module library, which defaults to /usr/share/ansible.
+The module library contains runnable modules that do 'things' to remote
+hosts.  See ansible-modules(5) for a list of those that bundled with
+Ansible.
 
 
 *-f*, *--forks*::
 
-Level of parallelism. Specify as an integer.
+Level of parallelism. Specify as an integer, the default is 3.  If set to "1" 
+debugging for certain classes of internal errors may become easier.
 
 
 *-n*, *--name*::
@@ -53,17 +59,15 @@ Module name to execute.
 
 *-a*, *--args*::
 
-Arguments to module.
+Arguments to module, as a single string.  Be sure to observe proper shell quoting rules.
+How these are handled are up to the module, but most modules take "key=value" pairs
+delimited by spaces.
 
 
 *-p*, *--pattern*::
 
-Hostname pattern. Accepts shell-like globs.
-
-
-*-r*, *--run-playbook*::
-
-Playbook file to run. Replaces the *-n* and *-a* options.
+Hostname pattern. Accepts shell-like globs which can be seperated with ";"
+The default is "*" which matches all hosts in the ansible hosts file.
 
 
 *-u*, *--remote-user*::
@@ -105,6 +109,8 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible-modules*(5), *ansible-playbook*(5)
+*ansible-modules*(5), 
+
+*ansible-playbook*(5),
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>

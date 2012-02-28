@@ -50,7 +50,7 @@ which for bonus points you can install with ansible!  Easy enough.
 Inventory file
 ==============
 
-To use ansible you must have a list of hosts somewhere.  The default inventory file (override with -H) is /etc/ansible/hosts and is a list of all hostnames to manage with ansible, one per line.  These can be hostnames or IPs.
+To use ansible you must have a list of hosts somewhere.  The default inventory host list (override with -l) is /etc/ansible/hosts and is a list of all hostnames to manage with ansible, one per line.  These can be hostnames or IPs.
 
 Example:
 
@@ -91,8 +91,8 @@ JSON files can be placed for template metadata using Jinja2.  Variables
 placed by 'setup' can be reused between ansible runs.
 
     ansible -p "*" -n setup -a "favcolor=red ntp_server=192.168.1.1"
-    ansible -p "*" -n template /srv/motd.j2 /etc/motd 
-    ansible -p "*" -n template /srv/ntp.j2 /etc/ntp.conf
+    ansible -p "*" -n template -a "src=/srv/motd.j2 dest=/etc/motd"
+    ansible -p "*" -n template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
 
 Need something like the fqdn in a template?  If facter or ohai are installed, data from these projects
 will also be made available to the template engine, using 'facter_' and 'ohai_'
@@ -142,7 +142,7 @@ multple patterns in a single file.
       - name: configure template & module variables for future template calls
         action: setup http_port=80 max_clients=200
       - name: write the apache config file
-        action: template src=/srv/templates/httpd.j2 dest=/etc/httpd/conf
+        action: template src=/srv/templates/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
       - name: ensure apache is running
@@ -155,7 +155,7 @@ See the playbook format manpage -- [ansible-playbook(5)](https://github.com/mpde
 
 To run a playbook:
 
-    ansible -r playbook.yml
+    ansible-playbook playbook.yml
 
 API
 ===
