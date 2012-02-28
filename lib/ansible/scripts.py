@@ -18,11 +18,8 @@ from optparse import OptionParser
 import sys
 import constants as C
 
-def base_ans_parser(opthosts=True, output_path=True, forkdef=C.DEFAULT_FORKS):
+def base_ans_parser():
     parser = OptionParser()
-    if opthosts:
-        parser.add_option('--host', default=[], action='append',
-            help="hosts to act on, defaults to ALL")
     parser.add_option("-H", "--host-list", dest="host_list",
         help="path to hosts list", default=C.DEFAULT_HOST_LIST)
     parser.add_option("-L", "--library", dest="module_path",
@@ -31,11 +28,8 @@ def base_ans_parser(opthosts=True, output_path=True, forkdef=C.DEFAULT_FORKS):
         dest='remote_user', help='set the default username')
     parser.add_option("-P", "--askpass", default=False, action="store_true",
         help="ask the user to input the ssh password for connecting")
-    parser.add_option('-f','--forks', dest='forks', default=forkdef, type='int',
+    parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')
-    if output_path:
-        parser.add_option('--output-path', default='/tmp/ansible', dest="output_path",
-                   help="basepath to store results/errors output.")
     return parser
 
 # other functions as needed for nicely handling output from json back

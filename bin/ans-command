@@ -29,17 +29,23 @@ from ansible.scripts import base_ans_parser, error_print
 
 
 def main(args):
+
     parser = base_ans_parser(output_path=False)
     parser.usage = "ans-command [options] command-to-run"
+
     parser.add_option('-c', '--return-codes', dest='return_codes', action='store_true', 
-            help="prefix each line with the commands returncode")
+        help="prefix each line with the command's return code")
     parser.add_option('-1', '--one-line', dest='one_line', action='store_true', 
-            help="output all things as one line - to make grepping easier, will \
-                  not remove \\n's from output of commands, though")
+        help="output results on one line to make grepping easier, however will \
+            not remove newlines from command output")
     parser.add_option('-o', '--output-dir', dest='output_dest', default=None,
-          help="output each host's results to a file in a dir named for the host")
+        help="output each host's results to a file in a dir named for the host")
+    parser.add_option('--output-path', default='/tmp/ansible', dest="output_path",
+        help="basepath to store results/errors output.")
+
     options, args = parser.parse_args(args)
 
+    # TODO: move into lib/ansible/scripts.py
     sshpass = None
     if options.askpass:
         sshpass = getpass.getpass(prompt="SSH password: ")
@@ -79,7 +85,6 @@ def main(args):
                 verbose=True,
             )
 
-    print mycmd
     results = runner.run()
 
     for hn in sorted(results['contacted']):
