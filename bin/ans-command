@@ -33,8 +33,6 @@ def main(args):
     parser = base_ans_parser()
     parser.usage = "ans-command [options] command-to-run"
 
-    parser.add_option('-c', '--return-codes', dest='return_codes', action='store_true', 
-        help="prefix each line with the command's return code")
     parser.add_option('-1', '--one-line', dest='one_line', action='store_true', 
         help="output results on one line to make grepping easier, however will \
             not remove newlines from command output")
@@ -95,14 +93,9 @@ def main(args):
             continue
 
         if options.one_line:
-            if options.return_codes:
-                print '%s:%s:%s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
-            else:
-                print '%s:%s:%s' % (hn, d['stdout'], d['stderr'])
+            print '%s | rc=%s | %s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
         else:
-            print '%s:' % hn
-            if options.return_codes:
-                print 'return code:%s\n' % d['rc']
+            print "%s: => rc=%s" % (hn, d['rc'])
             print '%s' % d['stdout']
             if d.get('stderr', None):
                 print '%s' % d['stderr']
