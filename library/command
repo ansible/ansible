@@ -28,6 +28,13 @@ import sys
 import datetime
 import traceback
 
+if len(sys.argv) == 1:
+    print json.dumps({
+        "failed" : True,
+        "msg"    : "at least a command name is required"
+    })
+    sys.exit(1)
+
 args = sys.argv[1:]
 startd = datetime.datetime.now()
 
