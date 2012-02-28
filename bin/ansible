@@ -18,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import OptionParser
+import sys
 import json
 import os
 import getpass
@@ -35,7 +36,7 @@ class Cli(object):
     def runner(self):
         parser = base_ans_parser()
         parser.add_option("-n", "--name", dest="module_name",
-            help="module name to execute", default=C.DEFAULT_MODULE_NAME)
+            help="module name to execute", default=None)
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
@@ -44,6 +45,10 @@ class Cli(object):
             help="if specified, a directory name to save output to, one file per host")
 
         options, args = parser.parse_args()
+
+        if options.module_name is None:
+            print >> sys.stderr, "-n is required"
+            sys.exit(1)
 
         # TODO: more shell like splitting on module_args would
         # be a good idea
