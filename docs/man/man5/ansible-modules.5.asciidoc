@@ -150,6 +150,10 @@ Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the template modules, usually as the very
 first step in your playbook. 
 
+If facter or ohai are installed, variables from these programs will also
+be snapshotted into the JSON file for usage in templating. These variables
+are prefixed with 'facter_' and 'ohai_" so it's easy to tell their source.
+
 *metadata=*::
 
 Optionally overrides the default JSON file location of /etc/ansible/setup.
