@@ -108,10 +108,17 @@ def main(args):
                 hostname, rc, msg
             )
         else:
-            print "%s | rc=%s >>" % (hostname, rc)
-            print stdout
+            buf = ''
+            buf += "%s | rc=%s >>\n" % (hostname, rc)
+            buf += stdout
             if stderr:
-                print stderr
+                buf += stderr
+            print buf
+            if options.output_dest:
+                path = os.path.join(options.output_dest, hostname)
+                fd = open(path, "w+")
+                fd.write(buf)
+                fd.close()
 
     if results['dark']:
         error_print('Hosts which could not be contacted or did not respond:')
