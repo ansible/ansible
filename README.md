@@ -157,6 +157,37 @@ To run a playbook:
 
     ansible -r playbook.yml
 
+API
+===
+
+The Python API is pretty powerful.
+
+    import ansible.runner
+
+    runner = ansible.runner.Runner(
+       module_name='ping',
+       module_args='',
+       pattern='web*',
+       forks=10
+    )
+    datastructure = runner.run()
+
+And returns results per host, for hosts we could contact
+and also ones that we failed to contact.
+
+    {
+        "dark" : {
+           "web1.example.com" : "failure message"
+        }
+        "contacted" : {
+           "web2.example.com" : 1
+        }
+ 
+    }
+
+A module can return any type of JSON data it wants, so Ansible can
+be used as a framework to build arbitrary applications and very powerful
+scripts.
 
 Future plans
 ============
