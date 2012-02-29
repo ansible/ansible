@@ -47,9 +47,6 @@ def main(args):
     sshpass = None
     if options.askpass:
         sshpass = getpass.getpass(prompt="SSH password: ")
-    pattern = '*'
-    if options.host:
-        pattern += ';'.join(options.host)
 
     if options.output_dest:
         if options.output_dest[0] != '/':
@@ -79,7 +76,7 @@ def main(args):
                 remote_pass=sshpass,
                 host_list=options.host_list,
                 forks=options.forks,
-                pattern=pattern,
+                pattern=options.pattern,
                 verbose=True,
             )
 
