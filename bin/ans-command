@@ -1,0 +1,117 @@
+#!/usr/bin/python -tt
+#skvidal
+# (c) Red Hat, Inc 2012
+
+#todo
+# add 'execution time' option output to the output
+
+import sys
+import os
+import getpass
+import ansible.runner
+import shlex
+from ansible.scripts import base_ans_parser, errorprint
+
+
+def main(args):
+    parser = base_ans_parser(outputpath=False)
+    parser.usage = "ans-command [options] command-to-run"
+    parser.add_option('--returncodes', action='store_true', 
+            help="prefix each line with the commands returncode")
+    parser.add_option('-1', '--oneline', action='store_true', 
+            help="output all things as one line - to make grepping easier, will \
+                  not remove \\n's from output of commands, though")
+    parser.add_option('-o', '--output-to-dir', dest='output_dest', default=None,
+          help="output each hosts results to a file in a dir named for the host")
+    options, args = parser.parse_args(args)
+
+    sshpass = None
+    if options.askpass:
+        sshpass = getpass.getpass(prompt="SSH password: ")
+    pattern = '*'
+    if options.host:
+        pattern += ';'.join(options.host)
+
+    if options.output_dest:
+        if options.output_dest[0] != '/':
+            options.output_dest = os.path.realpath(os.path.expanduser(options.output_dest))
+        if not os.path.exists(options.output_dest):
+            try:
+                os.makedirs(options.output_dest)
+            except (IOError, OSError), e:
+                print >> sys.stderr, "Could not make dir %s: %s" % (options.output_dest, e)
+                sys.exit(1)
+        
+        if not os.access(options.output_dest, os.W_OK):
+            print >> sys.stderr, "Cannot write to path %s" % options.output_dest
+            sys.exit(1)
+
+    mycmd = ' '.join(args)
+    runner = ansible.runner.Runner(
+                module_name='command',
+                module_path=options.module_path,
+                module_args=shlex.split(mycmd),
+                remote_user=options.remote_user,
+                remote_pass=sshpass,
+                host_list=options.host_list,
+                forks=options.forks,
+                pattern=pattern,
+                verbose=True,
+            )
+
+    print mycmd
+    results = runner.run()
+
+    for hn in sorted(results['contacted']):
+        d = results['contacted'][hn]
+        if d.get('rc', 0) != 0 or d.get('failed', 0):
+            msg = 'Error: %s: ' % hn
+            # too bad stdout/stderr is not interleaved :(
+            msg += d.get('stdout', '')
+            msg += d.get('stderr', '')
+            msg += d.get('traceback', '')
+            msg += d.get('error', '')
+            errorprint(msg)
+            continue
+
+        if options.output_dest:
+            fo = open(options.output_dest + '/' + hn +'.output', 'w')
+            fo.write(mycmd + '\n')
+            fo.write('%s:\n' % hn)
+            if options.returncodes:
+                fo.write('return code: %s\n' % d['rc'])
+            fo.write('%s\nErrors:\n%s\n' % (d['stdout'], d['stderr']))
+            fo.close()
+            continue
+
+        if options.oneline:
+            if options.returncodes:
+                print '%s:%s:%s:%s' % (hn, d['rc'], d['stdout'], d['stderr'])
+            else:
+                print '%s:%s:%s' % (hn, d['stdout'], d['stderr'])
+        else:
+            print '%s:' % hn
+            if options.returncodes:
+                print 'return code:%s\n' % d['rc']
+            print '%s' % d['stdout']
+            if d.get('stderr', None):
+                print '%s' % d['stderr']
+
+    if results['dark']:
+        errorprint('Hosts which could not be contacted or did not respond:')
+        for hn in sorted(results['dark']):
+            errorprint(hn)
+        print ''
+
+
+    if options.output_dest:
+        print "output written to %s" % options.output_dest
+
+    
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
+
+
+
+
+
