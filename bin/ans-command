@@ -40,8 +40,6 @@ def main(args):
             not remove newlines from command output")
     parser.add_option('-o', '--output-dir', dest='output_dest', default=None,
         help="output each host's results to a file in a dir named for the host")
-    parser.add_option('--output-path', default='/tmp/ansible', dest="output_path",
-        help="basepath to store results/errors output.")
 
     options, args = parser.parse_args(args)
 
