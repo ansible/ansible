@@ -14,7 +14,7 @@ ansible-playbook - format and function of an ansible playbook file
 DESCRIPTION
 -----------
 
-Ansible ships with a ansible-playbook tool for running playbooks.
+Ansible ships with 'ansible-playbook', a tool for running playbooks.
 Playbooks can represent frequent tasks, desired system configurations,
 or deployment processes.
 
@@ -22,8 +22,7 @@ or deployment processes.
 FORMAT
 ------
 
-Playbooks are currently writeable in YAML.  Other formats (JSON?) may
-be supported in the future.
+Playbooks are written in YAML.
 
 
 EXAMPLE
