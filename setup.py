@@ -34,6 +34,7 @@ setup(name='ansible',
       ],
       scripts=[
          'bin/ansible',
-         'bin/ans-command',
+         'bin/ansible-command',
+         'bin/ansible-playbook'
       ]
 )
