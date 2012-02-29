@@ -16,11 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import fnmatch
 import multiprocessing
 import signal
 import os
-import json
 import traceback
 import paramiko # non-core dependency
 import ansible.constants as C 

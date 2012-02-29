@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from optparse import OptionParser
 import sys
-import json
 import os
 import getpass
 import shlex
