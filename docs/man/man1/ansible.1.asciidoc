@@ -99,8 +99,7 @@ COPYRIGHT
 
 Copyright © 2012, Michael DeHaan
 
-Ansible is released under the terms of the MIT license.
-
+Ansible is released under the terms of the GPLv3 License.
 
 
 SEE ALSO

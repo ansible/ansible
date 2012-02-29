@@ -197,7 +197,7 @@ See github's issue tracker for what we're thinking about
 License
 =======
 
-MIT
+GPLv3
 
 Mailing List
 ============
