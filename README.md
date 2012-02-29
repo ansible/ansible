@@ -199,12 +199,16 @@ License
 
 GPLv3
 
-Mailing List
-============
+Mailing List and IRC
+====================
 
-Join the mailing list to talk about Ansible!
+Join the mailing list to talk about Ansible:
 
 [ansible-project](http://groups.google.com/group/ansible-project)
+
+irc.freenode.net: #ansible
+
+Everyone may not always be available on IRC, for important issues/questions, use the list or file a ticket.
 
 Author
 ======
