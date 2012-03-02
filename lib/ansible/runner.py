@@ -68,7 +68,8 @@ class Runner(object):
         '''
 
         # save input values
-        self.host_list   = self.parse_hosts(host_list)
+       
+        self.host_list, self.groups = self.parse_hosts(host_list)
         self.module_path = module_path
         self.module_name = module_name
         self.forks       = forks
@@ -78,19 +79,35 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
-        self._tmp_paths = {}
+        # hosts in each group name in the inventory file
+        self._tmp_paths  = {}
 
     @classmethod
     def parse_hosts(cls, host_list):
-        ''' parse the host inventory file if not sent as an array '''
+        ''' 
+        parse the host inventory file, returns (hosts, groups) 
+        [groupname]
+        host1
+        host2
+        '''
 
-        # if the host list is given as a string load the host list
-        # from a file, one host per line
-        if type(host_list) != list:
-            host_list = os.path.expanduser(host_list)
-            return file(host_list).read().split("\n")
+        if type(host_list) == list:
+            return (host_list, {})
 
-        return host_list
+        host_list = os.path.expanduser(host_list)
+        lines = file(host_list).read().split("\n")
+        groups     = {}
+        group_name = 'ungrouped'
+        results    = []
+        for item in lines:
+            if item.startswith("["):
+                group_name = item.replace("[","").replace("]","").lstrip().rstrip()
+                groups[group_name] = []
+            else:
+                groups[group_name].append(item)
+                results.append(item)
+
+        return (results, groups)
 
 
     def _matches(self, host_name, pattern=None):
@@ -98,12 +115,18 @@ class Runner(object):
         # a pattern is in fnmatch format but more than one pattern
         # can be strung together with semicolons. ex:
         #   atlanta-web*.example.com;dc-web*.example.com
+
         if host_name == '':
             return False
         subpatterns = pattern.split(";")
         for subpattern in subpatterns:
+            # the pattern could be a real glob
             if fnmatch.fnmatch(host_name, subpattern):
                 return True
+            # or it could be a literal group name instead
+            if self.groups.has_key(subpattern):
+                if host_name in self.groups[subpattern]:
+                    return True
         return False
 
     def _connect(self, host):
@@ -117,7 +140,7 @@ class Runner(object):
         try:
             # try paramiko
             ssh.connect(host, username=self.remote_user, allow_agent=True, 
-              look_for_keys=True, password=self.remote_pass timeout=self.timeout)
+              look_for_keys=True, password=self.remote_pass, timeout=self.timeout)
             return [ True, ssh ]
         except Exception, e:
             # it failed somehow, return the failure string
@@ -303,7 +326,7 @@ class Runner(object):
         
         # find hosts that match the pattern
         hosts = self.match_hosts(self.pattern)
-
+        
         # attack pool of hosts in N forks
         # _executor_hook does all of the work
         hosts = [ (self,x) for x in hosts ]

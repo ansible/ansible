@@ -106,7 +106,7 @@ class PlayBook(object):
             # actions where not all hosts have changed
             # though top-level tasks will pass in "None" here
             host_list = self.host_list
-        host_list = ansible.runner.Runner.parse_hosts(host_list)
+            (host_list, groups) = ansible.runner.Runner.parse_hosts(host_list)
 
         # do not continue to run tasks on hosts that have had failures
         new_hosts = []
@@ -132,9 +132,9 @@ class PlayBook(object):
 
         if self.verbose:
             if not conditional:
-                print "\nTASK [%s]" % (name)
+                print "\nTASK: %s" % (name)
             else:
-                print "\nNOTIFIED [%s]" % (name)
+                print "\nNOTIFIED: %s" % (name)
 
         # load up an appropriate ansible runner to
         # run the task in parallel
@@ -240,10 +240,12 @@ class PlayBook(object):
         tasks    = pg['tasks']
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
-        self.host_list = pg.get('hosts', '/etc/ansible/hosts')
+
+        host_file = pg.get('hosts', '/etc/ansible/hosts')
+        self.host_list, groups = ansible.runner.Runner.parse_hosts(host_file)
 
         if self.verbose:
-            print "PLAY: [%s] from [%s] ********** " % (pattern, self.host_list)
+            print "PLAY: [%s] ********** " % (pattern)
 
         # run all the top level tasks, these get run on every node
 
@@ -252,7 +254,8 @@ class PlayBook(object):
                 pattern=pattern, 
                 task=task, 
                 handlers=handlers,
-                remote_user=user)
+                remote_user=user
+            )
 
         # handlers only run on certain nodes, they are flagged by _flag_handlers
         # above.  They only run on nodes when things mark them as changed, and
