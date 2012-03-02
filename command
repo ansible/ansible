@@ -45,13 +45,13 @@ try:
 except (OSError, IOError), e:
     print json.dumps({
         "failed": 1,
-        "error": str(e),
+        "msg": str(e),
         })
     sys.exit(1)
 except:
     print json.dumps({
         "failed" : 1,
-        "traceback" : traceback.format_exc()
+        "msg" : traceback.format_exc()
     })   
     sys.exit(1)
 
