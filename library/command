@@ -31,7 +31,7 @@ import traceback
 if len(sys.argv) == 1:
     print json.dumps({
         "failed" : True,
-        "msg"    : "at least a command name is required"
+        "msg"    : "the command module requires arguments (-a)"
     })
     sys.exit(1)
 
