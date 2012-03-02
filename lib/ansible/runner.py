@@ -117,7 +117,7 @@ class Runner(object):
         try:
             # try paramiko
             ssh.connect(host, username=self.remote_user, allow_agent=True, 
-              look_for_keys=True, password=self.remote_pass)
+              look_for_keys=True, password=self.remote_pass timeout=self.timeout)
             return [ True, ssh ]
         except Exception, e:
             # it failed somehow, return the failure string
