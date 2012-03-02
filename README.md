@@ -139,9 +139,8 @@ multi-machine applications.
 An example showing a small playbook:
 
     ---
-    - pattern: 'webservers*'
+    - hosts: 'web*.example.com'
       comment: webserver setup steps
-      hosts: '/etc/ansible/hosts'
       tasks:
       - name: configure template & module variables for future template calls
         action: setup http_port=80 max_clients=200
