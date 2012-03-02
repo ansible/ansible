@@ -47,75 +47,81 @@ which for bonus points you can install with ansible!  Easy enough.
 
    * python-jinja2 
 
-Inventory file
-==============
+Patterns and Groups
+===================
 
-To use ansible you must have a list of hosts somewhere.  The default inventory host list (override with -l) is /etc/ansible/hosts and is a list of all hostnames to manage with ansible, one per line.  These can be hostnames or IPs.
+Ansible works off an inventory file (/etc/ansible/hosts or overrideable with -i).  Hosts can
+be listed by IP or hostname, and groups are supported with square brackets:
 
 Example:
 
     abc.example.com
     def.example.com
+
+    [atlanta]
     192.168.10.50
     192.168.10.51
+   
+    [raleigh]
+    192.168.10.52
 
-This list is further filtered by the pattern wildcard (-p) to target
-specific hosts.  This is covered below.  You can also organize groups of systems by having multiple inventory files (i.e. keeping webservers different from dbservers, etc)
+When running ansible commands, specific hosts are addressed by wildcard or group name. 
+The default pattern is '*', meaning all ansible hosts.
 
-Massive Parallelism, Pattern Matching, and a Usage Example
-==========================================================
+    -p '*.example.com'
+    -p 'atlanta;raleigh'
+    -p 'database*;appserver*'
+    -p '192.168.10.50;192.168.10.52'
+
+Example: Massive Parallelism and Running Shell Commands
+=======================================================
 
 Reboot all web servers in Atlanta, 10 at a time:
  
     ssh-agent bash
     ssh-add ~/.ssh/id_rsa.pub
+
     ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
 
-Other than the comamnd module, though, ansible modules are not scripts.  They make
-the remote system look like you state, and run the commands neccessary to get it 
-there.
+The -f 10 specifies the usage of 10 simultaneous processes.
 
-[Read the manpage](https://github.com/mpdehaan/ansible/blob/master/docs/man/man1/ansible.1.asciidoc)
+Note that other than the command module, ansible modules do not work like simple scripts.  They make
+the remote system look like you state, and run the commands neccessary to get it there.
 
-File Transfer
-=============
+[Read the ansible manpage](https://github.com/mpdehaan/ansible/blob/master/docs/man/man1/ansible.1.asciidoc)
 
-Ansible can SCP lots of files to lots of places in parallel.
+Example: File Transfer and Templating
+=====================================
 
-    ansible -p "web-*.acme.net" -f 10 -n copy -a "/etc/hosts /tmp/hosts"
+Ansible can SCP lots of files to multiple machines in parallel, and optionally use
+them as template sources.
 
-Templating
-==========
+To just transfer a file directly to many different servers:
 
-JSON files can be placed for template metadata using Jinja2.  Variables
-placed by 'setup' can be reused between ansible runs.
+    ansible -n copy -a "/etc/hosts /tmp/hosts"
 
-    ansible -p "*" -n setup -a "favcolor=red ntp_server=192.168.1.1"
-    ansible -p "*" -n template -a "src=/srv/motd.j2 dest=/etc/motd"
-    ansible -p "*" -n template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
+To use templating, first run the setup module to put the template variables you would
+like to use on the remote host.  Then use the template module to write the
+files using the templates.  Templates are written in Jinja2 format.
+
+    ansible -p webservers -n setup -a "favcolor=red ntp_server=192.168.1.1"
+    ansible -p webservers -n template -a "src=/srv/motd.j2 dest=/etc/motd"
+    ansible -p webservers -n template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
 
 Need something like the fqdn in a template?  If facter or ohai are installed, data from these projects
-will also be made available to the template engine, using 'facter_' and 'ohai_'
-prefixes for each.
+will also be made available to the template engine, using 'facter_' and 'ohai_' prefixes for each.
 
-Git Deployments
-===============
+Example: Software Deployment From Source Control
+================================================
 
 Deploy your webapp straight from git
 
-    ansible -p "web*" -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
-
-Take Inventory
-==============
-
-Run popular open-source data discovery tools across a wide number of hosts.
-This is best used from API scripts that want to learn about remote systems.
-
-    ansible -p "dbserver*" -n facter
-    ansible -p "dbserver"" -n ohai
+    ansible -p webservers -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
 
 Other Modules
 =============
+
+Ansible has lots of other modules.
 
 See the library directory for lots of extras.  There's also a manpage,
 [ansible-modules(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-modules.5.asciidoc) that covers all the options they take.  You can
@@ -124,15 +130,13 @@ read the asciidoc in github in the 'docs' directory.
 Playbooks
 =========
 
-Playbooks are particularly awesome.  Playbooks can batch ansible commands
-together, and can even fire off triggers when certain commands report changes.
+Playbooks are a completely different way to use ansible and are particularly awesome.
 
 They are the basis for a really simple configuration management system, unlike
 any that already exist, and one that is very well suited to deploying complex
 multi-machine applications.  
 
-An example showing just once pattern in a playbook is below.  Playbooks can contain
-multple patterns in a single file.
+An example showing a small playbook:
 
     ---
     - pattern: 'webservers*'
@@ -151,16 +155,17 @@ multple patterns in a single file.
         - name: restart apache
         - action: service name=httpd state=restarted
 
-See the playbook format manpage -- [ansible-playbook(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc) for more details.
-
 To run a playbook:
 
     ansible-playbook playbook.yml
 
+See the playbook format manpage -- [ansible-playbook(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-playbook.5.asciidoc) for more details.
+
+
 API
 ===
 
-The Python API is pretty powerful.
+The Python API is very powerful:
 
     import ansible.runner
 
@@ -172,8 +177,9 @@ The Python API is pretty powerful.
     )
     datastructure = runner.run()
 
-And returns results per host, for hosts we could contact
-and also ones that we failed to contact.
+The run method returns results per host, grouped by whether they 
+could be contacted or not.  Return types are module specific, as
+expressed in the 'ansible-modules' manpage.
 
     {
         "dark" : {
@@ -182,33 +188,21 @@ and also ones that we failed to contact.
         "contacted" : {
            "web2.example.com" : 1
         }
- 
     }
 
-A module can return any type of JSON data it wants, so Ansible can
-be used as a framework to build arbitrary applications and very powerful
-scripts.
-
-Future plans
-============
-
-See github's issue tracker for what we're thinking about
+Since a module can return any type of JSON data it wants, so Ansible can
+be used as a framework to rapidly build powerful applications and scripts.
 
 License
 =======
 
 GPLv3
 
-Mailing List and IRC
-====================
+Communicate
+===========
 
-Join the mailing list to talk about Ansible:
-
-[ansible-project](http://groups.google.com/group/ansible-project)
-
-irc.freenode.net: #ansible
-
-Everyone may not always be available on IRC, for important issues/questions, use the list or file a ticket.
+   * [ansible-project mailing list](http://groups.google.com/group/ansible-project)
+   * irc.freenode.net: #ansible
 
 Author
 ======

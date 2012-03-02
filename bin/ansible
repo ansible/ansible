@@ -39,29 +39,28 @@ class Cli(object):
 
     def runner(self):
         parser = OptionParser()
-        parser.add_option("-l", "--host-list", dest="host_list",
-           help="path to hosts list", default=C.DEFAULT_HOST_LIST)
-        parser.add_option("-m", "--module-path", dest="module_path",
-           help="path to module library", default=C.DEFAULT_MODULE_PATH)
-        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='set the default username')
-        parser.add_option("-p", "--pattern", dest="pattern",
-            help="hostname pattern", default=C.DEFAULT_PATTERN)
-        parser.add_option("-k", "--ask-pass", default=False, action="store_true",
-            help="ask the user to input the ssh password for connecting")
-        parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-            help='set the number of forks to start up')
-        parser.add_option("-n", "--name", dest="module_name",
-            help="module name to execute", default=None)
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+        parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+            help='set the number of forks to start up')
+        parser.add_option("-p", "--host-pattern", dest="hosts",
+            help="hostname glob or group name", default=C.DEFAULT_PATTERN)
+        parser.add_option("-i", "--inventory", dest="inventory",
+           help="inventory host list", default=C.DEFAULT_HOST_LIST)
+        parser.add_option("-k", "--ask-pass", default=False, action="store_true",
+            help="ask the user to input the ssh password for connecting")
+        parser.add_option("-m", "--module-path", dest="module_path",
+           help="path to module library", default=C.DEFAULT_MODULE_PATH)
+        parser.add_option("-n", "--name", dest="module_name",
+            help="module name to execute", default=None)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
             help="try to print output on one line")
         parser.add_option('-t', '--tree', dest='tree', default=None,
             help="if specified, a directory name to save output to, one file per host")
         parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
             dest='timeout', help="set the timeout in seconds for ssh")
-
+        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
+            dest='remote_user', help='set the default username')
         options, args = parser.parse_args()
 
         if options.module_name is None:
@@ -83,10 +82,10 @@ class Cli(object):
             module_args=shlex.split(options.module_args),
             remote_user=options.remote_user,
             remote_pass=sshpass,
-            host_list=options.host_list,
+            host_list=options.inventory,
             timeout=options.timeout,
             forks=options.forks,
-            pattern=options.pattern,
+            pattern=options.hosts,
             verbose=True,
         )
         return runner

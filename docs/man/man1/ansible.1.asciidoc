@@ -12,8 +12,7 @@ ansible - run a command somewhere else
 
 SYNOPSIS
 --------
-ansible [-f forks] [-p pattern ] [-u remote_user]
-        [-n module_name] [-a [args1 [args2 ...]]]
+ansible [-f forks] [-p pattern ] [-n module_name] [-a args]
 
 
 DESCRIPTION
@@ -26,30 +25,15 @@ SSH.
 OPTIONS
 -------
 
-*-k*, *--ask-pass*::
 
-Ask the user to input the ssh password for connecting.  Generally using
-ssh-agent instead is preferred.
+*-i*, *--inventory*::
 
-
-*-l*, *--host-list*::
-
-Path to hosts list, which defaults to /etc/ansible/hosts.  Users can use
-multiple files to emulate groups of systems.
-
-
-*-m*, *--module-path*::
-
-Override the path to module library, which defaults to /usr/share/ansible.
-The module library contains runnable modules that do 'things' to remote
-hosts.  See ansible-modules(5) for a list of those that bundled with
-Ansible.
+Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
 
 
 *-f*, *--forks*::
 
-Level of parallelism. Specify as an integer, the default is 3.  If set to "1" 
-debugging for certain classes of internal errors may become easier.
+Level of parallelism. Specify as an integer, the default is 5.
 
 
 *-n*, *--name*::
@@ -59,29 +43,25 @@ Module name to execute.
 
 *-a*, *--args*::
 
-Arguments to module, as a single string.  Be sure to observe proper shell quoting rules.
-How these are handled are up to the module, but most modules take "key=value" pairs
-delimited by spaces.
+Arguments to module, as a single string.  
 
 
 *-p*, *--pattern*::
 
 Hostname pattern. Accepts shell-like globs which can be seperated with ";"
-The default is "*" which matches all hosts in the ansible hosts file.
+The default is "*" which matches all hosts in the ansible hosts file.  Group
+names from the ansible inventory file can also be used.
 
 
-*-u*, *--remote-user*::
-
-Remote user to connect as. Uses __root__ by default.
+See ansible --help for additional options.
 
 
 INVENTORY
 ---------
 
 Ansible stores the hosts it can potentially operate on in an inventory
-file. The syntax is simple: one host per line. Organize your hosts
-into multiple groups by separating them into multiple inventory files.
-
+file. The syntax is one host per line.  Groups headers are allowed and
+are included on their own line, enclosed in square brackets.
 
 FILES
 -----

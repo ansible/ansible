@@ -1,2 +1,12 @@
-127.0.0.1
-192.168.1.255
+[webservers]
+alpha.example.org
+beta.example.org
+192.168.1.100
+192.168.1.110
+
+[dbservers]
+192.168.1.200
+192.168.1.201
+foo.example.org
+bar.example.org
+
