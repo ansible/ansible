@@ -59,6 +59,8 @@ class Cli(object):
             help="try to print output on one line")
         parser.add_option('-t', '--tree', dest='tree', default=None,
             help="if specified, a directory name to save output to, one file per host")
+        parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
+            dest='timeout', help="set the timeout in seconds for ssh")
 
         options, args = parser.parse_args()
 
@@ -82,6 +84,7 @@ class Cli(object):
             remote_user=options.remote_user,
             remote_pass=sshpass,
             host_list=options.host_list,
+            timeout=options.timeout,
             forks=options.forks,
             pattern=options.pattern,
             verbose=True,
