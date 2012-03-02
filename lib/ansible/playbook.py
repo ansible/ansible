@@ -151,6 +151,11 @@ class PlayBook(object):
             remote_user=remote_user
         )
         results = runner.run()
+
+        # if no hosts are matched, carry on, unlike /bin/ansible
+        # which would warn you about this
+        if results is None:
+            results = {}
  
         # walk through the results and build up
         # summary information about successes and

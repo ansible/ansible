@@ -326,7 +326,9 @@ class Runner(object):
         
         # find hosts that match the pattern
         hosts = self.match_hosts(self.pattern)
-        
+        if len(hosts) == 0:
+            return None       
+ 
         # attack pool of hosts in N forks
         # _executor_hook does all of the work
         hosts = [ (self,x) for x in hosts ]

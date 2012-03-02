@@ -19,8 +19,8 @@
 # control side (aka 'overlord')
 DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
 DEFAULT_MODULE_PATH    = '/usr/share/ansible'
-DEFAULT_MODULE_NAME    = 'ping'
-DEFAULT_PATTERN        = '*'
+DEFAULT_MODULE_NAME    = 'command'
+DEFAULT_PATTERN        = None
 DEFAULT_FORKS          = 3
 DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 10

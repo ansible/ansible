@@ -38,37 +38,33 @@ class Cli(object):
         pass
 
     def runner(self):
-        parser = OptionParser()
+        parser = OptionParser(usage = 'ansible <host-pattern> [options]')
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-            help='set the number of forks to start up')
-        parser.add_option("-p", "--host-pattern", dest="hosts",
-            help="hostname glob or group name", default=C.DEFAULT_PATTERN)
-        parser.add_option("-i", "--inventory", dest="inventory",
-           help="inventory host list", default=C.DEFAULT_HOST_LIST)
+            help='number of parallel processes to use')
+        parser.add_option("-i", "--inventory-file", dest="inventory",
+           help="inventory host file", default=C.DEFAULT_HOST_LIST)
         parser.add_option("-k", "--ask-pass", default=False, action="store_true",
-            help="ask the user to input the ssh password for connecting")
-        parser.add_option("-m", "--module-path", dest="module_path",
+            help="ask for SSH password")
+        parser.add_option("-M", "--module-path", dest="module_path",
            help="path to module library", default=C.DEFAULT_MODULE_PATH)
-        parser.add_option("-n", "--name", dest="module_name",
-            help="module name to execute", default=None)
+        parser.add_option("-m", "--module-name", dest="module_name",
+            help="module name to execute", default=C.DEFAULT_MODULE_NAME)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-            help="try to print output on one line")
+            help="condense output")
         parser.add_option('-t', '--tree', dest='tree', default=None,
-            help="if specified, a directory name to save output to, one file per host")
+            help="log output to this directory")
         parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
-            dest='timeout', help="set the timeout in seconds for ssh")
+            dest='timeout', help="set the SSH timeout in seconds")
         parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='set the default username')
+            dest='remote_user', help='connect as this user')
         options, args = parser.parse_args()
 
-        if options.module_name is None:
-            print >> sys.stderr, "-n is required"
+        if len(args) == 0 or len(args) > 1:
+            parser.print_help()
             sys.exit(1)
-
-        # TODO: more shell like splitting on module_args would
-        # be a good idea
+        pattern = args[0]
 
         sshpass = None
         if options.ask_pass:
@@ -85,7 +81,7 @@ class Cli(object):
             host_list=options.inventory,
             timeout=options.timeout,
             forks=options.forks,
-            pattern=options.hosts,
+            pattern=pattern,
             verbose=True,
         )
         return runner
@@ -94,6 +90,10 @@ class Cli(object):
 
         # if specifying output destination (aka tree output saves), create the
         # directory to output to
+
+        if results is None:
+           print >> sys.stderr, "No hosts matched"
+           sys.exit(1)
 
         options = self.options
 
@@ -117,64 +117,64 @@ class Cli(object):
         
         for hostname in sorted(results['contacted']):
             result    = results['contacted'][hostname]
+            
+            # TODO: refactor
             rc        = 0
+            msg       = ''
             failed    = False
             stdout    = None
             stderr    = None
             traceback = None
-            error     = None
             if type(result) == dict:
                 failed    = result.get('failed', 0)
+                msg       = result.get('msg', '')
                 if module_name == 'command':
+                    # TODO: refactor
                     rc        = result.get('rc',0)
                     stdout    = result.get('stdout', '')
                     stderr    = result.get('stderr', '')
                     traceback = result.get('traceback', '')
-                    error     = result.get('error', '')
-
-            # detect and show failures, if any
-            if rc != 0 or failed:
-                msg = "Error: %s: \n" % hostname
-                if stdout:
-                    msg += stdout
-                if stderr:
-                    msg += stderr
-                if traceback:
-                    msg += traceback
-                if error:
-                    msg += error
-                print >> sys.stderr, msg
-                continue
 
             if options.one_line:
                 # try to print everything on one line, but don't strip newlines
                 # if the command output happend to be too long
                 if module_name == 'command':
-                    msg = "(stdout) %s" % stdout
-                    if stderr.rstrip() != '':
-                        msg = "(stdout) %s (stderr) %s" % (stdout,stderr)
-                    print "%s | rc=%s | %s" % (
-                        hostname, rc, msg
-                    ) 
+                    if not failed:
+                        buf = "(stdout) %s" % stdout
+                        if stderr.rstrip() != '':
+                            buf = "(stdout) %s (stderr) %s" % (stdout,stderr)
+                        print "%s | rc=%s | %s" % (
+                            hostname, rc, buf
+                        )
+                    else:
+                        print "%s | (error) %s" % (hostname, msg)
                 else:
                     print "%s | %s" % (hostname, result)
             else:
                 # summarize response from command in multiple lines
+                buf = ''
                 if module_name == 'command':
-                    buf = ''
-                    buf += "%s | rc=%s >>\n" % (hostname, rc)
+                    if not failed:
+                        buf += "%s | rc=%s >>\n" % (hostname, rc)
+                    else:
+                        buf += "%s | rc=%s | FAILED >>\n" % (hostname, rc)
                     buf += stdout
                     if stderr:
                         buf += stderr
+                    if msg:
+                        buf += msg
                     print buf
-                    if options.tree:
-                        path = os.path.join(options.tree, hostname)
-                        fd = open(path, "w+")
-                        fd.write(buf)
-                        fd.close()
                 else:
-                    print "%s >>" % hostname
-                    print json.dumps(result, indent=4, sort_keys=True)
+                    if not failed:
+                        buf += "%s >>" % hostname
+                    else:
+                        buf += "%s | FAILED >>" % hostname
+                    buf += json.dumps(result, indent=4, sort_keys=True)
+                if options.tree:
+                    path = os.path.join(options.tree, hostname)
+                    fd = open(path, "w+")
+                    fd.write(buf)
+                    fd.close()
 
         if len(results['dark'].keys()) > 0:
             print >> sys.stderr, "*** Hosts which could not be contacted or did not respond: ***"

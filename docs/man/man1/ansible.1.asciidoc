@@ -12,7 +12,7 @@ ansible - run a command somewhere else
 
 SYNOPSIS
 --------
-ansible [-f forks] [-p pattern ] [-n module_name] [-a args]
+ansible <host-pattern> [-f forks] [-m module_name] [-a args]
 
 
 DESCRIPTION
@@ -20,6 +20,15 @@ DESCRIPTION
 
 *Ansible* is an extra-simple tool/framework/API for doing \'remote things' over
 SSH.
+
+
+ARGUMENTS
+---------
+
+*hostspec*
+
+A name of a group in the inventory file, a shell-like glob selecting hosts in inventory
+file, or any combination of the two seperated by semicolons.
 
 
 OPTIONS
@@ -36,14 +45,9 @@ Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
 Level of parallelism. Specify as an integer, the default is 5.
 
 
-*-n*, *--name*::
+*-m*, *--module-name*::
 
 Module name to execute.
-
-
-*-a*, *--args*::
-
-Arguments to module, as a single string.  
 
 
 *-p*, *--pattern*::
@@ -89,8 +93,9 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
+Ansible home page: <https://github.com/mpdehaan/ansible/>
+
 *ansible-modules*(5), 
 
 *ansible-playbook*(5),
 
-Ansible home page: <https://github.com/mpdehaan/ansible/>

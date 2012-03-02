@@ -66,22 +66,22 @@ Example:
     192.168.10.52
 
 When running ansible commands, specific hosts are addressed by wildcard or group name. 
-The default pattern is '*', meaning all ansible hosts.
+This is required for all ansible commands.
 
-    -p '*.example.com'
-    -p 'atlanta;raleigh'
-    -p 'database*;appserver*'
-    -p '192.168.10.50;192.168.10.52'
+    '*.example.com'
+    'atlanta;raleigh'
+    'database*;appserver*'
+    '192.168.10.50;192.168.10.52'
 
 Example: Massive Parallelism and Running Shell Commands
 =======================================================
 
 Reboot all web servers in Atlanta, 10 at a time:
  
-    ssh-agent bash
-    ssh-add ~/.ssh/id_rsa.pub
+    > ssh-agent bash
+    > ssh-add ~/.ssh/id_rsa.pub
 
-    ansible -p "atlanta-web*" -f 10 -n command -a "/sbin/reboot"
+    > ansible atlanta -a "/sbin/reboot" -f 10
 
 The -f 10 specifies the usage of 10 simultaneous processes.
 
@@ -98,15 +98,15 @@ them as template sources.
 
 To just transfer a file directly to many different servers:
 
-    ansible -n copy -a "/etc/hosts /tmp/hosts"
+    > ansible atlanta copy -a "/etc/hosts /tmp/hosts"
 
 To use templating, first run the setup module to put the template variables you would
 like to use on the remote host.  Then use the template module to write the
 files using the templates.  Templates are written in Jinja2 format.
 
-    ansible -p webservers -n setup -a "favcolor=red ntp_server=192.168.1.1"
-    ansible -p webservers -n template -a "src=/srv/motd.j2 dest=/etc/motd"
-    ansible -p webservers -n template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
+    > ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
+    > ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
+    > ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
 
 Need something like the fqdn in a template?  If facter or ohai are installed, data from these projects
 will also be made available to the template engine, using 'facter_' and 'ohai_' prefixes for each.
@@ -116,7 +116,7 @@ Example: Software Deployment From Source Control
 
 Deploy your webapp straight from git
 
-    ansible -p webservers -n git -a "repo=git://foo dest=/srv/myapp version=HEAD"
+    > ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"
 
 Other Modules
 =============
