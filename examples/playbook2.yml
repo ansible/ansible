@@ -1,6 +1,5 @@
 ---
-- pattern: '*'
-  hosts: /etc/ansible/hosts
+- hosts: '*'
   tasks:
   - name: config step
     action: setup a=2 b=3 c=4

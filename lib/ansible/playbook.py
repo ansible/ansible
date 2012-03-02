@@ -241,12 +241,12 @@ class PlayBook(object):
         '''
 
         # get configuration information about the pattern
-        pattern  = pg['pattern']
+        pattern  = pg['hosts']
         tasks    = pg['tasks']
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
 
-        host_file = pg.get('hosts', '/etc/ansible/hosts')
+        host_file = pg.get('inventory', '/etc/ansible/hosts')
         self.host_list, groups = ansible.runner.Runner.parse_hosts(host_file)
 
         if self.verbose:
