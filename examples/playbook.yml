@@ -1,6 +1,7 @@
 ---
 - hosts: '*'
   tasks:
+  - include: base.yml
   - name: configure template & module variables for future template calls
     action: setup http_port=80 max_clients=200
   - name: write the apache config file
@@ -10,5 +11,4 @@
   - name: ensure apache is running
     action: service name=httpd state=started
   handlers:
-    - name: restart apache
-    - action: service name=httpd state=restarted
+    - include: handlers.yml

@@ -1,0 +1,5 @@
+---
+- name: no selinux
+  action: command /usr/sbin/setenforce 0
+- name: no iptables
+  action: service name=iptables state=stopped

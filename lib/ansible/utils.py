@@ -165,4 +165,12 @@ def prepare_writeable_dir(tree):
     if not os.access(tree, os.W_OK):
         exit("Cannot write to path %s" % tree)
 
+def path_dwim(basedir, given):
+    if given.startswith("/"):
+        return given
+    elif given.startswith("~/"):
+        return os.path.expanduser(given)
+    else:
+        return os.path.join(basedir, given)
 
+  

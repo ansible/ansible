@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+#############################################
+
 import ansible.runner
 import ansible.constants as C
 from ansible.utils import *
 import yaml
 import shlex
+import os
 
-# TODO: make a constants file rather than
-# duplicating these
+#############################################
 
 class PlayBook(object):
 
@@ -72,9 +74,43 @@ class PlayBook(object):
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
 
-        if type(playbook) == str:
-            playbook = yaml.load(file(playbook).read())
-        self.playbook = playbook
+        self.playbook = self._parse_playbook(playbook)
+
+    def _parse_playbook(self, playbook):
+        ''' load YAML file, including handling for imported files '''
+        
+        dirname  = os.path.dirname(playbook)
+        playbook = yaml.load(file(playbook).read())
+
+        for play in playbook:
+            tasks = play.get('tasks',[])
+            handlers = play.get('handlers', [])
+
+            # process tasks in this file as well as imported tasks
+            new_tasks = []
+            for task in tasks:
+               if 'include' in task:
+                   path = path_dwim(dirname, task['include'])
+                   included = yaml.load(file(path).read())
+                   for x in included:
+                       new_tasks.append(x)
+               else:
+                   new_tasks.append(task)
+            play['tasks'] = new_tasks
+
+            # process handlers as well as imported handlers
+            new_handlers = [] 
+            for handler in handlers:
+               if 'include' in handler:
+                   path = path_dwim(dirname, handler['include'])
+                   included = yaml.load(file(path).read())
+                   for x in included:
+                       new_handlers.append(x)
+               else:
+                   new_handlers.append(handler)
+            play['handlers'] = new_handlers
+
+        return playbook
         
     def run(self):
         ''' run all patterns in the playbook '''
@@ -227,7 +263,7 @@ class PlayBook(object):
             if match_name == name:
                 # flag the handler with the list of hosts
                 # it needs to be run on, it will be run later
-                if not run in x:
+                if not 'run' in x:
                     x['run'] = []
                 x['run'].append(host)
 

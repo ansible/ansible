@@ -1,0 +1,5 @@
+---
+- name: restart apache
+  action: service name=httpd state=restarted
+- name: restart memcached
+  action: service name=memcached state=restarted
