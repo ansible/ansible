@@ -32,13 +32,14 @@ import traceback
 if len(sys.argv) < 3:
     print json.dumps({
         "failed" : True,
-        "msg"    : "usage: async_wrapper <jid> <module_script> <args>.  Humans, do not call directly!"
+        "msg"    : "usage: async_wrapper <jid> <module_script> <time_limit> <args>.  Humans, do not call directly!"
     })
     sys.exit(1)
 
 jid = sys.argv[1]
 wrapped_module = sys.argv[2]
-args = sys.argv[3:]
+time_limit = sys.argv[3]
+args = sys.argv[4:]
 
 cmd = "%s %s" % (wrapped_module, " ".join(args))
 
