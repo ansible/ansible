@@ -28,6 +28,8 @@ import subprocess
 import sys
 import datetime
 import traceback
+import signal
+import time
 
 if len(sys.argv) < 3:
     print json.dumps({
@@ -66,7 +68,6 @@ def _run_command(wrapped_cmd, jid, log_path):
 
     try:
         cmd = shlex.split(wrapped_cmd)
-        subprocess.call("/usr/bin/logger %s" % wrapped_cmd, shell=True)
         script = subprocess.Popen(cmd, shell=False, 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = script.communicate()
@@ -90,28 +91,36 @@ def _run_command(wrapped_cmd, jid, log_path):
     logfile.write(json.dumps(result))
     logfile.close()
 
-# TODO: daemonize this with time limits
-# TODO: might be nice to keep timing data, eventually...
-
+# immediately exit this process, leaving an orphaned process
+# running which immediately forks a supervisory timing process
 
 pid = os.fork()
 if pid == 0:
+   print "RETURNING SUCCESS IN UNO"
    print json.dumps({ "started" : 1, "ansible_job_id" : jid })
    sys.exit(0)
 else:
+   print "DAEMONIZED DOS"
+   sub_pid = os.fork()
+   if sub_pid == 0:
+       print "RUNNING IN KID A"
+       _run_command(cmd, jid, log_path)
+       sys.exit(0)
+   else:
+       print "WATCHING IN KID B"
+       remaining = int(time_limit)
+       if os.path.exists("/proc/%s" % sub_pid):
+           print "STILL RUNNING"
+           time.sleep(1)
+           remaining = remaining - 1
+       else:
+           print "DONE IN KID B"
+           sys.exit(0)
+       if remaining == 0:
+           print "SLAYING IN KID B"
+           os.kill(sub_pid, signals.SIGKILL)
+           sys.exit(1)
 
-   # FIXME: need to implement time limits
-   # probably something easy like:
-   #
-   #   sub_pid = os.fork()
-   #   if sub_pid == 0:
-   #      run command
-   #   else
-   #      check status
-   #      sleep 1 second
-   #      kill if greater than timelimit
-
-   _run_command(cmd, jid, log_path)
    sys.exit(0)
 
 
