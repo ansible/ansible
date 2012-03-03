@@ -1,5 +1,6 @@
 ---
-- hosts: '*'
+- hosts: all
+  user: root
   tasks:
   - include: base.yml
   - name: configure template & module variables for future template calls
