@@ -21,6 +21,7 @@
 import sys
 import ansible.playbook
 import ansible.constants as C
+import getpass
 from optparse import OptionParser
 
 #######################################################
@@ -33,21 +34,32 @@ def main(args):
     parser.usage = "ans-playbook playbook.yml ..."
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')
-    parser.add_option("-m", "--module-path", dest="module_path",
+    parser.add_option("-i", "--inventory-file", dest="inventory",
+        help="inventory host file", default=C.DEFAULT_HOST_LIST)
+    parser.add_option("-k", "--ask-pass", default=False, action="store_true",
+        help="ask for SSH password")
+    parser.add_option("-M", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
+
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
-       print >> sys.stderr, "playbook path is a required argument"
-       return 1
+        print >> sys.stderr, "playbook path is a required argument"
+        return 1
+
+    sshpass = None
+    if options.ask_pass:
+        sshpass = getpass.getpass(prompt="SSH password: ")
 
     # run all playbooks specified on the command line
     for playbook in args:
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
+            host_list=options.inventory,
             module_path=options.module_path,
             forks=options.forks,
-            verbose=True
+            verbose=True,
+            remote_pass=sshpass,
         )
         pb.run()
 

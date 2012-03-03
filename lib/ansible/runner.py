@@ -272,10 +272,11 @@ class Runner(object):
         # module, call the appropriate executor function
 
         ok, conn = self._connect(host)
+        if not ok:
+            return [ host, False, conn ]
+           
         tmp = self._get_tmp_path(conn)
         result = None
-        if not ok:
-            result = [ host, False, conn ]
         if self.module_name not in [ 'copy', 'template' ]:
             result = self._execute_normal_module(conn, host, tmp)
         elif self.module_name == 'copy':

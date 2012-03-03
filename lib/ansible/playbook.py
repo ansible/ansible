@@ -242,8 +242,7 @@ class PlayBook(object):
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
 
-        host_file = pg.get('inventory', '/etc/ansible/hosts')
-        self.host_list, groups = ansible.runner.Runner.parse_hosts(host_file)
+        self.host_list, groups = ansible.runner.Runner.parse_hosts(self.host_list)
 
         if self.verbose:
             print "PLAY [%s] ****************************\n" % pattern
