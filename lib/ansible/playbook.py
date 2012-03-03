@@ -161,8 +161,8 @@ class PlayBook(object):
         # summary information about successes and
         # failures.  TODO: split into subfunction
 
-        dark = results.get("dark", [])
-        contacted = results.get("contacted", [])
+        dark = results.get("dark", {})
+        contacted = results.get("contacted", {})
         ok_hosts = contacted.keys()
 
         for host, msg in dark.items():

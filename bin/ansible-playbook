@@ -15,14 +15,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+#######################################################
 
 import sys
 import ansible.playbook
 import ansible.constants as C
 from optparse import OptionParser
 
+#######################################################
+
 def main(args):
+    ''' run ansible-playbook operations '''
+
+    # create parser for CLI options
     parser = OptionParser()
     parser.usage = "ans-playbook playbook.yml ..."
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
@@ -35,6 +41,7 @@ def main(args):
        print >> sys.stderr, "playbook path is a required argument"
        return 1
 
+    # run all playbooks specified on the command line
     for playbook in args:
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
