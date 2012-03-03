@@ -166,10 +166,10 @@ class Cli(object):
                     print buf
                 else:
                     if not failed:
-                        buf += "%s >>" % hostname
+                        buf += "%s >>\n" % hostname
                     else:
-                        buf += "%s | FAILED >>" % hostname
-                    buf += json.dumps(result, indent=4, sort_keys=True)
+                        buf += "%s | FAILED >>\n" % hostname
+                    buf += json.dumps(result, sort_keys=True)
                     print buf
                 if options.tree:
                     path = os.path.join(options.tree, hostname)
