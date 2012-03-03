@@ -170,6 +170,7 @@ class Cli(object):
                     else:
                         buf += "%s | FAILED >>" % hostname
                     buf += json.dumps(result, indent=4, sort_keys=True)
+                    print buf
                 if options.tree:
                     path = os.path.join(options.tree, hostname)
                     fd = open(path, "w+")

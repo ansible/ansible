@@ -121,6 +121,8 @@ class Runner(object):
         subpatterns = pattern.split(";")
         for subpattern in subpatterns:
             # the pattern could be a real glob
+            if subpattern == 'all':
+                return True
             if fnmatch.fnmatch(host_name, subpattern):
                 return True
             # or it could be a literal group name instead

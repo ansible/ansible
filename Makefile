@@ -24,6 +24,7 @@ pep8:
 	pep8 lib/
 
 clean:
+	rm -rf build
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
 	find . -type f -name "*~" -delete
