@@ -129,7 +129,8 @@ class Runner(object):
 
         if host_name == '':
             return False
-        subpatterns = pattern.split(";")
+        pattern = pattern.replace(";",":")
+        subpatterns = pattern.split(":")
         for subpattern in subpatterns:
             # the pattern could be a real glob
             if subpattern == 'all':
