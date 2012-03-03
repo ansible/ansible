@@ -52,6 +52,8 @@ class Cli(object):
         parser = OptionParser(usage = 'ansible <host-pattern> [options]')
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+        parser.add_option("-B", "--background", dest="seconds", default=0,
+            help="run asynchronously, failing after X seconds")
         parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
             help='number of parallel processes to use')
         parser.add_option("-i", "--inventory-file", dest="inventory",
@@ -96,6 +98,7 @@ class Cli(object):
             host_list=options.inventory,
             timeout=options.timeout,
             forks=options.forks,
+            background=options.seconds,
             pattern=pattern,
             verbose=True,
         ).run()

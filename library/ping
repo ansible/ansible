@@ -22,4 +22,4 @@ try:
 except ImportError:
     import simplejson as json
 
-print json.dumps(1)
+print json.dumps({ "ping" : "pong" })

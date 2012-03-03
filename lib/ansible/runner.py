@@ -30,6 +30,7 @@ import os
 import ansible.constants as C 
 import Queue
 import paramiko
+import random
 
 ################################################
 
@@ -56,6 +57,7 @@ class Runner(object):
         pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER,
         remote_pass=C.DEFAULT_REMOTE_PASS,
+        background=0,
         verbose=False):
     
         ''' 
@@ -68,6 +70,7 @@ class Runner(object):
         forks -------- how parallel should we be? 1 is extra debuggable.
         remote_user -- who to login as (default root)
         remote_pass -- provide only if you don't want to use keys or ssh-agent
+        background --- if non 0, run async, failing after X seconds, -1 == infinite
         '''
 
         # save input values
@@ -82,8 +85,13 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
+        self.background  = background
+
         # hosts in each group name in the inventory file
         self._tmp_paths  = {}
+
+        random.seed()
+        self.generated_jid = str(random.randint(0, 999999999999))
 
     @classmethod
     def parse_hosts(cls, host_list):
@@ -162,7 +170,11 @@ class Runner(object):
 
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
+        if type(files) == str:
+            files = [ files ]
         for filename in files:
+            if not filename.startswith('/tmp/'):
+                raise Exception("not going to happen")
             self._exec_command(conn, "rm -rf %s" % filename)
 
     def _transfer_file(self, conn, source, dest):
@@ -172,20 +184,21 @@ class Runner(object):
         sftp.put(source, dest)
         sftp.close()
 
-    def _transfer_module(self, conn, tmp):
+    def _transfer_module(self, conn, tmp, module):
         ''' 
         transfers a module file to the remote side to execute it,
         but does not execute it yet
         '''
-        outpath = self._copy_module(conn, tmp)
+        outpath = self._copy_module(conn, tmp, module)
         self._exec_command(conn, "chmod +x %s" % outpath)
         return outpath
 
-    def _execute_module(self, conn, outpath, tmp):
+    def _execute_module(self, conn, tmp, remote_module_path, module_args):
         ''' 
         runs a module that has already been transferred
         '''
-        cmd = self._command(outpath)
+        args = " ".join(module_args)
+        cmd = "%s %s" % (remote_module_path, args)
         result = self._exec_command(conn, cmd)
         self._delete_remote_files(conn, [ tmp ])
         return result
@@ -195,11 +208,23 @@ class Runner(object):
         transfer & execute a module that is not 'copy' or 'template'
         because those require extra work.
         '''
-        module = self._transfer_module(conn, tmp)
-        result = self._execute_module(conn, module, tmp)
+        module = self._transfer_module(conn, tmp, self.module_name)
+        result = self._execute_module(conn, tmp, module, self.module_args)
         self._delete_remote_files(conn, tmp)
-        result = self._return_from_module(conn, host, result)
-        return result
+        return self._return_from_module(conn, host, result)
+
+    def _execute_async_module(self, conn, host, tmp):
+        ''' 
+        transfer the given module name, plus the async module
+        and then run the async module wrapping the other module
+        '''
+        async  = self._transfer_module(conn, tmp, 'async_wrapper')
+        module = self._transfer_module(conn, tmp, self.module_name)
+        new_args = [] 
+        new_args = [ self.generated_jid, module ]
+        new_args.extend(self.module_args)
+        result = self._execute_module(conn, tmp, async, new_args)
+        return self._return_from_module(conn, host, result)
 
     def _parse_kv(self, args):
         ''' helper function to convert a string of key/value items to a dict '''
@@ -225,11 +250,11 @@ class Runner(object):
 
         # install the copy  module
         self.module_name = 'copy'
-        module = self._transfer_module(conn)
+        module = self._transfer_module(conn, tmp, 'copy')
 
         # run the copy module
-        self.module_args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
-        result = self._execute_module(conn, module, tmp)
+        args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
+        result = self._execute_module(conn, tmp, module, args)
         self._delete_remote_files(conn, tmp_path)
         return self._return_from_module(conn, host, result)
 
@@ -253,8 +278,8 @@ class Runner(object):
         module = self._transfer_module(conn, tmp)
 
         # run the template module
-        self.module_args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
-        result = self._execute_module(conn, module, tmp)
+        args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
+        result = self._execute_module(conn, tmp, module, args)
         self._delete_remote_files(conn, [ tpath ])
         return self._return_from_module(conn, host, result)
 
@@ -278,7 +303,10 @@ class Runner(object):
         tmp = self._get_tmp_path(conn)
         result = None
         if self.module_name not in [ 'copy', 'template' ]:
-            result = self._execute_normal_module(conn, host, tmp)
+            if self.background == 0:
+                result = self._execute_normal_module(conn, host, tmp)
+            else:
+                result = self._execute_async_module(conn, host, tmp)
         elif self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'template':
@@ -290,12 +318,6 @@ class Runner(object):
         self._delete_remote_files(conn, tmp)
         conn.close()
         return result
-
-
-    def _command(self, outpath):
-        ''' form up a command string for running over SSH '''
-        cmd = "%s %s" % (outpath, " ".join(self.module_args))
-        return cmd
 
     def remote_log(self, conn, msg):
         ''' this is the function we use to log things '''
@@ -315,12 +337,12 @@ class Runner(object):
         result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
         return result.split("\n")[0] + '/'
 
-    def _copy_module(self, conn, tmp):
+    def _copy_module(self, conn, tmp, module):
         ''' transfer a module over SFTP, does not run it '''
         in_path = os.path.expanduser(
-            os.path.join(self.module_path, self.module_name)
+            os.path.join(self.module_path, module)
         )
-        out_path = tmp + self.module_name
+        out_path = tmp + module
         sftp = conn.open_sftp()
         sftp.put(in_path, out_path)
         sftp.close()
@@ -359,7 +381,6 @@ class Runner(object):
                 for worker in workers:
                     worker.join()
             except KeyboardInterrupt:
-                print 'parent received ctrl-c'
                 for worker in workers:
                     worker.terminate()
                     worker.join()
