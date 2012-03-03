@@ -21,7 +21,6 @@ try:
     import json
 except ImportError:
     import simplejson as json
-
 from optparse import OptionParser
 import sys
 import os
@@ -31,13 +30,19 @@ import ansible.runner
 import ansible.playbook
 import ansible.constants as C
 from optparse import OptionParser
+from ansible.utils import *
 
 class Cli(object):
+    
+    # ----------------------------------------------     
 
     def __init__(self):
         pass
 
-    def runner(self):
+    # ----------------------------------------------     
+
+    def parse(self):
+
         parser = OptionParser(usage = 'ansible <host-pattern> [options]')
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
@@ -60,19 +65,22 @@ class Cli(object):
         parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
             dest='remote_user', help='connect as this user')
         options, args = parser.parse_args()
-
+        
         if len(args) == 0 or len(args) > 1:
             parser.print_help()
             sys.exit(1)
-        pattern = args[0]
+        return (options, args)   
+    
+    # ----------------------------------------------     
+ 
+    def run(self, options, args):
 
+        pattern = args[0]
         sshpass = None
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
 
-        self.options = options
-
-        runner = ansible.runner.Runner(
+        return ansible.runner.Runner(
             module_name=options.module_name,
             module_path=options.module_path,
             module_args=shlex.split(options.module_args),
@@ -83,108 +91,38 @@ class Cli(object):
             forks=options.forks,
             pattern=pattern,
             verbose=True,
-        )
-        return runner
+        ).run()
 
-    def output(self, results):
+    # ----------------------------------------------     
 
-        # if specifying output destination (aka tree output saves), create the
-        # directory to output to
+    def output(self, results, options, args):
 
         if results is None:
-           print >> sys.stderr, "No hosts matched"
-           sys.exit(1)
-
-        options = self.options
-
-        # TODO: split into function 
+           exit("No hosts matched")
         if options.tree:
-            if options.tree[0] != '/':
-                options.tree = os.path.realpath(os.path.expanduser(options.tree))
-            if not os.path.exists(options.tree):
-                try:
-                    os.makedirs(options.tree)
-                except (IOError, OSError), e:
-                    print >> sys.stderr, "Could not make dir %s: %s" % (options.tree, e)
-                    sys.exit(1)
-            if not os.access(options.tree, os.W_OK):
-                print >> sys.stderr, "Cannot write to path %s" % options.tree
-                sys.exit(1)
+            prepare_writeable_dir(options.tree)
 
-        # now walk results and print output
-
-        module_name = self.options.module_name
-        
-        for hostname in sorted(results['contacted']):
-            result    = results['contacted'][hostname]
+        buf = '' 
+        for hostname in contacted_hosts(results):
+            msg = host_report_msg(
+                hostname, 
+                options.module_name, 
+                contacted_host_result(results, hostname),
+                options.one_line
+            )
+            if options.tree:
+                write_tree_file(hostname, msg)
+            buf += msg
             
-            # TODO: refactor
-            rc        = 0
-            msg       = ''
-            failed    = False
-            stdout    = None
-            stderr    = None
-            traceback = None
-            if type(result) == dict:
-                failed    = result.get('failed', 0)
-                msg       = result.get('msg', '')
-                if module_name == 'command':
-                    # TODO: refactor
-                    rc        = result.get('rc',0)
-                    stdout    = result.get('stdout', '')
-                    stderr    = result.get('stderr', '')
-                    traceback = result.get('traceback', '')
+        if has_dark_hosts(results):
+            buf += dark_hosts_msg(results)
 
-            if options.one_line:
-                # try to print everything on one line, but don't strip newlines
-                # if the command output happend to be too long
-                if module_name == 'command':
-                    if not failed:
-                        buf = "(stdout) %s" % stdout
-                        if stderr.rstrip() != '':
-                            buf = "(stdout) %s (stderr) %s" % (stdout,stderr)
-                        print "%s | rc=%s | %s" % (
-                            hostname, rc, buf
-                        )
-                    else:
-                        print "%s | (error) %s" % (hostname, msg)
-                else:
-                    print "%s | %s" % (hostname, result)
-            else:
-                # summarize response from command in multiple lines
-                buf = ''
-                if module_name == 'command':
-                    if not failed:
-                        buf += "%s | rc=%s >>\n" % (hostname, rc)
-                    else:
-                        buf += "%s | rc=%s | FAILED >>\n" % (hostname, rc)
-                    buf += stdout
-                    if stderr:
-                        buf += stderr
-                    if msg:
-                        buf += msg
-                    print buf
-                else:
-                    if not failed:
-                        buf += "%s >>\n" % hostname
-                    else:
-                        buf += "%s | FAILED >>\n" % hostname
-                    buf += json.dumps(result, sort_keys=True)
-                    print buf
-                if options.tree:
-                    path = os.path.join(options.tree, hostname)
-                    fd = open(path, "w+")
-                    fd.write(buf)
-                    fd.close()
-
-        if len(results['dark'].keys()) > 0:
-            print >> sys.stderr, "*** Hosts which could not be contacted or did not respond: ***"
-            failed_hosts = results['dark'].keys()
-            for hostname in failed_hosts:
-                print >> sys.stderr, "%s:\n%s\n" % (hostname, results['dark'][hostname])
-            print ""
+        print buf
 
 if __name__ == '__main__':
     cli = Cli()
-    cli.output(cli.runner().run())
+    (options, args) = cli.parse()
+    results = cli.run(options, args)
+    cli.output(results, options, args)
     
+

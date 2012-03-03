@@ -36,16 +36,21 @@ Design Principles
 Requirements
 ============
 
-For the server the tool is running from, *only*:
+Requirements are extremely minimal.
+
+If you are running python 2.6 on the 'overlord' machine, you will need:
 
    * paramiko
-   * python 2.6 (or the 2.4/2.5 backport of the multiprocessing module)
-   * PyYAML (only if using playbooks)
+   * PyYAML (if using playbooks)
 
-Optional -- If you want to push templates, the nodes need a template library,
-which for bonus points you can install with ansible!  Easy enough.
+If you are running less than Python 2.6, you will also need
 
-   * python-jinja2 
+   * the Python 2.4 or 2.5 backport of the multiprocessing module
+   * simplejson
+
+On the managed nodes, to use templating, you will need:
+
+   * python-jinja2 (you can install this with ansible)
 
 Patterns and Groups
 ===================
