@@ -96,28 +96,28 @@ def _run_command(wrapped_cmd, jid, log_path):
 
 pid = os.fork()
 if pid == 0:
-   print "RETURNING SUCCESS IN UNO"
+   # "RETURNING SUCCESS IN UNO"
    print json.dumps({ "started" : 1, "ansible_job_id" : jid })
    sys.exit(0)
 else:
-   print "DAEMONIZED DOS"
+   # "DAEMONIZED DOS"
    sub_pid = os.fork()
    if sub_pid == 0:
-       print "RUNNING IN KID A"
+       # "RUNNING IN KID A"
        _run_command(cmd, jid, log_path)
        sys.exit(0)
    else:
-       print "WATCHING IN KID B"
+       # "WATCHING IN KID B"
        remaining = int(time_limit)
        if os.path.exists("/proc/%s" % sub_pid):
-           print "STILL RUNNING"
+           # "STILL RUNNING"
            time.sleep(1)
            remaining = remaining - 1
        else:
-           print "DONE IN KID B"
+           # "DONE IN KID B"
            sys.exit(0)
        if remaining == 0:
-           print "SLAYING IN KID B"
+           # "SLAYING IN KID B"
            os.kill(sub_pid, signals.SIGKILL)
            sys.exit(1)
 
