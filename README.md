@@ -56,7 +56,7 @@ Patterns and Groups
 ===================
 
 Ansible works off an inventory file (/etc/ansible/hosts or overrideable with -i).  Hosts can
-be listed by IP or hostname, and groups are supported with square brackets:
+be listed by IP or hostname, and groups are denoted with square brackets:
 
 Example:
 
@@ -70,13 +70,15 @@ Example:
     [raleigh]
     192.168.10.52
 
-When running ansible commands, specific hosts are addressed by wildcard or group name. 
-This is required for all ansible commands.
+When running ansible commands, hosts are addressed by name, wildcard, or group name. 
+This specifier is used in all ansible commands.  'all' is a built-in group name that matches all
+hosts.  Group names and host wildcards can be mixed as needed:
 
-    '*.example.com'
+    all
+    'web*.example.com'
+    'appservers;dbservers'
     'atlanta;raleigh'
-    'database*;appserver*'
-    '192.168.10.50;192.168.10.52'
+    '192.168.10.50'
 
 Example: Massive Parallelism and Running Shell Commands
 =======================================================
