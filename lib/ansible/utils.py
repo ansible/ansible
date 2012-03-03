@@ -36,20 +36,26 @@ def exit(msg, rc=1):
     err(msg)
     sys.exit(rc)
 
-def _bigjson(result):
+def bigjson(result):
     ''' format JSON output (uncompressed) '''
     return json.dumps(result, sort_keys=True, indent=4)
 
-def _json(result):
+def smjson(result):
     ''' format JSON output (compressed) '''
     return json.dumps(result, sort_keys=True)
+
+def task_start_msg(name, conditional):
+    if conditional:
+        return "NOTIFIED: [%s] **********\n" % name
+    else:
+        return "TASK: [%s] *********\n" % name
 
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''
     if not oneline:
-        return "%s | %s >>\n%s" % (hostname, caption, _bigjson(result))
+        return "%s | %s >>\n%s" % (hostname, caption, bigjson(result))
     else:
-        return "%s | %s >> %s" % (hostname, caption, _json(result))
+        return "%s | %s >> %s" % (hostname, caption, smjson(result))
 
 def regular_success_msg(hostname, result, oneline):
     ''' output the result of a successful module run '''

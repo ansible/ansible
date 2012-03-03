@@ -17,6 +17,7 @@
 
 import ansible.runner
 import ansible.constants as C
+from ansible.utils import *
 import yaml
 import shlex
 
@@ -94,6 +95,27 @@ class PlayBook(object):
             } 
         return results
 
+    def _prune_failed_hosts(self, host_list):
+        new_hosts = []
+        for x in host_list:
+            if not self.failures.has_key(x) and not self.dark.has_key(x):
+                new_hosts.append(x)
+        return new_hosts
+
+    def _run_module(self, pattern, module, args, hosts, remote_user):
+        ''' run a particular module step in a playbook '''
+        return ansible.runner.Runner(
+            pattern=pattern,
+            module_name=module,
+            module_args=args,
+            host_list=hosts,
+            forks=self.forks,
+            remote_pass=self.remote_pass,
+            module_path=self.module_path,
+            timeout=self.timeout,
+            remote_user=remote_user
+        ).run()
+
     def _run_task(self, pattern=None, task=None, host_list=None, 
         remote_user=None, handlers=None, conditional=False):
         ''' 
@@ -109,14 +131,9 @@ class PlayBook(object):
             (host_list, groups) = ansible.runner.Runner.parse_hosts(host_list)
 
         # do not continue to run tasks on hosts that have had failures
-        new_hosts = []
-        for x in host_list:
-            if not self.failures.has_key(x) and not self.dark.has_key(x):
-                new_hosts.append(x)
-        host_list = new_hosts
+        host_list = self._prune_failed_hosts(host_list)
 
-        # load the module name and parameters from the task
-        # entry
+        # load the module name and parameters from the task entry
         name    = task['name']
         action  = task['action']
         comment = task.get('comment', '')
@@ -131,26 +148,11 @@ class PlayBook(object):
         # of all of the hosts
 
         if self.verbose:
-            if not conditional:
-                print "\nTASK: %s" % (name)
-            else:
-                print "\nNOTIFIED: %s" % (name)
+            print task_start_msg(name, conditional)
 
         # load up an appropriate ansible runner to
         # run the task in parallel
-
-        runner = ansible.runner.Runner(
-            pattern=pattern,
-            module_name=module_name,
-            module_args=module_args,
-            host_list=host_list,
-            forks=self.forks,
-            remote_pass=self.remote_pass,
-            module_path=self.module_path,
-            timeout=self.timeout,
-            remote_user=remote_user
-        )
-        results = runner.run()
+        results = self._run_module(pattern, module_name, module_args, host_list, remote_user)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
         # which would warn you about this
@@ -161,9 +163,9 @@ class PlayBook(object):
         # summary information about successes and
         # failures.  TODO: split into subfunction
 
-        dark = results.get("dark", {})
+        dark      = results.get("dark", {})
         contacted = results.get("contacted", {})
-        ok_hosts = contacted.keys()
+        ok_hosts  = contacted.keys()
 
         for host, msg in dark.items():
             self.processed[host] = 1
@@ -176,23 +178,17 @@ class PlayBook(object):
 
         for host, results in contacted.items():
             self.processed[host] = 1
-            failed = False
-            if module_name == "command":
-                if results.get("rc", 0) != 0:
-                    failed=True
-            elif results.get("failed", 0) == 1:
-                    failed=True
    
-            if failed:
+            if is_failed(results):
                 if self.verbose:
-                    print "failure: [%s] => %s" % (host, results)
+                    print "failed: [%s] => %s\n" % (host, smjson(results))
                 if not self.failures.has_key(host):
                     self.failures[host] = 1
                 else:
                     self.failures[host] = self.failures[host] + 1
             else:
                 if self.verbose:
-                    print "ok: [%s]" % host
+                    print "ok: [%s]\n" % host
                 if not self.invocations.has_key(host):
                     self.invocations[host] = 1
                 else:
@@ -250,7 +246,7 @@ class PlayBook(object):
         self.host_list, groups = ansible.runner.Runner.parse_hosts(host_file)
 
         if self.verbose:
-            print "PLAY: [%s] ********** " % (pattern)
+            print "PLAY [%s] ****************************************\n" % pattern
 
         # run all the top level tasks, these get run on every node
 
