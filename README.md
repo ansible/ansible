@@ -102,8 +102,8 @@ Long running operations can be backgrounded, and their status can be checked on 
 job ID is given to the same task on all hosts, so you won't lose track.  Polling support
 is pending in the command line.
 
-   > ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
-   > ansible all -n job_status -a jid=123456789
+    > ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    > ansible all -n job_status -a jid=123456789
 
 Any module other than 'copy' or 'template' can be backgrounded.
 
