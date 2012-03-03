@@ -1,0 +1,98 @@
+#!/usr/bin/python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import shlex
+import os
+import subprocess
+import sys
+import datetime
+import traceback
+
+# ===========================================
+# convert arguments of form a=b c=d
+# to a dictionary
+# FIXME: make more idiomatic
+
+args = " ".join(sys.argv[1:])
+items = shlex.split(args)
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+mode = params.get('mode', 'status')
+jid  = params.get('jid', None)
+
+# ===========================================
+
+if jid is None:
+    print json.dumps({
+        "failed" : True,
+        "msg"    : "jid=INTEGER is required"
+    })
+    sys.exit(1)
+
+
+# setup logging directory
+logdir = os.path.expanduser("~/.ansible_async")
+log_path = os.path.join(logdir, jid)
+
+if not os.path.exists(log_path):
+    print json.dumps({
+        "failed" : 1,
+        "msg" : "could not find job",
+        "ansible_job_id" : jid
+    })
+    sys.exit(1)
+
+if mode == 'cleanup':
+    os.unlink(log_path)
+    print json.dumps({
+        "ansible_job_id" : jid,
+        "erased" : log_path
+    })
+    sys.exit(0)
+
+# NOT in cleanup mode, assume regular status mode
+# no remote kill mode currently exists, but probably should
+# consider log_path + ".pid" file and also unlink that above
+
+data = file(log_path).read()
+try:
+   data = json.loads(data)
+except:
+   print json.dumps({
+       "failed" : True,
+       "msg"    : "Could not parse job output"
+   })
+   sys.exit(1)
+
+if not data.has_key("started"):
+   data['finished'] = 1
+data['ansible_job_id'] = jid
+
+print json.dumps(data)
+sys.exit(0)
+
+
