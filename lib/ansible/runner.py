@@ -153,8 +153,6 @@ class Runner(object):
 
     def _return_from_module(self, conn, host, result):
         ''' helper function to handle JSON parsing of results '''
-        # disconnect from paramiko/SSH
-        conn.close()
         try:
             # try to parse the JSON response
             return [ host, True, json.loads(result) ]
@@ -165,7 +163,7 @@ class Runner(object):
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
         for filename in files:
-            self._exec_command(conn, "rm -f %s" % filename)
+            self._exec_command(conn, "rm -rf %s" % filename)
 
     def _transfer_file(self, conn, source, dest):
         ''' transfers a remote file '''
@@ -174,32 +172,34 @@ class Runner(object):
         sftp.put(source, dest)
         sftp.close()
 
-    def _transfer_module(self, conn):
+    def _transfer_module(self, conn, tmp):
         ''' 
         transfers a module file to the remote side to execute it,
         but does not execute it yet
         '''
-        outpath = self._copy_module(conn)
+        outpath = self._copy_module(conn, tmp)
         self._exec_command(conn, "chmod +x %s" % outpath)
         return outpath
 
-    def _execute_module(self, conn, outpath):
+    def _execute_module(self, conn, outpath, tmp):
         ''' 
         runs a module that has already been transferred
         '''
         cmd = self._command(outpath)
         result = self._exec_command(conn, cmd)
-        self._delete_remote_files(conn, [ outpath ])
+        self._delete_remote_files(conn, [ tmp ])
         return result
 
-    def _execute_normal_module(self, conn, host):
+    def _execute_normal_module(self, conn, host, tmp):
         ''' 
         transfer & execute a module that is not 'copy' or 'template'
         because those require extra work.
         '''
-        module = self._transfer_module(conn)
-        result = self._execute_module(conn, module)
-        return self._return_from_module(conn, host, result)
+        module = self._transfer_module(conn, tmp)
+        result = self._execute_module(conn, module, tmp)
+        self._delete_remote_files(conn, tmp)
+        result = self._return_from_module(conn, host, result)
+        return result
 
     def _parse_kv(self, args):
         ''' helper function to convert a string of key/value items to a dict '''
@@ -210,7 +210,7 @@ class Runner(object):
                 options[k]=v
         return options
 
-    def _execute_copy(self, conn, host):
+    def _execute_copy(self, conn, host, tmp):
         ''' handler for file transfer operations '''
 
         # load up options
@@ -219,7 +219,7 @@ class Runner(object):
         dest   = options['dest']
         
         # transfer the file to a remote tmp location
-        tmp_path = self._get_tmp_path(conn)
+        tmp_path = tmp
         tmp_src = tmp_path + source.split('/')[-1]
         self._transfer_file(conn, source, tmp_src)
 
@@ -229,11 +229,11 @@ class Runner(object):
 
         # run the copy module
         self.module_args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
-        result = self._execute_module(conn, module)
-        self._delete_remote_files(conn, tmp_src)
+        result = self._execute_module(conn, module, tmp)
+        self._delete_remote_files(conn, tmp_path)
         return self._return_from_module(conn, host, result)
 
-    def _execute_template(self, conn, host):
+    def _execute_template(self, conn, host, tmp):
         ''' handler for template operations '''
 
         # load up options
@@ -243,18 +243,19 @@ class Runner(object):
         metadata = options.get('metadata', '/etc/ansible/setup')
 
         # first copy the source template over
+        tpath = tmp
         tempname = os.path.split(source)[-1]
-        temppath = self._get_tmp_path(conn) + tempname
+        temppath = tpath + tempname
         self._transfer_file(conn, source, temppath)
 
         # install the template module
         self.module_name = 'template'
-        module = self._transfer_module(conn)
+        module = self._transfer_module(conn, tmp)
 
         # run the template module
         self.module_args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
-        result = self._execute_module(conn, module)
-        self._delete_remote_files(conn, [ temppath ])
+        result = self._execute_module(conn, module, tmp)
+        self._delete_remote_files(conn, [ tpath ])
         return self._return_from_module(conn, host, result)
 
 
@@ -271,18 +272,24 @@ class Runner(object):
         # module, call the appropriate executor function
 
         ok, conn = self._connect(host)
+        tmp = self._get_tmp_path(conn)
+        result = None
         if not ok:
-            return [ host, False, conn ]
+            result = [ host, False, conn ]
         if self.module_name not in [ 'copy', 'template' ]:
-            return self._execute_normal_module(conn, host)
+            result = self._execute_normal_module(conn, host, tmp)
         elif self.module_name == 'copy':
-            return self._execute_copy(conn, host)
+            result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'template':
-            return self._execute_template(conn, host)
+            result = self._execute_template(conn, host, tmp)
         else:
             # this would be a coding error in THIS module
             # shouldn't occur
             raise Exception("???")
+        self._delete_remote_files(conn, tmp)
+        conn.close()
+        return result
+
 
     def _command(self, outpath):
         ''' form up a command string for running over SSH '''
@@ -304,19 +311,15 @@ class Runner(object):
 
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
+        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
+        return result.split("\n")[0] + '/'
 
-        if conn not in self._tmp_paths:
-            output = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
-            self._tmp_paths[conn] = output.split("\n")[0] + '/'
-            
-        return self._tmp_paths[conn]
-
-    def _copy_module(self, conn):
+    def _copy_module(self, conn, tmp):
         ''' transfer a module over SFTP, does not run it '''
         in_path = os.path.expanduser(
             os.path.join(self.module_path, self.module_name)
         )
-        out_path = self._get_tmp_path(conn) + self.module_name
+        out_path = tmp + self.module_name
         sftp = conn.open_sftp()
         sftp.put(in_path, out_path)
         sftp.close()

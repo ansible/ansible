@@ -4,7 +4,7 @@
   - name: configure template & module variables for future template calls
     action: setup http_port=80 max_clients=200
   - name: write the apache config file
-    action: template src=/srv/httpd.j2 dest=/etc/httpd/conf
+    action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
     notify:
     - restart apache
   - name: ensure apache is running

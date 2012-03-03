@@ -223,8 +223,7 @@ class PlayBook(object):
         # for this particular pattern group
 
         for x in handlers:
-            attribs = x["do"]
-            name = attribs[0]
+            name = x['name']
             if match_name == name:
                 # flag the handler with the list of hosts
                 # it needs to be run on, it will be run later
