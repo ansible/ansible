@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+########################################################
+
 try:
     import json
 except ImportError:
@@ -32,7 +34,10 @@ import ansible.constants as C
 from optparse import OptionParser
 from ansible.utils import *
 
+########################################################
+
 class Cli(object):
+    ''' code behind bin/ansible '''
     
     # ----------------------------------------------     
 
@@ -42,6 +47,7 @@ class Cli(object):
     # ----------------------------------------------     
 
     def parse(self):
+        ''' create an options parser for bin/ansible '''
 
         parser = OptionParser(usage = 'ansible <host-pattern> [options]')
         parser.add_option("-a", "--args", dest="module_args",
@@ -74,6 +80,7 @@ class Cli(object):
     # ----------------------------------------------     
  
     def run(self, options, args):
+        ''' use Runner lib to do SSH things '''
 
         pattern = args[0]
         sshpass = None
@@ -96,6 +103,7 @@ class Cli(object):
     # ----------------------------------------------     
 
     def output(self, results, options, args):
+        ''' summarize results from Runner '''
 
         if results is None:
            exit("No hosts matched")
@@ -118,6 +126,8 @@ class Cli(object):
             buf += dark_hosts_msg(results)
 
         print buf
+
+########################################################
 
 if __name__ == '__main__':
     cli = Cli()
