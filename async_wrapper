@@ -36,9 +36,11 @@ if len(sys.argv) < 3:
     })
     sys.exit(1)
 
+print sys.argv
+
 jid = sys.argv[1]
-wrapped_module = sys.argv[2]
-time_limit = sys.argv[3]
+time_limit = sys.argv[2]
+wrapped_module = sys.argv[3]
 args = sys.argv[4:]
 
 cmd = "%s %s" % (wrapped_module, " ".join(args))
@@ -73,11 +75,13 @@ def _run_command(wrapped_cmd, jid, log_path):
     except (OSError, IOError), e:
         result = {
             "failed": 1,
+            "cmd" : wrapped_cmd,
             "msg": str(e),
         }
     except:
         result = {
             "failed" : 1,
+            "cmd" : wrapped_cmd,
             "msg" : traceback.format_exc()
         }   
 
@@ -86,12 +90,28 @@ def _run_command(wrapped_cmd, jid, log_path):
     logfile.write(json.dumps(result))
     logfile.close()
 
-    # TEMPORARY:
-    print json.dumps(result)
-
 # TODO: daemonize this with time limits
 # TODO: might be nice to keep timing data, eventually...
 
-_run_command(cmd, jid, log_path)
+
+pid = os.fork()
+if pid == 0:
+   print json.dumps({ "started" : 1, "ansible_job_id" : jid })
+   sys.exit(0)
+else:
+
+   # FIXME: need to implement time limits
+   # probably something easy like:
+   #
+   #   sub_pid = os.fork()
+   #   if sub_pid == 0:
+   #      run command
+   #   else
+   #      check status
+   #      sleep 1 second
+   #      kill if greater than timelimit
+
+   _run_command(cmd, jid, log_path)
+   sys.exit(0)
 
 
