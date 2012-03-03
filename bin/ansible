@@ -119,7 +119,7 @@ class Cli(object):
                 options.one_line
             )
             if options.tree:
-                write_tree_file(hostname, msg)
+                write_tree_file(options.tree, hostname, bigjson(results))
             buf += msg
             
         if has_dark_hosts(results):

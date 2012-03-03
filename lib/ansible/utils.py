@@ -18,6 +18,7 @@
 ###############################################################
 
 import sys
+import os
 try:
     import json
 except ImportError:
@@ -94,11 +95,11 @@ def command_failure_msg(hostname, result, oneline):
     ''' output from a failed command run '''
     return command_generic_msg(hostname, result, oneline, 'FAILED')
 
-def write_tree_file(hostname,buf):
+def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
     # TODO: might be nice to append playbook runs per host in a similar way
     # in which case, we'd want append mode.
-    path = os.path.join(options.tree, hostname)
+    path = os.path.join(tree, hostname)
     fd = open(path, "w+")
     fd.write(buf)
     fd.close()
@@ -155,7 +156,7 @@ def contacted_host_result(results, hostname):
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
     if tree != '/':
-        tree = os.path.realpath(os.path.expanduser(options.tree))
+        tree = os.path.realpath(os.path.expanduser(tree))
     if not os.path.exists(tree):
         try:
             os.makedirs(tree)

@@ -27,7 +27,6 @@ import fnmatch
 import multiprocessing
 import signal
 import os
-import traceback
 import ansible.constants as C 
 import Queue
 import paramiko

@@ -137,7 +137,7 @@ class PlayBook(object):
         # load the module name and parameters from the task entry
         name    = task['name']
         action  = task['action']
-        comment = task.get('comment', '')
+        # comment = task.get('comment', '')
 
         tokens = shlex.split(action)
         module_name = tokens[0]
@@ -167,7 +167,6 @@ class PlayBook(object):
 
         dark      = results.get("dark", {})
         contacted = results.get("contacted", {})
-        ok_hosts  = contacted.keys()
 
         for host, msg in dark.items():
             self.processed[host] = 1
