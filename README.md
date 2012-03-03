@@ -95,7 +95,17 @@ The -f 10 specifies the usage of 10 simultaneous processes.
 Note that other than the command module, ansible modules do not work like simple scripts.  They make
 the remote system look like you state, and run the commands neccessary to get it there.
 
-[Read the ansible manpage](https://github.com/mpdehaan/ansible/blob/master/docs/man/man1/ansible.1.asciidoc)
+Example: Time-limited Background Operations
+===========================================
+
+Long running operations can be backgrounded, and their status can be checked on later.  The same
+job ID is given to the same task on all hosts, so you won't lose track.  Polling support
+is pending in the command line.
+
+   > ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+   > ansible all -n job_status -a jid=123456789
+
+Any module other than 'copy' or 'template' can be backgrounded.
 
 Example: File Transfer and Templating
 =====================================
@@ -125,14 +135,18 @@ Deploy your webapp straight from git
 
     > ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"
 
+Since ansible modules can notify change handlers (see 'Playbooks') it is possible
+to tell ansible to run specific tasks when the code is updated, such as deploying
+Perl/Python/PHP/Ruby directly from git and then restarting apache.
+
+
 Other Modules
 =============
 
-Ansible has lots of other modules.
+Ansible has lots of other modules and they are growing.
 
-See the library directory for lots of extras.  There's also a manpage,
-[ansible-modules(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-modules.5.asciidoc) that covers all the options they take.  You can
-read the asciidoc in github in the 'docs' directory.
+See the library directory in the source checkout or the manpage:
+[ansible-modules(5)](https://github.com/mpdehaan/ansible/blob/master/docs/man/man5/ansible-modules.5.asciidoc) that covers what's there and all the options they take.
 
 Playbooks
 =========
@@ -146,20 +160,27 @@ multi-machine applications.
 An example showing a small playbook:
 
     ---
-    - hosts: 'web*.example.com'
-      comment: webserver setup steps
+    - hosts: all
+      user: root
       tasks:
+      - include: base.yml
       - name: configure template & module variables for future template calls
         action: setup http_port=80 max_clients=200
       - name: write the apache config file
-        action: template src=/srv/templates/httpd.j2 dest=/etc/httpd.conf
+        action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
       - name: ensure apache is running
         action: service name=httpd state=started
       handlers:
-        - name: restart apache
-        - action: service name=httpd state=restarted
+        - include: handlers.yml
+
+Some key concepts here include:
+
+   * Everything is expressed in simple YAML
+   * Steps can be run as non-root
+   * Modules can notify 'handlers' when changes occur.
+   * Tasks and handlers can be 'included' to faciliate sharing and 'class' like behavior
 
 To run a playbook:
 
@@ -171,7 +192,8 @@ See the playbook format manpage -- [ansible-playbook(5)](https://github.com/mpde
 API
 ===
 
-The Python API is very powerful:
+The Python API is very powerful, and is how the ansible CLI and ansible-playbook
+are implemented.
 
     import ansible.runner
 
@@ -196,7 +218,7 @@ expressed in the 'ansible-modules' manpage.
         }
     }
 
-Since a module can return any type of JSON data it wants, so Ansible can
+A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.
 
 License
