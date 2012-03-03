@@ -74,11 +74,11 @@ def command_generic_msg(hostname, result, oneline, caption):
     if not oneline:
         buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
         if stdout:
-           buf += stdout
+            buf += stdout
         if stderr:
-           buf += stderr
+            buf += stderr
         if msg:
-           buf += msg
+            buf += msg
         return buf
     else:
         if stderr:

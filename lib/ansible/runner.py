@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+################################################
+
 try:
     import json
 except ImportError:
@@ -26,9 +28,11 @@ import multiprocessing
 import signal
 import os
 import traceback
-import paramiko # non-core dependency
 import ansible.constants as C 
 import Queue
+import paramiko
+
+################################################
 
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
@@ -126,7 +130,7 @@ class Runner(object):
             if fnmatch.fnmatch(host_name, subpattern):
                 return True
             # or it could be a literal group name instead
-            if self.groups.has_key(subpattern):
+            if subpattern in self.groups:
                 if host_name in self.groups[subpattern]:
                     return True
         return False
@@ -203,8 +207,8 @@ class Runner(object):
         options = {}
         for x in args:
             if x.find("=") != -1:
-               k, v = x.split("=")
-               options[k]=v
+                k, v = x.split("=")
+                options[k]=v
         return options
 
     def _execute_copy(self, conn, host):

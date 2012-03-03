@@ -25,7 +25,8 @@ import shlex
 # duplicating these
 
 class PlayBook(object):
-    ''' 
+
+    '''
     runs an ansible playbook, given as a datastructure
     or YAML filename.  a playbook is a deployment, config
     management, or automation based set of commands to
@@ -36,7 +37,7 @@ class PlayBook(object):
     according to the number of forks requested.
     '''
 
-    def __init__(self, 
+    def __init__(self,
         playbook     =None,
         host_list    =C.DEFAULT_HOST_LIST,
         module_path  =C.DEFAULT_MODULE_PATH,
@@ -92,13 +93,13 @@ class PlayBook(object):
                 'changed'     : self.changed.get(host, 0),
                 'dark'        : self.dark.get(host, 0),
                 'failed'      : self.failures.get(host, 0)
-            } 
+            }
         return results
 
     def _prune_failed_hosts(self, host_list):
         new_hosts = []
         for x in host_list:
-            if not self.failures.has_key(x) and not self.dark.has_key(x):
+            if not x in self.failures and not x in self.dark:
                 new_hosts.append(x)
         return new_hosts
 
@@ -116,9 +117,9 @@ class PlayBook(object):
             remote_user=remote_user
         ).run()
 
-    def _run_task(self, pattern=None, task=None, host_list=None, 
+    def _run_task(self, pattern=None, task=None, host_list=None,
         remote_user=None, handlers=None, conditional=False):
-        ''' 
+        '''
         run a single task in the playbook and
         recursively run any subtasks.
         '''
@@ -152,7 +153,8 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to
         # run the task in parallel
-        results = self._run_module(pattern, module_name, module_args, host_list, remote_user)
+        results = self._run_module(pattern, module_name, 
+            module_args, host_list, remote_user)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
         # which would warn you about this
@@ -171,7 +173,7 @@ class PlayBook(object):
             self.processed[host] = 1
             if self.verbose:
                 print "unreachable: [%s] => %s" % (host, msg)
-            if not self.dark.has_key(host):
+            if not host in self.dark:
                 self.dark[host] = 1
             else:
                 self.dark[host] = self.dark[host] + 1
@@ -182,19 +184,19 @@ class PlayBook(object):
             if is_failed(results):
                 if self.verbose:
                     print "failed: [%s] => %s\n" % (host, smjson(results))
-                if not self.failures.has_key(host):
+                if not host in self.failures:
                     self.failures[host] = 1
                 else:
                     self.failures[host] = self.failures[host] + 1
             else:
                 if self.verbose:
                     print "ok: [%s]\n" % host
-                if not self.invocations.has_key(host):
+                if not host in self.invocations:
                     self.invocations[host] = 1
                 else:
                     self.invocations[host] = self.invocations[host] + 1
                 if results.get('changed', False):
-                    if not self.changed.has_key(host):
+                    if not host in self.changed:
                         self.changed[host] = 1
                     else:
                         self.changed[host] = self.changed[host] + 1
@@ -209,7 +211,7 @@ class PlayBook(object):
             for host, results in contacted.items():
                 if results.get('changed', False):
                     for subtask in subtasks:
-                         self._flag_handler(handlers, subtask, host)
+                        self._flag_handler(handlers, subtask, host)
 
     def _flag_handler(self, handlers, match_name, host):
         ''' 
@@ -227,7 +229,7 @@ class PlayBook(object):
             if match_name == name:
                 # flag the handler with the list of hosts
                 # it needs to be run on, it will be run later
-                if not x.has_key("run"):
+                if not run in x:
                     x['run'] = []
                 x['run'].append(host)
 
@@ -246,7 +248,7 @@ class PlayBook(object):
         self.host_list, groups = ansible.runner.Runner.parse_hosts(host_file)
 
         if self.verbose:
-            print "PLAY [%s] ****************************************\n" % pattern
+            print "PLAY [%s] ****************************\n" % pattern
 
         # run all the top level tasks, these get run on every node
 
@@ -268,7 +270,7 @@ class PlayBook(object):
             if type(task.get("run", None)) == list:
                 self._run_task(
                    pattern=pattern, 
-                   task=task, 
+                   task=task,
                    handlers=handlers,
                    host_list=task.get('run',[]),
                    conditional=True,
