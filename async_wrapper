@@ -1,0 +1,96 @@
+#!/usr/bin/python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import shlex
+import os
+import subprocess
+import sys
+import datetime
+import traceback
+
+if len(sys.argv) < 3:
+    print json.dumps({
+        "failed" : True,
+        "msg"    : "usage: async_wrapper <jid> <module_script> <args>.  Humans, do not call directly!"
+    })
+    sys.exit(1)
+
+jid = sys.argv[1]
+wrapped_module = sys.argv[2]
+args = sys.argv[3:]
+
+cmd = "%s %s" % (wrapped_module, " ".join(args))
+
+# setup logging directory
+logdir = os.path.expanduser("~/.ansible_async")
+log_path = os.path.join(logdir, jid)
+
+if not os.path.exists(logdir):
+    try:
+        os.makedirs(logdir)
+    except:
+        print json.dumps({
+            "failed" : 1,
+            "msg" : "could not create: %s" % logdir
+        })
+
+def _run_command(wrapped_cmd, jid, log_path):
+
+    logfile = open(log_path, "w+")
+    logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    result = {}
+
+    try:
+        cmd = shlex.split(wrapped_cmd)
+        subprocess.call("/usr/bin/logger %s" % wrapped_cmd, shell=True)
+        script = subprocess.Popen(cmd, shell=False, 
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = script.communicate()
+        result = json.loads(out)
+    
+    except (OSError, IOError), e:
+        result = {
+            "failed": 1,
+            "msg": str(e),
+        }
+    except:
+        result = {
+            "failed" : 1,
+            "msg" : traceback.format_exc()
+        }   
+
+    result['ansible_job_id'] = jid
+    logfile = open(log_path, "w+")
+    logfile.write(json.dumps(result))
+    logfile.close()
+
+    # TEMPORARY:
+    print json.dumps(result)
+
+# TODO: daemonize this with time limits
+# TODO: might be nice to keep timing data, eventually...
+
+_run_command(cmd, jid, log_path)
+
+
