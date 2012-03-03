@@ -28,24 +28,44 @@ Playbooks are written in YAML.
 EXAMPLE
 -------
 
-see https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml
+see 
+
+https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml
+
+https://github.com/mpdehaan/ansible/blob/master/examples/base.yml
+
+https://github.com/mpdehaan/ansible/blob/master/examples/handlers.yml
 
 WHAT THE EXAMPLE MEANS
 -----------------------
 
-Here's what the above example will do.
+Here's what playbook.yml (above) will do.
 
-For all hosts in /etc/ansible/hosts (one host per line) that are named
-'webserver-anything', first write a JSON file into /etc/ansible/setup
-on each remote system with the values max_clients and http_port.
+The first pattern will select all hosts.  The patterns are the same
+as supported by /usr/bin/ansible.
 
-Next, use a Jinja2 template locally residing at
-/srv/templates/httpd.j2 to write the Apache config file on each host
-to the path /etc/httpd.conf, using the previous values.
+First, it will run all the modules specified in base.yml.  Includes can
+be used to implement classes of things, and if you wanted, a playbook
+could consist of nothing but include files.  This is an example of an
+include.
 
-We'll ensure that apache is running if stopped.
+After processing base.yml, on each host we'll write for 
+a JSON file into /etc/ansible/setup on each remote system with the 
+values max_clients and http_port.
 
-If and only if the config file changed, note that we need to restart
+Next, we'll use a Jinja2 template locally residing at
+/srv/templates/httpd.j2 to write the Apache config file on each host, 
+using the previous values in that setup file.
+
+Next, We'll ensure that apache is running if stopped.
+
+The template task set up a notifier, which means if the configuration
+file actually changed, we have a named handler, in this case, 'restart apache'
+to run.  In this case, all the notifiers come from handlers.yml, though it's
+also ok to express handlers directly in the main yaml file too.  Using
+the include promotes reuse.
+
+What does the handler say?  If and only if the config file changed, note that we need to restart
 apache at the end of the run, otherwise, don't bother because we
 already know it is running.
 
