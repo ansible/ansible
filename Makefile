@@ -7,6 +7,9 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 
 all: clean python
 
+tests: 
+	PYTHONPATH=./lib nosetests
+
 docs: manuals
 
 manuals: $(MANPAGES)
