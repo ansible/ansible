@@ -36,7 +36,7 @@ clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
 	@echo "Cleaning up byte compiled python stuff"
-	find . -regex ".*\.py[co]$$"
+	find . -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	@echo "Cleaning up asciidoc to man transformations and results"
