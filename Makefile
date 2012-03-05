@@ -33,12 +33,14 @@ pyflakes:
 	pyflakes lib/ansible/*.py
 
 clean:
+	@echo "Cleaning up distutils stuff"
 	rm -rf build
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type f -name "*~" -delete
-	find ./docs/ -type f -name "*.xml" -delete
-	find . -type f -name "#*" -delete
+	@echo "Cleaning up byte compiled python stuff"
+	find . -regex ".*\.py[co]$$"
+	@echo "Cleaning up editor backup files"
+	find . -type f \( -name "*~" -or -name "#*" \) -delete
+	@echo "Cleaning up asciidoc to man transformations and results"
+	find ./docs/man -type f \( -name "*.xml" -or -regex ".*\.[0-9]$$" \) -delete
 
 python: docs
 	python setup.py build
