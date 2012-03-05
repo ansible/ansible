@@ -8,7 +8,7 @@ setup(name='ansible',
       author='Michael DeHaan',
       author_email='michael.dehaan@gmail.com',
       url='http://github.com/mpdehaan/ansible/',
-      license='MIT',
+      license='GPLv3',
       package_dir = { 'ansible' : 'lib/ansible' },
       packages=[
          'ansible',
@@ -25,10 +25,10 @@ setup(name='ansible',
              'library/template',
              'library/git',
          ]),
-         ('man/man1', [
+         ('/usr/share/man/man1', [
                 'docs/man/man1/ansible.1'
          ]),
-         ('man/man5', [
+         ('/usr/share/man/man5', [
                 'docs/man/man5/ansible-modules.5',
                 'docs/man/man5/ansible-playbook.5'
          ])
