@@ -5,7 +5,7 @@ Name: ansible
 Version: 1.0
 Release: 1
 Source0: ansible-%{version}.tar.gz
-License: MIT
+License: GPLv3
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
