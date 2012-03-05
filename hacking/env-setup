@@ -1,0 +1,11 @@
+# -*- mode: shell-script -*-
+PREFIX_PYTHONPATH="`pwd`/lib/ansible:`pwd`/lib"
+PREFIX_PATH="`pwd`/bin"
+PREFIX_MANPATH="`pwd`/docs/man"
+
+echo "Prefixing PYTHONPATH with $PREFIX_PYTHONPATH"
+export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
+echo "Prefixing PATH with $PREFIX_PATH"
+export PATH=$PREFIX_PATH:$PATH
+echo "Prefixing MANPATH with $PREFIX_MANPATH"
+export MANPATH=$PREFIX_MANPATH:$MANPATH
