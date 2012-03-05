@@ -12,6 +12,7 @@ Prefix: %{_prefix}
 BuildArch: noarch
 Url: http://github.com/mpdehaan/ansible/
 BuildRequires: asciidoc
+Requires: python-paramiko
 
 %description
 Ansible is a extra-simple tool/API for doing 'parallel remote things' over SSH
