@@ -112,6 +112,7 @@ class Runner(object):
         host_list = os.path.expanduser(host_list)
         lines = file(host_list).read().split("\n")
         groups     = {}
+        groups['ungrouped'] = []
         group_name = 'ungrouped'
         results    = []
         for item in lines:
