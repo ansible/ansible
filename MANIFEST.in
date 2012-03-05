@@ -1,0 +1,3 @@
+include README.md AUTHORS.md ansible.spec
+recursive-include docs *
+include Makefile
