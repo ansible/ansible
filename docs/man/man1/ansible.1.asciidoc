@@ -25,7 +25,7 @@ SSH.
 ARGUMENTS
 ---------
 
-*hostspec*
+*host-pattern*::
 
 A name of a group in the inventory file, a shell-like glob selecting hosts in inventory
 file, or any combination of the two seperated by semicolons.
@@ -75,6 +75,16 @@ FILES
 /usr/share/ansible -- Default module library
 
 
+ENVIRONMENT
+-----------
+
+The following environment variables may specified.
+
+ANSIBLE_HOSTS  -- Override the default ansible hosts file
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+
 AUTHOR
 ------
 
@@ -95,7 +105,7 @@ SEE ALSO
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>
 
-*ansible-modules*(5), 
+*ansible-modules*(5)
 
-*ansible-playbook*(5),
+*ansible-playbook*(5)
 

@@ -2,10 +2,20 @@
 PREFIX_PYTHONPATH="`pwd`/lib/ansible:`pwd`/lib"
 PREFIX_PATH="`pwd`/bin"
 PREFIX_MANPATH="`pwd`/docs/man"
+PREFIX_ANS_LIBRARY="`pwd`/library"
+PREFIX_ANS_HOSTS="`pwd`/examples/ansible_hosts"
 
 echo "Prefixing PYTHONPATH with $PREFIX_PYTHONPATH"
 export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
+
 echo "Prefixing PATH with $PREFIX_PATH"
 export PATH=$PREFIX_PATH:$PATH
+
 echo "Prefixing MANPATH with $PREFIX_MANPATH"
 export MANPATH=$PREFIX_MANPATH:$MANPATH
+
+echo "Setting ANSIBLE_LIBRARY to ${PREFIX_ANS_LIBRARY}"
+export ANSIBLE_LIBRARY=${PREFIX_ANS_LIBRARY}
+
+echo "Setting ANSIBLE_HOSTS to ${PREFIX_ANS_HOSTS}"
+export ANSIBLE_HOSTS=${PREFIX_ANS_HOSTS}
