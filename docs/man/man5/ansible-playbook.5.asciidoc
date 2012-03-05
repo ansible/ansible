@@ -112,6 +112,6 @@ SEE ALSO
 
 *ansible*(1)
 
-*ansible-playbook*(5) - pending
+*ansible-modules*(5)
 
 Ansible home page: <https://github.com/mpdehaan/ansible/>
