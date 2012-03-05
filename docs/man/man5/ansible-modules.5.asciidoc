@@ -3,7 +3,7 @@ ansible-modules(5)
 :doctype:manpage
 :man source: Ansible-modules
 :man version: 0.0.1
-:man manual: System administration commands
+:man manual: Ansible
 
 
 NAME
@@ -23,7 +23,7 @@ IDEMPOTENCE
 
 Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
-trigger change events, as described in ansible-playbooks (5).  
+trigger change events, as described in *ansible-playbooks*(5).
 
 Unless otherwise noted, all modules support change hooks.
 
@@ -148,7 +148,7 @@ setup
 
 Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the template modules, usually as the very
-first step in your playbook. 
+first step in your playbook.
 
 If facter or ohai are installed, variables from these programs will also
 be snapshotted into the JSON file for usage in templating. These variables
@@ -211,6 +211,13 @@ To write your own modules, simply follow the convention of those already availab
 To support change hooks, modules should return hashes, with a changed: True/False
 element at the top level.  Modules can also choose to indicate a failure scenario
 by returning a top level 'failure' element with a True value.
+
+
+ENVIRONMENT
+-----------
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
 
 AUTHOR
 ------

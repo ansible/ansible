@@ -3,7 +3,7 @@ ansible-modules(5)
 :doctype:manpage
 :man source: Ansible-playbook
 :man version: 0.0.1
-:man manual: System administration commands
+:man manual: Ansible
 
 
 NAME
@@ -28,13 +28,13 @@ Playbooks are written in YAML.
 EXAMPLE
 -------
 
-see 
+See:
 
-https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml
+- https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml
 
-https://github.com/mpdehaan/ansible/blob/master/examples/base.yml
+- https://github.com/mpdehaan/ansible/blob/master/examples/base.yml
 
-https://github.com/mpdehaan/ansible/blob/master/examples/handlers.yml
+- https://github.com/mpdehaan/ansible/blob/master/examples/handlers.yml
 
 WHAT THE EXAMPLE MEANS
 -----------------------
@@ -98,6 +98,12 @@ ERROR HANDLING
 
 If a host has a failure, the host will be ignored for the remainder
 of the playbook execution.
+
+
+ENVIRONMENT
+-----------
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
 
 
 AUTHOR
