@@ -8,7 +8,7 @@ For space reasons, we can't list everybody's favorite management tool.
 <table>
    <tr>
       <td></td>
-      <td><B>Ansible</B></font></td>
+      <td><B><U>Ansible</U></B></font></td>
       <td>Puppet</td>
       <td>Chef</td>
       <td>Func</td>
@@ -16,7 +16,7 @@ For space reasons, we can't list everybody's favorite management tool.
    </tr>
    <tr>
       <td>Purpose</td>
-      <td>Config, Deployment, Ad-Hoc</td>
+      <td><B>Config, Deployment, Ad-Hoc</B></td>
       <td>Config, Deployment</td>
       <td>Config, Deployment</td>
       <td>Ad-Hoc</td>
@@ -24,7 +24,7 @@ For space reasons, we can't list everybody's favorite management tool.
    </tr>
    <tr>
       <td>Config Language</td>
-      <td>YAML format</td>
+      <td><B>Simple YAML format</B></td>
       <td>Custom DSL</td>
       <td>Ruby code</td>
       <td>None</td>
@@ -39,6 +39,14 @@ For space reasons, we can't list everybody's favorite management tool.
       <td>None</td>
    </tr>
    <tr>
+      <td>Config Ordering</td>
+      <td><B>Simply ordered, with notifiers</B></td>
+      <td>Strict dependency DAG</td>
+      <td>Simply ordered</td>
+      <td>None</td>
+      <td>Simply ordered</td>
+   </tr>
+   <tr>
       <td>Communication</td>
       <td>SSH push</td>
       <td>SSL pull or push trigger</td>
@@ -48,35 +56,35 @@ For space reasons, we can't list everybody's favorite management tool.
    </tr>
    <tr>
       <td>Daemons Required?</td>
-      <td>no</td>
+      <td><B>no</B></td>
       <td>yes</td>
       <td>yes</td>
       <td>yes</td>
-      <td>no</td>
+      <td><B>no</B></td>
    </tr>
    <tr>
       <td>Database Required</td>
-      <td>no</td>
+      <td><B>no</B></td>
       <td>yes</td>
       <td>yes</td>
-      <td>no</td>
-      <td>no</td>
+      <td><B>no</B></td>
+      <td><B>no</B></td>
    </tr>
    <tr>
       <td>Inventory Features</td>
       <td>planned</td>
-      <td>yes</td>
-      <td>yes?</td>
-      <td>yes</td>
+      <td><B>yes</B></td>
+      <td><B>yes?</B></td>
+      <td>some</td>
       <td>no</td>
    </tr>
    <tr>
       <td>Message Bus Required</td>
-      <td>no</td>
+      <td><B>no</B></td>
       <td>yes</td>
       <td>yes</td>
-      <td>no</td>
-      <td>no</td>
+      <td><B>no</B></td>
+      <td><B>no</B></td>
    </tr>
    <tr>
       <td>Implemented In</td>
@@ -88,7 +96,7 @@ For space reasons, we can't list everybody's favorite management tool.
    </tr>
    <tr>
       <td>Extensible In</td>
-      <td>Anything!</td>
+      <td><B>Anything</B></td>
       <td>Ruby</td>
       <td>Ruby</td>
       <td>Python</td>
@@ -96,7 +104,7 @@ For space reasons, we can't list everybody's favorite management tool.
    </tr>
    <tr>
       <td>Codebase Size</td>
-      <td>Small</td>
+      <td><B>Small</B></td>
       <td>Large</td>
       <td>Large</td>
       <td>Medium</td>
@@ -105,26 +113,33 @@ For space reasons, we can't list everybody's favorite management tool.
    <tr>
       <td>Module Support</td>
       <td>Emerging</td>
-      <td>Wide/Established</td>
-      <td>Wide/Established</td>
+      <td><B>Wide/Established</B></td>
+      <td><B>Wide/Established</B></td>
       <td>Medium/Established</td>
       <td>Poor</td>
    </tr>
    <tr>
       <td>Users Targeted</td>
-      <td>Sysadmins, developers, web admins</td>
+      <td><B>Sysadmins, developers, QA, web admins</B></td>
       <td>Sysadmins</td>
       <td>Sysadmins, web admins</td>
       <td>Sysadmins, developers</td>
       <td>Web admins</td>
    </tr>
    <tr>
-   <tr>
       <td>Can Easily Build Applications On It</td>
-      <td>Yes</td>
+      <td><B>Yes</B></td>
       <td>No</td>
       <td>No</td>
-      <td>Yes</td>
+      <td><B>Yes</B></td>
+      <td>No</td>
+   </tr>
+   <tr>
+      <td>Parallelism & Scaling Tech</td>
+      <td>Fork/Merge</td>
+      <td>Add Servers / Staged Commands / No Server</td>
+      <td>Adding More Erlang</td>
+      <td>Fork/Merge</td>
       <td>No</td>
    </tr>
    <tr>
@@ -132,7 +147,7 @@ For space reasons, we can't list everybody's favorite management tool.
       <td>No</td>
       <td>No</td>
       <td>No</td>
-      <td>Yes</td>
+      <td><B>Yes</B></td>
       <td>No</td>
    </tr>
 </td>
