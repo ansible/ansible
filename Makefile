@@ -34,7 +34,8 @@ pyflakes:
 
 clean:
 	@echo "Cleaning up distutils stuff"
-	rm -rf build
+	-rm -rf build
+	-rm -rf dist
 	@echo "Cleaning up byte compiled python stuff"
 	find . -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
@@ -47,6 +48,10 @@ python: docs
 
 install: docs
 	python setup.py install
+
+rpm: 
+	python setup.py sdist
+	rpmbuild -ta dist/ansible-1.0.tar.gz
 
 .PHONEY: docs manual clean pep8
 vpath %.asciidoc docs/man/man1
