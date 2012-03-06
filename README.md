@@ -120,7 +120,8 @@ To just transfer a file directly to many different servers:
 
 To use templating, first run the setup module to put the template variables you would
 like to use on the remote host.  Then use the template module to write the
-files using the templates.  Templates are written in Jinja2 format.
+files using the templates.  Templates are written in Jinja2 format.   Playbooks
+(covered below) will run the setup module for you, making this even simpler.
 
     > ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
     > ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
@@ -154,9 +155,11 @@ Playbooks
 
 Playbooks are a completely different way to use ansible and are particularly awesome.
 
-They are the basis for a really simple configuration management system, unlike
+They are the basis for a really simple configuration management and deployment system, unlike
 any that already exist, and one that is very well suited to deploying complex
-multi-machine applications.  
+multi-machine applications.  While you might run the main ansible program for ad-hoc tasks,
+playbooks are more likely to be kept in source control and used to push out your configuration
+or assure the configurations of your remote systems are in spec.
 
 An example showing a small playbook:
 
