@@ -96,10 +96,9 @@ md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
 if md5sum != md5sum2:
    changed = True
 
-result = {
-   "written" : ansible_file,
-   "changed" : changed,
-   "md5sum"  : md5sum2
-}
+new_options['written'] = ansible_file
+new_options['changed'] = changed
+new_options['md5sum']  = md5sum2 
 
-print json.dumps(result)
+print json.dumps(new_options)
+
