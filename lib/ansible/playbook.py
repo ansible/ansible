@@ -306,8 +306,6 @@ class PlayBook(object):
         push_var_str=''
         for (k,v) in vars.items():
             push_var_str += "%s=%s " % (k,v)
-        if user != 'root':
-            push_var_str = "%s metadata=~/.ansible_setup" % (push_var_str)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(

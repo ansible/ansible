@@ -213,6 +213,16 @@ class Runner(object):
             args = [ str(x) for x in module_args ]
             args = " ".join(args)
         inject_vars = self.setup_cache.get(conn._host,{})
+
+        # the metadata location for the setup module is transparently managed
+        # since it's an 'internals' module, kind of a black box. See playbook
+        # other modules are not allowed to have this kind of handling
+        if remote_module_path.endswith("/setup") and args.find("metadata=") == -1:
+            if self.remote_user == 'root':
+                args = "%s metadata=/etc/ansible/setup" % args
+            else:
+                args = "%s metadata=~/.ansible/setup" % args
+
         template = jinja2.Template(args)
         args = template.render(inject_vars)
 
@@ -227,7 +237,9 @@ class Runner(object):
         because those require extra work.
         '''
         module = self._transfer_module(conn, tmp, self.module_name)
+
         result = self._execute_module(conn, tmp, module, self.module_args)
+
         # when running the setup module, which pushes vars to the host and ALSO
         # returns them (+factoids), store the variables that were returned such that commands
         # run AFTER setup use these variables for templating when executed
@@ -238,6 +250,7 @@ class Runner(object):
                 var_result = json.loads(result)
             except:
                 var_result = {}
+
         self._delete_remote_files(conn, tmp)
         return self._return_from_module(conn, host, result)
 
@@ -293,7 +306,13 @@ class Runner(object):
         options  = self._parse_kv(self.module_args)
         source   = options['src']
         dest     = options['dest']
-        metadata = options.get('metadata', '/etc/ansible/setup')
+        metadata = options.get('metadata', None)
+
+        if metadata is None:
+            if self.remote_user == 'root':
+                metadata = '/etc/ansible/setup'
+            else:
+                metadata = '~/.ansible/setup'
 
         # first copy the source template over
         tpath = tmp
