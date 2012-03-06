@@ -8,7 +8,7 @@ For space reasons, we can't list everybody's favorite management tool.
 <table>
    <tr>
       <td></td>
-      <td><font color="green">Ansible</font></td>
+      <td><B>Ansible</B></font></td>
       <td>Puppet</td>
       <td>Chef</td>
       <td>Func</td>
