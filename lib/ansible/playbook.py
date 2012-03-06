@@ -24,6 +24,8 @@ import yaml
 import shlex
 import os
 
+SETUP_CACHE={ 'foo' : {} }
+
 #############################################
 
 class PlayBook(object):
@@ -150,7 +152,8 @@ class PlayBook(object):
             remote_pass=self.remote_pass,
             module_path=self.module_path,
             timeout=self.timeout,
-            remote_user=remote_user
+            remote_user=remote_user,
+            setup_cache=SETUP_CACHE
         ).run()
 
     def _run_task(self, pattern=None, task=None, host_list=None,
@@ -274,6 +277,7 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern  = pg['hosts']
+        vars     = pg.get('vars', {})
         tasks    = pg['tasks']
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
@@ -283,8 +287,35 @@ class PlayBook(object):
         if self.verbose:
             print "PLAY [%s] ****************************\n" % pattern
 
-        # run all the top level tasks, these get run on every node
+        # first run the setup task on every node, which gets the variables
+        # written to the JSON file and will also bubble facts back up via
+        # magic in Runner()
+        push_var_str=''
+        for (k,v) in vars.items():
+            push_var_str += "%s=%s " % (k,v)
+        if user != 'root':
+            push_var_str = "%s metadata=~/.ansible_setup" % (push_var_str)
 
+        # push any variables down to the system
+        setup_results = ansible.runner.Runner(
+            pattern=pattern,
+            module_name='setup',
+            module_args=push_var_str,
+            host_list=self.host_list,
+            forks=self.forks,
+            module_path=self.module_path,
+            timeout=self.timeout,
+            remote_user=user,
+            setup_cache=SETUP_CACHE
+        ).run()
+
+        # now for each result, load into the setup cache so we can
+        # let runner template out future commands
+        setup_ok = setup_results.get('contacted', {})
+        for (host, result) in setup_ok.items():
+            SETUP_CACHE[host] = result
+
+        # run all the top level tasks, these get run on every node
         for task in tasks:
             self._run_task(
                 pattern=pattern, 

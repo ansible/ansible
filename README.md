@@ -41,6 +41,7 @@ Requirements are extremely minimal.
 If you are running python 2.6 on the 'overlord' machine, you will need:
 
    * paramiko
+   * python-jinja2
    * PyYAML (if using playbooks)
 
 If you are running less than Python 2.6, you will also need
@@ -161,6 +162,9 @@ An example showing a small playbook:
 
     ---
     - hosts: all
+      vars:
+        http_port: 80
+        max_clients: 200
       user: root
       tasks:
       - include: base.yml

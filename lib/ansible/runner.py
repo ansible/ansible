@@ -29,9 +29,10 @@ import signal
 import os
 import ansible.constants as C 
 import Queue
-import paramiko
 import random
-
+import paramiko
+import jinja2
+        
 ################################################
 
 def noop(*args, **kwargs):
@@ -62,6 +63,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER,
         remote_pass=C.DEFAULT_REMOTE_PASS,
         background=0,
+        setup_cache={},
         verbose=False):
     
         ''' 
@@ -75,9 +77,10 @@ class Runner(object):
         remote_user -- who to login as (default root)
         remote_pass -- provide only if you don't want to use keys or ssh-agent
         background --- if non 0, run async, failing after X seconds, -1 == infinite
+        setup_cache -- used only by playbook (complex explanation pending)
         '''
 
-        # save input values
+        self.setup_cache = setup_cache
        
         self.host_list, self.groups = self.parse_hosts(host_list)
         self.module_path = module_path
@@ -90,6 +93,7 @@ class Runner(object):
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.background  = background
+
 
         # hosts in each group name in the inventory file
         self._tmp_paths  = {}
@@ -201,10 +205,17 @@ class Runner(object):
 
     def _execute_module(self, conn, tmp, remote_module_path, module_args):
         ''' 
-        runs a module that has already been transferred
+        runs a module that has already been transferred, but first
+        modifies the command using setup_cache variables (see playbook)
         '''
-        args = [ str(x) for x in module_args ]
-        args = " ".join(args)
+        args = module_args
+        if type(args) == list:
+            args = [ str(x) for x in module_args ]
+            args = " ".join(args)
+        inject_vars = self.setup_cache.get(conn._host,{})
+        template = jinja2.Template(args)
+        args = template.render(inject_vars)
+
         cmd = "%s %s" % (remote_module_path, args)
         result = self._exec_command(conn, cmd)
         self._delete_remote_files(conn, [ tmp ])
@@ -217,6 +228,16 @@ class Runner(object):
         '''
         module = self._transfer_module(conn, tmp, self.module_name)
         result = self._execute_module(conn, tmp, module, self.module_args)
+        # when running the setup module, which pushes vars to the host and ALSO
+        # returns them (+factoids), store the variables that were returned such that commands
+        # run AFTER setup use these variables for templating when executed
+        # from playbooks
+        if self.module_name == 'setup':
+            host = conn._host
+            try:
+                var_result = json.loads(result)
+            except:
+                var_result = {}
         self._delete_remote_files(conn, tmp)
         return self._return_from_module(conn, host, result)
 
@@ -303,6 +324,7 @@ class Runner(object):
         # module, call the appropriate executor function
 
         ok, conn = self._connect(host)
+        conn._host = host
         if not ok:
             return [ host, False, conn ]
            

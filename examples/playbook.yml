@@ -1,15 +1,18 @@
 ---
 - hosts: all
   user: root
+  vars:
+    http_port: 80
+    max_clients: 200
   tasks:
   - include: base.yml
-  - name: configure template & module variables for future template calls
-    action: setup http_port=80 max_clients=200
-  - name: write the apache config file
+  - name: write the apache config file using vars set above
     action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
     notify:
     - restart apache
   - name: ensure apache is running
     action: service name=httpd state=started
+  - name: pointless test action
+    action: command /bin/echo {{ http_port }}
   handlers:
     - include: handlers.yml

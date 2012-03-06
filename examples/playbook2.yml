@@ -1,8 +1,10 @@
 ---
 - hosts: '*'
+  vars:
+    a: 2
+    b: 3
+    c: 4
   tasks:
-  - name: config step
-    action: setup a=2 b=3 c=4
   - name: copy comand
     action: copy src=/srv/a dest=/srv/b
     notify: 
