@@ -56,9 +56,9 @@ experiment in radical simplicity and encourages anyone to be able to easily cont
    </tr>
    <tr>
       <td>Config Language Style</td>
-      <td>Very simple, not expressive</td>
-      <td>Very rich & expressive</td>
-      <td>Very rich & expressive</td>
+      <td><B>Very simple</B></td>
+      <td>Very rich, complex</td>
+      <td>Very rich, complex</td>
       <td>None</td>
       <td>None</td>
       <td>None</td>
@@ -79,7 +79,7 @@ experiment in radical simplicity and encourages anyone to be able to easily cont
       <td>SSL pull or push trigger(?)</td>
       <td>SSL push</td>
       <td>SSH</td>
-      <td>AMQP</td>
+      <td>AMQP bus</td>
    </tr>
    <tr>
       <td>Daemons Required?</td>
@@ -93,11 +93,11 @@ experiment in radical simplicity and encourages anyone to be able to easily cont
    <tr>
       <td>Database Needed?</td>
       <td><B>no</B></td>
-      <td>optional</td>
+      <td>some features</td>
       <td>yes</td>
       <td><B>no</B></td>
       <td><B>no</B></td>
-      <td>optional</td>
+      <td>some features</td>
    </tr>
    <tr>
       <td>Message Bus Required?</td>
@@ -106,7 +106,7 @@ experiment in radical simplicity and encourages anyone to be able to easily cont
       <td>yes</td>
       <td><B>no</B></td>
       <td><B>no</B></td>
-      <td><B>no</B></td>
+      <td>yes</td>
    </tr>
    <tr>
       <td>Inventory Features</td>
@@ -151,7 +151,7 @@ experiment in radical simplicity and encourages anyone to be able to easily cont
       <td><B>Wide/Established</B></td>
       <td>Medium/Established</td>
       <td>Poor</td>
-      <td>N/A?</td>
+      <td>Medium/Established</td>
    </tr>
    <tr>
       <td>Users Targeted</td>
