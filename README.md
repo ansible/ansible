@@ -167,9 +167,7 @@ An example showing a small playbook:
         max_clients: 200
       user: root
       tasks:
-      - include: base.yml
-      - name: configure template & module variables for future template calls
-        action: setup http_port=80 max_clients=200
+      - include: base.yml somevar=3 othervar=4
       - name: write the apache config file
         action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
@@ -181,10 +179,15 @@ An example showing a small playbook:
 
 Some key concepts here include:
 
-   * Everything is expressed in simple YAML
-   * Steps can be run as non-root
-   * Modules can notify 'handlers' when changes occur.
-   * Tasks and handlers can be 'included' to faciliate sharing and 'class' like behavior
+   * Everything is expressed in a simple YAML data format, not a custom language, not code.
+   * Playooks can have many steps
+   * Any step can run as any user
+   * Conditional handlers fire on 'notify'.  Ex: restart apache only once, at the end, only if needed
+   * Tasks and handlers can be 'included' to faciliate sharing and reuse
+   * Include statements can take parameters for customization, and be used more than once per file
+   * Variables from the host system (from facter, ohai, etc) bubble-up for use in templates
+   * Variables can be deferenced like {{ varname }} in both include directives & templates
+   * Templates are powered by Jinja2: http://jinja.pocoo.org/docs/templates/#synopsis
 
 To run a playbook:
 
