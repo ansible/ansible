@@ -42,6 +42,8 @@ clean:
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	@echo "Cleaning up asciidoc to man transformations and results"
 	find ./docs/man -type f \( -name "*.xml" -or -regex ".*\.[0-9]$$" \) -delete
+	@echo "Cleaning up output from test runs"
+	-rm -rf test/test_data
 
 python: docs
 	python setup.py build
