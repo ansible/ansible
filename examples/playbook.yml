@@ -5,7 +5,7 @@
     http_port: 80
     max_clients: 200
   tasks:
-  - include: base.yml
+  - include: base.yml favcolor=blue
   - name: write the apache config file using vars set above
     action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
     notify:

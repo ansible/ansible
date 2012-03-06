@@ -23,6 +23,7 @@ from ansible.utils import *
 import yaml
 import shlex
 import os
+import jinja2
 
 SETUP_CACHE={ 'foo' : {} }
 
@@ -92,8 +93,20 @@ class PlayBook(object):
             new_tasks = []
             for task in tasks:
                if 'include' in task:
-                   path = path_dwim(dirname, task['include'])
-                   included = yaml.load(file(path).read())
+                   # FIXME: refactor
+                   # an include line looks like:
+                   # include: some.yml a=2 b=3 c=4
+                   include_tokens = task['include'].split()
+                   path = path_dwim(dirname, include_tokens[0])
+                   inject_vars = play.get('vars', {})
+                   for i,x in enumerate(include_tokens):
+                       if x.find("=") != -1:
+                           (k,v) = x.split("=")
+                           inject_vars[k] = v
+                   included = file(path).read()
+                   template = jinja2.Template(included)
+                   included = template.render(inject_vars)
+                   included = yaml.load(included)
                    for x in included:
                        new_tasks.append(x)
                else:

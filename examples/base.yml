@@ -3,3 +3,5 @@
   action: command /usr/sbin/setenforce 0
 - name: no iptables
   action: service name=iptables state=stopped
+- name: this is just to show variables work here, favcolor={{ favcolor }}
+  action: command /bin/true
