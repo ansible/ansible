@@ -6,8 +6,8 @@
     max_clients: 200
   tasks:
   - include: base.yml favcolor=blue
-  - name: write the apache config file using vars set above
-    action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
+  - name: write the foo config file using vars set above
+    action: template src=foo.j2 dest=/etc/some_random_foo.conf
     notify:
     - restart apache
   - name: ensure apache is running

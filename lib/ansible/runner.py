@@ -32,7 +32,8 @@ import Queue
 import random
 import paramiko
 import jinja2
-        
+from ansible.utils import *
+    
 ################################################
 
 def noop(*args, **kwargs):
@@ -63,6 +64,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER,
         remote_pass=C.DEFAULT_REMOTE_PASS,
         background=0,
+        basedir=None,
         setup_cache={},
         verbose=False):
     
@@ -94,6 +96,9 @@ class Runner(object):
         self.remote_pass = remote_pass
         self.background  = background
 
+        if basedir is None: 
+            basedir = os.getcwd()
+        self.basedir = basedir
 
         # hosts in each group name in the inventory file
         self._tmp_paths  = {}
@@ -287,7 +292,7 @@ class Runner(object):
         # transfer the file to a remote tmp location
         tmp_path = tmp
         tmp_src = tmp_path + source.split('/')[-1]
-        self._transfer_file(conn, source, tmp_src)
+        self._transfer_file(conn, path_dwim(self.basedir, source), tmp_src)
 
         # install the copy  module
         self.module_name = 'copy'
@@ -318,7 +323,7 @@ class Runner(object):
         tpath = tmp
         tempname = os.path.split(source)[-1]
         temppath = tpath + tempname
-        self._transfer_file(conn, source, temppath)
+        self._transfer_file(conn, path_dwim(self.basedir, source), temppath)
 
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')

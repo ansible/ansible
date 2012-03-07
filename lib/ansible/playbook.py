@@ -81,6 +81,7 @@ class PlayBook(object):
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
 
+        self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
     def _include_tasks(self, play, task, dirname, new_tasks):
@@ -178,7 +179,8 @@ class PlayBook(object):
             module_path=self.module_path,
             timeout=self.timeout,
             remote_user=remote_user,
-            setup_cache=SETUP_CACHE
+            setup_cache=SETUP_CACHE,
+            basedir=self.basedir
         ).run()
 
     def _run_task(self, pattern=None, task=None, host_list=None,
