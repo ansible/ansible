@@ -71,6 +71,8 @@ class SphinxBuilder(object):
             print >> sys.stderr, "are required to make documentation:"
             print >> sys.stderr, "\tsphinx.application.Sphinx"
             print >> sys.stderr, "This is usually available from the python-sphinx package"
+            print >> sys.stderr, "=== Error message received while attempting to build==="
+            print >> sys.stderr, ie
         except Exception, ex:
             print >> sys.stderr, "FAIL! exiting ... (%s)" % ex
 
@@ -80,4 +82,8 @@ class SphinxBuilder(object):
 
 if __name__ == '__main__':
     docgen = SphinxBuilder()
-#    docgen.build_docs()
+
+    if "view" in sys.argv:
+        import webbrowser
+        if not webbrowser.open('html/index.html'):
+            print >> sys.stderr, "Could not open on your webbrowser."

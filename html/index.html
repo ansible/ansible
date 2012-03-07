@@ -85,20 +85,52 @@ obvious.</p>
 <p>If you are running python 2.6 on the <strong>overlord</strong> machine, you will
 need:</p>
 <ul class="simple">
-<li>paramiko</li>
-<li>python-jinja2</li>
-<li>PyYAML (if using playbooks)</li>
+<li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">Asciidoc</span></tt> (for building documentation)</li>
 </ul>
-<p>If you are running less than Python 2.6, you will also need</p>
+<p>If you are running less than Python 2.6, you will also need:</p>
 <ul class="simple">
-<li>the Python 2.4 or 2.5 backport of the multiprocessing module</li>
-<li>simplejson</li>
+<li>The Python 2.4 or 2.5 backport of the multiprocessing module
+* <a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">Installation and Testing Instructions</a></li>
+<li><tt class="docutils literal"><span class="pre">simplejson</span></tt></li>
 </ul>
 <p>On the managed nodes, to use templating, you will need:</p>
 <ul class="simple">
-<li>python-jinja2 (you can install this with ansible)</li>
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can install this with ansible)</li>
 </ul>
-<p>Contents:</p>
+</div>
+<div class="section" id="getting-ansible">
+<h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
+<p>Tagged releases are available as tar.gz files from the Ansible github
+project page:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
+</ul>
+<p>You can also clone the git repository yourself and install Ansible in
+one of two ways:</p>
+<div class="section" id="python-distutils">
+<h3>Python Distutils<a class="headerlink" href="#python-distutils" title="Permalink to this headline">¶</a></h3>
+<p>You can install Ansible using Python Distutils:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
+$ cd ./ansible
+$ sudo make install</pre>
+</div>
+</div>
+<div class="section" id="via-rpm">
+<h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
+<p>In the future, pre-built RPMs may be available. Until that time you
+can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
+$ cd ./ansible
+$ make rpm
+$ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
@@ -112,8 +144,6 @@ need:</p>
 <li class="toctree-l1"><a class="reference internal" href="patterns.html">Patterns</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#examples-1">Examples 1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#examples-2">Examples 2</a></li>
@@ -122,21 +152,26 @@ need:</p>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#examples-4">Examples 4</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="man.html#taboot-1">taboot(1)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="man.html#taboot-tasks-5">taboot-tasks(5)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="man.html#ansible-1">ansible(1)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="man.html#ansible-modules-5">ansible-modules(5)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="man.html#ansible-playbook-5">ansible-playbook(5)</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="communicate-or-get-involved">
+<h1>Communicate or Get Involved<a class="headerlink" href="#communicate-or-get-involved" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
-<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+<li>Join the <a class="reference external" href="http://groups.google.com/group/ansible-project">ansible-project mailing list</a> on Google Groups</li>
+<li>Join <a class="reference external" href="irc://irc.freenode.net/#ansible">#ansible</a> on the <a class="reference external" href="http://freenode.net/">freenode IRC network</a></li>
+<li>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github<ul>
+<li>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></li>
+</ul>
+</li>
 </ul>
 </div>
 
@@ -150,12 +185,18 @@ need:</p>
   <ul>
 <li><a class="reference internal" href="#">Ansible</a><ul>
 <li><a class="reference internal" href="#design-principles">Design Principles</a></li>
-<li><a class="reference internal" href="#requirements">Requirements</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
+<li><a class="reference internal" href="#python-distutils">Python Distutils</a></li>
+<li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#communicate-or-get-involved">Communicate or Get Involved</a></li>
 </ul>
 
   <h4>Next topic</h4>
