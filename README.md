@@ -120,7 +120,8 @@ To just transfer a file directly to many different servers:
 
 To use templating, first run the setup module to put the template variables you would
 like to use on the remote host.  Then use the template module to write the
-files using the templates.  Templates are written in Jinja2 format.
+files using the templates.  Templates are written in Jinja2 format.   Playbooks
+(covered below) will run the setup module for you, making this even simpler.
 
     > ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
     > ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
@@ -154,9 +155,11 @@ Playbooks
 
 Playbooks are a completely different way to use ansible and are particularly awesome.
 
-They are the basis for a really simple configuration management system, unlike
+They are the basis for a really simple configuration management and deployment system, unlike
 any that already exist, and one that is very well suited to deploying complex
-multi-machine applications.  
+multi-machine applications.  While you might run the main ansible program for ad-hoc tasks,
+playbooks are more likely to be kept in source control and used to push out your configuration
+or assure the configurations of your remote systems are in spec.
 
 An example showing a small playbook:
 
@@ -167,9 +170,7 @@ An example showing a small playbook:
         max_clients: 200
       user: root
       tasks:
-      - include: base.yml
-      - name: configure template & module variables for future template calls
-        action: setup http_port=80 max_clients=200
+      - include: base.yml somevar=3 othervar=4
       - name: write the apache config file
         action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
@@ -181,10 +182,15 @@ An example showing a small playbook:
 
 Some key concepts here include:
 
-   * Everything is expressed in simple YAML
-   * Steps can be run as non-root
-   * Modules can notify 'handlers' when changes occur.
-   * Tasks and handlers can be 'included' to faciliate sharing and 'class' like behavior
+   * Everything is expressed in a simple YAML data format, not a custom language, not code.
+   * Playooks can have many steps
+   * Any step can run as any user
+   * Conditional handlers fire on 'notify'.  Ex: restart apache only once, at the end, only if needed
+   * Tasks and handlers can be 'included' to faciliate sharing and reuse
+   * Include statements can take parameters for customization, and be used more than once per file
+   * Variables from the host system (from facter, ohai, etc) bubble-up for use in templates
+   * Variables can be deferenced like {{ varname }} in both include directives & templates
+   * Templates are powered by Jinja2: http://jinja.pocoo.org/docs/templates/#synopsis
 
 To run a playbook:
 
