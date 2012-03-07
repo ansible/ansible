@@ -21,10 +21,38 @@
 import sys
 import ansible.playbook
 import ansible.constants as C
+from ansible.utils import *
 import getpass
 from optparse import OptionParser
 
 #######################################################
+
+class PlaybookCallbacks(object):
+  
+    def __init__(self):
+        pass
+
+    def set_playbook(self, playbook):
+        self.playbook = playbook
+
+    def on_start(self):
+        print "\n"
+
+    def on_task_start(self, name, is_conditional):
+        print task_start_msg(name, is_conditional)
+
+    def on_unreachable(self, host, msg):
+        print "unreachable: [%s] => %s" % (host, msg)
+
+    def on_failed(self, host, results):
+        print "failed: [%s] => %s\n" % (host, smjson(results))
+ 
+    def on_ok(self, host):
+        print "ok: [%s]\n" % (host)
+
+    def on_play_start(self, pattern):
+        print "PLAY [%s] ****************************\n" % pattern
+
 
 def main(args):
     ''' run ansible-playbook operations '''
@@ -60,6 +88,7 @@ def main(args):
             forks=options.forks,
             verbose=True,
             remote_pass=sshpass,
+            callbacks=PlaybookCallbacks()
         )
         pb.run()
 

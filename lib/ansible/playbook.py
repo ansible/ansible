@@ -50,7 +50,8 @@ class PlayBook(object):
         timeout      =C.DEFAULT_TIMEOUT,
         remote_user  =C.DEFAULT_REMOTE_USER,
         remote_pass  =C.DEFAULT_REMOTE_PASS,
-        verbose=False):
+        verbose=False,
+        callbacks=None):
 
         # TODO, once ansible-playbook is it's own script this will
         # have much LESS parameters to the constructor and will
@@ -64,6 +65,8 @@ class PlayBook(object):
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.verbose     = verbose
+        self.callbacks   = callbacks
+        self.callbacks.set_playbook(self)
 
         # store the list of changes/invocations/failure counts
         # as a dictionary of integers keyed off the hostname
@@ -131,10 +134,9 @@ class PlayBook(object):
         ''' run all patterns in the playbook '''
 
         # loop through all patterns and run them
+        self.callbacks.on_start()
         for pattern in self.playbook:
             self._run_pattern(pattern)
-        if self.verbose:
-            print "\n"
 
         # summarize the results
         results = {}
@@ -200,8 +202,7 @@ class PlayBook(object):
         # as the result of a change handler on a subset
         # of all of the hosts
 
-        if self.verbose:
-            print task_start_msg(name, conditional)
+        self.callbacks.on_task_start(name, conditional)
 
         # load up an appropriate ansible runner to
         # run the task in parallel
@@ -222,8 +223,7 @@ class PlayBook(object):
 
         for host, msg in dark.items():
             self.processed[host] = 1
-            if self.verbose:
-                print "unreachable: [%s] => %s" % (host, msg)
+            self.callbacks.on_unreachable(host, msg)
             if not host in self.dark:
                 self.dark[host] = 1
             else:
@@ -233,15 +233,13 @@ class PlayBook(object):
             self.processed[host] = 1
    
             if is_failed(results):
-                if self.verbose:
-                    print "failed: [%s] => %s\n" % (host, smjson(results))
+                self.callbacks.on_failed(host, results)
                 if not host in self.failures:
                     self.failures[host] = 1
                 else:
                     self.failures[host] = self.failures[host] + 1
             else:
-                if self.verbose:
-                    print "ok: [%s]\n" % host
+                self.callbacks.on_ok(host)
                 if not host in self.invocations:
                     self.invocations[host] = 1
                 else:
@@ -297,8 +295,7 @@ class PlayBook(object):
 
         self.host_list, groups = ansible.runner.Runner.parse_hosts(self.host_list)
 
-        if self.verbose:
-            print "PLAY [%s] ****************************\n" % pattern
+        self.callbacks.on_play_start(pattern)
 
         # first run the setup task on every node, which gets the variables
         # written to the JSON file and will also bubble facts back up via
