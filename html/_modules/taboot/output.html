@@ -1,0 +1,618 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taboot.output &mdash; Taboot v0.4.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Taboot v0.4.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Taboot v0.4.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for taboot.output</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># Taboot - Client utility for performing deployments with Func.</span>
+<span class="c"># Copyright © 2009,2011, Red Hat, Inc.</span>
+<span class="c">#</span>
+<span class="c"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="kn">from</span> <span class="nn">taboot.tasks.puppet</span> <span class="kn">import</span> <span class="n">PuppetTaskResult</span>
+<span class="kn">from</span> <span class="nn">taboot.tasks.rpm</span> <span class="kn">import</span> <span class="n">RPMTaskResult</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<span class="k">class</span> <span class="nc">_FileLikeOutputObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A file-like parent class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">exceptions</span>
+    <span class="kn">import</span> <span class="nn">time</span> <span class="kn">as</span> <span class="nn">_time</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">starttime</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates an instance of a file-like object.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `args`: all non-keyword arguments.</span>
+<span class="sd">           - `kwargs`: all keyword arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">ConfigParser</span>
+        <span class="kn">import</span> <span class="nn">os.path</span>
+
+        <span class="k">if</span> <span class="n">_FileLikeOutputObject</span><span class="o">.</span><span class="n">defaults</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s">&quot;~/.taboot.conf&quot;</span><span class="p">):</span>
+                <span class="n">_FileLikeOutputObject</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+                <span class="n">_FileLikeOutputObject</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s">&quot;~/.taboot.conf&quot;</span><span class="p">))</span>
+
+        <span class="c"># Only set the start time once, not for each logger instance</span>
+        <span class="k">if</span> <span class="n">_FileLikeOutputObject</span><span class="o">.</span><span class="n">starttime</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">datetime</span>
+            <span class="n">_FileLikeOutputObject</span><span class="o">.</span><span class="n">starttime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span> <span class="o">=</span> <span class="il">0L</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation specific setup.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `args`: all non-keyword arguments.</span>
+<span class="sd">           - `kwargs`: all keyword arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        We are not buffering so we always just return None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        We are an output only file-like object. Raise exception.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `args`: all non-keyword arguments.</span>
+<span class="sd">           - `kwargs`: all keyword arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Object for output only.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tell</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the position of the file-like object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span>
+
+    <span class="k">def</span> <span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        We are an output only file-like object. Raise exception.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `size`: size to truncate to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NotImplementedError</span><span class="p">(</span>
+            <span class="s">&#39;This does not support truncate.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">writelines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Writes a sequence of lines.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `sequence`: iterable sequence of data to write.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Writer wrapper (not rapper, beav). Simply calls _write which is</span>
+<span class="sd">        implementation specific and updates the position.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `item`: the item to write.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of writing data.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `item`: the item to write.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NotImplementedError</span><span class="p">(</span>
+            <span class="s">&#39;_write must be overriden.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Close wrapper (again, not rapper, beav). Simply calls _close  which</span>
+<span class="sd">        is implementation specific and updates the closed property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of closing the file-like object.</span>
+<span class="sd">        By default nothing occurs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c"># Read aliases</span>
+    <span class="n">readline</span> <span class="o">=</span> <span class="n">read</span>
+    <span class="n">readlines</span> <span class="o">=</span> <span class="n">read</span>
+    <span class="n">xreadlines</span> <span class="o">=</span> <span class="n">read</span>
+    <span class="n">seek</span> <span class="o">=</span> <span class="n">read</span>
+
+    <span class="c"># Read-only Properties</span>
+    <span class="n">closed</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">)</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span>
+            <span class="s">&quot;%Y-%m-</span><span class="si">%d</span><span class="s"> %H:%M:%S&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()))</span>
+
+
+<div class="viewcode-block" id="CLIOutput"><a class="viewcode-back" href="../../code.html#taboot.output.CLIOutput">[docs]</a><span class="k">class</span> <span class="nc">CLIOutput</span><span class="p">(</span><span class="n">_FileLikeOutputObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output a :class:`taboot.tasks.TaskResult` to the command line</span>
+<span class="sd">    with pretty formatting and colors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation specific setup for outputting to the CLI.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `host`: name of the host</span>
+<span class="sd">           - `task`: name of the task</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">Colors</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_c</span> <span class="o">=</span> <span class="n">Colors</span><span class="o">.</span><span class="n">Colors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span> <span class="o">=</span> <span class="n">sys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> Starting Task[</span><span class="si">%s</span><span class="s">]</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s">&#39;white&#39;</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of writing to the CLI.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `result`: result object to inspect and write</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">types</span>
+
+        <span class="c"># Set output color</span>
+        <span class="n">output_color</span> <span class="o">=</span> <span class="s">&#39;red&#39;</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="n">output_color</span> <span class="o">=</span> <span class="s">&#39;green&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> Finished Task[</span><span class="si">%s</span><span class="s">]:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">output_color</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">PuppetTaskResult</span><span class="p">):</span>
+            <span class="c"># If result is an instance of PuppetTaskResult,</span>
+            <span class="c"># colorize the puppet output</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;info:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;green&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;notice:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;blue&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;warning:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;yellow&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;err:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;red&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;normal&#39;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">RPMTaskResult</span><span class="p">):</span>
+            <span class="c"># If result is an instance of RPMTaskResult,</span>
+            <span class="c"># colorize the rpm.PostManifest output</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;red&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;green&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s">&#39;normal&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Use standard pass/fall coloring for output</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ListType</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                            <span class="n">r</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">output_color</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">output_color</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="LogOutput"><a class="viewcode-back" href="../../code.html#taboot.output.LogOutput">[docs]</a><span class="k">class</span> <span class="nc">LogOutput</span><span class="p">(</span><span class="n">_FileLikeOutputObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output a :class:`taboot.tasks.TaskResult` to a logfile.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&#39;taboot.log&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation specific setup for outputting to a log.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `logfile`: name of the logfile to write to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logfile</span> <span class="o">=</span> <span class="n">logfile</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logfile</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;stdout&#39;</span><span class="p">,</span> <span class="s">&#39;1&#39;</span><span class="p">):</span>
+            <span class="kn">import</span> <span class="nn">sys</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="se">\n</span><span class="si">%s</span><span class="s"> Starting Task[</span><span class="si">%s</span><span class="s">]</span><span class="se">\n\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">task</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of writing to a log.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `result`: result object to inspect and write</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">types</span>
+
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="s">&#39;OK&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="s">&#39;FAIL&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="se">\n</span><span class="si">%s</span><span class="s"> Finished Task[</span><span class="si">%s</span><span class="s">]: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">success_str</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ListType</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">r</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+</div>
+<div class="viewcode-block" id="EmailOutput"><a class="viewcode-back" href="../../code.html#taboot.output.EmailOutput">[docs]</a><span class="k">class</span> <span class="nc">EmailOutput</span><span class="p">(</span><span class="n">_FileLikeOutputObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output a :class:`taboot.tasks.TaskResult` to a logfile.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_addr</span><span class="p">,</span> <span class="n">from_addr</span><span class="o">=</span><span class="s">&#39;taboot@redhat.com&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation specific setup for outputting to a log.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `to_addr`: who to send the email to.</span>
+<span class="sd">           - `from_addr`: who the email is from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">cStringIO</span> <span class="kn">as</span> <span class="nn">StringIO</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="n">ie</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">StringIO</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to_addr</span> <span class="o">=</span> <span class="n">to_addr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_from_addr</span> <span class="o">=</span> <span class="n">from_addr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">StringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation of writing out to an email.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `result`: result object to inspect and write</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="s">&#39;OK&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="s">&#39;FAIL&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">task_result</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">success_str</span><span class="p">))</span>
+
+<div class="viewcode-block" id="EmailOutput.flush"><a class="viewcode-back" href="../../code.html#taboot.output.EmailOutput.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flushing sends the email with the buffer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">smtplib</span>
+        <span class="kn">from</span> <span class="nn">email.mime.text</span> <span class="kn">import</span> <span class="n">MIMEText</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MIMEText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s">&#39;Subject&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_result</span><span class="o">.</span><span class="n">host</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s">&#39;From&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_addr</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s">&#39;To&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_addr</span>
+
+        <span class="n">smtp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">()</span>
+        <span class="n">smtp</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="n">smtp</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_from_addr</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_addr</span><span class="p">],</span> <span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+        <span class="n">smtp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If the buffer is not empty before destroying, flush.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="o">.</span><span class="n">pos</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="o">.</span><span class="n">len</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="HTMLOutput"><a class="viewcode-back" href="../../code.html#taboot.output.HTMLOutput">[docs]</a><span class="k">class</span> <span class="nc">HTMLOutput</span><span class="p">(</span><span class="n">_FileLikeOutputObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output a :class:`taboot.tasks.TaskResult` to the command line</span>
+<span class="sd">    with pretty formatting and colors.</span>
+
+<span class="sd">    .. document private functions</span>
+<span class="sd">    .. automethod:: _write</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logfile_path</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_expand_starttime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expand any instances of &quot;%s&quot; in `param`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">param</span> <span class="o">%</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">starttime</span>
+            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="s">&quot;-&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">param</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">logfile</span><span class="o">=</span><span class="s">&quot;taboot-</span><span class="si">%s</span><span class="s">.html&quot;</span><span class="p">,</span> <span class="n">destdir</span><span class="o">=</span><span class="s">&quot;.&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implementation specific setup for outputting to an HTML file.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `host`: name of the host</span>
+<span class="sd">           - `task`: name of the task</span>
+<span class="sd">           - `logfile`: name of the file to log to, &#39;%s&#39; is substituted</span>
+<span class="sd">              with a datestamp</span>
+<span class="sd">           - `destdir`: directory in which to save the log file to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">Colors</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="kn">import</span> <span class="nn">os.path</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+
+        <span class="n">_default_logfile</span> <span class="o">=</span> <span class="s">&quot;taboot-</span><span class="si">%s</span><span class="s">.html&quot;</span>
+        <span class="n">_default_destdir</span> <span class="o">=</span> <span class="s">&quot;.&quot;</span>
+
+        <span class="c"># Pick if the parameter is changed</span>
+        <span class="c"># Pick if above is false and logfile is set in defaults</span>
+        <span class="c"># Else, use parameter</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logfile</span> <span class="o">==</span> <span class="n">_default_logfile</span><span class="p">:</span>
+            <span class="n">_logfile</span> <span class="o">=</span> <span class="n">logfile</span>
+        <span class="k">elif</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+                <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s">&quot;HTMLOutput&quot;</span><span class="p">,</span> <span class="s">&quot;logfile&quot;</span><span class="p">):</span>
+            <span class="n">_logfile</span> <span class="o">=</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HTMLOutput&quot;</span><span class="p">,</span> <span class="s">&quot;logfile&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_logfile</span> <span class="o">=</span> <span class="n">logfile</span>
+
+        <span class="c"># Expand %s into a time stamp if necessary</span>
+        <span class="n">_logfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_starttime</span><span class="p">(</span><span class="n">_logfile</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">destdir</span> <span class="o">==</span> <span class="n">_default_destdir</span><span class="p">:</span>
+            <span class="n">_destdir</span> <span class="o">=</span> <span class="n">destdir</span>
+        <span class="k">elif</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+                <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="s">&quot;HTMLOutput&quot;</span><span class="p">,</span> <span class="s">&quot;destdir&quot;</span><span class="p">):</span>
+            <span class="n">_destdir</span> <span class="o">=</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;HTMLOutput&quot;</span><span class="p">,</span> <span class="s">&quot;destdir&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_destdir</span> <span class="o">=</span> <span class="n">destdir</span>
+
+        <span class="c"># Figured it all out, now we join them together!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logfile_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_destdir</span><span class="p">,</span> <span class="n">_logfile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">_destdir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">_destdir</span><span class="p">,</span> <span class="mo">0755</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_c</span> <span class="o">=</span> <span class="n">Colors</span><span class="o">.</span><span class="n">HTMLColors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_logfile_path</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">)</span>
+
+        <span class="c"># Lets only print this when it is set or changed</span>
+        <span class="k">if</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">logfile_path</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> \
+                <span class="ow">not</span> <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">logfile_path</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logfile_path</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Logging HTML Output to </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> \
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">_logfile_path</span><span class="p">)</span>
+            <span class="n">HTMLOutput</span><span class="o">.</span><span class="n">logfile_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logfile_path</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+        <span class="c"># Log the start of this task</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fmt_anchor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fmt_hostname</span><span class="p">(</span><span class="n">host</span><span class="p">))</span>
+        <span class="n">start_msg</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;&lt;p&gt;&lt;tt&gt;</span><span class="si">%s</span><span class="s">:&lt;/tt&gt;&lt;/p&gt;</span>
+<span class="s">&lt;p&gt;&lt;tt&gt;</span><span class="si">%s</span><span class="s"> Starting Task[</span><span class="si">%s</span><span class="s">]</span><span class="se">\n</span><span class="s">&lt;/tt&gt;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">start_msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_fmt_anchor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Format an #anchor and a clickable link to it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="n">anchor_str</span> <span class="o">=</span> <span class="s">&quot;&lt;a name=&#39;</span><span class="si">%s</span><span class="s">&#39; href=&#39;#</span><span class="si">%s</span><span class="s">&#39;&gt;</span><span class="si">%s</span><span class="s">&lt;/a&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">anchor_str</span>
+
+    <span class="k">def</span> <span class="nf">_fmt_hostname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Standardize the hostname formatting</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;b&gt;</span><span class="si">%s</span><span class="s">&lt;/b&gt;&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s">&#39;blue&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HTMLOutput._write"><a class="viewcode-back" href="../../code.html#taboot.output.HTMLOutput._write">[docs]</a>    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write a tasks `result` out to HTML. Handles enhanced stylizing</span>
+<span class="sd">        for task results that support such as:</span>
+
+<span class="sd">        - :py:mod:`taboot.tasks.puppet.PuppetTaskResult`</span>
+<span class="sd">        - :py:mod:`taboot.tasks.rpm.RPMTaskResult`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">types</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+        <span class="kn">import</span> <span class="nn">cgi</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fmt_hostname</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+
+        <span class="c"># escape any html in result.output</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">cgi</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="s">&#39;&lt;b&gt;OK&lt;/b&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;green&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">success_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="s">&#39;&lt;b&gt;FAIL&lt;/b&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;red&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;p&gt;&lt;tt&gt;</span><span class="si">%s</span><span class="s">:</span><span class="se">\n</span><span class="s">&lt;/tt&gt;&lt;/p&gt;</span><span class="se">\n</span><span class="s">&lt;p&gt;&lt;tt&gt;</span><span class="si">%s</span><span class="s"> &quot;</span>\
+                               <span class="s">&quot;Finished Task[</span><span class="si">%s</span><span class="s">]: </span><span class="si">%s</span><span class="s">&lt;/tt&gt;&lt;/p&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                           <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">success_str</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">PuppetTaskResult</span><span class="p">):</span>
+            <span class="c"># If result is an instance of PuppetTaskResult,</span>
+            <span class="c"># colorize the puppet output</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;info:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;green&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;notice:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;blue&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;warning:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;yellow&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;err:&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;red&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;normal&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;br /&gt;&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">RPMTaskResult</span><span class="p">):</span>
+            <span class="c"># If result is an instance of RPMTaskResult,</span>
+            <span class="c"># colorize the rpm.PostManifest output</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;red&#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;green&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_c</span><span class="o">.</span><span class="n">format_string</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                                             <span class="s">&#39;normal&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;br /&gt;&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Use standard pass/fall coloring for output</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ListType</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;pre&gt;</span><span class="si">%s</span><span class="s">&lt;/pre&gt;</span><span class="se">\n</span><span class="s">&lt;br /&gt;&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                                       <span class="n">r</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;pre&gt;</span><span class="si">%s</span><span class="s">&lt;/pre&gt;</span><span class="se">\n</span><span class="s">&lt;br /&gt;&lt;br /&gt;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                               <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_fd</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Taboot v0.4.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009-2011 Red Hat, Inc.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Ansible &mdash; Ansible v0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Ansible v0.0.1 documentation" href="#" />
+    <link rel="next" title="Getting Started" href="gettingstarted.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="gettingstarted.html" title="Getting Started"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Ansible v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ansible">
+<h1>Ansible<a class="headerlink" href="#ansible" title="Permalink to this headline">¶</a></h1>
+<p>Ansible is a extra-simple tool/API for doing &#8216;parallel remote things&#8217;
+over SSH &#8211; whether executing commands, running &#8220;modules&#8221;, or
+executing larger &#8216;playbooks&#8217; that can serve as a configuration
+management or deployment system.</p>
+<p>While <a class="reference external" href="http://fedorahosted.org/func">Func installation</a> which I
+co-wrote, aspired to avoid using SSH and have it&#8217;s own daemon
+infrastructure, Ansible aspires to be quite different and more
+minimal, but still able to grow more modularly over time.  This is
+based on talking to a lot of users of various tools and wishing to
+eliminate problems with connectivity and long running daemons, or not
+picking tool X because they preferred to code in Y. Further, playbooks
+take things a whole step further, building the config and deployment
+system I always wanted to build.</p>
+<p>Why use Ansible versus something else?  (Fabric, Capistrano,
+mCollective, Func, SaltStack, etc?) It will have far less code, it
+will be more correct, and it will be the easiest thing to hack on and
+use you&#8217;ll ever see &#8211; regardless of your favorite language of choice.
+Want to only code plugins in bash or clojure?  Ansible doesn&#8217;t care.
+The docs will fit on one page and the source will be blindingly
+obvious.</p>
+<div class="section" id="design-principles">
+<h2>Design Principles<a class="headerlink" href="#design-principles" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Dead simple setup</li>
+<li>Super fast &amp; parallel by default</li>
+<li>No server or client daemons; use existing SSHd</li>
+<li>No additional software required on client boxes</li>
+<li>Modules can be written in ANY language</li>
+<li>Awesome API for creating very powerful distributed scripts</li>
+<li>Be usable as non-root</li>
+<li>Create the easiest config management system to use, ever.</li>
+</ul>
+</div>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>Requirements are extremely minimal.</p>
+<p>If you are running python 2.6 on the <strong>overlord</strong> machine, you will
+need:</p>
+<ul class="simple">
+<li>paramiko</li>
+<li>python-jinja2</li>
+<li>PyYAML (if using playbooks)</li>
+</ul>
+<p>If you are running less than Python 2.6, you will also need</p>
+<ul class="simple">
+<li>the Python 2.4 or 2.5 backport of the multiprocessing module</li>
+<li>simplejson</li>
+</ul>
+<p>On the managed nodes, to use templating, you will need:</p>
+<ul class="simple">
+<li>python-jinja2 (you can install this with ansible)</li>
+</ul>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#what-you-need">What you need</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="YAMLScripts.html#yaml-basics">YAML Basics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-1">Examples 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-2">Examples 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-3">Examples 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#id1">Examples 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-4">Examples 4</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="man.html#taboot-1">taboot(1)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="man.html#taboot-tasks-5">taboot-tasks(5)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Ansible</a><ul>
+<li><a class="reference internal" href="#design-principles">Design Principles</a></li>
+<li><a class="reference internal" href="#requirements">Requirements</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gettingstarted.html"
+                        title="next chapter">Getting Started</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="gettingstarted.html" title="Getting Started"
+             >next</a> |</li>
+        <li><a href="#">Ansible v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012 Michael DeHaan.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

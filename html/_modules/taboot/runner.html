@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>taboot.runner &mdash; Taboot v0.4.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Taboot v0.4.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Taboot v0.4.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for taboot.runner</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># Taboot - Client utility for performing deployments with Func.</span>
+<span class="c"># Copyright © 2009-2011, Red Hat, Inc.</span>
+<span class="c">#</span>
+<span class="c"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">taboot.util</span> <span class="kn">import</span> <span class="n">instantiator</span>
+<span class="kn">from</span> <span class="nn">log</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Runner"><a class="viewcode-back" href="../../code.html#taboot.runner.Runner">[docs]</a><span class="k">class</span> <span class="nc">Runner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Runner, responsible for running a taboot job.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">threading</span>
+    <span class="kn">import</span> <span class="nn">taboot.output</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">expand_globs</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :Parameters:</span>
+<span class="sd">           - `script`: an instance of tabootScript</span>
+
+<span class="sd">           - `expand_globs`: whether to expand the globs or just leave</span>
+<span class="sd">             them as is.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">getHosts</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">getTaskTypes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">getOutputTypes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task_q</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">expand_globs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_globs</span><span class="p">()</span>
+        <span class="n">log_debug</span><span class="p">(</span><span class="s">&quot;Will operate on </span><span class="si">%s</span><span class="s"> host(s).&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">))</span>
+
+        <span class="c"># Prefight threading</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_tasks</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">getPreflightTypes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_semaphore</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_tasks_q</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Main task-body threading</span>
+        <span class="k">if</span> <span class="n">script</span><span class="o">.</span><span class="n">getConcurrency</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;all&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_concurrency</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_concurrency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">script</span><span class="o">.</span><span class="n">getConcurrency</span><span class="p">())</span>
+        <span class="n">log_debug</span><span class="p">(</span><span class="s">&quot;Setting task-body concurrency to </span><span class="si">%s</span><span class="s">.&quot;</span><span class="p">,</span>
+                  <span class="bp">self</span><span class="o">.</span><span class="n">_concurrency</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concurrency</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the jobs in a prefilght section.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">signal</span>
+
+        <span class="n">rdy_msg</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Pre-Flight complete, press enter to continue: &quot;</span>
+
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">TaskRunner</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_tasks</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_semaphore</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_tasks_q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sighandler</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_q</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">task</span><span class="o">.</span><span class="n">isAlive</span><span class="p">():</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">enumerate</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c"># Even though all the threads may have been joined we</span>
+            <span class="c"># should still wait for them to terminate. If we don&#39;t</span>
+            <span class="c"># wait for that we will likely see the &#39;continue?&#39; prompt</span>
+            <span class="c"># before the preflight output gets a chance to print.</span>
+            <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s">&quot;onlypreflight&quot;</span><span class="p">]:</span>
+            <span class="n">ready</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="n">rdy_msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">_run_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a task body.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">signal</span>
+
+        <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">TaskRunner</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sighandler</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_q</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">task</span><span class="o">.</span><span class="n">isAlive</span><span class="p">():</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<div class="viewcode-block" id="Runner.run"><a class="viewcode-back" href="../../code.html#taboot.runner.Runner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the preflight/tasks-body</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_preflight_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_preflight</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s">&quot;onlypreflight&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_tasks</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">_expand_globs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the hosts that expand out from globs.</span>
+
+<span class="sd">        This is kind of a dirty hack around how Func returns minions</span>
+<span class="sd">        in an arbitrary order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">import</span> <span class="nn">func.overlord.client</span> <span class="kn">as</span> <span class="nn">fc</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+            <span class="n">glob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">fc</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">glob</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">list_minions</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Iterate over each given item, expand it, and then push</span>
+            <span class="c"># it onto our list. But only if it doesn&#39;t exist already!</span>
+            <span class="n">found_hosts</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">fc</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+                <span class="n">new_hosts</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">found_hosts</span><span class="p">,</span>
+                                   <span class="n">c</span><span class="o">.</span><span class="n">list_minions</span><span class="p">())</span>
+                <span class="n">found_hosts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_hosts</span><span class="p">)</span>
+                <span class="c"># for found_host in c.list_minions():</span>
+                <span class="c">#     h = filter</span>
+                <span class="c">#     if not found_host in found_hosts:</span>
+                <span class="c">#         found_hosts.append(found_host)</span>
+            <span class="k">return</span> <span class="n">found_hosts</span>
+
+    <span class="k">def</span> <span class="nf">__sighandler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If we get SIGINT on the CLI, we need to quit all the threads</span>
+<span class="sd">        in our process group</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+        <span class="kn">import</span> <span class="nn">signal</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">killpg</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getpgid</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIGQUIT</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="TaskRunner"><a class="viewcode-back" href="../../code.html#taboot.runner.TaskRunner">[docs]</a><span class="k">class</span> <span class="nc">TaskRunner</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    TaskRunner is responsible for executing a set of tasks for a</span>
+<span class="sd">    single host in it&#39;s own thread.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">taboot.tasks</span> <span class="kn">import</span> <span class="n">TaskResult</span> <span class="k">as</span> <span class="n">_TaskResult</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">semaphore</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">fail_event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :Parameters:</span>
+<span class="sd">          - `host`: The host to operate on.</span>
+<span class="sd">          - `tasks`: A list of tasks to perform (see :class:`Runner`)</span>
+<span class="sd">          - `semaphore`: The :class:`Runner` semaphore to acquire before</span>
+<span class="sd">            executing</span>
+<span class="sd">          - `output`: A list of outputters to use. (see :class:`Runner`)</span>
+<span class="sd">          - `fail_event`: The :class:`Runner` failure event to check before</span>
+<span class="sd">            executing.  If this event is set when the TaskRunner acquires the</span>
+<span class="sd">            semaphore, then the TaskRunner is effectively a no-op.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span> <span class="o">=</span> <span class="n">semaphore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span> <span class="o">=</span> <span class="n">fail_event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="TaskRunner.run"><a class="viewcode-back" href="../../code.html#taboot.runner.TaskRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the task(s) for the given host.  If the fail_event passed</span>
+<span class="sd">        from the invoking :class:`Runner` is set, do nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="c"># some other host has bombed</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">host_success</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">ignore_errors</span><span class="p">:</span>
+                    <span class="n">host_success</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">break</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bail_failure</span><span class="p">()</span>
+            <span class="k">raise</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">host_success</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bail_failure</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">host_success</span>
+</div>
+    <span class="k">def</span> <span class="nf">_bail_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Die nicely :)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+<div class="viewcode-block" id="TaskRunner.run_task"><a class="viewcode-back" href="../../code.html#taboot.runner.TaskRunner.run_task">[docs]</a>    <span class="k">def</span> <span class="nf">run_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a single task.  Sets task.host and then invokes the run</span>
+<span class="sd">        method for the task.</span>
+
+<span class="sd">        :Parameters:</span>
+<span class="sd">          - `task`: The task to run</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ignore_errors</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="s">&#39;ignore_errors&#39;</span> <span class="ow">in</span> <span class="n">task</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span><span class="p">[</span><span class="s">&#39;ignore_errors&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;True&#39;</span><span class="p">,</span> <span class="s">&#39;true&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">ignore_errors</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="n">task</span> <span class="o">=</span> <span class="n">instantiator</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s">&#39;taboot.tasks&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">)</span>
+
+        <span class="n">outputters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="p">:</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="n">instantiator</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;taboot.output&#39;</span><span class="p">,</span>
+                                           <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span>
+                                           <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">outputters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_TaskResult</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="nb">repr</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">outputters</span><span class="p">:</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="n">result</span><span class="o">.</span><span class="n">ignore_errors</span> <span class="o">=</span> <span class="n">ignore_errors</span>
+        <span class="k">return</span> <span class="n">result</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Taboot v0.4.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009-2011 Red Hat, Inc.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

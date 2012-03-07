@@ -1,0 +1,1304 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tasks &mdash; Taboot v0.4.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Taboot v0.4.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tasks">
+<span id="id1"></span><h1>Tasks<a class="headerlink" href="#tasks" title="Permalink to this headline">¶</a></h1>
+<p>All the built-in tasks are documented here.</p>
+<div class="section" id="command">
+<span id="id2"></span><h2>Command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.command" title="taboot.tasks.command"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.command</span></tt></a></li>
+<li>Classes<ul>
+<li>Run</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">command</span></tt> module is used to execute arbitrary commands on a
+remote host. The <tt class="docutils literal"><span class="pre">command</span></tt> module has one callable class, that is
+the <tt class="docutils literal"><span class="pre">Run</span></tt> class.</p>
+<div class="section" id="run">
+<h3>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.command.Run" title="taboot.tasks.command.Run"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.command.Run</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">command</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: The command to run</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - command.Run:
+        command: command-to-run
+
+    # Abbreviated form
+    - command.Run: {command: command-to-run}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - command.Run: {command: yum -y install httpd}</pre>
+</div>
+</div>
+</div>
+<div class="section" id="service">
+<h2>Service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.service" title="taboot.tasks.service"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.service</span></tt></a></li>
+<li>Classes<ul>
+<li>Start</li>
+<li>Stop</li>
+<li>Restart</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">service</span></tt> module provides interface classes to the system
+<cite>service</cite> command.</p>
+<div class="section" id="start">
+<h3>Start<a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.service.Start" title="taboot.tasks.service.Start"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.service.Start</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">service</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: The service to start</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - service.Start:
+        service: service-to-start
+
+    # Abbreviated form
+    - service.Start: {service: service-to-start}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - service.Start: {service: httpd}</pre>
+</div>
+</div>
+<div class="section" id="stop">
+<h3>Stop<a class="headerlink" href="#stop" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.service.Stop" title="taboot.tasks.service.Stop"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.service.Stop</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">service</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: The service to stop</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - service.Stop:
+        service: service-to-stop
+
+    # Abbreviated form
+    - service.Stop: {service: service-to-stop}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - service.Stop: {command: httpd}</pre>
+</div>
+</div>
+<div class="section" id="restart">
+<h3>Restart<a class="headerlink" href="#restart" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.service.Restart" title="taboot.tasks.service.Restart"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.service.Restart</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">service</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: The service to restart</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - service.Restart:
+        service: service-to-restart
+
+    # Abbreviated form
+    - service.Restart: {service: service-to-restart}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - service.Restart: {command: httpd}</pre>
+</div>
+</div>
+</div>
+<div class="section" id="puppet">
+<span id="id3"></span><h2>Puppet<a class="headerlink" href="#puppet" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.puppet" title="taboot.tasks.puppet"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet</span></tt></a></li>
+<li>Classes<ul>
+<li>Run</li>
+<li>SafeRun</li>
+<li>Enable</li>
+<li>Disable</li>
+<li>DeleteDockfile</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">puppet</span></tt> module provides a uniform way interact with the puppet
+service. This includes like enabling/disabling the daemon and manually
+forcing a catalog run.</p>
+<div class="section" id="id4">
+<h3>Run<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.puppet.Run" title="taboot.tasks.puppet.Run"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet.Run</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">server</span></tt><ul>
+<li>Type: String</li>
+<li>Default: As specified in <tt class="docutils literal"><span class="pre">/etc/puppet/puppet.conf</span></tt></li>
+<li>Required: No (has default)</li>
+<li>Description: Puppet Master to run against</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">noop</span></tt><ul>
+<li>Type: Boolean</li>
+<li>Default: <tt class="xref docutils literal"><span class="pre">False</span></tt></li>
+<li>Required: No (has default)</li>
+<li>Description: Make this a &#8220;noop&#8221;, or &#8220;dry-run&#8221;</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">See the <a class="reference internal" href="YAMLScripts.html#truthiness"><em>YAML Basics document</em></a> for notes on
+specifying boolean values.</p>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">Run</span></tt> class triggers a manual catalog run. This is equivalent to
+<tt class="docutils literal"><span class="pre">puppetd</span> <span class="pre">--test</span></tt>. This will <strong>not</strong> abort the release if puppet
+returns with a non-zero exit code. You should check out the <tt class="docutils literal"><span class="pre">SafeRun</span></tt>
+class if you&#8217;re paranoid about that.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - puppet.Run
+
+    # Run against a different puppet master
+    - puppet.Run: {server: my.puppet.server}
+    # No operation run
+    - puppet.Run: {noop: true}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - puppet.Run
+
+---
+- hosts:
+    - www*
+  tasks:
+    - puppet.Run: {noop: true, server: puppetmaster01.util.foobar.com}</pre>
+</div>
+<p class="versionchanged">
+<span class="versionmodified">Changed in version 0.2.11: </span>Absolutely will <strong>not</strong> abort the release if puppet returns
+non-zero.</p>
+<p class="versionchanged">
+<span class="versionmodified">Changed in version 0.4.0: </span>Added <tt class="docutils literal"><span class="pre">server</span></tt> and <tt class="docutils literal"><span class="pre">noop</span></tt> keys.</p>
+</div>
+<div class="section" id="saferun">
+<h3>SafeRun<a class="headerlink" href="#saferun" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.puppet.SafeRun" title="taboot.tasks.puppet.SafeRun"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet.SafeRun</span></tt></a></li>
+<li>Keys<ul>
+<li>Inherited from <tt class="docutils literal"><span class="pre">puppet.Run</span></tt></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">SafeRun</span></tt> class triggers a manual catalog run. This is
+equivalent to <tt class="docutils literal"><span class="pre">puppetd</span> <span class="pre">--test</span></tt>. This <strong>will</strong> abort the release if
+puppet returns with a non-zero exit code on systems running puppet
+2.6+. You should check out the <tt class="docutils literal"><span class="pre">Run</span></tt> class if you have reasons to
+ignore possible puppet errors.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - puppet.SafeRun
+
+    # Run against a different puppet master
+    - puppet.SafeRun: {server: my.puppet.server}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - puppet.SafeRun</pre>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.2.11.</span></p>
+</div>
+<div class="section" id="enable">
+<h3>Enable<a class="headerlink" href="#enable" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.puppet.Enable" title="taboot.tasks.puppet.Enable"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet.Enable</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>None</cite></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">Enable</span></tt> class reverses the effect of the <tt class="docutils literal"><span class="pre">disable</span></tt>
+class. This removes the lockfile that prevented any automatic or
+manual catalog runs from happening before. This is equivalent to
+<tt class="docutils literal"><span class="pre">puppetd</span> <span class="pre">--enable</span></tt>.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - puppet.Enable</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - puppet.Enable</pre>
+</div>
+</div>
+<div class="section" id="disable">
+<h3>Disable<a class="headerlink" href="#disable" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.puppet.Disable" title="taboot.tasks.puppet.Disable"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet.Disable</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>None</cite></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">Disable</span></tt> class creates a lockfile that prevents puppet from
+performing any manual or automatic catalog runs. This is equivalent to
+<tt class="docutils literal"><span class="pre">puppetd</span> <span class="pre">--disable</span></tt>.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - puppet.Disable</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - puppet.Disable</pre>
+</div>
+</div>
+<div class="section" id="deletelockfile">
+<h3>DeleteLockfile<a class="headerlink" href="#deletelockfile" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.puppet.DeleteLockfile" title="taboot.tasks.puppet.DeleteLockfile"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.puppet.DeleteLockfile</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>None</cite></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">DeleteLockfile</span></tt> class forcibly deletes a lockfile. You
+shouldn&#8217;t normally need this but from time to time you may find it
+necessary. Try and use the <tt class="docutils literal"><span class="pre">Enable</span></tt> class when at all possible.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - puppet.DeleteLockfile</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - puppet.DeleteLockfile</pre>
+</div>
+</div>
+</div>
+<div class="section" id="nagios">
+<span id="id5"></span><h2>Nagios<a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.nagios" title="taboot.tasks.nagios"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios</span></tt></a></li>
+<li>Classes<ul>
+<li>EnableNotifications</li>
+<li>DisableNotifications</li>
+<li>ScheduleDowntime</li>
+<li>SilenceHost</li>
+<li>UnsilenceHost</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">nagios</span></tt> task lets you handle notification and set downtime
+from your Taboot scripts.</p>
+<p class="versionchanged">
+<span class="versionmodified">Changed in version 0.2.14: </span>The <tt class="docutils literal"><span class="pre">nagios</span></tt> task has switched from a CURL backend using Kerberos
+authentication to a pure Func backend. Significant changes include:<ul class="simple">
+<li>Previously this task specified the <tt class="docutils literal"><span class="pre">nagios_url</span></tt> key as a URL,
+it should now be given as the hostname of the Nagios server. To
+facilitate transitions we automatically correct URLs into
+hostnames. In the future the name of this key may change.</li>
+<li>Previously the <tt class="docutils literal"><span class="pre">service</span></tt> key was defined as a scalar, like &#8220;HTTP&#8221;
+or &#8220;JBOSS&#8221;. This version accepts that key as a scalar OR as a
+list and &#8220;does the right thing&#8221; in each case.</li>
+</ul>
+</p>
+<p>The host identified by the <tt class="docutils literal"><span class="pre">nagios_url</span></tt> key must be a registered
+Func minion and it must have the new Func Nagios module installed. You
+can download it from the Func git repo (in the func/minion/modules/
+directory) if it is missing from your installation.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="http://git.fedorahosted.org/git/?p=func.git">Func git repo</a></p>
+</div>
+<div class="section" id="enablealerts">
+<h3>EnableAlerts<a class="headerlink" href="#enablealerts" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.nagios.EnableAlerts" title="taboot.tasks.nagios.EnableAlerts"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios.EnableAlerts</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">nagios_url</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Hostname of the nagios server.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This class enables host alerts for the current host.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - nagios.EnableAlerts:
+        nagios_url: nagios-hostname
+
+    # Abbreviated form
+    - nagios.EnableAlerts: {nagios_url: nagios-hostname}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.EnableAlerts: {nagios_url: nagios.example.com}</pre>
+</div>
+</div>
+<div class="section" id="disablealerts">
+<h3>DisableAlerts<a class="headerlink" href="#disablealerts" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.nagios.DisableAlerts" title="taboot.tasks.nagios.DisableAlerts"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios.DisableAlerts</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">nagios_url</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Hostname of the nagios server.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This class disables host alerts for the current host.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - nagios.DisableAlerts:
+        nagios_url: nagios-hostname
+
+    # Abbreviated form
+    - nagios.DisableAlerts: {nagios_url: nagios-hostname}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.DisableAlerts: {nagios_url: nagios.example.com}</pre>
+</div>
+</div>
+<div class="section" id="scheduledowntime">
+<h3>ScheduleDowntime<a class="headerlink" href="#scheduledowntime" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.nagios.ScheduleDowntime" title="taboot.tasks.nagios.ScheduleDowntime"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios.ScheduleDowntime</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">nagios_url</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Hostname of the nagios server.</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">service</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: No (has default)</li>
+<li>Description: The name of the service to be scheduled for downtime.</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">minutes</span></tt><ul>
+<li>Type: Integer</li>
+<li>Default: 30</li>
+<li>Required: No (has default)</li>
+<li>Description: The number of minutes to schedule downtime for.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="versionchanged">
+<span class="versionmodified">Changed in version 0.2.14: </span>Default for the <tt class="docutils literal"><span class="pre">minutes</span></tt> key changed from 15 to 30 minutes.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - nagios.ScheduleDowntime:
+        nagios_url: nagios-hostname
+        service: service-to-schedule
+        minutes: length-of-downtime
+
+    # Abbreviated form
+    - nagios.ScheduleDowntime: {nagios_url: nagios-hostname, service: service-to-schedule, minutes: length-of-downtime}</pre>
+</div>
+<p>Example #1:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.ScheduleDowntime:
+        nagios_url: nagios.example.com
+        service: httpd
+        minutes: 60</pre>
+</div>
+<p>Example #2:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.ScheduleDowntime:
+        nagios_url: nagios.example.com
+        service: [httpd, git, XMLRPC]
+        minutes: 60</pre>
+</div>
+</div>
+<div class="section" id="silencehost">
+<h3>SilenceHost<a class="headerlink" href="#silencehost" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.nagios.SilenceHost" title="taboot.tasks.nagios.SilenceHost"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios.SilenceHost</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">nagios_url</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Hostname of the nagios server.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This class disables all host and service notifications for the current
+host.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - nagios.SilenceHost:
+        nagios_url: nagios-hostname
+
+    # Abbreviated form
+    - nagios.SilenceHost: {nagios_url: nagios-hostname}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.SilenceHost: {nagios_url: nagios.example.com}</pre>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.3.2.</span></p>
+</div>
+<div class="section" id="unsilencehost">
+<h3>UnsilenceHost<a class="headerlink" href="#unsilencehost" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.nagios.UnsilenceHost" title="taboot.tasks.nagios.UnsilenceHost"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.nagios.UnsilenceHost</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">nagios_url</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Hostname of the nagios server.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This class enables all host and service notifications for the current
+host.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - nagios.UnsilenceHost:
+        nagios_url: nagios-hostname
+
+    # Abbreviated form
+    - nagios.UnsilenceHost: {nagios_url: nagios-hostname}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - nagios.UnsilenceHost: {nagios_url: nagios.example.com}</pre>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.3.2.</span></p>
+</div>
+</div>
+<div class="section" id="sleep">
+<h2>Sleep<a class="headerlink" href="#sleep" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.sleep" title="taboot.tasks.sleep"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.sleep</span></tt></a></li>
+<li>Classes<ul>
+<li>Seconds</li>
+<li>Minutes</li>
+<li>WaitOnInput</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">sleep</span></tt> module is used to halt further task processing for a
+specified period of time, or until the user presses enter (as in the
+case of WaitOnInput).</p>
+<p>You might use this if you&#8217;ve rolled the services on a node and need to
+let it build up or sync a cache before you put it back into rotation.</p>
+<p>WaitOnInput can be used when user verification needs to be performed
+before proceeding on to another node.</p>
+<div class="section" id="seconds">
+<h3>Seconds<a class="headerlink" href="#seconds" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.sleep.Seconds" title="taboot.tasks.sleep.Seconds"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.sleep.Seconds</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">seconds</span></tt><ul>
+<li>Type: Integer</li>
+<li>Default: 60</li>
+<li>Required: No (has default)</li>
+<li>Description: The number of seconds to halt</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - sleep.Seconds:
+        seconds: number-of-seconds
+
+    # Abbreviated form
+    - sleep.Seconds: {seconds: number-of-seconds}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - service.Restart: {service: jbossas}
+    - sleep.Seconds: {seconds: 300}</pre>
+</div>
+</div>
+<div class="section" id="minutes">
+<h3>Minutes<a class="headerlink" href="#minutes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.sleep.Minutes" title="taboot.tasks.sleep.Minutes"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.sleep.Minutes</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">minutes</span></tt><ul>
+<li>Type: Integer</li>
+<li>Default: 1</li>
+<li>Required: No (has default)</li>
+<li>Description: The number of minutes to halt</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - sleep.Minutes:
+        minutes: number-of-minutes
+
+    # Abbreviated form
+    - sleep.Minutes: {minutes: number-of-minutes}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - java*
+  tasks:
+    - service.Restart: {service: jbossas}
+    - sleep.Minutes: {minutes: 5}</pre>
+</div>
+</div>
+<div class="section" id="waitoninput">
+<h3>WaitOnInput<a class="headerlink" href="#waitoninput" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.sleep.WaitOnInput" title="taboot.tasks.sleep.WaitOnInput"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.sleep.WaitOnInput</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">message</span></tt><ul>
+<li>Type: String</li>
+<li>Default: <cite>Press enter to continue</cite></li>
+<li>Required: No (has default)</li>
+<li>Description: The message to prompt the user with</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - sleep.WaitOnInput:
+        message: message-to-prompt-user
+
+    # Abbreviated form
+    - sleep.WaitOnInput: {message: message-to-prompt-user}</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - java*
+  tasks:
+    - service.Restart: {service: jbossas}
+    - sleep.WaitOnInput</pre>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.3.2.</span></p>
+</div>
+</div>
+<div class="section" id="yum">
+<span id="id6"></span><h2>Yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.yum" title="taboot.tasks.yum"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.yum</span></tt></a></li>
+<li>Classes<ul>
+<li>Install</li>
+<li>Remove</li>
+<li>Update</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">yum</span></tt> module lets you perform common tasks right in your
+<cite>Taboot</cite> scripts.</p>
+<div class="section" id="install">
+<h3>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.yum.Install" title="taboot.tasks.yum.Install"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.yum.Install</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">packages</span></tt><ul>
+<li>Type: List of strings</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Names of the packages to install</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - yum.Install:
+        packages:
+            - package-name
+
+    # Abbreviated form
+    - yum.Install: {packages: [package-name]}</pre>
+</div>
+<p>Example 1:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Install: {packages: [httpd, php5, screen]}</pre>
+</div>
+<p>Example 2:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Install:
+        packages:
+            - httpd
+            - php5
+            - screen</pre>
+</div>
+</div>
+<div class="section" id="remove">
+<h3>Remove<a class="headerlink" href="#remove" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.yum.Remove" title="taboot.tasks.yum.Remove"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.yum.Remove</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">packages</span></tt><ul>
+<li>Type: List of strings</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: Names of packages to remove</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - yum.Remove:
+        packages:
+            - package-name
+
+    # Abbreviated form
+    - yum.Remove: {packages: [package-name]}</pre>
+</div>
+<p>Example 1:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Remove: {packages: [httpd, php5, screen]}</pre>
+</div>
+<p>Example 2:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Remove:
+        packages:
+            - httpd
+            - php5
+            - screen</pre>
+</div>
+</div>
+<div class="section" id="update">
+<h3>Update<a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.yum.Update" title="taboot.tasks.yum.Update"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.yum.Update</span></tt></a></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">packages</span></tt><ul>
+<li>Type: List of strings</li>
+<li>Default: Update all packages</li>
+<li>Required: No (has default)</li>
+<li>Description: Names of packages to update</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - yum.Update:
+        packages:
+            - package-name
+
+    # Abbreviated form
+    - yum.Update: {packages: [package-name]}</pre>
+</div>
+<p>Example 1:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Update: {packages: [httpd, php5, screen]}</pre>
+</div>
+<p>Example 2:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - yum.Update:
+        packages:
+            - httpd
+            - php5
+            - screen</pre>
+</div>
+</div>
+</div>
+<div class="section" id="rpm">
+<span id="id7"></span><h2>RPM<a class="headerlink" href="#rpm" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.rpm" title="taboot.tasks.rpm"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.rpm</span></tt></a></li>
+<li>Classes<ul>
+<li>PreManifest</li>
+<li>PostManifest</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">RPM</span></tt> module provides two utility classes used to create a log
+of any RPMs installed on the target system that were changed during
+the <cite>Taboot</cite> run.</p>
+<div class="section" id="premanifest">
+<h3>PreManifest<a class="headerlink" href="#premanifest" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.rpm.PreManifest" title="taboot.tasks.rpm.PreManifest"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.rpm.PreManifest</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>None</cite></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">PreManifest</span></tt> class is best ran at the beginning of a tasks
+block. When ran it saves the output of <tt class="docutils literal"><span class="pre">rpm</span> <span class="pre">-qa</span> <span class="pre">|</span> <span class="pre">sort</span></tt> on each of
+the target machine locally. This is only useful if the
+<tt class="docutils literal"><span class="pre">PostManifest</span></tt> class is called at the end of the <cite>Taboot</cite> script.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - rpm.PreManifest</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - rpm.PreManifest
+    - puppet.Run
+    - rpm.PostManifest</pre>
+</div>
+</div>
+<div class="section" id="postmanifest">
+<h3>PostManifest<a class="headerlink" href="#postmanifest" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.rpm.PostManifest" title="taboot.tasks.rpm.PostManifest"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.rpm.PostManifest</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>None</cite></li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">PostManifest</span></tt> class is best ran at the end of a tasks
+block. When ran it will show a diff of the packages installed between
+when <tt class="docutils literal"><span class="pre">PreManifest</span></tt> was ran and when <tt class="docutils literal"><span class="pre">PostManifest</span></tt> is called.</p>
+<p>This is really useful for checking that planned updates are happening
+in a <cite>Taboot</cite> script if they are supposed to be. There might be
+package updates happening if you&#8217;re doing a manual puppet catalog run,
+or are triggering some other kind of automatic package updating
+utility. Maybe your script is as simple as a <tt class="docutils literal"><span class="pre">PreManifest</span></tt>, then a
+<tt class="docutils literal"><span class="pre">command.Run</span></tt> that just runs <cite>yum -y update</cite>, and ends with a
+<tt class="docutils literal"><span class="pre">PostManifest</span></tt>.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - rpm.PostManifest</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - rpm.PreManifest
+    - puppet.Run
+    - rpm.PostManifest</pre>
+</div>
+</div>
+<div class="section" id="example-postmanifest-output">
+<span id="examplepostmanifest"></span><h3>Example PostManifest Output<a class="headerlink" href="#example-postmanifest-output" title="Permalink to this headline">¶</a></h3>
+<p>These classes might be described best by showing a complete example.</p>
+<p>Here is the YAML file (<tt class="docutils literal"><span class="pre">mercurial-update.yaml</span></tt>) that&#8217;s going to be
+run:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - fridge
+  tasks:
+    - rpm.PreManifest
+    - yum.Update: {packages: [mercurial]}
+    - rpm.PostManifest</pre>
+</div>
+<p>This is what the output looks like. The last two lines show the
+packages that changed during the <cite>Taboot</cite> run:</p>
+<div class="highlight-python"><pre>[root@fridge yamls]# taboot mercurial-update.yaml
+fridge.bsb.local:
+2011-04-04 21:04:09 Starting Task[taboot.tasks.rpm.PreManifest('rpm -qa | sort',)]
+fridge.bsb.local:
+2011-04-04 21:04:12 Finished Task[taboot.tasks.rpm.PreManifest('rpm -qa | sort',)]:
+
+fridge.bsb.local:
+2011-04-04 21:04:12 Starting Task[taboot.tasks.yum.Update('yum update -y mercurial',)]
+fridge.bsb.local:
+2011-04-04 21:04:34 Finished Task[taboot.tasks.yum.Update('yum update -y mercurial',)]:
+
+# yum.Update output here...
+
+fridge.bsb.local:
+2011-04-04 21:04:34 Starting Task[taboot.tasks.rpm.PostManifest('rpm -qa | sort',)]
+fridge.bsb.local:
+2011-04-04 21:04:37 Finished Task[taboot.tasks.rpm.PostManifest('rpm -qa | sort',)]:
+- mercurial-1.7.5-1.fc14.x86_64
++ mercurial-1.8.1-2.fc14.x86_64</pre>
+</div>
+</div>
+</div>
+<div class="section" id="ajp">
+<h2>AJP<a class="headerlink" href="#ajp" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#module-taboot.tasks.mod_jk" title="taboot.tasks.mod_jk"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.mod_jk</span></tt></a></li>
+<li>Classes<ul>
+<li>InRotation</li>
+<li>OutOfRotation</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">AJP</span></tt> module provides a uniform way to put nodes into and out of
+rotation in a <cite>mod_jk</cite> AJP balancer. This module is a great
+replacement for manually adding and removing nodes in a <cite>jkmanage</cite>
+management panel.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module requires that the <tt class="docutils literal"><span class="pre">taboot-func</span></tt> package is installed
+on the target AJP balancers.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module is very specific to the original authors needs and may
+not work outside of that environment without customization.</p>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference external" href="http://tomcat.apache.org/connectors-doc/generic_howto/loadbalancers.html">The Apache Tomcat Connector - LoadBalancer HowTo</a></dt>
+<dd>Documentation on the Apache Tomcat Connector</dd>
+</dl>
+</div>
+<div class="section" id="inrotation">
+<h3>InRotation<a class="headerlink" href="#inrotation" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.mod_jk.InRotation" title="taboot.tasks.mod_jk.InRotation"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.mod_jk.InRotation</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>proxies</cite><ul>
+<li>Type: List of strings</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: List of AJP proxy hostnames</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">InRotation</span></tt> class puts an AJP node back into rotation.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - mod_jk.InRotation:
+        proxies:
+            - proxy-hostname</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - tomcat*.int.company.com
+  tasks:
+    - mod_jk.InRotation:
+        proxies:
+            - proxyjava01.web.prod.ext.example.com
+            - proxyjava02.web.prod.ext.example.com</pre>
+</div>
+</div>
+<div class="section" id="outofrotation">
+<h3>OutOfRotation<a class="headerlink" href="#outofrotation" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <a class="reference internal" href="code.html#taboot.tasks.mod_jk.OutOfRotation" title="taboot.tasks.mod_jk.OutOfRotation"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.mod_jk.OutOfRotation</span></tt></a></li>
+<li>Keys<ul>
+<li><cite>proxies</cite><ul>
+<li>Type: List of strings</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: List of AJP proxy hostnames</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">OutOfRotation</span></tt> class takes an AJP node out of rotation.</p>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - mod_jk.OutOfRotation:
+        proxies:
+            - proxy-hostname</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - tomcat*.int.company.com
+  tasks:
+    - mod_jk.OutOfRotation:
+        proxies:
+            - proxyjava01.web.prod.ext.example.com
+            - proxyjava02.web.prod.ext.example.com</pre>
+</div>
+</div>
+</div>
+<div class="section" id="misc">
+<span id="id8"></span><h2>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>API: <tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.misc</span></tt></li>
+<li>Classes<ul>
+<li>Noop</li>
+<li>Echo</li>
+</ul>
+</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">misc</span></tt> module has two simple tasks in it: <tt class="docutils literal"><span class="pre">Noop</span></tt> and
+<tt class="docutils literal"><span class="pre">Echo</span></tt>. They are primarily intended for instruction and as
+placeholders while testing scripts or major code changes.</p>
+<div class="section" id="noop">
+<h3>Noop<a class="headerlink" href="#noop" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.misc.Noop</span></tt></li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    - misc.Noop</pre>
+</div>
+<p>Example:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - misc.Noop</pre>
+</div>
+<p>This is a generic task that litterally does nothing.</p>
+</div>
+<div class="section" id="echo">
+<h3>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API: <tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.misc.Echo</span></tt></li>
+<li>Keys<ul>
+<li><tt class="docutils literal"><span class="pre">input</span></tt><ul>
+<li>Type: String</li>
+<li>Default: None</li>
+<li>Required: Yes</li>
+<li>Description: String to echo back</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Syntax:</p>
+<div class="highlight-python"><pre>---
+  tasks:
+    # Normal form
+    - misc.Echo:
+        input: string
+
+    # Abbreviated form
+    - misc.Echo: {input: string}</pre>
+</div>
+<p>Example 1:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - misc.Echo: {input: "Taboot Rules!"}</pre>
+</div>
+<p>Example 2:</p>
+<div class="highlight-python"><pre>---
+- hosts:
+    - www*
+  tasks:
+    - misc.Echo:
+        input: "Taboot Rules!"</pre>
+</div>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.4.0.</span></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Tasks</a><ul>
+<li><a class="reference internal" href="#command">Command</a><ul>
+<li><a class="reference internal" href="#run">Run</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#service">Service</a><ul>
+<li><a class="reference internal" href="#start">Start</a></li>
+<li><a class="reference internal" href="#stop">Stop</a></li>
+<li><a class="reference internal" href="#restart">Restart</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#puppet">Puppet</a><ul>
+<li><a class="reference internal" href="#id4">Run</a></li>
+<li><a class="reference internal" href="#saferun">SafeRun</a></li>
+<li><a class="reference internal" href="#enable">Enable</a></li>
+<li><a class="reference internal" href="#disable">Disable</a></li>
+<li><a class="reference internal" href="#deletelockfile">DeleteLockfile</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#nagios">Nagios</a><ul>
+<li><a class="reference internal" href="#enablealerts">EnableAlerts</a></li>
+<li><a class="reference internal" href="#disablealerts">DisableAlerts</a></li>
+<li><a class="reference internal" href="#scheduledowntime">ScheduleDowntime</a></li>
+<li><a class="reference internal" href="#silencehost">SilenceHost</a></li>
+<li><a class="reference internal" href="#unsilencehost">UnsilenceHost</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sleep">Sleep</a><ul>
+<li><a class="reference internal" href="#seconds">Seconds</a></li>
+<li><a class="reference internal" href="#minutes">Minutes</a></li>
+<li><a class="reference internal" href="#waitoninput">WaitOnInput</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#yum">Yum</a><ul>
+<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#remove">Remove</a></li>
+<li><a class="reference internal" href="#update">Update</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#rpm">RPM</a><ul>
+<li><a class="reference internal" href="#premanifest">PreManifest</a></li>
+<li><a class="reference internal" href="#postmanifest">PostManifest</a></li>
+<li><a class="reference internal" href="#example-postmanifest-output">Example PostManifest Output</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ajp">AJP</a><ul>
+<li><a class="reference internal" href="#inrotation">InRotation</a></li>
+<li><a class="reference internal" href="#outofrotation">OutOfRotation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#misc">Misc</a><ul>
+<li><a class="reference internal" href="#noop">Noop</a></li>
+<li><a class="reference internal" href="#echo">Echo</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tasks.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009-2011 Red Hat, Inc.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

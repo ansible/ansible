@@ -1,0 +1,6 @@
+*.py[co]
+build
+# Emacs backup files...
+*~
+.\#*
+.doctrees

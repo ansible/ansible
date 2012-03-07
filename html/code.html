@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Code &mdash; Taboot v0.4.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Taboot v0.4.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="code">
+<h1>Code<a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-taboot">
+<span id="taboot"></span><h2>Taboot<a class="headerlink" href="#module-taboot" title="Permalink to this headline">¶</a></h2>
+<p>The Taboot task library.</p>
+<p>Taboot was created as a framework to do code deployments which
+require a repetitive set of tasks to be run in a certain order against
+certain groups of hosts.</p>
+</div>
+<div class="section" id="module-taboot.runner">
+<span id="taboot-runner"></span><h2>Taboot runner<a class="headerlink" href="#module-taboot.runner" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="taboot.runner.Runner">
+<em class="property">class </em><tt class="descclassname">taboot.runner.</tt><tt class="descname">Runner</tt><big>(</big><em>script</em>, <em>config</em>, <em>expand_globs=True</em><big>)</big><a class="reference internal" href="_modules/taboot/runner.html#Runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.runner.Runner" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Runner, responsible for running a taboot job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>script</cite>: an instance of tabootScript</li>
+<li><cite>expand_globs</cite>: whether to expand the globs or just leave
+them as is.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="taboot.runner.Runner.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taboot/runner.html#Runner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.runner.Runner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the preflight/tasks-body</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.runner.TaskRunner">
+<em class="property">class </em><tt class="descclassname">taboot.runner.</tt><tt class="descname">TaskRunner</tt><big>(</big><em>host</em>, <em>tasks</em>, <em>semaphore</em>, <em>output</em>, <em>fail_event</em><big>)</big><a class="reference internal" href="_modules/taboot/runner.html#TaskRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.runner.TaskRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>TaskRunner is responsible for executing a set of tasks for a
+single host in it&#8217;s own thread.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>host</cite>: The host to operate on.</li>
+<li><cite>tasks</cite>: A list of tasks to perform (see <a class="reference internal" href="#taboot.runner.Runner" title="taboot.runner.Runner"><tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt></a>)</li>
+<li><cite>semaphore</cite>: The <a class="reference internal" href="#taboot.runner.Runner" title="taboot.runner.Runner"><tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt></a> semaphore to acquire before
+executing</li>
+<li><cite>output</cite>: A list of outputters to use. (see <a class="reference internal" href="#taboot.runner.Runner" title="taboot.runner.Runner"><tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt></a>)</li>
+<li><cite>fail_event</cite>: The <a class="reference internal" href="#taboot.runner.Runner" title="taboot.runner.Runner"><tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt></a> failure event to check before
+executing.  If this event is set when the TaskRunner acquires the
+semaphore, then the TaskRunner is effectively a no-op.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="taboot.runner.TaskRunner.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taboot/runner.html#TaskRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.runner.TaskRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the task(s) for the given host.  If the fail_event passed
+from the invoking <a class="reference internal" href="#taboot.runner.Runner" title="taboot.runner.Runner"><tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt></a> is set, do nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taboot.runner.TaskRunner.run_task">
+<tt class="descname">run_task</tt><big>(</big><em>task</em><big>)</big><a class="reference internal" href="_modules/taboot/runner.html#TaskRunner.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.runner.TaskRunner.run_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a single task.  Sets task.host and then invokes the run
+method for the task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>task</cite>: The task to run</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks">
+<span id="id1"></span><span id="taboot-tasks"></span><h2>Taboot tasks<a class="headerlink" href="#module-taboot.tasks" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="taboot.tasks.BaseTask">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.</tt><tt class="descname">BaseTask</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks.html#BaseTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.BaseTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base Task.  All tasks should inherit from this.  It does the
+pretty string representation of a task and allows setting of the
+host attribute.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.FuncErrorTask">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.</tt><tt class="descname">FuncErrorTask</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks.html#FuncErrorTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.FuncErrorTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Explicitly cause a func remote error by calling a bad command.
+Used to verify func exception handling works as expected</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.FuncTask">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.</tt><tt class="descname">FuncTask</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks.html#FuncTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.FuncTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Func-based task.  All tasks that utilize Func should inherit
+from this.</p>
+<dl class="method">
+<dt id="taboot.tasks.FuncTask.run">
+<tt class="descname">run</tt><big>(</big><em>runner</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks.html#FuncTask.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.FuncTask.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the FuncTask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>runner</cite> A <a class="reference internal" href="#taboot.runner.TaskRunner" title="taboot.runner.TaskRunner"><tt class="xref py py-class docutils literal"><span class="pre">taboot.runner.TaskRunner</span></tt></a> instance</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.TaskResult">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.</tt><tt class="descname">TaskResult</tt><big>(</big><em>task</em>, <em>success=False</em>, <em>output=''</em>, <em>ignore_errors=False</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks.html#TaskResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.TaskResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>An encapsulation of the results of a task.  This is passed to one
+or more instances of output classes (derived from BaseOutput) in
+order to display to the user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>task</cite>: The task object represented by this result</li>
+<li><cite>success</cite>: Whether the task completed successfully or not</li>
+<li><cite>output</cite>: Any text output produced by the task</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="section" id="module-taboot.tasks.mod_jk">
+<span id="ajp-tasks"></span><h3>AJP Tasks<a class="headerlink" href="#module-taboot.tasks.mod_jk" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.mod_jk.InRotation">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.mod_jk.</tt><tt class="descname">InRotation</tt><big>(</big><em>proxies</em>, <em>action='enable'</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/mod_jk.html#InRotation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.mod_jk.InRotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Put an AJP node in rotation on a proxy via modjkapi access on
+the proxy with func.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>proxies</cite>: A list of URLs to AJP jkmanage interfaces</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.mod_jk.OutOfRotation">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.mod_jk.</tt><tt class="descname">OutOfRotation</tt><big>(</big><em>proxies</em>, <em>action='stop'</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/mod_jk.html#OutOfRotation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.mod_jk.OutOfRotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an AJP node from rotation on a proxy via modjkapi access on
+the proxy with func.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>proxies</cite>: A list of URLs to AJP jkmanage interfaces</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.command">
+<span id="command-tasks"></span><h3>Command tasks<a class="headerlink" href="#module-taboot.tasks.command" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.command.Run">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.command.</tt><tt class="descname">Run</tt><big>(</big><em>command</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/command.html#Run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.command.Run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run arbitrary commands via Func.  The arguments passed to __init__
+are used to execute func.overlord.Client.command.run(args).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>command</cite>: Command to run on the remote host</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="misc-tasks">
+<h3>Misc tasks<a class="headerlink" href="#misc-tasks" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-taboot.tasks.nagios">
+<span id="nagios-tasks"></span><h3>Nagios tasks<a class="headerlink" href="#module-taboot.tasks.nagios" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.nagios.DisableAlerts">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">DisableAlerts</tt><big>(</big><em>nagios_url</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#DisableAlerts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.DisableAlerts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disable alerts for a host on a nagios instance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>nagios_url</cite>: Hostname of the Nagios server.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.nagios.EnableAlerts">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">EnableAlerts</tt><big>(</big><em>nagios_url</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#EnableAlerts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.EnableAlerts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable alerts for a host on a nagios instance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>nagios_url</cite>: Hostname of the Nagios server.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.nagios.NagiosBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">NagiosBase</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#NagiosBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.NagiosBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>All subsequent Nagios tasks are subclasses of this.</p>
+<p>Code note: Because a <cite>FuncTask</cite> expects to make connections to
+<cite>self.host</cite> we need to switch <cite>nagios_url</cite> with <cite>self.host</cite> and
+pass the original <cite>self.host</cite> as an argument.</p>
+<p class="versionchanged">
+<span class="versionmodified">Changed in version 0.2.14.</span></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.nagios.ScheduleDowntime">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">ScheduleDowntime</tt><big>(</big><em>nagios_url</em>, <em>service='HOST'</em>, <em>minutes=30</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#ScheduleDowntime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.ScheduleDowntime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Schedule downtime for services on a host in Nagios</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>nagios_url</cite>: Hostname of the Nagios server.</li>
+<li><cite>service</cite>: Service or list of services to schedule down for.</li>
+<li><cite>minutes</cite>: The number of minutes to schedule downtime
+for. Default is 30.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.nagios.SilenceHost">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">SilenceHost</tt><big>(</big><em>nagios_url</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#SilenceHost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.SilenceHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Silence all notifications for a given host</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>nagios_url</cite>: Hostname of the Nagios server.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.nagios.UnsilenceHost">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.nagios.</tt><tt class="descname">UnsilenceHost</tt><big>(</big><em>nagios_url</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/nagios.html#UnsilenceHost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.nagios.UnsilenceHost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsilence all notifications for a given host</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>nagios_url</cite>: Hostname of the Nagios server.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.poller">
+<span id="polling-tasks"></span><h3>Polling tasks<a class="headerlink" href="#module-taboot.tasks.poller" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.poller.PollTask">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.poller.</tt><tt class="descname">PollTask</tt><big>(</big><em>task</em>, <em>sleep_interval=5</em>, <em>max_attempts=6</em>, <em>fail_task=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/poller.html#PollTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.poller.PollTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>PollTask.  A task that will poll a particular task until the task
+succeeds or until max_attempts is reached.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last">
+<li><p class="first"><cite>task</cite> The task to poll.</p>
+</li>
+<li><dl class="first docutils">
+<dt><cite>sleep_interval</cite> The number of seconds to wait before trying</dt>
+<dd><p class="first last">the task again.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>max_attempts</cite> The maximum number of attempts that the task</dt>
+<dd><p class="first last">should be run.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>fail_task</cite> The task to run when max_attempts has been exhausted.</dt>
+<dd><p class="first last">If no fail_task is provided, then a simple TaskResult
+indicating failure is returned.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.puppet">
+<span id="puppet-tasks"></span><h3>Puppet tasks<a class="headerlink" href="#module-taboot.tasks.puppet" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.puppet.DeleteLockfile">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">DeleteLockfile</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#DeleteLockfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.DeleteLockfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the puppet lock file.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.Disable">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">Disable</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#Disable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.Disable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run &#8216;puppetd &#8211;disable&#8217;.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.Enable">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">Enable</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#Enable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.Enable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run &#8216;puppetd &#8211;enable&#8217;.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.PuppetBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">PuppetBase</tt><big>(</big><em>pcmd</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#PuppetBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.PuppetBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for puppet commands</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.PuppetTaskResult">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">PuppetTaskResult</tt><big>(</big><em>task</em>, <em>success=False</em>, <em>output=''</em>, <em>ignore_errors=False</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#PuppetTaskResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.PuppetTaskResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around TaskResult to be able to differentiate in output class</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.Run">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">Run</tt><big>(</big><em>server=''</em>, <em>noop=False</em>, <em>safe=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#Run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.Run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run &#8216;puppetd &#8211;test || true&#8217;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">Optional Parameters:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><cite>server</cite>: Puppetmaster to run against</li>
+<li><cite>noop</cite>: If this should be a noop run (Boolean)</li>
+<li><cite>safe</cite>: Abort if puppet errors (Boolean)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>See also: <tt class="xref py py-meth docutils literal"><span class="pre">taboot.tasks.Puppet.SafeRun()</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.puppet.SafeRun">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.puppet.</tt><tt class="descname">SafeRun</tt><big>(</big><em>server=''</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/puppet.html#SafeRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.puppet.SafeRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run &#8216;puppetd &#8211;test&#8217;.</p>
+<p>How is this different from Run? Simple, it will abort everything
+if puppet returns with a non-zero exit status.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.rpm">
+<span id="rpm-tasks"></span><h3>RPM tasks<a class="headerlink" href="#module-taboot.tasks.rpm" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.rpm.PostManifest">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.rpm.</tt><tt class="descname">PostManifest</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#PostManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.PostManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gather list of installed RPMs and compare against a previously
+taken <a class="reference internal" href="#taboot.tasks.rpm.PreManifest" title="taboot.tasks.rpm.PreManifest"><tt class="xref py py-class docutils literal"><span class="pre">PreManifest</span></tt></a></p>
+<dl class="method">
+<dt id="taboot.tasks.rpm.PostManifest.run">
+<tt class="descname">run</tt><big>(</big><em>runner</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#PostManifest.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.PostManifest.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>The runner that gets passed in contains state that can be
+access via dict-like access.  PreManifest uses this to write
+to the rpm.Premanifest field.  So we&#8217;ll check to make sure the
+pre-manifest is there by looking for that state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.rpm.PreManifest">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.rpm.</tt><tt class="descname">PreManifest</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#PreManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.PreManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gather list of installed RPMs.  A later invocation of <a class="reference internal" href="#taboot.tasks.rpm.PostManifest" title="taboot.tasks.rpm.PostManifest"><tt class="xref py py-class docutils literal"><span class="pre">PostManifest</span></tt></a>
+is then used to output the RPMs changed during intermediate tasks.</p>
+<dl class="method">
+<dt id="taboot.tasks.rpm.PreManifest.run">
+<tt class="descname">run</tt><big>(</big><em>runner</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#PreManifest.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.PreManifest.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override the default <tt class="xref py py-class docutils literal"><span class="pre">command.Run</span></tt> to strip the output
+from the result because we&#8217;re really not interested in the
+contents of the pre-manifest; we just want to collect it to
+compare later on with PostManifest.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.rpm.RPMBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.rpm.</tt><tt class="descname">RPMBase</tt><big>(</big><em>pcmd</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#RPMBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.RPMBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for rpm commands</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.rpm.RPMTaskResult">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.rpm.</tt><tt class="descname">RPMTaskResult</tt><big>(</big><em>task</em>, <em>success=False</em>, <em>output=''</em>, <em>ignore_errors=False</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/rpm.html#RPMTaskResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.rpm.RPMTaskResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around TaskResult to be able to differentiate in output class</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.service">
+<span id="service-tasks"></span><h3>Service tasks<a class="headerlink" href="#module-taboot.tasks.service" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.service.Restart">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.service.</tt><tt class="descname">Restart</tt><big>(</big><em>service</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/service.html#Restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.service.Restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart a service.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ul class="first last simple">
+<li><tt class="docutils literal"><span class="pre">service</span></tt> - The service to restart.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.service.ServiceBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.service.</tt><tt class="descname">ServiceBase</tt><big>(</big><em>command</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/service.html#ServiceBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.service.ServiceBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base Class for system service tasks</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.service.Start">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.service.</tt><tt class="descname">Start</tt><big>(</big><em>service</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/service.html#Start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.service.Start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a service.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ul class="first last simple">
+<li><tt class="docutils literal"><span class="pre">service</span></tt> - The service to start.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.service.Stop">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.service.</tt><tt class="descname">Stop</tt><big>(</big><em>service</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/service.html#Stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.service.Stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop a service.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ul class="first last simple">
+<li><tt class="docutils literal"><span class="pre">service</span></tt> - The service to stop.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.sleep">
+<span id="sleep-tasks"></span><h3>Sleep tasks<a class="headerlink" href="#module-taboot.tasks.sleep" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.sleep.Minutes">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.sleep.</tt><tt class="descname">Minutes</tt><big>(</big><em>minutes=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/sleep.html#Minutes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.sleep.Minutes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Halt task processing on a node for a certain number of minutes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>minutes</cite>: Number of minutes to halt execution for.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.sleep.Seconds">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.sleep.</tt><tt class="descname">Seconds</tt><big>(</big><em>seconds=60</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/sleep.html#Seconds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.sleep.Seconds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Halt task processing on a node for a certain number of seconds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>seconds</cite>: Number of seconds to halt execution for.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.sleep.SleepBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.sleep.</tt><tt class="descname">SleepBase</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/sleep.html#SleepBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.sleep.SleepBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for task-queue pausing classes.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.sleep.WaitOnInput">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.sleep.</tt><tt class="descname">WaitOnInput</tt><big>(</big><em>message='Press enter to continuen'</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/sleep.html#WaitOnInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.sleep.WaitOnInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Halt task processing on a node until the user presses enter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>message</cite>: The message to prompt on the CLI.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-taboot.tasks.yum">
+<span id="yum-tasks"></span><h3>Yum tasks<a class="headerlink" href="#module-taboot.tasks.yum" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="taboot.tasks.yum.Install">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.yum.</tt><tt class="descname">Install</tt><big>(</big><em>packages</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/yum.html#Install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.yum.Install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install one or more packages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>packages</cite>: A list of packages to install</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.yum.Remove">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.yum.</tt><tt class="descname">Remove</tt><big>(</big><em>packages</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/yum.html#Remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.yum.Remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove one or more packages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>packages</cite>: A list of packages to remove.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.yum.Update">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.yum.</tt><tt class="descname">Update</tt><big>(</big><em>packages=</em><span class="optional">[</span><span class="optional">]</span>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/yum.html#Update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.yum.Update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update one or more packages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt><cite>packages</cite>: A list of packages to update.  If <cite>packages</cite> is empty,</dt>
+<dd><p class="first last">update all packages on the system.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.tasks.yum.YumBase">
+<em class="property">class </em><tt class="descclassname">taboot.tasks.yum.</tt><tt class="descname">YumBase</tt><big>(</big><em>packages</em><big>)</big><a class="reference internal" href="_modules/taboot/tasks/yum.html#YumBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.tasks.yum.YumBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for all Yum-related tasks.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-taboot.output">
+<span id="taboot-output"></span><h2>Taboot output<a class="headerlink" href="#module-taboot.output" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="taboot.output.CLIOutput">
+<em class="property">class </em><tt class="descclassname">taboot.output.</tt><tt class="descname">CLIOutput</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/output.html#CLIOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.CLIOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a <a class="reference internal" href="#taboot.tasks.TaskResult" title="taboot.tasks.TaskResult"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.TaskResult</span></tt></a> to the command line
+with pretty formatting and colors.</p>
+<p>Creates an instance of a file-like object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>args</cite>: all non-keyword arguments.</li>
+<li><cite>kwargs</cite>: all keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.output.EmailOutput">
+<em class="property">class </em><tt class="descclassname">taboot.output.</tt><tt class="descname">EmailOutput</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/output.html#EmailOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.EmailOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a <a class="reference internal" href="#taboot.tasks.TaskResult" title="taboot.tasks.TaskResult"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.TaskResult</span></tt></a> to a logfile.</p>
+<p>Creates an instance of a file-like object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>args</cite>: all non-keyword arguments.</li>
+<li><cite>kwargs</cite>: all keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="taboot.output.EmailOutput.flush">
+<tt class="descname">flush</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taboot/output.html#EmailOutput.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.EmailOutput.flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flushing sends the email with the buffer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.output.HTMLOutput">
+<em class="property">class </em><tt class="descclassname">taboot.output.</tt><tt class="descname">HTMLOutput</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/output.html#HTMLOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.HTMLOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a <a class="reference internal" href="#taboot.tasks.TaskResult" title="taboot.tasks.TaskResult"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.TaskResult</span></tt></a> to the command line
+with pretty formatting and colors.</p>
+<dl class="method">
+<dt id="taboot.output.HTMLOutput._write">
+<tt class="descname">_write</tt><big>(</big><em>result</em><big>)</big><a class="reference internal" href="_modules/taboot/output.html#HTMLOutput._write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.HTMLOutput._write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a tasks <cite>result</cite> out to HTML. Handles enhanced stylizing
+for task results that support such as:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#taboot.tasks.puppet.PuppetTaskResult" title="taboot.tasks.puppet.PuppetTaskResult"><tt class="xref py py-mod docutils literal"><span class="pre">taboot.tasks.puppet.PuppetTaskResult</span></tt></a></li>
+<li><a class="reference internal" href="#taboot.tasks.rpm.RPMTaskResult" title="taboot.tasks.rpm.RPMTaskResult"><tt class="xref py py-mod docutils literal"><span class="pre">taboot.tasks.rpm.RPMTaskResult</span></tt></a></li>
+</ul>
+</dd></dl>
+
+<p>Creates an instance of a file-like object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>args</cite>: all non-keyword arguments.</li>
+<li><cite>kwargs</cite>: all keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="taboot.output.LogOutput">
+<em class="property">class </em><tt class="descclassname">taboot.output.</tt><tt class="descname">LogOutput</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/taboot/output.html#LogOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taboot.output.LogOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a <a class="reference internal" href="#taboot.tasks.TaskResult" title="taboot.tasks.TaskResult"><tt class="xref py py-class docutils literal"><span class="pre">taboot.tasks.TaskResult</span></tt></a> to a logfile.</p>
+<p>Creates an instance of a file-like object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last simple">
+<li><cite>args</cite>: all non-keyword arguments.</li>
+<li><cite>kwargs</cite>: all keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Code</a><ul>
+<li><a class="reference internal" href="#module-taboot">Taboot</a></li>
+<li><a class="reference internal" href="#module-taboot.runner">Taboot runner</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks">Taboot tasks</a><ul>
+<li><a class="reference internal" href="#module-taboot.tasks.mod_jk">AJP Tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.command">Command tasks</a></li>
+<li><a class="reference internal" href="#misc-tasks">Misc tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.nagios">Nagios tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.poller">Polling tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.puppet">Puppet tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.rpm">RPM tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.service">Service tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.sleep">Sleep tasks</a></li>
+<li><a class="reference internal" href="#module-taboot.tasks.yum">Yum tasks</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-taboot.output">Taboot output</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/code.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009-2011 Red Hat, Inc.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

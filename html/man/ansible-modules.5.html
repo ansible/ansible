@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ansible-modules</title><link rel="stylesheet" type="text/css" href="./docbook-xsl.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /></head><body><div xml:lang="en" class="refentry" title="ansible-modules" lang="en"><a id="id343184"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ansible-modules — stock modules shipped with ansible</p></div><div class="refsect1" title="DESCRIPTION"><a id="_description"></a><h2>DESCRIPTION</h2><p>Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.</p></div><div class="refsect1" title="IDEMPOTENCE"><a id="_idempotence"></a><h2>IDEMPOTENCE</h2><p>Most modules other than command are idempotent, meaning they will seek to avoid changes
+unless a change needs to be made.  When using ansible playbooks, these modules can
+trigger change events, as described in <span class="strong"><strong>ansible-playbooks</strong></span>(5).</p><p>Unless otherwise noted, all modules support change hooks.</p></div><div class="refsect1" title="command"><a id="_command"></a><h2>command</h2><p>The command module takes the command name followed by a list of arguments, space delimited.
+This is the only module that does not use key=value style parameters.</p><div class="variablelist"><dl><dt><span class="term">
+Example usage
+</span></dt><dd>
+/sbin/shutdown -t now
+</dd></dl></div><p>This module does not support change hooks.</p><p>Returns the return code from the program as well as timing information.</p><p>(Async command running and command execution time limits are in plan.)</p></div><div class="refsect1" title="copy"><a id="_copy"></a><h2>copy</h2><p>The copy module moves a file on the local box to remote locations.</p><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>src=</strong></span>
+</span></dt><dd>
+Local absolute path to a file to copy to the remote server
+</dd><dt><span class="term">
+<span class="strong"><strong>dest=</strong></span>
+</span></dt><dd>
+Remote absolute path where the file should end up
+</dd></dl></div><p>This module also returns md5sum information about the resultant file.</p></div><div class="refsect1" title="facter"><a id="_facter"></a><h2>facter</h2><p>Runs the discovery program <span class="emphasis"><em>facter</em></span> on the remote system, returning
+JSON data that can be useful for inventory purposes.</p><p>Requires that <span class="emphasis"><em>facter</em></span> and <span class="emphasis"><em>ruby-json</em></span> be installed on the remote end.</p><p>This module is informative only - it takes no parameters &amp; does not support change hooks,
+nor does it make any changes on the system.</p></div><div class="refsect1" title="file"><a id="_file"></a><h2>file</h2><p>Ensures the ownership and permissions of files are as desired.</p><p>Use copy or template first if you need to make sure a file is on the box.</p><p>In plan.</p></div><div class="refsect1" title="git"><a id="_git"></a><h2>git</h2><p>Deploys software from git checkouts.</p><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>repo=</strong></span>
+</span></dt><dd>
+git or http protocol address of the repo to checkout
+</dd><dt><span class="term">
+<span class="strong"><strong>dest=</strong></span>
+</span></dt><dd>
+where to check it out, an absolute directory path
+</dd><dt><span class="term">
+<span class="strong"><strong>version=</strong></span>
+</span></dt><dd>
+what version to check out — either the git SHA, the literal string <span class="emphasis"><em>HEAD</em></span>, or a tag name
+</dd></dl></div></div><div class="refsect1" title="ohai"><a id="_ohai"></a><h2>ohai</h2><p>Similar to the facter module, this returns JSON inventory data.  Ohai
+data is a bit more verbose and nested than facter.</p><p>Requires that <span class="emphasis"><em>ohai</em></span> be installed on the remote end.</p><p>This module is information only - it takes no parameters &amp; does not
+support change hooks, nor does it make any changes on the system.</p></div><div class="refsect1" title="ping"><a id="_ping"></a><h2>ping</h2><p>A trivial test module, this module always returns the integer <span class="emphasis"><em>1</em></span> on
+successful contact.</p><p>This module does not support change hooks.</p><p>This module is informative only - it takes no parameters &amp; does not
+support change hooks, nor does it make any changes on the system.</p></div><div class="refsect1" title="service"><a id="_service"></a><h2>service</h2><p>Controls services on remote machines.</p><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>state=</strong></span>
+</span></dt><dd>
+Values are <span class="emphasis"><em>started</em></span>, <span class="emphasis"><em>stopped</em></span>, or <span class="emphasis"><em>restarted</em></span>.   Started/stopped
+are idempotent actions that will not run commands unless neccessary.
+<span class="emphasis"><em>restarted</em></span> will always bounce the service
+</dd><dt><span class="term">
+<span class="strong"><strong>name=</strong></span>
+</span></dt><dd>
+The name of the service
+</dd></dl></div></div><div class="refsect1" title="setup"><a id="_setup"></a><h2>setup</h2><p>Writes a JSON file containing key/value data, for use in templating.
+Call this once before using the template modules, usually as the very
+first step in your playbook.</p><p>If facter or ohai are installed, variables from these programs will also
+be snapshotted into the JSON file for usage in templating. These variables
+are prefixed with <span class="emphasis"><em>facter_</em></span> and 'ohai_" so it’s easy to tell their source.</p><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>metadata=</strong></span>
+</span></dt><dd>
+Optionally overrides the default JSON file location of /etc/ansible/setup.
+If used, also supply the metadata parameter to <span class="emphasis"><em>template</em></span>.  Change if
+running as a non-root remote user who does not have permissions on /etc/ansible.
+</dd><dt><span class="term">
+<span class="strong"><strong>anything=</strong></span>
+</span></dt><dd>
+any other parameters can be named basically anything, and set a key=value
+pair in the JSON file for use in templating.
+</dd></dl></div></div><div class="refsect1" title="template"><a id="_template"></a><h2>template</h2><p>Templates a file out to a remote server.  Call the setup module prior to usage.</p><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>src=</strong></span>
+</span></dt><dd>
+path of a Jinja2 formatted template on the local server
+</dd><dt><span class="term">
+<span class="strong"><strong>dest</strong></span>
+</span></dt><dd>
+location to render the template on the remote server
+</dd><dt><span class="term">
+<span class="strong"><strong>metadata</strong></span>
+</span></dt><dd>
+location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
+which is the same as the default for the setup module.   Change if running as a non-root
+remote user who does not have permissions on /etc/ansible.
+</dd></dl></div><p>This module also returns md5sum information about the resultant file.</p></div><div class="refsect1" title="user"><a id="_user"></a><h2>user</h2><p>This module is in plan.</p></div><div class="refsect1" title="yum"><a id="_yum"></a><h2>yum</h2><p>This module is in plan.</p></div><div class="refsect1" title="WRITING YOUR OWN MODULES"><a id="_writing_your_own_modules"></a><h2>WRITING YOUR OWN MODULES</h2><p>To write your own modules, simply follow the convention of those already available in
+/usr/share/ansible.  Modules must return JSON but can be written in any language.
+To support change hooks, modules should return hashes, with a changed: True/False
+element at the top level.  Modules can also choose to indicate a failure scenario
+by returning a top level <span class="emphasis"><em>failure</em></span> element with a True value.</p></div><div class="refsect1" title="ENVIRONMENT"><a id="_environment"></a><h2>ENVIRONMENT</h2><p>ANSIBLE_LIBRARY — Override the default ansible module library path</p></div><div class="refsect1" title="AUTHOR"><a id="_author"></a><h2>AUTHOR</h2><p>Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.</p></div><div class="refsect1" title="SEE ALSO"><a id="_see_also"></a><h2>SEE ALSO</h2><p><span class="strong"><strong>ansible</strong></span>(1)</p><p><span class="strong"><strong>ansible-playbook</strong></span>(5)</p><p>Ansible home page: <a class="ulink" href="https://github.com/mpdehaan/ansible/" target="_top">https://github.com/mpdehaan/ansible/</a></p></div></div></body></html>

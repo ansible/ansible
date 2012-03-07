@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ansible-modules</title><link rel="stylesheet" type="text/css" href="./docbook-xsl.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /></head><body><div xml:lang="en" class="refentry" title="ansible-modules" lang="en"><a id="id322567"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ansible-playbook — format and function of an ansible playbook file</p></div><div class="refsect1" title="DESCRIPTION"><a id="_description"></a><h2>DESCRIPTION</h2><p>Ansible ships with <span class="emphasis"><em>ansible-playbook</em></span>, a tool for running playbooks.
+Playbooks can represent frequent tasks, desired system configurations,
+or deployment processes.</p></div><div class="refsect1" title="FORMAT"><a id="_format"></a><h2>FORMAT</h2><p>Playbooks are written in YAML.</p></div><div class="refsect1" title="EXAMPLE"><a id="_example"></a><h2>EXAMPLE</h2><p>See:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem">
+<a class="ulink" href="https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml" target="_top">https://github.com/mpdehaan/ansible/blob/master/examples/playbook.yml</a>
+</li><li class="listitem">
+<a class="ulink" href="https://github.com/mpdehaan/ansible/blob/master/examples/base.yml" target="_top">https://github.com/mpdehaan/ansible/blob/master/examples/base.yml</a>
+</li><li class="listitem">
+<a class="ulink" href="https://github.com/mpdehaan/ansible/blob/master/examples/handlers.yml" target="_top">https://github.com/mpdehaan/ansible/blob/master/examples/handlers.yml</a>
+</li></ul></div></div><div class="refsect1" title="WHAT THE EXAMPLE MEANS"><a id="_what_the_example_means"></a><h2>WHAT THE EXAMPLE MEANS</h2><p>Here’s what playbook.yml (above) will do.</p><p>The first pattern will select all hosts.  The patterns are the same
+as supported by /usr/bin/ansible.</p><p>First, it will run all the modules specified in base.yml.  Includes can
+be used to implement classes of things, and if you wanted, a playbook
+could consist of nothing but include files.  This is an example of an
+include.</p><p>After processing base.yml, on each host we’ll write for
+a JSON file into /etc/ansible/setup on each remote system with the
+values max_clients and http_port.</p><p>Next, we’ll use a Jinja2 template locally residing at
+/srv/templates/httpd.j2 to write the Apache config file on each host,
+using the previous values in that setup file.</p><p>Next, We’ll ensure that apache is running if stopped.</p><p>The template task set up a notifier, which means if the configuration
+file actually changed, we have a named handler, in this case, <span class="emphasis"><em>restart apache</em></span>
+to run.  In this case, all the notifiers come from handlers.yml, though it’s
+also ok to express handlers directly in the main yaml file too.  Using
+the include promotes reuse.</p><p>What does the handler say?  If and only if the config file changed, note that we need to restart
+apache at the end of the run, otherwise, don’t bother because we
+already know it is running.</p></div><div class="refsect1" title="HIGH LEVEL EXPLANATION"><a id="_high_level_explanation"></a><h2>HIGH LEVEL EXPLANATION</h2><p>Playbooks are executed top down and can contain multiple references to
+patterns.  For instance, a playbook could do something to all
+webservers, then do something to all database servers, then do
+something different to all webservers again.</p><p>For each pattern, the tasks in the <span class="emphasis"><em>tasks</em></span> list are executed in order
+for all hosts in the host file matching the pattern.</p><p>For each task, a name/action pair describes what the task is and what
+ansible module to use to accomplish the task, along with any
+arguments.   Additional fields like <span class="emphasis"><em>comment:</em></span> can be added and will
+be ignored, so feel free to take notes in the file.</p><p>Most modules accept key=value format arguments.</p><p>Handlers are like tasks, but are conditionally executed.  If a module
+reports a <span class="emphasis"><em>change</em></span>, it can notify one or more handler by name.  If
+notified, it will run only for hosts that changed.</p></div><div class="refsect1" title="ERROR HANDLING"><a id="_error_handling"></a><h2>ERROR HANDLING</h2><p>If a host has a failure, the host will be ignored for the remainder
+of the playbook execution.</p></div><div class="refsect1" title="ENVIRONMENT"><a id="_environment"></a><h2>ENVIRONMENT</h2><p>ANSIBLE_LIBRARY — Override the default ansible module library path</p></div><div class="refsect1" title="AUTHOR"><a id="_author"></a><h2>AUTHOR</h2><p>Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.</p></div><div class="refsect1" title="SEE ALSO"><a id="_see_also"></a><h2>SEE ALSO</h2><p><span class="strong"><strong>ansible</strong></span>(1)</p><p><span class="strong"><strong>ansible-modules</strong></span>(5)</p><p>Ansible home page: <a class="ulink" href="https://github.com/mpdehaan/ansible/" target="_top">https://github.com/mpdehaan/ansible/</a></p></div></div></body></html>

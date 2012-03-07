@@ -1,0 +1,158 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Install &mdash; Taboot v0.4.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Taboot v0.4.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="install">
+<h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="from-yum">
+<h2>From Yum<a class="headerlink" href="#from-yum" title="Permalink to this headline">¶</a></h2>
+<p>Taboot is in the Fedora package repositories. Installing it should be as simple as:</p>
+<div class="highlight-python"><pre>sudo yum install python-taboot</pre>
+</div>
+</div>
+<div class="section" id="from-source">
+<h2>From Source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h2>
+<p>You&#8217;ll need these dependencies to build/install:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><a class="reference external" href="http://www.python.org">python</a> - The python programming language along with python-setuptools</li>
+<li><a class="reference external" href="http://docs.python.org/lib/module-distutils.html">distutils</a> - Python building and packaging library</li>
+</ol>
+</div></blockquote>
+<p>Building documentation requires some more deps. These are <strong>required</strong>
+if you&#8217;re building RPMs, and optional if you&#8217;re installing manually:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>python-sphinx</li>
+<li>asciidoc</li>
+<li>libxslt</li>
+</ol>
+</div></blockquote>
+<div class="section" id="building-rpms-from-source">
+<h3>Building RPMs from source<a class="headerlink" href="#building-rpms-from-source" title="Permalink to this headline">¶</a></h3>
+<p>This is the recommended installation method if you&#8217;re pulling Taboot
+from source:</p>
+<div class="highlight-python"><pre>make rpm
+sudo yum localinstall /path/to/rpm</pre>
+</div>
+</div>
+<div class="section" id="installing-from-source">
+<h3>Installing From source<a class="headerlink" href="#installing-from-source" title="Permalink to this headline">¶</a></h3>
+<p>I <strong>don&#8217;t</strong> recommend this. But if you&#8217;re dead set on installing
+directly from source you still can. This calls the python
+<tt class="docutils literal"><span class="pre">distutils</span></tt> installer directly:</p>
+<div class="highlight-python"><pre>sudo make install</pre>
+</div>
+<p>If you wish to build and install the optional documentation you&#8217;ll
+need some additional packages so it can be built fully. Install the
+documentation with this command:</p>
+<div class="highlight-python"><pre>sudo make installdocs</pre>
+</div>
+<p>Uninstall everything with:</p>
+<div class="highlight-python"><pre>sudo make uninstall</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Install</a><ul>
+<li><a class="reference internal" href="#from-yum">From Yum</a></li>
+<li><a class="reference internal" href="#from-source">From Source</a><ul>
+<li><a class="reference internal" href="#building-rpms-from-source">Building RPMs from source</a></li>
+<li><a class="reference internal" href="#installing-from-source">Installing From source</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/install.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Taboot v0.4.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009-2011 Red Hat, Inc.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
