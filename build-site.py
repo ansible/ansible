@@ -61,6 +61,7 @@ class SphinxBuilder(object):
                               freshenv)
 
             app.builder.build_all()
+
             # We also have the HTML man pages to handle now as well
             #if os.system("make htmlman"):
             #    print "There was an error while building the HTML man pages."
@@ -80,8 +81,30 @@ class SphinxBuilder(object):
         self.app.builder.build_all()
 
 
-if __name__ == '__main__':
+def build_rst_docs():
     docgen = SphinxBuilder()
+
+
+def build_html_manpages():
+    os.system("make htmlman")
+
+
+if __name__ == '__main__':
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print "This script builds the html documentation from rst/asciidoc sources.\n"
+        print "    Run 'make docs' to build everything."
+        print "    Run 'make viewdocs' to build and then preview in a web browser."
+        sys.exit(0)
+
+    # The 'htmldocs' make target will call this scrip twith the 'rst'
+    # parameter' We don't need to run the 'htmlman' target then.
+    if "rst" in sys.argv:
+        build_rst_docs()
+    else:
+        # By default, preform the rst->html transformation and then
+        # the asciidoc->html trasnformation
+        build_rst_docs()
+        build_html_manpages()
 
     if "view" in sys.argv:
         import webbrowser

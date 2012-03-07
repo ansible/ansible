@@ -4,7 +4,11 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 
 all: clean docs
 
-docs: htmlman htmldocs
+docs: clean
+	./build-site.py
+
+viewdocs: clean
+	./build-site.py view
 
 htmlman:
 	mkdir -p html/man
@@ -13,7 +17,7 @@ htmlman:
 	$(ASCII2HTMLMAN) ansible/docs/man/man5/ansible-playbook.5.asciidoc
 
 htmldocs:
-	./build-site.py
+	 ./build-site.py rst
 
 clean:
 	@echo "Cleaning up byte compiled python stuff"

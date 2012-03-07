@@ -16,9 +16,9 @@ infrastructure, Ansible aspires to be quite different and more
 minimal, but still able to grow more modularly over time.  This is
 based on talking to a lot of users of various tools and wishing to
 eliminate problems with connectivity and long running daemons, or not
-picking tool X because they preferred to code in Y. Further, playbooks
-take things a whole step further, building the config and deployment
-system I always wanted to build.
+picking tool `X` because they preferred to code in `Y`. Further,
+playbooks take things a whole step further, building the config and
+deployment system I always wanted to build.
 
 Why use Ansible versus something else?  (Fabric, Capistrano,
 mCollective, Func, SaltStack, etc?) It will have far less code, it
@@ -52,12 +52,15 @@ need:
 
 * ``paramiko``
 * ``PyYAML``
+* ``python-jinja2`` (for playbooks)
 * ``Asciidoc`` (for building documentation)
 
 If you are running less than Python 2.6, you will also need:
 
-* The Python 2.4 or 2.5 backport of the multiprocessing module
-  * `Installation and Testing Instructions <http://code.google.com/p/python-multiprocessing/wiki/Install>`_
+* The Python 2.4 or 2.5 backport of the ``multiprocessing`` module
+
+  - `Installation and Testing Instructions <http://code.google.com/p/python-multiprocessing/wiki/Install>`_
+
 * ``simplejson``
 
 On the managed nodes, to use templating, you will need:
