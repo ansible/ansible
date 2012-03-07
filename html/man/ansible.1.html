@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ansible</title><link rel="stylesheet" type="text/css" href="./docbook-xsl.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.76.1" /></head><body><div xml:lang="en" class="refentry" title="ansible" lang="en"><a id="id355813"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ansible — run a command somewhere else</p></div><div class="refsynopsisdiv" title="Synopsis"><a id="_synopsis"></a><h2>Synopsis</h2><p>ansible &lt;host-pattern&gt; [-f forks] [-m module_name] [-a args]</p></div><div class="refsect1" title="DESCRIPTION"><a id="_description"></a><h2>DESCRIPTION</h2><p><span class="strong"><strong>Ansible</strong></span> is an extra-simple tool/framework/API for doing 'remote things' over
+SSH.</p></div><div class="refsect1" title="ARGUMENTS"><a id="_arguments"></a><h2>ARGUMENTS</h2><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>host-pattern</strong></span>
+</span></dt><dd>
+A name of a group in the inventory file, a shell-like glob selecting hosts in inventory
+file, or any combination of the two seperated by semicolons.
+</dd></dl></div></div><div class="refsect1" title="OPTIONS"><a id="_options"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">
+<span class="strong"><strong>-i</strong></span>, <span class="strong"><strong>--inventory</strong></span>
+</span></dt><dd>
+Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
+</dd><dt><span class="term">
+<span class="strong"><strong>-f</strong></span>, <span class="strong"><strong>--forks</strong></span>
+</span></dt><dd>
+Level of parallelism. Specify as an integer, the default is 5.
+</dd><dt><span class="term">
+<span class="strong"><strong>-m</strong></span>, <span class="strong"><strong>--module-name</strong></span>
+</span></dt><dd>
+Module name to execute.
+</dd><dt><span class="term">
+<span class="strong"><strong>-p</strong></span>, <span class="strong"><strong>--pattern</strong></span>
+</span></dt><dd>
+Hostname pattern. Accepts shell-like globs which can be seperated with ";"
+The default is "*" which matches all hosts in the ansible hosts file.  Group
+names from the ansible inventory file can also be used.
+</dd></dl></div><p>See ansible --help for additional options.</p></div><div class="refsect1" title="INVENTORY"><a id="_inventory"></a><h2>INVENTORY</h2><p>Ansible stores the hosts it can potentially operate on in an inventory
+file. The syntax is one host per line.  Groups headers are allowed and
+are included on their own line, enclosed in square brackets.</p></div><div class="refsect1" title="FILES"><a id="_files"></a><h2>FILES</h2><p>/etc/ansible/hosts — Default hosts file</p><p>/usr/share/ansible — Default module library</p></div><div class="refsect1" title="ENVIRONMENT"><a id="_environment"></a><h2>ENVIRONMENT</h2><p>The following environment variables may specified.</p><p>ANSIBLE_HOSTS  — Override the default ansible hosts file</p><p>ANSIBLE_LIBRARY — Override the default ansible module library path</p></div><div class="refsect1" title="AUTHOR"><a id="_author"></a><h2>AUTHOR</h2><p>Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.</p></div><div class="refsect1" title="COPYRIGHT"><a id="_copyright"></a><h2>COPYRIGHT</h2><p>Copyright © 2012, Michael DeHaan</p><p>Ansible is released under the terms of the GPLv3 License.</p></div><div class="refsect1" title="SEE ALSO"><a id="_see_also"></a><h2>SEE ALSO</h2><p>Ansible home page: <a class="ulink" href="https://github.com/mpdehaan/ansible/" target="_top">https://github.com/mpdehaan/ansible/</a></p><p><span class="strong"><strong>ansible-modules</strong></span>(5)</p><p><span class="strong"><strong>ansible-playbook</strong></span>(5)</p></div></div></body></html>

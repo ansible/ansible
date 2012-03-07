@@ -1,0 +1,188 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>YAML Scripts &mdash; Ansible v0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
+    <link rel="next" title="Patterns" href="patterns.html" />
+    <link rel="prev" title="Getting Started" href="gettingstarted.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="patterns.html" title="Patterns"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gettingstarted.html" title="Getting Started"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="yaml-scripts">
+<h1>YAML Scripts<a class="headerlink" href="#yaml-scripts" title="Permalink to this headline">¶</a></h1>
+<p>This page provides a basic overview of correct YAML syntax.</p>
+<div class="section" id="yaml-basics">
+<h2>YAML Basics<a class="headerlink" href="#yaml-basics" title="Permalink to this headline">¶</a></h2>
+<p>For <cite>ansible</cite>, every YAML script must be a list at it&#8217;s root-most
+element. Each item in the list is a dictionary. These dictionaries
+represent all the options you can use to write a <cite>ansible</cite> script. In
+addition, all YAML files (regardless of their association with
+<cite>ansible</cite> or not) should start with <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
+<p>In YAML a list can be represented in two ways. In one way all members
+of a list are lines beginning at the same indentation level starting
+with a <tt class="docutils literal"><span class="pre">-</span></tt> character:</p>
+<div class="highlight-python"><pre>---
+# A list of tasty fruits
+- Apple
+- Orange
+- Strawberry
+- Mango</pre>
+</div>
+<p>In the second way a list is represented as comma separated elements
+surrounded by square brackets. Newlines are permitted between
+elements:</p>
+<div class="highlight-python"><pre>---
+# A list of tasty fruits
+[apple, orange, banana, mango]</pre>
+</div>
+<p>A dictionary is represented in a simple <tt class="docutils literal"><span class="pre">key:</span></tt> and <tt class="docutils literal"><span class="pre">value</span></tt> form:</p>
+<div class="highlight-python"><pre>---
+# An employee record
+name: John Eckersberg
+job: Developer
+skill: Elite</pre>
+</div>
+<p>Like lists, dictionaries can be represented in an abbreviated form:</p>
+<div class="highlight-python"><pre>---
+# An employee record
+{name: John Eckersberg, job: Developer, skill: Elite}</pre>
+</div>
+<p id="truthiness">You can specify a boolean value (true/false) in several forms:</p>
+<div class="highlight-python"><pre>---
+knows_oop: True
+likes_emacs: TRUE
+uses_cvs: false</pre>
+</div>
+<p>Finally, you can combine these data structures:</p>
+<div class="highlight-python"><pre>---
+# An employee record
+name: John Eckersberg
+job: Developer
+skill: Elite
+employed: True
+foods:
+    - Apple
+    - Orange
+    - Strawberry
+    - Mango
+languages:
+    ruby: Elite
+    python: Elite
+    dotnet: Lame</pre>
+</div>
+<p>That&#8217;s all you really need to know about YAML to get started writing
+<cite>Ansible</cite> scripts.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference external" href="http://yamllint.com/">YAMLLint</a></dt>
+<dd>YAML Lint gets the lint out of your YAML</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">YAML Scripts</a><ul>
+<li><a class="reference internal" href="#yaml-basics">YAML Basics</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gettingstarted.html"
+                        title="previous chapter">Getting Started</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="patterns.html"
+                        title="next chapter">Patterns</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/YAMLScripts.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="patterns.html" title="Patterns"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gettingstarted.html" title="Getting Started"
+             >previous</a> |</li>
+        <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012 Michael DeHaan.
+      Last updated on Mar 07, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
