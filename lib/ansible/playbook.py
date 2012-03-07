@@ -25,7 +25,8 @@ import shlex
 import os
 import jinja2
 
-SETUP_CACHE={ 'foo' : {} }
+# used to transfer variables to Runner
+SETUP_CACHE={ }
 
 #############################################
 
@@ -82,6 +83,33 @@ class PlayBook(object):
 
         self.playbook = self._parse_playbook(playbook)
 
+    def _include_tasks(self, play, task, dirname, new_tasks):
+        # an include line looks like:
+        # include: some.yml a=2 b=3 c=4
+        include_tokens = task['include'].split()
+        path = path_dwim(dirname, include_tokens[0])
+        inject_vars = play.get('vars', {})
+        for i,x in enumerate(include_tokens):
+            if x.find("=") != -1:
+                (k,v) = x.split("=")
+                inject_vars[k] = v
+            included = file(path).read()
+            template = jinja2.Template(included)
+            included = template.render(inject_vars)
+            included = yaml.load(included)
+            for x in included:
+                new_tasks.append(x)
+
+    def _include_handlers(self, play, handler, dirname, new_handlers):
+        path = path_dwim(dirname, handler['include'])
+        included = file(path).read()
+        inject_vars = play.get('vars', {})
+        template = jinja2.Template(included)
+        included = template.render(inject_vars)
+        included = yaml.load(included)
+        for x in included:
+            new_handlers.append(x)
+
     def _parse_playbook(self, playbook):
         ''' load YAML file, including handling for imported files '''
         
@@ -96,22 +124,7 @@ class PlayBook(object):
             new_tasks = []
             for task in tasks:
                if 'include' in task:
-                   # FIXME: refactor
-                   # an include line looks like:
-                   # include: some.yml a=2 b=3 c=4
-                   include_tokens = task['include'].split()
-                   path = path_dwim(dirname, include_tokens[0])
-                   inject_vars = play.get('vars', {})
-                   for i,x in enumerate(include_tokens):
-                       if x.find("=") != -1:
-                           (k,v) = x.split("=")
-                           inject_vars[k] = v
-                   included = file(path).read()
-                   template = jinja2.Template(included)
-                   included = template.render(inject_vars)
-                   included = yaml.load(included)
-                   for x in included:
-                       new_tasks.append(x)
+                   self._include_tasks(play, task, dirname, new_tasks)
                else:
                    new_tasks.append(task)
             play['tasks'] = new_tasks
@@ -120,10 +133,7 @@ class PlayBook(object):
             new_handlers = [] 
             for handler in handlers:
                if 'include' in handler:
-                   path = path_dwim(dirname, handler['include'])
-                   included = yaml.load(file(path).read())
-                   for x in included:
-                       new_handlers.append(x)
+                   self._include_handlers(play, handler, dirname, new_handlers)
                else:
                    new_handlers.append(handler)
             play['handlers'] = new_handlers
