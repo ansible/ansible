@@ -1,67 +1,100 @@
 Getting Started
 ===============
 
-How to ansible
-
+How to download ansible and get started using it
 
 .. seealso::
 
+   :doc:`examples`
+       Examples of basic commands
    :doc:`YAMLScripts`
-       Complete documentation of the YAML syntax `ansible` understands.
+       Complete documentation of the YAML syntax `ansible` understands for playbooks.
+   :doc:`playbooks`
+       Learning ansible's configuration management language
+   :doc:`modules`
+       Learn about modules that ship with ansible
+
+Requirements
+````````````
+
+Requirements are extremely minimal.
+
+If you are running python 2.6 on the **overlord** machine, you will
+need:
+
+* ``paramiko``
+* ``PyYAML``
+* ``python-jinja2`` (for playbooks)
+
+If you are running less than Python 2.6, you will also need:
+
+* The Python 2.4 or 2.5 backport of the ``multiprocessing`` module
+
+  - `Installation and Testing Instructions <http://code.google.com/p/python-multiprocessing/wiki/Install>`_
+
+* ``simplejson``
+
+On the managed nodes, to use templating, you will need:
+
+* ``python-jinja2`` (you can install this with ansible)
+
+Developer Requirements
+``````````````````````
+
+For developers, you may wish to have:
+
+* ``asciidoc`` (for building manpage documentation)
+* ``python-sphinx`` (for building content for ansible.github.com)
 
 
-What you need
--------------
+Getting Ansible
+```````````````
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.
+Tagged releases are available as tar.gz files from the Ansible github
+project page:
 
-Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.
+* `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
 
-Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.
+You can also clone the git repository yourself and install Ansible in
+one of two ways:
 
-In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.
 
-Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.
+Python Distutils
+++++++++++++++++
+
+You can also install Ansible using Python Distutils::
+
+    $ git clone git://github.com/ansible/ansible.git
+    $ cd ./ansible
+    $ sudo make install
+
+Via RPM
++++++++
+
+In the near future, pre-built RPMs will be available through your distribution. Until that time you
+can use the ``make rpm`` command::
+
+    $ git clone git://github.com/ansible/ansible.git
+    $ cd ./ansible
+    $ make rpm
+    $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm
+
+Your first commands
+```````````````````
+
+Edit /etc/ansible/hosts and put one or more remote systems in it, for which you have your SSH
+key in ``authorized_keys``::
+
+    192.168.1.50
+    aserver.example.org
+    bserver.example.org
+
+Now try this:
+
+    ssh-agent bash
+    ssh-add ~/.ssh/id_rsa
+    ansible all -m ping
+
+Congratulations.  You've just contacted your nodes with Ansible.  It's now time to read some
+of the more real-world examples.
+

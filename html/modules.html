@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Modules &mdash; Ansible v0.0.1 documentation</title>
+    <title>Ansible Modules &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="Playbooks" href="playbooks.html" />
+    <link rel="next" title="YAML Scripts" href="YAMLScripts.html" />
     <link rel="prev" title="Patterns" href="patterns.html" /> 
   </head>
   <body>
@@ -34,7 +34,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="playbooks.html" title="Playbooks"
+          <a href="YAMLScripts.html" title="YAML Scripts"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="patterns.html" title="Patterns"
@@ -48,56 +48,139 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="modules">
-<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.</p>
-<p>Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.</p>
-<p>Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.</p>
-<p>In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.</p>
-<p>Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.</p>
+  <div class="section" id="ansible-modules">
+<h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="examples.html"><em>Examples</em></a></dt>
+<dd>Examples of using modules in /usr/bin/ansible</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
+<dt><a class="reference internal" href="api.html"><em>API</em></a></dt>
+<dd>Examples of using modules with the Python API</dd>
+</dl>
+</div>
+<div class="section" id="about-modules">
+<h2>About Modules<a class="headerlink" href="#about-modules" title="Permalink to this headline">¶</a></h2>
+<p>Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.</p>
+</div>
+<div class="section" id="idempotence">
+<h2>Idempotence<a class="headerlink" href="#idempotence" title="Permalink to this headline">¶</a></h2>
+<p>Most modules other than command are idempotent, meaning they will seek to avoid changes
+unless a change needs to be made.  When using ansible playbooks, these modules can
+trigger change events.  Unless otherwise noted, all modules support change hooks.</p>
+</div>
+<div class="section" id="command">
+<h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<p>The command module takes the command name followed by a list of arguments, space delimited.
+This is the only module that does not use key=value style parameters.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>/sbin/shutdown -t now</pre>
+</div>
+<p>This module does not support change hooks and returns the return code from the program as well as timing information about how long the command was running for.</p>
+</div>
+<div class="section" id="copy">
+<h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
+<p>The copy module moves a file on the local box to remote locations.</p>
+<p><em>src</em>:</p>
+<p>Local absolute path to a file to copy to the remote server</p>
+<p><em>dest</em>:</p>
+<p>Remote absolute path where the file should end up</p>
+<p>This module also returns md5sum information about the resultant file.</p>
+</div>
+<div class="section" id="facter">
+<h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
+JSON data that can be useful for inventory purposes.</p>
+<p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
+<p>This module is informative only - it takes no parameters &amp; does not support change hooks,
+nor does it make any changes on the system.</p>
+</div>
+<div class="section" id="git">
+<h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<p>Deploys software from git checkouts.</p>
+<p><em>repo</em>:</p>
+<p>git or http protocol address of the repo to checkout</p>
+<p><em>dest</em>:</p>
+<p>where to check it out, an absolute directory path</p>
+<p><em>version</em>:</p>
+<p>what version to check out &#8211; either the git SHA, the literal string &#8216;HEAD&#8217;, or a tag name</p>
+</div>
+<div class="section" id="ohai">
+<h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<p>Similar to the facter module, this returns JSON inventory data.  Ohai
+data is a bit more verbose and nested than facter.</p>
+<p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
+<p>This module is information only - it takes no parameters &amp; does not
+support change hooks, nor does it make any changes on the system.</p>
+</div>
+<div class="section" id="ping">
+<h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<p>A trivial test module, this module always returns the integer &#8216;1&#8217; on
+successful contact.</p>
+<p>This module does not support change hooks.</p>
+<p>This module is informative only - it takes no parameters &amp; does not
+support change hooks, nor does it make any changes on the system.</p>
+</div>
+<div class="section" id="service">
+<h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<p>Controls services on remote machines.</p>
+<p><em>state</em></p>
+<p>Values are &#8216;started&#8217;, &#8216;stopped&#8217;, or &#8216;restarted&#8217;.   Started/stopped
+are idempotent actions that will not run commands unless neccessary.
+&#8216;restarted&#8217; will always bounce the service</p>
+<p><em>name</em></p>
+<p>The name of the service</p>
+</div>
+<div class="section" id="setup">
+<h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>Writes a JSON file containing key/value data, for use in templating.
+Call this once before using the template modules.  Playbooks will
+execute this module automatically as the first step in each play.</p>
+<p>If facter or ohai are installed, variables from these programs will also
+be snapshotted into the JSON file for usage in templating. These variables
+are prefixed with &#8216;<a class="reference internal" href="#facter">facter</a>&#8216; and &#8216;<a class="reference internal" href="#ohai">ohai</a>&#8221; so it&#8217;s easy to tell their source.</p>
+<p><em>metadata</em></p>
+<p>Optionally overrides the default JSON file location of /etc/ansible/setup or ~/ansible/setup
+depending on what remote user has been specified.</p>
+<p>If used, also supply the metadata parameter to the template module.</p>
+<p><em>anything</em></p>
+<p>any other parameters can be named basically anything, and set a key=value
+pair in the JSON file for use in templating.</p>
+</div>
+<div class="section" id="template">
+<h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<p>Templates a file out to a remote server.  Call the setup module prior to usage.</p>
+<p><em>src</em></p>
+<p>path of a Jinja2 formatted template on the local server</p>
+<p><em>dest</em></p>
+<p>location to render the template on the remote server</p>
+<p><em>metadata</em></p>
+<p>location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
+which is the same as the default for the setup module.   Change if running as a non-root
+remote user who does not have permissions on /etc/ansible.</p>
+<p>This module also returns md5sum information about the resultant file.</p>
+</div>
+<div class="section" id="user">
+<h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<p>This module is in plan.</p>
+</div>
+<div class="section" id="yum">
+<h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<p>This module is in plan.</p>
+</div>
+<div class="section" id="writing-your-own-modules">
+<h2>WRITING YOUR OWN MODULES<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
+<p>To write your own modules, simply follow the convention of those already available in
+/usr/share/ansible.  Modules must return JSON but can be written in any language.
+Modules should return hashes, but hashes can be nested.
+To support change hooks, modules should return hashes with a changed: True/False
+element at the top level.  Modules can also choose to indicate a failure scenario
+by returning a top level &#8216;failure&#8217; element with a True value, and a &#8216;msg&#8217; element
+describing the nature of the failure.  Other values are up to the module.</p>
+</div>
 </div>
 
 
@@ -106,12 +189,33 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#about-modules">About Modules</a></li>
+<li><a class="reference internal" href="#idempotence">Idempotence</a></li>
+<li><a class="reference internal" href="#command">command</a></li>
+<li><a class="reference internal" href="#copy">copy</a></li>
+<li><a class="reference internal" href="#facter">facter</a></li>
+<li><a class="reference internal" href="#git">git</a></li>
+<li><a class="reference internal" href="#ohai">ohai</a></li>
+<li><a class="reference internal" href="#ping">ping</a></li>
+<li><a class="reference internal" href="#service">service</a></li>
+<li><a class="reference internal" href="#setup">setup</a></li>
+<li><a class="reference internal" href="#template">template</a></li>
+<li><a class="reference internal" href="#user">user</a></li>
+<li><a class="reference internal" href="#yum">yum</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules">WRITING YOUR OWN MODULES</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="patterns.html"
                         title="previous chapter">Patterns</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="playbooks.html"
-                        title="next chapter">Playbooks</a></p>
+  <p class="topless"><a href="YAMLScripts.html"
+                        title="next chapter">YAML Scripts</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/modules.txt"
@@ -120,7 +224,7 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -141,7 +245,7 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="playbooks.html" title="Playbooks"
+          <a href="YAMLScripts.html" title="YAML Scripts"
              >next</a> |</li>
         <li class="right" >
           <a href="patterns.html" title="Patterns"
@@ -151,8 +255,8 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 07, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Last updated on Mar 08, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>

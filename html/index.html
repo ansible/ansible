@@ -46,32 +46,25 @@
             
   <div class="section" id="ansible">
 <h1>Ansible<a class="headerlink" href="#ansible" title="Permalink to this headline">¶</a></h1>
-<p>Ansible is a extra-simple tool/API for doing &#8216;parallel remote things&#8217;
-over SSH &#8211; whether executing commands, running &#8220;modules&#8221;, or
-executing larger &#8216;playbooks&#8217; that can serve as a configuration
-management or deployment system.</p>
-<p>While <a class="reference external" href="http://fedorahosted.org/func">Func installation</a> which I
-co-wrote, aspired to avoid using SSH and have it&#8217;s own daemon
-infrastructure, Ansible aspires to be quite different and more
-minimal, but still able to grow more modularly over time.  This is
-based on talking to a lot of users of various tools and wishing to
-eliminate problems with connectivity and long running daemons, or not
-picking tool <cite>X</cite> because they preferred to code in <cite>Y</cite>. Further,
-playbooks take things a whole step further, building the config and
-deployment system I always wanted to build.</p>
-<p>Why use Ansible versus something else?  (Fabric, Capistrano,
+<p>Ansible is a radically simple deployment, configuration, and command execution framework.
+Other tools in this space have been too complicated for too long, require too much bootstrapping,
+and have too much learning curve.  Ansible is dead simple and painless to extend.  For comparison, Puppet and Chef have about 60k lines of code.  Ansible&#8217;s core is a little over 1000 lines.</p>
+<p>Ansible isn&#8217;t just for configuration &#8211; it&#8217;s also great for Ad-Hoc tasks,
+quickly firing off commands against nodes.  Where Ansible excels though, is expressing complex multi-node deployment processes, executing complex sequences of commands on different hosts through the &#8220;playbooks&#8221; feature.</p>
+<p>Ansible does not require programming in any particular language &#8211; you can write modules
+as scripts or programs that return simple JSON.</p>
+<p>Why use Ansible versus something else?  (Puppet, Chef, Fabric, Capistrano,
 mCollective, Func, SaltStack, etc?) It will have far less code, it
 will be more correct, and it will be the easiest thing to hack on and
 use you&#8217;ll ever see &#8211; regardless of your favorite language of choice.
-Want to only code plugins in bash or clojure?  Ansible doesn&#8217;t care.
-The docs will fit on one page and the source will be blindingly
-obvious.</p>
-<div class="section" id="design-principles">
-<h2>Design Principles<a class="headerlink" href="#design-principles" title="Permalink to this headline">¶</a></h2>
+Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs will remain
+short &amp; simple, and the source will be blindingly obvious.</p>
+<div class="section" id="design-goals">
+<h2>Design Goals<a class="headerlink" href="#design-goals" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Dead simple setup</li>
 <li>Super fast &amp; parallel by default</li>
-<li>No server or client daemons; use existing SSHd</li>
+<li>No server or client daemons; use existing SSHd out of the box</li>
 <li>No additional software required on client boxes</li>
 <li>Modules can be written in ANY language</li>
 <li>Awesome API for creating very powerful distributed scripts</li>
@@ -79,57 +72,16 @@ obvious.</p>
 <li>Create the easiest config management system to use, ever.</li>
 </ul>
 </div>
-<div class="section" id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<p>Requirements are extremely minimal.</p>
-<p>If you are running python 2.6 on the <strong>overlord</strong> machine, you will
-need:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (for playbooks)</li>
-<li><tt class="docutils literal"><span class="pre">Asciidoc</span></tt> (for building documentation)</li>
-</ul>
-<p>If you are running less than Python 2.6, you will also need:</p>
-<ul class="simple">
-<li>The Python 2.4 or 2.5 backport of the <tt class="docutils literal"><span class="pre">multiprocessing</span></tt> module<ul>
-<li><a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">Installation and Testing Instructions</a></li>
-</ul>
-</li>
-<li><tt class="docutils literal"><span class="pre">simplejson</span></tt></li>
-</ul>
-<p>On the managed nodes, to use templating, you will need:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can install this with ansible)</li>
-</ul>
-</div>
-<div class="section" id="getting-ansible">
-<h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
-<p>Tagged releases are available as tar.gz files from the Ansible github
-project page:</p>
-<ul class="simple">
-<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
-</ul>
-<p>You can also clone the git repository yourself and install Ansible in
-one of two ways:</p>
-<div class="section" id="python-distutils">
-<h3>Python Distutils<a class="headerlink" href="#python-distutils" title="Permalink to this headline">¶</a></h3>
-<p>You can install Ansible using Python Distutils:</p>
-<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
-$ cd ./ansible
-$ sudo make install</pre>
-</div>
-</div>
-<div class="section" id="via-rpm">
-<h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
-<p>In the future, pre-built RPMs may be available. Until that time you
-can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
-<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
-$ cd ./ansible
-$ make rpm
-$ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
-</div>
-</div>
+<div class="section" id="about-the-author">
+<h2>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h2>
+<p>Michael DeHaan is a Raleigh, NC based software developer and architect.  He created other
+DevOps programs such as Cobbler, the popular Linux install server.
+Cobbler is used to deploy mission critical systems all over the planet, in industries
+ranging from massively multiplayer gaming, core internet infrastructure, finance,
+chip design, and more.  Michael also helped co-author of Func, which is used
+to orchestrate systems in lots of diverse places.</p>
+<p>Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
+get involved.</p>
 </div>
 </div>
 <div class="section" id="contents">
@@ -137,45 +89,74 @@ $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#what-you-need">What you need</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#developer-requirements">Developer Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#getting-ansible">Getting Ansible</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gettingstarted.html#python-distutils">Python Distutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gettingstarted.html#via-rpm">Via RPM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#your-first-commands">Your first commands</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Patterns</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#targetting-all-systems">Targetting All Systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#specific-hosts">Specific Hosts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#groups">Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#wildcards">Wildcards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#mixing-things-up">Mixing Things Up</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#about-modules">About Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#idempotence">Idempotence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#command">command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#copy">copy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#facter">facter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#git">git</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#ohai">ohai</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#ping">ping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#service">service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#setup">setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#template">template</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#user">user</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#yum">yum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#writing-your-own-modules">WRITING YOUR OWN MODULES</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Scripts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="YAMLScripts.html#yaml-basics">YAML Basics</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">Patterns</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#playbook-example">Playbook Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#hosts-line">Hosts line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#vars-section">Vars section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#tasks-list">Tasks list</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#task-name-and-comment">Task name and comment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#task-action">Task action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#notify-statements">Notify statements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#handlers">Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#includes">Includes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#executing-a-playbook">Executing A Playbook</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-1">Examples 1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-2">Examples 2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-3">Examples 3</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#id1">Examples 3</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-4">Examples 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2-time-limited-background-operations">Example 2: Time Limited Background Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-3-file-transfer-templating">Examples 3: File Transfer &amp; Templating</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#examples-3-deploying-from-source-control">Examples 3: Deploying From Source Control</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate and Get Involved</a></li>
 <li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="man.html#ansible-1">ansible(1)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="man.html#ansible-modules-5">ansible-modules(5)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="man.html#ansible-playbook-5">ansible-playbook(5)</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="communicate-or-get-involved">
-<h1>Communicate or Get Involved<a class="headerlink" href="#communicate-or-get-involved" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li>Join the <a class="reference external" href="http://groups.google.com/group/ansible-project">ansible-project mailing list</a> on Google Groups</li>
-<li>Join <a class="reference external" href="irc://irc.freenode.net/#ansible">#ansible</a> on the <a class="reference external" href="http://freenode.net/">freenode IRC network</a></li>
-<li>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github<ul>
-<li>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></li>
-</ul>
-</li>
-</ul>
 </div>
 
 
@@ -187,19 +168,13 @@ $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Ansible</a><ul>
-<li><a class="reference internal" href="#design-principles">Design Principles</a></li>
-<li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
-<li><a class="reference internal" href="#python-distutils">Python Distutils</a></li>
-<li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#design-goals">Design Goals</a></li>
+<li><a class="reference internal" href="#about-the-author">About the Author</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#contents">Contents</a><ul>
 </ul>
 </li>
-<li><a class="reference internal" href="#communicate-or-get-involved">Communicate or Get Involved</a></li>
 </ul>
 
   <h4>Next topic</h4>
@@ -213,7 +188,7 @@ $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -241,8 +216,8 @@ $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 07, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Last updated on Mar 08, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>

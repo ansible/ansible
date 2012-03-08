@@ -1,8 +1,9 @@
 YAML Scripts
 ============
 
-This page provides a basic overview of correct YAML syntax.
-
+This page provides a basic overview of correct YAML syntax, which is how Ansible
+playbooks (our configuration management language) are expressed.  
+You may also wish to read playbook examples and will quickly pick this up from those.
 
 YAML Basics
 -----------
@@ -74,7 +75,7 @@ Finally, you can combine these data structures::
 	dotnet: Lame
 
 That's all you really need to know about YAML to get started writing
-`Ansible` scripts.
+`Ansible` playbooks.
 
 .. seealso::
 

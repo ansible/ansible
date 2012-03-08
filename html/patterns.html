@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="Modules" href="modules.html" />
-    <link rel="prev" title="YAML Scripts" href="YAMLScripts.html" /> 
+    <link rel="next" title="Ansible Modules" href="modules.html" />
+    <link rel="prev" title="Getting Started" href="gettingstarted.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,10 +34,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="modules.html" title="Ansible Modules"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Scripts"
+          <a href="gettingstarted.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -50,54 +50,64 @@
             
   <div class="section" id="patterns">
 <h1>Patterns<a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h1>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.</p>
-<p>Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.</p>
-<p>Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.</p>
-<p>In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.</p>
-<p>Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.</p>
+<p>How to select hosts you wish to manage</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="examples.html"><em>Examples</em></a></dt>
+<dd>Examples of basic commands</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Learning ansible&#8217;s configuration management language</dd>
+</dl>
+</div>
+<p>Ansible works against multiple systems in your infrastructure at the
+same time.  It does this by selecting portions of systems listed in Ansible&#8217;s inventory file,
+which defaults to /etc/ansible/hosts, and looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+
+<span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
+<span class="n">foo</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">bar</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+
+<span class="p">[</span><span class="n">dbservers</span><span class="p">]</span>
+<span class="n">one</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">two</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">three</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<div class="section" id="targetting-all-systems">
+<h2>Targetting All Systems<a class="headerlink" href="#targetting-all-systems" title="Permalink to this headline">¶</a></h2>
+<p>The pattern &#8216;all&#8217; or &#8216;*&#8217; targets all systems in the inventory file.</p>
+</div>
+<div class="section" id="specific-hosts">
+<h2>Specific Hosts<a class="headerlink" href="#specific-hosts" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to address specific hosts:</p>
+<blockquote>
+<div>one.example.com
+one.example.com:two.example.com</div></blockquote>
+</div>
+<div class="section" id="groups">
+<h2>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h2>
+<p>The following patterns address one or more groups:</p>
+<blockquote>
+<div>webservers
+webservers:dbservers</div></blockquote>
+<p>There is also a magic group &#8216;ungrouped&#8217; which selects systems not in a group.</p>
+</div>
+<div class="section" id="wildcards">
+<h2>Wildcards<a class="headerlink" href="#wildcards" title="Permalink to this headline">¶</a></h2>
+<p>Individual hosts, but not groups, can also be referenced using wildcards:</p>
+<blockquote>
+<div><a href="#id1"><span class="problematic" id="id2">*</span></a>.example.com
+<a href="#id3"><span class="problematic" id="id4">*</span></a>.com</div></blockquote>
+</div>
+<div class="section" id="mixing-things-up">
+<h2>Mixing Things Up<a class="headerlink" href="#mixing-things-up" title="Permalink to this headline">¶</a></h2>
+<p>Specific hosts, wildcards, and groups can all be mixed in the same pattern</p>
+<blockquote>
+<div>one*.com:dbservers</div></blockquote>
+<p>It is not possible to target a host not in the inventory file.</p>
+</div>
 </div>
 
 
@@ -106,12 +116,24 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Patterns</a><ul>
+<li><a class="reference internal" href="#targetting-all-systems">Targetting All Systems</a></li>
+<li><a class="reference internal" href="#specific-hosts">Specific Hosts</a></li>
+<li><a class="reference internal" href="#groups">Groups</a></li>
+<li><a class="reference internal" href="#wildcards">Wildcards</a></li>
+<li><a class="reference internal" href="#mixing-things-up">Mixing Things Up</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="YAMLScripts.html"
-                        title="previous chapter">YAML Scripts</a></p>
+  <p class="topless"><a href="gettingstarted.html"
+                        title="previous chapter">Getting Started</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="modules.html"
-                        title="next chapter">Modules</a></p>
+                        title="next chapter">Ansible Modules</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/patterns.txt"
@@ -120,7 +142,7 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -141,18 +163,18 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="modules.html" title="Modules"
+          <a href="modules.html" title="Ansible Modules"
              >next</a> |</li>
         <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Scripts"
+          <a href="gettingstarted.html" title="Getting Started"
              >previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 07, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Last updated on Mar 08, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>

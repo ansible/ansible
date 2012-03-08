@@ -1,71 +1,65 @@
 Examples
 ========
 
-Examples 1
-``````````
+.. seealso::
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.
+   :doc:`modules`
+       A list of available modules
+   :doc:`playbooks`
+       Alternative ways to use ansible
 
 
-Examples 2
-``````````
+Parallelism and Shell Commands
+``````````````````````````````
 
-Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.
+Reboot all web servers in Atlanta, 10 at a time::
 
-Examples 3
-``````````
+    ssh-agent bash
+    ssh-add ~/.ssh/id_rsa.pub
 
-Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.
+    ansible atlanta -a "/sbin/reboot" -f 10
 
-Examples 3
-``````````
+The -f 10 specifies the usage of 10 simultaneous processes.
 
-In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.
+Note that other than the command module, ansible modules do not work like simple scripts. They make the remote system look like you state, and run the commands neccessary to get it there.
 
-Examples 4
-``````````
 
-Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.
+Example 2: Time Limited Background Operations
+`````````````````````````````````````````````
+
+
+Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won't lose track. Polling support is pending in the command line.::
+
+    ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    ansible all -n job_status -a jid=123456789
+
+Any module other than 'copy' or 'template' can be backgrounded.
+
+
+Examples 3: File Transfer & Templating
+``````````````````````````````````````
+
+Ansible can SCP lots of files to multiple machines in parallel, and optionally use them as template sources.
+
+To just transfer a file directly to many different servers::
+
+    ansible atlanta copy -a "/etc/hosts /tmp/hosts"
+
+To use templating, first run the setup module to put the template variables you would like to use on the remote host. Then use the template module to write the files using the templates. Templates are written in Jinja2 format. Playbooks (covered below) will run the setup module for you, making this even simpler.::
+
+    ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
+    ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
+    ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
+
+Need something like the fqdn in a template? If facter or ohai are installed, data from these projects will also be made available to the template engine, using 'facter' and 'ohai' prefixes for each.
+
+Examples 3: Deploying From Source Control
+`````````````````````````````````````````
+
+Deploy your webapp straight from git::
+
+    ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"
+
+Since ansible modules can notify change handlers (see 'Playbooks') it is possible to tell ansible to run specific tasks when the code is updated, such as deploying Perl/Python/PHP/Ruby directly from git and then restarting apache.
+
+

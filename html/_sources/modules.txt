@@ -1,55 +1,201 @@
-Modules
-=======
+Ansible Modules
+===============
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.
+.. seealso::
 
-Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.
+   :doc:`examples`
+       Examples of using modules in /usr/bin/ansible
+   :doc:`playbooks`
+       Examples of using modules with /usr/bin/ansible-playbook
+   :doc:`api`
+       Examples of using modules with the Python API
 
-Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.
 
-In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.
+About Modules
+`````````````
 
-Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.
+Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.
+
+
+Idempotence
+```````````
+
+Most modules other than command are idempotent, meaning they will seek to avoid changes
+unless a change needs to be made.  When using ansible playbooks, these modules can
+trigger change events.  Unless otherwise noted, all modules support change hooks.
+
+
+command
+```````
+
+The command module takes the command name followed by a list of arguments, space delimited.
+This is the only module that does not use key=value style parameters.
+
+Example usage::
+
+    /sbin/shutdown -t now
+
+This module does not support change hooks and returns the return code from the program as well as timing information about how long the command was running for.
+
+
+copy
+````
+
+The copy module moves a file on the local box to remote locations.  
+
+*src*::
+
+Local absolute path to a file to copy to the remote server
+
+
+*dest*::
+
+Remote absolute path where the file should end up
+
+
+This module also returns md5sum information about the resultant file.
+
+
+facter
+``````
+
+Runs the discovery program 'facter' on the remote system, returning
+JSON data that can be useful for inventory purposes.
+
+Requires that 'facter' and 'ruby-json' be installed on the remote end.
+
+This module is informative only - it takes no parameters & does not support change hooks,
+nor does it make any changes on the system.
+
+
+git
+```
+
+Deploys software from git checkouts.
+
+*repo*::
+
+git or http protocol address of the repo to checkout
+
+*dest*::
+
+where to check it out, an absolute directory path
+
+*version*::
+
+what version to check out -- either the git SHA, the literal string 'HEAD', or a tag name
+
+
+ohai
+````
+
+Similar to the facter module, this returns JSON inventory data.  Ohai
+data is a bit more verbose and nested than facter.
+
+Requires that 'ohai' be installed on the remote end.
+
+This module is information only - it takes no parameters & does not
+support change hooks, nor does it make any changes on the system.
+
+
+ping
+````
+
+A trivial test module, this module always returns the integer '1' on
+successful contact.
+
+This module does not support change hooks.
+
+This module is informative only - it takes no parameters & does not
+support change hooks, nor does it make any changes on the system.
+
+
+service
+```````
+
+Controls services on remote machines.
+
+*state*
+
+Values are 'started', 'stopped', or 'restarted'.   Started/stopped
+are idempotent actions that will not run commands unless neccessary.
+'restarted' will always bounce the service
+
+
+*name*
+
+The name of the service
+
+
+setup
+`````
+
+Writes a JSON file containing key/value data, for use in templating.
+Call this once before using the template modules.  Playbooks will
+execute this module automatically as the first step in each play.
+
+If facter or ohai are installed, variables from these programs will also
+be snapshotted into the JSON file for usage in templating. These variables
+are prefixed with 'facter_' and 'ohai_" so it's easy to tell their source.
+
+*metadata*
+
+Optionally overrides the default JSON file location of /etc/ansible/setup or ~/ansible/setup
+depending on what remote user has been specified.  
+
+If used, also supply the metadata parameter to the template module.
+
+*anything*
+
+any other parameters can be named basically anything, and set a key=value
+pair in the JSON file for use in templating.
+
+
+template
+````````
+
+Templates a file out to a remote server.  Call the setup module prior to usage.
+
+*src*
+
+path of a Jinja2 formatted template on the local server
+
+
+*dest*
+
+location to render the template on the remote server
+
+
+*metadata*
+
+location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
+which is the same as the default for the setup module.   Change if running as a non-root
+remote user who does not have permissions on /etc/ansible.
+
+
+This module also returns md5sum information about the resultant file.
+
+
+user
+````
+
+This module is in plan.
+
+
+yum
+```
+
+This module is in plan.
+
+
+WRITING YOUR OWN MODULES
+````````````````````````
+
+To write your own modules, simply follow the convention of those already available in
+/usr/share/ansible.  Modules must return JSON but can be written in any language.
+Modules should return hashes, but hashes can be nested.
+To support change hooks, modules should return hashes with a changed: True/False
+element at the top level.  Modules can also choose to indicate a failure scenario
+by returning a top level 'failure' element with a True value, and a 'msg' element
+describing the nature of the failure.  Other values are up to the module.
