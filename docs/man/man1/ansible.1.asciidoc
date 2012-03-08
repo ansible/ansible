@@ -103,9 +103,6 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-Ansible home page: <https://github.com/mpdehaan/ansible/>
+Ansible home page: <https://ansible.github.com/>
 
-*ansible-modules*(5)
-
-*ansible-playbook*(5)
 

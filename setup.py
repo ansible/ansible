@@ -28,10 +28,6 @@ setup(name='ansible',
          ('/usr/share/man/man1', [
                 'docs/man/man1/ansible.1'
          ]),
-         ('/usr/share/man/man5', [
-                'docs/man/man5/ansible-modules.5',
-                'docs/man/man5/ansible-playbook.5'
-         ])
       ],
       scripts=[
          'bin/ansible',
