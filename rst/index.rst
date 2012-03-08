@@ -38,6 +38,8 @@ Design Goals
 Communicate and Get Involved
 ````````````````````````````
 
+Your ideas and contributions are welcome.  We're also happy to help you with questions about Ansible.
+
 * Join the `ansible-project mailing list <http://groups.google.com/group/ansible-project>`_ on Google Groups
 * Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
 * Visit the `project page <https://github.com/ansible/ansible>`_ on Github
@@ -63,13 +65,11 @@ Contents
 About the Author
 ````````````````
 
-Michael DeHaan is a Raleigh, NC based software developer and architect.  He created other
-DevOps programs such as Cobbler, the popular Linux install server.
+Ansible was originally developed by Michael DeHaan, a Raleigh, NC based software developer and architect.  
+He created other popular DevOps programs such as Cobbler, the popular Linux install server.
 Cobbler is used to deploy mission critical systems all over the planet, in industries
 ranging from massively multiplayer gaming, core internet infrastructure, finance,
 chip design, and more.  Michael also helped co-author of Func, which is used
-to orchestrate systems in lots of diverse places.
-
-Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
-get involved.
+to orchestrate systems in lots of diverse places.  He's worked on systems software for
+IBM, Motorola, Red Hat's Emerging Technologies Group, and rPath.
 
