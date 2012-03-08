@@ -83,6 +83,17 @@ to orchestrate systems in lots of diverse places.</p>
 <p>Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
 get involved.</p>
 </div>
+<div class="section" id="communicate-and-get-involved">
+<h2>Communicate and Get Involved<a class="headerlink" href="#communicate-and-get-involved" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Join the <a class="reference external" href="http://groups.google.com/group/ansible-project">ansible-project mailing list</a> on Google Groups</li>
+<li>Join <a class="reference external" href="irc://irc.freenode.net/#ansible">#ansible</a> on the <a class="reference external" href="http://freenode.net/">freenode IRC network</a></li>
+<li>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github<ul>
+<li>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></li>
+</ul>
+</li>
+</ul>
+</div>
 </div>
 <div class="section" id="contents">
 <h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
@@ -99,17 +110,13 @@ get involved.</p>
 <li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#your-first-commands">Your first commands</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">Patterns</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="patterns.html#targetting-all-systems">Targetting All Systems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="patterns.html#specific-hosts">Specific Hosts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="patterns.html#groups">Groups</a></li>
-<li class="toctree-l2"><a class="reference internal" href="patterns.html#wildcards">Wildcards</a></li>
-<li class="toctree-l2"><a class="reference internal" href="patterns.html#mixing-things-up">Mixing Things Up</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#inventory-file-format">Inventory File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patterns.html#selecting-targets">Selecting Targets</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#about-modules">About Modules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#idempotence">Idempotence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#module-idempotence">Module Idempotence</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#command">command</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#copy">copy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#facter">facter</a></li>
@@ -121,20 +128,19 @@ get involved.</p>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#template">template</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#user">user</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#yum">yum</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#writing-your-own-modules">WRITING YOUR OWN MODULES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#writing-your-own-modules">writing your own modules</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Scripts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="YAMLScripts.html#yaml-basics">YAML Basics</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#playbook-example">Playbook Example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#hosts-line">Hosts line</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#vars-section">Vars section</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#tasks-list">Tasks list</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks.html#task-name-and-comment">Task name and comment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks.html#task-action">Task action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#task-name-and-action">Task name and action</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#notify-statements">Notify statements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#handlers">Handlers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#includes">Includes</a></li>
@@ -150,7 +156,6 @@ get involved.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="communicate.html">Communicate and Get Involved</a></li>
 <li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="man.html#ansible-1">ansible(1)</a></li>
 </ul>
@@ -170,6 +175,7 @@ get involved.</p>
 <li><a class="reference internal" href="#">Ansible</a><ul>
 <li><a class="reference internal" href="#design-goals">Design Goals</a></li>
 <li><a class="reference internal" href="#about-the-author">About the Author</a></li>
+<li><a class="reference internal" href="#communicate-and-get-involved">Communicate and Get Involved</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#contents">Contents</a><ul>

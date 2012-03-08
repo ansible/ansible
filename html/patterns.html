@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Patterns &mdash; Ansible v0.0.1 documentation</title>
+    <title>The Inventory File, Patterns, and Groups &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -48,18 +48,20 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="patterns">
-<h1>Patterns<a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="the-inventory-file-patterns-and-groups">
+<h1>The Inventory File, Patterns, and Groups<a class="headerlink" href="#the-inventory-file-patterns-and-groups" title="Permalink to this headline">¶</a></h1>
 <p>How to select hosts you wish to manage</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
 <dt><a class="reference internal" href="examples.html"><em>Examples</em></a></dt>
 <dd>Examples of basic commands</dd>
-<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</em></a></dt>
 <dd>Learning ansible&#8217;s configuration management language</dd>
 </dl>
 </div>
+<div class="section" id="inventory-file-format">
+<h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in Ansible&#8217;s inventory file,
 which defaults to /etc/ansible/hosts, and looks like this:</p>
@@ -75,38 +77,30 @@ which defaults to /etc/ansible/hosts, and looks like this:</p>
 <span class="n">three</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 </pre></div>
 </div>
-<div class="section" id="targetting-all-systems">
-<h2>Targetting All Systems<a class="headerlink" href="#targetting-all-systems" title="Permalink to this headline">¶</a></h2>
-<p>The pattern &#8216;all&#8217; or &#8216;*&#8217; targets all systems in the inventory file.</p>
 </div>
-<div class="section" id="specific-hosts">
-<h2>Specific Hosts<a class="headerlink" href="#specific-hosts" title="Permalink to this headline">¶</a></h2>
-<p>It is possible to address specific hosts:</p>
-<blockquote>
-<div>one.example.com
-one.example.com:two.example.com</div></blockquote>
+<div class="section" id="selecting-targets">
+<h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
+<p>These patterns target all hosts in the inventory file:</p>
+<div class="highlight-python"><pre>all
+*</pre>
 </div>
-<div class="section" id="groups">
-<h2>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h2>
-<p>The following patterns address one or more groups:</p>
-<blockquote>
-<div>webservers
-webservers:dbservers</div></blockquote>
-<p>There is also a magic group &#8216;ungrouped&#8217; which selects systems not in a group.</p>
+<p>It is also possible to address specific hosts:</p>
+<div class="highlight-python"><pre>one.example.com
+one.example.com:two.example.com</pre>
 </div>
-<div class="section" id="wildcards">
-<h2>Wildcards<a class="headerlink" href="#wildcards" title="Permalink to this headline">¶</a></h2>
+<p>The following patterns address one or more groups, which are denoted with the bracket
+headers in the inventory file:</p>
+<div class="highlight-python"><pre>webservers
+webservers:dbservers</pre>
+</div>
 <p>Individual hosts, but not groups, can also be referenced using wildcards:</p>
 <blockquote>
 <div><a href="#id1"><span class="problematic" id="id2">*</span></a>.example.com
 <a href="#id3"><span class="problematic" id="id4">*</span></a>.com</div></blockquote>
+<p>It&#8217;s also ok to mix wildcard patterns and groups at the same time:</p>
+<div class="highlight-python"><pre>one*.com:dbservers</pre>
 </div>
-<div class="section" id="mixing-things-up">
-<h2>Mixing Things Up<a class="headerlink" href="#mixing-things-up" title="Permalink to this headline">¶</a></h2>
-<p>Specific hosts, wildcards, and groups can all be mixed in the same pattern</p>
-<blockquote>
-<div>one*.com:dbservers</div></blockquote>
-<p>It is not possible to target a host not in the inventory file.</p>
+<p>NOTE: It is not possible to target a host not in the inventory file.</p>
 </div>
 </div>
 
@@ -118,12 +112,9 @@ webservers:dbservers</div></blockquote>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Patterns</a><ul>
-<li><a class="reference internal" href="#targetting-all-systems">Targetting All Systems</a></li>
-<li><a class="reference internal" href="#specific-hosts">Specific Hosts</a></li>
-<li><a class="reference internal" href="#groups">Groups</a></li>
-<li><a class="reference internal" href="#wildcards">Wildcards</a></li>
-<li><a class="reference internal" href="#mixing-things-up">Mixing Things Up</a></li>
+<li><a class="reference internal" href="#">The Inventory File, Patterns, and Groups</a><ul>
+<li><a class="reference internal" href="#inventory-file-format">Inventory File Format</a></li>
+<li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
 </ul>
 </li>
 </ul>

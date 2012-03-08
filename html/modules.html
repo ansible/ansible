@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
     <link rel="next" title="YAML Scripts" href="YAMLScripts.html" />
-    <link rel="prev" title="Patterns" href="patterns.html" /> 
+    <link rel="prev" title="The Inventory File, Patterns, and Groups" href="patterns.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
           <a href="YAMLScripts.html" title="YAML Scripts"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="patterns.html" title="Patterns"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -50,24 +50,21 @@
             
   <div class="section" id="ansible-modules">
 <h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
+<p>Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
 <dt><a class="reference internal" href="examples.html"><em>Examples</em></a></dt>
 <dd>Examples of using modules in /usr/bin/ansible</dd>
-<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</em></a></dt>
 <dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
 <dt><a class="reference internal" href="api.html"><em>API</em></a></dt>
 <dd>Examples of using modules with the Python API</dd>
 </dl>
 </div>
-<div class="section" id="about-modules">
-<h2>About Modules<a class="headerlink" href="#about-modules" title="Permalink to this headline">¶</a></h2>
-<p>Ansible ships with a number of modules that can be executed directly on remote hosts or through
-ansible playbooks.</p>
-</div>
-<div class="section" id="idempotence">
-<h2>Idempotence<a class="headerlink" href="#idempotence" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-idempotence">
+<h2>Module Idempotence<a class="headerlink" href="#module-idempotence" title="Permalink to this headline">¶</a></h2>
 <p>Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
 trigger change events.  Unless otherwise noted, all modules support change hooks.</p>
@@ -172,7 +169,7 @@ remote user who does not have permissions on /etc/ansible.</p>
 <p>This module is in plan.</p>
 </div>
 <div class="section" id="writing-your-own-modules">
-<h2>WRITING YOUR OWN MODULES<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
+<h2>writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
 <p>To write your own modules, simply follow the convention of those already available in
 /usr/share/ansible.  Modules must return JSON but can be written in any language.
 Modules should return hashes, but hashes can be nested.
@@ -192,8 +189,7 @@ describing the nature of the failure.  Other values are up to the module.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#about-modules">About Modules</a></li>
-<li><a class="reference internal" href="#idempotence">Idempotence</a></li>
+<li><a class="reference internal" href="#module-idempotence">Module Idempotence</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
@@ -205,14 +201,14 @@ describing the nature of the failure.  Other values are up to the module.</p>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules">WRITING YOUR OWN MODULES</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules">writing your own modules</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="patterns.html"
-                        title="previous chapter">Patterns</a></p>
+                        title="previous chapter">The Inventory File, Patterns, and Groups</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="YAMLScripts.html"
                         title="next chapter">YAML Scripts</a></p>
@@ -248,7 +244,7 @@ describing the nature of the failure.  Other values are up to the module.</p>
           <a href="YAMLScripts.html" title="YAML Scripts"
              >next</a> |</li>
         <li class="right" >
-          <a href="patterns.html" title="Patterns"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              >previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>

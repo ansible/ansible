@@ -35,18 +35,15 @@ Design Goals
 * Be usable as non-root
 * Create the easiest config management system to use, ever.
 
-About the Author
-````````````````
+Communicate and Get Involved
+````````````````````````````
 
-Michael DeHaan is a Raleigh, NC based software developer and architect.  He created other
-DevOps programs such as Cobbler, the popular Linux install server.  
-Cobbler is used to deploy mission critical systems all over the planet, in industries
-ranging from massively multiplayer gaming, core internet infrastructure, finance,
-chip design, and more.  Michael also helped co-author of Func, which is used
-to orchestrate systems in lots of diverse places.  
+* Join the `ansible-project mailing list <http://groups.google.com/group/ansible-project>`_ on Google Groups
+* Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
+* Visit the `project page <https://github.com/ansible/ansible>`_ on Github
 
-Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
-get involved.
+  - View the `issue tracker <https://github.com/ansible/ansible/issues>`_
+
 
 Contents
 ========
@@ -61,5 +58,18 @@ Contents
    playbooks
    examples
    api
-   communicate
    man
+
+About the Author
+````````````````
+
+Michael DeHaan is a Raleigh, NC based software developer and architect.  He created other
+DevOps programs such as Cobbler, the popular Linux install server.
+Cobbler is used to deploy mission critical systems all over the planet, in industries
+ranging from massively multiplayer gaming, core internet infrastructure, finance,
+chip design, and more.  Michael also helped co-author of Func, which is used
+to orchestrate systems in lots of diverse places.
+
+Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
+get involved.
+

@@ -48,6 +48,16 @@ to orchestrate systems in lots of diverse places.
 Ansible is an GPLv3 licensed open source project, so see the contributions section for how to
 get involved.
 
+Communicate and Get Involved
+````````````````````````````
+
+* Join the `ansible-project mailing list <http://groups.google.com/group/ansible-project>`_ on Google Groups
+* Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
+* Visit the `project page <https://github.com/ansible/ansible>`_ on Github
+
+  - View the `issue tracker <https://github.com/ansible/ansible/issues>`_
+
+
 Contents
 ========
 
@@ -61,5 +71,4 @@ Contents
    playbooks
    examples
    api
-   communicate
    man

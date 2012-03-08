@@ -1,6 +1,9 @@
 Ansible Modules
 ===============
 
+Ansible ships with a number of modules that can be executed directly on remote hosts or through
+ansible playbooks.
+
 .. seealso::
 
    :doc:`examples`
@@ -10,16 +13,8 @@ Ansible Modules
    :doc:`api`
        Examples of using modules with the Python API
 
-
-About Modules
-`````````````
-
-Ansible ships with a number of modules that can be executed directly on remote hosts or through
-ansible playbooks.
-
-
-Idempotence
-```````````
+Module Idempotence
+```````````````````
 
 Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
@@ -189,7 +184,7 @@ yum
 This module is in plan.
 
 
-WRITING YOUR OWN MODULES
+writing your own modules
 ````````````````````````
 
 To write your own modules, simply follow the convention of those already available in

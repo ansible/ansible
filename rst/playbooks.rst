@@ -1,5 +1,5 @@
-Playbooks
-=========
+Playbooks: Ansible for Deployment, Configuration Management, and Orchestration
+==============================================================================
 
 .. seealso::
 
@@ -11,22 +11,20 @@ Playbooks
        Learn about how to select hosts
 
 
-Playbooks are a completely different way to use ansible and are particularly awesome.
-
-They are the basis for a really simple configuration management and deployment system, unlike any that already exist, and one that is very well suited to deploying complex multi-machine applications. While you might run the main ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.
+Playbooks are a completely different way to use ansible and are particularly awesome.  They are the basis for a really simple configuration management and deployment system, unlike any that already exist, and one that is very well suited to deploying complex multi-machine applications. While you might run the main ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.
 
 
 Playbook Example
 ````````````````
 
 Playbooks are expressed in YAML format and have a minimum of syntax.  Each playbook is composed
-of one or more patterns in a list.  By composing a playbook of multiple patterns, it is possible
+of one or more 'plays' in a list.  By composing a playbook of multiple 'plays', it is possible
 to orchestrate multi-machine deployments, running certain steps on all machines in
 the webservers group, then certain steps on the database server group, then more commands
 back on the webservers group, etc::
 
     ---
-    - hosts: all
+    - hosts: webservers
       vars:
         http_port: 80
         max_clients: 200
@@ -45,38 +43,39 @@ back on the webservers group, etc::
 Hosts line
 ``````````
 
-The hosts line is alist of one or more groups or host patterns, seperated by colons.::
-
-   webservers:dbservers:*.foo.example.com
+The hosts line is alist of one or more groups or host patterns, seperated by colons, as
+described in the 'patterns' documentation.
 
 Vars section
 ````````````
 
-A list of variables that can be used in the 'action' lines of the template, or in
-included templates.   Variables are deferenced like this::
+A list of variables that can be used in the templates, action lines, or included files.
+Variables are deferenced using ``jinja2`` syntax like this::
 
    {{ varname }}
 
-These variables will be pushed down to the managed systems for use in templating operations.
+These variables will be pushed down to the managed systems for use in templating operations, where
+the way to dereference them in templates is exactly the same.
 
 Further, if there are discovered variables about the system (say, if facter or ohai were
 installed) these variables bubble up back into the playbook, and can be used on each
-system just like explicitly set variables.  Facter variables are prefixed with 'facter'
-and Ohai variables are prefixed with 'ohai'.
+system just like explicitly set variables.  Facter variables are prefixed with 'facter_'
+and Ohai variables are prefixed with 'ohai_'.
 
 Tasks list
 ``````````
 
-Tasks are executed in order, one at a time, against all machines matched by the host
-pattern, before moving on to the next task.  Failed tasks are taken out of the rotation.
+Each play contains a list of tasks.  Tasks are executed in order, one at a time, against 
+all machines matched by the play's host pattern, before moving on to the next task.  
+Hosts with failed tasks are taken out of the rotation for the entire playbook.  If things fail, 
+correct the problem and rerun.  Modules other than command are idempotent, meaning if you
+run them again, they will make the changes they are told to make to bring the system to
+the desired state.
 
-Task name and comment
-`````````
+Task name and action
+`````````````````````
 
-Each task has a name (required) and optional comment.  This is for informational purposes only
-
-Task action
-```````````
+Every task must have a name, which is included in the output from running the playbook.
 
 The action line is the name of an ansible module followed by parameters.  Usually these
 are expressed in key=value form, except for the command module, which looks just like a Linux/Unix

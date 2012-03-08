@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Playbooks &mdash; Ansible v0.0.1 documentation</title>
+    <title>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -48,8 +48,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="playbooks">
-<h1>Playbooks<a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="playbooks-ansible-for-deployment-configuration-management-and-orchestration">
+<h1>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration<a class="headerlink" href="#playbooks-ansible-for-deployment-configuration-management-and-orchestration" title="Permalink to this headline">¶</a></h1>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -57,78 +57,66 @@
 <dd>Learn about YAML syntax</dd>
 <dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
 <dd>Learn about available modules and writing your own</dd>
-<dt><a class="reference internal" href="patterns.html"><em>Patterns</em></a></dt>
+<dt><a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a></dt>
 <dd>Learn about how to select hosts</dd>
 </dl>
 </div>
-<p>Playbooks are a completely different way to use ansible and are particularly awesome.</p>
-<p>They are the basis for a really simple configuration management and deployment system, unlike any that already exist, and one that is very well suited to deploying complex multi-machine applications. While you might run the main ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.</p>
+<p>Playbooks are a completely different way to use ansible and are particularly awesome.  They are the basis for a really simple configuration management and deployment system, unlike any that already exist, and one that is very well suited to deploying complex multi-machine applications. While you might run the main ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.</p>
 <div class="section" id="playbook-example">
 <h2>Playbook Example<a class="headerlink" href="#playbook-example" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks are expressed in YAML format and have a minimum of syntax.  Each playbook is composed
-of one or more patterns in a list.  By composing a playbook of multiple patterns, it is possible
+of one or more &#8216;plays&#8217; in a list.  By composing a playbook of multiple &#8216;plays&#8217;, it is possible
 to orchestrate multi-machine deployments, running certain steps on all machines in
 the webservers group, then certain steps on the database server group, then more commands
 back on the webservers group, etc:</p>
 <div class="highlight-python"><pre>---
-- hosts: all</pre>
+- hosts: webservers
+  vars:
+    http_port: 80
+    max_clients: 200
+  user: root
+  tasks:
+  - include: base.yml somevar=3 othervar=4
+  - name: write the apache config file
+    action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
+    notify:
+    - restart apache
+  - name: ensure apache is running
+    action: service name=httpd state=started
+  handlers:
+    - include: handlers.yml</pre>
 </div>
-<blockquote>
-<div><dl class="docutils">
-<dt>vars:</dt>
-<dd>http_port: 80
-max_clients: 200</dd>
-</dl>
-<p>user: root
-tasks:
-- include: base.yml somevar=3 othervar=4
-- name: write the apache config file</p>
-<blockquote>
-<div>action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
-notify:
-- restart apache</div></blockquote>
-<ul class="simple">
-<li>name: ensure apache is running
-action: service name=httpd state=started</li>
-</ul>
-<dl class="docutils">
-<dt>handlers:</dt>
-<dd><ul class="first last simple">
-<li>include: handlers.yml</li>
-</ul>
-</dd>
-</dl>
-</div></blockquote>
 </div>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
-<p>The hosts line is alist of one or more groups or host patterns, seperated by colons.</p>
-<blockquote>
-<div>webservers:dbservers:<a href="#id1"><span class="problematic" id="id2">*</span></a>.foo.example.com</div></blockquote>
+<p>The hosts line is alist of one or more groups or host patterns, seperated by colons, as
+described in the &#8216;patterns&#8217; documentation.</p>
 </div>
 <div class="section" id="vars-section">
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
-<p>A list of variables that can be used in the &#8216;action&#8217; lines of the template, or in
-included templates.   Variables are deferenced like this:</p>
+<p>A list of variables that can be used in the templates, action lines, or included files.
+Variables are deferenced using <tt class="docutils literal"><span class="pre">jinja2</span></tt> syntax like this:</p>
 <div class="highlight-python"><pre>{{ varname }}</pre>
 </div>
-<p>These variables will be pushed down to the managed systems for use in templating operations.</p>
+<p>These variables will be pushed down to the managed systems for use in templating operations, where
+the way to dereference them in templates is exactly the same.</p>
 <p>Further, if there are discovered variables about the system (say, if facter or ohai were
 installed) these variables bubble up back into the playbook, and can be used on each
-system just like explicitly set variables.  Facter variables are prefixed with &#8216;facter&#8217;
-and Ohai variables are prefixed with &#8216;ohai&#8217;.</p>
+system just like explicitly set variables.  Facter variables are prefixed with &#8216;<a href="#id1"><span class="problematic" id="id2">facter_</span></a>&#8216;
+and Ohai variables are prefixed with &#8216;<a href="#id3"><span class="problematic" id="id4">ohai_</span></a>&#8216;.</p>
 </div>
 <div class="section" id="tasks-list">
 <h2>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h2>
-<p>Tasks are executed in order, one at a time, against all machines matched by the host
-pattern, before moving on to the next task.  Failed tasks are taken out of the rotation.</p>
+<p>Each play contains a list of tasks.  Tasks are executed in order, one at a time, against
+all machines matched by the play&#8217;s host pattern, before moving on to the next task.
+Hosts with failed tasks are taken out of the rotation for the entire playbook.  If things fail,
+correct the problem and rerun.  Modules other than command are idempotent, meaning if you
+run them again, they will make the changes they are told to make to bring the system to
+the desired state.</p>
 </div>
-<div class="section" id="task-name-and-comment">
-<h2>Task name and comment<a class="headerlink" href="#task-name-and-comment" title="Permalink to this headline">¶</a></h2>
-<p>Each task has a name (required) and optional comment.  This is for informational purposes only</p>
-</div>
-<div class="section" id="task-action">
-<h2>Task action<a class="headerlink" href="#task-action" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="task-name-and-action">
+<h2>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h2>
+<p>Every task must have a name, which is included in the output from running the playbook.</p>
 <p>The action line is the name of an ansible module followed by parameters.  Usually these
 are expressed in key=value form, except for the command module, which looks just like a Linux/Unix
 command line.  See the module documentation for more info.</p>
@@ -172,13 +160,12 @@ Variables passed in can be deferenced like this:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Playbooks</a><ul>
+<li><a class="reference internal" href="#">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a><ul>
 <li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
 <li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
 <li><a class="reference internal" href="#vars-section">Vars section</a></li>
 <li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
-<li><a class="reference internal" href="#task-name-and-comment">Task name and comment</a></li>
-<li><a class="reference internal" href="#task-action">Task action</a></li>
+<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
 <li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
 <li><a class="reference internal" href="#handlers">Handlers</a></li>
 <li><a class="reference internal" href="#includes">Includes</a></li>
