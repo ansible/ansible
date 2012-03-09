@@ -348,10 +348,10 @@ class Runner(object):
         # module, call the appropriate executor function
 
         ok, conn = self._connect(host)
-        conn._host = host
         if not ok:
             return [ host, False, conn ]
-           
+
+        conn._host = host           
         tmp = self._get_tmp_path(conn)
         result = None
         if self.module_name not in [ 'copy', 'template' ]:
