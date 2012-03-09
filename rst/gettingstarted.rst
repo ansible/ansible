@@ -15,7 +15,8 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-If you are running python 2.6 on the **overlord** machine (the machine that you'll be talking to the other machines from), you will need:
+If you are running python 2.6 on the **overlord** machine (the machine
+that you'll be talking to the other machines from), you will need:
 
 * ``paramiko``
 * ``PyYAML``
@@ -66,8 +67,8 @@ You can also install Ansible using Python Distutils::
 Via RPM
 +++++++
 
-In the near future, pre-built RPMs will be available through your distribution. Until that time you
-can use the ``make rpm`` command::
+In the near future, pre-built RPMs will be available through your
+distribution. Until that time you can use the ``make rpm`` command::
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
@@ -77,8 +78,8 @@ can use the ``make rpm`` command::
 Your first commands
 ```````````````````
 
-Edit /etc/ansible/hosts and put one or more remote systems in it, for which you have your SSH
-key in ``authorized_keys``::
+Edit /etc/ansible/hosts and put one or more remote systems in it, for
+which you have your SSH key in ``authorized_keys``::
 
     192.168.1.50
     aserver.example.org
@@ -97,8 +98,14 @@ Now run a live command on all of your nodes::
   
     ansible all /bin/echo hello
 
-Congratulations.  You've just contacted your nodes with Ansible.  It's now time to read some
-of the more real-world examples, and explore what you can do with different modules, as well
-as the Ansible playbooks language.  Ansible is not just about running commands, but you already
-have a working infrastructure!
+Congratulations.  You've just contacted your nodes with Ansible.  It's
+now time to read some of the more real-world examples, and explore
+what you can do with different modules, as well as the Ansible
+playbooks language.  Ansible is not just about running commands, but
+you already have a working infrastructure!
 
+
+.. seealso::
+
+   :ref:`Inventory <inventoryformat>`
+       Complete documentation on the inventory file format

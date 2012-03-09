@@ -55,7 +55,7 @@ Hosts line
 ``````````
 
 The hosts line is a list of one or more groups or host patterns,
-seperated by colons, as described in the :ref:`patterns`
+separated by colons, as described in the :ref:`patterns`
 documentation.  This is just like the first parameter to
 `/usr/bin/ansible`.
 
@@ -88,7 +88,7 @@ Tasks list
 ``````````
 
 Each play contains a list of tasks.  Tasks are executed in order, one
-at a time, against all machines matched by the play's host pattern,
+at a time, against all machines matched by the playbooks host pattern,
 before moving on to the next task.
 
 Hosts with failed tasks are taken out of the rotation for the entire
@@ -177,8 +177,10 @@ do in the main file.  Including a variable in the name of a task is a
 contrived example, you could also pass them to the action command line
 or use them inside a template file.
 
-Note that include statements are only usable from the top level
-playbook file.  At this time, includes can not include other includes.
+.. note::
+    Note that include statements are only usable from the top level
+    playbook file.  At this time, includes can not include other
+    includes.
 
 Using Includes To Assign Classes of Systems
 ```````````````````````````````````````````
