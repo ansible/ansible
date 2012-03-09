@@ -10,15 +10,17 @@ Other tools in this space have been too complicated for too long, require too mu
 and have too much learning curve.  Ansible is dead simple and painless to extend.  For comparison, Puppet and Chef have about 60k lines of code.  Ansible's core is a little over 1000 lines.  
 
 Ansible isn't just for configuration -- it's also great for Ad-Hoc tasks, 
-quickly firing off commands against nodes.  Where Ansible excels though, is expressing complex multi-node deployment processes, executing complex sequences of commands on different hosts through the "playbooks" feature.
+quickly firing off commands against nodes.  Where Ansible excels though, is expressing complex multi-node deployment processes, executing complex sequences of commands on different hosts through "playbooks".
 
-Ansible does not require programming in any particular language -- you can write modules
-as scripts or programs that return simple JSON.
+Extending ansible does not require programming in any particular language -- you can write modules
+as scripts or programs that return simple JSON.  It's also trivially easy to just execute
+useful shell commands.
 
 Why use Ansible versus something else?  (Puppet, Chef, Fabric, Capistrano,
-mCollective, Func, SaltStack, etc?) It will have far less code, it
-will be more correct, and it will be the easiest thing to hack on and
+mCollective, Func, SaltStack, etc?) Ansible will have far less code, it
+will be (by extension) more correct, and it will be the easiest thing to hack on and
 use you'll ever see -- regardless of your favorite language of choice.
+
 Systems management doesn't have to be complicated.  Ansible's docs will remain 
 short & simple, and the source will be blindingly obvious.
 
@@ -32,7 +34,7 @@ Design Goals
 * No additional software required on client boxes
 * Modules can be written in ANY language
 * Awesome API for creating very powerful distributed scripts
-* Be usable as non-root
+* Be very usable as non-root
 * Create the easiest config management system to use, ever.
 
 Communicate and Get Involved
@@ -55,10 +57,10 @@ Contents
 
    gettingstarted
    patterns
+   examples
    modules
    YAMLScripts
    playbooks
-   examples
    api
    man
 
@@ -69,7 +71,7 @@ Ansible was originally developed by Michael DeHaan, a Raleigh, NC based software
 He created other popular DevOps programs such as Cobbler, the popular Linux install server.
 Cobbler is used to deploy mission critical systems all over the planet, in industries
 ranging from massively multiplayer gaming, core internet infrastructure, finance,
-chip design, and more.  Michael also helped co-author of Func, which is used
+chip design, and more.  Michael also helped co-author of Func, a precursor to Ansible, which is used
 to orchestrate systems in lots of diverse places.  He's worked on systems software for
-IBM, Motorola, Red Hat's Emerging Technologies Group, and rPath.
+IBM, Motorola, Red Hat's Emerging Technologies Group, Puppet Labs, and rPath.
 

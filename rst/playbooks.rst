@@ -11,7 +11,11 @@ Playbooks: Ansible for Deployment, Configuration Management, and Orchestration
        Learn about how to select hosts
 
 
-Playbooks are a completely different way to use ansible and are particularly awesome.  They are the basis for a really simple configuration management and deployment system, unlike any that already exist, and one that is very well suited to deploying complex multi-machine applications. While you might run the main ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.
+Playbooks are a completely different way to use ansible and are particularly awesome.  
+
+They are the basis for a really simple configuration management and multi-machine deployment system, unlike any that already exist, and one that is very well suited to deploying complex applications. 
+
+While you might run the main /usr/bin/ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.
 
 
 Playbook Example
@@ -43,34 +47,43 @@ back on the webservers group, etc::
 Hosts line
 ``````````
 
-The hosts line is alist of one or more groups or host patterns, seperated by colons, as
-described in the 'patterns' documentation.
+The hosts line is a list of one or more groups or host patterns, seperated by colons, as
+described in the 'patterns' documentation.  This is just like the first parameter to /usr/bin/ansible.
 
 Vars section
 ````````````
 
-A list of variables that can be used in the templates, action lines, or included files.
-Variables are deferenced using ``jinja2`` syntax like this::
+A list of variables and values that can be used in the plays.  These can be used in templates
+or 'action' lines and are dereferenced using ```jinja2``` syntax like this:
 
    {{ varname }}
-
-These variables will be pushed down to the managed systems for use in templating operations, where
-the way to dereference them in templates is exactly the same.
 
 Further, if there are discovered variables about the system (say, if facter or ohai were
 installed) these variables bubble up back into the playbook, and can be used on each
 system just like explicitly set variables.  Facter variables are prefixed with 'facter_'
-and Ohai variables are prefixed with 'ohai_'.
+and Ohai variables are prefixed with 'ohai_'.  So for instance, if I wanted to write the
+hostname into the /etc/motd file, I could say:
+
+   - name: write the motd
+   - action: template src=/srv/templates/motd.j2 dest=/etc/motd
+
+And in /srv/templates/motd.j2:::
+
+   You are logged into {{ facter_hostname }}
+
+But we're getting ahead of ourselves.  Let's talk about tasks.
 
 Tasks list
 ``````````
 
 Each play contains a list of tasks.  Tasks are executed in order, one at a time, against 
 all machines matched by the play's host pattern, before moving on to the next task.  
+
 Hosts with failed tasks are taken out of the rotation for the entire playbook.  If things fail, 
-correct the problem and rerun.  Modules other than command are idempotent, meaning if you
-run them again, they will make the changes they are told to make to bring the system to
-the desired state.
+simply correct the playbook file and rerun.  
+
+Modules other than command are idempotent, meaning if you run them again, they will make the 
+changes they are told to make to bring the system to the desired state.
 
 Task name and action
 `````````````````````
@@ -81,27 +94,51 @@ The action line is the name of an ansible module followed by parameters.  Usuall
 are expressed in key=value form, except for the command module, which looks just like a Linux/Unix
 command line.  See the module documentation for more info.
 
+Variables, as mentioned above, can be used in action lines.  So if, hypothetically, you wanted
+to make a directory on each system named after the hostname ... yeah, that's I know silly ... you could
+do it like so:
+
+   - name: make a directory
+   - action: mkdir /tmp/{{ facter_hostname }}
+
 Notify statements
 `````````````````
 
 Nearly all modules are written to be 'idempotent' and can signal when they have affected a change
 on the remote system.  If a notify statement is used, the named handler will be run against
-each system where a change was effected, but NOT on systems where no change occurred.
+each system where a change was effected, but NOT on systems where no change occurred.  This happens
+after all of the tasks are run.  For example, if notifying Apache and potentially replacing lots of
+configuration files, you could have Apache restart just once, at the end of a run.  If you need
+Apache restarted in the middle of a run, you could just make a task for it, no harm done.  Notifiers
+are optional.
 
 Handlers
 ````````
 
 Handlers are lists of tasks, not really any different from regular tasks, that are referenced
-by name.  
+by name.  Handlers are what notifiers notify.  If nothing notifies a handler, it will not run.
+Regardless of how many things notify a handler, it will run only once, after all of the tasks
+complete in a particular play.
 
 Includes
 ````````
 
 Not all tasks have to be listed directly in the main file.  An include file can contain
 a list of tasks (in YAML) as well, optionally passing extra variables into the file.
-Variables passed in can be deferenced like this:
+Variables passed in can be deferenced like this (assume a variable named 'user')
 
-   {{ variable }}
+   {{ user }}
+
+For instance, if deploying multiple wordpress instances, I could contain all of my tasks
+in a wordpress.yml file, and use it like so:
+
+   - tasks:
+      - include: wordpress.yml user=timmy 
+      - include: wordpress.yml user=alice
+      - include: wordpress.yml user=bob
+
+In addition to the explicitly passed in parameters, all variables from the vars section
+are also available.
 
 Asynchronous Actions and Polling
 ````````````````````````````````
