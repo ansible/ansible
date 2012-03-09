@@ -156,8 +156,8 @@
    
   <div class="section" id="ansible-modules">
 <h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
-<p>Ansible ships with a number of modules that can be executed directly on remote hosts or through
-ansible playbooks.</p>
+<p>Ansible ships with a number of modules that can be executed directly
+on remote hosts or through ansible playbooks.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -169,131 +169,165 @@ ansible playbooks.</p>
 <dd>Examples of using modules with the Python API</dd>
 </dl>
 </div>
-<p>Nearly all modules take key=value parameters.  Some modules take no parameters, and the command
-module just takes arguments for the command you want to run.</p>
-<p>All modules return JSON format data, thoug if you are using the command line or playbooks, you
-don&#8217;t really need to know much about that.</p>
-<p>Most modules other than command are idempotent, meaning they will seek to avoid changes
-unless a change needs to be made.  When using ansible playbooks, these modules can
-trigger change events.  Unless otherwise noted, all modules support change hooks.</p>
+<p>Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt> parameters.  Some modules take
+no parameters, and the command module just takes arguments for the
+command you want to run.</p>
+<p>All modules return JSON format data, though if you are using the
+command line or playbooks, you don&#8217;t really need to know much about
+that.</p>
+<p>Most modules other than command are idempotent, meaning they will seek
+to avoid changes unless a change needs to be made.  When using ansible
+playbooks, these modules can trigger change events.  Unless otherwise
+noted, all modules support change hooks.</p>
 <p>Stock modules:</p>
 <div class="section" id="command">
-<h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
-<p>The command module takes the command name followed by a list of arguments, space delimited.
-This is the only module that does not use key=value style parameters.</p>
+<span id="id1"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<p>The command module takes the command name followed by a list of
+arguments, space delimited.  This is the only module that does not use
+<tt class="docutils literal"><span class="pre">key=value</span></tt> style parameters.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><pre>/sbin/shutdown -t now</pre>
 </div>
 <p>The given shell command will be executed on all selected nodes.</p>
-<p>This module does not support change hooks and returns the return code from the program as well as timing information about how long the command was running for.</p>
+<p>This module does not support change hooks and returns the return code
+from the program as well as timing information about how long the
+command was running for.</p>
 </div>
 <div class="section" id="copy">
-<h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
 <p>The copy module moves a file on the local box to remote locations.</p>
 <p><em>src</em>:</p>
-<p>Local path to a file to copy to the remote server.  This can be an absolute or relative path.</p>
+<ul class="simple">
+<li>Local path to a file to copy to the remote server.  This can be an
+absolute or relative path.</li>
+</ul>
 <p><em>dest</em>:</p>
-<p>Remote absolute path where the file should end up.</p>
+<ul class="simple">
+<li>Remote absolute path where the file should end up.</li>
+</ul>
 <p>This module also returns md5sum information about the resultant file.</p>
 </div>
 <div class="section" id="facter">
-<h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
 <p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
-<p>This module is informative only - it takes no parameters &amp; does not support change hooks,
-nor does it make any changes on the system.   Playbooks do not actually use
-this module, they use the &#8216;setup&#8217; module behind the scenes.</p>
+<p>This module is informative only - it takes no parameters &amp; does not
+support change hooks, nor does it make any changes on the system.
+Playbooks do not actually use this module, they use the <a class="reference internal" href="#setup"><em>setup</em></a>
+module behind the scenes.</p>
 </div>
 <div class="section" id="git">
 <h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
-<p>git or http protocol address of the repo to checkout</p>
+<ul class="simple">
+<li>git or http protocol address of the repo to checkout.</li>
+</ul>
 <p><em>dest</em>:</p>
-<p>where to check it out, an absolute directory path</p>
+<ul class="simple">
+<li>Where to check it out, an absolute directory path.</li>
+</ul>
 <p><em>version</em>:</p>
-<p>what version to check out &#8211; either the git SHA, the literal string &#8216;HEAD&#8217;, or a tag name</p>
+<ul class="simple">
+<li>What version to check out &#8211; either the git SHA, the literal string
+<tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
+</ul>
 </div>
 <div class="section" id="ohai">
 <h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
-<p>Similar to the facter module, this returns JSON inventory data.  Ohai
-data is a bit more verbose and nested than facter.</p>
+<p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
+Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
 <p>This module is information only - it takes no parameters &amp; does not
 support change hooks, nor does it make any changes on the system.</p>
-<p>Playbooks should not call the ohai module, playbooks call the &#8216;setup&#8217;
-module behind the scenes instead.</p>
+<p>Playbooks should not call the ohai module, playbooks call the
+<a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
 <h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
-<p>A trivial test module, this module always returns the integer &#8216;1&#8217; on
+<p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
-<p>This module does not support change hooks and is informative only - it takes no parameters &amp; does not
-support change hooks, nor does it make any changes on the system.</p>
+<p>This module does not support change hooks and is informative only - it
+takes no parameters &amp; does not support change hooks, nor does it make
+any changes on the system.</p>
 </div>
 <div class="section" id="service">
 <h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
-<p><em>state</em></p>
-<p>Values are &#8216;started&#8217;, &#8216;stopped&#8217;, or &#8216;restarted&#8217;.   Started/stopped
-are idempotent actions that will not run commands unless neccessary.
-&#8216;restarted&#8217; will always bounce the service</p>
-<p><em>name</em></p>
-<p>The name of the service</p>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>Values are <tt class="docutils literal"><span class="pre">started</span></tt>, <tt class="docutils literal"><span class="pre">stopped</span></tt>, or <tt class="docutils literal"><span class="pre">restarted</span></tt>.
+Started/stopped are idempotent actions that will not run commands
+unless necessary.  <tt class="docutils literal"><span class="pre">restarted</span></tt> will always bounce the service.</li>
+</ul>
+<p><em>name</em>:</p>
+<ul class="simple">
+<li>The name of the service.</li>
+</ul>
 </div>
 <div class="section" id="setup">
-<h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>Writes a JSON file containing key/value data, for use in templating.
-Call this once before using the template modules.  Playbooks will
-execute this module automatically as the first step in each play using
-the variables section, so it is unneccessary to make explicit calls to
-setup within a playbook.</p>
-<p>If facter or ohai are installed, variables from these programs will also
-be snapshotted into the JSON file for usage in templating. These variables
-are prefixed with &#8216;<a class="reference internal" href="#facter">facter</a>&#8216; and &#8216;<a class="reference internal" href="#ohai">ohai</a>&#8221; so it&#8217;s easy to tell their source.
-All variables are then bubbled up to the caller.</p>
-<p><em>anything</em></p>
-<p>any other parameters can be named basically anything, and set a key=value
-pair in the JSON file for use in templating.</p>
+Call this once before using the <a class="reference internal" href="#template"><em>template</em></a> module.  Playbooks
+will execute this module automatically as the first step in each play
+using the variables section, so it is unnecessary to make explicit
+calls to setup within a playbook.</p>
+<p>If facter or ohai are installed, variables from these programs will
+also be snapshotted into the JSON file for usage in templating. These
+variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and <tt class="docutils literal"><span class="pre">ohai_</span></tt> so it&#8217;s easy to
+tell their source.  All variables are then bubbled up to the caller.</p>
+<p><em>anything</em>:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Any other parameters can be named basically anything, and set a
+<tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
+</ul>
+</div></blockquote>
 </div>
 <div class="section" id="template">
-<h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
-<p>Templates a file out to a remote server.  Call the setup module prior to usage.</p>
-<p><em>src</em></p>
-<p>path of a Jinja2 formatted template on the local server.  This can be a relative
-or absolute path.</p>
-<p><em>dest</em></p>
-<p>location to render the template on the remote server</p>
+<span id="id5"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
+prior to usage.</p>
+<p><em>src</em>:</p>
+<ul class="simple">
+<li>Path of a Jinja2 formatted template on the local server.  This can
+be a relative or absolute path.</li>
+</ul>
+<p><em>dest</em>:</p>
+<ul class="simple">
+<li>Location to render the template on the remote server.</li>
+</ul>
 <p>This module also returns md5sum information about the resultant file.</p>
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
-<p>To write your own modules, simply follow the convention of those already available in
-/usr/share/ansible.  Modules must return JSON but can be written in any language.
-Modules should return hashes, but hashes can be nested.</p>
-<p>To support change hooks, modules should return hashes with a changed: True/False
-element at the top level:</p>
+<p>To write your own modules, simply follow the convention of those
+already available in /usr/share/ansible.  Modules must return JSON but
+can be written in any language.  Modules should return hashes, but
+hashes can be nested.</p>
+<p>To support change hooks, modules should return hashes with a changed:
+True/False element at the top level:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
     <span class="s">&#39;changed&#39;</span>   <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
     <span class="s">&#39;something&#39;</span> <span class="p">:</span> <span class="mi">42</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Modules can also choose to indicate a failure scenario by returning a top level &#8216;failure&#8217;
-element with a True value, and a &#8216;msg&#8217; element describing the nature of the failure.
-Other return values are up to the module.</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>{</dt>
-<dd>&#8216;failure&#8217;   : True,
-&#8216;msg&#8217;       : &#8220;here is what happened...&#8221;</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
-<p>When shipping modules, drop them in /usr/share/ansible, or specify the module path to the
-command line tool or API.  It is easy to test modules by running them directly on
-the command line, passing them arguments just like they would be passed with ansible.</p>
+<p>Modules can also choose to indicate a failure scenario by returning a
+top level <tt class="docutils literal"><span class="pre">failure</span></tt> element with a True value, and a <tt class="docutils literal"><span class="pre">msg</span></tt> element
+describing the nature of the failure.  Other return values are up to
+the module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&#39;failure&#39;</span>   <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+    <span class="s">&#39;msg&#39;</span>       <span class="p">:</span> <span class="s">&quot;here is what happened...&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When shipping modules, drop them in /usr/share/ansible, or specify the
+module path to the command line tool or API.  It is easy to test
+modules by running them directly on the command line, passing them
+arguments just like they would be passed with ansible.</p>
 </div>
 </div>
 
@@ -305,7 +339,7 @@ the command line, passing them arguments just like they would be passed with ans
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 09, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>

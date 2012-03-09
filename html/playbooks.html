@@ -206,7 +206,7 @@ server group, then more commands back on the webservers group, etc:</p>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
 <p>The hosts line is a list of one or more groups or host patterns,
-seperated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
+separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
 documentation.  This is just like the first parameter to
 <cite>/usr/bin/ansible</cite>.</p>
 </div>
@@ -215,8 +215,7 @@ documentation.  This is just like the first parameter to
 <p>A list of variables and values that can be used in the plays.  These
 can be used in templates or &#8216;action&#8217; lines and are dereferenced using
 <cite>jinja2</cite> syntax like this:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">varname</span> <span class="p">}}</span>
-</pre></div>
+<div class="highlight-python"><pre>{{ varname }}</pre>
 </div>
 <p>Further, if there are discovered variables about the system (say, if
 facter or ohai were installed) these variables bubble up back into the
@@ -235,7 +234,7 @@ to write the hostname into the /etc/motd file, I could say:</p>
 <div class="section" id="tasks-list">
 <h2>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h2>
 <p>Each play contains a list of tasks.  Tasks are executed in order, one
-at a time, against all machines matched by the play&#8217;s host pattern,
+at a time, against all machines matched by the playbooks host pattern,
 before moving on to the next task.</p>
 <p>Hosts with failed tasks are taken out of the rotation for the entire
 playbook.  If things fail, simply correct the playbook file and rerun.</p>
@@ -285,8 +284,7 @@ of the tasks complete in a particular play.</p>
 file can contain a list of tasks (in YAML) as well, optionally passing
 extra variables into the file.  Variables passed in can be deferenced
 like this (assume a variable named &#8216;user&#8217;):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">user</span> <span class="p">}}</span>
-</pre></div>
+<div class="highlight-python"><pre>{{ user }}</pre>
 </div>
 <p>For instance, if deploying multiple wordpress instances, I could
 contain all of my tasks in a wordpress.yml file, and use it like so:</p>
@@ -312,8 +310,12 @@ like:</p>
 do in the main file.  Including a variable in the name of a task is a
 contrived example, you could also pass them to the action command line
 or use them inside a template file.</p>
-<p>Note that include statements are only usable from the top level
-playbook file.  At this time, includes can not include other includes.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that include statements are only usable from the top level
+playbook file.  At this time, includes can not include other
+includes.</p>
+</div>
 </div>
 <div class="section" id="using-includes-to-assign-classes-of-systems">
 <h2>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h2>
@@ -367,7 +369,7 @@ from the configuration file to generate machine specific variables.</p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 09, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>

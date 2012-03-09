@@ -1,9 +1,11 @@
-.. Director documentation master file, created by sphinx-quickstart on Sat Sep 27 13:23:22 2008.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. image:: http://ansible.github.com/html/mpd_rings.jpg
+   :height: 300
+   :width: 400
+   :alt: http://mpdehaan.zenfolio.com
+   :target: http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf
 
-Ansible
-=======
+Introducing Ansible
+===================
 
 Ansible is a radically simple deployment, configuration, and command
 execution framework.  Other tools in this space have been too

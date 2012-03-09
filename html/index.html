@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Ansible &mdash; Ansible v0.0.1 documentation</title>
+    <title>Introducing Ansible &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -109,7 +109,7 @@
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Ansible</a><ul>
+<li><a class="reference internal" href="#">Introducing Ansible</a><ul>
 <li><a class="reference internal" href="#design-goals">Design Goals</a></li>
 <li><a class="reference internal" href="#communicate-and-get-involved">Communicate and Get Involved</a></li>
 </ul>
@@ -147,22 +147,31 @@
 
 <div class="container">
    
-  <div class="section" id="ansible">
-<h1>Ansible<a class="headerlink" href="#ansible" title="Permalink to this headline">¶</a></h1>
-<p>Ansible is a radically simple deployment, configuration, and command execution framework.
-Other tools in this space have been too complicated for too long, require too much bootstrapping,
-and have too much learning curve.  Ansible is dead simple and painless to extend.  For comparison, Puppet and Chef have about 60k lines of code.  Ansible&#8217;s core is a little over 1000 lines.</p>
-<p>Ansible isn&#8217;t just for configuration &#8211; it&#8217;s also great for Ad-Hoc tasks,
-quickly firing off commands against nodes.  Where Ansible excels though, is expressing complex multi-node deployment processes, executing complex sequences of commands on different hosts through &#8220;playbooks&#8221;.</p>
-<p>Extending ansible does not require programming in any particular language &#8211; you can write modules
-as scripts or programs that return simple JSON.  It&#8217;s also trivially easy to just execute
-useful shell commands.</p>
-<p>Why use Ansible versus something else?  (Puppet, Chef, Fabric, Capistrano,
-mCollective, Func, SaltStack, etc?) Ansible will have far less code, it
-will be (by extension) more correct, and it will be the easiest thing to hack on and
-use you&#8217;ll ever see &#8211; regardless of your favorite language of choice.</p>
-<p>Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs will remain
-short &amp; simple, and the source will be blindingly obvious.</p>
+  <a class="reference external image-reference" href="http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf"><img alt="http://mpdehaan.zenfolio.com" src="http://ansible.github.com/html/mpd_rings.jpg" style="width: 400px; height: 300px;" /></a>
+<div class="section" id="introducing-ansible">
+<h1>Introducing Ansible<a class="headerlink" href="#introducing-ansible" title="Permalink to this headline">¶</a></h1>
+<p>Ansible is a radically simple deployment, configuration, and command
+execution framework.  Other tools in this space have been too
+complicated for too long, require too much bootstrapping, and have too
+much learning curve.  Ansible is dead simple and painless to extend.
+For comparison, Puppet and Chef have about 60k lines of code.
+Ansible&#8217;s core is a little over 1000 lines.</p>
+<p>Ansible isn&#8217;t just for configuration &#8211; it&#8217;s also great for Ad-Hoc
+tasks, quickly firing off commands against nodes.  Where Ansible
+excels though, is expressing complex multi-node deployment processes,
+executing complex sequences of commands on different hosts through
+<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
+<p>Extending ansible does not require programming in any particular
+language &#8211; you can write modules as scripts or programs that return
+simple JSON.  It&#8217;s also trivially easy to just execute useful shell
+commands.</p>
+<p>Why use Ansible versus something else?  (Puppet, Chef, Fabric,
+Capistrano, mCollective, Func, SaltStack, etc?) Ansible will have far
+less code, it will be (by extension) more correct, and it will be the
+easiest thing to hack on and use you&#8217;ll ever see &#8211; regardless of your
+favorite language of choice.</p>
+<p>Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs
+will remain short &amp; simple, and the source will be blindingly obvious.</p>
 <div class="section" id="design-goals">
 <h2>Design Goals<a class="headerlink" href="#design-goals" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -178,7 +187,8 @@ short &amp; simple, and the source will be blindingly obvious.</p>
 </div>
 <div class="section" id="communicate-and-get-involved">
 <h2>Communicate and Get Involved<a class="headerlink" href="#communicate-and-get-involved" title="Permalink to this headline">¶</a></h2>
-<p>Your ideas and contributions are welcome.  We&#8217;re also happy to help you with questions about Ansible.</p>
+<p>Your ideas and contributions are welcome.  We&#8217;re also happy to help
+you with questions about Ansible.</p>
 <ul class="simple">
 <li>Join the <a class="reference external" href="http://groups.google.com/group/ansible-project">ansible-project mailing list</a> on Google Groups</li>
 <li>Join <a class="reference external" href="irc://irc.freenode.net/#ansible">#ansible</a> on the <a class="reference external" href="http://freenode.net/">freenode IRC network</a></li>
@@ -260,13 +270,16 @@ short &amp; simple, and the source will be blindingly obvious.</p>
 </div>
 <div class="section" id="about-the-author">
 <h2>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h2>
-<p>Ansible was originally developed by Michael DeHaan, a Raleigh, NC based software developer and architect.
-He created other popular DevOps programs such as Cobbler, the popular Linux install server.
-Cobbler is used to deploy mission critical systems all over the planet, in industries
-ranging from massively multiplayer gaming, core internet infrastructure, finance,
-chip design, and more.  Michael also helped co-author of Func, a precursor to Ansible, which is used
-to orchestrate systems in lots of diverse places.  He&#8217;s worked on systems software for
-IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group, Puppet Labs, and rPath.</p>
+<p>Ansible was originally developed by Michael DeHaan, a Raleigh, NC
+based software developer and architect.  He created other popular
+DevOps programs such as Cobbler, the popular Linux install server.
+Cobbler is used to deploy mission critical systems all over the
+planet, in industries ranging from massively multiplayer gaming, core
+internet infrastructure, finance, chip design, and more.  Michael also
+helped co-author of Func, a precursor to Ansible, which is used to
+orchestrate systems in lots of diverse places.  He&#8217;s worked on systems
+software for IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group,
+Puppet Labs, and rPath.</p>
 </div>
 </div>
 
@@ -278,7 +291,7 @@ IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group, Puppet Labs, and rPa
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 09, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>

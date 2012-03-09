@@ -79,6 +79,14 @@ div.sphinxsidebar input {
     font-size: 1em;
 }
 
+div.sphinxsidebar input[type="text"] {
+    width: 170px;
+}
+
+div.sphinxsidebar input[type="submit"] {
+    width: 30px;
+}
+
 img {
     border: 0;
 }
@@ -236,7 +244,6 @@ img.align-center, .figure.align-center, object.align-center {
 }
 
 .align-center {
-    clear: both;
     text-align: center;
 }
 

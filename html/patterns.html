@@ -159,10 +159,11 @@
 </dl>
 </div>
 <div class="section" id="inventory-file-format">
-<h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
+<span id="inventoryformat"></span><h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
 <p>Ansible works against multiple systems in your infrastructure at the
-same time.  It does this by selecting portions of systems listed in Ansible&#8217;s inventory file,
-which defaults to /etc/ansible/hosts, and looks like this:</p>
+same time.  It does this by selecting portions of systems listed in
+Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts, and
+looks like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 
 <span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
@@ -199,7 +200,10 @@ wildcards:</p>
 <p>It&#8217;s also ok to mix wildcard patterns and groups at the same time:</p>
 <div class="highlight-python"><pre>one*.com:dbservers</pre>
 </div>
-<p>NOTE: It is not possible to target a host not in the inventory file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is not possible to target a host not in the inventory file.</p>
+</div>
 </div>
 </div>
 
@@ -211,7 +215,7 @@ wildcards:</p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 09, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>

@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
     <link rel="next" title="The Inventory File, Patterns, and Groups" href="patterns.html" />
-    <link rel="prev" title="Ansible" href="index.html" />
+    <link rel="prev" title="Introducing Ansible" href="index.html" />
 <script type="text/javascript">
 (function () {
   /**
@@ -128,7 +128,7 @@
           
             
   <li><a href="index.html"
-         title="previous chapter">&laquo; Ansible</a></li>
+         title="previous chapter">&laquo; Introducing Ansible</a></li>
   <li><a href="patterns.html"
          title="next chapter">The Inventory File, Patterns, and Groups &raquo;</a></li>
           
@@ -167,7 +167,8 @@
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>Requirements for Ansible are extremely minimal.</p>
-<p>If you are running python 2.6 on the <strong>overlord</strong> machine (the machine that you&#8217;ll be talking to the other machines from), you will need:</p>
+<p>If you are running python 2.6 on the <strong>overlord</strong> machine (the machine
+that you&#8217;ll be talking to the other machines from), you will need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
@@ -213,8 +214,8 @@ $ sudo make install</pre>
 </div>
 <div class="section" id="via-rpm">
 <h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
-<p>In the near future, pre-built RPMs will be available through your distribution. Until that time you
-can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
+<p>In the near future, pre-built RPMs will be available through your
+distribution. Until that time you can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ make rpm
@@ -224,8 +225,8 @@ $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
 </div>
 <div class="section" id="your-first-commands">
 <h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
-<p>Edit /etc/ansible/hosts and put one or more remote systems in it, for which you have your SSH
-key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
+<p>Edit /etc/ansible/hosts and put one or more remote systems in it, for
+which you have your SSH key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
 <div class="highlight-python"><pre>192.168.1.50
 aserver.example.org
 bserver.example.org</pre>
@@ -240,10 +241,18 @@ ssh-add ~/.ssh/id_rsa</pre>
 <p>Now run a live command on all of your nodes:</p>
 <div class="highlight-python"><pre>ansible all /bin/echo hello</pre>
 </div>
-<p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s now time to read some
-of the more real-world examples, and explore what you can do with different modules, as well
-as the Ansible playbooks language.  Ansible is not just about running commands, but you already
-have a working infrastructure!</p>
+<p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s
+now time to read some of the more real-world examples, and explore
+what you can do with different modules, as well as the Ansible
+playbooks language.  Ansible is not just about running commands, but
+you already have a working infrastructure!</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="patterns.html#inventoryformat"><em>Inventory</em></a></dt>
+<dd>Complete documentation on the inventory file format</dd>
+</dl>
+</div>
 </div>
 </div>
 
@@ -255,7 +264,7 @@ have a working infrastructure!</p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 09, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>
