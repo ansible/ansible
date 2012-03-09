@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>YAML Scripts &mdash; Ansible v0.0.1 documentation</title>
+    <title>YAML Format &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -48,20 +48,20 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="yaml-scripts">
-<h1>YAML Scripts<a class="headerlink" href="#yaml-scripts" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="yaml-format">
+<h1>YAML Format<a class="headerlink" href="#yaml-format" title="Permalink to this headline">¶</a></h1>
 <p>This page provides a basic overview of correct YAML syntax, which is how Ansible
 playbooks (our configuration management language) are expressed.
 You may also wish to read playbook examples and will quickly pick this up from those.</p>
 <div class="section" id="yaml-basics">
 <h2>YAML Basics<a class="headerlink" href="#yaml-basics" title="Permalink to this headline">¶</a></h2>
-<p>For <cite>ansible</cite>, every YAML script must be a list at it&#8217;s root-most
+<p>For <cite>ansible</cite>, every YAML file must be a list at it&#8217;s root-most
 element. Each item in the list is a dictionary. These dictionaries
-represent all the options you can use to write a <cite>ansible</cite> script. In
+represent all the options you can use to write an <cite>ansible</cite> file. In
 addition, all YAML files (regardless of their association with
 <cite>ansible</cite> or not) should start with <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
 <p>In YAML a list can be represented in two ways. In one way all members
-of a list are lines beginning at the same indentation level starting
+of a list are lines beginning at the same indenta`tion level starting
 with a <tt class="docutils literal"><span class="pre">-</span></tt> character:</p>
 <div class="highlight-python"><pre>---
 # A list of tasty fruits
@@ -132,7 +132,7 @@ languages:
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">YAML Scripts</a><ul>
+<li><a class="reference internal" href="#">YAML Format</a><ul>
 <li><a class="reference internal" href="#yaml-basics">YAML Basics</a></li>
 </ul>
 </li>
