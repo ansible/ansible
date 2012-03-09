@@ -22,6 +22,7 @@ import os
 #sys.path.append(os.path.abspath('some/directory'))
 
 sys.path.insert(0, os.path.join('ansible', 'lib'))
+sys.path.append(os.path.abspath('_themes'))
 
 from ansible import __version__, __author__
 
@@ -97,6 +98,10 @@ pygments_style = 'sphinx'
 
 # Options for HTML output
 # -----------------------
+
+html_theme_path = ['_themes']
+html_theme = 'bootstrap'
+html_short_title = 'Ansible'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths

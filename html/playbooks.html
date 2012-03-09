@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -7,9 +6,11 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration &mdash; Ansible v0.0.1 documentation</title>
+    <title>Playbooks &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
@@ -22,34 +23,142 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
     <link rel="next" title="Using the Python API" href="api.html" />
-    <link rel="prev" title="YAML Format" href="YAMLScripts.html" /> 
+    <link rel="prev" title="YAML Format" href="YAMLScripts.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
   </head>
   <body>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="api.html" title="Using the Python API"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Format"
-             accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body">
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible</a>
+        <ul class="nav">
+          
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Site</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Format</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Playbooks</a><ul>
+<li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
+<li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
+<li><a class="reference internal" href="#vars-section">Vars section</a></li>
+<li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
+<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
+<li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
+<li><a class="reference internal" href="#handlers">Handlers</a></li>
+<li><a class="reference internal" href="#includes">Includes</a></li>
+<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
+<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+<li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+          
             
-  <div class="section" id="playbooks-ansible-for-deployment-configuration-management-and-orchestration">
-<h1>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration<a class="headerlink" href="#playbooks-ansible-for-deployment-configuration-management-and-orchestration" title="Permalink to this headline">¶</a></h1>
+  <li><a href="YAMLScripts.html"
+         title="previous chapter">&laquo; YAML Format</a></li>
+  <li><a href="api.html"
+         title="next chapter">Using the Python API &raquo;</a></li>
+          
+          
+            
+  <li><a href="_sources/playbooks.txt"
+         rel="nofollow">Source</a></li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<div class="container">
+   
+  <div class="section" id="playbooks">
+<h1>Playbooks<a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -61,16 +170,23 @@
 <dd>Learn about how to select hosts</dd>
 </dl>
 </div>
-<p>Playbooks are a completely different way to use ansible and are particularly awesome.</p>
-<p>They are the basis for a really simple configuration management and multi-machine deployment system, unlike any that already exist, and one that is very well suited to deploying complex applications.</p>
-<p>While you might run the main /usr/bin/ansible program for ad-hoc tasks, playbooks are more likely to be kept in source control and used to push out your configuration or assure the configurations of your remote systems are in spec.</p>
+<p>Playbooks are a completely different way to use ansible and are
+particularly awesome.</p>
+<p>They are the basis for a really simple configuration management and
+multi-machine deployment system, unlike any that already exist, and
+one that is very well suited to deploying complex applications.</p>
+<p>While you might run the main <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt> program for ad-hoc
+tasks, playbooks are more likely to be kept in source control and used
+to push out your configuration or assure the configurations of your
+remote systems are in spec.</p>
 <div class="section" id="playbook-example">
 <h2>Playbook Example<a class="headerlink" href="#playbook-example" title="Permalink to this headline">¶</a></h2>
-<p>Playbooks are expressed in YAML format and have a minimum of syntax.  Each playbook is composed
-of one or more &#8216;plays&#8217; in a list.  By composing a playbook of multiple &#8216;plays&#8217;, it is possible
-to orchestrate multi-machine deployments, running certain steps on all machines in
-the webservers group, then certain steps on the database server group, then more commands
-back on the webservers group, etc:</p>
+<p>Playbooks are expressed in YAML format and have a minimum of syntax.
+Each playbook is composed of one or more &#8216;plays&#8217; in a list.  By
+composing a playbook of multiple &#8216;plays&#8217;, it is possible to
+orchestrate multi-machine deployments, running certain steps on all
+machines in the webservers group, then certain steps on the database
+server group, then more commands back on the webservers group, etc:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   vars:
@@ -91,19 +207,24 @@ back on the webservers group, etc:</p>
 </div>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
-<p>The hosts line is a list of one or more groups or host patterns, seperated by colons, asdescribed in the &#8216;patterns&#8217; documentation.  This is just like the first parameter to /usr/bin/ansible.</p>
+<p>The hosts line is a list of one or more groups or host patterns,
+seperated by colons, asdescribed in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a> documentation.
+This is just like the first parameter to <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt>.</p>
 </div>
 <div class="section" id="vars-section">
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
-<p>A list of variables and values that can be used in the plays.  These can be used in templates
-or &#8216;action&#8217; lines and are dereferenced using <tt class="docutils literal"><span class="pre">`jinja2`</span></tt> syntax like this:</p>
-<div class="highlight-python"><pre>{{ varname }}</pre>
+<p>A list of variables and values that can be used in the plays.  These
+can be used in templates or &#8216;action&#8217; lines and are dereferenced using
+<tt class="docutils literal"><span class="pre">`jinja2`</span></tt> syntax like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">varname</span> <span class="p">}}</span>
+</pre></div>
 </div>
-<p>Further, if there are discovered variables about the system (say, if facter or ohai were
-installed) these variables bubble up back into the playbook, and can be used on each
-system just like explicitly set variables.  Facter variables are prefixed with &#8216;<a href="#id1"><span class="problematic" id="id2">facter_</span></a>&#8216;
-and Ohai variables are prefixed with &#8216;<a href="#id3"><span class="problematic" id="id4">ohai_</span></a>&#8216;.  So for instance, if I wanted to write the
-hostname into the /etc/motd file, I could say:</p>
+<p>Further, if there are discovered variables about the system (say, if
+facter or ohai were installed) these variables bubble up back into the
+playbook, and can be used on each system just like explicitly set
+variables.  Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
+variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  So for instance, if I wanted
+to write the hostname into the /etc/motd file, I could say:</p>
 <div class="highlight-python"><pre>- name: write the motd
 - action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
 </div>
@@ -114,61 +235,72 @@ hostname into the /etc/motd file, I could say:</p>
 </div>
 <div class="section" id="tasks-list">
 <h2>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h2>
-<p>Each play contains a list of tasks.  Tasks are executed in order, one at a time, against
-all machines matched by the play&#8217;s host pattern, before moving on to the next task.</p>
-<p>Hosts with failed tasks are taken out of the rotation for the entire playbook.  If things fail,
-simply correct the playbook file and rerun.</p>
-<p>Modules other than command are idempotent, meaning if you run them again, they will make the
-changes they are told to make to bring the system to the desired state.</p>
+<p>Each play contains a list of tasks.  Tasks are executed in order, one
+at a time, against all machines matched by the play&#8217;s host pattern,
+before moving on to the next task.</p>
+<p>Hosts with failed tasks are taken out of the rotation for the entire
+playbook.  If things fail, simply correct the playbook file and rerun.</p>
+<p>Modules other than command are idempotent, meaning if you run them
+again, they will make the changes they are told to make to bring the
+system to the desired state.</p>
 </div>
 <div class="section" id="task-name-and-action">
 <h2>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h2>
-<p>Every task must have a name, which is included in the output from running the playbook.</p>
-<p>The action line is the name of an ansible module followed by parameters.  Usually these
-are expressed in key=value form, except for the command module, which looks just like a Linux/Unix
-command line.  See the module documentation for more info.</p>
-<p>Variables, as mentioned above, can be used in action lines.  So if, hypothetically, you wanted
-to make a directory on each system named after the hostname ... yeah, that&#8217;s I know silly ... you could
-do it like so:</p>
+<p>Every task must have a name, which is included in the output from
+running the playbook.</p>
+<p>The action line is the name of an ansible module followed by
+parameters.  Usually these are expressed in <tt class="docutils literal"><span class="pre">key=value</span></tt> form, except
+for the command module, which looks just like a Linux/Unix command
+line.  See the module documentation for more info.</p>
+<p>Variables, as mentioned above, can be used in action lines.  So if,
+hypothetically, you wanted to make a directory on each system named
+after the hostname ... yeah, that&#8217;s I know silly ... you could do it
+like so:</p>
 <div class="highlight-python"><pre>- name: make a directory
 - action: mkdir /tmp/{{ facter_hostname }}</pre>
 </div>
 </div>
 <div class="section" id="notify-statements">
 <h2>Notify statements<a class="headerlink" href="#notify-statements" title="Permalink to this headline">¶</a></h2>
-<p>Nearly all modules are written to be &#8216;idempotent&#8217; and can signal when they have affected a change
-on the remote system.  If a notify statement is used, the named handler will be run against
-each system where a change was effected, but NOT on systems where no change occurred.  This happens
-after all of the tasks are run.  For example, if notifying Apache and potentially replacing lots of
-configuration files, you could have Apache restart just once, at the end of a run.  If you need
-Apache restarted in the middle of a run, you could just make a task for it, no harm done.  Notifiers
-are optional.</p>
+<p>Nearly all modules are written to be &#8216;idempotent&#8217; and can signal when
+they have affected a change on the remote system.  If a notify
+statement is used, the named handler will be run against each system
+where a change was effected, but NOT on systems where no change
+occurred.  This happens after all of the tasks are run.  For example,
+if notifying Apache and potentially replacing lots of configuration
+files, you could have Apache restart just once, at the end of a run.
+If you need Apache restarted in the middle of a run, you could just
+make a task for it, no harm done.  Notifiers are optional.</p>
 </div>
 <div class="section" id="handlers">
 <h2>Handlers<a class="headerlink" href="#handlers" title="Permalink to this headline">¶</a></h2>
-<p>Handlers are lists of tasks, not really any different from regular tasks, that are referenced
-by name.  Handlers are what notifiers notify.  If nothing notifies a handler, it will not run.
-Regardless of how many things notify a handler, it will run only once, after all of the tasks
-complete in a particular play.</p>
+<p>Handlers are lists of tasks, not really any different from regular
+tasks, that are referenced by name.  Handlers are what notifiers
+notify.  If nothing notifies a handler, it will not run.  Regardless
+of how many things notify a handler, it will run only once, after all
+of the tasks complete in a particular play.</p>
 </div>
 <div class="section" id="includes">
 <h2>Includes<a class="headerlink" href="#includes" title="Permalink to this headline">¶</a></h2>
-<p>Not all tasks have to be listed directly in the main file.  An include file can contain
-a list of tasks (in YAML) as well, optionally passing extra variables into the file.
-Variables passed in can be deferenced like this (assume a variable named &#8216;user&#8217;):</p>
-<div class="highlight-python"><pre>{{ user }}</pre>
+<p>Not all tasks have to be listed directly in the main file.  An include
+file can contain a list of tasks (in YAML) as well, optionally passing
+extra variables into the file.  Variables passed in can be deferenced
+like this (assume a variable named &#8216;user&#8217;):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">user</span> <span class="p">}}</span>
+</pre></div>
 </div>
-<p>For instance, if deploying multiple wordpress instances, I could contain all of my tasks
-in a wordpress.yml file, and use it like so:</p>
+<p>For instance, if deploying multiple wordpress instances, I could
+contain all of my tasks in a wordpress.yml file, and use it like so:</p>
 <div class="highlight-python"><pre>- tasks:
    - include: wordpress.yml user=timmy
    - include: wordpress.yml user=alice
    - include: wordpress.yml user=bob</pre>
 </div>
-<p>In addition to the explicitly passed in parameters, all variables from the vars section
-are also available.</p>
-<p>The format of an included list of tasks or handlers looks just like a flat list of tasks.  Here
-is an example of what base.yml might look like:</p>
+<p>In addition to the explicitly passed in parameters, all variables from
+the vars section are also available.</p>
+<p>The format of an included list of tasks or handlers looks just like a
+flat list of tasks.  Here is an example of what base.yml might look
+like:</p>
 <div class="highlight-python"><pre>---
 - name: no selinux
   action: command /usr/sbin/setenforce 0
@@ -177,16 +309,18 @@ is an example of what base.yml might look like:</p>
 - name: this is just to show variables work here, favcolor={{ favcolor }}
   action: command /bin/true</pre>
 </div>
-<p>As you can see above, variables in include files work just like they do in the main file.
-Including a variable in the name of a task is a contrived example, you could also
-pass them to the action command line or use them inside a template file.</p>
-<p>Note that include statements are only usable from the top level playbook file.
-At this time, includes can not include other includes.</p>
+<p>As you can see above, variables in include files work just like they
+do in the main file.  Including a variable in the name of a task is a
+contrived example, you could also pass them to the action command line
+or use them inside a template file.</p>
+<p>Note that include statements are only usable from the top level
+playbook file.  At this time, includes can not include other includes.</p>
 </div>
 <div class="section" id="using-includes-to-assign-classes-of-systems">
 <h2>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h2>
-<p>Include files are best used to reuse logic between playbooks.  You could imagine
-a playbook describing your entire infrastructure like this:</p>
+<p>Include files are best used to reuse logic between playbooks.  You
+could imagine a playbook describing your entire infrastructure like
+this:</p>
 <div class="highlight-python"><pre>---
 - hosts: atlanta-webservers
   vars:
@@ -205,13 +339,14 @@ a playbook describing your entire infrastructure like this:</p>
   handlers:
     - include: generic-handlers.yml</pre>
 </div>
-<p>There is one (or more) play defined for each group of systems, and each play maps
-each group includes one or more &#8216;class definitions&#8217; telling the systems what they
-are supposed to do or be.</p>
-<p>Using a common handlers file could allow one task in &#8216;webservers&#8217; to define &#8216;restart apache&#8217;,
-and it could be reused between multiple plays.</p>
-<p>Variables like &#8216;database&#8217; above can be used in templates referenced from the
-configuration file to generate machine specific variables.</p>
+<p>There is one (or more) play defined for each group of systems, and
+each play maps each group includes one or more &#8216;class definitions&#8217;
+telling the systems what they are supposed to do or be.</p>
+<p>Using a common handlers file could allow one task in &#8216;webservers&#8217; to
+define &#8216;restart apache&#8217;, and it could be reused between multiple
+plays.</p>
+<p>Variables like &#8216;database&#8217; above can be used in templates referenced
+from the configuration file to generate machine specific variables.</p>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
 <h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
@@ -226,76 +361,16 @@ configuration file to generate machine specific variables.</p>
 </div>
 
 
-          </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a><ul>
-<li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
-<li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
-<li><a class="reference internal" href="#vars-section">Vars section</a></li>
-<li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
-<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
-<li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
-<li><a class="reference internal" href="#handlers">Handlers</a></li>
-<li><a class="reference internal" href="#includes">Includes</a></li>
-<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
-<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
-<li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
-</ul>
-</li>
-</ul>
-
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="YAMLScripts.html"
-                        title="previous chapter">YAML Format</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="api.html"
-                        title="next chapter">Using the Python API</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/playbooks.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="api.html" title="Using the Python API"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Format"
-             >previous</a> |</li>
-        <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer">
-        &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 09, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
-    </div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right"><a href="#">Back to top</a></p>
+    <p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Mar 09, 2012.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+    </p>
+  </div>
+</footer>
   </body>
 </html>

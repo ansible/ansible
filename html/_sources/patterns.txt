@@ -1,3 +1,5 @@
+.. _patterns:
+
 The Inventory File, Patterns, and Groups
 ========================================
 
@@ -43,16 +45,17 @@ It is also possible to address specific hosts::
     one.example.com:two.example.com
  
 
-The following patterns address one or more groups, which are denoted with the bracket
-headers in the inventory file::
+The following patterns address one or more groups, which are denoted
+with the bracket headers in the inventory file::
 
     webservers
     webservers:dbservers
 
-Individual hosts, but not groups, can also be referenced using wildcards:
+Individual hosts, but not groups, can also be referenced using
+wildcards::
 
-    *.example.com
-    *.com
+   *.example.com
+   *.com
 
 It's also ok to mix wildcard patterns and groups at the same time::
 
