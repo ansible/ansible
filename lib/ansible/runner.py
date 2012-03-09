@@ -374,12 +374,13 @@ class Runner(object):
 
     def remote_log(self, conn, msg):
         ''' this is the function we use to log things '''
-        stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info %r' % msg)
+        stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
         # TODO: maybe make that optional
 
     def _exec_command(self, conn, cmd):
         ''' execute a command string over SSH, return the output '''
         msg = '%s: %s' % (self.module_name, cmd)
+       
         self.remote_log(conn, msg)
         stdin, stdout, stderr = conn.exec_command(cmd)
         results = "\n".join(stdout.readlines())
