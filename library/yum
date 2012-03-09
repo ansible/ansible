@@ -195,8 +195,8 @@ def remove_only(pkgspec):
     pass
 
 def main():
-    # ensure=installed pkg=pkgspec
-    # ensure=removed pkg=pkgspec
+    # state=installed pkg=pkgspec
+    # state=removed pkg=pkgspec
     # list=installed
     # list=updates
     # list=available
@@ -222,7 +222,7 @@ def main():
         results = list_stuff(my, params['list'])
     elif 'ensure' in params:
         my = yum_base(conf_file=params['conf_file'], cachedir=True)        
-        state = params['ensure']
+        state = params['state']
         pkgspec = params['pkg']
         results = ensure(my, state, pkgspec)
 
