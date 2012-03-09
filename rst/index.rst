@@ -1,8 +1,13 @@
 .. image:: http://ansible.github.com/html/mpd_rings.jpg
-   :height: 300
-   :width: 400
-   :alt: http://mpdehaan.zenfolio.com
+   :height: 225
+   :width: 300
+   :alt: ""
    :target: http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf
+.. image:: http://ansible.github.com/html/mpd_tunnel.jpg
+   :height: 225
+   :width: 337
+   :alt: "" 
+   :target: http://photos.michaeldehaan.net/favorites/h2428aca7#h2428aca7
 
 Introducing Ansible
 ===================
