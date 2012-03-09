@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="YAML Scripts" href="YAMLScripts.html" />
+    <link rel="next" title="The Inventory File, Patterns, and Groups" href="patterns.html" />
     <link rel="prev" title="Ansible" href="index.html" /> 
   </head>
   <body>
@@ -34,7 +34,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Scripts"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Ansible"
@@ -50,64 +50,96 @@
             
   <div class="section" id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
-<p>How to ansible</p>
+<p>How to download ansible and get started using it</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="YAMLScripts.html"><em>YAML Scripts</em></a></dt>
-<dd>Complete documentation of the YAML syntax <cite>ansible</cite> understands.</dd>
+<dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
+<dd>Examples of basic commands</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</em></a></dt>
+<dd>Learning ansible&#8217;s configuration management language</dd>
 </dl>
 </div>
-<div class="section" id="what-you-need">
-<h2>What you need<a class="headerlink" href="#what-you-need" title="Permalink to this headline">¶</a></h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In dignissim
-placerat nibh, non feugiat risus varius vitae. Donec eu libero
-lectus. Ut non orci felis, eget mattis mauris. Etiam ut tellus in
-magna porta venenatis. Quisque scelerisque, sem non ultrices bibendum,
-dolor diam rutrum lectus, sed luctus neque neque vitae eros. Vivamus
-mattis, ipsum ut bibendum gravida, lectus arcu venenatis elit, vitae
-luctus diam leo sit amet ligula. Nunc egestas justo in nulla sagittis
-ut suscipit sapien gravida. Morbi id dui nibh. Nullam diam massa,
-rhoncus a dignissim non, adipiscing vel arcu. Quisque ultricies
-tincidunt purus ut sodales. Quisque scelerisque dapibus purus quis
-egestas. Maecenas sagittis porttitor adipiscing. Duis eu magna
-sem. Donec arcu felis, faucibus et malesuada non, blandit vitae
-metus. Fusce nec sapien dolor.</p>
-<p>Aenean ac fermentum nisl. Integer leo sem, rutrum nec dictum at,
-pretium quis sapien. Duis felis metus, sodales sit amet gravida in,
-pretium ut arcu. Nulla ligula quam, aliquam sit amet sollicitudin
-eget, molestie tincidunt ipsum. Nulla leo nunc, mattis sed auctor at,
-suscipit ut metus. Suspendisse hendrerit, justo sagittis malesuada
-molestie, nisi nunc placerat libero, vel vulputate elit tellus et
-augue. Phasellus tempor lectus ac nisi aliquam faucibus. Donec feugiat
-egestas nibh id mattis. In hac habitasse platea dictumst. Ut accumsan
-lorem eget leo dictum viverra.</p>
-<p>Quisque egestas lorem sit amet felis tincidunt adipiscing. Aenean
-ornare fermentum accumsan. Aenean eu mauris arcu, id pulvinar
-quam. Suspendisse nec massa vel augue laoreet ultricies in convallis
-dolor. Mauris sodales porta enim, non ultricies dolor luctus
-in. Phasellus eu tortor lectus, vel porttitor nulla. Mauris vulputate,
-erat id scelerisque lobortis, nibh ipsum tristique elit, ac viverra
-arcu sem a ante. Praesent nec metus vestibulum augue eleifend
-suscipit. In feugiat, sem nec dignissim consequat, velit tortor
-scelerisque metus, sit amet mollis nisl sem eu nibh. Quisque in nibh
-turpis. Proin ac nisi ligula, a pretium augue.</p>
-<p>In nibh eros, laoreet id interdum vel, sodales sed tortor. Sed
-ullamcorper, sem vel mattis consectetur, nibh turpis molestie nisl,
-eget lobortis mi magna sed metus. Cras justo est, tempus quis
-adipiscing ut, hendrerit convallis sem. Mauris ullamcorper, sapien et
-luctus iaculis, urna elit egestas ipsum, et tristique enim risus vitae
-nunc. Vivamus aliquet lorem eu urna pulvinar hendrerit malesuada nunc
-sollicitudin. Cras in mi rhoncus quam egestas dignissim vel sit amet
-lacus. Maecenas interdum viverra laoreet. Quisque elementum
-sollicitudin ullamcorper.</p>
-<p>Pellentesque mauris sem, malesuada at lobortis in, porta eget
-urna. Duis aliquet quam eget risus elementum quis auctor ligula
-gravida. Phasellus et ullamcorper libero. Nam elementum ultricies
-tellus, in sagittis magna aliquet quis. Ut sit amet tellus id erat
-tristique lobortis. Suspendisse est enim, tristique eu convallis id,
-rutrum nec lacus. Fusce iaculis diam non felis rutrum lobortis. Proin
-hendrerit mi tincidunt dui fermentum placerat.</p>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>Requirements for Ansible are extremely minimal.</p>
+<p>If you are running python 2.6 on the <strong>overlord</strong> machine (the machine that you&#8217;ll be talking to the other machines from), you will need:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (for playbooks)</li>
+</ul>
+<p>If you are running less than Python 2.6, you will also need:</p>
+<ul class="simple">
+<li>The Python 2.4 or 2.5 backport of the <tt class="docutils literal"><span class="pre">multiprocessing</span></tt> module<ul>
+<li><a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">Installation and Testing Instructions</a></li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">simplejson</span></tt></li>
+</ul>
+<p>On the managed nodes, to use templating, you will need:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can install this with ansible)</li>
+</ul>
+</div>
+<div class="section" id="developer-requirements">
+<h2>Developer Requirements<a class="headerlink" href="#developer-requirements" title="Permalink to this headline">¶</a></h2>
+<p>For developers, you may wish to have:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">asciidoc</span></tt> (for building manpage documentation)</li>
+<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for building content for the ansible.github.com project only)</li>
+</ul>
+</div>
+<div class="section" id="getting-ansible">
+<h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
+<p>Tagged releases are available as tar.gz files from the Ansible github
+project page:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
+</ul>
+<p>You can also clone the git repository yourself and install Ansible in
+one of two ways:</p>
+<div class="section" id="python-distutils">
+<h3>Python Distutils<a class="headerlink" href="#python-distutils" title="Permalink to this headline">¶</a></h3>
+<p>You can also install Ansible using Python Distutils:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
+$ cd ./ansible
+$ sudo make install</pre>
+</div>
+</div>
+<div class="section" id="via-rpm">
+<h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
+<p>In the near future, pre-built RPMs will be available through your distribution. Until that time you
+can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
+$ cd ./ansible
+$ make rpm
+$ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
+</div>
+</div>
+</div>
+<div class="section" id="your-first-commands">
+<h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
+<p>Edit /etc/ansible/hosts and put one or more remote systems in it, for which you have your SSH
+key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
+<div class="highlight-python"><pre>192.168.1.50
+aserver.example.org
+bserver.example.org</pre>
+</div>
+<p>Set up SSH agent to avoid retyping passwords:</p>
+<div class="highlight-python"><pre>ssh-agent bash
+ssh-add ~/.ssh/id_rsa</pre>
+</div>
+<p>Now ping all your nodes:</p>
+<div class="highlight-python"><pre>ansible all -m ping</pre>
+</div>
+<p>Now run a live command on all of your nodes:</p>
+<div class="highlight-python"><pre>ansible all /bin/echo hello</pre>
+</div>
+<p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s now time to read some
+of the more real-world examples, and explore what you can do with different modules, as well
+as the Ansible playbooks language.  Ansible is not just about running commands, but you already
+have a working infrastructure!</p>
 </div>
 </div>
 
@@ -120,7 +152,14 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Getting Started</a><ul>
-<li><a class="reference internal" href="#what-you-need">What you need</a></li>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#developer-requirements">Developer Requirements</a></li>
+<li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
+<li><a class="reference internal" href="#python-distutils">Python Distutils</a></li>
+<li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#your-first-commands">Your first commands</a></li>
 </ul>
 </li>
 </ul>
@@ -129,8 +168,8 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Ansible</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="YAMLScripts.html"
-                        title="next chapter">YAML Scripts</a></p>
+  <p class="topless"><a href="patterns.html"
+                        title="next chapter">The Inventory File, Patterns, and Groups</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/gettingstarted.txt"
@@ -139,7 +178,7 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -160,7 +199,7 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="YAMLScripts.html" title="YAML Scripts"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Ansible"
@@ -170,8 +209,8 @@ hendrerit mi tincidunt dui fermentum placerat.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 07, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Last updated on Mar 09, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>

@@ -1,20 +1,21 @@
-YAML Scripts
-============
+YAML Format
+===========
 
-This page provides a basic overview of correct YAML syntax.
-
+This page provides a basic overview of correct YAML syntax, which is how Ansible
+playbooks (our configuration management language) are expressed.  
+You may also wish to read playbook examples and will quickly pick this up from those.
 
 YAML Basics
 -----------
 
-For `ansible`, every YAML script must be a list at it's root-most
+For `ansible`, every YAML file must be a list at it's root-most
 element. Each item in the list is a dictionary. These dictionaries
-represent all the options you can use to write a `ansible` script. In
+represent all the options you can use to write an `ansible` file. In
 addition, all YAML files (regardless of their association with
 `ansible` or not) should start with ``---``.
 
 In YAML a list can be represented in two ways. In one way all members
-of a list are lines beginning at the same indentation level starting
+of a list are lines beginning at the same indenta`tion level starting
 with a ``-`` character::
 
     ---
@@ -74,7 +75,7 @@ Finally, you can combine these data structures::
 	dotnet: Lame
 
 That's all you really need to know about YAML to get started writing
-`Ansible` scripts.
+`Ansible` playbooks.
 
 .. seealso::
 

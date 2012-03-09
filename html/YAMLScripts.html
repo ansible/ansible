@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>YAML Scripts &mdash; Ansible v0.0.1 documentation</title>
+    <title>YAML Format &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="Patterns" href="patterns.html" />
-    <link rel="prev" title="Getting Started" href="gettingstarted.html" /> 
+    <link rel="next" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration" href="playbooks.html" />
+    <link rel="prev" title="Ansible Modules" href="modules.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,10 +34,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="patterns.html" title="Patterns"
+          <a href="playbooks.html" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="gettingstarted.html" title="Getting Started"
+          <a href="modules.html" title="Ansible Modules"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -48,18 +48,20 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="yaml-scripts">
-<h1>YAML Scripts<a class="headerlink" href="#yaml-scripts" title="Permalink to this headline">¶</a></h1>
-<p>This page provides a basic overview of correct YAML syntax.</p>
+  <div class="section" id="yaml-format">
+<h1>YAML Format<a class="headerlink" href="#yaml-format" title="Permalink to this headline">¶</a></h1>
+<p>This page provides a basic overview of correct YAML syntax, which is how Ansible
+playbooks (our configuration management language) are expressed.
+You may also wish to read playbook examples and will quickly pick this up from those.</p>
 <div class="section" id="yaml-basics">
 <h2>YAML Basics<a class="headerlink" href="#yaml-basics" title="Permalink to this headline">¶</a></h2>
-<p>For <cite>ansible</cite>, every YAML script must be a list at it&#8217;s root-most
+<p>For <cite>ansible</cite>, every YAML file must be a list at it&#8217;s root-most
 element. Each item in the list is a dictionary. These dictionaries
-represent all the options you can use to write a <cite>ansible</cite> script. In
+represent all the options you can use to write an <cite>ansible</cite> file. In
 addition, all YAML files (regardless of their association with
 <cite>ansible</cite> or not) should start with <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
 <p>In YAML a list can be represented in two ways. In one way all members
-of a list are lines beginning at the same indentation level starting
+of a list are lines beginning at the same indenta`tion level starting
 with a <tt class="docutils literal"><span class="pre">-</span></tt> character:</p>
 <div class="highlight-python"><pre>---
 # A list of tasty fruits
@@ -111,7 +113,7 @@ languages:
     dotnet: Lame</pre>
 </div>
 <p>That&#8217;s all you really need to know about YAML to get started writing
-<cite>Ansible</cite> scripts.</p>
+<cite>Ansible</cite> playbooks.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -130,18 +132,18 @@ languages:
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">YAML Scripts</a><ul>
+<li><a class="reference internal" href="#">YAML Format</a><ul>
 <li><a class="reference internal" href="#yaml-basics">YAML Basics</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="gettingstarted.html"
-                        title="previous chapter">Getting Started</a></p>
+  <p class="topless"><a href="modules.html"
+                        title="previous chapter">Ansible Modules</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="patterns.html"
-                        title="next chapter">Patterns</a></p>
+  <p class="topless"><a href="playbooks.html"
+                        title="next chapter">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/YAMLScripts.txt"
@@ -150,7 +152,7 @@ languages:
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -171,18 +173,18 @@ languages:
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="patterns.html" title="Patterns"
+          <a href="playbooks.html" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration"
              >next</a> |</li>
         <li class="right" >
-          <a href="gettingstarted.html" title="Getting Started"
+          <a href="modules.html" title="Ansible Modules"
              >previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 07, 2012.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Last updated on Mar 09, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>

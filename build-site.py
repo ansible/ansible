@@ -20,6 +20,7 @@ __docformat__ = 'restructuredtext'
 
 import os
 import sys
+import traceback
 from sphinx.application import Sphinx
 from os import path
 
@@ -68,12 +69,7 @@ class SphinxBuilder(object):
             #    print "Run 'make htmlman' to recreate the problem."
             #print "Your docs are now in %s" % outdir
         except ImportError, ie:
-            print >> sys.stderr, "You don't seem to have the following which"
-            print >> sys.stderr, "are required to make documentation:"
-            print >> sys.stderr, "\tsphinx.application.Sphinx"
-            print >> sys.stderr, "This is usually available from the python-sphinx package"
-            print >> sys.stderr, "=== Error message received while attempting to build==="
-            print >> sys.stderr, ie
+            traceback.print_exc()
         except Exception, ex:
             print >> sys.stderr, "FAIL! exiting ... (%s)" % ex
 
