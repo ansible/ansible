@@ -7,20 +7,15 @@ How to download ansible and get started using it
 
    :doc:`examples`
        Examples of basic commands
-   :doc:`YAMLScripts`
-       Complete documentation of the YAML syntax `ansible` understands for playbooks.
    :doc:`playbooks`
        Learning ansible's configuration management language
-   :doc:`modules`
-       Learn about modules that ship with ansible
 
 Requirements
 ````````````
 
-Requirements are extremely minimal.
+Requirements for Ansible are extremely minimal.
 
-If you are running python 2.6 on the **overlord** machine, you will
-need:
+If you are running python 2.6 on the **overlord** machine (the machine that you'll be talking to the other machines from), you will need:
 
 * ``paramiko``
 * ``PyYAML``
@@ -44,7 +39,7 @@ Developer Requirements
 For developers, you may wish to have:
 
 * ``asciidoc`` (for building manpage documentation)
-* ``python-sphinx`` (for building content for ansible.github.com)
+* ``python-sphinx`` (for building content for the ansible.github.com project only)
 
 
 Getting Ansible
@@ -96,5 +91,6 @@ Now try this:
     ansible all -m ping
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's now time to read some
-of the more real-world examples.
+of the more real-world examples, and explore what you can do with different modules, as well
+as the Ansible playbooks language.
 

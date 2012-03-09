@@ -13,13 +13,17 @@ ansible playbooks.
    :doc:`api`
        Examples of using modules with the Python API
 
-Module Idempotence
-```````````````````
+Nearly all modules take key=value parameters.  Some modules take no parameters, and the command
+module just takes arguments for the command you want to run.
+
+All modules return JSON format data, thoug if you are using the command line or playbooks, you
+don't really need to know much about that.
 
 Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
 trigger change events.  Unless otherwise noted, all modules support change hooks.
 
+Stock modules:
 
 command
 ```````
@@ -31,6 +35,8 @@ Example usage::
 
     /sbin/shutdown -t now
 
+The given shell command will be executed on all selected nodes.
+
 This module does not support change hooks and returns the return code from the program as well as timing information about how long the command was running for.
 
 
@@ -41,12 +47,12 @@ The copy module moves a file on the local box to remote locations.
 
 *src*::
 
-Local absolute path to a file to copy to the remote server
+Local path to a file to copy to the remote server.  This can be an absolute or relative path.
 
 
 *dest*::
 
-Remote absolute path where the file should end up
+Remote absolute path where the file should end up.
 
 
 This module also returns md5sum information about the resultant file.
@@ -56,18 +62,19 @@ facter
 ``````
 
 Runs the discovery program 'facter' on the remote system, returning
-JSON data that can be useful for inventory purposes.
+JSON data that can be useful for inventory purposes.  
 
 Requires that 'facter' and 'ruby-json' be installed on the remote end.
 
 This module is informative only - it takes no parameters & does not support change hooks,
-nor does it make any changes on the system.
+nor does it make any changes on the system.   Playbooks do not actually use
+this module, they use the 'setup' module behind the scenes.
 
 
 git
 ```
 
-Deploys software from git checkouts.
+Deploys software (or files) from git checkouts.
 
 *repo*::
 
@@ -93,6 +100,8 @@ Requires that 'ohai' be installed on the remote end.
 This module is information only - it takes no parameters & does not
 support change hooks, nor does it make any changes on the system.
 
+Playbooks should not call the ohai module, playbooks call the 'setup'
+module behind the scenes instead.
 
 ping
 ````
@@ -100,9 +109,7 @@ ping
 A trivial test module, this module always returns the integer '1' on
 successful contact.
 
-This module does not support change hooks.
-
-This module is informative only - it takes no parameters & does not
+This module does not support change hooks and is informative only - it takes no parameters & does not
 support change hooks, nor does it make any changes on the system.
 
 
@@ -128,18 +135,14 @@ setup
 
 Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the template modules.  Playbooks will
-execute this module automatically as the first step in each play.
+execute this module automatically as the first step in each play using
+the variables section, so it is unneccessary to make explicit calls to
+setup within a playbook.
 
 If facter or ohai are installed, variables from these programs will also
 be snapshotted into the JSON file for usage in templating. These variables
 are prefixed with 'facter_' and 'ohai_" so it's easy to tell their source.
-
-*metadata*
-
-Optionally overrides the default JSON file location of /etc/ansible/setup or ~/ansible/setup
-depending on what remote user has been specified.  
-
-If used, also supply the metadata parameter to the template module.
+All variables are then bubbled up to the caller.
 
 *anything*
 
@@ -154,43 +157,43 @@ Templates a file out to a remote server.  Call the setup module prior to usage.
 
 *src*
 
-path of a Jinja2 formatted template on the local server
-
+path of a Jinja2 formatted template on the local server.  This can be a relative
+or absolute path.
 
 *dest*
 
 location to render the template on the remote server
 
 
-*metadata*
-
-location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
-which is the same as the default for the setup module.   Change if running as a non-root
-remote user who does not have permissions on /etc/ansible.
-
-
 This module also returns md5sum information about the resultant file.
 
 
-user
-````
-
-This module is in plan.
-
-
-yum
-```
-
-This module is in plan.
-
-
-writing your own modules
+Writing your own modules
 ````````````````````````
 
 To write your own modules, simply follow the convention of those already available in
 /usr/share/ansible.  Modules must return JSON but can be written in any language.
 Modules should return hashes, but hashes can be nested.
+
 To support change hooks, modules should return hashes with a changed: True/False
-element at the top level.  Modules can also choose to indicate a failure scenario
-by returning a top level 'failure' element with a True value, and a 'msg' element
-describing the nature of the failure.  Other values are up to the module.
+element at the top level::
+
+    {
+        'changed'   : True,
+        'something' : 42
+    }
+
+Modules can also choose to indicate a failure scenario by returning a top level 'failure' 
+element with a True value, and a 'msg' element describing the nature of the failure.  
+Other return values are up to the module.
+
+    {
+        'failure'   : True,
+        'msg'       : "here is what happened..."
+    }
+
+When shipping modules, drop them in /usr/share/ansible, or specify the module path to the
+command line tool or API.  It is easy to test modules by running them directly on
+the command line, passing them arguments just like they would be passed with ansible.
+
+

@@ -56,19 +56,14 @@
 <dl class="last docutils">
 <dt><a class="reference internal" href="examples.html"><em>Examples</em></a></dt>
 <dd>Examples of basic commands</dd>
-<dt><a class="reference internal" href="YAMLScripts.html"><em>YAML Scripts</em></a></dt>
-<dd>Complete documentation of the YAML syntax <cite>ansible</cite> understands for playbooks.</dd>
 <dt><a class="reference internal" href="playbooks.html"><em>Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</em></a></dt>
 <dd>Learning ansible&#8217;s configuration management language</dd>
-<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
-<dd>Learn about modules that ship with ansible</dd>
 </dl>
 </div>
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<p>Requirements are extremely minimal.</p>
-<p>If you are running python 2.6 on the <strong>overlord</strong> machine, you will
-need:</p>
+<p>Requirements for Ansible are extremely minimal.</p>
+<p>If you are running python 2.6 on the <strong>overlord</strong> machine (the machine that you&#8217;ll be talking to the other machines from), you will need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
@@ -92,7 +87,7 @@ need:</p>
 <p>For developers, you may wish to have:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">asciidoc</span></tt> (for building manpage documentation)</li>
-<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for building content for ansible.github.com)</li>
+<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for building content for the ansible.github.com project only)</li>
 </ul>
 </div>
 <div class="section" id="getting-ansible">
@@ -137,7 +132,8 @@ bserver.example.org</pre>
 ssh-add ~/.ssh/id_rsa
 ansible all -m ping</div></blockquote>
 <p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s now time to read some
-of the more real-world examples.</p>
+of the more real-world examples, and explore what you can do with different modules, as well
+as the Ansible playbooks language.</p>
 </div>
 </div>
 

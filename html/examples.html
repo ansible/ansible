@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="API" href="api.html" />
-    <link rel="prev" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration" href="playbooks.html" /> 
+    <link rel="next" title="Ansible Modules" href="modules.html" />
+    <link rel="prev" title="The Inventory File, Patterns, and Groups" href="patterns.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,10 +34,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="api.html" title="API"
+          <a href="modules.html" title="Ansible Modules"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="playbooks.html" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -61,42 +61,54 @@
 </div>
 <div class="section" id="parallelism-and-shell-commands">
 <h2>Parallelism and Shell Commands<a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
-<p>Reboot all web servers in Atlanta, 10 at a time:</p>
+<p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time:</p>
 <div class="highlight-python"><pre>ssh-agent bash
 ssh-add ~/.ssh/id_rsa.pub
 
 ansible atlanta -a "/sbin/reboot" -f 10</pre>
 </div>
 <p>The -f 10 specifies the usage of 10 simultaneous processes.</p>
-<p>Note that other than the command module, ansible modules do not work like simple scripts. They make the remote system look like you state, and run the commands neccessary to get it there.</p>
+<p>Note that other than the command module, ansible modules do not work like simple scripts. They make the remote system look like you state, and run the commands neccessary to get it there.  This is commonly refered to
+as &#8216;idempotency&#8217;.</p>
 </div>
-<div class="section" id="example-2-time-limited-background-operations">
-<h2>Example 2: Time Limited Background Operations<a class="headerlink" href="#example-2-time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="time-limited-background-operations">
+<h2>Time Limited Background Operations<a class="headerlink" href="#time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
 <p>Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won&#8217;t lose track. Polling support is pending in the command line.:</p>
 <div class="highlight-python"><pre>ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
 ansible all -n job_status -a jid=123456789</pre>
 </div>
-<p>Any module other than &#8216;copy&#8217; or &#8216;template&#8217; can be backgrounded.</p>
+<p>Any module other than &#8216;copy&#8217; or &#8216;template&#8217; can be backgrounded.  Typically you&#8217;ll be backgrounding shell
+commands or software upgrades only.</p>
+<p>After the time limit (in seconds) runs out (-B), the process on the remote nodes will be killed.</p>
 </div>
-<div class="section" id="examples-3-file-transfer-templating">
-<h2>Examples 3: File Transfer &amp; Templating<a class="headerlink" href="#examples-3-file-transfer-templating" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="file-transfer-templating">
+<h2>File Transfer &amp; Templating<a class="headerlink" href="#file-transfer-templating" title="Permalink to this headline">¶</a></h2>
 <p>Ansible can SCP lots of files to multiple machines in parallel, and optionally use them as template sources.</p>
 <p>To just transfer a file directly to many different servers:</p>
 <div class="highlight-python"><pre>ansible atlanta copy -a "/etc/hosts /tmp/hosts"</pre>
 </div>
-<p>To use templating, first run the setup module to put the template variables you would like to use on the remote host. Then use the template module to write the files using the templates. Templates are written in Jinja2 format. Playbooks (covered below) will run the setup module for you, making this even simpler.:</p>
+<p>To use templating, first run the setup module to put the template variables you would like to use on the remote host. Then use the template module to write the files using the templates. Templates are written in Jinja2 format. Playbooks (covered elsewhere in the documentation) will run the setup module for you, making this even simpler.:</p>
 <div class="highlight-python"><pre>ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
 ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
 ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
 </div>
 <p>Need something like the fqdn in a template? If facter or ohai are installed, data from these projects will also be made available to the template engine, using &#8216;facter&#8217; and &#8216;ohai&#8217; prefixes for each.</p>
 </div>
-<div class="section" id="examples-3-deploying-from-source-control">
-<h2>Examples 3: Deploying From Source Control<a class="headerlink" href="#examples-3-deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="deploying-from-source-control">
+<h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
 <div class="highlight-python"><pre>ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"</pre>
 </div>
 <p>Since ansible modules can notify change handlers (see &#8216;Playbooks&#8217;) it is possible to tell ansible to run specific tasks when the code is updated, such as deploying Perl/Python/PHP/Ruby directly from git and then restarting apache.</p>
+</div>
+<div class="section" id="managing-services">
+<h2>Managing Services<a class="headerlink" href="#managing-services" title="Permalink to this headline">¶</a></h2>
+<p>Ensure a service is started on all webservers:</p>
+<div class="highlight-python"><pre>ansible webservers -m service name=httpd state=started</pre>
+</div>
+<p>Alternatively, restart a service on all webservers:</p>
+<div class="highlight-python"><pre>ansible webservers -m service name=httpd state=restarted</pre>
+</div>
 </div>
 </div>
 
@@ -110,19 +122,20 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
   <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
 <li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
-<li><a class="reference internal" href="#example-2-time-limited-background-operations">Example 2: Time Limited Background Operations</a></li>
-<li><a class="reference internal" href="#examples-3-file-transfer-templating">Examples 3: File Transfer &amp; Templating</a></li>
-<li><a class="reference internal" href="#examples-3-deploying-from-source-control">Examples 3: Deploying From Source Control</a></li>
+<li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
+<li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
+<li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
+<li><a class="reference internal" href="#managing-services">Managing Services</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="playbooks.html"
-                        title="previous chapter">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a></p>
+  <p class="topless"><a href="patterns.html"
+                        title="previous chapter">The Inventory File, Patterns, and Groups</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="api.html"
-                        title="next chapter">API</a></p>
+  <p class="topless"><a href="modules.html"
+                        title="next chapter">Ansible Modules</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/examples.txt"
@@ -152,10 +165,10 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="api.html" title="API"
+          <a href="modules.html" title="Ansible Modules"
              >next</a> |</li>
         <li class="right" >
-          <a href="playbooks.html" title="Playbooks: Ansible for Deployment, Configuration Management, and Orchestration"
+          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
              >previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>

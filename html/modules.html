@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
     <link rel="next" title="YAML Scripts" href="YAMLScripts.html" />
-    <link rel="prev" title="The Inventory File, Patterns, and Groups" href="patterns.html" /> 
+    <link rel="prev" title="Examples" href="examples.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
           <a href="YAMLScripts.html" title="YAML Scripts"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
+          <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -63,12 +63,14 @@ ansible playbooks.</p>
 <dd>Examples of using modules with the Python API</dd>
 </dl>
 </div>
-<div class="section" id="module-idempotence">
-<h2>Module Idempotence<a class="headerlink" href="#module-idempotence" title="Permalink to this headline">¶</a></h2>
+<p>Nearly all modules take key=value parameters.  Some modules take no parameters, and the command
+module just takes arguments for the command you want to run.</p>
+<p>All modules return JSON format data, thoug if you are using the command line or playbooks, you
+don&#8217;t really need to know much about that.</p>
 <p>Most modules other than command are idempotent, meaning they will seek to avoid changes
 unless a change needs to be made.  When using ansible playbooks, these modules can
 trigger change events.  Unless otherwise noted, all modules support change hooks.</p>
-</div>
+<p>Stock modules:</p>
 <div class="section" id="command">
 <h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of arguments, space delimited.
@@ -76,15 +78,16 @@ This is the only module that does not use key=value style parameters.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><pre>/sbin/shutdown -t now</pre>
 </div>
+<p>The given shell command will be executed on all selected nodes.</p>
 <p>This module does not support change hooks and returns the return code from the program as well as timing information about how long the command was running for.</p>
 </div>
 <div class="section" id="copy">
 <h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
 <p>The copy module moves a file on the local box to remote locations.</p>
 <p><em>src</em>:</p>
-<p>Local absolute path to a file to copy to the remote server</p>
+<p>Local path to a file to copy to the remote server.  This can be an absolute or relative path.</p>
 <p><em>dest</em>:</p>
-<p>Remote absolute path where the file should end up</p>
+<p>Remote absolute path where the file should end up.</p>
 <p>This module also returns md5sum information about the resultant file.</p>
 </div>
 <div class="section" id="facter">
@@ -93,11 +96,12 @@ This is the only module that does not use key=value style parameters.</p>
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
 <p>This module is informative only - it takes no parameters &amp; does not support change hooks,
-nor does it make any changes on the system.</p>
+nor does it make any changes on the system.   Playbooks do not actually use
+this module, they use the &#8216;setup&#8217; module behind the scenes.</p>
 </div>
 <div class="section" id="git">
 <h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
-<p>Deploys software from git checkouts.</p>
+<p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
 <p>git or http protocol address of the repo to checkout</p>
 <p><em>dest</em>:</p>
@@ -112,13 +116,14 @@ data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
 <p>This module is information only - it takes no parameters &amp; does not
 support change hooks, nor does it make any changes on the system.</p>
+<p>Playbooks should not call the ohai module, playbooks call the &#8216;setup&#8217;
+module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
 <h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer &#8216;1&#8217; on
 successful contact.</p>
-<p>This module does not support change hooks.</p>
-<p>This module is informative only - it takes no parameters &amp; does not
+<p>This module does not support change hooks and is informative only - it takes no parameters &amp; does not
 support change hooks, nor does it make any changes on the system.</p>
 </div>
 <div class="section" id="service">
@@ -135,14 +140,13 @@ are idempotent actions that will not run commands unless neccessary.
 <h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the template modules.  Playbooks will
-execute this module automatically as the first step in each play.</p>
+execute this module automatically as the first step in each play using
+the variables section, so it is unneccessary to make explicit calls to
+setup within a playbook.</p>
 <p>If facter or ohai are installed, variables from these programs will also
 be snapshotted into the JSON file for usage in templating. These variables
-are prefixed with &#8216;<a class="reference internal" href="#facter">facter</a>&#8216; and &#8216;<a class="reference internal" href="#ohai">ohai</a>&#8221; so it&#8217;s easy to tell their source.</p>
-<p><em>metadata</em></p>
-<p>Optionally overrides the default JSON file location of /etc/ansible/setup or ~/ansible/setup
-depending on what remote user has been specified.</p>
-<p>If used, also supply the metadata parameter to the template module.</p>
+are prefixed with &#8216;<a class="reference internal" href="#facter">facter</a>&#8216; and &#8216;<a class="reference internal" href="#ohai">ohai</a>&#8221; so it&#8217;s easy to tell their source.
+All variables are then bubbled up to the caller.</p>
 <p><em>anything</em></p>
 <p>any other parameters can be named basically anything, and set a key=value
 pair in the JSON file for use in templating.</p>
@@ -151,32 +155,39 @@ pair in the JSON file for use in templating.</p>
 <h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the setup module prior to usage.</p>
 <p><em>src</em></p>
-<p>path of a Jinja2 formatted template on the local server</p>
+<p>path of a Jinja2 formatted template on the local server.  This can be a relative
+or absolute path.</p>
 <p><em>dest</em></p>
 <p>location to render the template on the remote server</p>
-<p><em>metadata</em></p>
-<p>location of a JSON file to use to supply template data.  Default is /etc/ansible/setup
-which is the same as the default for the setup module.   Change if running as a non-root
-remote user who does not have permissions on /etc/ansible.</p>
 <p>This module also returns md5sum information about the resultant file.</p>
 </div>
-<div class="section" id="user">
-<h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
-<p>This module is in plan.</p>
-</div>
-<div class="section" id="yum">
-<h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
-<p>This module is in plan.</p>
-</div>
 <div class="section" id="writing-your-own-modules">
-<h2>writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
+<h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
 <p>To write your own modules, simply follow the convention of those already available in
 /usr/share/ansible.  Modules must return JSON but can be written in any language.
-Modules should return hashes, but hashes can be nested.
-To support change hooks, modules should return hashes with a changed: True/False
-element at the top level.  Modules can also choose to indicate a failure scenario
-by returning a top level &#8216;failure&#8217; element with a True value, and a &#8216;msg&#8217; element
-describing the nature of the failure.  Other values are up to the module.</p>
+Modules should return hashes, but hashes can be nested.</p>
+<p>To support change hooks, modules should return hashes with a changed: True/False
+element at the top level:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&#39;changed&#39;</span>   <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+    <span class="s">&#39;something&#39;</span> <span class="p">:</span> <span class="mi">42</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Modules can also choose to indicate a failure scenario by returning a top level &#8216;failure&#8217;
+element with a True value, and a &#8216;msg&#8217; element describing the nature of the failure.
+Other return values are up to the module.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>{</dt>
+<dd>&#8216;failure&#8217;   : True,
+&#8216;msg&#8217;       : &#8220;here is what happened...&#8221;</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>When shipping modules, drop them in /usr/share/ansible, or specify the module path to the
+command line tool or API.  It is easy to test modules by running them directly on
+the command line, passing them arguments just like they would be passed with ansible.</p>
 </div>
 </div>
 
@@ -189,7 +200,6 @@ describing the nature of the failure.  Other values are up to the module.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#module-idempotence">Module Idempotence</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
@@ -199,16 +209,14 @@ describing the nature of the failure.  Other values are up to the module.</p>
 <li><a class="reference internal" href="#service">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
-<li><a class="reference internal" href="#user">user</a></li>
-<li><a class="reference internal" href="#yum">yum</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules">writing your own modules</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="patterns.html"
-                        title="previous chapter">The Inventory File, Patterns, and Groups</a></p>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="YAMLScripts.html"
                         title="next chapter">YAML Scripts</a></p>
@@ -244,7 +252,7 @@ describing the nature of the failure.  Other values are up to the module.</p>
           <a href="YAMLScripts.html" title="YAML Scripts"
              >next</a> |</li>
         <li class="right" >
-          <a href="patterns.html" title="The Inventory File, Patterns, and Groups"
+          <a href="examples.html" title="Examples"
              >previous</a> |</li>
         <li><a href="index.html">Ansible v0.0.1 documentation</a> &raquo;</li> 
       </ul>
