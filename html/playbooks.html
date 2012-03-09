@@ -17,7 +17,7 @@
         VERSION:     '0.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  false
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -137,8 +137,6 @@
           
           
             
-  <li><a href="_sources/playbooks.txt"
-         rel="nofollow">Source</a></li>
           
         </ul>
         <ul class="nav secondary-nav">
@@ -175,7 +173,7 @@ particularly awesome.</p>
 <p>They are the basis for a really simple configuration management and
 multi-machine deployment system, unlike any that already exist, and
 one that is very well suited to deploying complex applications.</p>
-<p>While you might run the main <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt> program for ad-hoc
+<p>While you might run the main /usr/bin/ansible program for ad-hoc
 tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.</p>
@@ -208,14 +206,15 @@ server group, then more commands back on the webservers group, etc:</p>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
 <p>The hosts line is a list of one or more groups or host patterns,
-seperated by colons, asdescribed in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a> documentation.
-This is just like the first parameter to <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt>.</p>
+seperated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
+documentation.  This is just like the first parameter to
+<cite>/usr/bin/ansible</cite>.</p>
 </div>
 <div class="section" id="vars-section">
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
 <p>A list of variables and values that can be used in the plays.  These
 can be used in templates or &#8216;action&#8217; lines and are dereferenced using
-<tt class="docutils literal"><span class="pre">`jinja2`</span></tt> syntax like this:</p>
+<cite>jinja2</cite> syntax like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">varname</span> <span class="p">}}</span>
 </pre></div>
 </div>
