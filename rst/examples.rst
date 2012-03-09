@@ -1,5 +1,9 @@
-Examples
-========
+Command Line Examples
+=====================
+
+The following examples show how to use `/usr/bin/ansible` for running ad-hoc tasks.
+Start here.  For configuration management and deployments, you'll want to pick up on
+using `/usr/bin/ansible-playbook` -- the concepts port over directly.
 
 .. seealso::
 
@@ -23,19 +27,6 @@ The -f 10 specifies the usage of 10 simultaneous processes.
 
 Note that other than the command module, ansible modules do not work like simple scripts. They make the remote system look like you state, and run the commands neccessary to get it there.  This is commonly refered to
 as 'idempotency'.
-
-Time Limited Background Operations
-``````````````````````````````````
-
-Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won't lose track. Polling support is pending in the command line.::
-
-    ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
-    ansible all -n job_status -a jid=123456789
-
-Any module other than 'copy' or 'template' can be backgrounded.  Typically you'll be backgrounding shell
-commands or software upgrades only.
-
-After the time limit (in seconds) runs out (-B), the process on the remote nodes will be killed.
 
 File Transfer & Templating
 ``````````````````````````
@@ -73,5 +64,18 @@ Ensure a service is started on all webservers::
 Alternatively, restart a service on all webservers::
 
     ansible webservers -m service name=httpd state=restarted
+
+Time Limited Background Operations
+``````````````````````````````````
+
+Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won't lose track. Polling support is pending in the command line.::
+
+    ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    ansible all -n job_status -a jid=123456789
+
+Any module other than 'copy' or 'template' can be backgrounded.  Typically you'll be backgrounding shell
+commands or software upgrades only.
+
+After the time limit (in seconds) runs out (-B), the process on the remote nodes will be killed.
 
 

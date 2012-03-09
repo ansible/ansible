@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Ansible v0.0.1 documentation</title>
+    <title>Command Line Examples &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -48,8 +48,11 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="command-line-examples">
+<h1>Command Line Examples<a class="headerlink" href="#command-line-examples" title="Permalink to this headline">¶</a></h1>
+<p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running ad-hoc tasks.
+Start here.  For configuration management and deployments, you&#8217;ll want to pick up on
+using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -70,16 +73,6 @@ ansible atlanta -a "/sbin/reboot" -f 10</pre>
 <p>The -f 10 specifies the usage of 10 simultaneous processes.</p>
 <p>Note that other than the command module, ansible modules do not work like simple scripts. They make the remote system look like you state, and run the commands neccessary to get it there.  This is commonly refered to
 as &#8216;idempotency&#8217;.</p>
-</div>
-<div class="section" id="time-limited-background-operations">
-<h2>Time Limited Background Operations<a class="headerlink" href="#time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
-<p>Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won&#8217;t lose track. Polling support is pending in the command line.:</p>
-<div class="highlight-python"><pre>ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
-ansible all -n job_status -a jid=123456789</pre>
-</div>
-<p>Any module other than &#8216;copy&#8217; or &#8216;template&#8217; can be backgrounded.  Typically you&#8217;ll be backgrounding shell
-commands or software upgrades only.</p>
-<p>After the time limit (in seconds) runs out (-B), the process on the remote nodes will be killed.</p>
 </div>
 <div class="section" id="file-transfer-templating">
 <h2>File Transfer &amp; Templating<a class="headerlink" href="#file-transfer-templating" title="Permalink to this headline">¶</a></h2>
@@ -110,6 +103,16 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
 <div class="highlight-python"><pre>ansible webservers -m service name=httpd state=restarted</pre>
 </div>
 </div>
+<div class="section" id="time-limited-background-operations">
+<h2>Time Limited Background Operations<a class="headerlink" href="#time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
+<p>Long running operations can be backgrounded, and their status can be checked on later. The same job ID is given to the same task on all hosts, so you won&#8217;t lose track. Polling support is pending in the command line.:</p>
+<div class="highlight-python"><pre>ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+ansible all -n job_status -a jid=123456789</pre>
+</div>
+<p>Any module other than &#8216;copy&#8217; or &#8216;template&#8217; can be backgrounded.  Typically you&#8217;ll be backgrounding shell
+commands or software upgrades only.</p>
+<p>After the time limit (in seconds) runs out (-B), the process on the remote nodes will be killed.</p>
+</div>
 </div>
 
 
@@ -120,12 +123,12 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#">Command Line Examples</a><ul>
 <li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
-<li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
 <li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
 <li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
 <li><a class="reference internal" href="#managing-services">Managing Services</a></li>
+<li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
 </ul>
 </li>
 </ul>
@@ -175,7 +178,7 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 08, 2012.
+      Last updated on Mar 09, 2012.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>

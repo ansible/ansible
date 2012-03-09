@@ -47,8 +47,7 @@ back on the webservers group, etc::
 Hosts line
 ``````````
 
-The hosts line is a list of one or more groups or host patterns, seperated by colons, as
-described in the 'patterns' documentation.  This is just like the first parameter to /usr/bin/ansible.
+The hosts line is a list of one or more groups or host patterns, seperated by colons, asdescribed in the 'patterns' documentation.  This is just like the first parameter to /usr/bin/ansible.
 
 Vars section
 ````````````
@@ -139,6 +138,58 @@ in a wordpress.yml file, and use it like so::
 
 In addition to the explicitly passed in parameters, all variables from the vars section
 are also available.
+
+The format of an included list of tasks or handlers looks just like a flat list of tasks.  Here
+is an example of what base.yml might look like::
+
+    ---
+    - name: no selinux
+      action: command /usr/sbin/setenforce 0
+    - name: no iptables
+      action: service name=iptables state=stopped
+    - name: this is just to show variables work here, favcolor={{ favcolor }}
+      action: command /bin/true
+
+As you can see above, variables in include files work just like they do in the main file.
+Including a variable in the name of a task is a contrived example, you could also
+pass them to the action command line or use them inside a template file.
+
+Note that include statements are only usable from the top level playbook file.
+At this time, includes can not include other includes.
+
+Using Includes To Assign Classes of Systems
+```````````````````````````````````````````
+
+Include files are best used to reuse logic between playbooks.  You could imagine
+a playbook describing your entire infrastructure like this::
+
+    ---
+    - hosts: atlanta-webservers
+      vars:
+        datacenter: atlanta
+      tasks:
+      - include: base.yml
+      - include: webservers.yml database=db.atlanta.com
+      handlers:
+        - include: generic-handlers.yml
+    - hosts: atlanta-dbservers
+      vars:
+        datacenter: atlanta
+      tasks:
+      - include: base.yml
+      - include: dbservers.yml
+      handlers:
+        - include: generic-handlers.yml
+
+There is one (or more) play defined for each group of systems, and each play maps
+each group includes one or more 'class definitions' telling the systems what they
+are supposed to do or be.
+
+Using a common handlers file could allow one task in 'webservers' to define 'restart apache',
+and it could be reused between multiple plays.
+
+Variables like 'database' above can be used in templates referenced from the
+configuration file to generate machine specific variables.
 
 Asynchronous Actions and Polling
 ````````````````````````````````

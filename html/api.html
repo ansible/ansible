@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &mdash; Ansible v0.0.1 documentation</title>
+    <title>Using the Python API &mdash; Ansible v0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -48,8 +48,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="using-the-python-api">
+<h1>Using the Python API<a class="headerlink" href="#using-the-python-api" title="Permalink to this headline">¶</a></h1>
 <p>The Python API is very powerful, and is how the ansible CLI and ansible-playbook
 are implemented.</p>
 <p>It&#8217;s pretty simple:</p>
@@ -78,6 +78,43 @@ expressed in the &#8216;ansible-modules&#8217; documentation.:</p>
 </div>
 <p>A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.</p>
+<div class="section" id="detailed-api-example">
+<h2>Detailed API Example<a class="headerlink" href="#detailed-api-example" title="Permalink to this headline">¶</a></h2>
+<p>The following script prints out the uptime information for all hosts:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+
+<span class="kn">import</span> <span class="nn">ansible.runner</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c"># construct the ansible runner and execute on all hosts</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">ansible</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">Runner</span><span class="p">(</span>
+    <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="n">forks</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">module_name</span><span class="o">=</span><span class="s">&#39;command&#39;</span><span class="p">,</span> <span class="n">module_args</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;/usr/bin/uptime&#39;</span><span class="p">],</span>
+<span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">results</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+   <span class="k">print</span> <span class="s">&quot;No hosts found&quot;</span>
+   <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="s">&quot;UP ***********&quot;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s">&#39;contacted&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;failed&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> &gt;&gt;&gt; </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="s">&#39;stdout&#39;</span><span class="p">])</span>
+
+<span class="k">print</span> <span class="s">&quot;FAILED *******&quot;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s">&#39;contacted&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s">&#39;failed&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> &gt;&gt;&gt; </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">])</span>
+
+<span class="k">print</span> <span class="s">&quot;DOWN *********&quot;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s">&#39;dark&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> &gt;&gt;&gt; </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hostname</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Advanced programmers may also wish to read the source to ansible itself, for
+it uses the Runner() API (with all available options) to implement the
+command line tools <tt class="docutils literal"><span class="pre">ansible</span></tt> and <tt class="docutils literal"><span class="pre">ansible-playbook</span></tt>.</p>
+</div>
 </div>
 
 
@@ -86,6 +123,14 @@ be used as a framework to rapidly build powerful applications and scripts.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using the Python API</a><ul>
+<li><a class="reference internal" href="#detailed-api-example">Detailed API Example</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="playbooks.html"
                         title="previous chapter">Playbooks: Ansible for Deployment, Configuration Management, and Orchestration</a></p>
@@ -131,7 +176,7 @@ be used as a framework to rapidly build powerful applications and scripts.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 08, 2012.
+      Last updated on Mar 09, 2012.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>

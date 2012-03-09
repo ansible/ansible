@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
-    <link rel="next" title="API" href="api.html" />
+    <link rel="next" title="Using the Python API" href="api.html" />
     <link rel="prev" title="YAML Format" href="YAMLScripts.html" /> 
   </head>
   <body>
@@ -34,7 +34,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="api.html" title="API"
+          <a href="api.html" title="Using the Python API"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="YAMLScripts.html" title="YAML Format"
@@ -91,8 +91,7 @@ back on the webservers group, etc:</p>
 </div>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
-<p>The hosts line is a list of one or more groups or host patterns, seperated by colons, as
-described in the &#8216;patterns&#8217; documentation.  This is just like the first parameter to /usr/bin/ansible.</p>
+<p>The hosts line is a list of one or more groups or host patterns, seperated by colons, asdescribed in the &#8216;patterns&#8217; documentation.  This is just like the first parameter to /usr/bin/ansible.</p>
 </div>
 <div class="section" id="vars-section">
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
@@ -168,6 +167,51 @@ in a wordpress.yml file, and use it like so:</p>
 </div>
 <p>In addition to the explicitly passed in parameters, all variables from the vars section
 are also available.</p>
+<p>The format of an included list of tasks or handlers looks just like a flat list of tasks.  Here
+is an example of what base.yml might look like:</p>
+<div class="highlight-python"><pre>---
+- name: no selinux
+  action: command /usr/sbin/setenforce 0
+- name: no iptables
+  action: service name=iptables state=stopped
+- name: this is just to show variables work here, favcolor={{ favcolor }}
+  action: command /bin/true</pre>
+</div>
+<p>As you can see above, variables in include files work just like they do in the main file.
+Including a variable in the name of a task is a contrived example, you could also
+pass them to the action command line or use them inside a template file.</p>
+<p>Note that include statements are only usable from the top level playbook file.
+At this time, includes can not include other includes.</p>
+</div>
+<div class="section" id="using-includes-to-assign-classes-of-systems">
+<h2>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h2>
+<p>Include files are best used to reuse logic between playbooks.  You could imagine
+a playbook describing your entire infrastructure like this:</p>
+<div class="highlight-python"><pre>---
+- hosts: atlanta-webservers
+  vars:
+    datacenter: atlanta
+  tasks:
+  - include: base.yml
+  - include: webservers.yml database=db.atlanta.com
+  handlers:
+    - include: generic-handlers.yml
+- hosts: atlanta-dbservers
+  vars:
+    datacenter: atlanta
+  tasks:
+  - include: base.yml
+  - include: dbservers.yml
+  handlers:
+    - include: generic-handlers.yml</pre>
+</div>
+<p>There is one (or more) play defined for each group of systems, and each play maps
+each group includes one or more &#8216;class definitions&#8217; telling the systems what they
+are supposed to do or be.</p>
+<p>Using a common handlers file could allow one task in &#8216;webservers&#8217; to define &#8216;restart apache&#8217;,
+and it could be reused between multiple plays.</p>
+<p>Variables like &#8216;database&#8217; above can be used in templates referenced from the
+configuration file to generate machine specific variables.</p>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
 <h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
@@ -198,6 +242,7 @@ are also available.</p>
 <li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
 <li><a class="reference internal" href="#handlers">Handlers</a></li>
 <li><a class="reference internal" href="#includes">Includes</a></li>
+<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
 <li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
 </ul>
@@ -209,7 +254,7 @@ are also available.</p>
                         title="previous chapter">YAML Format</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="api.html"
-                        title="next chapter">API</a></p>
+                        title="next chapter">Using the Python API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/playbooks.txt"
@@ -239,7 +284,7 @@ are also available.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="api.html" title="API"
+          <a href="api.html" title="Using the Python API"
              >next</a> |</li>
         <li class="right" >
           <a href="YAMLScripts.html" title="YAML Format"
@@ -249,7 +294,7 @@ are also available.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2012 Michael DeHaan.
-      Last updated on Mar 08, 2012.
+      Last updated on Mar 09, 2012.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
