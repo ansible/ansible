@@ -12,12 +12,16 @@ How to select hosts you wish to manage
    :doc:`playbooks`
        Learning ansible's configuration management language
 
+
+.. _inventoryformat:
+
 Inventory File Format
 +++++++++++++++++++++
 
 Ansible works against multiple systems in your infrastructure at the
-same time.  It does this by selecting portions of systems listed in Ansible's inventory file,
-which defaults to /etc/ansible/hosts, and looks like this::
+same time.  It does this by selecting portions of systems listed in
+Ansible's inventory file, which defaults to /etc/ansible/hosts, and
+looks like this::
 
     mail.example.com
 
@@ -54,13 +58,12 @@ with the bracket headers in the inventory file::
 Individual hosts, but not groups, can also be referenced using
 wildcards::
 
-   *.example.com
-   *.com
+    *.example.com
+    *.com
 
 It's also ok to mix wildcard patterns and groups at the same time::
 
-   one*.com:dbservers
+    one*.com:dbservers
 
-NOTE: It is not possible to target a host not in the inventory file.
-
-
+.. note::
+    It is not possible to target a host not in the inventory file.

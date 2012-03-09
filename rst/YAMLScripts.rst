@@ -15,7 +15,7 @@ addition, all YAML files (regardless of their association with
 `ansible` or not) should start with ``---``.
 
 In YAML a list can be represented in two ways. In one way all members
-of a list are lines beginning at the same indenta`tion level starting
+of a list are lines beginning at the same indentation level starting
 with a ``-`` character::
 
     ---
