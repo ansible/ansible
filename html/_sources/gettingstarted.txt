@@ -84,13 +84,21 @@ key in ``authorized_keys``::
     aserver.example.org
     bserver.example.org
 
-Now try this:
+Set up SSH agent to avoid retyping passwords::
 
     ssh-agent bash
     ssh-add ~/.ssh/id_rsa
+
+Now ping all your nodes::
+
     ansible all -m ping
+
+Now run a live command on all of your nodes::
+  
+    ansible all /bin/echo hello
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's now time to read some
 of the more real-world examples, and explore what you can do with different modules, as well
-as the Ansible playbooks language.
+as the Ansible playbooks language.  Ansible is not just about running commands, but you already
+have a working infrastructure!
 

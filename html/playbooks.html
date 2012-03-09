@@ -98,20 +98,17 @@ described in the &#8216;patterns&#8217; documentation.  This is just like the fi
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
 <p>A list of variables and values that can be used in the plays.  These can be used in templates
 or &#8216;action&#8217; lines and are dereferenced using <tt class="docutils literal"><span class="pre">`jinja2`</span></tt> syntax like this:</p>
-<blockquote>
-<div>{{ varname }}</div></blockquote>
+<div class="highlight-python"><pre>{{ varname }}</pre>
+</div>
 <p>Further, if there are discovered variables about the system (say, if facter or ohai were
 installed) these variables bubble up back into the playbook, and can be used on each
 system just like explicitly set variables.  Facter variables are prefixed with &#8216;<a href="#id1"><span class="problematic" id="id2">facter_</span></a>&#8216;
 and Ohai variables are prefixed with &#8216;<a href="#id3"><span class="problematic" id="id4">ohai_</span></a>&#8216;.  So for instance, if I wanted to write the
 hostname into the /etc/motd file, I could say:</p>
-<blockquote>
-<div><ul class="simple">
-<li>name: write the motd</li>
-<li>action: template src=/srv/templates/motd.j2 dest=/etc/motd</li>
-</ul>
-</div></blockquote>
-<p>And in /srv/templates/motd.j2::</p>
+<div class="highlight-python"><pre>- name: write the motd
+- action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
+</div>
+<p>And in /srv/templates/motd.j2:</p>
 <div class="highlight-python"><pre>You are logged into {{ facter_hostname }}</pre>
 </div>
 <p>But we&#8217;re getting ahead of ourselves.  Let&#8217;s talk about tasks.</p>
@@ -134,12 +131,9 @@ command line.  See the module documentation for more info.</p>
 <p>Variables, as mentioned above, can be used in action lines.  So if, hypothetically, you wanted
 to make a directory on each system named after the hostname ... yeah, that&#8217;s I know silly ... you could
 do it like so:</p>
-<blockquote>
-<div><ul class="simple">
-<li>name: make a directory</li>
-<li>action: mkdir /tmp/{{ facter_hostname }}</li>
-</ul>
-</div></blockquote>
+<div class="highlight-python"><pre>- name: make a directory
+- action: mkdir /tmp/{{ facter_hostname }}</pre>
+</div>
 </div>
 <div class="section" id="notify-statements">
 <h2>Notify statements<a class="headerlink" href="#notify-statements" title="Permalink to this headline">¶</a></h2>
@@ -162,25 +156,16 @@ complete in a particular play.</p>
 <h2>Includes<a class="headerlink" href="#includes" title="Permalink to this headline">¶</a></h2>
 <p>Not all tasks have to be listed directly in the main file.  An include file can contain
 a list of tasks (in YAML) as well, optionally passing extra variables into the file.
-Variables passed in can be deferenced like this (assume a variable named &#8216;user&#8217;)</p>
-<blockquote>
-<div>{{ user }}</div></blockquote>
+Variables passed in can be deferenced like this (assume a variable named &#8216;user&#8217;):</p>
+<div class="highlight-python"><pre>{{ user }}</pre>
+</div>
 <p>For instance, if deploying multiple wordpress instances, I could contain all of my tasks
 in a wordpress.yml file, and use it like so:</p>
-<blockquote>
-<div><ul>
-<li><dl class="first docutils">
-<dt>tasks:</dt>
-<dd><ul class="first last simple">
-<li>include: wordpress.yml user=timmy</li>
-<li>include: wordpress.yml user=alice</li>
-<li>include: wordpress.yml user=bob</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</div></blockquote>
+<div class="highlight-python"><pre>- tasks:
+   - include: wordpress.yml user=timmy
+   - include: wordpress.yml user=alice
+   - include: wordpress.yml user=bob</pre>
+</div>
 <p>In addition to the explicitly passed in parameters, all variables from the vars section
 are also available.</p>
 </div>

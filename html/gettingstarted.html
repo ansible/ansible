@@ -126,14 +126,20 @@ key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt
 aserver.example.org
 bserver.example.org</pre>
 </div>
-<p>Now try this:</p>
-<blockquote>
-<div>ssh-agent bash
-ssh-add ~/.ssh/id_rsa
-ansible all -m ping</div></blockquote>
+<p>Set up SSH agent to avoid retyping passwords:</p>
+<div class="highlight-python"><pre>ssh-agent bash
+ssh-add ~/.ssh/id_rsa</pre>
+</div>
+<p>Now ping all your nodes:</p>
+<div class="highlight-python"><pre>ansible all -m ping</pre>
+</div>
+<p>Now run a live command on all of your nodes:</p>
+<div class="highlight-python"><pre>ansible all /bin/echo hello</pre>
+</div>
 <p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s now time to read some
 of the more real-world examples, and explore what you can do with different modules, as well
-as the Ansible playbooks language.</p>
+as the Ansible playbooks language.  Ansible is not just about running commands, but you already
+have a working infrastructure!</p>
 </div>
 </div>
 

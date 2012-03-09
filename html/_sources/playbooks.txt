@@ -54,7 +54,7 @@ Vars section
 ````````````
 
 A list of variables and values that can be used in the plays.  These can be used in templates
-or 'action' lines and are dereferenced using ```jinja2``` syntax like this:
+or 'action' lines and are dereferenced using ```jinja2``` syntax like this::
 
    {{ varname }}
 
@@ -62,12 +62,12 @@ Further, if there are discovered variables about the system (say, if facter or o
 installed) these variables bubble up back into the playbook, and can be used on each
 system just like explicitly set variables.  Facter variables are prefixed with 'facter_'
 and Ohai variables are prefixed with 'ohai_'.  So for instance, if I wanted to write the
-hostname into the /etc/motd file, I could say:
+hostname into the /etc/motd file, I could say::
 
    - name: write the motd
    - action: template src=/srv/templates/motd.j2 dest=/etc/motd
 
-And in /srv/templates/motd.j2:::
+And in /srv/templates/motd.j2::
 
    You are logged into {{ facter_hostname }}
 
@@ -96,7 +96,7 @@ command line.  See the module documentation for more info.
 
 Variables, as mentioned above, can be used in action lines.  So if, hypothetically, you wanted
 to make a directory on each system named after the hostname ... yeah, that's I know silly ... you could
-do it like so:
+do it like so::
 
    - name: make a directory
    - action: mkdir /tmp/{{ facter_hostname }}
@@ -125,12 +125,12 @@ Includes
 
 Not all tasks have to be listed directly in the main file.  An include file can contain
 a list of tasks (in YAML) as well, optionally passing extra variables into the file.
-Variables passed in can be deferenced like this (assume a variable named 'user')
+Variables passed in can be deferenced like this (assume a variable named 'user')::
 
    {{ user }}
 
 For instance, if deploying multiple wordpress instances, I could contain all of my tasks
-in a wordpress.yml file, and use it like so:
+in a wordpress.yml file, and use it like so::
 
    - tasks:
       - include: wordpress.yml user=timmy 
