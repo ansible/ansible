@@ -1,0 +1,126 @@
+{% extends "basic/layout.html" %}
+{% set script_files = script_files + ['_static/bootstrap-dropdown.js', '_static/bootstrap-scrollspy.js'] %}
+{% set css_files = ['_static/bootstrap.css', '_static/bootstrap-sphinx.css'] + css_files %}
+
+{# Sidebar: Rework into our Boostrap nav section. #}
+{% macro navBar() %}
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>
+        <ul class="nav">
+          {% block sidebartoc %}
+            {% include "globaltoc.html" %}
+            {% include "localtoc.html" %}
+          {% endblock %}
+          {% block sidebarrel %}
+            {% include "relations.html" %}
+          {% endblock %}
+          {% block sidebarsourcelink %}
+            {% include "sourcelink.html" %}
+          {% endblock %}
+        </ul>
+        <ul class="nav secondary-nav">
+          {% block sidebarsearch %}
+            {% include "searchbox.html" %}
+          {% endblock %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{%- block extrahead %}
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+{% endblock %}
+
+{% block header %}{{ navBar() }}{% endblock %}
+
+{# Silence the sidebar's, relbar's #}
+{% block sidebar1 %}{% endblock %}
+{% block sidebar2 %}{% endblock %}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+
+{%- block content %}
+<div class="container">
+   {% block body %} {% endblock %}
+</div>
+{%- endblock %}
+
+{%- block footer %}
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right"><a href="#">Back to top</a></p>
+    <p>
+    {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}<br/>
+      {%- else %}
+        {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}.{% endtrans %}<br/>
+      {%- endif %}
+    {%- endif %}
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
+    {%- endif %}
+    {%- if show_sphinx %}
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}<br/>
+    {%- endif %}
+    </p>
+  </div>
+</footer>
+{%- endblock %}
+

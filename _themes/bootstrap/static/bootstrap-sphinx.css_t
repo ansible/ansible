@@ -1,0 +1,24 @@
+/*
+* bootstrap-sphinx.css
+* ~~~~~~~~~~~~~~~~~~~~
+*
+* Sphinx stylesheet -- Twitter Bootstrap theme.
+*/
+
+body {
+  padding-top: 42px;
+}
+
+div.documentwrapper {
+  float: left;
+  width: 100%;
+}
+
+{%- block sidebarlogo %}
+  {%- if logo %}
+.topbar h3 a, .topbar .brand {
+  background: transparent url("{{ logo }}") no-repeat 22px 3px;
+  padding-left: 62px;
+}
+  {%- endif %}
+{%- endblock %}

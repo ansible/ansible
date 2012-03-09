@@ -22,6 +22,7 @@ import os
 #sys.path.append(os.path.abspath('some/directory'))
 
 sys.path.insert(0, os.path.join('ansible', 'lib'))
+sys.path.append(os.path.abspath('_themes'))
 
 from ansible import __version__, __author__
 
@@ -98,6 +99,10 @@ pygments_style = 'sphinx'
 # Options for HTML output
 # -----------------------
 
+html_theme_path = ['_themes']
+html_theme = 'bootstrap'
+html_short_title = 'Ansible'
+
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
@@ -149,7 +154,7 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_split_index = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+html_copy_source = False
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
