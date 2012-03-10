@@ -76,6 +76,7 @@ Contents
 .. toctree::
    :maxdepth: 3
 
+   faq
    gettingstarted
    patterns
    examples
