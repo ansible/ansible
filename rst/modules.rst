@@ -173,7 +173,7 @@ template
 ````````
 
 Templates a file out to a remote server.  Call the :ref:`setup` module
-prior to usage.
+prior to usage if you are not running from a playbook.
 
 *src*:
 
@@ -187,6 +187,26 @@ prior to usage.
 
 This module also returns md5sum information about the resultant file.
 
+.. _yum:
+
+yum
+```
+
+Will install, upgrade, remove, and list packages with the yum package manager.
+
+*pkg*:
+
+* A package name or package specifier with version, like name-1.0
+
+*state*:
+
+* Can be either 'installed' or 'removed'
+
+*list*:
+
+* When 'list' is supplied instead of 'state', the yum module can list
+  various configuration attributes.  Values include 'installed', 'updates',
+  'available', 'repos', or any package specifier.
 
 Writing your own modules
 ````````````````````````

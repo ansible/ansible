@@ -120,6 +120,7 @@
 <li><a class="reference internal" href="#service">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
+<li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
 </ul>
 </li>
@@ -288,7 +289,7 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 <div class="section" id="template">
 <span id="id5"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
-prior to usage.</p>
+prior to usage if you are not running from a playbook.</p>
 <p><em>src</em>:</p>
 <ul class="simple">
 <li>Path of a Jinja2 formatted template on the local server.  This can
@@ -299,6 +300,24 @@ be a relative or absolute path.</li>
 <li>Location to render the template on the remote server.</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
+</div>
+<div class="section" id="yum">
+<span id="id6"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
+<p><em>pkg</em>:</p>
+<ul class="simple">
+<li>A package name or package specifier with version, like name-1.0</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>Can be either &#8216;installed&#8217; or &#8216;removed&#8217;</li>
+</ul>
+<p><em>list</em>:</p>
+<ul class="simple">
+<li>When &#8216;list&#8217; is supplied instead of &#8216;state&#8217;, the yum module can list
+various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
+&#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.</li>
+</ul>
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
