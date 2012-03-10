@@ -1,0 +1,324 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequently Asked Questions &mdash; Ansible v0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="top" title="Ansible v0.0.1 documentation" href="index.html" />
+    <link rel="next" title="Man Pages" href="man.html" />
+    <link rel="prev" title="Using the Python API" href="api.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible</a>
+        <ul class="nav">
+          
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Site</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the Python API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#what-inspired-ansible">What inspired Ansible?</a></li>
+<li><a class="reference internal" href="#comparisons">Comparisons</a><ul>
+<li><a class="reference internal" href="#vs-func">vs Func?</a></li>
+<li><a class="reference internal" href="#vs-puppet">vs Puppet?</a></li>
+<li><a class="reference internal" href="#vs-chef">vs Chef?</a></li>
+<li><a class="reference internal" href="#vs-capistrano-fabric">vs Capistrano/Fabric?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-questions">Other Questions</a><ul>
+<li><a class="reference internal" href="#how-does-ansible-scale">How does Ansible scale?</a></li>
+<li><a class="reference internal" href="#are-transports-other-than-ssh-supported">Are transports other than SSH supported?</a></li>
+<li><a class="reference internal" href="#what-are-some-ideal-uses-for-ansible">What are some ideal uses for Ansible?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+          
+            
+  <li><a href="api.html"
+         title="previous chapter">&laquo; Using the Python API</a></li>
+  <li><a href="man.html"
+         title="next chapter">Man Pages &raquo;</a></li>
+          
+          
+            
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<div class="container">
+   
+  <div class="section" id="frequently-asked-questions">
+<h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-inspired-ansible">
+<h2>What inspired Ansible?<a class="headerlink" href="#what-inspired-ansible" title="Permalink to this headline">¶</a></h2>
+<p>Back when I worked for Red Hat and working on <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>, several of us identified a gap between
+provisioning (Cobbler) and configuration management solutions (cfengine, Puppet, etc).
+There was a need for a way to do ad-hoc tasks efficiently, and various parallel
+SSH scripts were not API based enough for us.  So we (Adrian Likins, Seth Vidal, and I)
+created <a class="reference external" href="http://fedorahosted.org/func">Func</a> &#8211; a secure distributed command framework.</p>
+<p>I always wanted to have a configuration management system built on Func, but never
+built it due to needing to spend time on Cobbler and other projects.
+In the meantime, a John Eckersberg developed Taboot,
+a deployment framework of sorts that sat on top of Func, using a YAML syntax very
+much like what Ansible now has in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
+<p>After trying to get Func running again recently at a new company, I got tired
+of some SSL and DNS issues and decided to create something a bit simpler, taking
+all of the good ideas from Func, and merging them with experience I learned from
+working at Puppet Labs.  I wanted something that was easy to pick up and was installable
+without any bootstrapping, and didn&#8217;t suffer from the &#8220;I don&#8217;t want to learn X&#8221; mentality
+that often impacted adoption of tools like Puppet and Chef among certain ops teams.</p>
+<p>I also spent some time working with a couple of sites that needed to do large webapp deployments,
+and noticed how complex various configuration management and deployment tools were to these
+companies, compared with what they actually needed.  Release processes were too complex
+and needed something simple to straighten them out &#8211; but I really didn&#8217;t want to train
+all the dev(ops) on Puppet or Chef, and they really didn&#8217;t want to learn them either.</p>
+<p>I kept thinking, is there a  reason for these programs to be so large and complicated?
+Well, systems management is a little complicated, but no.  Not really.</p>
+<p>Can I build something that a sysadmin can
+figure out in 15 minutes and get going, and then extend in any language he knows?
+That&#8217;s how Ansible was born.  It sheds &#8216;best practices&#8217; for &#8216;you know your infrastructure
+best&#8217;, and distills all of the ideas behind all of these other tools to the core.</p>
+<p>Not only is Ansible very simple and easy to learn/extend, it&#8217;s configuration management, deployment, and ad-hoc tasks all in one app.  And I think that makes it pretty powerful.  It hasn&#8217;t really been done before.</p>
+<p>I&#8217;d like to know what you think of it.  Hop by the mailing list and say hi.</p>
+</div>
+<div class="section" id="comparisons">
+<h2>Comparisons<a class="headerlink" href="#comparisons" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vs-func">
+<h3>vs Func?<a class="headerlink" href="#vs-func" title="Permalink to this headline">¶</a></h3>
+<p>Ansible uses SSH by default instead of SSL and custom daemons, and requires
+no extra software to run on managed machines.  You can also write modules
+in any language as long as they return JSON.  Ansible&#8217;s API, of course, is
+heavily inspired by Func.   Some features, like delegation hierarchies, are
+not supported, but Ansible does have an async mode.  Ansible also adds
+a configuration management and multinode orchestration layer (<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>)
+that Func didn&#8217;t have.</p>
+</div>
+<div class="section" id="vs-puppet">
+<h3>vs Puppet?<a class="headerlink" href="#vs-puppet" title="Permalink to this headline">¶</a></h3>
+<p>First off, Ansible wouldn&#8217;t have happened without Puppet.  Puppet took configuration
+management ideas from cfengine and made them sane.  However, I still think they can
+be simpler.</p>
+<p>Ansible playbooks ARE a complete configuration management system.  Unlike Puppet, playbooks
+are implicitly ordered (more like Chef), but still retain the ability to signal
+notification events (like Puppet).  This is kind of a &#8216;best of both worlds&#8217; thing.</p>
+<p>There is no central server to promote scaling, and Ansible is
+also designed with multi-node deployment in mind from day-one &#8211; something that is difficult
+for Puppet because of the pull architecture.  Ansible is push based,
+so you can do things in an ordered fashion, addressing batches of servers
+at one time, and you do not have to contend with the DAG.  It&#8217;s also extensible in any language
+and the source is designed so that you don&#8217;t have to be an expert programmer to submit a patch.</p>
+<p>Ansible&#8217;s resources are heavily inspired by Puppet, with the &#8220;state&#8221; keyword being a more or less
+direct port of &#8220;ensure&#8221; from Puppet.  Unlike Puppet, Ansible can be extended in any language,
+even bash ... just return some output in JSON format.  You don&#8217;t need to know Ruby.</p>
+<p>Unlike Puppet, hosts are taken out of playbooks when they have a failure.  It encourages
+&#8216;fail first&#8217;, so you can correct the error, instead of configuring as much of the system
+as it can.  A system shouldn&#8217;t be half correct, especially if we&#8217;re planning on configuring
+other systems that depend on that system.</p>
+<p>Ansible also has a VERY short learning curve &#8211; but it also has less language constructs and
+does not create it&#8217;s own programming language.   What constructs Ansible does have should be enough to cover 80% or so of the cases of most Puppet users, and it should scale equally well (not having a server is
+almost like cheating).</p>
+<p>I also suspect some Ansible users will actually use Ansible to trigger Puppet &#8211; using the git
+module to checkout a Puppet module hierachy from source, and the command module to run
+&#8216;puppet apply&#8217;.  That&#8217;s ok too, but you may find playbooks do all you need.</p>
+<p>Ansible does support gathering variables from &#8216;facter&#8217;, if installed, and Ansible templates
+in jinja2 in a way just like Puppet does with erb.</p>
+</div>
+<div class="section" id="vs-chef">
+<h3>vs Chef?<a class="headerlink" href="#vs-chef" title="Permalink to this headline">¶</a></h3>
+<p>Much in the ways Ansible is different from Puppet.  Chef is notoriously hard
+to set up on the server, and requires that you know how to program in Ruby to
+use the language.  As such, it seems to have a pretty good following mainly
+among Rails coders.</p>
+<p>Like Chef (and unlike Puppet), Ansible executes configuration tasks in the order
+given, rather than having to manually specify a dependency graph.  Ansible extends
+this though, by allowing triggered notifiers, so Apache can, be restarted if needed,
+only once, at the end of a configuration run.</p>
+<p>Unlike Chef, Ansible&#8217;s playbooks are not a programming language.   This means
+that you can parse Ansible&#8217;s playbooks and treat the instructions as data.  It also
+means working on your infrastructure is not a development task and testing is easier.</p>
+<p>Ansible can be used regardless of your programming language experience.  Both
+Chef and Puppet are around 60k+ lines of code, while Ansible is a much simpler
+program.  I believe this strongly leads to more reliable software and a richer
+open source community &#8211; the code is kept simple so it is easy for anyone to
+submit a patch or module.</p>
+<p>Just like with puppet, some users may wish to use Ansible to trigger chef-solo to
+avoid using the server, after checking out some chef content using Ansible&#8217;s git
+support.</p>
+<p>Ansible does support gathering variables from &#8216;ohai&#8217;, if installed.</p>
+</div>
+<div class="section" id="vs-capistrano-fabric">
+<h3>vs Capistrano/Fabric?<a class="headerlink" href="#vs-capistrano-fabric" title="Permalink to this headline">¶</a></h3>
+<p>These tools aren&#8217;t really well suited to doing idempotent configuration and are
+typically about pushing software out for web deployment and automating steps.</p>
+<p>Meanwhile Ansible is designed for other types of configuration management, and contains some
+advanced scaling features.</p>
+<p>The ansible playbook syntax is documented within a page of text and also has a MUCH lower learning curve.  And because Ansible is designed for more than pushing webapps, it&#8217;s more generally
+useful for sysadmins (not just web developers), and can also be used for firing off ad-hoc tasks.</p>
+</div>
+</div>
+<div class="section" id="other-questions">
+<h2>Other Questions<a class="headerlink" href="#other-questions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-does-ansible-scale">
+<h3>How does Ansible scale?<a class="headerlink" href="#how-does-ansible-scale" title="Permalink to this headline">¶</a></h3>
+<p>Whether in single-execution mode or using ansible playbooks, ansible can
+run multiple commands in seperate forks, thanks to the magic behind
+Python&#8217;s multiprocessing module.</p>
+<p>If you need to address 500 machines you can decide if you want to try
+to contact 5 at a time, or 50 at a time.
+It&#8217;s up to you and how much power you can throw at it, but it&#8217;s heritage
+is about handling those kinds of use cases.</p>
+<p>There are no daemons so it&#8217;s entirely up to you.  When you are aren&#8217;t using
+Ansible, it is not consuming any resources.</p>
+<p>If you have 10,000 systems, running a single ansible playbook against all of
+them probably isn&#8217;t always appropriate, but most users shouldn&#8217;t have any problems.
+If you want to kick off an async task/module, it&#8217;s probably fine.</p>
+<p>If you&#8217;d like to discuss scaling, please hop on the mailing list.</p>
+</div>
+<div class="section" id="are-transports-other-than-ssh-supported">
+<h3>Are transports other than SSH supported?<a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
+<p>Currently SSH is the only one, though the intent is to make this entirely
+pluggable very soon so if you wanted to build a message bus or XMPP (or even
+sneaker net?) adapter ansible will let you do that.  Stay tuned!</p>
+</div>
+<div class="section" id="what-are-some-ideal-uses-for-ansible">
+<h3>What are some ideal uses for Ansible?<a class="headerlink" href="#what-are-some-ideal-uses-for-ansible" title="Permalink to this headline">¶</a></h3>
+<p>One of the best use cases? Complex multi-node cloud deployments using playbooks.  Another good
+example is for configuration management where you
+are starting from a clean OS with no extra software installed, adopting systems
+that are already deployed.</p>
+<p>Ansible is also great for running ad-hoc tasks across a wide variety of Linux, Unix, and <a href="#id1"><span class="problematic" id="id2">*</span></a>BSDs.
+Because it just uses the basic tools available on the system, it is exceptionally cross platform
+without needing to install management packages on each node.</p>
+<p>It also excels for writing distributed
+scripts and ad-hoc applications that need to gather data or perform arbitrary
+tasks &#8211; whether for a QA sytem, build system, or anything you can think of.</p>
+</div>
+</div>
+</div>
+
+
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right"><a href="#">Back to top</a></p>
+    <p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Mar 09, 2012.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
