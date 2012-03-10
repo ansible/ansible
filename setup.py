@@ -26,7 +26,8 @@ setup(name='ansible',
              'library/git',
          ]),
          ('/usr/share/man/man1', [
-                'docs/man/man1/ansible.1'
+                'docs/man/man1/ansible.1',
+                'docs/man/man1/ansible-playbook.1'
          ]),
       ],
       scripts=[

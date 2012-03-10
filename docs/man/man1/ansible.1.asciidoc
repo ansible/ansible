@@ -50,14 +50,44 @@ Level of parallelism. Specify as an integer, the default is 5.
 Module name to execute.
 
 
-*-p*, *--pattern*::
+*-M*, *--module-path*::
 
-Hostname pattern. Accepts shell-like globs which can be seperated with ";"
-The default is "*" which matches all hosts in the ansible hosts file.  Group
-names from the ansible inventory file can also be used.
+Where to load modules from.  The default is /usr/share/ansible
 
 
-See ansible --help for additional options.
+*-a*, *--args*::
+
+Arguments to pass to the module
+
+
+*-k*, *--ask-pass*::
+
+Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
+
+
+*-o*, *--one-line*::
+
+Try to output everything on one line.
+
+
+*-t*, *--tree*::
+
+Save contents in this output directory, with the results named in a file named after each host.
+
+
+*-T*, *--timeout*::
+
+Connection timeout to use when trying to talk to hosts, in seconds.
+
+
+*-B*, *--background*::
+
+Runs commands in the background, killing the task after N seconds.
+
+
+*-u*, *--remote-user*::
+
+Use this remote username instead of root
 
 
 INVENTORY
@@ -70,9 +100,9 @@ are included on their own line, enclosed in square brackets.
 FILES
 -----
 
-/etc/ansible/hosts -- Default hosts file
+/etc/ansible/hosts -- Default inventory file
 
-/usr/share/ansible -- Default module library
+/usr/share/ansible/ -- Default module library
 
 
 ENVIRONMENT
@@ -103,6 +133,8 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-Ansible home page: <https://ansible.github.com/>
+Extensive documentation as well as IRC and mailing list info
+is available on the ansible home page: <https://ansible.github.com/>
+
 
 
