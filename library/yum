@@ -77,7 +77,7 @@ def list_stuff(my, stuff):
             s = 'disabled'
             if repo.enabled:
                 s = 'enabled'
-            r[repo.id] = s
+            t[repo.id] = s
             r.append(t)
         
         return r
@@ -179,7 +179,12 @@ def ensure(my, state, pkgspec):
                 'failed': failed,
                 'results':out,
                 'errors': err }
-
+    #if state == 'latest':
+        # check to see if this pkg is in an update
+        # if it is - update it and check to see if it applied
+        # if it is not - then return 
+        # return { 'changed':False, 'failed':False, 'results':'', 'errors':'' }
+        
     return {'changed': False,
             'failed': True,
             'results':'',
@@ -205,9 +210,11 @@ def main():
     # update="args"?
     #
     
-    results = {}
+
     args = " ".join(sys.argv[1:])
     items = shlex.split(args)
+    # if nothing else changes - it fails
+    results = { 'changed':False, 'failed':True, 'results':'', 'errors':args }
     params = {}
     for x in items:
         (k, v) = x.split("=", 1)
