@@ -57,6 +57,29 @@ Need something like the fqdn in a template? If facter or ohai are
 installed, data from these projects will also be made available to the
 template engine, using 'facter' and 'ohai' prefixes for each.
 
+Managing Packages
+`````````````````
+
+Ensure a package is at the latest version::
+
+    ansible webservers -m yum -a "pkg=acme state=latest"
+
+Ensure a package is installed, but don't update it::
+    
+    ansible webservers -m yum -a "pkg=acme state=installed"
+
+Ensure a package is installed to a specific version::
+
+    ansible-webservers -m yum -a "pkg=acme-1.5 state=installed"
+
+Ensure a package is not installed:
+    
+    ansible-webservers -m yum -a "pkg=acme state=removed"
+
+Currently Ansible only has a module for managing packages with yum.  You can install
+for other package manages using the command module or contribute a module
+for other package managers.  Stop by the mailing list for info/details.
+
 Deploying From Source Control
 `````````````````````````````
 
@@ -74,11 +97,15 @@ Managing Services
 
 Ensure a service is started on all webservers::
 
-    ansible webservers -m service name=httpd state=started
+    ansible webservers -m service -a "name=httpd state=started"
 
 Alternatively, restart a service on all webservers::
 
-    ansible webservers -m service name=httpd state=restarted
+    ansible webservers -m service -a "name=httpd state=restarted"
+
+Ensure a service is stopped::
+
+    ansible webservers -m service -a "name=httpd state=stopped"
 
 Time Limited Background Operations
 ``````````````````````````````````
