@@ -4,17 +4,17 @@ Frequently Asked Questions
 What inspired Ansible?
 ----------------------
 
-Back when I worked for Red Hat and working on Cobbler, several of us identified a gap between
+Back when I worked for Red Hat and working on `Cobbler <http://cobbler.github.com/>`_, several of us identified a gap between
 provisioning (Cobbler) and configuration management solutions (cfengine, Puppet, etc).
 There was a need for a way to do ad-hoc tasks efficiently, and various parallel
 SSH scripts were not API based enough for us.  So we (Adrian Likins, Seth Vidal, and I) 
-created Func -- a secure distributed command framework.
+created `Func <http://fedorahosted.org/func>`_ -- a secure distributed command framework.
 
 I always wanted to have a configuration management system built on Func, but never
 built it due to needing to spend time on Cobbler and other projects.  
 In the meantime, a John Eckersberg developed Taboot, 
 a deployment framework of sorts that sat on top of Func, using a YAML syntax very
-much like what Ansible now has.
+much like what Ansible now has in :doc:`playbooks`.
 
 After trying to get Func running again recently at a new company, I got tired
 of some SSL and DNS issues and decided to create something a bit simpler, taking
@@ -52,7 +52,8 @@ no extra software to run on managed machines.  You can also write modules
 in any language as long as they return JSON.  Ansible's API, of course, is
 heavily inspired by Func.   Some features, like delegation hierarchies, are
 not supported, but Ansible does have an async mode.  Ansible also adds
-a configuration management and multinode orchestration layer that Func didn't have.
+a configuration management and multinode orchestration layer (:doc:`playbooks`) 
+that Func didn't have.
 
 vs Puppet?
 ++++++++++

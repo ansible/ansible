@@ -57,10 +57,10 @@ Design Goals
 * Be very usable as non-root
 * Create the easiest config management system to use, ever.
 
-Communicate and Get Involved
-````````````````````````````
+Mailing List & IRC
+```````````````````
 
-Your ideas and contributions are welcome.  We're also happy to help
+Your ideas and contributions are welcome.  We're also happy to help 
 you with questions about Ansible.
 
 * Join the `ansible-project mailing list <http://groups.google.com/group/ansible-project>`_ on Google Groups
@@ -76,7 +76,6 @@ Contents
 .. toctree::
    :maxdepth: 3
 
-   faq
    gettingstarted
    patterns
    examples
@@ -84,6 +83,7 @@ Contents
    YAMLScripts
    playbooks
    api
+   faq
    man
 
 About the Author

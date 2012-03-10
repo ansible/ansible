@@ -1,5 +1,5 @@
-Getting Started
-===============
+Downloads & Getting Started
+===========================
 
 How to download ansible and get started using it
 
