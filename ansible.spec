@@ -9,7 +9,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Group: Development/Libraries
 License: GPLv3
 Prefix: %{_prefix}
-Source0: ansible-%{version}.tar.gz
+Source0: https://github.com/downloads/ansible/ansible/%{name}-%{version}.tar.gz
 Url: http://ansible.github.com
 
 BuildArch: noarch
