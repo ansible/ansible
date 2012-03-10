@@ -1,9 +1,13 @@
 #!/usr/bin/make
 
+NAME = "ansible"
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
+RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
+RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)"
 
 all: clean python
 
@@ -45,8 +49,8 @@ clean:
 	find ./docs/man -type f \( -name "*.xml" -or -regex ".*\.[0-9]$$" \) -delete
 	@echo "Cleaning up output from test runs"
 	-rm -rf test/test_data
-	@echo "Cleaning up RPM stuff"
-	-rm MANIFEST
+	@echo "Cleaning up RPM building stuff"
+	-rm -rf MANIFEST rpm-build
 
 python: docs
 	python setup.py build
@@ -54,11 +58,38 @@ python: docs
 install: docs
 	python setup.py install
 
-rpm: 
-	python setup.py sdist
-	rpmbuild -ta dist/ansible-1.0.tar.gz
+sdist: clean
+	python ./setup.py sdist
+
+rpmcommon: sdist
+	@mkdir -p rpm-build
+	@cp dist/*.gz rpm-build/
+
+srpm: rpmcommon
+	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
+	--define "_builddir %{_topdir}" \
+	--define "_rpmdir %{_topdir}" \
+	--define "_srcrpmdir %{_topdir}" \
+	--define "_specdir %{_topdir}" \
+	--define "_sourcedir %{_topdir}" \
+	-bs ansible.spec
+	@echo "#############################################"
+	@echo "Ansible SRPM is built:"
+	@echo "    rpm-build/$(RPMNVR).src.rpm"
+	@echo "#############################################"
+
+rpm: rpmcommon
+	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
+	--define "_builddir %{_topdir}" \
+	--define "_rpmdir %{_topdir}" \
+	--define "_srcrpmdir %{_topdir}" \
+	--define "_specdir %{_topdir}" \
+	--define "_sourcedir %{_topdir}" \
+	-ba ansible.spec
+	@echo "#############################################"
+	@echo "Ansible RPM is built:"
+	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
+	@echo "#############################################"
 
 .PHONEY: docs manual clean pep8
 vpath %.asciidoc docs/man/man1
-
-
