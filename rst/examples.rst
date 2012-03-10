@@ -60,10 +60,6 @@ template engine, using 'facter' and 'ohai' prefixes for each.
 Managing Packages
 `````````````````
 
-Ensure a package is at the latest version::
-
-    ansible webservers -m yum -a "pkg=acme state=latest"
-
 Ensure a package is installed, but don't update it::
     
     ansible webservers -m yum -a "pkg=acme state=installed"
@@ -71,6 +67,10 @@ Ensure a package is installed, but don't update it::
 Ensure a package is installed to a specific version::
 
     ansible-webservers -m yum -a "pkg=acme-1.5 state=installed"
+
+Ensure a package is at the latest version::
+
+    ansible webservers -m yum -a "pkg=acme state=latest" 
 
 Ensure a package is not installed:
     

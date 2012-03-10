@@ -130,6 +130,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#">Command Line Examples</a><ul>
 <li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
 <li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
+<li><a class="reference internal" href="#managing-packages">Managing Packages</a></li>
 <li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
 <li><a class="reference internal" href="#managing-services">Managing Services</a></li>
 <li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
@@ -224,6 +225,24 @@ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
 installed, data from these projects will also be made available to the
 template engine, using &#8216;facter&#8217; and &#8216;ohai&#8217; prefixes for each.</p>
 </div>
+<div class="section" id="managing-packages">
+<h2>Managing Packages<a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
+<p>Ensure a package is installed, but don&#8217;t update it:</p>
+<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=installed"</pre>
+</div>
+<p>Ensure a package is installed to a specific version:</p>
+<div class="highlight-python"><pre>ansible-webservers -m yum -a "pkg=acme-1.5 state=installed"</pre>
+</div>
+<p>Ensure a package is at the latest version:</p>
+<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=latest"</pre>
+</div>
+<p>Ensure a package is not installed:</p>
+<blockquote>
+<div>ansible-webservers -m yum -a &#8220;pkg=acme state=removed&#8221;</div></blockquote>
+<p>Currently Ansible only has a module for managing packages with yum.  You can install
+for other package manages using the command module or contribute a module
+for other package managers.  Stop by the mailing list for info/details.</p>
+</div>
 <div class="section" id="deploying-from-source-control">
 <h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
@@ -237,10 +256,13 @@ directly from git and then restarting apache.</p>
 <div class="section" id="managing-services">
 <h2>Managing Services<a class="headerlink" href="#managing-services" title="Permalink to this headline">¶</a></h2>
 <p>Ensure a service is started on all webservers:</p>
-<div class="highlight-python"><pre>ansible webservers -m service name=httpd state=started</pre>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=started"</pre>
 </div>
 <p>Alternatively, restart a service on all webservers:</p>
-<div class="highlight-python"><pre>ansible webservers -m service name=httpd state=restarted</pre>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=restarted"</pre>
+</div>
+<p>Ensure a service is stopped:</p>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=stopped"</pre>
 </div>
 </div>
 <div class="section" id="time-limited-background-operations">

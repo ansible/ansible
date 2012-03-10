@@ -42,6 +42,8 @@ server group, then more commands back on the webservers group, etc::
       user: root
       tasks:
       - include: base.yml somevar=3 othervar=4
+      - name: ensure apache is installed
+        action: yum pkg=httpd state=installed
       - name: write the apache config file
         action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
