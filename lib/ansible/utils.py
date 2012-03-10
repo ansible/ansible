@@ -54,9 +54,9 @@ def task_start_msg(name, conditional):
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''
     if not oneline:
-        return "%s | %s >>\n%s" % (hostname, caption, bigjson(result))
+        return "%s | %s >> %s\n" % (hostname, caption, bigjson(result))
     else:
-        return "%s | %s >> %s" % (hostname, caption, smjson(result))
+        return "%s | %s >> %s\n" % (hostname, caption, smjson(result))
 
 def regular_success_msg(hostname, result, oneline):
     ''' output the result of a successful module run '''
@@ -135,9 +135,9 @@ def dark_hosts_msg(results):
     ''' summarize the results of all uncontactable hosts '''
     buf = ''
     if len(results['dark'].keys()) > 0:
-        buf += "*** Hosts which could not be contacted or did not respond: ***"
+        buf += "\n*** Hosts which could not be contacted or did not respond: ***\n"
         for hostname in results['dark'].keys():
-            buf += "%s:\n%s\n" % (hostname, results['dark'][hostname])
+            buf += "%s: %s\n" % (hostname, results['dark'][hostname])
     buf += "\n"
     return buf
 

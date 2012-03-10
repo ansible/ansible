@@ -28,9 +28,9 @@ import multiprocessing
 import signal
 import os
 import ansible.constants as C 
+import ansible.connection
 import Queue
 import random
-import paramiko
 import jinja2
 from ansible.utils import *
     
@@ -66,6 +66,7 @@ class Runner(object):
         background=0,
         basedir=None,
         setup_cache={},
+        transport='paramiko',
         verbose=False):
     
         ''' 
@@ -105,6 +106,7 @@ class Runner(object):
 
         random.seed()
         self.generated_jid = str(random.randint(0, 999999999999))
+        self.connector = ansible.connection.Connection(self, transport)
 
     @classmethod
     def parse_hosts(cls, host_list):
@@ -159,19 +161,13 @@ class Runner(object):
 
     def _connect(self, host):
         ''' 
-        obtains a paramiko connection to the host.
+        obtains a connection to the host.
         on success, returns (True, connection) 
         on failure, returns (False, traceback str)
         '''
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            # try paramiko
-            ssh.connect(host, username=self.remote_user, allow_agent=True, 
-              look_for_keys=True, password=self.remote_pass, timeout=self.timeout)
-            return [ True, ssh ]
-        except Exception, e:
-            # it failed somehow, return the failure string
+            return [ True, self.connector.connect(host) ]
+        except ansible.connection.AnsibleConnectionException, e:
             return [ False, "FAILED: %s" % str(e) ]
 
     def _return_from_module(self, conn, host, result):
@@ -195,9 +191,7 @@ class Runner(object):
     def _transfer_file(self, conn, source, dest):
         ''' transfers a remote file '''
         self.remote_log(conn, 'COPY remote:%s local:%s' % (source, dest))
-        sftp = conn.open_sftp()
-        sftp.put(source, dest)
-        sftp.close()
+        conn.put_file(source, dest)
 
     def _transfer_module(self, conn, tmp, module):
         ''' 
@@ -217,7 +211,7 @@ class Runner(object):
         if type(args) == list:
             args = [ str(x) for x in module_args ]
             args = " ".join(args)
-        inject_vars = self.setup_cache.get(conn._host,{})
+        inject_vars = self.setup_cache.get(conn.host,{})
 
         # the metadata location for the setup module is transparently managed
         # since it's an 'internals' module, kind of a black box. See playbook
@@ -250,7 +244,7 @@ class Runner(object):
         # run AFTER setup use these variables for templating when executed
         # from playbooks
         if self.module_name == 'setup':
-            host = conn._host
+            host = conn.host
             try:
                 var_result = json.loads(result)
             except:
@@ -351,7 +345,6 @@ class Runner(object):
         if not ok:
             return [ host, False, conn ]
 
-        conn._host = host           
         tmp = self._get_tmp_path(conn)
         result = None
         if self.module_name not in [ 'copy', 'template' ]:
@@ -397,9 +390,7 @@ class Runner(object):
             os.path.join(self.module_path, module)
         )
         out_path = tmp + module
-        sftp = conn.open_sftp()
-        sftp.put(in_path, out_path)
-        sftp.close()
+        conn.put_file(in_path, out_path)
         return out_path
 
     def match_hosts(self, pattern):
