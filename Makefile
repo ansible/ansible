@@ -13,8 +13,7 @@ viewdocs: clean
 htmlman:
 	mkdir -p html/man
 	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible.1.asciidoc
-	$(ASCII2HTMLMAN) ansible/docs/man/man5/ansible-modules.5.asciidoc
-	$(ASCII2HTMLMAN) ansible/docs/man/man5/ansible-playbook.5.asciidoc
+	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible-playbook.1.asciidoc
 
 htmldocs:
 	 ./build-site.py rst

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ansible</title><link rel="stylesheet" href="./docbook-xsl.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /></head><body><div xml:lang="en" class="refentry" title="ansible" lang="en"><a id="id408842"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ansible — run a command somewhere else</p></div><div class="refsynopsisdiv" title="Synopsis"><a id="_synopsis"></a><h2>Synopsis</h2><p>ansible &lt;host-pattern&gt; [-f forks] [-m module_name] [-a args]</p></div><div class="refsect1" title="DESCRIPTION"><a id="_description"></a><h2>DESCRIPTION</h2><p><span class="strong"><strong>Ansible</strong></span> is an extra-simple tool/framework/API for doing 'remote things' over
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ansible</title><link rel="stylesheet" href="./docbook-xsl.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.75.2" /></head><body><div xml:lang="en" class="refentry" title="ansible" lang="en"><a id="id334636"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ansible — run a command somewhere else</p></div><div class="refsynopsisdiv" title="Synopsis"><a id="_synopsis"></a><h2>Synopsis</h2><p>ansible &lt;host-pattern&gt; [-f forks] [-m module_name] [-a args]</p></div><div class="refsect1" title="DESCRIPTION"><a id="_description"></a><h2>DESCRIPTION</h2><p><span class="strong"><strong>Ansible</strong></span> is an extra-simple tool/framework/API for doing 'remote things' over
 SSH.</p></div><div class="refsect1" title="ARGUMENTS"><a id="_arguments"></a><h2>ARGUMENTS</h2><div class="variablelist"><dl><dt><span class="term">
 <span class="strong"><strong>host-pattern</strong></span>
 </span></dt><dd>
@@ -19,12 +19,39 @@ Level of parallelism. Specify as an integer, the default is 5.
 </span></dt><dd>
 Module name to execute.
 </dd><dt><span class="term">
-<span class="strong"><strong>-p</strong></span>, <span class="strong"><strong>--pattern</strong></span>
+<span class="strong"><strong>-M</strong></span>, <span class="strong"><strong>--module-path</strong></span>
 </span></dt><dd>
-Hostname pattern. Accepts shell-like globs which can be seperated with ";"
-The default is "*" which matches all hosts in the ansible hosts file.  Group
-names from the ansible inventory file can also be used.
-</dd></dl></div><p>See ansible --help for additional options.</p></div><div class="refsect1" title="INVENTORY"><a id="_inventory"></a><h2>INVENTORY</h2><p>Ansible stores the hosts it can potentially operate on in an inventory
+Where to load modules from.  The default is /usr/share/ansible
+</dd><dt><span class="term">
+<span class="strong"><strong>-a</strong></span>, <span class="strong"><strong>--args</strong></span>
+</span></dt><dd>
+Arguments to pass to the module
+</dd><dt><span class="term">
+<span class="strong"><strong>-k</strong></span>, <span class="strong"><strong>--ask-pass</strong></span>
+</span></dt><dd>
+Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
+</dd><dt><span class="term">
+<span class="strong"><strong>-o</strong></span>, <span class="strong"><strong>--one-line</strong></span>
+</span></dt><dd>
+Try to output everything on one line.
+</dd><dt><span class="term">
+<span class="strong"><strong>-t</strong></span>, <span class="strong"><strong>--tree</strong></span>
+</span></dt><dd>
+Save contents in this output directory, with the results named in a file named after each host.
+</dd><dt><span class="term">
+<span class="strong"><strong>-T</strong></span>, <span class="strong"><strong>--timeout</strong></span>
+</span></dt><dd>
+Connection timeout to use when trying to talk to hosts, in seconds.
+</dd><dt><span class="term">
+<span class="strong"><strong>-B</strong></span>, <span class="strong"><strong>--background</strong></span>
+</span></dt><dd>
+Runs commands in the background, killing the task after N seconds.
+</dd><dt><span class="term">
+<span class="strong"><strong>-u</strong></span>, <span class="strong"><strong>--remote-user</strong></span>
+</span></dt><dd>
+Use this remote username instead of root
+</dd></dl></div></div><div class="refsect1" title="INVENTORY"><a id="_inventory"></a><h2>INVENTORY</h2><p>Ansible stores the hosts it can potentially operate on in an inventory
 file. The syntax is one host per line.  Groups headers are allowed and
-are included on their own line, enclosed in square brackets.</p></div><div class="refsect1" title="FILES"><a id="_files"></a><h2>FILES</h2><p>/etc/ansible/hosts — Default hosts file</p><p>/usr/share/ansible — Default module library</p></div><div class="refsect1" title="ENVIRONMENT"><a id="_environment"></a><h2>ENVIRONMENT</h2><p>The following environment variables may specified.</p><p>ANSIBLE_HOSTS  — Override the default ansible hosts file</p><p>ANSIBLE_LIBRARY — Override the default ansible module library path</p></div><div class="refsect1" title="AUTHOR"><a id="_author"></a><h2>AUTHOR</h2><p>Ansible was originally written by Michael DeHaan. See the AUTHORS file
-for a complete list of contributors.</p></div><div class="refsect1" title="COPYRIGHT"><a id="_copyright"></a><h2>COPYRIGHT</h2><p>Copyright © 2012, Michael DeHaan</p><p>Ansible is released under the terms of the GPLv3 License.</p></div><div class="refsect1" title="SEE ALSO"><a id="_see_also"></a><h2>SEE ALSO</h2><p>Ansible home page: <a class="ulink" href="https://github.com/mpdehaan/ansible/" target="_top">https://github.com/mpdehaan/ansible/</a></p><p><span class="strong"><strong>ansible-modules</strong></span>(5)</p><p><span class="strong"><strong>ansible-playbook</strong></span>(5)</p></div></div></body></html>
+are included on their own line, enclosed in square brackets.</p></div><div class="refsect1" title="FILES"><a id="_files"></a><h2>FILES</h2><p>/etc/ansible/hosts — Default inventory file</p><p>/usr/share/ansible/ — Default module library</p></div><div class="refsect1" title="ENVIRONMENT"><a id="_environment"></a><h2>ENVIRONMENT</h2><p>The following environment variables may specified.</p><p>ANSIBLE_HOSTS  — Override the default ansible hosts file</p><p>ANSIBLE_LIBRARY — Override the default ansible module library path</p></div><div class="refsect1" title="AUTHOR"><a id="_author"></a><h2>AUTHOR</h2><p>Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.</p></div><div class="refsect1" title="COPYRIGHT"><a id="_copyright"></a><h2>COPYRIGHT</h2><p>Copyright © 2012, Michael DeHaan</p><p>Ansible is released under the terms of the GPLv3 License.</p></div><div class="refsect1" title="SEE ALSO"><a id="_see_also"></a><h2>SEE ALSO</h2><p>Extensive documentation as well as IRC and mailing list info
+is available on the ansible home page: <a class="ulink" href="https://ansible.github.com/" target="_top">https://ansible.github.com/</a></p></div></div></body></html>
