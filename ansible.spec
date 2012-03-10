@@ -34,6 +34,7 @@ make docs
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
+cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -45,7 +46,8 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*
 %{_bindir}/ansible*
 %{_datadir}/ansible/*
-%{_sysconfdir}/ansible/
+%config(noreplace) %{_sysconfdir}/ansible/
+
 
 %changelog
 * Sat Mar 10 2012  <tbielawa@redhat.com> - 0.0.1-1
