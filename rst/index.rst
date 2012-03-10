@@ -57,8 +57,8 @@ Design Goals
 * Be very usable as non-root
 * Create the easiest config management system to use, ever.
 
-Mailing List & IRC
-```````````````````
+Resources
+`````````
 
 Your ideas and contributions are welcome.  We're also happy to help 
 you with questions about Ansible.
