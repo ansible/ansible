@@ -8,6 +8,11 @@
    :width: 337
    :alt: "" 
    :target: http://photos.michaeldehaan.net/favorites/h2428aca7#h2428aca7
+.. image:: http://ansible.github.com/html/mpd_tubes.jpg
+   :height: 225
+   :width: 225
+   :alt: "" 
+   :target: http://photos.michaeldehaan.net/ncsu/h3b63b68e#h3b63b68e
 
 Introducing Ansible
 ===================
