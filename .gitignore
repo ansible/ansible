@@ -3,3 +3,7 @@ build
 # Emacs backup files...
 *~
 .\#*
+# (s)rpm building stuff
+MANIFEST
+dist
+rpm-build

@@ -133,8 +133,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
+*ansible-playbook*(1)
+
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>
-
-
-
