@@ -56,9 +56,9 @@ def pkg_to_dict(po):
         '_nevra':po.ui_nevra,
         }
     if type(po) == yum.rpmsack.RPMInstalledPackage:
-        d['state'] = 'installed'
+        d['yumstate'] = 'installed'
     else:
-        d['state'] = 'available'
+        d['yumstate'] = 'available'
 
     return d
     
@@ -220,7 +220,7 @@ def main():
     if 'list' in params:
         my = yum_base(conf_file=params['conf_file'], cachedir=True)
         results = list_stuff(my, params['list'])
-    elif 'ensure' in params:
+    elif 'state' in params:
         my = yum_base(conf_file=params['conf_file'], cachedir=True)        
         state = params['state']
         pkgspec = params['pkg']
