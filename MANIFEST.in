@@ -1,3 +1,4 @@
 include README.md AUTHORS.md ansible.spec
+include examples/hosts
 recursive-include docs *
 include Makefile
