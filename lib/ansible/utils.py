@@ -167,6 +167,7 @@ def prepare_writeable_dir(tree):
         exit("Cannot write to path %s" % tree)
 
 def path_dwim(basedir, given):
+    ''' make relative paths work like folks expect '''
     if given.startswith("/"):
         return given
     elif given.startswith("~/"):
@@ -174,4 +175,12 @@ def path_dwim(basedir, given):
     else:
         return os.path.join(basedir, given)
 
-  
+def async_poll_status(runner, clock, poll_interval, ok, host, jid, result):
+    if ok and 'finished' in result:
+        print "<job %s> finished on %s, %s" % (jid, host, result)
+    elif not ok or 'failed' in result:
+        print "<job %s> FAILED on %s, %s" % (jid, host, result)
+    else:
+        print "<job %s> polling on %s, %s remaining" % (jid, host, clock)
+
+

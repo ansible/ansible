@@ -67,6 +67,8 @@ class Runner(object):
         basedir=None,
         setup_cache={},
         transport='paramiko',
+        poll_interval=None,
+        async_poll_callback=None,
         verbose=False):
     
         ''' 
@@ -95,7 +97,12 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
-        self.background  = background
+        self.background          = background
+        self.poll_interval       = poll_interval
+        self.async_poll_callback = async_poll_callback 
+
+        if self.async_poll_callback is None:
+            self.async_poll_callback = async_poll_status
 
         if basedir is None: 
             basedir = os.getcwd()
@@ -231,9 +238,9 @@ class Runner(object):
         template = jinja2.Template(args)
         args = template.render(inject_vars)
 
+
         cmd = "%s %s" % (remote_module_path, args)
         result = self._exec_command(conn, cmd)
-        self._delete_remote_files(conn, [ tmp ])
         return result
 
     def _execute_normal_module(self, conn, host, tmp):
@@ -256,7 +263,6 @@ class Runner(object):
             except:
                 var_result = {}
 
-        self._delete_remote_files(conn, tmp)
         return self._return_from_module(conn, host, result)
 
     def _execute_async_module(self, conn, host, tmp):
@@ -301,7 +307,6 @@ class Runner(object):
         # run the copy module
         args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
         result = self._execute_module(conn, tmp, module, args)
-        self._delete_remote_files(conn, tmp_path)
         return self._return_from_module(conn, host, result)
 
     def _execute_template(self, conn, host, tmp):
@@ -331,7 +336,6 @@ class Runner(object):
         # run the template module
         args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
         result = self._execute_module(conn, tmp, template_module, args)
-        self._delete_remote_files(conn, [ tpath ])
         return self._return_from_module(conn, host, result)
 
 
@@ -358,6 +362,30 @@ class Runner(object):
                 result = self._execute_normal_module(conn, host, tmp)
             else:
                 result = self._execute_async_module(conn, host, tmp)
+                if self.poll_interval > 0:
+                    # poll for completion
+                    # FIXME: refactor
+
+                    (host, ok, launch_result) = result
+                    jid = launch_result.get('ansible_job_id', None)
+                    if jid is None:
+                        return result
+                    if self.async_poll_callback is None:
+                        self.async_poll_callback = async_poll_callback
+                    self.module_name = 'async_status'
+                    self.module_args = [ "jid=%s" % jid ]
+                    clock = self.background
+                    while (clock >= 0):
+                        clock -= self.poll_interval
+                        result = self._execute_normal_module(conn, host, tmp)
+                        (host, ok, real_result) = result
+                        self.async_poll_callback(self, clock, self.poll_interval, ok, host, jid, real_result)
+                        if 'finished' in real_result or 'failed' in real_result:
+                            clock=-1
+                    self._delete_remote_files(conn, tmp)
+                    conn.close() 
+                    return result
+
         elif self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'template':
@@ -366,6 +394,7 @@ class Runner(object):
             # this would be a coding error in THIS module
             # shouldn't occur
             raise Exception("???")
+
         self._delete_remote_files(conn, tmp)
         conn.close()
         

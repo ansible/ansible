@@ -52,7 +52,7 @@ class Cli(object):
         parser = OptionParser(usage = 'ansible <host-pattern> [options]')
         parser.add_option("-a", "--args", dest="module_args",
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
-        parser.add_option("-B", "--background", dest="seconds", default=0,
+        parser.add_option("-B", "--background", dest="seconds", type='int', default=0,
             help="run asynchronously, failing after X seconds")
         parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
             help='number of parallel processes to use')
@@ -66,6 +66,8 @@ class Cli(object):
             help="module name to execute", default=C.DEFAULT_MODULE_NAME)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
             help="condense output")
+        parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
+            dest='poll_interval', help="set the poll interval if using -B")
         parser.add_option('-t', '--tree', dest='tree', default=None,
             help="log output to this directory")
         parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
@@ -99,6 +101,8 @@ class Cli(object):
             timeout=options.timeout,
             forks=options.forks,
             background=options.seconds,
+            poll_interval=options.poll_interval,
+            async_poll_callback=async_poll_status,
             pattern=pattern,
             verbose=True,
         ).run()
