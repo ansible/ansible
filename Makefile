@@ -19,6 +19,9 @@ htmldocs:
 	 ./build-site.py rst
 
 clean:
+	-rm .buildinfo
+	-rm *.inv
+	-rm -rf *.doctrees
 	@echo "Cleaning up byte compiled python stuff"
 	find . -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"

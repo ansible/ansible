@@ -22,7 +22,7 @@ execution framework.  Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
-Ansible's core is a little over 1000 lines.
+Ansible's core is a little over 1000 lines. 
 
 Ansible isn't just for configuration -- it's also great for Ad-Hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
