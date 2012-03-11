@@ -1,5 +1,5 @@
 #!/usr/bin/make
-ASCII2HTMLMAN = a2x -D html/man/ -d manpage -f xhtml
+ASCII2HTMLMAN = a2x -D man/ -d manpage -f xhtml
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 all: clean docs
@@ -11,7 +11,7 @@ viewdocs: clean
 	./build-site.py view
 
 htmlman:
-	mkdir -p html/man
+	mkdir -p man
 	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible.1.asciidoc
 	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible-playbook.1.asciidoc
 

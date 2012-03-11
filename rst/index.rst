@@ -1,14 +1,14 @@
-.. image:: http://ansible.github.com/html/mpd_rings.jpg
+.. image:: http://ansible.github.com/mpd_rings.jpg
    :height: 225
    :width: 300
    :alt: ""
    :target: http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf
-.. image:: http://ansible.github.com/html/mpd_tunnel.jpg
+.. image:: http://ansible.github.com/mpd_tunnel.jpg
    :height: 225
    :width: 337
    :alt: "" 
    :target: http://photos.michaeldehaan.net/favorites/h2428aca7#h2428aca7
-.. image:: http://ansible.github.com/html/mpd_tubes.jpg
+.. image:: http://ansible.github.com/mpd_tubes.jpg
    :height: 225
    :width: 225
    :alt: "" 
@@ -47,7 +47,7 @@ will remain short & simple, and the source will be blindingly obvious.
 Architecture
 ````````````
 
-.. image:: http://ansible.github.com/html/ansible_arch.jpg
+.. image:: http://ansible.github.com/ansible_arch.jpg
    :alt: "Architecture Diagram" 
    :width: 648
    :height: 464

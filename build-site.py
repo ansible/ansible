@@ -22,7 +22,7 @@ import os
 import sys
 import traceback
 from sphinx.application import Sphinx
-from os import path
+import os
 
 
 class SphinxBuilder(object):
@@ -39,15 +39,15 @@ class SphinxBuilder(object):
         try:
             buildername = 'html'
 
-            outdir = path.abspath(path.join('html'))
+            outdir = os.path.abspath(os.getcwd())
             # Create the output directory if it doesn't exist
             if not os.access(outdir, os.F_OK):
                 os.mkdir(outdir)
 
             doctreedir = os.path.join('./', '.doctrees')
 
-            confdir = path.abspath('./')
-            srcdir = path.abspath('rst')
+            confdir = os.path.abspath('./')
+            srcdir = os.path.abspath('rst')
             freshenv = False
 
             # Create the builder
