@@ -44,6 +44,13 @@ favorite language of choice.
 Systems management doesn't have to be complicated.  Ansible's docs
 will remain short & simple, and the source will be blindingly obvious.
 
+Architecture
+````````````
+
+.. image:: http://ansible.github.com/html/ansible_arch.jpg
+   :alt: "Architecture Diagram" 
+   :target: http://photos.michaeldehaan.net/ncsu/h3b63b68e#h3b63b68e
+
 
 Design Goals
 ````````````
