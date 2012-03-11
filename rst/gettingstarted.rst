@@ -99,13 +99,16 @@ Now run a live command on all of your nodes::
     ansible all /bin/echo hello
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's
-now time to read some of the more real-world examples, and explore
+now time to read some of the more real-world :doc:`examples`, and explore
 what you can do with different modules, as well as the Ansible
-playbooks language.  Ansible is not just about running commands, but
+:doc:`playbooks` language.  Ansible is not just about running commands, but
 you already have a working infrastructure!
 
 
 .. seealso::
 
-   :ref:`Inventory <inventoryformat>`
-       Complete documentation on the inventory file format
+   :doc:`examples`
+       Examples of basic commands
+   :doc:`playbooks`
+       Learning ansible's configuration management language
+

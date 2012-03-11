@@ -181,3 +181,10 @@ It also excels for writing distributed
 scripts and ad-hoc applications that need to gather data or perform arbitrary
 tasks -- whether for a QA sytem, build system, or anything you can think of.
 
+.. seealso::
+
+   :doc:`examples`
+       Examples of basic commands
+   :doc:`playbooks`
+       Learning ansible's configuration management language
+

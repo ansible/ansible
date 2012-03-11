@@ -88,7 +88,7 @@ Contents
    patterns
    examples
    modules
-   YAMLScripts
+   YAMLSyntax
    playbooks
    api
    faq

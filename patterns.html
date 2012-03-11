@@ -115,7 +115,7 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1 current"><a class="current reference internal" href="">The Inventory File, Patterns, and Groups</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="YAMLScripts.html">YAML Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Using the Python API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
@@ -199,6 +199,8 @@ looks like this:</p>
 <span class="n">three</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 </pre></div>
 </div>
+<p>The things in brackets are group names, you don&#8217;t have to have them,
+but they are useful.</p>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
@@ -206,16 +208,18 @@ looks like this:</p>
 <div class="highlight-python"><pre>all
 *</pre>
 </div>
-<p>It is also possible to address specific hosts:</p>
+<p>Basically &#8216;all&#8217; is an alias for &#8216;*&#8217;.  It is also possible to address a specific host or hosts:</p>
 <div class="highlight-python"><pre>one.example.com
-one.example.com:two.example.com</pre>
+one.example.com:two.example.com
+192.168.1.50
+192.168.1.*</pre>
 </div>
 <p>The following patterns address one or more groups, which are denoted
-with the bracket headers in the inventory file:</p>
+with the aforementioned bracket headers in the inventory file:</p>
 <div class="highlight-python"><pre>webservers
 webservers:dbservers</pre>
 </div>
-<p>Individual hosts, but not groups, can also be referenced using
+<p>Individual host names (or IPs), but not groups, can also be referenced using
 wildcards:</p>
 <div class="highlight-python"><pre>*.example.com
 *.com</pre>
@@ -225,8 +229,9 @@ wildcards:</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">It is not possible to target a host not in the inventory file.</p>
+<p class="last">It is not possible to target a host not in the inventory file.   This is a safety feature.</p>
 </div>
+<p>Easy enough.  Now see <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
 </div>
 </div>
 
@@ -237,7 +242,7 @@ wildcards:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 10, 2012.<br/>
+      Last updated on Mar 11, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

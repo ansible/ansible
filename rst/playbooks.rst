@@ -3,7 +3,7 @@ Playbooks
 
 .. seealso::
 
-   :doc:`YAMLScripts`
+   :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`modules`
        Learn about available modules and writing your own
