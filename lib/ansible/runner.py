@@ -32,6 +32,7 @@ import ansible.connection
 import Queue
 import random
 import jinja2
+import time
 from ansible.utils import *
     
 ################################################
@@ -376,12 +377,16 @@ class Runner(object):
                     self.module_args = [ "jid=%s" % jid ]
                     clock = self.background
                     while (clock >= 0):
+                        time.sleep(self.poll_interval)
                         clock -= self.poll_interval
                         result = self._execute_normal_module(conn, host, tmp)
                         (host, ok, real_result) = result
                         self.async_poll_callback(self, clock, self.poll_interval, ok, host, jid, real_result)
                         if 'finished' in real_result or 'failed' in real_result:
                             clock=-1
+                        elif (clock < 0 and not 'finished' in real_result):
+                            return [ host, False, "timer expired" ]
+
                     self._delete_remote_files(conn, tmp)
                     conn.close() 
                     return result

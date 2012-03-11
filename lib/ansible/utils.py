@@ -177,9 +177,9 @@ def path_dwim(basedir, given):
 
 def async_poll_status(runner, clock, poll_interval, ok, host, jid, result):
     if ok and 'finished' in result:
-        print "<job %s> finished on %s, %s" % (jid, host, result)
+        print "<job %s> finished on %s" % (jid, host)
     elif not ok or 'failed' in result:
-        print "<job %s> FAILED on %s, %s" % (jid, host, result)
+        print "<job %s> FAILED on %s" % (jid, host)
     else:
         print "<job %s> polling on %s, %s remaining" % (jid, host, clock)
 
