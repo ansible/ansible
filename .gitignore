@@ -1,4 +1,7 @@
 *.py[co]
+.buildinfo
+objects.inv
+.doctrees
 build
 # Emacs backup files...
 *~
