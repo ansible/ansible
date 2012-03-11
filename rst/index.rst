@@ -49,7 +49,8 @@ Architecture
 
 .. image:: http://ansible.github.com/html/ansible_arch.jpg
    :alt: "Architecture Diagram" 
-   :target: http://photos.michaeldehaan.net/ncsu/h3b63b68e#h3b63b68e
+   :width: 648
+   :height: 464
 
 
 Design Goals
