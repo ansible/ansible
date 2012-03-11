@@ -127,10 +127,16 @@ class Runner(object):
         group_name = 'ungrouped'
         results    = []
         for item in lines:
+            item = item.lstrip().rstrip()
+            if item.startswith("#"): 
+                # ignore commented out lines
+                continue
             if item.startswith("["):
+                # looks like a group
                 group_name = item.replace("[","").replace("]","").lstrip().rstrip()
                 groups[group_name] = []
             else:
+                # looks like a regular host
                 groups[group_name].append(item)
                 results.append(item)
 
