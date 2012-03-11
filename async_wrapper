@@ -31,6 +31,38 @@ import traceback
 import signal
 import time
 
+def daemonize_self():
+    # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
+    # logger.info("cobblerd started")
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit first parent
+            sys.exit(0)
+    except OSError, e:
+        print >>sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+
+    # decouple from parent environment
+    os.chdir("/")
+    os.setsid()
+    os.umask(022)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # print "Daemon PID %d" % pid
+            sys.exit(0)
+    except OSError, e:
+        print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+
+    dev_null = file('/dev/null','rw')
+    os.dup2(dev_null.fileno(), sys.stdin.fileno())
+    os.dup2(dev_null.fileno(), sys.stdout.fileno())
+    os.dup2(dev_null.fileno(), sys.stderr.fileno()) 
+
 if len(sys.argv) < 3:
     print json.dumps({
         "failed" : True,
@@ -60,65 +92,83 @@ if not os.path.exists(logdir):
 
 def _run_command(wrapped_cmd, jid, log_path):
 
-    logfile = open(log_path, "w+")
+    print "RUNNING: %s" % wrapped_cmd
+    logfile = open(log_path, "w")
     logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    logfile.close()
+    logfile = open(log_path, "w")
     result = {}
 
     try:
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False, 
-            stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = script.communicate()
-        result = json.loads(out)
-    
+            stdin=None, stdout=logfile, stderr=logfile)
+        script.communicate()
+        #result = json.loads(out)
+        result = json.loads(file(log_path).read())    
+
     except (OSError, IOError), e:
         result = {
             "failed": 1,
             "cmd" : wrapped_cmd,
             "msg": str(e),
         }
+        result['ansible_job_id'] = jid
+        logfile.write(json.dumps(result))
     except:
         result = {
             "failed" : 1,
             "cmd" : wrapped_cmd,
             "msg" : traceback.format_exc()
         }   
-
-    result['ansible_job_id'] = jid
-    logfile = open(log_path, "w+")
-    logfile.write(json.dumps(result))
+        result['ansible_job_id'] = jid
+        logfile.write(json.dumps(result))
     logfile.close()
 
 # immediately exit this process, leaving an orphaned process
 # running which immediately forks a supervisory timing process
 
 pid = os.fork()
-if pid == 0:
-   "RETURNING SUCCESS IN UNO"
-   print json.dumps({ "started" : 1, "ansible_job_id" : jid })
+if pid != 0:
+   # the parent indicates the job has started
+   # print "RETURNING SUCCESS IN PARENT"
+   print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
+   sys.stdout.flush()
    sys.exit(0)
 else:
-   # "DAEMONIZED DOS"
+   # the kid manages the job
+   # WARNING: the following call may be total overkill
+   daemonize_self()
+
+   # we are now daemonized in this other fork but still
+   # want to create a supervisory process
+
+   #print "DAEMONIZED KID MAKING MORE KIDS"
    sub_pid = os.fork()
    if sub_pid == 0:
-       # "RUNNING IN KID A"
+       #print "RUNNING IN KID A"
        _run_command(cmd, jid, log_path)
+       #print "KID A COMPLETE"
+       sys.stdout.flush()
        sys.exit(0)
    else:
-       # "WATCHING IN KID B"
+       #print "WATCHING IN KID B"
        remaining = int(time_limit)
        if os.path.exists("/proc/%s" % sub_pid):
-           # "STILL RUNNING"
+           #print "STILL RUNNING"
            time.sleep(1)
            remaining = remaining - 1
        else:
-           # "DONE IN KID B"
+           #print "DONE IN KID B"
+           sys.stdout.flush()
            sys.exit(0)
        if remaining == 0:
-           # "SLAYING IN KID B"
+           #print "SLAYING IN KID B"
            os.kill(sub_pid, signals.SIGKILL)
+           sys.stdout.flush()
            sys.exit(1)
 
+   sys.stdout.flush()
    sys.exit(0)
 
 
