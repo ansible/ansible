@@ -25,13 +25,13 @@ For comparison, Puppet and Chef have about 60k lines of code.
 Ansible's core is a little over 1000 lines.
 
 Ansible isn't just for configuration -- it's also great for Ad-Hoc
-tasks, quickly firing off commands against nodes.  Where Ansible
-excels though, is expressing complex multi-node deployment processes,
-executing complex sequences of commands on different hosts through
-:doc:`playbooks`.
+tasks, quickly firing off commands against nodes.  See :doc:`examples`.
+Where Ansible excels though, is expressing complex multi-node 
+deployment processes, executing complex sequences of commands on 
+different hosts through :doc:`playbooks`.
 
 Extending ansible does not require programming in any particular
-language -- you can write modules as scripts or programs that return
+language -- you can write :doc:`modules` as scripts or programs that return
 simple JSON.  It's also trivially easy to just execute useful shell
 commands.
 

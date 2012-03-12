@@ -209,7 +209,7 @@ is commonly referred to as &#8216;idempotent&#8217;.</p>
 <p>Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.</p>
 <p>To just transfer a file directly to many different servers:</p>
-<div class="highlight-python"><pre>ansible atlanta copy -a "/etc/hosts /tmp/hosts"</pre>
+<div class="highlight-python"><pre>ansible atlanta -m copy -a "/etc/hosts /tmp/hosts"</pre>
 </div>
 <p>To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
@@ -274,7 +274,7 @@ to poll, it looks like this:</p>
 <div class="highlight-python"><pre>ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"</pre>
 </div>
 <p>If you do decide you want to check on the job status later, you can:</p>
-<div class="highlight-python"><pre>ansible all -n job_status -a jid=123456789</pre>
+<div class="highlight-python"><pre>ansible all -m async_status -a "jid=123456789"</pre>
 </div>
 <p>Polling is built-in and looks like this:</p>
 <div class="highlight-python"><pre>ansible all -B 3600 -P 60 -a "/usr/bin/long_running_operation --do-stuff"</pre>

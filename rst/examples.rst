@@ -40,7 +40,7 @@ optionally use them as template sources.
 
 To just transfer a file directly to many different servers::
 
-    ansible atlanta copy -a "/etc/hosts /tmp/hosts"
+    ansible atlanta -m copy -a "/etc/hosts /tmp/hosts"
 
 To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
@@ -119,7 +119,7 @@ to poll, it looks like this::
 
 If you do decide you want to check on the job status later, you can::
 
-    ansible all -n job_status -a jid=123456789
+    ansible all -m async_status -a "jid=123456789"
 
 Polling is built-in and looks like this::
     
