@@ -48,7 +48,7 @@ class SphinxBuilder(object):
 
             confdir = os.path.abspath('./')
             srcdir = os.path.abspath('rst')
-            freshenv = False
+            freshenv = True
 
             # Create the builder
             app = Sphinx(srcdir,

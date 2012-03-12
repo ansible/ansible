@@ -18,7 +18,7 @@ Introducing Ansible
 ===================
 
 Ansible is a radically simple deployment, configuration, and command
-execution framework.  Other tools in this space have been too
+execution framework. Other similar tools have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
