@@ -85,6 +85,11 @@ Connection timeout to use when trying to talk to hosts, in seconds.
 Runs commands in the background, killing the task after N seconds.
 
 
+*-P*, *--poll*::
+
+Poll a background job every (this many) seconds.  Requires -B.
+
+
 *-u*, *--remote-user*::
 
 Use this remote username instead of root
