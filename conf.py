@@ -24,7 +24,8 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-from ansible import __version__, __author__
+VERSION='0.01'
+AUTHOR='Michael DeHaan'
 
 
 # General configuration
@@ -56,9 +57,9 @@ copyright = "2012 Michael DeHaan"
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = __version__
+version = VERSION
 # The full version, including alpha/beta/rc tags.
-release = __version__
+release = VERSION
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -110,7 +111,7 @@ html_style = 'default.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = 'Ansible - SSH-Based Configuration Management & Deployment'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -182,7 +183,7 @@ htmlhelp_basename = 'Poseidodoc'
 # [howto/manual]).
 latex_documents = [
   ('index', 'ansible.tex', 'Ansible Documentation',
-   __author__, 'manual'),
+   AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -1,3 +1,0 @@
-[submodule "ansible"]
-	path = ansible
-	url = git://github.com/ansible/ansible.git

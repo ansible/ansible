@@ -4,7 +4,7 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 
 all: clean docs
 
-docs: clean
+docs: clean htmlman
 	./build-site.py
 
 viewdocs: clean
@@ -12,8 +12,8 @@ viewdocs: clean
 
 htmlman:
 	mkdir -p man
-	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible.1.asciidoc
-	$(ASCII2HTMLMAN) ansible/docs/man/man1/ansible-playbook.1.asciidoc
+	$(ASCII2HTMLMAN) ansible.1.asciidoc
+	$(ASCII2HTMLMAN) ansible-playbook.1.asciidoc
 
 htmldocs:
 	 ./build-site.py rst
@@ -29,6 +29,4 @@ clean:
 	find . -type f \( -name "*.swp" \) -delete
 
 .PHONEY: docs manual clean
-vpath %.asciidoc docs/man/man1
-
 

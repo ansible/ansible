@@ -1,0 +1,144 @@
+ansible(1)
+=========
+:doctype:manpage
+:man source:   Ansible
+:man version:  0.0.1
+:man manual:   System administration commands
+
+NAME
+----
+ansible - run a command somewhere else
+
+
+SYNOPSIS
+--------
+ansible <host-pattern> [-f forks] [-m module_name] [-a args]
+
+
+DESCRIPTION
+-----------
+
+*Ansible* is an extra-simple tool/framework/API for doing \'remote things' over
+SSH.
+
+
+ARGUMENTS
+---------
+
+*host-pattern*::
+
+A name of a group in the inventory file, a shell-like glob selecting hosts in inventory
+file, or any combination of the two seperated by semicolons.
+
+
+OPTIONS
+-------
+
+
+*-i*, *--inventory*::
+
+Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
+
+
+*-f*, *--forks*::
+
+Level of parallelism. Specify as an integer, the default is 5.
+
+
+*-m*, *--module-name*::
+
+Module name to execute.
+
+
+*-M*, *--module-path*::
+
+Where to load modules from.  The default is /usr/share/ansible
+
+
+*-a*, *--args*::
+
+Arguments to pass to the module
+
+
+*-k*, *--ask-pass*::
+
+Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
+
+
+*-o*, *--one-line*::
+
+Try to output everything on one line.
+
+
+*-t*, *--tree*::
+
+Save contents in this output directory, with the results named in a file named after each host.
+
+
+*-T*, *--timeout*::
+
+Connection timeout to use when trying to talk to hosts, in seconds.
+
+
+*-B*, *--background*::
+
+Runs commands in the background, killing the task after N seconds.
+
+
+*-P*, *--poll*::
+
+Poll a background job every (this many) seconds.  Requires -B.
+
+
+*-u*, *--remote-user*::
+
+Use this remote username instead of root
+
+
+INVENTORY
+---------
+
+Ansible stores the hosts it can potentially operate on in an inventory
+file. The syntax is one host per line.  Groups headers are allowed and
+are included on their own line, enclosed in square brackets.
+
+FILES
+-----
+
+/etc/ansible/hosts -- Default inventory file
+
+/usr/share/ansible/ -- Default module library
+
+
+ENVIRONMENT
+-----------
+
+The following environment variables may specified.
+
+ANSIBLE_HOSTS  -- Override the default ansible hosts file
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.
+
+
+COPYRIGHT
+---------
+
+Copyright © 2012, Michael DeHaan
+
+Ansible is released under the terms of the GPLv3 License.
+
+
+SEE ALSO
+--------
+
+*ansible-playbook*(1)
+
+Extensive documentation as well as IRC and mailing list info
+is available on the ansible home page: <https://ansible.github.com/>
