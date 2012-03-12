@@ -26,6 +26,7 @@ Ansible's core is a little over 1000 lines.
 
 Ansible isn't just for configuration -- it's also great for Ad-Hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
+
 Where Ansible excels though, is expressing complex multi-node 
 deployment processes, executing complex sequences of commands on 
 different hosts through :doc:`playbooks`.
