@@ -96,7 +96,7 @@ Now ping all your nodes::
 
 Now run a live command on all of your nodes::
   
-    ansible all /bin/echo hello
+    ansible all -a "/bin/echo hello"
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's
 now time to read some of the more real-world :doc:`examples`, and explore

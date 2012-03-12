@@ -262,7 +262,7 @@ ssh-add ~/.ssh/id_rsa</pre>
 <div class="highlight-python"><pre>ansible all -m ping</pre>
 </div>
 <p>Now run a live command on all of your nodes:</p>
-<div class="highlight-python"><pre>ansible all /bin/echo hello</pre>
+<div class="highlight-python"><pre>ansible all -a "/bin/echo hello"</pre>
 </div>
 <p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s
 now time to read some of the more real-world <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>, and explore
