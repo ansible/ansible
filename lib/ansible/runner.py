@@ -26,6 +26,7 @@ except ImportError:
 import fnmatch
 import multiprocessing
 import signal
+import sys
 import os
 import ansible.constants as C 
 import ansible.connection
@@ -122,6 +123,9 @@ class Runner(object):
             return (host_list, {})
 
         host_list = os.path.expanduser(host_list)
+        if not os.path.exists(host_list):
+            print "Exiting: Could find the specified hosts file: %s" % host_list
+            sys.exit(1)
         lines = file(host_list).read().split("\n")
         groups     = {}
         groups['ungrouped'] = []
