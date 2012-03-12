@@ -112,17 +112,30 @@ Time Limited Background Operations
 
 Long running operations can be backgrounded, and their status can be
 checked on later. The same job ID is given to the same task on all
-hosts, so you won't lose track. Polling support is pending in the
-command line.::
+hosts, so you won't lose track.  If you kick hosts and don't want
+to poll, it looks like this::
 
     ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+
+If you do decide you want to check on the job status later, you can::
+
     ansible all -n job_status -a jid=123456789
+
+Polling is built-in and looks like this::
+    
+    ansible all -B 3600 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
+
+The above example says "run for 60 minutes max (60*60=3600), poll for status every 60 seconds".
+Poll mode is smart so all jobs will be started before polling will begin on any machine.
+Be sure to use a high enough `--forks` value if you want to get all of your jobs started
+very quickly. 
 
 Any module other than :ref:`copy` or :ref:`template` can be
 backgrounded.  Typically you'll be backgrounding shell commands or
 software upgrades only.
 
 After the time limit (in seconds) runs out (``-B``), the process on
-the remote nodes will be killed.
+the remote nodes will be killed.  Forcibly.
+  
 
 
