@@ -200,7 +200,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 
 *state*:
 
-* Can be either 'installed' or 'removed'
+* Can be either 'installed', 'latest', or 'removed'
 
 *list*:
 
