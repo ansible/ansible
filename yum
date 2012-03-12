@@ -63,6 +63,8 @@ def pkg_to_dict(po):
     return d
     
 def list_stuff(my, stuff):
+    # FIXME - there are poitential tracebacks that could occur here
+    # need some more catching for them so we can see what happened
     if stuff == 'installed':
         return [ pkg_to_dict(po) for po in my.rpmdb ]
     elif stuff == 'updates':
@@ -113,6 +115,7 @@ def run_yum(command):
 
 def ensure(my, state, pkgspec):
     yumconf = my.conf.config_file_path
+    res = {}
     if state == 'installed':
         pkg = None
         # check if pkgspec is installed
@@ -126,13 +129,16 @@ def ensure(my, state, pkgspec):
             pkgs = e +m
         
         if pkgs:
-            return { 'changed':False, 'failed':False, 'results':'', 'errors':'' }
+            return { 'changed':False }
     
         # if not - try to install it    
         my.close()
         del my
         cmd = 'yum -c %s -d1 -y install %s' % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
+        # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
+        # look for the pkg in rpmdb
+        # look for the pkg via obsoletes
         if rc:
             changed = False
             failed = True
@@ -140,11 +146,15 @@ def ensure(my, state, pkgspec):
             changed = True
             failed = False
         
-        return {'changed': changed,
-                'failed': failed,
-                'results':out,
-                'errors': err }
+        res['changed'] = changed
 
+        if failed:
+            res['failed'] = failed
+            res['msg'] = err
+            res['results'] = out
+        
+        return res
+        
     if state == 'removed':
         # check if pkgspec is installed
         # if not return {changed: False, failed=False }
@@ -162,28 +172,57 @@ def ensure(my, state, pkgspec):
             pkgs = e +m
 
         if not pkgs:
-            return { 'changed':False, 'failed':False, 'results':'', 'errors':'' }
+            return { 'changed':False }
     
         my.close()
         del my
         cmd = 'yum -c %s -d1 -y remove %s' % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
+        # FIXME if we ran the remove - check to make sure it actually removed :(
+        # look for the pkg in the rpmdb
         if rc:
             changed = False
             failed = True
         else:
             changed = True
             failed = False
-        
-        return {'changed': changed,
-                'failed': failed,
-                'results':out,
-                'errors': err }
-    #if state == 'latest':
-        # check to see if this pkg is in an update
-        # if it is - update it and check to see if it applied
-        # if it is not - then return 
-        # return { 'changed':False, 'failed':False, 'results':'', 'errors':'' }
+
+        res['changed'] = changed
+
+        if failed:
+            res['failed'] = failed
+            res['msg'] = err
+            res['results'] = out
+
+        return res
+                
+    if state == 'latest':
+        if not [ pkg_to_dict(po) for 
+            po in my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates ]:
+            # there nothing in updates matching this.
+            return { 'changed':False,}
+
+        # we have something in updates
+        cmd = 'yum -c %s -d1 -y update %s' % (yumconf, pkgspec)
+        rc, out, err = run_yum(cmd)
+        # FIXME if it is - update it and check to see if it applied
+        # check to see if there is no longer an update available for the pkgspec
+        if rc:
+            changed = False
+            failed = True
+        else:
+            changed = True
+            failed = False
+
+
+        res['changed'] = changed
+
+        if failed:
+            res['failed'] = failed
+            res['msg'] = err
+            res['results'] = out
+
+        return res
         
     return {'changed': False,
             'failed': True,
@@ -214,7 +253,11 @@ def main():
     args = " ".join(sys.argv[1:])
     items = shlex.split(args)
     # if nothing else changes - it fails
-    results = { 'changed':False, 'failed':True, 'results':'', 'errors':args }
+    results = { 'changed':False, 
+                'failed':True, 
+                'results':'', 
+                'errors':'', 
+                'msg':args }
     params = {}
     for x in items:
         (k, v) = x.split("=", 1)
@@ -228,10 +271,13 @@ def main():
         my = yum_base(conf_file=params['conf_file'], cachedir=True)
         results = list_stuff(my, params['list'])
     elif 'state' in params:
-        my = yum_base(conf_file=params['conf_file'], cachedir=True)        
-        state = params['state']
-        pkgspec = params['pkg']
-        results = ensure(my, state, pkgspec)
+        if 'pkg' not in params:
+            results['msg'] = "No pkg specified"
+        else:
+            my = yum_base(conf_file=params['conf_file'], cachedir=True)        
+            state = params['state']
+            pkgspec = params['pkg']
+            results = ensure(my, state, pkgspec)
 
     print json.dumps(results)
 
