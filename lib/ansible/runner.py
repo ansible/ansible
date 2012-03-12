@@ -68,8 +68,6 @@ class Runner(object):
         basedir=None,
         setup_cache={},
         transport='paramiko',
-        poll_interval=None,
-        async_poll_callback=None,
         verbose=False):
     
         ''' 
@@ -99,11 +97,6 @@ class Runner(object):
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.background          = background
-        self.poll_interval       = poll_interval
-        self.async_poll_callback = async_poll_callback 
-
-        if self.async_poll_callback is None:
-            self.async_poll_callback = async_poll_status
 
         if basedir is None: 
             basedir = os.getcwd()
@@ -363,33 +356,6 @@ class Runner(object):
                 result = self._execute_normal_module(conn, host, tmp)
             else:
                 result = self._execute_async_module(conn, host, tmp)
-                if self.poll_interval > 0:
-                    # poll for completion
-                    # FIXME: refactor
-
-                    (host, ok, launch_result) = result
-                    jid = launch_result.get('ansible_job_id', None)
-                    if jid is None:
-                        return result
-                    if self.async_poll_callback is None:
-                        self.async_poll_callback = async_poll_callback
-                    self.module_name = 'async_status'
-                    self.module_args = [ "jid=%s" % jid ]
-                    clock = self.background
-                    while (clock >= 0):
-                        time.sleep(self.poll_interval)
-                        clock -= self.poll_interval
-                        result = self._execute_normal_module(conn, host, tmp)
-                        (host, ok, real_result) = result
-                        self.async_poll_callback(self, clock, self.poll_interval, ok, host, jid, real_result)
-                        if 'finished' in real_result or 'failed' in real_result:
-                            clock=-1
-                        elif (clock < 0 and not 'finished' in real_result):
-                            return [ host, False, "timer expired" ]
-
-                    self._delete_remote_files(conn, tmp)
-                    conn.close() 
-                    return result
 
         elif self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
