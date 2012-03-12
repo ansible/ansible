@@ -128,14 +128,13 @@ Polling is built-in and looks like this::
 The above example says "run for 60 minutes max (60*60=3600), poll for status every 60 seconds".
 Poll mode is smart so all jobs will be started before polling will begin on any machine.
 Be sure to use a high enough `--forks` value if you want to get all of your jobs started
-very quickly. 
+very quickly. After the time limit (in seconds) runs out (``-B``), the process on
+the remote nodes will be terminated.
 
 Any module other than :ref:`copy` or :ref:`template` can be
 backgrounded.  Typically you'll be backgrounding shell commands or
 software upgrades only.
 
-After the time limit (in seconds) runs out (``-B``), the process on
-the remote nodes will be killed.  Forcibly.
   
 
 
