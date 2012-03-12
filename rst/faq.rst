@@ -161,9 +161,9 @@ If you'd like to discuss scaling, please hop on the mailing list.
 Are transports other than SSH supported?
 ++++++++++++++++++++++++++++++++++++++++
 
-Currently SSH is the only one, though the intent is to make this entirely
-pluggable very soon so if you wanted to build a message bus or XMPP (or even
-sneaker net?) adapter ansible will let you do that.  Stay tuned!
+Currently SSH is the only transport, though the interface is pluggable so a 
+small patch could bring transport over message bus or XMPP as an option.
+Stop by the mailing list if you have ideas.
 
 What are some ideal uses for Ansible?
 +++++++++++++++++++++++++++++++++++++
