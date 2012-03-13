@@ -171,7 +171,7 @@ change, but only if the file changes::
      action: template src=template.j2 dest=/etc/foo.conf
      notify:
         - restart memcached
-        - restart foo
+        - restart apache
 
 Next up, we'll show what a handler looks like.
 
@@ -190,10 +190,10 @@ of the tasks complete in a particular play.
 Here's an example handlers section::
 
     handlers:
-        - name: restart apache
-          action: service name=apache state=restarted
         - name: restart memcached
           action: service name=memcached state=restarted
+        - name: restart apache
+          action: service name=apache state=restarted
 
 Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
@@ -361,7 +361,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
     - hosts: all
       user: root
       tasks:
-      - name: simulate long running op (15 sec), wait for up to 45, poll every 5
+      - name: simulate long running op, allow to run for 45, fire and forget
         action: command /bin/sleep 15
         async: 45
         poll: 0
