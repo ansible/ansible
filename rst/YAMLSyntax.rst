@@ -20,8 +20,8 @@ is used in practice.
 YAML Basics
 -----------
 
-For `ansible`, every YAML file starts with a list of things
-to do.   Each item in the list is a list of key/value pairs, commonly
+For `ansible`, nearly every YAML file starts with a list.   
+Each item in the list is a list of key/value pairs, commonly
 called a "hash" or a "dictionary".  So, we need to know how
 to write lists and dictionaries in YAML.
 
