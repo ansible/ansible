@@ -130,14 +130,19 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#">Playbooks</a><ul>
 <li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
 <li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
+<li><a class="reference internal" href="#user-line">User line</a></li>
 <li><a class="reference internal" href="#vars-section">Vars section</a></li>
 <li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
 <li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
 <li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
 <li><a class="reference internal" href="#handlers">Handlers</a></li>
-<li><a class="reference internal" href="#includes">Includes</a></li>
+<li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
+<li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
+<li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
 <li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
 </ul>
 </li>
@@ -196,18 +201,22 @@ particularly awesome.</p>
 <p>They are the basis for a really simple configuration management and
 multi-machine deployment system, unlike any that already exist, and
 one that is very well suited to deploying complex applications.</p>
+<p>Playbooks can declare configurations, or they can automate steps of
+a manual ordered process.  They can launch tasks synchronously or asynchronously.</p>
 <p>While you might run the main /usr/bin/ansible program for ad-hoc
 tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.</p>
+<p>Let&#8217;s dive in and see how they work.</p>
 <div class="section" id="playbook-example">
 <h2>Playbook Example<a class="headerlink" href="#playbook-example" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks are expressed in YAML format and have a minimum of syntax.
-Each playbook is composed of one or more &#8216;plays&#8217; in a list.  By
-composing a playbook of multiple &#8216;plays&#8217;, it is possible to
+Each playbook is composed of one or more &#8216;plays&#8217; in a list.</p>
+<p>By composing a playbook of multiple &#8216;plays&#8217;, it is possible to
 orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
-server group, then more commands back on the webservers group, etc:</p>
+server group, then more commands back on the webservers group, etc.</p>
+<p>For starters, here&#8217;s a playbook that contains just one play.:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   vars:
@@ -216,8 +225,8 @@ server group, then more commands back on the webservers group, etc:</p>
   user: root
   tasks:
   - include: base.yml somevar=3 othervar=4
-  - name: ensure apache is installed
-    action: yum pkg=httpd state=installed
+  - name: ensure apache is at the latest version
+    action: yum pkg=httpd state=latest
   - name: write the apache config file
     action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
     notify:
@@ -227,19 +236,28 @@ server group, then more commands back on the webservers group, etc:</p>
   handlers:
     - include: handlers.yml</pre>
 </div>
+<p>Below, we&#8217;ll break down what the various features of the playbook language are.</p>
 </div>
 <div class="section" id="hosts-line">
 <h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
-<p>The hosts line is a list of one or more groups or host patterns,
+<p>The <cite>hosts</cite> line is a list of one or more groups or host patterns,
 separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
 documentation.  This is just like the first parameter to
 <cite>/usr/bin/ansible</cite>.</p>
+<p>Each play gets to designate it&#8217;s own choice of patterns.</p>
+</div>
+<div class="section" id="user-line">
+<h2>User line<a class="headerlink" href="#user-line" title="Permalink to this headline">¶</a></h2>
+<p>Playbook steps on the remote system can be executed as any user.  The default is root,
+but you can specify others.  Sudo support is pending.:</p>
+<div class="highlight-python"><pre>user: mdehaan</pre>
+</div>
 </div>
 <div class="section" id="vars-section">
 <h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
-<p>A list of variables and values that can be used in the plays.  These
-can be used in templates or &#8216;action&#8217; lines and are dereferenced using
-<cite>jinja2</cite> syntax like this:</p>
+<p>The <cite>vars&#8217; section contains a list of variables and values that can be used in the plays.  These
+can be used in templates or tasks and are dereferenced using
+`jinja2</cite> syntax like this:</p>
 <div class="highlight-python"><pre>{{ varname }}</pre>
 </div>
 <p>Further, if there are discovered variables about the system (say, if
@@ -249,7 +267,7 @@ variables.  Facter variables are prefixed with <tt class="docutils literal"><spa
 variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say:</p>
 <div class="highlight-python"><pre>- name: write the motd
-- action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
+  action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
 </div>
 <p>And in /srv/templates/motd.j2:</p>
 <div class="highlight-python"><pre>You are logged into {{ facter_hostname }}</pre>
@@ -259,41 +277,60 @@ to write the hostname into the /etc/motd file, I could say:</p>
 <div class="section" id="tasks-list">
 <h2>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h2>
 <p>Each play contains a list of tasks.  Tasks are executed in order, one
-at a time, against all machines matched by the playbooks host pattern,
+at a time, against all machines matched by the host pattern,
 before moving on to the next task.</p>
 <p>Hosts with failed tasks are taken out of the rotation for the entire
 playbook.  If things fail, simply correct the playbook file and rerun.</p>
-<p>Modules other than command are idempotent, meaning if you run them
+<p>Modules other than <cite>command</cite> are &#8216;idempotent&#8217;, meaning if you run them
 again, they will make the changes they are told to make to bring the
-system to the desired state.</p>
+system to the desired state.  This makes it very safe to rerun
+the same playbook multiple times.  They won&#8217;t change things
+unless they have to change things.  Command will actually rerun the
+same command again, which is totally ok if the command is something
+like &#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
 </div>
 <div class="section" id="task-name-and-action">
 <h2>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h2>
 <p>Every task must have a name, which is included in the output from
 running the playbook.</p>
 <p>The action line is the name of an ansible module followed by
-parameters.  Usually these are expressed in <tt class="docutils literal"><span class="pre">key=value</span></tt> form, except
-for the command module, which looks just like a Linux/Unix command
-line.  See the module documentation for more info.</p>
-<p>Variables, as mentioned above, can be used in action lines.  So if,
-hypothetically, you wanted to make a directory on each system named
-after the hostname ... yeah, that&#8217;s I know silly ... you could do it
-like so:</p>
-<div class="highlight-python"><pre>- name: make a directory
-- action: mkdir /tmp/{{ facter_hostname }}</pre>
+parameters in key=value form:</p>
+<div class="highlight-python"><pre>- name: make sure apache is running
+  action: service name=httpd state=running</pre>
 </div>
+<p>The command module is the one module that just takes a list
+of arguments, and doesn&#8217;t use the key=value form.  Simple:</p>
+<div class="highlight-python"><pre>- name: disable selinux
+  action: command /sbin/setenforce 0</pre>
+</div>
+<p>Variables can be used in action lines.   Suppose you defined
+a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you could do this:</p>
+<div class="highlight-python"><pre>- name: make a directory
+  action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}</pre>
+</div>
+<p>Those same variables are usable in templates, which we&#8217;ll get to later.</p>
 </div>
 <div class="section" id="notify-statements">
 <h2>Notify statements<a class="headerlink" href="#notify-statements" title="Permalink to this headline">¶</a></h2>
-<p>Nearly all modules are written to be &#8216;idempotent&#8217; and can signal when
-they have affected a change on the remote system.  If a notify
-statement is used, the named handler will be run against each system
-where a change was effected, but NOT on systems where no change
-occurred.  This happens after all of the tasks are run.  For example,
-if notifying Apache and potentially replacing lots of configuration
-files, you could have Apache restart just once, at the end of a run.
-If you need Apache restarted in the middle of a run, you could just
-make a task for it, no harm done.  Notifiers are optional.</p>
+<p>As we&#8217;ve mentioned, nearly all modules are written to be &#8216;idempotent&#8217; and can signal when
+they have affected a change on the remote system.   Playbooks recognize this and
+have a basic event system that can be used to respond to change.</p>
+<p>These &#8216;notify&#8217; actions are triggered at the end of each &#8216;play&#8217; in a playbook, and
+trigger only once each.  For instance, multiple resources may indicate
+that apache needs to be restarted, but apache will only be bounced once.</p>
+<p>Here&#8217;s an example of restarting two services when the contents of a file
+change, but only if the file changes:</p>
+<div class="highlight-python"><pre>- name: template configuration file
+  action: template src=template.j2 dest=/etc/foo.conf
+  notify:
+     - restart memcached
+     - restart foo</pre>
+</div>
+<p>Next up, we&#8217;ll show what a handler looks like.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Notify handlers are always run in the order written.</p>
+</div>
 </div>
 <div class="section" id="handlers">
 <h2>Handlers<a class="headerlink" href="#handlers" title="Permalink to this headline">¶</a></h2>
@@ -302,51 +339,96 @@ tasks, that are referenced by name.  Handlers are what notifiers
 notify.  If nothing notifies a handler, it will not run.  Regardless
 of how many things notify a handler, it will run only once, after all
 of the tasks complete in a particular play.</p>
+<p>Here&#8217;s an example handlers section:</p>
+<div class="highlight-python"><pre>handlers:
+    - name: restart apache
+      action: service name=apache state=restarted
+    - name: restart memcached
+      action: service name=memcached state=restarted</pre>
 </div>
-<div class="section" id="includes">
-<h2>Includes<a class="headerlink" href="#includes" title="Permalink to this headline">¶</a></h2>
-<p>Not all tasks have to be listed directly in the main file.  An include
-file can contain a list of tasks (in YAML) as well, optionally passing
-extra variables into the file.  Variables passed in can be deferenced
-like this (assume a variable named &#8216;user&#8217;):</p>
+<p>Handlers are best used to restart services and trigger reboots.  You probably
+won&#8217;t need them for much else.</p>
+</div>
+<div class="section" id="power-tricks">
+<h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
+<p>Now that you have the basics down, let&#8217;s learn some more advanced
+things you can do with playbooks.</p>
+<div class="section" id="external-variables-and-sensitive-data">
+<h3>External Variables And Sensitive Data<a class="headerlink" href="#external-variables-and-sensitive-data" title="Permalink to this headline">¶</a></h3>
+<p>It&#8217;s a great idea to keep your playbooks under source control, but
+you may wish to make the playbook source public while keeping certain
+important variables private.  You can do this by using an external
+variables file, or files, just like this:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars:
+    favcolor: blue
+  vars_files:
+    - /path/to/external_vars.yml
+  tasks:
+  - name: this is just a placeholder
+    action: command /bin/echo foo</pre>
+</div>
+<p>This removes the risk of sharing sensitive data with others when
+sharing your playbook source with them.</p>
+<p>The contents of each variables file is a simple YAML dictionary, like this:</p>
+<div class="highlight-python"><pre>---
+somevar: somevalue
+password: magic</pre>
+</div>
+</div>
+<div class="section" id="include-files-and-reuse">
+<h3>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h3>
+<p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
+include files to do this.</p>
+<p>An include file simply contains a list of tasks, like so:</p>
+<div class="highlight-python"><pre>---
+- name: placeholder foo
+  action: command /bin/foo
+- name: placeholder bar
+  action: command /bin/bar</pre>
+</div>
+<p>Variables passed in can be deferenced too.  Assume a variable named &#8216;user&#8217;. Using
+<cite>jinja2</cite> syntax, anywhere in the included file, you can say:</p>
 <div class="highlight-python"><pre>{{ user }}</pre>
 </div>
 <p>For instance, if deploying multiple wordpress instances, I could
-contain all of my tasks in a wordpress.yml file, and use it like so:</p>
+contain all of my wordpress tasks in a single wordpress.yml file, and use it like so:</p>
 <div class="highlight-python"><pre>- tasks:
-   - include: wordpress.yml user=timmy
-   - include: wordpress.yml user=alice
-   - include: wordpress.yml user=bob</pre>
+  - include: wordpress.yml user=timmy
+  - include: wordpress.yml user=alice
+  - include: wordpress.yml user=bob</pre>
 </div>
 <p>In addition to the explicitly passed in parameters, all variables from
-the vars section are also available.</p>
-<p>The format of an included list of tasks or handlers looks just like a
-flat list of tasks.  Here is an example of what base.yml might look
-like:</p>
-<div class="highlight-python"><pre>---
-- name: no selinux
-  action: command /usr/sbin/setenforce 0
-- name: no iptables
-  action: service name=iptables state=stopped
-- name: this is just to show variables work here, favcolor={{ favcolor }}
-  action: command /bin/true</pre>
-</div>
-<p>As you can see above, variables in include files work just like they
-do in the main file.  Including a variable in the name of a task is a
-contrived example, you could also pass them to the action command line
-or use them inside a template file.</p>
+the vars section are also available for use here as well.  Variables that bubble
+up from tools like facter and ohai are not though &#8211; but they ARE available for use
+inside &#8216;action&#8217; lines.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Note that include statements are only usable from the top level
-playbook file.  At this time, includes can not include other
+<p class="last">Include statements are only usable from the top level
+playbook file.  This means includes can not include other
 includes.</p>
 </div>
+<p>Includes can also be used in the &#8216;handlers&#8217; section, for instance, if you
+want to define how to restart apache, you only have to do that once for all
+of your playbooks.  You might make a notifiers.yaml that looked like:</p>
+<div class="highlight-python"><pre>----
+- name: restart apache
+  action: service name=apache state=restarted</pre>
+</div>
+<p>And in your main playbook file, just include it like so, at the bottom
+of a play:</p>
+<div class="highlight-python"><pre>handlers:
+  - include: handlers.yml</pre>
+</div>
+<p>You can mix in includes along with your regular non-included tasks and handlers.</p>
 </div>
 <div class="section" id="using-includes-to-assign-classes-of-systems">
-<h2>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h2>
-<p>Include files are best used to reuse logic between playbooks.  You
+<h3>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h3>
+<p>Include files are really powerful when used to reuse logic between playbooks.  You
 could imagine a playbook describing your entire infrastructure like
-this:</p>
+this, in a list of just a few plays:</p>
 <div class="highlight-python"><pre>---
 - hosts: atlanta-webservers
   vars:
@@ -366,22 +448,71 @@ this:</p>
     - include: generic-handlers.yml</pre>
 </div>
 <p>There is one (or more) play defined for each group of systems, and
-each play maps each group includes one or more &#8216;class definitions&#8217;
-telling the systems what they are supposed to do or be.</p>
-<p>Using a common handlers file could allow one task in &#8216;webservers&#8217; to
-define &#8216;restart apache&#8217;, and it could be reused between multiple
-plays.</p>
-<p>Variables like &#8216;database&#8217; above can be used in templates referenced
-from the configuration file to generate machine specific variables.</p>
+each play maps each group to several includes.  These includes represent
+&#8216;class definitions&#8217;, telling the systems what they are supposed to do or be.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Playbooks do not always have to be declarative; you can do something
+similar to model a push process for a multi-tier web application.  This is
+actually one of the things playbooks were invented to do.</p>
+</div>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
-<h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
-<p>(Information on this feature is pending)</p>
+<h3>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h3>
+<p>By default tasks in playbooks block, meaning the connections stay open
+until the task is done on each node.  If executing playbooks with
+a small parallelism value (aka <cite>&#8211;forks</cite>), you may wish that long
+running operations can go faster.  The easiest way to do this is
+to kick them off all at once and then poll until they are done.</p>
+<p>You will also want to use asynchronous mode on very long running
+operations that might be subject to timeout.</p>
+<p>To launch a task asynchronously, specify it&#8217;s maximum runtime
+and how frequently you would like to poll for status.  The default
+poll value is 10 seconds if you do not specify a value for <cite>poll</cite>:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  tasks:
+  - name: simulate long running op (15 sec), wait for up to 45, poll every 5
+    action: command /bin/sleep 15
+    async: 45
+    poll: 5</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">There is no default for the async time limit.  If you leave off the
+&#8216;async&#8217; keyword, the task runs synchronously, which is Ansible&#8217;s
+default.</p>
+</div>
+<p>Alternatively, if you do not need to wait on the task to complete, you may
+&#8220;fire and forget&#8221; by specifying a poll value of 0:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  tasks:
+  - name: simulate long running op (15 sec), wait for up to 45, poll every 5
+    action: command /bin/sleep 15
+    async: 45
+    poll: 0</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You shouldn&#8217;t &#8220;fire and forget&#8221; with operations that require
+exclusive locks, such as yum transactions, if you expect to run other
+commands later in the playbook against those same resources.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Using a higher value for <cite>&#8211;forks</cite> will result in kicking off asynchronous
+tasks even faster.  This also increases the efficiency of polling.</p>
+</div>
+</div>
 </div>
 <div class="section" id="executing-a-playbook">
 <h2>Executing A Playbook<a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
-<p>To run a playbook:</p>
-<div class="highlight-python"><pre>ansible-playbook playbook.yml</pre>
+<p>Now that you&#8217;ve learned playbook syntax, how do you run a playbook?  It&#8217;s simple.
+Let&#8217;s run a playbook using a parallelism level of 10:</p>
+<div class="highlight-python"><pre>ansible-playbook playbook.yml -f 10</pre>
 </div>
 </div>
 </div>

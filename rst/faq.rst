@@ -173,7 +173,7 @@ example is for configuration management where you
 are starting from a clean OS with no extra software installed, adopting systems
 that are already deployed. 
 
-Ansible is also great for running ad-hoc tasks across a wide variety of Linux, Unix, and *BSDs.  
+Ansible is also great for running ad-hoc tasks across a wide variety of Linux, Unix, and BSDs.  
 Because it just uses the basic tools available on the system, it is exceptionally cross platform
 without needing to install management packages on each node.
 
