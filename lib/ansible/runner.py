@@ -39,6 +39,8 @@ import random
 import jinja2
 import time
 from ansible.utils import *
+from ansible.errors import AnsibleInventoryNotFoundError
+
     
 ################################################
 
@@ -127,6 +129,10 @@ class Runner(object):
             return (host_list, {})
 
         host_list = os.path.expanduser(host_list)
+
+        if not os.path.exists(host_list):
+            raise AnsibleInventoryNotFoundError(host_list)
+
         lines = file(host_list).read().split("\n")
         groups     = {}
         groups['ungrouped'] = []
