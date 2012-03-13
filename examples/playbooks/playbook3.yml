@@ -1,0 +1,26 @@
+---
+# this is not so much an example playbook file as a playbook we sometimes use
+# for testing.  I have chosen to not comment this one so folks can get
+# an idea of what a concise playbook can look like...
+
+- hosts: all
+  user: root
+  vars:
+    http_port: 80
+    max_clients: 200
+  tasks:
+  - name: simulate long running op, wait for 45s, poll every 5
+    action: command /bin/sleep 15
+    async: 45
+    poll: 5
+  - include: tasks/base.yml favcolor=blue
+  - name: write the foo config file using vars set above
+    action: template src=foo.j2 dest=/etc/some_random_foo.conf
+    notify:
+    - restart apache
+  - name: ensure apache is running
+    action: service name=httpd state=started
+  - name: pointless test action
+    action: command /bin/echo {{ http_port }}
+  handlers:
+    - include: handlers/handlers.yml

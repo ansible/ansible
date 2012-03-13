@@ -16,7 +16,7 @@
   # files but still keep the playbook in public source control
 
   vars_files:
-    - external_vars.yml
+    - vars/external_vars.yml
 
   # as with before, every play has a list of tasks in it
 
@@ -30,7 +30,7 @@
   # or we can promote reuse and simplicity by including tasks
   # from other files, for instance, to reuse common tasks
 
-  - include: base.yml
+  - include: tasks/base.yml
 
   # we could also have done something like:
   # - include: wordpress.yml user=timmy
@@ -44,7 +44,7 @@
     # and simpler recipes, you may wish to only have one
     # handler file for all your plays and playbooks
 
-    - include: handlers.yml
+    - include: handlers/handlers.yml
 
     # you can mix things that are directly in the file with things
     # that are included.  Order is executed as written, but only
@@ -75,7 +75,7 @@
   vars:
      release: 2.0
   vars_files:
-     - external_vars.yml
+     - vars/external_vars.yml
 
 
   # these all runs as the user 'mdehaan'.  If there were any handlers

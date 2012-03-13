@@ -42,7 +42,7 @@
   # end of the playbook run
 
   - name: write some_random_foo configuration
-    action: template src=foo.j2 dest=/etc/some_random_foo.conf
+    action: template src=templates/foo.j2 dest=/etc/some_random_foo.conf
     notify:
     - restart apache
 
@@ -66,6 +66,6 @@
     # is changed, and only then
 
     - name: restart apache
-      action: service httpd state=restarted
+      action: service name=httpd state=restarted
 
 
