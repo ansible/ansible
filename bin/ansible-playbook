@@ -22,6 +22,7 @@ import sys
 import ansible.playbook
 import ansible.constants as C
 from ansible.utils import *
+from ansible.errors import *
 import getpass
 from optparse import OptionParser
 
@@ -99,7 +100,7 @@ def main(args):
         try:
             pb.run()
         except AnsibleError as e:
-            print e
+            print >>sys.stderr, "ERROR: %s" % e
             return 1
 
     return 0

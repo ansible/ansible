@@ -20,6 +20,7 @@
 import ansible.runner
 import ansible.constants as C
 from ansible.utils import *
+from ansible.errors import *
 import yaml
 import shlex
 import os
@@ -87,6 +88,8 @@ class PlayBook(object):
 
     def _get_vars(self, play, dirname):
         vars = play.get('vars', {})
+        if type(vars) != dict:
+            raise AnsibleError("'vars' section must contain only key/value pairs")
         vars_files = play.get('vars_files', [])
         for f in vars_files:
             path = path_dwim(dirname, f)
