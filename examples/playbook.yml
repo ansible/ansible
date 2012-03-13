@@ -4,6 +4,8 @@
   vars:
     http_port: 80
     max_clients: 200
+  vars_files:
+    - external_vars.yml
   tasks:
   - name: simulate long running op (15 sec), wait for up to 45, poll every 5
     action: command /bin/sleep 15

@@ -85,12 +85,25 @@ class PlayBook(object):
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
+    def _get_vars(self, play, dirname):
+        vars = play.get('vars', {})
+        vars_files = play.get('vars_files', [])
+        for f in vars_files:
+            path = path_dwim(dirname, f)
+            # FIXME: better error handling if not valid YAML 
+            # or file not found
+            # raise typed exception
+            data = file(path).read()
+            data = yaml.load(data)
+            vars.update(data)
+        return vars
+
     def _include_tasks(self, play, task, dirname, new_tasks):
         # an include line looks like:
         # include: some.yml a=2 b=3 c=4
         include_tokens = task['include'].split()
         path = path_dwim(dirname, include_tokens[0])
-        inject_vars = play.get('vars', {})
+        inject_vars = self._get_vars(play, dirname)
         for i,x in enumerate(include_tokens):
             if x.find("=") != -1:
                 (k,v) = x.split("=")
@@ -105,7 +118,7 @@ class PlayBook(object):
     def _include_handlers(self, play, handler, dirname, new_handlers):
         path = path_dwim(dirname, handler['include'])
         included = file(path).read()
-        inject_vars = play.get('vars', {})
+        inject_vars = self._get_vars(play, dirname)
         template = jinja2.Template(included)
         included = template.render(inject_vars)
         included = yaml.load(included)
@@ -383,7 +396,8 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern  = pg['hosts']
-        vars     = pg.get('vars', {})
+
+        vars     = self._get_vars(pg, self.basedir)
         tasks    = pg['tasks']
         handlers = pg['handlers']
         user     = pg.get('user', C.DEFAULT_REMOTE_USER)
