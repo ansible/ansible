@@ -283,7 +283,7 @@ class PlayBook(object):
         name    = task['name']
         action  = task['action']
         async_seconds = int(task.get('async', 0)) # not async by default
-        async_poll_interval = int(task.get('poll', 30)) # default poll = 30 seconds
+        async_poll_interval = int(task.get('poll', 10)) # default poll = 10 seconds
 
         # comment = task.get('comment', '')
 

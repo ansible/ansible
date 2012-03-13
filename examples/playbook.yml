@@ -9,6 +9,10 @@
     action: command /bin/sleep 15
     async: 45
     poll: 5
+  - name: fire and forget
+    action: command /bin/sleep 15
+    async: 45
+    poll: 0
   - include: base.yml favcolor=blue
   - name: write the foo config file using vars set above
     action: template src=foo.j2 dest=/etc/some_random_foo.conf
