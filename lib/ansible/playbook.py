@@ -161,7 +161,7 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for pattern in self.playbook:
-            self._run_pattern(pattern)
+            self._run_play(pattern)
 
         # summarize the results
         results = {}
@@ -389,7 +389,7 @@ class PlayBook(object):
                     x['run'] = []
                 x['run'].append(host)
 
-    def _run_pattern(self, pg):
+    def _run_play(self, pg):
         '''
         run a list of tasks for a given pattern, in order
         '''
