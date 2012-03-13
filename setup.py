@@ -19,14 +19,6 @@ setup(name='ansible',
       packages=[
          'ansible',
       ],
-      data_files=[ 
-         ('/usr/share/ansible',
-          glob.glob('library/*')
-          ),
-         ('/usr/share/man/man1',
-          glob.glob('docs/man/man1/*.1')
-          ),
-      ],
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook'
