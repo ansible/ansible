@@ -34,6 +34,7 @@ import ansible.runner
 import ansible.playbook
 import ansible.constants as C
 from ansible.utils import *
+from ansible.errors import *
 
 ########################################################
 
@@ -193,7 +194,11 @@ class Cli(object):
 if __name__ == '__main__':
     cli = Cli()
     (options, args) = cli.parse()
-    (runner, results) = cli.run(options, args)
-    cli.output(runner, results, options, args)
-    
-
+    try:
+        (runner, results) = cli.run(options, args)
+    except AnsibleError as e:
+        # Generic handler for ansible specific errors
+        print e
+        sys.exit(1)
+    else:
+        cli.output(runner, results, options, args)

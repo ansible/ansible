@@ -96,15 +96,14 @@ def main(args):
             remote_pass=sshpass,
             callbacks=PlaybookCallbacks()
         )
-        pb.run()
+        try:
+            pb.run()
+        except AnsibleError as e:
+            print e
+            return 1
 
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
-
-
-
-
-
