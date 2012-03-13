@@ -24,6 +24,7 @@ import yaml
 import shlex
 import os
 import jinja2
+import time
 
 # used to transfer variables to Runner
 SETUP_CACHE={ }
@@ -167,9 +168,82 @@ class PlayBook(object):
                 new_hosts.append(x)
         return new_hosts
 
-    def _run_module(self, pattern, module, args, hosts, remote_user):
+    def hosts_to_poll(self, results):
+        ''' which hosts need more polling? '''
+        hosts = []
+        for (host, res) in results['contacted'].iteritems():
+            # FIXME: make polling pattern in /bin/ansible match
+            # move to common function in utils
+            if not 'finished' in res and 'started' in res:
+                hosts.append(host)
+        return hosts
+
+
+    def _async_poll(self, runner, async_seconds, async_poll_interval):
+        ''' launch an async job, if poll_interval is set, wait for completion '''
+
+        # TODO: refactor this function
+        runner.background = async_seconds
+        results = runner.run()
+
+        if async_poll_interval <= 0:
+            # if not polling, playbook requested fire and forget
+            # trust the user wanted that and return immediately
+            return results
+        
+        poll_hosts = results['contacted'].keys()
+        if len(poll_hosts) == 0:
+            # no hosts launched ok, return that.
+            return results
+        ahost = poll_hosts[0]
+        jid = results['contacted'][ahost].get('ansible_job_id', None)
+        if jid is None:
+            # FIXME this really shouldn't happen.  consider marking hosts failed
+            # and looking for jid in other host.
+            self.callbacks.on_async_confused("unexpected error: unable to determine jid")
+            return results
+
+        clock = async_seconds
+        runner.hosts       = self.hosts_to_poll(results)
+        poll_results = results
+        while (clock >= 0):
+            runner.hosts = poll_hosts
+            # FIXME: make a "get_async_runner" method like in /bin/ansible
+            # loop until polling duration complete
+            runner.module_args = [ "jid=%s" % jid ]
+            runner.module_name = 'async_status'
+            # FIXME: make it such that if you say 'async_status' you
+            # can't background that op!
+            runner.background  = 0  
+            runner.pattern     = '*'
+            runner.hosts       = self.hosts_to_poll(poll_results)
+            poll_results       = runner.run()
+            if len(runner.hosts) == 0:
+                break
+            if poll_results is None:
+                break
+            for (host, host_result) in poll_results['contacted'].iteritems():
+                # override last result with current status result for report
+                results['contacted'][host] = host_result
+                # output if requested
+                self.callbacks.on_async_poll(jid, host, clock, host_result)
+                # run down the clock
+                clock = clock - async_poll_interval
+                time.sleep(async_poll_interval)
+                # do not have to poll the completed hosts, smaller list
+                runner.hosts       = self.hosts_to_poll(poll_results)
+            # mark any hosts that are still listed as started as failed
+            # since these likely got killed by async_wrapper
+            for (host, host_result) in results['contacted'].iteritems():
+                if 'started' in host_result:
+                    results['contacted'][host] = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+        return results
+
+    def _run_module(self, pattern, module, args, hosts, remote_user,
+        async_seconds, async_poll_interval):
+
         ''' run a particular module step in a playbook '''
-        return ansible.runner.Runner(
+        runner = ansible.runner.Runner(
             pattern=pattern,
             module_name=module,
             module_args=args,
@@ -181,7 +255,12 @@ class PlayBook(object):
             remote_user=remote_user,
             setup_cache=SETUP_CACHE,
             basedir=self.basedir
-        ).run()
+        )
+
+        if async_seconds == 0:
+            return runner.run()
+        else:
+            return self._async_poll(runner, async_seconds, async_poll_interval)
 
     def _run_task(self, pattern=None, task=None, host_list=None,
         remote_user=None, handlers=None, conditional=False):
@@ -203,6 +282,9 @@ class PlayBook(object):
         # load the module name and parameters from the task entry
         name    = task['name']
         action  = task['action']
+        async_seconds = int(task.get('async', 0)) # not async by default
+        async_poll_interval = int(task.get('poll', 30)) # default poll = 30 seconds
+
         # comment = task.get('comment', '')
 
         tokens = shlex.split(action)
@@ -219,7 +301,8 @@ class PlayBook(object):
         # load up an appropriate ansible runner to
         # run the task in parallel
         results = self._run_module(pattern, module_name, 
-            module_args, host_list, remote_user)
+            module_args, host_list, remote_user, 
+            async_seconds, async_poll_interval)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
         # which would warn you about this

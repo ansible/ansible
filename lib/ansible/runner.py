@@ -18,6 +18,11 @@
 
 ################################################
 
+# FIXME: need to add global error handling around
+# executor_hook mapping all exceptions into failures
+# with the traceback converted into a string and
+# if the exception is typed, a *nice* string
+
 try:
     import json
 except ImportError:
@@ -373,8 +378,8 @@ class Runner(object):
 
     def remote_log(self, conn, msg):
         ''' this is the function we use to log things '''
+        # FIXME: TODO: make this optional as it's executed a lot
         stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
-        # TODO: maybe make that optional
 
     def _exec_command(self, conn, cmd):
         ''' execute a command string over SSH, return the output '''
@@ -392,9 +397,18 @@ class Runner(object):
 
     def _copy_module(self, conn, tmp, module):
         ''' transfer a module over SFTP, does not run it '''
+        if module.startswith("/"):
+            # user probably did "/bin/foo" instead of "command /bin/foo" in a playbook
+            # or tried "-m /bin/foo" instead of "a /bin/foo"
+            # FIXME: type this exception
+            raise Exception("%s is not a module" % module)
         in_path = os.path.expanduser(
             os.path.join(self.module_path, module)
         )
+        if not os.path.exists(in_path):
+            # FIXME: type this exception 
+            raise Exception("module not found: %s" % in_path)
+
         out_path = tmp + module
         conn.put_file(in_path, out_path)
         return out_path

@@ -53,6 +53,12 @@ class PlaybookCallbacks(object):
     def on_play_start(self, pattern):
         print "PLAY [%s] ****************************\n" % pattern
 
+    def on_async_confused(self, msg):
+        print msg
+
+    def on_async_poll(self, jid, host, clock, host_result):
+        print async_poll_status(jid, host, clock, host_result)
+
 
 def main(args):
     ''' run ansible-playbook operations '''
