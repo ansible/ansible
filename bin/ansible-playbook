@@ -60,6 +60,9 @@ class PlaybookCallbacks(object):
     def on_async_poll(self, jid, host, clock, host_result):
         print async_poll_status(jid, host, clock, host_result)
 
+    def on_dark_host(self, host, msg):
+        print "exception: [%s] => %s" % (host, msg)
+
 
 def main(args):
     ''' run ansible-playbook operations '''

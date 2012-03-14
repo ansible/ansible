@@ -202,6 +202,17 @@ class PlayBook(object):
         runner.background = async_seconds
         results = runner.run()
 
+        # TODO -- this block is repeated in lots of places, refactor
+        dark_hosts = results.get('dark',{})
+        contacted_hosts = results.get('contacted',{})
+        for (host, error) in dark_hosts.iteritems():
+            self.callbacks.on_dark_host(host, error)
+            self.dark[host] = 1
+        for (host, host_result) in contacted_hosts.iteritems():
+            if 'failed' in host_result:
+                self.callbacks.on_failed(host, host_result)
+                self.failures[host] = 1
+
         if async_poll_interval <= 0:
             # if not polling, playbook requested fire and forget
             # trust the user wanted that and return immediately
@@ -220,7 +231,9 @@ class PlayBook(object):
             return results
 
         clock = async_seconds
-        runner.hosts       = self.hosts_to_poll(results)
+        runner.hosts = self.hosts_to_poll(results)
+        runner.hosts = self._prune_failed_hosts(runner.hosts)
+
         poll_results = results
         while (clock >= 0):
             runner.hosts = poll_hosts
@@ -234,20 +247,33 @@ class PlayBook(object):
             runner.pattern     = '*'
             runner.hosts       = self.hosts_to_poll(poll_results)
             poll_results       = runner.run()
+
             if len(runner.hosts) == 0:
                 break
             if poll_results is None:
                 break
+
+            # TODO -- this block is repeated in lots of places, refactor
+            dark_hosts = poll_results.get('dark',{})
+            contacted_hosts = poll_results.get('contacted',{})
+            for (host, error) in dark_hosts.iteritems():
+                self.callbacks.on_dark_host(host, error)
+                self.dark[host] = 1
+            for (host, host_result) in contacted_hosts.iteritems():
+                if 'failed' in host_result:
+                    self.callbacks.on_failed(host, host_result)
+                    self.failures[host] = 1
+
             for (host, host_result) in poll_results['contacted'].iteritems():
-                # override last result with current status result for report
                 results['contacted'][host] = host_result
-                # output if requested
-                self.callbacks.on_async_poll(jid, host, clock, host_result)
-                # run down the clock
-                clock = clock - async_poll_interval
-                time.sleep(async_poll_interval)
-                # do not have to poll the completed hosts, smaller list
-                runner.hosts       = self.hosts_to_poll(poll_results)
+                if not host in self.dark and not host in self.failures:
+                    # override last result with current status result for report
+                    # output if requested
+                    self.callbacks.on_async_poll(jid, host, clock, host_result)
+            # run down the clock
+            clock = clock - async_poll_interval
+            time.sleep(async_poll_interval)
+            # do not have to poll the completed hosts, smaller list
             # mark any hosts that are still listed as started as failed
             # since these likely got killed by async_wrapper
             for (host, host_result) in results['contacted'].iteritems():
@@ -274,9 +300,16 @@ class PlayBook(object):
         )
 
         if async_seconds == 0:
-            return runner.run()
+            rc = runner.run()
         else:
-            return self._async_poll(runner, async_seconds, async_poll_interval)
+            rc = self._async_poll(runner, async_seconds, async_poll_interval)
+ 
+        dark_hosts = rc.get('dark',{})
+        for (host, error) in dark_hosts.iteritems():
+            self.callbacks.on_dark_host(host, error)
+
+        return rc
+
 
     def _run_task(self, pattern=None, task=None, host_list=None,
         remote_user=None, handlers=None, conditional=False):
@@ -428,6 +461,17 @@ class PlayBook(object):
             remote_user=user,
             setup_cache=SETUP_CACHE
         ).run()
+
+        # FIXME: similar logic up in run_task, refactor
+        dark_hosts = setup_results.get('dark',{})
+        contacted_hosts = setup_results.get('contacted',{})
+        for (host, error) in dark_hosts.iteritems():
+            self.callbacks.on_dark_host(host, error)
+            self.dark[host] = 1
+        for (host, host_result) in contacted_hosts.iteritems():
+            if 'failed' in host_result:
+                self.callbacks.on_failed(host, host_result)
+                self.failed[hosts] = 1
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
