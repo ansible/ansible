@@ -31,7 +31,13 @@ except ImportError:
 
 # load config & template variables
 
-input_data = sys.argv[1:]
+if len(sys.argv) == 1:
+    sys.exit(1)
+argfile = sys.argv[1]
+if not os.path.exists(argfile):
+    sys.exit(1)
+input_data = open(argfile, 'r').read()
+
 new_options = dict([ x.split('=') for x in input_data ])
 ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
 ansible_dir = os.path.dirname(ansible_file)
