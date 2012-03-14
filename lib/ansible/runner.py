@@ -35,6 +35,7 @@ import jinja2
 import time
 import traceback
 import tempfile
+import StringIO
 
 # FIXME: stop importing *, use as utils/errors
 from ansible.utils import *
@@ -227,7 +228,6 @@ class Runner(object):
     def _transfer_file(self, conn, source, dest):
         ''' transfers a remote file '''
 
-        self.remote_log(conn, 'COPY remote:%s local:%s' % (source, dest))
         conn.put_file(source, dest)
 
     # *****************************************************
@@ -241,6 +241,23 @@ class Runner(object):
         outpath = self._copy_module(conn, tmp, module)
         self._exec_command(conn, "chmod +x %s" % outpath)
         return outpath
+
+    # *****************************************************
+
+    def _transfer_argsfile(self, conn, tmp, args_str):
+        ''' 
+        transfer arguments as a single file to be fed to the module.
+        this is to avoid various shell things being eaten by SSH
+        '''
+        args_fd, args_file = tempfile.mkstemp()
+        args_fo = os.fdopen(args_fd, 'w')
+        args_fo.write(args_str)
+        args_fo.flush()
+        args_fo.close()
+        args_remote = os.path.join(tmp, 'arguments')
+        self._transfer_file(conn, args_file, 'arguments')
+        os.unlink(args_file)
+        return args_remote
 
     # *****************************************************
 
@@ -268,17 +285,8 @@ class Runner(object):
         template = jinja2.Template(args)
         args = template.render(inject_vars)
 
-        # make a tempfile for the args and stuff the args into the file
-        argsfd,argsfile = tempfile.mkstemp()
-        argsfo = os.fdopen(argsfd, 'w')
-        argsfo.write(args)
-        argsfo.flush()
-        argsfo.close()
-        args_rem = tmp + 'argsfile'
-        self.remote_log(conn, "args: %s" % args)
-        self._transfer_file(conn,argsfile, args_rem)
-        os.unlink(argsfile)
-        cmd = "%s %s" % (remote_module_path, args_rem)
+        argsfile = self._transfer_argsfile(conn, tmp, args)
+        cmd = "%s %s" % (remote_module_path, 'arguments')
         result = self._exec_command(conn, cmd)
         return result
 
