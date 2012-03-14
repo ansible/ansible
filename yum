@@ -117,7 +117,6 @@ def ensure(my, state, pkgspec):
     yumconf = my.conf.config_file_path
     res = {}
     if state == 'installed':
-        pkg = None
         # check if pkgspec is installed
         if re.search('[></=]',pkgspec):
             try:
@@ -131,10 +130,23 @@ def ensure(my, state, pkgspec):
         if pkgs:
             return { 'changed':False }
     
-        # if not - try to install it    
+        # if not see if it is available
+        if re.search('[></=]',pkgspec):
+            try:
+                pkgs = my.returnPackagesByDep(pkgspec)
+            except yum.Errors.YumBaseError:
+                pkgs = None
+        else:
+            e,m,u = my.pkgSack.matchPackageNames([pkgspec])
+            pkgs = e +m
+        
+        if not pkgs:
+            msg = "No Package matching %s available" % pkgspec
+            return { 'changed':False, 'failed': True, 'msg':msg }
+        
         my.close()
         del my
-        cmd = 'yum -c %s -d1 -y install %s' % (yumconf, pkgspec)
+        cmd = "yum -c %s -d1 -y install '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
@@ -176,7 +188,7 @@ def ensure(my, state, pkgspec):
     
         my.close()
         del my
-        cmd = 'yum -c %s -d1 -y remove %s' % (yumconf, pkgspec)
+        cmd = "yum -c %s -d1 -y remove '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
         # FIXME if we ran the remove - check to make sure it actually removed :(
         # look for the pkg in the rpmdb
@@ -203,7 +215,7 @@ def ensure(my, state, pkgspec):
             return { 'changed':False,}
 
         # we have something in updates
-        cmd = 'yum -c %s -d1 -y update %s' % (yumconf, pkgspec)
+        cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
         # FIXME if it is - update it and check to see if it applied
         # check to see if there is no longer an update available for the pkgspec
@@ -249,9 +261,22 @@ def main():
     # update="args"?
     #
     
+    if len(sys.argv) == 1:
+        msg = "the yum module requires arguments (-a)"
+        return 1, msg
 
-    args = " ".join(sys.argv[1:])
+    argfile = sys.argv[1]
+    if not os.path.exists(argfile):
+        msg = "Argument file not found"
+        return 1, msg
+
+    args = open(argfile, 'r').read()
     items = shlex.split(args)
+
+    if not len(items):
+        msg = "the yum module requires arguments (-a)"
+        return 1, msg
+
     # if nothing else changes - it fails
     results = { 'changed':False, 
                 'failed':True, 
@@ -260,7 +285,12 @@ def main():
                 'msg':args }
     params = {}
     for x in items:
-        (k, v) = x.split("=", 1)
+        try:
+            (k, v) = x.split("=", 1)
+        except ValueError:
+            msg = "invalid arguments: %s" % args
+            return 1, msg
+            
         params[k] = v
 
     if 'conf_file' not in params:
@@ -280,8 +310,15 @@ def main():
             results = ensure(my, state, pkgspec)
 
     print json.dumps(results)
-
+    return 0, None
 
 if __name__ == "__main__":
-    main()
+    rc, msg = main()
+    if rc != 0: # something went wrong emit the msg
+        print json.dumps({
+            "failed" : rc,
+            "msg" : msg
+        })   
+        sys.exit(rc)
+
     
