@@ -194,6 +194,8 @@ alt="Fork me on GitHub"
 <dd>Learn about available modules and writing your own</dd>
 <dt><a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a></dt>
 <dd>Learn about how to select hosts</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
+<dd>Complete playbook files from the github project source</dd>
 </dl>
 </div>
 <p>Playbooks are a completely different way to use ansible and are
@@ -224,7 +226,6 @@ server group, then more commands back on the webservers group, etc.</p>
     max_clients: 200
   user: root
   tasks:
-  - include: base.yml somevar=3 othervar=4
   - name: ensure apache is at the latest version
     action: yum pkg=httpd state=latest
   - name: write the apache config file
@@ -234,7 +235,8 @@ server group, then more commands back on the webservers group, etc.</p>
   - name: ensure apache is running
     action: service name=httpd state=started
   handlers:
-    - include: handlers.yml</pre>
+    - name: restart apache
+      action: service name=apache state=restarted</pre>
 </div>
 <p>Below, we&#8217;ll break down what the various features of the playbook language are.</p>
 </div>
@@ -324,7 +326,7 @@ change, but only if the file changes:</p>
   action: template src=template.j2 dest=/etc/foo.conf
   notify:
      - restart memcached
-     - restart foo</pre>
+     - restart apache</pre>
 </div>
 <p>Next up, we&#8217;ll show what a handler looks like.</p>
 <div class="admonition note">
@@ -341,10 +343,10 @@ of how many things notify a handler, it will run only once, after all
 of the tasks complete in a particular play.</p>
 <p>Here&#8217;s an example handlers section:</p>
 <div class="highlight-python"><pre>handlers:
-    - name: restart apache
-      action: service name=apache state=restarted
     - name: restart memcached
-      action: service name=memcached state=restarted</pre>
+      action: service name=memcached state=restarted
+    - name: restart apache
+      action: service name=apache state=restarted</pre>
 </div>
 <p>Handlers are best used to restart services and trigger reboots.  You probably
 won&#8217;t need them for much else.</p>
@@ -365,7 +367,7 @@ variables file, or files, just like this:</p>
   vars:
     favcolor: blue
   vars_files:
-    - /path/to/external_vars.yml
+    - /vars/external_vars.yml
   tasks:
   - name: this is just a placeholder
     action: command /bin/echo foo</pre>
@@ -374,6 +376,7 @@ variables file, or files, just like this:</p>
 sharing your playbook source with them.</p>
 <p>The contents of each variables file is a simple YAML dictionary, like this:</p>
 <div class="highlight-python"><pre>---
+# in the above example, this would be vars/external_vars.yml
 somevar: somevalue
 password: magic</pre>
 </div>
@@ -382,17 +385,32 @@ password: magic</pre>
 <h3>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h3>
 <p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.</p>
-<p>An include file simply contains a list of tasks, like so:</p>
+<p>An include file simply contains a flat list of tasks, like so:</p>
 <div class="highlight-python"><pre>---
+# possibly saved as tasks/foo.yml
 - name: placeholder foo
   action: command /bin/foo
 - name: placeholder bar
   action: command /bin/bar</pre>
 </div>
-<p>Variables passed in can be deferenced too.  Assume a variable named &#8216;user&#8217;. Using
+<p>Include directives look like this:</p>
+<blockquote>
+<div><ul>
+<li><dl class="first docutils">
+<dt>tasks:</dt>
+<dd><ul class="first last simple">
+<li>include: tasks/foo.yml</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>Variables passed in can be used in the include files too.  Assume a variable named &#8216;user&#8217;. Using
 <cite>jinja2</cite> syntax, anywhere in the included file, you can say:</p>
 <div class="highlight-python"><pre>{{ user }}</pre>
 </div>
+<p>I can also pass variables into includes directly.  We might call this a &#8216;parameterized include&#8217;.</p>
 <p>For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so:</p>
 <div class="highlight-python"><pre>- tasks:
@@ -402,8 +420,8 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
 </div>
 <p>In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.  Variables that bubble
-up from tools like facter and ohai are not though &#8211; but they ARE available for use
-inside &#8216;action&#8217; lines.</p>
+up from tools like facter and ohai are not usable here though &#8211; but they ARE available for use
+inside &#8216;action&#8217; lines and in templates.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Include statements are only usable from the top level
@@ -414,13 +432,14 @@ includes.</p>
 want to define how to restart apache, you only have to do that once for all
 of your playbooks.  You might make a notifiers.yaml that looked like:</p>
 <div class="highlight-python"><pre>----
+# this might be in a file like handlers/handlers.yml
 - name: restart apache
   action: service name=apache state=restarted</pre>
 </div>
 <p>And in your main playbook file, just include it like so, at the bottom
 of a play:</p>
 <div class="highlight-python"><pre>handlers:
-  - include: handlers.yml</pre>
+  - include: handlers/handlers.yml</pre>
 </div>
 <p>You can mix in includes along with your regular non-included tasks and handlers.</p>
 </div>
@@ -434,22 +453,24 @@ this, in a list of just a few plays:</p>
   vars:
     datacenter: atlanta
   tasks:
-  - include: base.yml
-  - include: webservers.yml database=db.atlanta.com
+  - include: tasks/base.yml
+  - include: tasks/webservers.yml database=db.atlanta.com
   handlers:
-    - include: generic-handlers.yml
+    - include: handlers/common.yml
 - hosts: atlanta-dbservers
   vars:
     datacenter: atlanta
   tasks:
-  - include: base.yml
-  - include: dbservers.yml
+  - include: tasks/base.yml
+  - include: tasks/dbservers.yml
   handlers:
-    - include: generic-handlers.yml</pre>
+    - include: handlers/common.yml</pre>
 </div>
 <p>There is one (or more) play defined for each group of systems, and
 each play maps each group to several includes.  These includes represent
-&#8216;class definitions&#8217;, telling the systems what they are supposed to do or be.</p>
+&#8216;class definitions&#8217;, telling the systems what they are supposed to do or be.
+In the above example, all hosts get the base configuration first and further
+customize it depending on what class or nature of machines they are.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Playbooks do not always have to be declarative; you can do something
@@ -490,7 +511,7 @@ default.</p>
 - hosts: all
   user: root
   tasks:
-  - name: simulate long running op (15 sec), wait for up to 45, poll every 5
+  - name: simulate long running op, allow to run for 45, fire and forget
     action: command /bin/sleep 15
     async: 45
     poll: 0</pre>
@@ -514,6 +535,10 @@ tasks even faster.  This also increases the efficiency of polling.</p>
 Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <div class="highlight-python"><pre>ansible-playbook playbook.yml -f 10</pre>
 </div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Don&#8217;t forget to check out the <a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a> for examples of playbooks in action, so you can see how all of these features can be put together.</p>
+</div>
 </div>
 </div>
 
@@ -524,7 +549,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 12, 2012.<br/>
+      Last updated on Mar 13, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

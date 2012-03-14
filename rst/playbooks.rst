@@ -9,6 +9,8 @@ Playbooks
        Learn about available modules and writing your own
    :doc:`patterns`
        Learn about how to select hosts
+   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
+       Complete playbook files from the github project source
 
 
 Playbooks are a completely different way to use ansible and are
@@ -49,7 +51,6 @@ For starters, here's a playbook that contains just one play.::
         max_clients: 200
       user: root
       tasks:
-      - include: base.yml somevar=3 othervar=4
       - name: ensure apache is at the latest version
         action: yum pkg=httpd state=latest
       - name: write the apache config file
@@ -59,8 +60,8 @@ For starters, here's a playbook that contains just one play.::
       - name: ensure apache is running
         action: service name=httpd state=started
       handlers:
-        - include: handlers.yml
-
+        - name: restart apache
+          action: service name=apache state=restarted
 
 Below, we'll break down what the various features of the playbook language are.
 
@@ -220,7 +221,7 @@ variables file, or files, just like this::
       vars:
         favcolor: blue
       vars_files:
-        - /path/to/external_vars.yml
+        - /vars/external_vars.yml
       tasks:
       - name: this is just a placeholder
         action: command /bin/echo foo
@@ -231,6 +232,7 @@ sharing your playbook source with them.
 The contents of each variables file is a simple YAML dictionary, like this::
 
     ---
+    # in the above example, this would be vars/external_vars.yml
     somevar: somevalue
     password: magic
 
@@ -241,18 +243,26 @@ Include Files And Reuse
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.
 
-An include file simply contains a list of tasks, like so::
+An include file simply contains a flat list of tasks, like so::
 
     ---
+    # possibly saved as tasks/foo.yml
     - name: placeholder foo
       action: command /bin/foo
     - name: placeholder bar
       action: command /bin/bar
 
-Variables passed in can be deferenced too.  Assume a variable named 'user'. Using
+Include directives look like this:
+
+   - tasks:
+      - include: tasks/foo.yml
+
+Variables passed in can be used in the include files too.  Assume a variable named 'user'. Using
 `jinja2` syntax, anywhere in the included file, you can say::
 
    {{ user }}
+
+I can also pass variables into includes directly.  We might call this a 'parameterized include'.
 
 For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
@@ -264,8 +274,8 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
 
 In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.  Variables that bubble
-up from tools like facter and ohai are not though -- but they ARE available for use
-inside 'action' lines.
+up from tools like facter and ohai are not usable here though -- but they ARE available for use
+inside 'action' lines and in templates.
 
 .. note::
    Include statements are only usable from the top level
@@ -277,6 +287,7 @@ want to define how to restart apache, you only have to do that once for all
 of your playbooks.  You might make a notifiers.yaml that looked like::
 
    ----
+   # this might be in a file like handlers/handlers.yml
    - name: restart apache
      action: service name=apache state=restarted
 
@@ -284,7 +295,7 @@ And in your main playbook file, just include it like so, at the bottom
 of a play::
 
    handlers:
-     - include: handlers.yml
+     - include: handlers/handlers.yml
 
 You can mix in includes along with your regular non-included tasks and handlers.
 
@@ -301,22 +312,24 @@ this, in a list of just a few plays::
       vars:
         datacenter: atlanta
       tasks:
-      - include: base.yml
-      - include: webservers.yml database=db.atlanta.com
+      - include: tasks/base.yml
+      - include: tasks/webservers.yml database=db.atlanta.com
       handlers:
-        - include: generic-handlers.yml
+        - include: handlers/common.yml
     - hosts: atlanta-dbservers
       vars:
         datacenter: atlanta
       tasks:
-      - include: base.yml
-      - include: dbservers.yml
+      - include: tasks/base.yml
+      - include: tasks/dbservers.yml
       handlers:
-        - include: generic-handlers.yml
+        - include: handlers/common.yml
 
 There is one (or more) play defined for each group of systems, and
 each play maps each group to several includes.  These includes represent
 'class definitions', telling the systems what they are supposed to do or be.
+In the above example, all hosts get the base configuration first and further
+customize it depending on what class or nature of machines they are.
 
 .. note::
    Playbooks do not always have to be declarative; you can do something
@@ -382,5 +395,8 @@ Now that you've learned playbook syntax, how do you run a playbook?  It's simple
 Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
+
+.. note::
+    Don't forget to check out the `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_ for examples of playbooks in action, so you can see how all of these features can be put together.
 
 
