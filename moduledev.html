@@ -331,7 +331,7 @@ a lot shorter than this:</p>
 </pre></div>
 </div>
 <p>Let&#8217;s test that module:</p>
-<div class="highlight-python"><pre>../ansible/hacking/test-module ./rst/time time=\"March 14 12:23\"</pre>
+<div class="highlight-python"><pre>ansible/hacking/test-module ./time time=\"March 14 12:23\"</pre>
 </div>
 <p>This should return something like:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;changed&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;2012-03-14 12:23:00.000307&quot;</span><span class="p">}</span>
@@ -374,9 +374,9 @@ and guidelines:</p>
 <p>To make it easier to write modules in bash and in cases where a JSON
 module might not be available, it is acceptable for a module to return
 key=value output all on one line, like this.   The Ansible parser
-will know what to do.</p>
-<blockquote>
-<div>somekey=1 somevalue=two favcolor=red</div></blockquote>
+will know what to do:</p>
+<div class="highlight-python"><pre>somekey=1 somevalue=2 rc=3 favcolor=red</pre>
+</div>
 <p>If you&#8217;re writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.</p>
 </div>

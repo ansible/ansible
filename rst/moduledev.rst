@@ -169,7 +169,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ../ansible/hacking/test-module ./rst/time time=\"March 14 12:23\"
+    ansible/hacking/test-module ./time time=\"March 14 12:23\"
 
 This should return something like::
 
@@ -222,9 +222,9 @@ Shorthand Vs JSON
 To make it easier to write modules in bash and in cases where a JSON
 module might not be available, it is acceptable for a module to return
 key=value output all on one line, like this.   The Ansible parser
-will know what to do.::
+will know what to do::
 
-    somekey=1 somevalue=two favcolor=red
+    somekey=1 somevalue=2 rc=3 favcolor=red
 
 If you're writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.
