@@ -36,7 +36,7 @@ if len(sys.argv) == 1:
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
     sys.exit(1)
-input_data = open(argfile, 'r').read()
+input_data = shlex.split(open(argfile, 'r').read())
 
 new_options = dict([ x.split('=') for x in input_data ])
 ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
