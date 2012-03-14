@@ -54,6 +54,11 @@ Desired level of parallelism.  Default 5.
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
 
 
+*-T*, *--timeout*::
+
+Connection timeout to use when trying to talk to hosts, in seconds.
+
+
 ENVIRONMENT
 -----------
 

@@ -394,18 +394,9 @@ include files to do this.</p>
   action: command /bin/bar</pre>
 </div>
 <p>Include directives look like this:</p>
-<blockquote>
-<div><ul>
-<li><dl class="first docutils">
-<dt>tasks:</dt>
-<dd><ul class="first last simple">
-<li>include: tasks/foo.yml</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</div></blockquote>
+<div class="highlight-python"><pre>- tasks:
+   - include: tasks/foo.yml</pre>
+</div>
 <p>Variables passed in can be used in the include files too.  Assume a variable named &#8216;user&#8217;. Using
 <cite>jinja2</cite> syntax, anywhere in the included file, you can say:</p>
 <div class="highlight-python"><pre>{{ user }}</pre>

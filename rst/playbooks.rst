@@ -252,7 +252,7 @@ An include file simply contains a flat list of tasks, like so::
     - name: placeholder bar
       action: command /bin/bar
 
-Include directives look like this:
+Include directives look like this::
 
    - tasks:
       - include: tasks/foo.yml
