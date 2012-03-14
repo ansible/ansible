@@ -198,7 +198,10 @@ if __name__ == '__main__':
         (runner, results) = cli.run(options, args)
     except AnsibleError as e:
         # Generic handler for ansible specific errors
-        print e
+        print "ERROR: %s" % str(e)
         sys.exit(1)
+    except Exception as e2:
+        print e2.__class__
     else:
         cli.output(runner, results, options, args)
+

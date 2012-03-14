@@ -136,7 +136,7 @@ def dark_hosts_msg(results):
     ''' summarize the results of all uncontactable hosts '''
     buf = ''
     if len(results['dark'].keys()) > 0:
-        buf += "\n*** Hosts which could not be contacted or did not respond: ***\n"
+        buf += "\n*** Hosts with fatal errors: ***\n"
         for hostname in results['dark'].keys():
             buf += "%s: %s\n" % (hostname, results['dark'][hostname])
     buf += "\n"

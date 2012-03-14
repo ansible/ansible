@@ -20,18 +20,18 @@ class AnsibleError(Exception):
     """
     The base Ansible exception from which all others should subclass.
     """
+
+    def __init__(self, msg):
+       self.msg = msg
+    
+    def __str__(self):
+        return self.msg
+
+
+class AnsibleFileNotFound(AnsibleError):
+    pass
+
+class AnsibleConnectionFailed(AnsibleError):
     pass
 
 
-class AnsibleInventoryNotFoundError(AnsibleError):
-    """
-    Exception raised when the default or provided host inventory file
-    does not exist.
-    """
-    def __init__(self, inventory):
-        self.inventory = inventory
-        self.msg = "Unable to continue, inventory file not found: %s" %\
-            self.inventory
-
-    def __str__(self):
-        return self.msg

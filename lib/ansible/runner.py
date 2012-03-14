@@ -18,11 +18,6 @@
 
 ################################################
 
-# FIXME: need to add global error handling around
-# executor_hook mapping all exceptions into failures
-# with the traceback converted into a string and
-# if the exception is typed, a *nice* string
-
 try:
     import json
 except ImportError:
@@ -38,14 +33,13 @@ import Queue
 import random
 import jinja2
 import time
-from ansible.utils import *
-from ansible.errors import AnsibleInventoryNotFoundError
+import traceback
 
+# FIXME: stop importing *, use as utils/errors
+from ansible.utils import *
+from ansible.errors import *
     
 ################################################
-
-def noop(*args, **kwargs):
-    pass
 
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
@@ -58,6 +52,14 @@ def _executor_hook(job_queue, result_queue):
             result_queue.put(runner._executor(host))
         except Queue.Empty:
             pass
+        except AnsibleError, ae:
+            result_queue.put([host, False, str(ae)])
+        except Exception, ee:
+            # probably should include the full trace
+            result_queue.put([host, False, traceback.format_exc()])
+            
+
+################################################
 
 class Runner(object):
 
@@ -116,6 +118,8 @@ class Runner(object):
         self.generated_jid = str(random.randint(0, 999999999999))
         self.connector = ansible.connection.Connection(self, transport)
 
+    # *****************************************************
+
     @classmethod
     def parse_hosts(cls, host_list):
         ''' 
@@ -131,7 +135,7 @@ class Runner(object):
         host_list = os.path.expanduser(host_list)
 
         if not os.path.exists(host_list):
-            raise AnsibleInventoryNotFoundError(host_list)
+            raise AnsibleFileNotFound("inventory file not found: %s" % host_list)
 
         lines = file(host_list).read().split("\n")
         groups     = {}
@@ -154,9 +158,11 @@ class Runner(object):
 
         return (results, groups)
 
+    # *****************************************************
 
     def _matches(self, host_name, pattern=None):
         ''' returns if a hostname is matched by the pattern '''
+
         # a pattern is in fnmatch format but more than one pattern
         # can be strung together with semicolons. ex:
         #   atlanta-web*.example.com;dc-web*.example.com
@@ -177,19 +183,25 @@ class Runner(object):
                     return True
         return False
 
+    # *****************************************************
+
     def _connect(self, host):
         ''' 
         obtains a connection to the host.
         on success, returns (True, connection) 
         on failure, returns (False, traceback str)
         '''
+
         try:
             return [ True, self.connector.connect(host) ]
-        except ansible.connection.AnsibleConnectionException, e:
+        except AnsibleConnectionFailed, e:
             return [ False, "FAILED: %s" % str(e) ]
+
+    # *****************************************************
 
     def _return_from_module(self, conn, host, result):
         ''' helper function to handle JSON parsing of results '''
+
         try:
             # try to parse the JSON response
             return [ host, True, json.loads(result) ]
@@ -197,8 +209,11 @@ class Runner(object):
             # it failed, say so, but return the string anyway
             return [ host, False, "%s/%s" % (str(e), result) ]
 
+    # *****************************************************
+
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
+
         if type(files) == str:
             files = [ files ]
         for filename in files:
@@ -206,25 +221,34 @@ class Runner(object):
                 raise Exception("not going to happen")
             self._exec_command(conn, "rm -rf %s" % filename)
 
+    # *****************************************************
+
     def _transfer_file(self, conn, source, dest):
         ''' transfers a remote file '''
+
         self.remote_log(conn, 'COPY remote:%s local:%s' % (source, dest))
         conn.put_file(source, dest)
+
+    # *****************************************************
 
     def _transfer_module(self, conn, tmp, module):
         ''' 
         transfers a module file to the remote side to execute it,
         but does not execute it yet
         '''
+
         outpath = self._copy_module(conn, tmp, module)
         self._exec_command(conn, "chmod +x %s" % outpath)
         return outpath
+
+    # *****************************************************
 
     def _execute_module(self, conn, tmp, remote_module_path, module_args):
         ''' 
         runs a module that has already been transferred, but first
         modifies the command using setup_cache variables (see playbook)
         '''
+
         args = module_args
         if type(args) == list:
             args = [ str(x) for x in module_args ]
@@ -248,13 +272,15 @@ class Runner(object):
         result = self._exec_command(conn, cmd)
         return result
 
+    # *****************************************************
+
     def _execute_normal_module(self, conn, host, tmp):
         ''' 
         transfer & execute a module that is not 'copy' or 'template'
         because those require extra work.
         '''
-        module = self._transfer_module(conn, tmp, self.module_name)
 
+        module = self._transfer_module(conn, tmp, self.module_name)
         result = self._execute_module(conn, tmp, module, self.module_args)
 
         # when running the setup module, which pushes vars to the host and ALSO
@@ -270,11 +296,14 @@ class Runner(object):
 
         return self._return_from_module(conn, host, result)
 
+    # *****************************************************
+
     def _execute_async_module(self, conn, host, tmp):
         ''' 
         transfer the given module name, plus the async module
         and then run the async module wrapping the other module
         '''
+
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, self.module_name)
         new_args = [] 
@@ -283,14 +312,20 @@ class Runner(object):
         result = self._execute_module(conn, tmp, async, new_args)
         return self._return_from_module(conn, host, result)
 
+    # *****************************************************
+
     def _parse_kv(self, args):
+        # FIXME: move to utils
         ''' helper function to convert a string of key/value items to a dict '''
+
         options = {}
         for x in args:
             if x.find("=") != -1:
                 k, v = x.split("=")
                 options[k]=v
         return options
+
+    # *****************************************************
 
     def _execute_copy(self, conn, host, tmp):
         ''' handler for file transfer operations '''
@@ -313,6 +348,8 @@ class Runner(object):
         args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
         result = self._execute_module(conn, tmp, module, args)
         return self._return_from_module(conn, host, result)
+
+    # *****************************************************
 
     def _execute_template(self, conn, host, tmp):
         ''' handler for template operations '''
@@ -343,6 +380,7 @@ class Runner(object):
         result = self._execute_module(conn, tmp, template_module, args)
         return self._return_from_module(conn, host, result)
 
+    # *****************************************************
 
     def _executor(self, host):
         ''' 
@@ -382,46 +420,56 @@ class Runner(object):
         
         return result
 
+    # *****************************************************
+
     def remote_log(self, conn, msg):
         ''' this is the function we use to log things '''
+
         # FIXME: TODO: make this optional as it's executed a lot
         stdin, stdout, stderr = conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
 
+    # *****************************************************
+
     def _exec_command(self, conn, cmd):
         ''' execute a command string over SSH, return the output '''
+
         msg = '%s: %s' % (self.module_name, cmd)
-       
         self.remote_log(conn, msg)
         stdin, stdout, stderr = conn.exec_command(cmd)
         results = "\n".join(stdout.readlines())
         return results
 
+    # *****************************************************
+
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
+
         result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
         return result.split("\n")[0] + '/'
 
+    # *****************************************************
+
     def _copy_module(self, conn, tmp, module):
         ''' transfer a module over SFTP, does not run it '''
+
         if module.startswith("/"):
-            # user probably did "/bin/foo" instead of "command /bin/foo" in a playbook
-            # or tried "-m /bin/foo" instead of "a /bin/foo"
-            # FIXME: type this exception
-            raise Exception("%s is not a module" % module)
-        in_path = os.path.expanduser(
-            os.path.join(self.module_path, module)
-        )
+            raise AnsibleFileNotFound("%s is not a module" % module)
+        in_path = os.path.expanduser(os.path.join(self.module_path, module))
         if not os.path.exists(in_path):
-            # FIXME: type this exception 
-            raise Exception("module not found: %s" % in_path)
+            raise AnsibleFileNotFound("module not found: %s" % in_path)
 
         out_path = tmp + module
         conn.put_file(in_path, out_path)
         return out_path
 
+    # *****************************************************
+
     def match_hosts(self, pattern):
         ''' return all matched hosts fitting a pattern '''
+
         return [ h for h in self.host_list if self._matches(h, pattern) ]
+
+    # *****************************************************
 
     def run(self):
         ''' xfer & run module on all matched hosts '''

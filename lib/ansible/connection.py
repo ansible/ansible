@@ -21,6 +21,7 @@
 import paramiko
 import exceptions
 import os
+from ansible.errors import *
     
 ################################################
 
@@ -38,18 +39,6 @@ class Connection(object):
         if conn is None:
             raise Exception("unsupported connection type")
         return conn.connect()
-
-
-################################################
-
-class AnsibleConnectionException(exceptions.Exception):
-    ''' Subclass of exception for catching in Runner() code '''
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
 
 ################################################
 # want to implement another connection type?
@@ -80,7 +69,7 @@ class ParamikoConnection(object):
                 timeout=self.runner.timeout
             )
         except Exception, e:
-            raise AnsibleConnectionException(str(e))
+            raise AnsibleConnectionFailed(str(e))
         return self
 
     def exec_command(self, cmd):
@@ -91,12 +80,12 @@ class ParamikoConnection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
-            raise AnsibleConnectionException("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         sftp = self.ssh.open_sftp()
         try:
             sftp.put(in_path, out_path)
         except IOError:
-            raise AnsibleConnectionException("failed to transfer file to %s" % out_path)
+            raise AnsibleException("failed to transfer file to %s" % out_path)
         sftp.close()
 
     def close(self):
