@@ -66,16 +66,15 @@ def daemonize_self():
 if len(sys.argv) < 3:
     print json.dumps({
         "failed" : True,
-        "msg"    : "usage: async_wrapper <jid> <module_script> <time_limit> <args>.  Humans, do not call directly!"
+        "msg"    : "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile>.  Humans, do not call directly!"
     })
     sys.exit(1)
 
 jid = sys.argv[1]
 time_limit = sys.argv[2]
 wrapped_module = sys.argv[3]
-args = sys.argv[4:]
-
-cmd = "%s %s" % (wrapped_module, " ".join(args))
+argsfile = sys.argv[4]
+cmd = "%s %s" % (wrapped_module, argsfile)
 
 # setup logging directory
 logdir = os.path.expanduser("~/.ansible_async")
@@ -92,20 +91,20 @@ if not os.path.exists(logdir):
 
 def _run_command(wrapped_cmd, jid, log_path):
 
-    print "RUNNING: %s" % wrapped_cmd
     logfile = open(log_path, "w")
     logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
     logfile.close()
     logfile = open(log_path, "w")
     result = {}
-
+  
+    outdata = ''
     try:
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False, 
             stdin=None, stdout=logfile, stderr=logfile)
         script.communicate()
-        #result = json.loads(out)
-        result = json.loads(file(log_path).read())    
+        outdata = file(log_path).read()
+        result = json.loads(outdata)
 
     except (OSError, IOError), e:
         result = {
@@ -119,6 +118,7 @@ def _run_command(wrapped_cmd, jid, log_path):
         result = {
             "failed" : 1,
             "cmd" : wrapped_cmd,
+            "data" : outdata, # temporary debug only
             "msg" : traceback.format_exc()
         }   
         result['ansible_job_id'] = jid

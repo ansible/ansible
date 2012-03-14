@@ -30,31 +30,9 @@ import traceback
 import shlex
 import os
 
-if len(sys.argv) == 1:
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
-    sys.exit(1)
-
 argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "Argument file not found"
-    })
-    sys.exit(1)
-
 args = open(argfile, 'r').read()
 args = shlex.split(args)
-
-if not len(args):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
-    sys.exit(1)
-
 
 startd = datetime.datetime.now()
 
