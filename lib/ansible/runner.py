@@ -34,6 +34,7 @@ import random
 import jinja2
 import time
 import traceback
+import tempfile
 
 # FIXME: stop importing *, use as utils/errors
 from ansible.utils import *
@@ -267,8 +268,17 @@ class Runner(object):
         template = jinja2.Template(args)
         args = template.render(inject_vars)
 
-
-        cmd = "%s %s" % (remote_module_path, args)
+        # make a tempfile for the args and stuff the args into the file
+        argsfd,argsfile = tempfile.mkstemp()
+        argsfo = os.fdopen(argsfd, 'w')
+        argsfo.write(args)
+        argsfo.flush()
+        argsfo.close()
+        args_rem = tmp + 'argsfile'
+        self.remote_log(conn, "args: %s" % args)
+        self._transfer_file(conn,argsfile, args_rem)
+        os.unlink(argsfile)
+        cmd = "%s %s" % (remote_module_path, args_rem)
         result = self._exec_command(conn, cmd)
         return result
 
