@@ -32,8 +32,14 @@ except ImportError:
 # to a dictionary
 # FIXME: make more idiomatic
 
-args = " ".join(sys.argv[1:])
-items = shlex.split(args)
+if len(sys.argv) == 1:
+    sys.exit(1)
+argfile = sys.argv[1]
+if not os.path.exists(argfile):
+    sys.exit(1)
+items = shlex.split(open(argfile, 'r').read())
+
+
 params = {}
 for x in items:
     (k, v) = x.split("=")
