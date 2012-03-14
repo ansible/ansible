@@ -196,7 +196,7 @@ def parse_json(data):
         tokens = shlex.split(data)
         for t in tokens:
             if t.find("=") == -1:
-                raise AnsibleException("failed to parse: %s" % data)
+                raise AnsibleError("failed to parse: %s" % data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ] :
