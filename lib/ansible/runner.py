@@ -40,6 +40,9 @@ import StringIO
 # FIXME: stop importing *, use as utils/errors
 from ansible.utils import *
 from ansible.errors import *
+
+# should be True except in debug
+CLEANUP_FILES = True
     
 ################################################
 
@@ -221,7 +224,8 @@ class Runner(object):
         for filename in files:
             if not filename.startswith('/tmp/'):
                 raise Exception("not going to happen")
-            self._exec_command(conn, "rm -rf %s" % filename)
+            if CLEANUP_FILES:
+                self._exec_command(conn, "rm -rf %s" % filename)
 
     # *****************************************************
 
@@ -255,13 +259,15 @@ class Runner(object):
         args_fo.flush()
         args_fo.close()
         args_remote = os.path.join(tmp, 'arguments')
-        self._transfer_file(conn, args_file, 'arguments')
-        os.unlink(args_file)
+        self._transfer_file(conn, args_file, args_remote)
+        if CLEANUP_FILES:
+            os.unlink(args_file)
         return args_remote
 
     # *****************************************************
 
-    def _execute_module(self, conn, tmp, remote_module_path, module_args):
+    def _execute_module(self, conn, tmp, remote_module_path, module_args, 
+        async_jid=None, async_module=None, async_limit=None):
         ''' 
         runs a module that has already been transferred, but first
         modifies the command using setup_cache variables (see playbook)
@@ -286,7 +292,11 @@ class Runner(object):
         args = template.render(inject_vars)
 
         argsfile = self._transfer_argsfile(conn, tmp, args)
-        cmd = "%s %s" % (remote_module_path, 'arguments')
+        if async_jid is None:
+            cmd = "%s %s" % (remote_module_path, argsfile)
+        else:
+            args = [str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]]
+            cmd = " ".join(args)
         result = self._exec_command(conn, cmd)
         return result
 
@@ -324,10 +334,11 @@ class Runner(object):
 
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, self.module_name)
-        new_args = [] 
-        new_args = [ self.generated_jid, self.background, module ]
-        new_args.extend(self.module_args)
-        result = self._execute_module(conn, tmp, async, new_args)
+        result = self._execute_module(conn, tmp, async, self.module_args,
+           async_module=module, 
+           async_jid=self.generated_jid, 
+           async_limit=self.background
+        )
         return self._return_from_module(conn, host, result)
 
     # *****************************************************
@@ -454,8 +465,7 @@ class Runner(object):
         msg = '%s: %s' % (self.module_name, cmd)
         self.remote_log(conn, msg)
         stdin, stdout, stderr = conn.exec_command(cmd)
-        results = "\n".join(stdout.readlines())
-        return results
+        return "\n".join(stdout.readlines())
 
     # *****************************************************
 

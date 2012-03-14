@@ -159,14 +159,18 @@ class TestRunner(unittest.TestCase):
    def test_async(self):
        # test async launch and job status
        # of any particular module
+       print "firing command..."
        result = self._run('command', [ "/bin/sleep", "3" ], background=20)
+       print "back..."
        assert 'ansible_job_id' in result
        assert 'started' in result
        jid = result['ansible_job_id']
        # no real chance of this op taking a while, but whatever
        time.sleep(5)
        # CLI will abstract this, but this is how it works internally
+       print "checking status..."
        result = self._run('async_status', [ "jid=%s" % jid ])
+       print "back..."
        # TODO: would be nice to have tests for supervisory process
        # killing job after X seconds
        assert 'finished' in result

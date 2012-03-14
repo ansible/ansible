@@ -30,12 +30,12 @@ import datetime
 import traceback
 
 # ===========================================
-# convert arguments of form a=b c=d
-# to a dictionary
-# FIXME: make more idiomatic
 
-args = " ".join(sys.argv[1:])
-items = shlex.split(args)
+# FIXME: better error handling
+
+argsfile = sys.argv[1]
+items = shlex.split(file(argsfile).read())
+
 params = {}
 for x in items:
     (k, v) = x.split("=")
