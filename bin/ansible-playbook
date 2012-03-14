@@ -78,6 +78,8 @@ def main(args):
         help="ask for SSH password")
     parser.add_option("-M", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
+    parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
+        dest='timeout', help="set the SSH timeout in seconds")
 
     options, args = parser.parse_args(args)
 
@@ -98,7 +100,8 @@ def main(args):
             forks=options.forks,
             verbose=True,
             remote_pass=sshpass,
-            callbacks=PlaybookCallbacks()
+            callbacks=PlaybookCallbacks(),
+            timeout=options.timeout
         )
         try:
             pb.run()
