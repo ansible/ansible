@@ -91,6 +91,7 @@ Contents
    YAMLSyntax
    playbooks
    api
+   moduledev
    faq
    man
 

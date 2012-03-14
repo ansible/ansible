@@ -6,7 +6,9 @@ Playbooks
    :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`modules`
-       Learn about available modules and writing your own
+       Learn about available modules
+   :doc:`moduledev`
+       Learn how to extend Ansible by writing your own modules
    :doc:`patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
