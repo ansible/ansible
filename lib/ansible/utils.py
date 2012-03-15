@@ -120,7 +120,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name == 'command':
+    if module_name in [ 'command', 'shell' ]:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:

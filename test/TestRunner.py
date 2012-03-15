@@ -127,6 +127,7 @@ class TestRunner(unittest.TestCase):
        assert result['changed'] == False
 
    def test_command(self):
+   
        # test command module, change trigger, etc
        result = self._run('command', [ "/bin/echo", "hi" ])
        assert "failed" not in result
@@ -134,13 +135,21 @@ class TestRunner(unittest.TestCase):
        assert result['rc'] == 0
        assert result['stdout'] == 'hi'
        assert result['stderr'] == ''
+   
        result = self._run('command', [ "/bin/false" ])
        assert result['rc'] == 1
        assert 'failed' not in result
+   
        result = self._run('command', [ "/usr/bin/this_does_not_exist", "splat" ]) 
        assert 'msg' in result
        assert 'failed' in result
        assert 'rc' not in result
+
+       result = self._run('shell', [ "/bin/echo", "$HOME" ])
+       assert 'failed' not in result
+       assert result['rc'] == 0 
+       raise Exception(result['stdout'])
+   
 
    def test_setup(self):
        output = self._get_stage_file('output.json')

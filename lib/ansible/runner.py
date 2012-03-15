@@ -308,6 +308,12 @@ class Runner(object):
         because those require extra work.
         '''
 
+        # hack to make the 'shell' module keyword really be executed
+        # by the command module
+        if self.module_name == 'shell':
+            self.module_name = 'command'
+            self.module_args.append("#USE_SHELL")
+
         module = self._transfer_module(conn, tmp, self.module_name)
         result = self._execute_module(conn, tmp, module, self.module_args)
 
