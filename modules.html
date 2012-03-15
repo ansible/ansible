@@ -136,6 +136,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#ping">ping</a></li>
 <li><a class="reference internal" href="#service">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
+<li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
@@ -193,9 +194,9 @@ on remote hosts or through ansible playbooks.</p>
 <dd>Examples of using modules with the Python API</dd>
 </dl>
 </div>
-<p>Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt> parameters.  Some modules take
-no parameters, and the command module just takes arguments for the
-command you want to run.</p>
+<p>Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt> parameters, space delimited.  Some modules take
+no parameters, and the command/shell modules simply take the string
+of the command you want to run.</p>
 <p>All modules return JSON format data, though if you are using the
 command line or playbooks, you don&#8217;t really need to know much about
 that.</p>
@@ -207,12 +208,17 @@ noted, all modules support change hooks.</p>
 <div class="section" id="command">
 <span id="id1"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
-arguments, space delimited.  This is the only module that does not use
-<tt class="docutils literal"><span class="pre">key=value</span></tt> style parameters.</p>
+arguments, space delimited.</p>
+<p>If you want to run a command through the shell (say you are using
+&#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;|&#8217;, etc), you actually want the &#8216;shell&#8217; module instead.
+The &#8216;command&#8217; module is much more secure as it&#8217;s not affected by the user&#8217;s environment.</p>
 <p>Example usage:</p>
 <div class="highlight-python"><pre>/sbin/shutdown -t now</pre>
 </div>
-<p>The given shell command will be executed on all selected nodes.</p>
+<p>The given command will be executed on all selected nodes.  It will not
+be processed through the shell, so variables like &#8220;$HOME&#8221; and
+operations like &#8220;&lt;&#8221;, &#8220;&gt;&#8221;, &#8220;|&#8221;, and &#8220;&amp;&#8221; will not work.  As such, all
+paths to commands must be fully qualified.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.</p>
@@ -309,8 +315,26 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 </ul>
 </div></blockquote>
 </div>
+<div class="section" id="shell">
+<span id="id5"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<p>The shell module takes the command name followed by a list of
+arguments, space delimited.  It is almost exactly like the command module
+but runs the command through the shell rather than directly.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>find . | grep *.txt</pre>
+</div>
+<p>The given command will be executed on all selected nodes.</p>
+<p>If you want to execute a command securely and predicably, it may
+be better to use the &#8216;command&#8217; module instead.  Best practices
+when writing playbooks will follow the trend of using &#8216;command&#8217;
+unless &#8216;shell&#8217; is explicitly required.  When running ad-hoc commands,
+use your best judgement.</p>
+<p>This module does not support change hooks and returns the return code
+from the program as well as timing information about how long the
+command was running for.</p>
+</div>
 <div class="section" id="template">
-<span id="id5"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
 prior to usage if you are not running from a playbook.</p>
 <p><em>src</em>:</p>
@@ -325,7 +349,7 @@ be a relative or absolute path.</li>
 <p>This module also returns md5sum information about the resultant file.</p>
 </div>
 <div class="section" id="yum">
-<span id="id6"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -380,7 +404,7 @@ arguments just like they would be passed with ansible.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 13, 2012.<br/>
+      Last updated on Mar 14, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

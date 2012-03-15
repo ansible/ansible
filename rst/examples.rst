@@ -132,8 +132,8 @@ very quickly. After the time limit (in seconds) runs out (``-B``), the process o
 the remote nodes will be terminated.
 
 Any module other than :ref:`copy` or :ref:`template` can be
-backgrounded.  Typically you'll be backgrounding shell commands or
-software upgrades only.
+backgrounded.  Typically you'll be backgrounding long-running 
+shell commands or software upgrades only.
 
   
 

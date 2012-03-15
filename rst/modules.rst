@@ -13,9 +13,9 @@ on remote hosts or through ansible playbooks.
    :doc:`api`
        Examples of using modules with the Python API
 
-Nearly all modules take ``key=value`` parameters.  Some modules take
-no parameters, and the command module just takes arguments for the
-command you want to run.
+Nearly all modules take ``key=value`` parameters, space delimited.  Some modules take
+no parameters, and the command/shell modules simply take the string
+of the command you want to run.
 
 All modules return JSON format data, though if you are using the
 command line or playbooks, you don't really need to know much about
@@ -34,18 +34,25 @@ command
 ```````
 
 The command module takes the command name followed by a list of
-arguments, space delimited.  This is the only module that does not use
-``key=value`` style parameters.
+arguments, space delimited.  
+
+If you want to run a command through the shell (say you are using
+'<', '>', '|', etc), you actually want the 'shell' module instead.  
+The 'command' module is much more secure as it's not affected by the user's environment.
 
 Example usage::
 
     /sbin/shutdown -t now
 
-The given shell command will be executed on all selected nodes.
+The given command will be executed on all selected nodes.  It will not
+be processed through the shell, so variables like "$HOME" and 
+operations like "<", ">", "|", and "&" will not work.  As such, all
+paths to commands must be fully qualified.
 
 This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.
+
 
 .. _copy:
 
@@ -165,6 +172,32 @@ tell their source.  All variables are then bubbled up to the caller.
 
  * Any other parameters can be named basically anything, and set a
    ``key=value`` pair in the JSON file for use in templating.
+
+
+.. _shell:
+
+shell
+`````
+
+The shell module takes the command name followed by a list of
+arguments, space delimited.  It is almost exactly like the command module
+but runs the command through the shell rather than directly.
+
+Example usage::
+
+    find . | grep *.txt
+
+The given command will be executed on all selected nodes.  
+
+If you want to execute a command securely and predicably, it may
+be better to use the 'command' module instead.  Best practices
+when writing playbooks will follow the trend of using 'command'
+unless 'shell' is explicitly required.  When running ad-hoc commands,
+use your best judgement.
+
+This module does not support change hooks and returns the return code
+from the program as well as timing information about how long the
+command was running for.
 
 
 .. _template:
