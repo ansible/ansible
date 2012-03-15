@@ -27,36 +27,14 @@ import shlex
 import subprocess
 
 # ===========================================
-# convert arguments of form a=b c=d
-# to a dictionary
-# FIXME: make more idiomatic
-
-
-if len(sys.argv) == 1:
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
-    sys.exit(1)
 
 argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "Argument file not found"
-    })
-    sys.exit(1)
-
 args = open(argfile, 'r').read()
-itmes = shlex.split(args)
+items = shlex.split(args)
 
 if not len(items):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
+    print "failed=True msg='the module requires arguments (-a)'"
     sys.exit(1)
-
 
 params = {}
 for x in items:
@@ -64,7 +42,11 @@ for x in items:
     params[k] = v
 
 name = params['name']
-state = params.get('state','running')
+state = params.get('state','unknown')
+
+if state not in [ 'running', 'stopped', 'restarted' ]:
+    print "failed=True msg='invalid state'"
+    sys.exit(1)
 
 # ===========================================
 # get service status
