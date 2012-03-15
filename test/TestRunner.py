@@ -148,7 +148,6 @@ class TestRunner(unittest.TestCase):
        result = self._run('shell', [ "/bin/echo", "$HOME" ])
        assert 'failed' not in result
        assert result['rc'] == 0 
-       raise Exception(result['stdout'])
    
 
    def test_setup(self):

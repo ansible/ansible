@@ -18,11 +18,6 @@
 
 ################################################
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import fnmatch
 import multiprocessing
 import signal
@@ -209,7 +204,7 @@ class Runner(object):
 
         try:
             # try to parse the JSON response
-            return [ host, True, json.loads(result) ]
+            return [ host, True, parse_json(result) ]
         except Exception, e:
             # it failed, say so, but return the string anyway
             return [ host, False, "%s/%s" % (str(e), result) ]
@@ -324,7 +319,7 @@ class Runner(object):
         if self.module_name == 'setup':
             host = conn.host
             try:
-                var_result = json.loads(result)
+                var_result = parse_json(result)
             except:
                 var_result = {}
 

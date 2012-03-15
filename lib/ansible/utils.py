@@ -19,6 +19,9 @@
 
 import sys
 import os
+import shlex
+from ansible.errors import *
+
 try:
     import json
 except ImportError:
@@ -182,5 +185,27 @@ def async_poll_status(jid, host, clock, result):
         return "<job %s> FAILED on %s" % (jid, host)
     else:
         return "<job %s> polling on %s, %s remaining" % (jid, host, clock)
+
+def parse_json(data):
+    try:
+        return json.loads(data)
+    except:
+        # not JSON, but try "Baby JSON" which allows many of our modules to not
+        # require JSON and makes writing modules in bash much simpler
+        results = {}
+        tokens = shlex.split(data)
+        for t in tokens:
+            if t.find("=") == -1:
+                raise AnsibleException("failed to parse: %s" % data)
+            (key,value) = t.split("=", 1)
+            if key == 'changed' or 'failed':
+                if value.lower() in [ 'true', '1' ] :
+                    value = True
+                elif value.lower() in [ 'false', '0' ]:
+                    value = False
+            if key == 'rc':
+                value = int(value)     
+            results[key] = value
+        return results
 
 
