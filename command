@@ -32,18 +32,27 @@ import os
 
 argfile = sys.argv[1]
 args = open(argfile, 'r').read()
-args = shlex.split(args)
+
+shell = False
+
+if args.find("#USE_SHELL") != -1:
+   args = args.replace("#USE_SHELL", "")
+   shell = True
+
+if not shell:
+    args = shlex.split(args)
 
 startd = datetime.datetime.now()
 
 try:
-    cmd = subprocess.Popen(args, shell=False, 
+    cmd = subprocess.Popen(args, shell=shell, 
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = cmd.communicate()
 except (OSError, IOError), e:
     print json.dumps({
-        "failed": 1,
-        "msg": str(e),
+        "cmd"    : args,
+        "failed" : 1,
+        "msg"    : str(e),
         })
     sys.exit(1)
 except:
@@ -62,6 +71,7 @@ if err is None:
    err = ''
 
 result = {
+   "cmd"    : args,
    "stdout" : out.strip(),
    "stderr" : err.strip(),
    "rc"     : cmd.returncode,
