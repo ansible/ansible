@@ -1,0 +1,78 @@
+#!/usr/bin/python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# this script is for testing modules without running through the
+# entire guts of ansible, and is very helpful for when developing
+# modules
+#
+# example:
+#    test-module ../library/command /bin/sleep 3
+#    test-module ../library/service name=httpd ensure=restarted
+
+import sys
+import os
+import subprocess
+import traceback
+import ansible.utils
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+modfile = None
+
+if len(sys.argv) == 1:
+    print >>sys.stderr, "usage: test-module ./library/command [key=value ...]"
+    sys.exit(1)
+
+modfile = sys.argv[1]
+if len(sys.argv) > 1:
+    args = " ".join(sys.argv[2:])
+else:
+    args = ""
+
+argspath = os.path.expanduser("/.ansible_test_module_arguments")
+argsfile = open(argspath, 'w')
+argsfile.write(args)
+argsfile.close()
+
+os.system("chmod +x %s" % modfile)
+cmd = subprocess.Popen("%s %s" % (modfile, argspath), 
+    shell=True,
+    stdout=subprocess.PIPE, 
+    stderr=subprocess.PIPE)
+(out, err) = cmd.communicate()
+
+try:
+    results = ansible.utils.parse_json(out)
+except:
+    print "INVALID OUTPUT FORMAT"
+    print "*********************"
+    print out
+    print "*********************"
+    traceback.print_exc()
+    sys.exit(1)
+
+print results
+
+sys.exit(0)
+
+
