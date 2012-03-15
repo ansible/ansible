@@ -132,11 +132,9 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li><a class="reference internal" href="#testing-modules">Testing Modules</a></li>
 <li><a class="reference internal" href="#reading-input">Reading Input</a></li>
-<li><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a><ul>
+<li><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a></li>
 <li><a class="reference internal" href="#conventions">Conventions</a></li>
 <li><a class="reference internal" href="#shorthand-vs-json">Shorthand Vs JSON</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#sharing-your-module">Sharing Your Module</a></li>
 <li><a class="reference internal" href="#getting-your-module-into-core">Getting Your Module Into Core</a></li>
 </ul>
@@ -355,8 +353,9 @@ json isn&#8217;t in the Python standard library until 2.5.:</p>
 </div>
 <p>Because the output is supposed to be valid JSON.  Except that&#8217;s not quite true,
 but we&#8217;ll get to that later.</p>
+</div>
 <div class="section" id="conventions">
-<h3>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h3>
+<h2>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h2>
 <p>As a reminder from the example code above, here are some basic conventions
 and guidelines:</p>
 <ul class="simple">
@@ -370,7 +369,7 @@ and guidelines:</p>
 </ul>
 </div>
 <div class="section" id="shorthand-vs-json">
-<h3>Shorthand Vs JSON<a class="headerlink" href="#shorthand-vs-json" title="Permalink to this headline">¶</a></h3>
+<h2>Shorthand Vs JSON<a class="headerlink" href="#shorthand-vs-json" title="Permalink to this headline">¶</a></h2>
 <p>To make it easier to write modules in bash and in cases where a JSON
 module might not be available, it is acceptable for a module to return
 key=value output all on one line, like this.   The Ansible parser
@@ -379,7 +378,6 @@ will know what to do:</p>
 </div>
 <p>If you&#8217;re writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.</p>
-</div>
 </div>
 <div class="section" id="sharing-your-module">
 <h2>Sharing Your Module<a class="headerlink" href="#sharing-your-module" title="Permalink to this headline">¶</a></h2>

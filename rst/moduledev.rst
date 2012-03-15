@@ -196,7 +196,7 @@ Because the output is supposed to be valid JSON.  Except that's not quite true,
 but we'll get to that later.
 
 Conventions
------------
+```````````
 
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
@@ -217,7 +217,7 @@ and guidelines:
 
 
 Shorthand Vs JSON
------------------
+`````````````````
 
 To make it easier to write modules in bash and in cases where a JSON
 module might not be available, it is acceptable for a module to return
