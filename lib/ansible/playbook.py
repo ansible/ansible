@@ -365,7 +365,7 @@ class PlayBook(object):
         dark      = results.get("dark", {})
         contacted = results.get("contacted", {})
 
-        for host, msg in dark.items():
+        for host, msg in dark.iteritems():
             self.processed[host] = 1
             self.callbacks.on_unreachable(host, msg)
             if not host in self.dark:
@@ -373,7 +373,7 @@ class PlayBook(object):
             else:
                 self.dark[host] = self.dark[host] + 1
 
-        for host, results in contacted.items():
+        for host, results in contacted.iteritems():
             self.processed[host] = 1
    
             if is_failed(results):
@@ -401,7 +401,7 @@ class PlayBook(object):
 
         subtasks = task.get('notify', [])
         if len(subtasks) > 0:
-            for host, results in contacted.items():
+            for host, results in contacted.iteritems():
                 if results.get('changed', False):
                     for subtask in subtasks:
                         self._flag_handler(handlers, subtask, host)
@@ -446,7 +446,7 @@ class PlayBook(object):
         # written to the JSON file and will also bubble facts back up via
         # magic in Runner()
         push_var_str=''
-        for (k,v) in vars.items():
+        for (k,v) in vars.iteritems():
             push_var_str += "%s=%s " % (k,v)
 
         # push any variables down to the system
@@ -476,7 +476,7 @@ class PlayBook(object):
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
-        for (host, result) in setup_ok.items():
+        for (host, result) in setup_ok.iteritems():
             SETUP_CACHE[host] = result
 
         # run all the top level tasks, these get run on every node
