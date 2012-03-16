@@ -214,17 +214,33 @@ optionally use them as template sources.</p>
 </div>
 <p>To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
-template module to write the files using the templates. Templates are
-written in Jinja2 format. Playbooks (covered elsewhere in the
+template module to write the files using those templates.</p>
+<p>Templates are written in Jinja2 format. Playbooks (covered elsewhere in the
 documentation) will run the setup module for you, making this even
-simpler.:</p>
+simpler:</p>
 <div class="highlight-python"><pre>ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
 ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
 ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
 </div>
-<p>Need something like the fqdn in a template? If facter or ohai are
-installed, data from these projects will also be made available to the
-template engine, using &#8216;facter&#8217; and &#8216;ohai&#8217; prefixes for each.</p>
+<p>Ansible variables are used in templates by using the name surrounded by double
+curly-braces.  If facter or ohai were installed on the remote machine, variables
+from those programs can be accessed too, which the appropriate prefix:</p>
+<div class="highlight-python"><pre>This is an Ansible variable: {{ favcolor }}
+This is a facter variable: {{ facter_hostname }}
+This is an ohai variable: {{ ohai_foo }}</pre>
+</div>
+<p>The <cite>file</cite> module allows changing ownership and permissions on files.  These
+same options can be passed directly to the <cite>copy</cite> or <cite>template</cite> modules as well:</p>
+<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
+ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"</pre>
+</div>
+<p>The <cite>file</cite> module can also create directories, similar to <cite>mkdir -p</cite>:</p>
+<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/path/to/c mode=644 owner=mdehaan group=mdehaan state=directory"</pre>
+</div>
+<p>As well as delete directories (recursively) and delete files:</p>
+<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/path/to/c state=absent"</pre>
+</div>
+<p>The mode, owner, and group flags can also be used on the copy or template lines.</p>
 </div>
 <div class="section" id="managing-packages">
 <h2>Managing Packages<a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>

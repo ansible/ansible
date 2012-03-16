@@ -44,18 +44,40 @@ To just transfer a file directly to many different servers::
 
 To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
-template module to write the files using the templates. Templates are
-written in Jinja2 format. Playbooks (covered elsewhere in the
+template module to write the files using those templates. 
+
+Templates are written in Jinja2 format. Playbooks (covered elsewhere in the
 documentation) will run the setup module for you, making this even
-simpler.::
+simpler::
 
     ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
     ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
     ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
 
-Need something like the fqdn in a template? If facter or ohai are
-installed, data from these projects will also be made available to the
-template engine, using 'facter' and 'ohai' prefixes for each.
+Ansible variables are used in templates by using the name surrounded by double
+curly-braces.  If facter or ohai were installed on the remote machine, variables
+from those programs can be accessed too, which the appropriate prefix::
+
+    This is an Ansible variable: {{ favcolor }}
+    This is a facter variable: {{ facter_hostname }}
+    This is an ohai variable: {{ ohai_foo }}
+
+The `file` module allows changing ownership and permissions on files.  These
+same options can be passed directly to the `copy` or `template` modules as well::
+
+    ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
+    ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"
+
+The `file` module can also create directories, similar to `mkdir -p`::
+    
+    ansible webservers -m file -a "dest=/path/to/c mode=644 owner=mdehaan group=mdehaan state=directory"
+
+As well as delete directories (recursively) and delete files::
+    
+    ansible webservers -m file -a "dest=/path/to/c state=absent"
+
+The mode, owner, and group flags can also be used on the copy or template lines.
+
 
 Managing Packages
 `````````````````
