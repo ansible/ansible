@@ -27,10 +27,8 @@ import ansible.connection
 import Queue
 import random
 import jinja2
-import time
 import traceback
 import tempfile
-import StringIO
 
 # FIXME: stop importing *, use as utils/errors
 from ansible.utils import *

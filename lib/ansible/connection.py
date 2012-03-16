@@ -19,7 +19,6 @@
 ################################################
 
 import paramiko
-import exceptions
 import os
 from ansible.errors import *
     
