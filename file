@@ -32,7 +32,8 @@ import pwd
 
 def debug(msg):
     # ansible ignores stderr, so it's safe to use for debug
-    print >>sys.stderr, msg
+    # print >>sys.stderr, msg
+    pass
 
 def exit_json(rc=0, **kwargs):
     # FIXME: if path exists, include the user, group, mode and context
