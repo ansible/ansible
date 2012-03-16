@@ -54,7 +54,7 @@
   # make sure httpd is running
 
   - name: httpd start
-    action: service name=httpd state=started
+    action: service name=httpd state=running
 
   # handlers are only run when things change, at the very end of each
   # play.  Let's define some.  The names are significant and must

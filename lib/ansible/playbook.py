@@ -141,19 +141,19 @@ class PlayBook(object):
             # process tasks in this file as well as imported tasks
             new_tasks = []
             for task in tasks:
-               if 'include' in task:
-                   self._include_tasks(play, task, dirname, new_tasks)
-               else:
-                   new_tasks.append(task)
+                if 'include' in task:
+                    self._include_tasks(play, task, dirname, new_tasks)
+                else:
+                    new_tasks.append(task)
             play['tasks'] = new_tasks
 
             # process handlers as well as imported handlers
             new_handlers = [] 
             for handler in handlers:
-               if 'include' in handler:
-                   self._include_handlers(play, handler, dirname, new_handlers)
-               else:
-                   new_handlers.append(handler)
+                if 'include' in handler:
+                    self._include_handlers(play, handler, dirname, new_handlers)
+                else:
+                    new_handlers.append(handler)
             play['handlers'] = new_handlers
 
         return playbook
@@ -331,8 +331,8 @@ class PlayBook(object):
         # load the module name and parameters from the task entry
         name    = task['name']
         action  = task['action']
-        async_seconds = int(task.get('async', 0)) # not async by default
-        async_poll_interval = int(task.get('poll', 10)) # default poll = 10 seconds
+        async_seconds = int(task.get('async', 0))  # not async by default
+        async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
 
         # comment = task.get('comment', '')
 
