@@ -83,11 +83,14 @@ for x in items:
 
 state     = params.get('state','file')
 path      = params.get('path', params.get('dest', params.get('name', None)))
-link      = params.get('link', 'false')
 mode      = params.get('mode', None)
 owner     = params.get('owner', None)
 group     = params.get('group', None)
+
+# presently unused, we always use -R (FIXME?)
 recurse   = params.get('recurse', 'false')
+
+# presently unused, implement (FIXME)
 secontext = params.get('secontext', None)
 
 if state not in [ 'file', 'directory', 'absent' ]:
