@@ -376,8 +376,26 @@ class Runner(object):
 
         # run the copy module
         args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
-        result = self._execute_module(conn, tmp, module, args)
-        return self._return_from_module(conn, host, result)
+        result1 = self._execute_module(conn, tmp, module, args)
+        results1 = self._return_from_module(conn, host, result1)
+        (host, ok, data) = results1
+
+        # magically chain into the file module
+        if ok:
+            # unless failed, run the file module to adjust file aspects
+            old_changed = data.get('changed', False)
+            module = self._transfer_module(conn, tmp, 'file')
+            args = [ "%s=%s" % (k,v) for (k,v) in options.items() ]
+            result2 = self._execute_module(conn, tmp, module, args)
+            results2 = self._return_from_module(conn, host, result2)
+            (host, ok, data2) = results2
+            new_changed = data2.get('changed', False)
+            data['changed'] = old_changed or new_changed
+            data.update(data2)
+            return (host, ok, data)
+        else:
+            # copy failed, return orig result without going through 'file' module
+            return results1  
 
     # *****************************************************
 
@@ -407,8 +425,26 @@ class Runner(object):
 
         # run the template module
         args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
-        result = self._execute_module(conn, tmp, template_module, args)
-        return self._return_from_module(conn, host, result)
+        result1 = self._execute_module(conn, tmp, template_module, args)
+        results1 = self._return_from_module(conn, host, result1)
+        (host, ok, data) = results1
+
+        # magically chain into the file module
+        if ok:
+            # unless failed, run the file module to adjust file aspects
+            old_changed = data.get('changed', False)
+            module = self._transfer_module(conn, tmp, 'file')
+            args = [ "%s=%s" % (k,v) for (k,v) in options.items() ]
+            result2 = self._execute_module(conn, tmp, module, args)
+            results2 = self._return_from_module(conn, host, result2)
+            (host, ok, data2) = results2
+            new_changed = data2.get('changed', False)
+            data['changed'] = old_changed or new_changed
+            data.update(data2)
+            return (host, ok, data)
+        else:
+            # copy failed, return orig result without going through 'file' module
+            return results1
 
     # *****************************************************
 

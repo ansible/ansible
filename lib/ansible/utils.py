@@ -199,7 +199,7 @@ def parse_json(data):
                 raise AnsibleError("failed to parse: %s" % data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ] :
+                if value.lower() in [ 'true', '1' ]:
                     value = True
                 elif value.lower() in [ 'false', '0' ]:
                     value = False
