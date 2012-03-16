@@ -35,20 +35,36 @@ def debug(msg):
     print >>sys.stderr, msg
 
 def exit_json(rc=0, **kwargs):
-   
     # FIXME: if path exists, include the user, group, mode and context
     # in the data if not already present, such that this module is
     # also useful for inventory purposes
- 
+    if 'path' in kwargs:
+        debug("adding path info")
+        add_path_info(kwargs)
     print json.dumps(kwargs)
-    sys.exit(1)
+    sys.exit(rc)
 
 def fail_json(**kwargs):
     kwargs['failed'] = True
     exit_json(rc=1, **kwargs)
 
-
-
+def add_path_info(kwargs):
+    path = kwargs['path']
+    if os.path.exists(path):
+        (user, group) = user_and_group(path)
+        kwargs['user']  = user
+        kwargs['group'] = group
+        st = os.stat(path)
+        kwargs['mode']  = stat.S_IMODE(st[stat.ST_MODE])
+        # secontext not yet supported
+        if os.path.isfile(path):
+            kwargs['state'] = 'file'
+        else:
+            kwargs['state'] = 'directory'
+    else:
+        kwargs['state'] = 'absent'
+    return kwargs 
+ 
 # ===========================================
 
 argfile = sys.argv[1]
@@ -56,7 +72,7 @@ args    = open(argfile, 'r').read()
 items   = shlex.split(args)
 
 if not len(items):
-    exit_json(msg='the module requires arguments -a')
+    fail_json(msg='the module requires arguments -a')
     sys.exit(1)
 
 params = {}
@@ -100,7 +116,7 @@ def set_context_if_different(path, context, changed):
    if context is None:
        return changed
    if context is not None:
-       fail_json(msg='context not yet supported')
+       fail_json(path=path, msg='context not yet supported')
     
 def set_owner_if_different(path, owner, changed):
    if owner is None:
@@ -111,7 +127,7 @@ def set_owner_if_different(path, owner, changed):
        debug('setting owner')
        rc = os.system("/bin/chown -R %s %s" % (owner, path))
        if rc != 0:
-           fail_json(msg='chown failed')
+           fail_json(path=path, msg='chown failed')
        return True
 
    return changed
@@ -125,7 +141,7 @@ def set_group_if_different(path, group, changed):
        debug('setting group')
        rc = os.system("/bin/chgrp -R %s %s" % (group, path))
        if rc != 0:
-           fail_json(msg='chgrp failed')
+           fail_json(path=path, msg='chgrp failed')
        return True
    return changed
 
@@ -137,7 +153,7 @@ def set_mode_if_different(path, mode, changed):
        # FIXME: support English modes
        mode = int("0%s" % mode)
    except Exception, e:
-       fail_json(msg='mode needs to be something octalish', details=str(e))  
+       fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
  
    st = os.stat(path)
    actual_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -147,12 +163,13 @@ def set_mode_if_different(path, mode, changed):
            debug('setting mode')
            os.chmod(path, mode)
        except Exception, e:
-           fail_json(msg='chmod failed', details=str(e))
+           fail_json(path=path, msg='chmod failed', details=str(e))
+   if os.path.exists(path):
        return True
    return changed
 
 def rmtree_error(func, path, exc_info):
-   fail_json(msg='failed to remove directory')
+   fail_json(path=path, msg='failed to remove directory')
 
 # ===========================================
 # go...
@@ -175,21 +192,21 @@ if prev_state != 'absent' and state == 'absent':
         else:
             os.unlink(path)
     except Exception, e:
-        fail_json(msg=str(e))
-    exit_json(changed=True)
+        fail_json(path=path, msg=str(e))
+    exit_json(path=path, changed=True)
     sys.exit(0)
 
 if prev_state != 'absent' and prev_state != state:
-    fail_json(msg='refusing to convert between file and directory')
+    fail_json(path=path, msg='refusing to convert between file and directory')
 
 if prev_state == 'absent' and state == 'absent':
-    exit_json(changed=False)
+    exit_json(path=path, changed=False)
 
 if state == 'file':
 
     debug('requesting file')
     if prev_state == 'absent':
-        fail_json(msg='file does not exist, use copy or template module to create')
+        fail_json(path=path, msg='file does not exist, use copy or template module to create')
 
     # set modes owners and context as needed
     changed = set_context_if_different(path, secontext, changed)
@@ -197,7 +214,7 @@ if state == 'file':
     changed = set_group_if_different(path, group, changed)
     changed = set_mode_if_different(path, mode, changed)
 
-    exit_json(changed=changed)
+    exit_json(path=path, changed=changed)
 
 elif state == 'directory':
 
@@ -212,8 +229,8 @@ elif state == 'directory':
     changed = set_group_if_different(path, owner, changed)
     changed = set_mode_if_different(path, owner, changed)
 
-    exit_json(changed=changed)
+    exit_json(path=path, changed=changed)
 
-fail_json(msg='unexpected position reached')
+fail_json(path=path, msg='unexpected position reached')
 sys.exit(0)
 
