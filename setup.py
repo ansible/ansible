@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# NOTE: setup.py does NOT install the contents of the library dir
+# for you, you should go through "make install" or "make RPMs" 
+# for that, or manually copy modules over.
+
 import glob
 import os
 import sys

@@ -14,9 +14,7 @@ all: clean python
 tests: 
 	PYTHONPATH=./lib nosetests
 
-docs: manuals
-
-manuals: $(MANPAGES)
+docs: $(MANPAGES)
 
 %.1: %.1.asciidoc
 	$(ASCII2MAN)
@@ -52,10 +50,12 @@ clean:
 	@echo "Cleaning up RPM building stuff"
 	-rm -rf MANIFEST rpm-build
 
-python: docs
+python:
 	python setup.py build
 
-install: docs
+install:
+	mkdir -p /usr/share/ansible
+	cp ./library/* /usr/share/ansible/
 	python setup.py install
 
 sdist: clean
