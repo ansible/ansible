@@ -206,6 +206,8 @@ def parse_json(data):
             if key == 'rc':
                 value = int(value)     
             results[key] = value
+        if len(results.keys()) == 0:
+            return { "failed" : True, "parsed" : False, "msg" : data }
         return results
 
 

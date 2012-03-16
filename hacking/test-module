@@ -61,15 +61,26 @@ cmd = subprocess.Popen("%s %s" % (modfile, argspath),
     stderr=subprocess.PIPE)
 (out, err) = cmd.communicate()
 
+if err and err != '':
+    print "***********************************"
+    print "RECIEVED DATA ON STDOUT, WILL IGNORE THIS:"
+    print err
+
 try:
-    results = ansible.utils.parse_json(out)
-except:
-    print "INVALID OUTPUT FORMAT"
-    print "*********************"
+    print "***********************************"
+    print "RAW OUTPUT"
     print out
-    print "*********************"
+    results = ansible.utils.parse_json(out)
+    
+except:
+    print "***********************************"
+    print "INVALID OUTPUT FORMAT"
+    print out
     traceback.print_exc()
     sys.exit(1)
+
+print "***********************************"
+print "PARSED OUTPUT"
 
 print results
 
