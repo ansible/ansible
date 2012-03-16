@@ -36,9 +36,6 @@ def debug(msg):
     pass
 
 def exit_json(rc=0, **kwargs):
-    # FIXME: if path exists, include the user, group, mode and context
-    # in the data if not already present, such that this module is
-    # also useful for inventory purposes
     if 'path' in kwargs:
         debug("adding path info")
         add_path_info(kwargs)
