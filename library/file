@@ -157,16 +157,22 @@ def set_mode_if_different(path, mode, changed):
        fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
  
    st = os.stat(path)
-   actual_mode = stat.S_IMODE(st[stat.ST_MODE])
+   prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
-   if actual_mode != mode:
+   if prev_mode != mode:
+       # FIXME: comparison against string above will cause this to be executed
+       # every time
        try:
            debug('setting mode')
            os.chmod(path, mode)
        except Exception, e:
            fail_json(path=path, msg='chmod failed', details=str(e))
-   if os.path.exists(path):
-       return True
+
+       st = os.stat(path)
+       new_mode = stat.S_IMODE(st[stat.ST_MODE])
+
+       if new_mode != prev_mode:
+           return True
    return changed
 
 def rmtree_error(func, path, exc_info):
