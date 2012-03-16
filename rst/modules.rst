@@ -59,7 +59,9 @@ command was running for.
 copy
 ````
 
-The copy module moves a file on the local box to remote locations.  
+The copy module moves a file on the local box to remote locations.  In addition to the options
+listed below, the arguments available to the `file` module can also be passed to the copy
+module.
 
 *src*:
 
@@ -89,6 +91,32 @@ This module is informative only - it takes no parameters & does not
 support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
+
+file
+````
+
+Sets attributes of files and directories, or removes files/directories.  All parameters available 
+to the file module are also available when running the `copy` or `template` modules.
+
+*dest*:
+
+* absolute path to a file on the filesystem.
+
+*state*:
+
+* either 'file', 'directory', or 'absent'.  The default is 'file'.  If 'directory', the directory and all immediate subdirectories will be created if they do not exist.  If 'file', the file will NOT be created if it does not exist, specify `copy` or `template` for the module name instead if you need to put content at the specified location.  If 'absent', directories will be recursively deleted, and files or symlinks will be unlinked.
+
+*mode*:
+
+* the mode the file or directory should be, such as 644, as would be given to `chmod`.  English modes like "g+x" are not yet supported.
+
+*owner*:
+
+* name of user that should own the file or directory, as would be given to `chown`.
+
+*group*:
+
+* name of group that should own the file or directory, as would be given to `chgrp`
 
 
 git
@@ -206,7 +234,9 @@ template
 ````````
 
 Templates a file out to a remote server.  Call the :ref:`setup` module
-prior to usage if you are not running from a playbook.
+prior to usage if you are not running from a playbook.   In addition to the options
+listed below, the arguments available to the `file` module can also be passed to the copy
+module.   
 
 *src*:
 

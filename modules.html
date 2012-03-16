@@ -132,6 +132,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
+<li><a class="reference internal" href="#file">file</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
@@ -226,7 +227,9 @@ command was running for.</p>
 </div>
 <div class="section" id="copy">
 <span id="id2"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
-<p>The copy module moves a file on the local box to remote locations.</p>
+<p>The copy module moves a file on the local box to remote locations.  In addition to the options
+listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
+module.</p>
 <p><em>src</em>:</p>
 <ul class="simple">
 <li>Local path to a file to copy to the remote server.  This can be an
@@ -247,6 +250,31 @@ JSON data that can be useful for inventory purposes.</p>
 support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the <a class="reference internal" href="#setup"><em>setup</em></a>
 module behind the scenes.</p>
+</div>
+<div class="section" id="file">
+<h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<p>Sets attributes of files and directories, or removes files/directories.  All parameters available
+to the file module are also available when running the <cite>copy</cite> or <cite>template</cite> modules.</p>
+<p><em>dest</em>:</p>
+<ul class="simple">
+<li>absolute path to a file on the filesystem.</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>either &#8216;file&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  The default is &#8216;file&#8217;.  If &#8216;directory&#8217;, the directory and all immediate subdirectories will be created if they do not exist.  If &#8216;file&#8217;, the file will NOT be created if it does not exist, specify <cite>copy</cite> or <cite>template</cite> for the module name instead if you need to put content at the specified location.  If &#8216;absent&#8217;, directories will be recursively deleted, and files or symlinks will be unlinked.</li>
+</ul>
+<p><em>mode</em>:</p>
+<ul class="simple">
+<li>the mode the file or directory should be, such as 644, as would be given to <cite>chmod</cite>.  English modes like &#8220;g+x&#8221; are not yet supported.</li>
+</ul>
+<p><em>owner</em>:</p>
+<ul class="simple">
+<li>name of user that should own the file or directory, as would be given to <cite>chown</cite>.</li>
+</ul>
+<p><em>group</em>:</p>
+<ul class="simple">
+<li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
+</ul>
 </div>
 <div class="section" id="git">
 <h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
@@ -337,7 +365,9 @@ command was running for.</p>
 <div class="section" id="template">
 <span id="id6"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
-prior to usage if you are not running from a playbook.</p>
+prior to usage if you are not running from a playbook.   In addition to the options
+listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
+module.</p>
 <p><em>src</em>:</p>
 <ul class="simple">
 <li>Path of a Jinja2 formatted template on the local server.  This can
@@ -405,7 +435,7 @@ arguments just like they would be passed with ansible.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 14, 2012.<br/>
+      Last updated on Mar 15, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
