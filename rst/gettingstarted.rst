@@ -32,8 +32,8 @@ Developer Requirements
 
 For developers, you may wish to have:
 
-* ``asciidoc`` (for building manpage documentation)
-* ``python-sphinx`` (for building content for the ansible.github.com project only)
+* ``asciidoc`` (for rebuilding manpage files)
+* ``python-sphinx`` (for rebuilding content for the ansible.github.com docs project only)
 
 
 Getting Ansible
@@ -44,18 +44,25 @@ project page:
 
 * `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
 
-You can also clone the git repository yourself and install Ansible in
-one of two ways:
+As the project is still pretty new, you will probably just want to clone
+the git checkout instead, so you can keep up with all of the latest features,
+and also contribute easily back to the project (if you want).  
+Instructions for installing from source are below.
+
+You may also wish to follow the `Github project <https://github.com/ansible/>`_ if
+you have a github account.  This is also where we keep the issue tracker for sharing
+bugs or feature ideas.
 
 
-Python Distutils
-++++++++++++++++
+Make Install
+++++++++++++
 
-You can also install Ansible using Python Distutils::
+You can install Ansible using "make install".  This is done through python distutils::
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ sudo make install
+
 
 Via RPM
 +++++++
@@ -66,12 +73,17 @@ distribution. Until that time you can use the ``make rpm`` command::
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm
+    $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm
+
+If you are tracking the upstream source (i.e. git), the RPM revision may not be 
+bumped with every source code change.  To get around this, you can use
+rpm `-Uvh` with `--force` when RPM tells you the package is still at the
+same version.
 
 Your first commands
 ```````````````````
 
-Edit /etc/ansible/hosts and put one or more remote systems in it, for
+Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in ``authorized_keys``::
 
     192.168.1.50

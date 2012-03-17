@@ -132,7 +132,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#developer-requirements">Developer Requirements</a></li>
 <li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
-<li><a class="reference internal" href="#python-distutils">Python Distutils</a></li>
+<li><a class="reference internal" href="#make-install">Make Install</a></li>
 <li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
 </ul>
 </li>
@@ -191,8 +191,8 @@ that you&#8217;ll be talking to the other machines from), you will need:</p>
 <h2>Developer Requirements<a class="headerlink" href="#developer-requirements" title="Permalink to this headline">¶</a></h2>
 <p>For developers, you may wish to have:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">asciidoc</span></tt> (for building manpage documentation)</li>
-<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for building content for the ansible.github.com project only)</li>
+<li><tt class="docutils literal"><span class="pre">asciidoc</span></tt> (for rebuilding manpage files)</li>
+<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for rebuilding content for the ansible.github.com docs project only)</li>
 </ul>
 </div>
 <div class="section" id="getting-ansible">
@@ -202,11 +202,16 @@ project page:</p>
 <ul class="simple">
 <li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
 </ul>
-<p>You can also clone the git repository yourself and install Ansible in
-one of two ways:</p>
-<div class="section" id="python-distutils">
-<h3>Python Distutils<a class="headerlink" href="#python-distutils" title="Permalink to this headline">¶</a></h3>
-<p>You can also install Ansible using Python Distutils:</p>
+<p>As the project is still pretty new, you will probably just want to clone
+the git checkout instead, so you can keep up with all of the latest features,
+and also contribute easily back to the project (if you want).
+Instructions for installing from source are below.</p>
+<p>You may also wish to follow the <a class="reference external" href="https://github.com/ansible/">Github project</a> if
+you have a github account.  This is also where we keep the issue tracker for sharing
+bugs or feature ideas.</p>
+<div class="section" id="make-install">
+<h3>Make Install<a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>
+<p>You can install Ansible using &#8220;make install&#8221;.  This is done through python distutils:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ sudo make install</pre>
@@ -219,13 +224,17 @@ distribution. Until that time you can use the <tt class="docutils literal"><span
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ make rpm
-$ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-1.0-1.noarch.rpm</pre>
+$ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm</pre>
 </div>
+<p>If you are tracking the upstream source (i.e. git), the RPM revision may not be
+bumped with every source code change.  To get around this, you can use
+rpm <cite>-Uvh</cite> with <cite>&#8211;force</cite> when RPM tells you the package is still at the
+same version.</p>
 </div>
 </div>
 <div class="section" id="your-first-commands">
 <h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
-<p>Edit /etc/ansible/hosts and put one or more remote systems in it, for
+<p>Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
 <div class="highlight-python"><pre>192.168.1.50
 aserver.example.org
@@ -269,7 +278,7 @@ you already have a working infrastructure!</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 31, 2012.<br/>
+      Last updated on Mar 17, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
