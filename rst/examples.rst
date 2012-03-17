@@ -22,7 +22,7 @@ The -f 10 specifies the usage of 10 simultaneous processes.
    -m does not always have to be specified to /usr/bin/ansible because 'command' is the default ansible module
 
 If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
-pipe and redirection operators.   Read more about the differences on the :ref:`modules` page.  The shell
+pipe and redirection operators.   Read more about the differences on the :doc:`modules` page.  The shell
 module looks like this::
 
     ansible raleigh -m shell -a "echo \\$TERM"
@@ -31,7 +31,7 @@ module looks like this::
    When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.
 
 .. note::
-   Note that other than the command :ref:`modules`, ansible modules usually do
+   Note that other than the command :doc:`modules`, ansible modules usually do
    not work like simple scripts. They make the remote system look like
    you state, and run the commands necessary to get it there.  This
    is commonly referred to as 'idempotence', and is a core design goal of ansible.  However, we also
@@ -159,9 +159,9 @@ Be sure to use a high enough `--forks` value if you want to get all of your jobs
 very quickly. After the time limit (in seconds) runs out (``-B``), the process on
 the remote nodes will be terminated.
 
-Any module other than :ref:`copy` or :ref:`template` can be
+Any module other than `copy` or `template` can be
 backgrounded.  Typically you'll be backgrounding long-running 
-shell commands or software upgrades only.  ref:`playbooks` also support polling, and have
+shell commands or software upgrades only.  :doc:`playbooks` also support polling, and have
 a simplified syntax for this.
 
 .. seealso::

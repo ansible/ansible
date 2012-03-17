@@ -178,7 +178,7 @@ ansible atlanta -a "/sbin/reboot" -f 10</pre>
 <p class="last">-m does not always have to be specified to /usr/bin/ansible because &#8216;command&#8217; is the default ansible module</p>
 </div>
 <p>If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
-pipe and redirection operators.   Read more about the differences on the <em class="xref std std-ref">modules</em> page.  The shell
+pipe and redirection operators.   Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
 module looks like this:</p>
 <div class="highlight-python"><pre>ansible raleigh -m shell -a "echo \\$TERM"</pre>
 </div>
@@ -188,7 +188,7 @@ module looks like this:</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Note that other than the command <em class="xref std std-ref">modules</em>, ansible modules usually do
+<p class="last">Note that other than the command <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>, ansible modules usually do
 not work like simple scripts. They make the remote system look like
 you state, and run the commands necessary to get it there.  This
 is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.  However, we also
@@ -291,9 +291,9 @@ to poll, it looks like this:</p>
 Be sure to use a high enough <cite>&#8211;forks</cite> value if you want to get all of your jobs started
 very quickly. After the time limit (in seconds) runs out (<tt class="docutils literal"><span class="pre">-B</span></tt>), the process on
 the remote nodes will be terminated.</p>
-<p>Any module other than <a class="reference internal" href="modules.html#copy"><em>copy</em></a> or <a class="reference internal" href="modules.html#template"><em>template</em></a> can be
+<p>Any module other than <cite>copy</cite> or <cite>template</cite> can be
 backgrounded.  Typically you&#8217;ll be backgrounding long-running
-shell commands or software upgrades only.  ref:<cite>playbooks</cite> also support polling, and have
+shell commands or software upgrades only.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> also support polling, and have
 a simplified syntax for this.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
