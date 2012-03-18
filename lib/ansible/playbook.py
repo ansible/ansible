@@ -83,7 +83,6 @@ class PlayBook(object):
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
 
-        print "DEBUG: playbook=%s" % playbook
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
@@ -384,7 +383,7 @@ class PlayBook(object):
                 else:
                     self.failures[host] = self.failures[host] + 1
             else:
-                self.callbacks.on_ok(host)
+                self.callbacks.on_ok(host, results)
                 if not host in self.invocations:
                     self.invocations[host] = 1
                 else:
@@ -418,7 +417,9 @@ class PlayBook(object):
         # for this particular pattern group
 
         for x in handlers:
-            name = x['name']
+            name = x.get('name', None)
+            if name is None:
+                raise errors.AnsibleError('handler is missing a name')
             if match_name == name:
                 # flag the handler with the list of hosts
                 # it needs to be run on, it will be run later

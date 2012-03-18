@@ -1,0 +1,203 @@
+{
+    "events": [
+        "start", 
+        [
+            "play start", 
+            [
+                "all"
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test basic success command", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": [
+                        "/bin/true"
+                    ], 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": ""
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test basic success command 2", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": [
+                        "/bin/true"
+                    ], 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": ""
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test basic shell", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": "echo $HOME ", 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": "/root"
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test copy", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "changed": true, 
+                    "group": "root", 
+                    "mode": 420, 
+                    "path": "/tmp/ansible_test_data_copy.out", 
+                    "state": "file", 
+                    "user": "root"
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test template", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "changed": true, 
+                    "group": "root", 
+                    "mode": 420, 
+                    "path": "/tmp/ansible_test_data_template.out", 
+                    "state": "file", 
+                    "user": "root"
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "async poll test", 
+                false
+            ]
+        ], 
+        [
+            "async poll", 
+            [
+                "127.0.0.1"
+            ]
+        ], 
+        [
+            "async poll", 
+            [
+                "127.0.0.1"
+            ]
+        ], 
+        [
+            "async poll", 
+            [
+                "127.0.0.1"
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": "sleep 5 ", 
+                    "finished": 1, 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": ""
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "on change 1", 
+                true
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": [
+                        "/bin/true"
+                    ], 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": ""
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "on change 2", 
+                true
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": [
+                        "/bin/true"
+                    ], 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": ""
+                }
+            ]
+        ]
+    ], 
+    "results": {
+        "127.0.0.1": {
+            "changed": 2, 
+            "dark": 0, 
+            "failed": 0, 
+            "resources": 8
+        }
+    }
+}
+

@@ -385,6 +385,12 @@ class Runner(object):
         and then run the async module wrapping the other module
         '''
 
+        # hack to make the 'shell' module keyword really be executed
+        # by the command module
+        if self.module_name == 'shell':
+            self.module_name = 'command'
+            self.module_args.append("#USE_SHELL")
+
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, self.module_name)
         result = self._execute_module(conn, tmp, async, self.module_args,

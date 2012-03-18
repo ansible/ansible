@@ -49,7 +49,7 @@ class PlaybookCallbacks(object):
     def on_failed(self, host, results):
         print "failed: [%s] => %s\n" % (host, utils.smjson(results))
  
-    def on_ok(self, host):
+    def on_ok(self, host, host_result):
         print "ok: [%s]\n" % (host)
 
     def on_play_start(self, pattern):

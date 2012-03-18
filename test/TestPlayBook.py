@@ -35,9 +35,12 @@ class TestCallbacks(object):
     def on_failed(self, host, results):
         self.events.append([ 'failed', [ host, results ]])
 
-    # FIXME: this callback should get results too!
-    def on_ok(self, host):
-        self.events.append([ 'ok', [ host ]])
+    def on_ok(self, host, host_result):
+        # delete certain info from host_result to make test comparisons easier
+        for k in [ 'ansible_job_id', 'md5sum', 'delta', 'start', 'end' ]:
+            if k in host_result:
+                del host_result[k]
+        self.events.append([ 'ok', [ host, host_result ]])
 
     def on_play_start(self, pattern):
         self.events.append([ 'play start', [ pattern ]])
@@ -46,13 +49,11 @@ class TestCallbacks(object):
         self.events.append([ 'async confused', [ msg ]])
 
     def on_async_poll(self, jid, host, clock, host_result):
-        self.events.append([ 'async poll', [ host, jid ]])
+        self.events.append([ 'async poll', [ host ]])
 
     def on_dark_host(self, host, msg):
         self.events.append([ 'failed/dark', [ host, msg ]])
 
-    # FIXME: callbacks need to be fired on notifiers as well
-    
 
 class TestRunner(unittest.TestCase):
 
@@ -61,6 +62,11 @@ class TestRunner(unittest.TestCase):
        self.cwd = os.getcwd()
        self.test_dir = os.path.join(self.cwd, 'test')
        self.stage_dir = self._prepare_stage_dir()
+
+       if os.path.exists('/tmp/ansible_test_data_copy.out'):
+           os.unlink('/tmp/ansible_test_data_copy.out')
+       if os.path.exists('/tmp/ansible_test_data_template.out'):
+           os.unlink('/tmp/ansible_test_data_template.out')
 
    def _prepare_stage_dir(self):
        stage_path = os.path.join(self.test_dir, 'test_data')
@@ -104,5 +110,10 @@ class TestRunner(unittest.TestCase):
 
    def test_one(self):
        pb = os.path.join(self.test_dir, 'playbook1.yml')
-       print utils.bigjson(self._run(pb))
-       assert False, "this test works, but we need to check the results values to complete it"
+       expected = os.path.join(self.test_dir, 'playbook1.events')
+       expected = utils.json_loads(file(expected).read())
+       actual = self._run(pb)
+       # if different, this will output to screen 
+       print utils.bigjson(actual)
+       assert cmp(expected, actual) == 0, "expected events match actual events"
+
