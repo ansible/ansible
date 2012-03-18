@@ -38,9 +38,9 @@ from ansible import errors
 CLEANUP_FILES = True
 
 try:
-   import json
+    import json
 except ImportError:
-   import simplejson as json
+    import simplejson as json
     
 ################################################
 
@@ -449,7 +449,7 @@ class Runner(object):
             new_changed = data2.get('changed', False)
             data.update(data2)
             if old_changed or new_changed:
-               data['changed'] = True
+                data['changed'] = True
             return (host, ok, data)
         else:
             # copy failed, return orig result without going through 'file' module
