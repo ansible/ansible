@@ -164,17 +164,17 @@ s.parentNode.insertBefore(ga, s);
 <a class="reference external image-reference" href="http://photos.michaeldehaan.net/ncsu/h3b63b68e#h3b63b68e"><img alt="&quot;&quot;" src="http://ansible.github.com/mpd_tubes.jpg" style="width: 225px; height: 225px;" /></a>
 <div class="section" id="introducing-ansible">
 <h1>Introducing Ansible<a class="headerlink" href="#introducing-ansible" title="Permalink to this headline">¶</a></h1>
-<p>Ansible is a radically simple deployment, configuration, and command
-execution framework. Other similar tools have been too
+<p>Ansible is a radically simple deployment, model-driven configuration management,
+and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
 Ansible&#8217;s core is a little over 1000 lines.</p>
-<p>Ansible isn&#8217;t just for configuration &#8211; it&#8217;s also great for Ad-Hoc
+<p>Ansible isn&#8217;t just for idempotent configuration &#8211; it&#8217;s also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>.
 Where Ansible excels though, is expressing complex multi-node
-deployment processes, executing complex sequences of commands on
-different hosts through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
+deployment processes, executing ordered sequences on
+different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
 <p>Extending ansible does not require programming in any particular
 language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as scripts or programs that return
 simple JSON.  It&#8217;s also trivially easy to just execute useful shell
@@ -197,9 +197,11 @@ will remain short &amp; simple, and the source will be blindingly obvious.</p>
 <li>Super fast &amp; parallel by default</li>
 <li>No server or client daemons; use existing SSHd out of the box</li>
 <li>No additional software required on client boxes</li>
+<li>Can be easily run from a checkout, no installation required</li>
+<li>Modules are idempotent</li>
 <li>Modules can be written in ANY language</li>
 <li>Awesome API for creating very powerful distributed scripts</li>
-<li>Be very usable as non-root</li>
+<li>Does not have to run remote steps as root</li>
 <li>Create the easiest config management system to use, ever.</li>
 </ul>
 </div>

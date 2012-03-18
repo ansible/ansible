@@ -17,18 +17,18 @@
 Introducing Ansible
 ===================
 
-Ansible is a radically simple deployment, configuration, and command
-execution framework. Other similar tools have been too
+Ansible is a radically simple deployment, model-driven configuration management, 
+and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
-Ansible's core is a little over 1000 lines. 
+Ansible's core is a little over 1000 lines.
 
-Ansible isn't just for configuration -- it's also great for Ad-Hoc
+Ansible isn't just for idempotent configuration -- it's also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
 Where Ansible excels though, is expressing complex multi-node 
-deployment processes, executing complex sequences of commands on 
-different hosts through :doc:`playbooks`.
+deployment processes, executing ordered sequences on 
+different sets of nodes through :doc:`playbooks`.
 
 Extending ansible does not require programming in any particular
 language -- you can write :doc:`modules` as scripts or programs that return
@@ -60,9 +60,11 @@ Design Goals
 * Super fast & parallel by default
 * No server or client daemons; use existing SSHd out of the box
 * No additional software required on client boxes
+* Can be easily run from a checkout, no installation required
+* Modules are idempotent
 * Modules can be written in ANY language
 * Awesome API for creating very powerful distributed scripts
-* Be very usable as non-root
+* Does not have to run remote steps as root
 * Create the easiest config management system to use, ever.
 
 Resources
