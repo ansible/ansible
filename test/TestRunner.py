@@ -22,7 +22,7 @@ class TestRunner(unittest.TestCase):
            module_name='ping',
            module_path='library/',
            module_args=[],
-           remote_user='root',
+           remote_user=self.user,
            remote_pass=None,
            host_list='test/ansible_hosts',
            timeout=5,

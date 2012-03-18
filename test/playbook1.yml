@@ -1,0 +1,34 @@
+# extremely simple test of the most basic of playbook engine/functions
+---
+- hosts: all
+  vars:
+    answer: "I think so, Brain, but if they called them sad meals, kids wouldn't buy them."
+    port: 5150
+
+  tasks:
+
+  - name: test basic success command
+    action: command /bin/true
+
+  - name: test basic success command 2
+    action: command /bin/true
+
+  - name: test basic shell
+    action: echo $HOME
+
+  - name: test copy
+    action: copy src=sample.j2 dest=test_data/copy.out
+
+  - name: test template
+    action: template src=sample.j2 dest=test_data/template.out
+
+  handlers:
+
+  - name: on change 1
+    action: command /bin/true
+  - name: on change 2
+    action: command /bin/true
+  - action: on change 3
+    action: command /bin/true
+
+

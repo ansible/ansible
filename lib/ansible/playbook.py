@@ -83,6 +83,7 @@ class PlayBook(object):
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
 
+        print "DEBUG: playbook=%s" % playbook
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
@@ -471,7 +472,7 @@ class PlayBook(object):
         for (host, host_result) in contacted_hosts.iteritems():
             if 'failed' in host_result:
                 self.callbacks.on_failed(host, host_result)
-                self.failed[host] = 1
+                self.failures[host] = 1
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
