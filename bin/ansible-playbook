@@ -19,12 +19,13 @@
 #######################################################
 
 import sys
-import ansible.playbook
-import ansible.constants as C
-from ansible.utils import *
-from ansible.errors import *
 import getpass
 from optparse import OptionParser
+
+import ansible.playbook
+import ansible.constants as C
+from ansible import errors
+from ansible import utils
 
 #######################################################
 
@@ -40,13 +41,13 @@ class PlaybookCallbacks(object):
         print "\n"
 
     def on_task_start(self, name, is_conditional):
-        print task_start_msg(name, is_conditional)
+        print utils.task_start_msg(name, is_conditional)
 
     def on_unreachable(self, host, msg):
         print "unreachable: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        print "failed: [%s] => %s\n" % (host, smjson(results))
+        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
  
     def on_ok(self, host):
         print "ok: [%s]\n" % (host)
@@ -58,7 +59,7 @@ class PlaybookCallbacks(object):
         print msg
 
     def on_async_poll(self, jid, host, clock, host_result):
-        print async_poll_status(jid, host, clock, host_result)
+        print utils.async_poll_status(jid, host, clock, host_result)
 
     def on_dark_host(self, host, msg):
         print "exception: [%s] => %s" % (host, msg)
@@ -105,7 +106,7 @@ def main(args):
         )
         try:
             pb.run()
-        except AnsibleError as e:
+        except errors.AnsibleError as e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
 
