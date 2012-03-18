@@ -6,6 +6,7 @@
 import unittest
 import getpass
 import ansible.playbook
+import ansible.utils as utils
 import os
 import shutil
 import time
@@ -17,56 +18,41 @@ except:
 class TestCallbacks(object):
 
     def __init__(self):
-        self.tasks_started = []
-        self.plays_started = []
-        self.unreachable = {}
-        self.failed = {}
-        self.ok_counts = {}
-        self.poll_events = []
-        self.dark = []
-
-    def results(self):
-        return dict(
-            tasks_started = self.tasks_started,
-            plays_started = self.plays_started,
-            unreachable   = self.unreachable,
-            failed        = self.failed,
-            ok_counts     = self.ok_counts,
-            poll_events   = self.poll_events,
-            dark          = self.dark
-        )
+        self.events = []
 
     def set_playbook(self, playbook):
         self.playbook = playbook
 
     def on_start(self):
-        pass
+        self.events.append('start')
 
     def on_task_start(self, name, is_conditional):
-        self.tasks_started.append(name)
+        self.events.append([ 'task start', [ name, is_conditional ]])
 
     def on_unreachable(self, host, msg):
-        self.unreachable[host] = msg
+        self.events.append([ 'unreachable', [ host, msg ]])
 
     def on_failed(self, host, results):
-        self.failed[host] = results
+        self.events.append([ 'failed', [ host, results ]])
 
+    # FIXME: this callback should get results too!
     def on_ok(self, host):
-        ok = self.ok_counts.get(host, 0)
-        self.ok_counts[host] = ok + 1
+        self.events.append([ 'ok', [ host ]])
 
     def on_play_start(self, pattern):
-        self.plays_started.append(pattern)
+        self.events.append([ 'play start', [ pattern ]])
 
     def on_async_confused(self, msg):
-        raise Exception("confused: %s" % msg)
+        self.events.append([ 'async confused', [ msg ]])
 
     def on_async_poll(self, jid, host, clock, host_result):
-        self.poll_events.append([jid,host,clock.host_result])
+        self.events.append([ 'async poll', [ host, jid ]])
 
     def on_dark_host(self, host, msg):
-        self.dark.append([host,msg])
+        self.events.append([ 'failed/dark', [ host, msg ]])
 
+    # FIXME: callbacks need to be fired on notifiers as well
+    
 
 class TestRunner(unittest.TestCase):
 
@@ -112,11 +98,11 @@ class TestRunner(unittest.TestCase):
        )
        results = self.playbook.run()
        return dict(
-           results   = results,
-           callbacks = self.test_callbacks.results(),
+           results = results,
+           events = self.test_callbacks.events,
        ) 
 
    def test_one(self):
        pb = os.path.join(self.test_dir, 'playbook1.yml')
-       print self._run(pb)
-
+       print utils.bigjson(self._run(pb))
+       assert False, "this test works, but we need to check the results values to complete it"

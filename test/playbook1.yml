@@ -2,7 +2,7 @@
 ---
 - hosts: all
   vars:
-    answer: "I think so, Brain, but if they called them sad meals, kids wouldn't buy them."
+    answer: "???"
     port: 5150
 
   tasks:
@@ -14,13 +14,13 @@
     action: command /bin/true
 
   - name: test basic shell
-    action: echo $HOME
+    action: shell echo $HOME
 
   - name: test copy
-    action: copy src=sample.j2 dest=test_data/copy.out
+    action: copy src=sample.j2 dest=/tmp/ansible_test_data_copy.out
 
   - name: test template
-    action: template src=sample.j2 dest=test_data/template.out
+    action: template src=sample.j2 dest=/tmp/ansible_test_data_template.out
 
   handlers:
 
