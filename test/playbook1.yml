@@ -2,7 +2,7 @@
 ---
 - hosts: all
   vars:
-    answer: "???"
+    answer: "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels."
     port: 5150
 
   tasks:

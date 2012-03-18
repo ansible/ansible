@@ -449,7 +449,7 @@ class PlayBook(object):
         # magic in Runner()
         push_var_str=''
         for (k,v) in vars.iteritems():
-            push_var_str += "%s=%s " % (k,v)
+            push_var_str += "%s=\"%s\" " % (k,v)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(

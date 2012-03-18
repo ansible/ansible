@@ -117,3 +117,7 @@ class TestRunner(unittest.TestCase):
        print utils.bigjson(actual)
        assert cmp(expected, actual) == 0, "expected events match actual events"
 
+       # make sure the template module took options from the vars section
+       data = file('/tmp/ansible_test_data_template.out').read()
+       assert data.find("ears") != -1, "template success"
+
