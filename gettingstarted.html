@@ -203,15 +203,15 @@ bugs or feature ideas.</p>
 to use it:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
-$ source ./hacking/env-setup
-$ cat "127.0.0.1" &gt; ~/ansible_hosts
-$ export ANSIBLE_HOSTS=~/ansible_hosts
-$ ansible all -m ping</pre>
+$ source ./hacking/env-setup</pre>
 </div>
-<p>The <cite>env-setup</cite> script modifies your <cite>PATH</cite>, <cite>PYTHONPATH</cite>, and <cite>ANSIBLE_LIBRARY</cite> environment variables
-so you can use Ansible from the checkout directory.  You have full access to everything
-Ansible can do this way, with no limitations.  If you do not set ANSIBLE_HOSTS, the default host
-file /etc/ansible/hosts will be used.</p>
+<p>You can optionally specify an inventory file other than /etc/ansible/hosts:</p>
+<div class="highlight-python"><pre>$ cat "127.0.0.1" &gt; ~/ansible_hosts
+$ export ANSIBLE_HOSTS=~/ansible_hosts</pre>
+</div>
+<p>Now let&#8217;s test things:</p>
+<div class="highlight-python"><pre>$ ansible all -m ping --ask-pass</pre>
+</div>
 </div>
 <div class="section" id="make-install">
 <h3>Make Install<a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>

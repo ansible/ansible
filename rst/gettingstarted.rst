@@ -49,14 +49,15 @@ to use it::
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ source ./hacking/env-setup
+
+You can optionally specify an inventory file other than /etc/ansible/hosts::
+
     $ cat "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_HOSTS=~/ansible_hosts
-    $ ansible all -m ping
 
-The `env-setup` script modifies your `PATH`, `PYTHONPATH`, and `ANSIBLE_LIBRARY` environment variables
-so you can use Ansible from the checkout directory.  You have full access to everything
-Ansible can do this way, with no limitations.  If you do not set ANSIBLE_HOSTS, the default host
-file /etc/ansible/hosts will be used.
+Now let's test things::
+
+    $ ansible all -m ping --ask-pass
 
 
 Make Install
