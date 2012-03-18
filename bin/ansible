@@ -19,22 +19,16 @@
 
 ########################################################
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-from optparse import OptionParser
 import sys
-import os
 import getpass
 import shlex
 import time
 from optparse import OptionParser
+
 import ansible.runner
-import ansible.playbook
 import ansible.constants as C
-from ansible.utils import *
-from ansible.errors import *
+from ansible import utils
+from ansible import errors
 
 ########################################################
 
@@ -142,7 +136,7 @@ class Cli(object):
         if results is None:
            exit("No hosts matched")
         if options.tree:
-            prepare_writeable_dir(options.tree)
+            utils.prepare_writeable_dir(options.tree)
 
         # BACKGROUND POLL LOGIC when -B and -P are specified
         # FIXME: refactor
@@ -164,7 +158,7 @@ class Cli(object):
                 for (host, host_result) in poll_results['contacted'].iteritems():
                     # override last result with current status result for report
                     results['contacted'][host] = host_result
-                    print async_poll_status(jid, host, clock, host_result)
+                    print utils.async_poll_status(jid, host, clock, host_result)
                 clock = clock - options.poll_interval
                 time.sleep(options.poll_interval)
                 poll_hosts = self.hosts_to_poll(poll_results)
@@ -173,19 +167,19 @@ class Cli(object):
                     results['contacted'][host] = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
 
         buf = '' 
-        for hostname in contacted_hosts(results):
-            msg = host_report_msg(
+        for hostname in utils.contacted_hosts(results):
+            msg = utils.host_report_msg(
                 hostname, 
                 options.module_name, 
-                contacted_host_result(results, hostname),
+                utils.contacted_host_result(results, hostname),
                 options.one_line
             )
             if options.tree:
-                write_tree_file(options.tree, hostname, bigjson(contacted_host_result(results, hostname)))
+                utils.write_tree_file(options.tree, hostname, utils.bigjson(utils.contacted_host_result(results, hostname)))
             buf += msg
             
-        if has_dark_hosts(results):
-            buf += dark_hosts_msg(results)
+        if utils.has_dark_hosts(results):
+            buf += utils.dark_hosts_msg(results)
 
         print buf
 
@@ -196,7 +190,7 @@ if __name__ == '__main__':
     (options, args) = cli.parse()
     try:
         (runner, results) = cli.run(options, args)
-    except AnsibleError as e:
+    except errors.AnsibleError as e:
         # Generic handler for ansible specific errors
         print "ERROR: %s" % str(e)
         sys.exit(1)
