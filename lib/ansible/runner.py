@@ -31,8 +31,7 @@ import traceback
 import tempfile
 import subprocess
 
-# FIXME: stop importing *, use as utils/errors
-from ansible.utils import *
+from ansible import utils
 from ansible.errors import *
 
 # should be True except in debug
@@ -51,7 +50,7 @@ def _executor_hook(job_queue, result_queue):
             result_queue.put(runner._executor(host))
         except Queue.Empty:
             pass
-        except AnsibleError, ae:
+        except errors.AnsibleError, ae:
             result_queue.put([host, False, str(ae)])
         except Exception, ee:
             # probably should include the full trace
@@ -168,7 +167,7 @@ class Runner(object):
             try:
                 groups = json.loads(out)
             except:
-                raise AnsibleError("invalid JSON response from script: %s" % host_list)
+                raise errors.AnsibleError("invalid JSON response from script: %s" % host_list)
             for (groupname, hostlist) in groups.iteritems():
                 for host in hostlist:
                     if host not in results:
@@ -222,7 +221,7 @@ class Runner(object):
 
         try:
             # try to parse the JSON response
-            return [ host, True, parse_json(result) ]
+            return [ host, True, utils.parse_json(result) ]
         except Exception, e:
             # it failed, say so, but return the string anyway
             return [ host, False, "%s/%s" % (str(e), result) ]
@@ -307,7 +306,7 @@ class Runner(object):
             try:
                 inject2 = json.loads(out)
             except:
-                raise AnsibleError("%s returned invalid result when called with hostname %s" % (
+                raise errors.AnsibleError("%s returned invalid result when called with hostname %s" % (
                     Runner._external_variable_script,
                     host
                 ))
@@ -363,7 +362,7 @@ class Runner(object):
         if self.module_name == 'setup':
             host = conn.host
             try:
-                var_result = parse_json(result)
+                var_result = utils.parse_json(result)
             except:
                 var_result = {}
 
@@ -412,7 +411,7 @@ class Runner(object):
         # transfer the file to a remote tmp location
         tmp_path = tmp
         tmp_src = tmp_path + source.split('/')[-1]
-        self._transfer_file(conn, path_dwim(self.basedir, source), tmp_src)
+        self._transfer_file(conn, utils.path_dwim(self.basedir, source), tmp_src)
 
         # install the copy  module
         self.module_name = 'copy'
@@ -463,7 +462,7 @@ class Runner(object):
         tpath = tmp
         tempname = os.path.split(source)[-1]
         temppath = tpath + tempname
-        self._transfer_file(conn, path_dwim(self.basedir, source), temppath)
+        self._transfer_file(conn, utils.path_dwim(self.basedir, source), temppath)
 
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')
