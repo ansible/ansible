@@ -32,10 +32,15 @@ import tempfile
 import subprocess
 
 from ansible import utils
-from ansible.errors import *
+from ansible import errors
 
 # should be True except in debug
 CLEANUP_FILES = True
+
+try:
+   import json
+except ImportError:
+   import simplejson as json
     
 ################################################
 
@@ -52,7 +57,7 @@ def _executor_hook(job_queue, result_queue):
             pass
         except errors.AnsibleError, ae:
             result_queue.put([host, False, str(ae)])
-        except Exception, ee:
+        except Exception:
             # probably should include the full trace
             result_queue.put([host, False, traceback.format_exc()])
             
@@ -135,7 +140,7 @@ class Runner(object):
         host_list = os.path.expanduser(host_list)
 
         if not os.path.exists(host_list):
-            raise AnsibleFileNotFound("inventory file not found: %s" % host_list)
+            raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
 
         results    = []
         groups     = { 'ungrouped' : [] }
@@ -211,7 +216,7 @@ class Runner(object):
 
         try:
             return [ True, self.connector.connect(host) ]
-        except AnsibleConnectionFailed, e:
+        except errors.AnsibleConnectionFailed, e:
             return [ False, "FAILED: %s" % str(e) ]
 
     # *****************************************************
@@ -557,10 +562,10 @@ class Runner(object):
         ''' transfer a module over SFTP, does not run it '''
 
         if module.startswith("/"):
-            raise AnsibleFileNotFound("%s is not a module" % module)
+            raise errors.AnsibleFileNotFound("%s is not a module" % module)
         in_path = os.path.expanduser(os.path.join(self.module_path, module))
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("module not found: %s" % in_path)
+            raise errors.AnsibleFileNotFound("module not found: %s" % in_path)
 
         out_path = tmp + module
         conn.put_file(in_path, out_path)

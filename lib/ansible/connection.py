@@ -20,8 +20,8 @@
 
 import paramiko
 import os
-from ansible.errors import *
-    
+from ansible import errors
+
 ################################################
 
 class Connection(object):
@@ -68,7 +68,7 @@ class ParamikoConnection(object):
                 timeout=self.runner.timeout
             )
         except Exception, e:
-            raise AnsibleConnectionFailed(str(e))
+            raise errors.AnsibleConnectionFailed(str(e))
         return self
 
     def exec_command(self, cmd):
@@ -79,12 +79,12 @@ class ParamikoConnection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         sftp = self.ssh.open_sftp()
         try:
             sftp.put(in_path, out_path)
         except IOError:
-            raise AnsibleException("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleException("failed to transfer file to %s" % out_path)
         sftp.close()
 
     def close(self):

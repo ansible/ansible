@@ -20,7 +20,7 @@
 import sys
 import os
 import shlex
-from ansible.errors import *
+from ansible import errors
 
 try:
     import json
@@ -196,7 +196,7 @@ def parse_json(data):
         tokens = shlex.split(data)
         for t in tokens:
             if t.find("=") == -1:
-                raise AnsibleError("failed to parse: %s" % data)
+                raise errors.AnsibleError("failed to parse: %s" % data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ]:

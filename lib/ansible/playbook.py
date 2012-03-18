@@ -19,8 +19,8 @@
 
 import ansible.runner
 import ansible.constants as C
-from ansible.utils import *
-from ansible.errors import *
+from ansible import utils
+from ansible import errors
 import yaml
 import shlex
 import os
@@ -89,10 +89,10 @@ class PlayBook(object):
     def _get_vars(self, play, dirname):
         vars = play.get('vars', {})
         if type(vars) != dict:
-            raise AnsibleError("'vars' section must contain only key/value pairs")
+            raise errors.AnsibleError("'vars' section must contain only key/value pairs")
         vars_files = play.get('vars_files', [])
         for f in vars_files:
-            path = path_dwim(dirname, f)
+            path = utils.path_dwim(dirname, f)
             # FIXME: better error handling if not valid YAML 
             # or file not found
             # raise typed exception
@@ -105,7 +105,7 @@ class PlayBook(object):
         # an include line looks like:
         # include: some.yml a=2 b=3 c=4
         include_tokens = task['include'].split()
-        path = path_dwim(dirname, include_tokens[0])
+        path = utils.path_dwim(dirname, include_tokens[0])
         inject_vars = self._get_vars(play, dirname)
         for i,x in enumerate(include_tokens):
             if x.find("=") != -1:
@@ -119,7 +119,7 @@ class PlayBook(object):
                 new_tasks.append(x)
 
     def _include_handlers(self, play, handler, dirname, new_handlers):
-        path = path_dwim(dirname, handler['include'])
+        path = utils.path_dwim(dirname, handler['include'])
         included = file(path).read()
         inject_vars = self._get_vars(play, dirname)
         template = jinja2.Template(included)
@@ -376,7 +376,7 @@ class PlayBook(object):
         for host, results in contacted.iteritems():
             self.processed[host] = 1
    
-            if is_failed(results):
+            if utils.is_failed(results):
                 self.callbacks.on_failed(host, results)
                 if not host in self.failures:
                     self.failures[host] = 1
@@ -471,7 +471,7 @@ class PlayBook(object):
         for (host, host_result) in contacted_hosts.iteritems():
             if 'failed' in host_result:
                 self.callbacks.on_failed(host, host_result)
-                self.failed[hosts] = 1
+                self.failed[host] = 1
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
