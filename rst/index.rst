@@ -53,19 +53,22 @@ Architecture
    :height: 464
 
 
-Design Goals
-````````````
+Features
+````````
 
 * Dead simple setup
 * Super fast & parallel by default
 * No server or client daemons; use existing SSHd out of the box
 * No additional software required on client boxes
 * Can be easily run from a checkout, no installation required
-* Modules are idempotent
+* Modules are idempotent, but you can also easily use shell commands
 * Modules can be written in ANY language
 * Awesome API for creating very powerful distributed scripts
 * Does not have to run remote steps as root
-* Create the easiest config management system to use, ever.
+* Pluggable transports (SSH is just the default)
+* Source host info & variables from files or external software
+* The easiest config management system to use, ever.
+
 
 Resources
 `````````
