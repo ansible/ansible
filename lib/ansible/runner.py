@@ -371,6 +371,15 @@ class Runner(object):
             except:
                 var_result = {}
 
+            # note: do not allow variables from playbook to be stomped on
+            # by variables coming up from facter/ohai/etc.  They
+            # should be prefixed anyway
+            if not host in self.setup_cache:
+                self.setup_cache[host] = {}
+            for (k, v) in var_result.iteritems():
+                if not k in self.setup_cache[host]:
+                    self.setup_cache[host][k] = v
+
         return self._return_from_module(conn, host, result)
 
     # *****************************************************
