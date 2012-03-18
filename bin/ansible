@@ -181,6 +181,9 @@ class Cli(object):
         if utils.has_dark_hosts(results):
             buf += utils.dark_hosts_msg(results)
 
+        if not utils.has_hosts(results):
+            print "ERROR: no hosts matched"
+
         print buf
 
 ########################################################

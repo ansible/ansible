@@ -22,8 +22,6 @@ import fnmatch
 import multiprocessing
 import signal
 import os
-import ansible.constants as C 
-import ansible.connection
 import Queue
 import random
 import jinja2
@@ -31,17 +29,14 @@ import traceback
 import tempfile
 import subprocess
 
+import ansible.constants as C 
+import ansible.connection
 from ansible import utils
 from ansible import errors
 
 # should be True except in debug
 CLEANUP_FILES = True
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-    
 ################################################
 
 def _executor_hook(job_queue, result_queue):
@@ -170,7 +165,7 @@ class Runner(object):
             cmd = subprocess.Popen([host_list], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
             out, err = cmd.communicate()
             try:
-                groups = json.loads(out)
+                groups = utils.json_loads(out)
             except:
                 raise errors.AnsibleError("invalid JSON response from script: %s" % host_list)
             for (groupname, hostlist) in groups.iteritems():
@@ -309,7 +304,7 @@ class Runner(object):
             out, err = cmd.communicate()
             inject2 = {}
             try:
-                inject2 = json.loads(out)
+                inject2 = utils.json_loads(out)
             except:
                 raise errors.AnsibleError("%s returned invalid result when called with hostname %s" % (
                     Runner._external_variable_script,

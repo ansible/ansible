@@ -149,6 +149,14 @@ def has_dark_hosts(results):
     ''' are there any uncontactable hosts? '''
     return len(results['dark'].keys()) > 0
 
+def has_contacted_hosts(results):
+    ''' are there any contacted hosts? '''
+    return len(results['contacted'].keys()) > 0
+
+def has_hosts(results):
+    ''' did ansible run against any hosts at all? '''
+    return has_contacted_hosts(results) or has_dark_hosts(results)
+
 def contacted_hosts(results):
     ''' what are the contactable hosts? '''
     return sorted(results['contacted'])
@@ -186,7 +194,11 @@ def async_poll_status(jid, host, clock, result):
     else:
         return "<job %s> polling on %s, %s remaining" % (jid, host, clock)
 
+def json_loads(data):
+    return json.loads(data)
+
 def parse_json(data):
+    ''' this version for module return data only '''
     try:
         return json.loads(data)
     except:
