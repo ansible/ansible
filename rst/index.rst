@@ -35,8 +35,7 @@ language -- you can write :doc:`modules` as scripts or programs that return
 simple JSON.  It's also trivially easy to just execute useful shell
 commands.
 
-Why use Ansible versus something else?  (Puppet, Chef, Fabric,
-Capistrano, mCollective, Func, SaltStack, etc?) Ansible will have far
+Why use Ansible versus something else?  (Puppet, Chef, Capistrano, etc?) Ansible will have far
 less code, it will be (by extension) more correct, and it will be the
 easiest thing to hack on and use you'll ever see -- regardless of your
 favorite language of choice.
