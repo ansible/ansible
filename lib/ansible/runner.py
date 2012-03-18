@@ -434,8 +434,9 @@ class Runner(object):
             results2 = self._return_from_module(conn, host, result2)
             (host, ok, data2) = results2
             new_changed = data2.get('changed', False)
-            data['changed'] = old_changed or new_changed
             data.update(data2)
+            if old_changed or new_changed:
+               data['changed'] = True
             return (host, ok, data)
         else:
             # copy failed, return orig result without going through 'file' module
@@ -483,8 +484,9 @@ class Runner(object):
             results2 = self._return_from_module(conn, host, result2)
             (host, ok, data2) = results2
             new_changed = data2.get('changed', False)
-            data['changed'] = old_changed or new_changed
             data.update(data2)
+            if old_changed or new_changed:
+                data['changed'] = True
             return (host, ok, data)
         else:
             # copy failed, return orig result without going through 'file' module
