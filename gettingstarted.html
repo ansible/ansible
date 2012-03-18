@@ -134,6 +134,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#running-from-checkout">Running From Checkout</a></li>
 <li><a class="reference internal" href="#make-install">Make Install</a></li>
 <li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
+<li><a class="reference internal" href="#other-package-distributions">Other Package Distributions</a></li>
 <li><a class="reference internal" href="#tagged-releases">Tagged Releases</a></li>
 </ul>
 </li>
@@ -164,12 +165,11 @@ s.parentNode.insertBefore(ga, s);
    
   <div class="section" id="downloads-getting-started">
 <h1>Downloads &amp; Getting Started<a class="headerlink" href="#downloads-getting-started" title="Permalink to this headline">¶</a></h1>
-<p>How to download ansible and get started using it</p>
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>Requirements for Ansible are extremely minimal.</p>
 <p>If you are running python 2.6 on the <strong>overlord</strong> machine (the machine
-that you&#8217;ll be talking to the other machines from), you will need:</p>
+that you&#8217;ll be talking to the remote machines from), you will need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
@@ -177,13 +177,10 @@ that you&#8217;ll be talking to the other machines from), you will need:</p>
 </ul>
 <p>If you are running less than Python 2.6, you will also need:</p>
 <ul class="simple">
-<li>The Python 2.4 or 2.5 backport of the <tt class="docutils literal"><span class="pre">multiprocessing</span></tt> module<ul>
-<li><a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">Installation and Testing Instructions</a></li>
+<li>The Python 2.4 or 2.5 backport of the <tt class="docutils literal"><span class="pre">multiprocessing</span></tt> module (<a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">see here</a>)</li>
+<li><tt class="docutils literal"><span class="pre">python-simplejson</span></tt></li>
 </ul>
-</li>
-<li><tt class="docutils literal"><span class="pre">simplejson</span></tt></li>
-</ul>
-<p>On the managed nodes, to use templating, you will need:</p>
+<p>On the managed nodes, to use templates, you will also need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can easily install this using ansible)</li>
 </ul>
@@ -192,11 +189,11 @@ that you&#8217;ll be talking to the other machines from), you will need:</p>
 <h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
 <p>As the project is still pretty new, you will probably want to clone
 the git checkout, so you can keep up with all of the latest features,
-and also contribute easily back to the project (if you want).</p>
+and also easily contribute back to the project (if you want).</p>
 <p>Instructions for installing from source are below.</p>
-<p>You may also wish to follow the <a class="reference external" href="https://github.com/ansible/">Github project</a> if
+<p>You may also wish to follow the <a class="reference external" href="https://github.com/ansible/ansible">Github project</a> if
 you have a github account.  This is also where we keep the issue tracker for sharing
-bugs or feature ideas.</p>
+bugs and feature ideas.</p>
 <div class="section" id="running-from-checkout">
 <h3>Running From Checkout<a class="headerlink" href="#running-from-checkout" title="Permalink to this headline">¶</a></h3>
 <p>Ansible is trivially easy to run from a checkout, root permissions are not required
@@ -205,7 +202,7 @@ to use it:</p>
 $ cd ./ansible
 $ source ./hacking/env-setup</pre>
 </div>
-<p>You can optionally specify an inventory file other than /etc/ansible/hosts:</p>
+<p>You can optionally specify an inventory file (see doc:<cite>patterns</cite>) other than /etc/ansible/hosts:</p>
 <div class="highlight-python"><pre>$ cat "127.0.0.1" &gt; ~/ansible_hosts
 $ export ANSIBLE_HOSTS=~/ansible_hosts</pre>
 </div>
@@ -215,7 +212,8 @@ $ export ANSIBLE_HOSTS=~/ansible_hosts</pre>
 </div>
 <div class="section" id="make-install">
 <h3>Make Install<a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>
-<p>You can install Ansible using &#8220;make install&#8221;.  This is done through <cite>python-distutils</cite>:</p>
+<p>If you are not working from a distribution where Ansible is packaged yet, you can install Ansible
+using &#8220;make install&#8221;.  This is done through <cite>python-distutils</cite>:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ sudo make install</pre>
@@ -223,17 +221,24 @@ $ sudo make install</pre>
 </div>
 <div class="section" id="via-rpm">
 <h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
-<p>In the near future, pre-built RPMs will be available through your
-distribution. Until that time, you can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
+<p>In the near future, pre-built packages will be available through your
+distribution. Until that time, you can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command to
+build an RPM you can distribute and install:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ make rpm
 $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm</pre>
 </div>
-<p>Note that if you are tracking the upstream source (i.e. git), the RPM revision may not be
+<p>Note that if you are tracking the upstream source (i.e. git), the RPM revision will not be
 bumped with every source code change.  To get around this, you can use
 rpm <cite>-Uvh</cite> with <cite>&#8211;force</cite> when RPM tells you the package is still at the
 same version.  This is perfectly safe to do.</p>
+</div>
+<div class="section" id="other-package-distributions">
+<h3>Other Package Distributions<a class="headerlink" href="#other-package-distributions" title="Permalink to this headline">¶</a></h3>
+<p>If you would like to package Ansible for Debian/Ubuntu, Homebrew, or BSD,
+please stop by the mailing list and say hi.  We&#8217;d love to have that as well
+and it shouldn&#8217;t be difficult and would be happy to help.</p>
 </div>
 <div class="section" id="tagged-releases">
 <h3>Tagged Releases<a class="headerlink" href="#tagged-releases" title="Permalink to this headline">¶</a></h3>
@@ -248,6 +253,7 @@ if you want access to all of the latest modules and improvements.</p>
 </div>
 <div class="section" id="your-first-commands">
 <h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
+<p>Now that you&#8217;ve installed Ansible, it&#8217;s time to test it.</p>
 <p>Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
 <div class="highlight-python"><pre>192.168.1.50
@@ -267,8 +273,9 @@ ssh-add ~/.ssh/id_rsa</pre>
 <p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s
 now time to read some of the more real-world <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>, and explore
 what you can do with different modules, as well as the Ansible
-<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> language.  Ansible is not just about running commands, but
-you already have a working infrastructure!</p>
+<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> language.  Ansible is not just about running commands, it
+also has powerful configuration and deployment features.  There&#8217;s more to
+explore, but you already have a fully working infrastructure!</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
