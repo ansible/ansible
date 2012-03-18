@@ -130,10 +130,11 @@ s.parentNode.insertBefore(ga, s);
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Downloads &amp; Getting Started</a><ul>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#developer-requirements">Developer Requirements</a></li>
 <li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
+<li><a class="reference internal" href="#running-from-checkout">Running From Checkout</a></li>
 <li><a class="reference internal" href="#make-install">Make Install</a></li>
 <li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
+<li><a class="reference internal" href="#tagged-releases">Tagged Releases</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#your-first-commands">Your first commands</a></li>
@@ -184,34 +185,37 @@ that you&#8217;ll be talking to the other machines from), you will need:</p>
 </ul>
 <p>On the managed nodes, to use templating, you will need:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can install this with ansible)</li>
-</ul>
-</div>
-<div class="section" id="developer-requirements">
-<h2>Developer Requirements<a class="headerlink" href="#developer-requirements" title="Permalink to this headline">¶</a></h2>
-<p>For developers, you may wish to have:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">asciidoc</span></tt> (for rebuilding manpage files)</li>
-<li><tt class="docutils literal"><span class="pre">python-sphinx</span></tt> (for rebuilding content for the ansible.github.com docs project only)</li>
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can easily install this using ansible)</li>
 </ul>
 </div>
 <div class="section" id="getting-ansible">
 <h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
-<p>Tagged releases are available as tar.gz files from the Ansible github
-project page:</p>
-<ul class="simple">
-<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
-</ul>
-<p>As the project is still pretty new, you will probably just want to clone
-the git checkout instead, so you can keep up with all of the latest features,
-and also contribute easily back to the project (if you want).
-Instructions for installing from source are below.</p>
+<p>As the project is still pretty new, you will probably want to clone
+the git checkout, so you can keep up with all of the latest features,
+and also contribute easily back to the project (if you want).</p>
+<p>Instructions for installing from source are below.</p>
 <p>You may also wish to follow the <a class="reference external" href="https://github.com/ansible/">Github project</a> if
 you have a github account.  This is also where we keep the issue tracker for sharing
 bugs or feature ideas.</p>
+<div class="section" id="running-from-checkout">
+<h3>Running From Checkout<a class="headerlink" href="#running-from-checkout" title="Permalink to this headline">¶</a></h3>
+<p>Ansible is trivially easy to run from a checkout, root permissions are not required
+to use it:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
+$ cd ./ansible
+$ source ./hacking/env-setup
+$ cat "127.0.0.1" &gt; ~/ansible_hosts
+$ export ANSIBLE_HOSTS=~/ansible_hosts
+$ ansible all -m ping</pre>
+</div>
+<p>The <cite>env-setup</cite> script modifies your <cite>PATH</cite>, <cite>PYTHONPATH</cite>, and <cite>ANSIBLE_LIBRARY</cite> environment variables
+so you can use Ansible from the checkout directory.  You have full access to everything
+Ansible can do this way, with no limitations.  If you do not set ANSIBLE_HOSTS, the default host
+file /etc/ansible/hosts will be used.</p>
+</div>
 <div class="section" id="make-install">
 <h3>Make Install<a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>
-<p>You can install Ansible using &#8220;make install&#8221;.  This is done through python distutils:</p>
+<p>You can install Ansible using &#8220;make install&#8221;.  This is done through <cite>python-distutils</cite>:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ sudo make install</pre>
@@ -220,16 +224,26 @@ $ sudo make install</pre>
 <div class="section" id="via-rpm">
 <h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
 <p>In the near future, pre-built RPMs will be available through your
-distribution. Until that time you can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
+distribution. Until that time, you can use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command:</p>
 <div class="highlight-python"><pre>$ git clone git://github.com/ansible/ansible.git
 $ cd ./ansible
 $ make rpm
 $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm</pre>
 </div>
-<p>If you are tracking the upstream source (i.e. git), the RPM revision may not be
+<p>Note that if you are tracking the upstream source (i.e. git), the RPM revision may not be
 bumped with every source code change.  To get around this, you can use
 rpm <cite>-Uvh</cite> with <cite>&#8211;force</cite> when RPM tells you the package is still at the
-same version.</p>
+same version.  This is perfectly safe to do.</p>
+</div>
+<div class="section" id="tagged-releases">
+<h3>Tagged Releases<a class="headerlink" href="#tagged-releases" title="Permalink to this headline">¶</a></h3>
+<p>Tagged releases are available as tar.gz files from the Ansible github
+project page:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
+</ul>
+<p>At this point in Ansible&#8217;s development, running or building from checkout is preferred
+if you want access to all of the latest modules and improvements.</p>
 </div>
 </div>
 <div class="section" id="your-first-commands">
@@ -278,7 +292,7 @@ you already have a working infrastructure!</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 17, 2012.<br/>
+      Last updated on Mar 18, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

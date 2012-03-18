@@ -25,39 +25,44 @@ If you are running less than Python 2.6, you will also need:
 
 On the managed nodes, to use templating, you will need:
 
-* ``python-jinja2`` (you can install this with ansible)
-
-Developer Requirements
-``````````````````````
-
-For developers, you may wish to have:
-
-* ``asciidoc`` (for rebuilding manpage files)
-* ``python-sphinx`` (for rebuilding content for the ansible.github.com docs project only)
-
+* ``python-jinja2`` (you can easily install this using ansible)
 
 Getting Ansible
 ```````````````
 
-Tagged releases are available as tar.gz files from the Ansible github
-project page:
-
-* `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
-
-As the project is still pretty new, you will probably just want to clone
-the git checkout instead, so you can keep up with all of the latest features,
+As the project is still pretty new, you will probably want to clone
+the git checkout, so you can keep up with all of the latest features,
 and also contribute easily back to the project (if you want).  
+
 Instructions for installing from source are below.
 
 You may also wish to follow the `Github project <https://github.com/ansible/>`_ if
 you have a github account.  This is also where we keep the issue tracker for sharing
 bugs or feature ideas.
 
+Running From Checkout
++++++++++++++++++++++
+
+Ansible is trivially easy to run from a checkout, root permissions are not required
+to use it::
+
+    $ git clone git://github.com/ansible/ansible.git
+    $ cd ./ansible
+    $ source ./hacking/env-setup
+    $ cat "127.0.0.1" > ~/ansible_hosts
+    $ export ANSIBLE_HOSTS=~/ansible_hosts
+    $ ansible all -m ping
+
+The `env-setup` script modifies your `PATH`, `PYTHONPATH`, and `ANSIBLE_LIBRARY` environment variables
+so you can use Ansible from the checkout directory.  You have full access to everything
+Ansible can do this way, with no limitations.  If you do not set ANSIBLE_HOSTS, the default host
+file /etc/ansible/hosts will be used.
+
 
 Make Install
 ++++++++++++
 
-You can install Ansible using "make install".  This is done through python distutils::
+You can install Ansible using "make install".  This is done through `python-distutils`::
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
@@ -68,17 +73,30 @@ Via RPM
 +++++++
 
 In the near future, pre-built RPMs will be available through your
-distribution. Until that time you can use the ``make rpm`` command::
+distribution. Until that time, you can use the ``make rpm`` command::
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm
 
-If you are tracking the upstream source (i.e. git), the RPM revision may not be 
+Note that if you are tracking the upstream source (i.e. git), the RPM revision may not be 
 bumped with every source code change.  To get around this, you can use
 rpm `-Uvh` with `--force` when RPM tells you the package is still at the
-same version.
+same version.  This is perfectly safe to do.
+
+
+Tagged Releases
++++++++++++++++
+
+Tagged releases are available as tar.gz files from the Ansible github
+project page:
+
+* `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
+
+At this point in Ansible's development, running or building from checkout is preferred
+if you want access to all of the latest modules and improvements.
+
 
 Your first commands
 ```````````````````
