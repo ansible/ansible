@@ -103,12 +103,12 @@ About the Author
 ````````````````
 
 Ansible was originally developed by `Michael DeHaan <http://michaeldehaan.net>`_ (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC
-based software developer and architect.  He created other popular
-DevOps programs such as `Cobbler <http://cobbler.github.com/>`_, the popular Linux install server.
+based software developer and architect.  He created the popular
+DevOps program `Cobbler <http://cobbler.github.com/>`_.
 Cobbler is used to deploy mission critical systems all over the
 planet, in industries ranging from massively multiplayer gaming, core
 internet infrastructure, finance, chip design, and more.  Michael also
-helped co-author of `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used to
+helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used to
 orchestrate systems in lots of diverse places.  He's worked on systems
 software for IBM, Motorola, Red Hat's Emerging Technologies Group,
 Puppet Labs, and rPath.  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
