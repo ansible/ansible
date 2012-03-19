@@ -52,7 +52,7 @@
         [
             "task start", 
             [
-                "test basic shell", 
+                "test basic shell, plus two ways to dereference a variable", 
                 false
             ]
         ], 
@@ -61,10 +61,10 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": "echo $HOME ", 
+                    "cmd": "echo $HOME 5150 5150 ", 
                     "rc": 0, 
                     "stderr": "", 
-                    "stdout": "/root"
+                    "stdout": "/root 5150 5150"
                 }
             ]
         ], 
@@ -200,4 +200,3 @@
         }
     }
 }
-

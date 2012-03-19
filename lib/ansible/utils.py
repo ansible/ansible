@@ -20,6 +20,7 @@
 import sys
 import os
 import shlex
+import re
 import jinja2
 
 try:
@@ -224,8 +225,41 @@ def parse_json(data):
             return { "failed" : True, "parsed" : False, "msg" : data }
         return results
 
+_KEYCRE = re.compile(r"\$(\w+)")
+
+def varReplace(raw, vars):
+    '''Perform variable replacement of $vars
+
+    @param raw: String to perform substitution on.  
+    @param vars: Dictionary of variables to replace. Key is variable name
+        (without $ prefix). Value is replacement string.
+    @return: Input raw string with substituted values.
+    '''
+    # this code originally from yum
+
+    done = []                      # Completed chunks to return
+
+    while raw:
+        m = _KEYCRE.search(raw)
+        if not m:
+            done.append(raw)
+            break
+
+        # Determine replacement value (if unknown variable then preserve
+        # original)
+        varname = m.group(1).lower()
+        replacement = vars.get(varname, m.group())
+
+        start, end = m.span()
+        done.append(raw[:start])    # Keep stuff leading up to token
+        done.append(replacement)    # Append replacement value
+        raw = raw[end:]             # Continue with remainder of string
+
+    return ''.join(done)
+
 def template(text, vars):
     ''' run a text buffer through the templating engine '''
+    text = varReplace(text, vars)
     template = jinja2.Template(text)
     return template.render(vars)
 

@@ -13,8 +13,8 @@
   - name: test basic success command 2
     action: command /bin/true
 
-  - name: test basic shell
-    action: shell echo $HOME
+  - name: test basic shell, plus two ways to dereference a variable
+    action: shell echo $HOME $port {{ port }}
 
 # in the command below, the test file should contain a valid template
 # and trigger the change handler
