@@ -24,7 +24,6 @@ import signal
 import os
 import Queue
 import random
-import jinja2
 import traceback
 import tempfile
 import subprocess
@@ -326,8 +325,7 @@ class Runner(object):
             else:
                 args = "%s metadata=~/.ansible/setup" % args
 
-        template = jinja2.Template(args)
-        args = template.render(inject_vars)
+        args = utils.template(args, inject_vars)
 
         argsfile = self._transfer_argsfile(conn, tmp, args)
         if async_jid is None:

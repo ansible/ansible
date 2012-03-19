@@ -24,7 +24,6 @@ from ansible import errors
 import yaml
 import shlex
 import os
-import jinja2
 import time
 
 # used to transfer variables to Runner
@@ -111,19 +110,15 @@ class PlayBook(object):
             if x.find("=") != -1:
                 (k,v) = x.split("=")
                 inject_vars[k] = v
-            included = file(path).read()
-            template = jinja2.Template(included)
-            included = template.render(inject_vars)
+            included = utils.template_from_file(path, inject_vars)
             included = yaml.load(included)
             for x in included:
                 new_tasks.append(x)
 
     def _include_handlers(self, play, handler, dirname, new_handlers):
         path = utils.path_dwim(dirname, handler['include'])
-        included = file(path).read()
         inject_vars = self._get_vars(play, dirname)
-        template = jinja2.Template(included)
-        included = template.render(inject_vars)
+        included = utils.template_from_file(path, inject_vars)
         included = yaml.load(included)
         for x in included:
             new_handlers.append(x)

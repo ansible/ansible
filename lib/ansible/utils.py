@@ -20,12 +20,14 @@
 import sys
 import os
 import shlex
-from ansible import errors
+import jinja2
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from ansible import errors
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -221,5 +223,16 @@ def parse_json(data):
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : data }
         return results
+
+def template(text, vars):
+    ''' run a text buffer through the templating engine '''
+    template = jinja2.Template(text)
+    return template.render(vars)
+
+def template_from_file(path, vars):
+    ''' run a file through the templating engine '''
+    data = file(path).read()
+    return template(data, vars)
+  
 
 
