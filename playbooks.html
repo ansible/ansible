@@ -371,8 +371,8 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook:</p>
 - hosts: all
   user: root
   vars_files:
-    - vars/common.yml
-    - [ vars/$facter_operatingsystem.yml, vars/os_defaults.yml ]
+    - "vars/common.yml"
+    - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ]
   tasks:
   - name: make sure apache is running
     action: service name=$apache state=running</pre>
