@@ -45,7 +45,5 @@
     action: $packager pkg=$apache state=latest
   - name: ensure apache is running
     action: service name=$apache state=running
-  - name: template step
-    action: template src=/tmp/test.j2 dest=/tmp/test.out
  
 
