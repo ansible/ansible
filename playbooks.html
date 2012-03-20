@@ -141,6 +141,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#notify-statements-handlers">Notify statements &amp; Handlers</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
 <li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
+<li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
 <li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
@@ -360,6 +361,47 @@ somevar: somevalue
 password: magic</pre>
 </div>
 </div>
+<div class="section" id="conditional-imports">
+<h3>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes you will want to do certain things differently in a playbook based on certain criteria.
+Having one playbook that works on multiple platforms and OS versions is a good example.</p>
+<p>As an example, the name of the Apache package may be different between CentOS and Debian,
+but it is easily handled with a minimum of syntax in an Ansible Playbook:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars_files:
+    - vars/common.yml
+    - [ vars/$facter_operatingsystem.yml, vars/os_defaults.yml ]
+  tasks:
+  - name: make sure apache is running
+    action: service name=$apache state=running</pre>
+</div>
+<p>As a reminder, the various YAML files contain just keys and values:</p>
+<div class="highlight-python"><pre>---
+# for vars/CentOS.yml
+apache: httpd
+somethingelse: 42</pre>
+</div>
+<p>How does this work?  If the operating system was &#8216;CentOS&#8217;, the first file Ansible would try to import
+would be &#8216;vars/CentOS.yml&#8217;, followed up by &#8216;/vars/os_defaults.yml&#8217; if that file
+did not exist.   If no files in the list were found, an error would be raised.
+On Debian, it would instead first look towards &#8216;vars/Debian.yml&#8217; instead of &#8216;vars/CentOS.yml&#8217;, before
+falling back on &#8216;vars/os_defaults.yml&#8217;. Pretty simple.</p>
+<p>To use this conditional import feature, you&#8217;ll need facter or ohai installed prior to running the playbook, but
+you can of course push this out with Ansible if you like:</p>
+<div class="highlight-python"><pre># for facter
+ansible -m yum -a "pkg=facter ensure=installed"
+ansible -m yum -a "pkg=ruby-json ensure=installed"
+
+# for ohai
+ansible -m yum -a "pkg=ohai ensure=installed"</pre>
+</div>
+<p>Ansible&#8217;s approach to configuration &#8211; seperating variables from tasks, keeps your playbooks
+from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
+in more streamlined &amp; auditable configuration rules &#8211; especially because there are a
+minimum of decision points to track.</p>
+</div>
 <div class="section" id="include-files-and-reuse">
 <h3>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h3>
 <p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
@@ -412,6 +454,9 @@ of a play:</p>
   - include: handlers/handlers.yml</pre>
 </div>
 <p>You can mix in includes along with your regular non-included tasks and handlers.</p>
+<p>Note that you can not conditionally path the location to an include file, like you can
+with &#8216;vars_files&#8217;.  If you find yourself needing to do this, consider how you can
+restructure your playbook to be more class/role oriented.</p>
 </div>
 <div class="section" id="using-includes-to-assign-classes-of-systems">
 <h3>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h3>
@@ -518,6 +563,8 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <dd>Learn about how to select hosts</dd>
 <dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
 <dd>Complete playbook files from the github project source</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
 </dl>
 </div>
 </div>
@@ -530,7 +577,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 18, 2012.<br/>
+      Last updated on Mar 19, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

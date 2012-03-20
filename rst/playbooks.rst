@@ -225,6 +225,54 @@ The contents of each variables file is a simple YAML dictionary, like this::
     somevar: somevalue
     password: magic
 
+Conditional Imports
++++++++++++++++++++
+
+Sometimes you will want to do certain things differently in a playbook based on certain criteria.
+Having one playbook that works on multiple platforms and OS versions is a good example.
+
+As an example, the name of the Apache package may be different between CentOS and Debian, 
+but it is easily handled with a minimum of syntax in an Ansible Playbook::
+
+    ---
+    - hosts: all
+      user: root
+      vars_files:
+        - vars/common.yml
+        - [ vars/$facter_operatingsystem.yml, vars/os_defaults.yml ] 
+      tasks:
+      - name: make sure apache is running
+        action: service name=$apache state=running
+
+
+As a reminder, the various YAML files contain just keys and values::
+
+    ---
+    # for vars/CentOS.yml
+    apache: httpd
+    somethingelse: 42
+
+How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
+would be 'vars/CentOS.yml', followed up by '/vars/os_defaults.yml' if that file
+did not exist.   If no files in the list were found, an error would be raised.
+On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
+falling back on 'vars/os_defaults.yml'. Pretty simple.
+
+To use this conditional import feature, you'll need facter or ohai installed prior to running the playbook, but
+you can of course push this out with Ansible if you like::
+
+    # for facter
+    ansible -m yum -a "pkg=facter ensure=installed"
+    ansible -m yum -a "pkg=ruby-json ensure=installed"
+
+    # for ohai
+    ansible -m yum -a "pkg=ohai ensure=installed"
+
+Ansible's approach to configuration -- seperating variables from tasks, keeps your playbooks
+from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
+in more streamlined & auditable configuration rules -- especially because there are a 
+minimum of decision points to track.
+
 
 Include Files And Reuse
 +++++++++++++++++++++++
@@ -287,6 +335,10 @@ of a play::
      - include: handlers/handlers.yml
 
 You can mix in includes along with your regular non-included tasks and handlers.
+
+Note that you can not conditionally path the location to an include file, like you can
+with 'vars_files'.  If you find yourself needing to do this, consider how you can
+restructure your playbook to be more class/role oriented.  
 
 
 Using Includes To Assign Classes of Systems
@@ -397,4 +449,7 @@ Let's run a playbook using a parallelism level of 10::
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
        Complete playbook files from the github project source
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+
 
