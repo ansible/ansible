@@ -318,7 +318,7 @@ class Runner(object):
         if self.module_name == 'setup':
             for (k,v) in inject_vars.iteritems():
                 if not k.startswith('facter_') and not k.startswith('ohai_'):
-                    if v.find(" ") != -1:
+                    if str(v).find(" ") != -1:
                         v = "\"%s\"" % v
                     args += " %s=%s" % (k, v)
 
