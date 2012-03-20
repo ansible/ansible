@@ -1,26 +1,51 @@
 ---
-# this is not so much an example playbook file as a playbook we sometimes use
-# for testing.  I have chosen to not comment this one so folks can get
-# an idea of what a concise playbook can look like...
+# this is a demo of conditional imports.  This is a powerful concept
+# and can be used to use the same recipe for different types of hosts,
+# based on variables that bubble up from the hosts from tools such
+# as ohai or facter.
+#
+# Here's an example use case:
+#
+# what to do if the service for apache is named 'httpd' on CentOS
+# but is named 'apache' on Debian?
+
+
+# there is only one play in this playbook, it runs on all hosts
+# as root
 
 - hosts: all
   user: root
-  vars:
-    http_port: 80
-    max_clients: 200
+
+# we have a common list of variables stored in /vars/external_vars.yml
+# that we will always import
+
+# next, we want to import files that are different per operating system
+# and if no per operating system file is found, load a defaults file.
+# for instance, if the OS was "CentOS", we'd try to load vars/CentOS.yml.
+# if that was found, we would immediately stop.  However if that wasn't
+# present, we'd try to load vars/defaults.yml.  If that in turn was not
+# found, we would fail immediately, because we had gotten to the end of
+# the list without importing anything.
+
+  vars_files:
+
+
+     - "vars/external_vars.yml"
+
+
+     - [ "vars/$facter_operatingsystem.yml", "vars/defaults.yml" ]
+
+# and this is just a regular task line from a playbook, as we're used to.
+# but with variables in it that come from above.  Note that the variables
+# from above are *also* available in templates
+     
   tasks:
-  - name: simulate long running op, wait for 45s, poll every 5
-    action: command /bin/sleep 15
-    async: 45
-    poll: 5
-  - include: tasks/base.yml favcolor=blue
-  - name: write the foo config file using vars set above
-    action: template src=foo.j2 dest=/etc/some_random_foo.conf
-    notify:
-    - restart apache
+
+  - name: ensure apache is latest
+    action: $packager pkg=$apache state=latest
   - name: ensure apache is running
-    action: service name=httpd state=running
-  - name: pointless test action
-    action: command /bin/echo {{ http_port }}
-  handlers:
-    - include: handlers/handlers.yml
+    action: service name=$apache state=running
+  - name: template step
+    action: template src=/tmp/test.j2 dest=/tmp/test.out
+ 
+

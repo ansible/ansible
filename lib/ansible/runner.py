@@ -74,7 +74,7 @@ class Runner(object):
         remote_pass=C.DEFAULT_REMOTE_PASS,
         background=0,
         basedir=None,
-        setup_cache={},
+        setup_cache=None,
         transport='paramiko',
         verbose=False):
     
@@ -92,6 +92,8 @@ class Runner(object):
         setup_cache -- used only by playbook (complex explanation pending)
         '''
 
+        if setup_cache is None:
+            setup_cache = {}
         self.setup_cache = setup_cache
        
         self.host_list, self.groups = self.parse_hosts(host_list)
@@ -152,7 +154,7 @@ class Runner(object):
                     # looks like a group
                     group_name = item.replace("[","").replace("]","").lstrip().rstrip()
                     groups[group_name] = []
-                else:
+                elif item != "":
                     # looks like a regular host
                     groups[group_name].append(item)
                     results.append(item)
@@ -286,13 +288,14 @@ class Runner(object):
 
         args = module_args
         if type(args) == list:
-            args = [ str(x) for x in module_args ]
-            args = " ".join(args)
+            args = " ".join([ str(x) for x in module_args ])
+        
+        # by default the args to substitute in the action line are those from the setup cache
         inject_vars = self.setup_cache.get(conn.host,{})
-        inject2 = {}
 
         # if the host file was an external script, execute it with the hostname
         # as a first parameter to get the variables to use for the host
+        inject2 = {}
         if Runner._external_variable_script is not None:
             host = conn.host
             cmd = subprocess.Popen([Runner._external_variable_script, host],
@@ -309,12 +312,15 @@ class Runner(object):
                     Runner._external_variable_script,
                     host
                 ))
-            inject_vars.update(inject2)    
-
-        # store injected variables in the templates
+            # store injected variables in the templates
+        inject_vars.update(inject2)   
+ 
         if self.module_name == 'setup':
-            for (k,v) in inject2.iteritems():
-                args = "%s %s=%s" % (args, k, v)
+            for (k,v) in inject_vars.iteritems():
+                if not k.startswith('facter_') and not k.startswith('ohai_'):
+                    if v.find(" ") != -1:
+                        v = "\"%s\"" % v
+                    args += " %s=%s" % (k, v)
 
         # the metadata location for the setup module is transparently managed
         # since it's an 'internals' module, kind of a black box. See playbook
@@ -338,7 +344,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_normal_module(self, conn, host, tmp):
+    def _execute_normal_module(self, conn, host, tmp, module_name):
         ''' 
         transfer & execute a module that is not 'copy' or 'template'
         because those require extra work.
@@ -346,18 +352,19 @@ class Runner(object):
 
         # hack to make the 'shell' module keyword really be executed
         # by the command module
-        if self.module_name == 'shell':
-            self.module_name = 'command'
-            self.module_args.append("#USE_SHELL")
+        module_args = self.module_args
+        if module_name == 'shell':
+            module_name = 'command'
+            module_args.append("#USE_SHELL")
 
-        module = self._transfer_module(conn, tmp, self.module_name)
-        result = self._execute_module(conn, tmp, module, self.module_args)
+        module = self._transfer_module(conn, tmp, module_name)
+        result = self._execute_module(conn, tmp, module, module_args)
 
         # when running the setup module, which pushes vars to the host and ALSO
         # returns them (+factoids), store the variables that were returned such that commands
         # run AFTER setup use these variables for templating when executed
         # from playbooks
-        if self.module_name == 'setup':
+        if module_name == 'setup':
             host = conn.host
             try:
                 var_result = utils.parse_json(result)
@@ -377,7 +384,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_async_module(self, conn, host, tmp):
+    def _execute_async_module(self, conn, host, tmp, module_name):
         ''' 
         transfer the given module name, plus the async module
         and then run the async module wrapping the other module
@@ -385,13 +392,14 @@ class Runner(object):
 
         # hack to make the 'shell' module keyword really be executed
         # by the command module
-        if self.module_name == 'shell':
-            self.module_name = 'command'
-            self.module_args.append("#USE_SHELL")
+        module_args = self.module_args
+        if module_name == 'shell':
+            module_name = 'command'
+            module_args.append("#USE_SHELL")
 
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
-        module = self._transfer_module(conn, tmp, self.module_name)
-        result = self._execute_module(conn, tmp, async, self.module_args,
+        module = self._transfer_module(conn, tmp, module_name)
+        result = self._execute_module(conn, tmp, async, module_args,
            async_module=module, 
            async_jid=self.generated_jid, 
            async_limit=self.background
@@ -518,17 +526,21 @@ class Runner(object):
         # or a request to use the copy or template
         # module, call the appropriate executor function
 
+
         ok, conn = self._connect(host)
         if not ok:
             return [ host, False, conn ]
+        
+        cache = self.setup_cache.get(host, {})
+        module_name = utils.template(self.module_name, cache)
 
         tmp = self._get_tmp_path(conn)
         result = None
         if self.module_name not in [ 'copy', 'template' ]:
             if self.background == 0:
-                result = self._execute_normal_module(conn, host, tmp)
+                result = self._execute_normal_module(conn, host, tmp, module_name)
             else:
-                result = self._execute_async_module(conn, host, tmp)
+                result = self._execute_async_module(conn, host, tmp, module_name)
 
         elif self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)

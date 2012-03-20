@@ -1,0 +1,3 @@
+---
+apache: httpd
+packager: yum

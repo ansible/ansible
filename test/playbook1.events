@@ -8,6 +8,26 @@
             ]
         ], 
         [
+            "primary_setup"
+        ], 
+        [
+            "secondary_setup"
+        ], 
+        [
+            "import", 
+            [
+                "127.0.0.1", 
+                "/home/mdehaan/ansible/test/common_vars.yml"
+            ]
+        ], 
+        [
+            "import", 
+            [
+                "127.0.0.1", 
+                "/home/mdehaan/ansible/test/CentOS.yml"
+            ]
+        ], 
+        [
             "task start", 
             [
                 "test basic success command", 
@@ -65,6 +85,25 @@
                     "rc": 0, 
                     "stderr": "", 
                     "stdout": "/root 5150 5150"
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
+                "test vars_files imports", 
+                false
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "cmd": "echo quack moo default ", 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": "quack moo default"
                 }
             ]
         ], 
@@ -196,7 +235,8 @@
             "changed": 2, 
             "dark": 0, 
             "failed": 0, 
-            "resources": 8
+            "resources": 9
         }
     }
 }
+

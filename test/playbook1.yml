@@ -4,7 +4,10 @@
   vars:
     answer: "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels."
     port: 5150
-
+  vars_files:
+    - common_vars.yml
+    - [ '$facter_operatingsystem.yml', 'default_os.yml' ]
+    
   tasks:
 
   - name: test basic success command
@@ -15,6 +18,9 @@
 
   - name: test basic shell, plus two ways to dereference a variable
     action: shell echo $HOME $port {{ port }}
+
+  - name: test vars_files imports
+    action: shell echo $duck $cow $testing
 
 # in the command below, the test file should contain a valid template
 # and trigger the change handler

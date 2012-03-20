@@ -26,6 +26,15 @@ class TestCallbacks(object):
     def on_start(self):
         self.events.append('start')
 
+    def on_setup_primary(self):
+        self.events.append([ 'primary_setup' ])
+ 
+    def on_setup_secondary(self):
+        self.events.append([ 'secondary_setup' ])
+
+    def on_import_for_host(self, host, filename):
+        self.events.append([ 'import', [ host, filename ]])
+
     def on_task_start(self, name, is_conditional):
         self.events.append([ 'task start', [ name, is_conditional ]])
 

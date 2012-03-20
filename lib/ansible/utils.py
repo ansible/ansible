@@ -22,6 +22,7 @@ import os
 import shlex
 import re
 import jinja2
+import yaml
 
 try:
     import json
@@ -267,6 +268,12 @@ def template_from_file(path, vars):
     ''' run a file through the templating engine '''
     data = file(path).read()
     return template(data, vars)
+
+def parse_yaml(data):
+    return yaml.load(data)
   
+def parse_yaml_from_file(path):
+    data = file(path).read()
+    return parse_yaml(data)
 
 

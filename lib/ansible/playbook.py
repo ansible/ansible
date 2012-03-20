@@ -21,7 +21,6 @@ import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-import yaml
 import shlex
 import os
 import time
@@ -89,15 +88,6 @@ class PlayBook(object):
         vars = play.get('vars', {})
         if type(vars) != dict:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
-        vars_files = play.get('vars_files', [])
-        for f in vars_files:
-            path = utils.path_dwim(dirname, f)
-            # FIXME: better error handling if not valid YAML 
-            # or file not found
-            # raise typed exception
-            data = file(path).read()
-            data = yaml.load(data)
-            vars.update(data)
         return vars
 
     def _include_tasks(self, play, task, dirname, new_tasks):
@@ -111,7 +101,7 @@ class PlayBook(object):
                 (k,v) = x.split("=")
                 inject_vars[k] = v
             included = utils.template_from_file(path, inject_vars)
-            included = yaml.load(included)
+            included = utils.parse_yaml(included)
             for x in included:
                 new_tasks.append(x)
 
@@ -119,7 +109,7 @@ class PlayBook(object):
         path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
         included = utils.template_from_file(path, inject_vars)
-        included = yaml.load(included)
+        included = utils.parse_yaml(included)
         for x in included:
             new_handlers.append(x)
 
@@ -127,7 +117,7 @@ class PlayBook(object):
         ''' load YAML file, including handling for imported files '''
         
         dirname  = os.path.dirname(playbook)
-        playbook = yaml.load(file(playbook).read())
+        playbook = utils.parse_yaml_from_file(playbook)
 
         for play in playbook:
             tasks = play.get('tasks',[])
@@ -355,7 +345,7 @@ class PlayBook(object):
  
         # walk through the results and build up
         # summary information about successes and
-        # failures.  TODO: split into subfunction
+        # failures.  FIXME: TODO: split into subfunction!
 
         dark      = results.get("dark", {})
         contacted = results.get("contacted", {})
@@ -422,22 +412,51 @@ class PlayBook(object):
                     x['run'] = []
                 x['run'].append(host)
 
-    def _run_play(self, pg):
-        '''
-        run a list of tasks for a given pattern, in order
-        '''
+    def _do_setup_step(self, pattern, vars, user, host_list, vars_files=None):
+        ''' push variables down to the systems and get variables+facts back up '''
 
-        # get configuration information about the pattern
-        pattern  = pg['hosts']
+        # this enables conditional includes like $facter_os.yml and is only done
+        # after the original pass when we have that data.
+        #
+        # FIXME: refactor into subfunction
+        # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
+        # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
+        #        not super optimized yet either, because we wouldn't have hit them, ergo
+        #        it will raise false errors if there is no defaults variable file without any $vars
+        #        in it, which could happen on uncontacted hosts.
 
-        vars     = self._get_vars(pg, self.basedir)
-        tasks    = pg['tasks']
-        handlers = pg['handlers']
-        user     = pg.get('user', C.DEFAULT_REMOTE_USER)
+        if vars_files is not None:
+            self.callbacks.on_setup_secondary()
+            for host in host_list:
+                cache_vars = SETUP_CACHE.get(host,{})
+                SETUP_CACHE[host] = {}
+                for filename in vars_files:
+                    if type(filename) == list:
+                        # loop over all filenames, loading the first one, and failing if
+                        # none found
+                        found = False
+                        sequence = []
+                        for real_filename in filename:
+                            filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
+                            sequence.append(filename2)
+                            if os.path.exists(filename2):
+                                found = True
+                                data = utils.parse_yaml_from_file(filename2)
+                                SETUP_CACHE[host].update(data)
+                                self.callbacks.on_import_for_host(host, filename2)
+                                break
+                        if not found:
+                            raise errors.AnsibleError("no files matched for vars_files import sequence: %s" % sequence)
 
-        self.host_list, groups = ansible.runner.Runner.parse_hosts(self.host_list)
-
-        self.callbacks.on_play_start(pattern)
+                    else:
+                        filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                        if not os.path.exists(filename2):
+                            raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
+                        data = utils.parse_yaml_from_file(filename2)
+                        SETUP_CACHE[host].update(data)
+                        self.callbacks.on_import_for_host(host, filename2)
+        else:
+            self.callbacks.on_setup_primary()
 
         # first run the setup task on every node, which gets the variables
         # written to the JSON file and will also bubble facts back up via
@@ -473,13 +492,62 @@ class PlayBook(object):
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
-        for (host, result) in setup_ok.iteritems():
-            SETUP_CACHE[host] = result
+        if vars_files is None:
+            # first pass only or we'll erase good work
+            for (host, result) in setup_ok.iteritems():
+                SETUP_CACHE[host] = result
+
+        host_list = self._prune_failed_hosts(host_list)
+        return host_list
+
+    def _run_play(self, pg):
+        '''
+        run a list of tasks for a given pattern, in order
+        '''
+
+        # get configuration information about the pattern
+        pattern  = pg['hosts']
+
+        vars       = self._get_vars(pg, self.basedir)
+        vars_files = pg.get('vars_files', {})
+        tasks      = pg.get('tasks', [])
+        handlers   = pg.get('handlers', [])
+        user       = pg.get('user', C.DEFAULT_REMOTE_USER)
+
+        self.host_list, groups = ansible.runner.Runner.parse_hosts(self.host_list)
+
+        self.callbacks.on_play_start(pattern)
+
+        # push any variables down to the system # and get facts/ohai/other data back up
+        host_list = self._do_setup_step(pattern, vars, user, self.host_list, None)
+         
+        # now with that data, handle contentional variable file imports!
+        if len(vars_files) > 0:
+            host_list = self._do_setup_step(pattern, vars, user, host_list, vars_files)
+
+        # FIXME: DUPLICATE CODE
+        # dark_hosts = setup_results.get('dark',{})
+        #contacted_hosts = setup_results.get('contacted',{})
+        #for (host, error) in dark_hosts.iteritems():
+        #    self.callbacks.on_dark_host(host, error)
+        #    self.dark[host] = 1
+        #for (host, host_result) in contacted_hosts.iteritems():
+        #    if 'failed' in host_result:
+        #        self.callbacks.on_failed(host, host_result)
+        #        self.failures[host] = 1
+
+        # FIXME: DUPLICATE CODE
+        # now for each result, load into the setup cache so we can
+        # let runner template out future commands
+        #setup_ok = setup_results.get('contacted', {})
+        #for (host, result) in setup_ok.iteritems():
+        #    SETUP_CACHE[host] = result
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
             self._run_task(
-                pattern=pattern, 
+                pattern=pattern,
+                host_list=host_list,
                 task=task, 
                 handlers=handlers,
                 remote_user=user
