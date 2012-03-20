@@ -235,7 +235,8 @@
             "changed": 2, 
             "dark": 0, 
             "failed": 0, 
-            "resources": 9
+            "resources": 9,
+            "skipped": 0
         }
     }
 }

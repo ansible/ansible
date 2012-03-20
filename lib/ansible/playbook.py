@@ -77,6 +77,7 @@ class PlayBook(object):
         self.changed      = {}
         self.invocations  = {}
         self.failures     = {}
+        self.skipped      = {}
 
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
@@ -158,8 +159,13 @@ class PlayBook(object):
                 'resources'   : self.invocations.get(host, 0),
                 'changed'     : self.changed.get(host, 0),
                 'dark'        : self.dark.get(host, 0),
-                'failed'      : self.failures.get(host, 0)
+                'failed'      : self.failures.get(host, 0),
+                'skipped'     : self.skipped.get(host, 0)
             }
+
+        # FIXME: TODO: use callback to reinstate per-host summary
+        # and add corresponding code in /bin/ansible-playbook
+        # print results
         return results
 
     def _prune_failed_hosts(self, host_list):
@@ -175,12 +181,12 @@ class PlayBook(object):
         for (host, res) in results['contacted'].iteritems():
             # FIXME: make polling pattern in /bin/ansible match
             # move to common function in utils
-            if not 'finished' in res and 'started' in res:
+            if not 'finished' in res and not 'skipped' in res and 'started' in res:
                 hosts.append(host)
         return hosts
 
 
-    def _async_poll(self, runner, async_seconds, async_poll_interval):
+    def _async_poll(self, runner, async_seconds, async_poll_interval, only_if):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
         # TODO: refactor this function
@@ -197,6 +203,8 @@ class PlayBook(object):
             if 'failed' in host_result:
                 self.callbacks.on_failed(host, host_result)
                 self.failures[host] = 1
+            if 'skipped' in host_result:
+                self.skipped[host] = self.skipped.get(host, 0) + 1
 
         if async_poll_interval <= 0:
             # if not polling, playbook requested fire and forget
@@ -248,6 +256,11 @@ class PlayBook(object):
                 if 'failed' in host_result:
                     self.callbacks.on_failed(host, host_result)
                     self.failures[host] = 1
+                if 'skipped' in host_result:
+                    # NOTE: callbacks on skipped?  should not really
+                    # happen at this point in the loop
+                    self.skipped[host] = self.skipped.get(host, 0) + 1
+
 
             for (host, host_result) in poll_results['contacted'].iteritems():
                 results['contacted'][host] = host_result
@@ -267,7 +280,7 @@ class PlayBook(object):
         return results
 
     def _run_module(self, pattern, module, args, hosts, remote_user,
-        async_seconds, async_poll_interval):
+        async_seconds, async_poll_interval, only_if):
 
         ''' run a particular module step in a playbook '''
         runner = ansible.runner.Runner(
@@ -281,13 +294,14 @@ class PlayBook(object):
             timeout=self.timeout,
             remote_user=remote_user,
             setup_cache=SETUP_CACHE,
-            basedir=self.basedir
+            basedir=self.basedir,
+            conditionally_execute_if=only_if
         )
 
         if async_seconds == 0:
             rc = runner.run()
         else:
-            rc = self._async_poll(runner, async_seconds, async_poll_interval)
+            rc = self._async_poll(runner, async_seconds, async_poll_interval, only_if)
  
         dark_hosts = rc.get('dark',{})
         for (host, error) in dark_hosts.iteritems():
@@ -314,12 +328,11 @@ class PlayBook(object):
         host_list = self._prune_failed_hosts(host_list)
 
         # load the module name and parameters from the task entry
-        name    = task['name']
-        action  = task['action']
+        name    = task['name']    # FIXME: error if not set
+        action  = task['action']  # FIXME: error if not set
+        only_if = task.get('only_if', 'True')
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
-
-        # comment = task.get('comment', '')
 
         tokens = shlex.split(action)
         module_name = tokens[0]
@@ -336,7 +349,7 @@ class PlayBook(object):
         # run the task in parallel
         results = self._run_module(pattern, module_name, 
             module_args, host_list, remote_user, 
-            async_seconds, async_poll_interval)
+            async_seconds, async_poll_interval, only_if)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
         # which would warn you about this
@@ -357,7 +370,8 @@ class PlayBook(object):
                 self.dark[host] = 1
             else:
                 self.dark[host] = self.dark[host] + 1
-
+       
+        # FIXME: refactor
         for host, results in contacted.iteritems():
             self.processed[host] = 1
    
@@ -378,6 +392,12 @@ class PlayBook(object):
                         self.changed[host] = 1
                     else:
                         self.changed[host] = self.changed[host] + 1
+                # TODO: verify/test that async steps are skippable
+                if results.get('skipped', False):
+                    if not host in self.changed:
+                        self.skipped[host] = 1
+                    else:
+                        self.skipped[host] = self.skipped[host] + 1
 
         # flag which notify handlers need to be run
         # this will be on a SUBSET of the actual host list.  For instance

@@ -76,6 +76,7 @@ class Runner(object):
         basedir=None,
         setup_cache=None,
         transport='paramiko',
+        conditionally_execute_if='True',
         verbose=False):
     
         ''' 
@@ -95,6 +96,7 @@ class Runner(object):
         if setup_cache is None:
             setup_cache = {}
         self.setup_cache = setup_cache
+        self.conditionally_execute_if = conditionally_execute_if
        
         self.host_list, self.groups = self.parse_hosts(host_list)
         self.module_path = module_path
@@ -286,12 +288,18 @@ class Runner(object):
         modifies the command using setup_cache variables (see playbook)
         '''
 
+
         args = module_args
         if type(args) == list:
             args = " ".join([ str(x) for x in module_args ])
         
         # by default the args to substitute in the action line are those from the setup cache
         inject_vars = self.setup_cache.get(conn.host,{})
+        
+        # see if we really need to run this or not...
+        conditional = utils.template(self.conditionally_execute_if, inject_vars)
+        if not eval(conditional):
+            return utils.smjson(dict(skipped=True))
 
         # if the host file was an external script, execute it with the hostname
         # as a first parameter to get the variables to use for the host
