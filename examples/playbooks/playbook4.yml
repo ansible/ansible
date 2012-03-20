@@ -1,0 +1,25 @@
+---
+# this is a demo of conditional executions using 'only_if', which can skip
+# certain tasks on machines/platforms/etc where they do not apply.
+
+- hosts: all
+  user: root
+
+  vars:
+     favcolor: "red"
+     ssn: 8675309
+
+# facter and ohai variables can be used in only_if statements too
+# ex:  "$facter_operatingsystem == 'CentOS'", which bubble up automatically
+# from the managed machines
+
+  tasks:
+
+     - name: "do this if my favcolor is blue"
+       action: shell /bin/false
+       only_if: "'$favcolor' == 'blue'"
+     
+     - name: "do this if my favcolor is red"
+       action: shell /bin/false
+       only_if: "'$favcolor' == 'red'"
+
