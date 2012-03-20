@@ -525,24 +525,6 @@ class PlayBook(object):
         if len(vars_files) > 0:
             host_list = self._do_setup_step(pattern, vars, user, host_list, vars_files)
 
-        # FIXME: DUPLICATE CODE
-        # dark_hosts = setup_results.get('dark',{})
-        #contacted_hosts = setup_results.get('contacted',{})
-        #for (host, error) in dark_hosts.iteritems():
-        #    self.callbacks.on_dark_host(host, error)
-        #    self.dark[host] = 1
-        #for (host, host_result) in contacted_hosts.iteritems():
-        #    if 'failed' in host_result:
-        #        self.callbacks.on_failed(host, host_result)
-        #        self.failures[host] = 1
-
-        # FIXME: DUPLICATE CODE
-        # now for each result, load into the setup cache so we can
-        # let runner template out future commands
-        #setup_ok = setup_results.get('contacted', {})
-        #for (host, result) in setup_ok.iteritems():
-        #    SETUP_CACHE[host] = result
-
         # run all the top level tasks, these get run on every node
         for task in tasks:
             self._run_task(
