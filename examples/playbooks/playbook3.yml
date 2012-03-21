@@ -44,5 +44,8 @@
     action: $packager pkg=$apache state=latest
   - name: ensure apache is running
     action: service name=$apache state=running
+  - name: fail
+    action: command /bin/false
+
  
 

@@ -8,10 +8,17 @@
             ]
         ], 
         [
-            "primary_setup"
-        ], 
-        [
-            "secondary_setup"
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "answer": "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels.", 
+                    "changed": true, 
+                    "metadata": "/etc/ansible/setup", 
+                    "port": "5150", 
+                    "written": "/etc/ansible/setup"
+                }
+            ]
         ], 
         [
             "import", 
@@ -24,7 +31,23 @@
             "import", 
             [
                 "127.0.0.1", 
-                "/home/mdehaan/ansible/test/CentOS.yml"
+                "/home/mdehaan/ansible/test/default_os.yml"
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "answer": "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels.", 
+                    "changed": true, 
+                    "cow": "moo", 
+                    "duck": "quack", 
+                    "metadata": "/etc/ansible/setup", 
+                    "port": "5150", 
+                    "testing": "default", 
+                    "written": "/etc/ansible/setup"
+                }
             ]
         ], 
         [
@@ -235,7 +258,7 @@
             "changed": 2, 
             "dark": 0, 
             "failed": 0, 
-            "resources": 9,
+            "resources": 9, 
             "skipped": 0
         }
     }

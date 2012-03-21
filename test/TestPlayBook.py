@@ -49,9 +49,12 @@ class TestCallbacks(object):
 
     def on_ok(self, host, host_result):
         # delete certain info from host_result to make test comparisons easier
-        for k in [ 'ansible_job_id', 'md5sum', 'delta', 'start', 'end' ]:
+        for k in [ 'ansible_job_id', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
             if k in host_result:
                 del host_result[k]
+        for k in host_result.keys():
+            if k.startswith('facter_') or k.startswith('ohai_'):
+                del host_result[k] 
         self.events.append([ 'ok', [ host, host_result ]])
 
     def on_play_start(self, pattern):

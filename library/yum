@@ -299,7 +299,7 @@ def main():
     
     if 'list' in params:
         my = yum_base(conf_file=params['conf_file'], cachedir=True)
-        results = list_stuff(my, params['list'])
+        results = dict(results=list_stuff(my, params['list']))
     elif 'state' in params:
         if 'pkg' not in params:
             results['msg'] = "No pkg specified"

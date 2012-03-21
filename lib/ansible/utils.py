@@ -46,11 +46,19 @@ def exit(msg, rc=1):
 
 def bigjson(result):
     ''' format JSON output (uncompressed) '''
-    return json.dumps(result, sort_keys=True, indent=4)
+    # hide some internals magic from command line userland
+    result2 = result.copy()
+    if 'invocation' in result2:
+        del result2['invocation']
+    return json.dumps(result2, sort_keys=True, indent=4)
 
 def smjson(result):
     ''' format JSON output (compressed) '''
-    return json.dumps(result, sort_keys=True)
+    # hide some internals magic from command line userland
+    result2 = result.copy()
+    if 'invocation' in result2:
+        del result2['invocation']
+    return json.dumps(result2, sort_keys=True)
 
 def task_start_msg(name, conditional):
     if conditional:
@@ -273,7 +281,10 @@ def parse_yaml(data):
     return yaml.load(data)
   
 def parse_yaml_from_file(path):
-    data = file(path).read()
+    try:
+        data = file(path).read()
+    except IOError:
+        raise errors.AnsibleError("file not found: %s" % path)
     return parse_yaml(data)
 
 

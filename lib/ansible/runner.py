@@ -219,15 +219,19 @@ class Runner(object):
 
     # *****************************************************
 
-    def _return_from_module(self, conn, host, result):
+    def _return_from_module(self, conn, host, result, executed=None):
         ''' helper function to handle JSON parsing of results '''
 
         try:
             # try to parse the JSON response
-            return [ host, True, utils.parse_json(result) ]
+            result = utils.parse_json(result) 
+            if executed is not None:
+                result['invocation'] = executed
+            return [ host, True, result ]
         except Exception, e:
-            # it failed, say so, but return the string anyway
-            return [ host, False, "%s/%s" % (str(e), result) ]
+            # it failed to parse, say so, but return the string anyway so 
+            # it can be debugged
+            return [ host, False, "%s/%s/%s" % (str(e), result, executed) ]
 
     # *****************************************************
 
@@ -301,6 +305,7 @@ class Runner(object):
         if not eval(conditional):
             return utils.smjson(dict(skipped=True))
 
+
         # if the host file was an external script, execute it with the hostname
         # as a first parameter to get the variables to use for the host
         inject2 = {}
@@ -340,6 +345,8 @@ class Runner(object):
                 args = "%s metadata=~/.ansible/setup" % args
 
         args = utils.template(args, inject_vars)
+        module_name_tail = remote_module_path.split("/")[-1]
+        client_executed_str = "%s %s" % (module_name_tail, args.strip())
 
         argsfile = self._transfer_argsfile(conn, tmp, args)
         if async_jid is None:
@@ -348,7 +355,7 @@ class Runner(object):
             args = [str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]]
             cmd = " ".join(args)
         result = self._exec_command(conn, cmd)
-        return result
+        return [ result, client_executed_str ]
 
     # *****************************************************
 
@@ -366,7 +373,7 @@ class Runner(object):
             module_args.append("#USE_SHELL")
 
         module = self._transfer_module(conn, tmp, module_name)
-        result = self._execute_module(conn, tmp, module, module_args)
+        (result, executed) = self._execute_module(conn, tmp, module, module_args)
 
         # when running the setup module, which pushes vars to the host and ALSO
         # returns them (+factoids), store the variables that were returned such that commands
@@ -388,7 +395,7 @@ class Runner(object):
                 if not k in self.setup_cache[host]:
                     self.setup_cache[host][k] = v
 
-        return self._return_from_module(conn, host, result)
+        return self._return_from_module(conn, host, result, executed)
 
     # *****************************************************
 
@@ -407,12 +414,13 @@ class Runner(object):
 
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, module_name)
-        result = self._execute_module(conn, tmp, async, module_args,
+        (result, executed) = self._execute_module(conn, tmp, async, module_args,
            async_module=module, 
            async_jid=self.generated_jid, 
            async_limit=self.background
         )
-        return self._return_from_module(conn, host, result)
+
+        return self._return_from_module(conn, host, result, executed)
 
     # *****************************************************
 
@@ -448,8 +456,8 @@ class Runner(object):
 
         # run the copy module
         args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
-        result1 = self._execute_module(conn, tmp, module, args)
-        results1 = self._return_from_module(conn, host, result1)
+        (result1, executed) = self._execute_module(conn, tmp, module, args)
+        results1 = self._return_from_module(conn, host, result1, executed)
         (host, ok, data) = results1
 
         # magically chain into the file module
@@ -458,8 +466,8 @@ class Runner(object):
             old_changed = data.get('changed', False)
             module = self._transfer_module(conn, tmp, 'file')
             args = [ "%s=%s" % (k,v) for (k,v) in options.items() ]
-            result2 = self._execute_module(conn, tmp, module, args)
-            results2 = self._return_from_module(conn, host, result2)
+            (result2, executed2) = self._execute_module(conn, tmp, module, args)
+            results2 = self._return_from_module(conn, host, result2, executed)
             (host, ok, data2) = results2
             new_changed = data2.get('changed', False)
             data.update(data2)
@@ -498,8 +506,8 @@ class Runner(object):
 
         # run the template module
         args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
-        result1 = self._execute_module(conn, tmp, template_module, args)
-        results1 = self._return_from_module(conn, host, result1)
+        (result1, executed) = self._execute_module(conn, tmp, template_module, args)
+        results1 = self._return_from_module(conn, host, result1, executed)
         (host, ok, data) = results1
 
         # magically chain into the file module
@@ -508,8 +516,8 @@ class Runner(object):
             old_changed = data.get('changed', False)
             module = self._transfer_module(conn, tmp, 'file')
             args = [ "%s=%s" % (k,v) for (k,v) in options.items() ]
-            result2 = self._execute_module(conn, tmp, module, args)
-            results2 = self._return_from_module(conn, host, result2)
+            (result2, executed2) = self._execute_module(conn, tmp, module, args)
+            results2 = self._return_from_module(conn, host, result2, executed)
             (host, ok, data2) = results2
             new_changed = data2.get('changed', False)
             data.update(data2)

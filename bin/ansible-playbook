@@ -53,10 +53,18 @@ class PlaybookCallbacks(object):
         print "unreachable: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
- 
+        invocation = results.get('invocation',None)
+        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
+            print "failed: [%s] => %s\n" % (host, utils.smjson(results))
+        else: 
+            print "failed: [%s] => %s => %s\n" % (host, invocation, utils.smjson(results))
+
     def on_ok(self, host, host_result):
-        print "ok: [%s]\n" % (host)
+        invocation = host_result.get('invocation',None)
+        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
+            print "ok: [%s]\n" % (host)
+        else:
+            print "ok: [%s] => %s\n" % (host, invocation)
 
     def on_import_for_host(self, host, imported_file):
         print "%s: importing %s" % (host, imported_file)
@@ -118,7 +126,7 @@ def main(args):
         )
         try:
             pb.run()
-        except errors.AnsibleError as e:
+        except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
 
@@ -126,4 +134,9 @@ def main(args):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except errors.AnsibleError, e:
+        print >>sys.stderr, "ERROR: %s" % e
+        sys.exit(1)
+
