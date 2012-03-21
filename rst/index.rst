@@ -1,4 +1,4 @@
-. image:: http://ansible.github.com/mpd_rings.jpg
+.. image:: http://ansible.github.com/mpd_rings.jpg
    :height: 225
    :width: 300
    :alt: ""
