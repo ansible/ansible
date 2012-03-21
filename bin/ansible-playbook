@@ -84,6 +84,14 @@ class PlaybookCallbacks(object):
     def on_dark_host(self, host, msg):
         print "exception: [%s] => %s" % (host, msg)
 
+def summarize(results):
+    ''' print out per host statistics '''
+
+    print "PLAY RECAP ******************************\n"
+
+    hosts = sorted(results.keys())
+    for host in hosts:
+        print "%s : %s" % (host, utils.smjson(results[host]))
 
 def main(args):
     ''' run ansible-playbook operations '''
@@ -125,7 +133,8 @@ def main(args):
             timeout=options.timeout
         )
         try:
-            pb.run()
+            results = pb.run()
+            summarize(results)
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
