@@ -43,6 +43,12 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         print utils.task_start_msg(name, is_conditional)
 
+    def on_setup_primary(self):
+        print "SETUP PHASE ****************************\n"
+    
+    def on_setup_secondary(self):
+        print "\nVARIABLE IMPORT PHASE ******************\n"
+
     def on_unreachable(self, host, msg):
         print "unreachable: [%s] => %s" % (host, msg)
 
@@ -52,14 +58,11 @@ class PlaybookCallbacks(object):
     def on_ok(self, host, host_result):
         print "ok: [%s]\n" % (host)
 
-    def on_setup_primary(self):
-        print "preparing nodes..."
-
-    def on_setup_secondary(self):
-        print "preparing conditional imports..."
-
     def on_import_for_host(self, host, imported_file):
-        pass
+        print "%s: importing %s" % (host, imported_file)
+
+    def on_not_import_for_host(self, host, missing_file):
+        print "%s: not importing file: %s" % (host, missing_file)
 
     def on_play_start(self, pattern):
         print "PLAY [%s] ****************************\n" % pattern

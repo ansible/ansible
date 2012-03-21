@@ -465,8 +465,12 @@ class PlayBook(object):
                                 SETUP_CACHE[host].update(data)
                                 self.callbacks.on_import_for_host(host, filename2)
                                 break
+                            else:
+                                self.callbacks.on_not_import_for_host(host, filename2)
                         if not found:
-                            raise errors.AnsibleError("no files matched for vars_files import sequence: %s" % sequence)
+                            raise errors.AnsibleError(
+                                "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
+                            )
 
                     else:
                         filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
@@ -508,6 +512,8 @@ class PlayBook(object):
             if 'failed' in host_result:
                 self.callbacks.on_failed(host, host_result)
                 self.failures[host] = 1
+            else:
+                self.callbacks.on_ok(host, host_result)
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands

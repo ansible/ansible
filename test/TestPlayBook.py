@@ -35,6 +35,9 @@ class TestCallbacks(object):
     def on_import_for_host(self, host, filename):
         self.events.append([ 'import', [ host, filename ]])
 
+    def on_not_import_for_host(self, host, missing_filename):
+        pass
+
     def on_task_start(self, name, is_conditional):
         self.events.append([ 'task start', [ name, is_conditional ]])
 
@@ -62,6 +65,12 @@ class TestCallbacks(object):
 
     def on_dark_host(self, host, msg):
         self.events.append([ 'failed/dark', [ host, msg ]])
+
+    def on_setup_primary(self):
+        pass
+    
+    def on_setup_secondary(self):
+        pass
 
 
 class TestRunner(unittest.TestCase):

@@ -54,9 +54,9 @@ def smjson(result):
 
 def task_start_msg(name, conditional):
     if conditional:
-        return "NOTIFIED: [%s] **********\n" % name
+        return "\nNOTIFIED: [%s] **********\n" % name
     else:
-        return "TASK: [%s] *********\n" % name
+        return "\nTASK: [%s] *********\n" % name
 
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''

@@ -32,7 +32,6 @@
 
      - "vars/external_vars.yml"
 
-
      - [ "vars/$facter_operatingsystem.yml", "vars/defaults.yml" ]
 
 # and this is just a regular task line from a playbook, as we're used to.
