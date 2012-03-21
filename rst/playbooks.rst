@@ -79,7 +79,7 @@ Support for running things from sudo is pending.
 Vars section
 ++++++++++++
 
-The `vars' section contains a list of variables and values that can be used in the plays, like this::
+The `vars` section contains a list of variables and values that can be used in the plays, like this::
 
     ---
     - hosts: webservers

@@ -1,4 +1,4 @@
-.. image:: http://ansible.github.com/mpd_rings.jpg
+. image:: http://ansible.github.com/mpd_rings.jpg
    :height: 225
    :width: 300
    :alt: ""
@@ -75,11 +75,23 @@ Resources
 Your ideas and contributions are welcome.  We're also happy to help 
 you with questions about Ansible.
 
-* Join the `ansible-project mailing list <http://groups.google.com/group/ansible-project>`_ on Google Groups
-* Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
 * Visit the `project page <https://github.com/ansible/ansible>`_ on Github
+* View the `issue tracker <https://github.com/ansible/ansible/issues>`_
+* Visit the `Google Group <http://groups.google.com/group/ansible-project>`_
+* Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
 
-  - View the `issue tracker <https://github.com/ansible/ansible/issues>`_
+.. raw:: html
+
+   <img src="http://groups.google.com/intl/en/images/logos/groups_logo_sm.gif" height=30 width=140 alt="Google Groups">
+   <br/>
+   <b>Subscribe to Ansible Project</b>
+   <br/>
+   <form action="http://groups.google.com/group/ansible-project/boxsubscribe">
+   <br/>
+   Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" value="Subscribe">
+   <br/></br>
+   </form>
+   <br/>
 
 
 Contents
