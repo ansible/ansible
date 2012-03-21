@@ -58,37 +58,52 @@ Below, we'll break down what the various features of the playbook language are.
 Basics
 ``````
 
-Hosts line
-++++++++++
+Hosts and Users
++++++++++++++++
+
+For each play in a playbook, you get to choose which machines in your infrastructure
+to target and what remote user to complete the steps (called tasks) as.
 
 The `hosts` line is a list of one or more groups or host patterns,
 separated by colons, as described in the :ref:`patterns`
-documentation.  This is just like the first parameter to
-`/usr/bin/ansible`. 
+documentation.  The `user` is just the name of the user account::
 
-Each play gets to designate it's own choice of patterns.
+    ---
+    - hosts: webservers
+      user: root
 
-User line
-+++++++++
 
-Playbook steps on the remote system can be executed as any user.  The default is root,
-but you can specify others.  Sudo support is pending.::
+Support for running things from sudo is pending.
 
-    user: mdehaan
 
 Vars section
 ++++++++++++
 
-The `vars' section contains a list of variables and values that can be used in the plays.  These
-can be used in templates or tasks and are dereferenced using
-`jinja2` syntax like this::
+The `vars' section contains a list of variables and values that can be used in the plays, like this::
+
+    ---
+    - hosts: webservers
+      users: root
+      vars:
+         http_port: 80
+         van_halen_port: 5150
+         other: 'magic'       
+
+These variables can be used later in the playbook, or on the managed system (in templates), just like this::
 
     {{ varname }}
+
+Within playbooks themselves, but not within templates on the remote machines, it's also legal
+to use nicer shorthand like this::
+
+    $varname
 
 Further, if there are discovered variables about the system (say, if
 facter or ohai were installed) these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set
-variables.  Facter variables are prefixed with ``facter_`` and Ohai
+variables.  
+
+Facter variables are prefixed with ``facter_`` and Ohai
 variables are prefixed with ``ohai_``.  So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say::
 
@@ -111,45 +126,52 @@ before moving on to the next task.
 Hosts with failed tasks are taken out of the rotation for the entire
 playbook.  If things fail, simply correct the playbook file and rerun.
 
+The goal of each task is to execute a module, with very specific arguments.
+Variables, as mentioned above, can be used in arguments to modules.
+
 Modules other than `command` are 'idempotent', meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
-unless they have to change things.  Command will actually rerun the
-same command again, which is totally ok if the command is something
-like 'chmod' or 'setsebool', etc.
+unless they have to change things.  
 
-
-Task name and action
-++++++++++++++++++++
+Command will actually rerun the same command again, 
+which is totally ok if the command is something like 
+'chmod' or 'setsebool', etc.
 
 Every task must have a name, which is included in the output from
-running the playbook.
+running the playbook.   This is output for humans, so it is
+nice to have reasonably good descriptions of each task step.
 
-The action line is the name of an ansible module followed by
-parameters in key=value form::
+Here is what a basic task looks like, as with most modules,
+the service module takes key=value arguments::
 
-   - name: make sure apache is running
-     action: service name=httpd state=running
+   tasks:
+     - name: make sure apache is running
+       action: service name=httpd state=running
 
 The command module is the one module that just takes a list
-of arguments, and doesn't use the key=value form.  Simple::
+of arguments, and doesn't use the key=value form.  This makes
+it work just like you would expect. Simple::
 
-   - name: disable selinux 
-     action: command /sbin/setenforce 0
+   tasks:
+     - name: disable selinux 
+       action: command /sbin/setenforce 0
 
 Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
-   - name: make a directory
-     action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
+   tasks:
+     - name: make a directory
+       action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost
 
 Those same variables are usable in templates, which we'll get to later.
 
-Notify statements & Handlers
+
+Running Operations On Change
 ````````````````````````````
 
-As we've mentioned, nearly all modules are written to be 'idempotent' and can signal when
+As we've mentioned, nearly all modules are written to be 'idempotent' and can relay  when
 they have affected a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
@@ -166,10 +188,8 @@ change, but only if the file changes::
         - restart memcached
         - restart apache
 
-Next up, we'll show what a handler looks like.
-
-.. note::
-   Notify handlers are always run in the order written.
+The things listed in the 'notify' section of a task are called
+handlers.  
 
 Handlers are lists of tasks, not really any different from regular
 tasks, that are referenced by name.  Handlers are what notifiers
@@ -187,6 +207,9 @@ Here's an example handlers section::
 
 Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
+
+.. note::
+   Notify handlers are always run in the order written.
 
 
 Power Tricks
@@ -224,6 +247,35 @@ The contents of each variables file is a simple YAML dictionary, like this::
     # in the above example, this would be vars/external_vars.yml
     somevar: somevalue
     password: magic
+
+
+Conditional Execution
++++++++++++++++++++++
+
+Sometimes you will want to skip a particular step on a particular host.  This could be something
+as simple as not installing a certain package if the operating system is a particular version,
+or it could be something like performing some cleanup steps if a filesystem is getting full.
+
+This is easy to do in Ansible, with the `only_if` clause.  This clause can be applied to any task,
+and allows usage of variables from anywhere in ansible, either denoted with `$dollar_sign_syntax` or
+`{{ braces_syntax }}` and then evaluates them with a Python expression.   Don't panic -- it's actually
+pretty simple.::
+
+    vars:
+      - favcolor: 'red'
+    tasks:
+      - name: "shutdown if my favorite color is blue"
+        action: command /sbin/shutdown -t now
+        only_if: "'$favcolor' == 'blue'"
+      
+Variables from tools like `facter` and `ohai` can also be used here, if installed.   As a reminder,
+these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  The only_if
+expression is actually a tiny small bit of Python, so be sure to quote variables and make something
+that evaluates to `True` or `False`.
+
+.. note::
+     Handlers don't support only_if because they don't need to.  If a handler is not notified,
+     it will not run.  
 
 Conditional Imports
 +++++++++++++++++++

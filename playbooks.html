@@ -131,16 +131,15 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#">Playbooks</a><ul>
 <li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
 <li><a class="reference internal" href="#basics">Basics</a><ul>
-<li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
-<li><a class="reference internal" href="#user-line">User line</a></li>
+<li><a class="reference internal" href="#hosts-and-users">Hosts and Users</a></li>
 <li><a class="reference internal" href="#vars-section">Vars section</a></li>
 <li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
-<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#notify-statements-handlers">Notify statements &amp; Handlers</a></li>
+<li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
 <li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
+<li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
 <li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
@@ -222,32 +221,42 @@ server group, then more commands back on the webservers group, etc.</p>
 </div>
 <div class="section" id="basics">
 <h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="hosts-line">
-<h3>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="hosts-and-users">
+<h3>Hosts and Users<a class="headerlink" href="#hosts-and-users" title="Permalink to this headline">¶</a></h3>
+<p>For each play in a playbook, you get to choose which machines in your infrastructure
+to target and what remote user to complete the steps (called tasks) as.</p>
 <p>The <cite>hosts</cite> line is a list of one or more groups or host patterns,
 separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
-documentation.  This is just like the first parameter to
-<cite>/usr/bin/ansible</cite>.</p>
-<p>Each play gets to designate it&#8217;s own choice of patterns.</p>
+documentation.  The <cite>user</cite> is just the name of the user account:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: root</pre>
 </div>
-<div class="section" id="user-line">
-<h3>User line<a class="headerlink" href="#user-line" title="Permalink to this headline">¶</a></h3>
-<p>Playbook steps on the remote system can be executed as any user.  The default is root,
-but you can specify others.  Sudo support is pending.:</p>
-<div class="highlight-python"><pre>user: mdehaan</pre>
-</div>
+<p>Support for running things from sudo is pending.</p>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
-<p>The <cite>vars&#8217; section contains a list of variables and values that can be used in the plays.  These
-can be used in templates or tasks and are dereferenced using
-`jinja2</cite> syntax like this:</p>
+<p>The <a href="#id1"><span class="problematic" id="id2">`</span></a>vars&#8217; section contains a list of variables and values that can be used in the plays, like this:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  users: root
+  vars:
+     http_port: 80
+     van_halen_port: 5150
+     other: 'magic'</pre>
+</div>
+<p>These variables can be used later in the playbook, or on the managed system (in templates), just like this:</p>
 <div class="highlight-python"><pre>{{ varname }}</pre>
+</div>
+<p>Within playbooks themselves, but not within templates on the remote machines, it&#8217;s also legal
+to use nicer shorthand like this:</p>
+<div class="highlight-python"><pre>$varname</pre>
 </div>
 <p>Further, if there are discovered variables about the system (say, if
 facter or ohai were installed) these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set
-variables.  Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
+variables.</p>
+<p>Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
 variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say:</p>
 <div class="highlight-python"><pre>- name: write the motd
@@ -265,39 +274,44 @@ at a time, against all machines matched by the host pattern,
 before moving on to the next task.</p>
 <p>Hosts with failed tasks are taken out of the rotation for the entire
 playbook.  If things fail, simply correct the playbook file and rerun.</p>
+<p>The goal of each task is to execute a module, with very specific arguments.
+Variables, as mentioned above, can be used in arguments to modules.</p>
 <p>Modules other than <cite>command</cite> are &#8216;idempotent&#8217;, meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won&#8217;t change things
-unless they have to change things.  Command will actually rerun the
-same command again, which is totally ok if the command is something
-like &#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
-</div>
-<div class="section" id="task-name-and-action">
-<h3>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h3>
+unless they have to change things.</p>
+<p>Command will actually rerun the same command again,
+which is totally ok if the command is something like
+&#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
 <p>Every task must have a name, which is included in the output from
-running the playbook.</p>
-<p>The action line is the name of an ansible module followed by
-parameters in key=value form:</p>
-<div class="highlight-python"><pre>- name: make sure apache is running
-  action: service name=httpd state=running</pre>
+running the playbook.   This is output for humans, so it is
+nice to have reasonably good descriptions of each task step.</p>
+<p>Here is what a basic task looks like, as with most modules,
+the service module takes key=value arguments:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: make sure apache is running
+    action: service name=httpd state=running</pre>
 </div>
 <p>The command module is the one module that just takes a list
-of arguments, and doesn&#8217;t use the key=value form.  Simple:</p>
-<div class="highlight-python"><pre>- name: disable selinux
-  action: command /sbin/setenforce 0</pre>
+of arguments, and doesn&#8217;t use the key=value form.  This makes
+it work just like you would expect. Simple:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: disable selinux
+    action: command /sbin/setenforce 0</pre>
 </div>
 <p>Variables can be used in action lines.   Suppose you defined
 a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you could do this:</p>
-<div class="highlight-python"><pre>- name: make a directory
-  action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}</pre>
+<div class="highlight-python"><pre>tasks:
+  - name: make a directory
+    action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost</pre>
 </div>
 <p>Those same variables are usable in templates, which we&#8217;ll get to later.</p>
 </div>
 </div>
-<div class="section" id="notify-statements-handlers">
-<h2>Notify statements &amp; Handlers<a class="headerlink" href="#notify-statements-handlers" title="Permalink to this headline">¶</a></h2>
-<p>As we&#8217;ve mentioned, nearly all modules are written to be &#8216;idempotent&#8217; and can signal when
+<div class="section" id="running-operations-on-change">
+<h2>Running Operations On Change<a class="headerlink" href="#running-operations-on-change" title="Permalink to this headline">¶</a></h2>
+<p>As we&#8217;ve mentioned, nearly all modules are written to be &#8216;idempotent&#8217; and can relay  when
 they have affected a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.</p>
 <p>These &#8216;notify&#8217; actions are triggered at the end of each &#8216;play&#8217; in a playbook, and
@@ -311,11 +325,8 @@ change, but only if the file changes:</p>
      - restart memcached
      - restart apache</pre>
 </div>
-<p>Next up, we&#8217;ll show what a handler looks like.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Notify handlers are always run in the order written.</p>
-</div>
+<p>The things listed in the &#8216;notify&#8217; section of a task are called
+handlers.</p>
 <p>Handlers are lists of tasks, not really any different from regular
 tasks, that are referenced by name.  Handlers are what notifiers
 notify.  If nothing notifies a handler, it will not run.  Regardless
@@ -330,6 +341,10 @@ of the tasks complete in a particular play.</p>
 </div>
 <p>Handlers are best used to restart services and trigger reboots.  You probably
 won&#8217;t need them for much else.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Notify handlers are always run in the order written.</p>
+</div>
 </div>
 <div class="section" id="power-tricks">
 <h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
@@ -359,6 +374,32 @@ sharing your playbook source with them.</p>
 # in the above example, this would be vars/external_vars.yml
 somevar: somevalue
 password: magic</pre>
+</div>
+</div>
+<div class="section" id="conditional-execution">
+<h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes you will want to skip a particular step on a particular host.  This could be something
+as simple as not installing a certain package if the operating system is a particular version,
+or it could be something like performing some cleanup steps if a filesystem is getting full.</p>
+<p>This is easy to do in Ansible, with the <cite>only_if</cite> clause.  This clause can be applied to any task,
+and allows usage of variables from anywhere in ansible, either denoted with <cite>$dollar_sign_syntax</cite> or
+<cite>{{ braces_syntax }}</cite> and then evaluates them with a Python expression.   Don&#8217;t panic &#8211; it&#8217;s actually
+pretty simple.:</p>
+<div class="highlight-python"><pre>vars:
+  - favcolor: 'red'
+tasks:
+  - name: "shutdown if my favorite color is blue"
+    action: command /sbin/shutdown -t now
+    only_if: "'$favcolor' == 'blue'"</pre>
+</div>
+<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can also be used here, if installed.   As a reminder,
+these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  The only_if
+expression is actually a tiny small bit of Python, so be sure to quote variables and make something
+that evaluates to <cite>True</cite> or <cite>False</cite>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Handlers don&#8217;t support only_if because they don&#8217;t need to.  If a handler is not notified,
+it will not run.</p>
 </div>
 </div>
 <div class="section" id="conditional-imports">
@@ -577,7 +618,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 19, 2012.<br/>
+      Last updated on Mar 20, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
