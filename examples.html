@@ -132,6 +132,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
 <li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
 <li><a class="reference internal" href="#managing-packages">Managing Packages</a></li>
+<li><a class="reference internal" href="#users-and-groups">Users and Groups</a></li>
 <li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
 <li><a class="reference internal" href="#managing-services">Managing Services</a></li>
 <li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
@@ -250,6 +251,16 @@ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=
 for other package manages using the command module or contribute a module
 for other package managers.  Stop by the mailing list for info/details.</p>
 </div>
+<div class="section" id="users-and-groups">
+<h2>Users and Groups<a class="headerlink" href="#users-and-groups" title="Permalink to this headline">¶</a></h2>
+<p>The user module allows easy creation and manipulation of existing user accounts, as well
+as removal of user accounts that may exist:</p>
+<div class="highlight-python"><pre>ansible all -m user -a "name=foo password=&lt;crypted password here&gt;"
+
+ansible all -m user -a "name=foo state=absent"</pre>
+</div>
+<p>See the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> section for details on all of the available options.</p>
+</div>
 <div class="section" id="deploying-from-source-control">
 <h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
@@ -318,7 +329,7 @@ a simplified syntax for this.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 21, 2012.<br/>
+      Last updated on Mar 22, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

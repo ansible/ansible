@@ -107,6 +107,19 @@ Currently Ansible only has a module for managing packages with yum.  You can ins
 for other package manages using the command module or contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
+Users and Groups
+````````````````
+
+The user module allows easy creation and manipulation of existing user accounts, as well
+as removal of user accounts that may exist::
+
+    ansible all -m user -a "name=foo password=<crypted password here>"
+
+    ansible all -m user -a "name=foo state=absent"
+
+See the :doc:`modules` section for details on all of the available options.
+
+
 Deploying From Source Control
 `````````````````````````````
 

@@ -47,10 +47,6 @@ If you want to run a command through the shell (say you are using
 '<', '>', '|', etc), you actually want the 'shell' module instead.  
 The 'command' module is much more secure as it's not affected by the user's environment.
 
-Example usage::
-
-    /sbin/shutdown -t now
-
 The given command will be executed on all selected nodes.  It will not
 be processed through the shell, so variables like "$HOME" and 
 operations like "<", ">", "|", and "&" will not work.  As such, all
@@ -59,6 +55,10 @@ paths to commands must be fully qualified.
 This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.
+
+Example action from a :doc:`playbook`::
+
+    command /sbin/shutdown -t now
 
 
 .. _copy:
@@ -80,8 +80,11 @@ module.
 
 * Remote absolute path where the file should end up.
 
-
 This module also returns md5sum information about the resultant file.
+
+Example action from a :doc:`playbook`::
+
+    copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 
 
 .. _facter:
@@ -125,6 +128,12 @@ to the file module are also available when running the `copy` or `template` modu
 
 * name of group that should own the file or directory, as would be given to `chgrp`
 
+Example action from a :doc:`playbook`::
+
+    file dest=/etc/foo.conf owner=foo group=foo mode=0644
+    file dest=/some/path owner=foo group=foo state=directory
+    file dest/path/to/delete state=absent
+
 
 git
 ```
@@ -143,6 +152,10 @@ Deploys software (or files) from git checkouts.
 
 * What version to check out -- either the git SHA, the literal string
   ``HEAD``, or a tag name.
+
+Example action from a :doc:`playbook`::
+
+    git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
 
 
 ohai
@@ -181,10 +194,15 @@ Controls services on remote machines.
   Started/stopped are idempotent actions that will not run commands
   unless necessary.  ``restarted`` will always bounce the service.
 
-
 *name*:
 
 * The name of the service.
+
+Example action from a :doc:`playbook`::
+
+    service name=httpd state=started
+    service name=httpd state=stopped
+    service name=httpd state=restarted
 
 
 .. _setup:
@@ -208,6 +226,16 @@ tell their source.  All variables are then bubbled up to the caller.
  * Any other parameters can be named basically anything, and set a
    ``key=value`` pair in the JSON file for use in templating.
 
+Example action from a :doc:`playbook`::
+
+    vars:
+        ntpserver: 'ntp.example.com'
+        xyz: 1234
+
+Example action from `/usr/bin/ansible`::
+
+    ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"
+
 
 .. _shell:
 
@@ -217,10 +245,6 @@ shell
 The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the shell rather than directly.
-
-Example usage::
-
-    find . | grep *.txt
 
 The given command will be executed on all selected nodes.  
 
@@ -233,6 +257,10 @@ use your best judgement.
 This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.
+
+Example action from a playbook::
+
+    shell somescript.sh >> somelog.txt
 
 
 .. _template:
@@ -254,8 +282,53 @@ module.
 
 * Location to render the template on the remote server.
 
-
 This module also returns md5sum information about the resultant file.
+
+Example action from a playbook::
+
+    template src=/srv/mytemplates/foo.j2 dest=/etc/foo.conf owner=foo group=foo mode=0644
+
+
+.. _user:
+
+user
+````
+
+Creates user accounts, manipulates existing user accounts, and removes user accounts.
+
+*name*:
+
+* Name of the user to create, remove, or edit
+
+*comment*:
+
+* Optionally sets the description of the user
+
+*gid*:
+
+* Optionally sets the primary group GID.  The user module will also be able to manipulate this.
+
+*shell*:
+
+* Optionally sets the user's shell.
+
+*createhome*:
+
+* Whether to create the user's home directory.  Takes 'yes', or 'no'.  The default is 'yes'.
+    
+*password*:
+
+* Sets the user's password to this crypted value.  Pass in a result from crypt.  See the users
+  example in the github examples directory for what this looks like in a playbook.
+
+*state*:
+
+* Defaults to 'present'.  When 'absent', the user account will be removed if present.
+
+Example action from a :doc:`playbook`::
+
+    user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
+    user name=mdehaan state=absent
 
 .. _yum:
 
@@ -277,6 +350,13 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 * When 'list' is supplied instead of 'state', the yum module can list
   various configuration attributes.  Values include 'installed', 'updates',
   'available', 'repos', or any package specifier.
+
+Example action from a :doc:`playbook`::
+
+    yum pkg=httpd ensure=latest
+    yum pkg=httpd ensure=removed
+    yum pkg=httpd ensure=installed
+
 
 Writing your own modules
 ````````````````````````

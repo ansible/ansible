@@ -140,6 +140,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
+<li><a class="reference internal" href="#user">user</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
 </ul>
@@ -202,9 +203,6 @@ arguments, space delimited.</p>
 <p>If you want to run a command through the shell (say you are using
 &#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;|&#8217;, etc), you actually want the &#8216;shell&#8217; module instead.
 The &#8216;command&#8217; module is much more secure as it&#8217;s not affected by the user&#8217;s environment.</p>
-<p>Example usage:</p>
-<div class="highlight-python"><pre>/sbin/shutdown -t now</pre>
-</div>
 <p>The given command will be executed on all selected nodes.  It will not
 be processed through the shell, so variables like &#8220;$HOME&#8221; and
 operations like &#8220;&lt;&#8221;, &#8220;&gt;&#8221;, &#8220;|&#8221;, and &#8220;&amp;&#8221; will not work.  As such, all
@@ -212,6 +210,9 @@ paths to commands must be fully qualified.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.</p>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
+</div>
 </div>
 <div class="section" id="copy">
 <span id="id2"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
@@ -228,6 +229,9 @@ absolute or relative path.</li>
 <li>Remote absolute path where the file should end up.</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
+</div>
 </div>
 <div class="section" id="facter">
 <span id="id3"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
@@ -263,6 +267,11 @@ to the file module are also available when running the <cite>copy</cite> or <cit
 <ul class="simple">
 <li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
 </ul>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>file dest=/etc/foo.conf owner=foo group=foo mode=0644
+file dest=/some/path owner=foo group=foo state=directory
+file dest/path/to/delete state=absent</pre>
+</div>
 </div>
 <div class="section" id="git">
 <h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
@@ -280,6 +289,9 @@ to the file module are also available when running the <cite>copy</cite> or <cit
 <li>What version to check out &#8211; either the git SHA, the literal string
 <tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
 </ul>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
+</div>
 </div>
 <div class="section" id="ohai">
 <h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
@@ -312,6 +324,11 @@ unless necessary.  <tt class="docutils literal"><span class="pre">restarted</spa
 <ul class="simple">
 <li>The name of the service.</li>
 </ul>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>service name=httpd state=started
+service name=httpd state=stopped
+service name=httpd state=restarted</pre>
+</div>
 </div>
 <div class="section" id="setup">
 <span id="id4"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
@@ -331,15 +348,20 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
 </ul>
 </div></blockquote>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>vars:
+    ntpserver: 'ntp.example.com'
+    xyz: 1234</pre>
+</div>
+<p>Example action from <cite>/usr/bin/ansible</cite>:</p>
+<div class="highlight-python"><pre>ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"</pre>
+</div>
 </div>
 <div class="section" id="shell">
 <span id="id5"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the shell rather than directly.</p>
-<p>Example usage:</p>
-<div class="highlight-python"><pre>find . | grep *.txt</pre>
-</div>
 <p>The given command will be executed on all selected nodes.</p>
 <p>If you want to execute a command securely and predicably, it may
 be better to use the &#8216;command&#8217; module instead.  Best practices
@@ -349,6 +371,9 @@ use your best judgement.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.</p>
+<p>Example action from a playbook:</p>
+<div class="highlight-python"><pre>shell somescript.sh &gt;&gt; somelog.txt</pre>
+</div>
 </div>
 <div class="section" id="template">
 <span id="id6"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
@@ -366,9 +391,49 @@ be a relative or absolute path.</li>
 <li>Location to render the template on the remote server.</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
+<p>Example action from a playbook:</p>
+<div class="highlight-python"><pre>template src=/srv/mytemplates/foo.j2 dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
+</div>
+</div>
+<div class="section" id="user">
+<span id="id7"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
+<p><em>name</em>:</p>
+<ul class="simple">
+<li>Name of the user to create, remove, or edit</li>
+</ul>
+<p><em>comment</em>:</p>
+<ul class="simple">
+<li>Optionally sets the description of the user</li>
+</ul>
+<p><em>gid</em>:</p>
+<ul class="simple">
+<li>Optionally sets the primary group GID.  The user module will also be able to manipulate this.</li>
+</ul>
+<p><em>shell</em>:</p>
+<ul class="simple">
+<li>Optionally sets the user&#8217;s shell.</li>
+</ul>
+<p><em>createhome</em>:</p>
+<ul class="simple">
+<li>Whether to create the user&#8217;s home directory.  Takes &#8216;yes&#8217;, or &#8216;no&#8217;.  The default is &#8216;yes&#8217;.</li>
+</ul>
+<p><em>password</em>:</p>
+<ul class="simple">
+<li>Sets the user&#8217;s password to this crypted value.  Pass in a result from crypt.  See the users
+example in the github examples directory for what this looks like in a playbook.</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.</li>
+</ul>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
+user name=mdehaan state=absent</pre>
+</div>
 </div>
 <div class="section" id="yum">
-<span id="id7"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -384,6 +449,11 @@ be a relative or absolute path.</li>
 various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
 &#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.</li>
 </ul>
+<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<div class="highlight-python"><pre>yum pkg=httpd ensure=latest
+yum pkg=httpd ensure=removed
+yum pkg=httpd ensure=installed</pre>
+</div>
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
@@ -415,7 +485,7 @@ various configuration attributes.  Values include &#8216;installed&#8217;, &#821
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 21, 2012.<br/>
+      Last updated on Mar 22, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

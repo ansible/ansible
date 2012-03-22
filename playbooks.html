@@ -386,6 +386,7 @@ and allows usage of variables from anywhere in ansible, either denoted with <cit
 <cite>{{ braces_syntax }}</cite> and then evaluates them with a Python expression.   Don&#8217;t panic &#8211; it&#8217;s actually
 pretty simple.:</p>
 <div class="highlight-python"><pre>vars:
+  favcolor: blue
   is_favcolor_blue: "'$favcolor' == 'blue'"
   is_centos: "'$facter_operatingsystem' == 'CentOS'"
 tasks:
@@ -621,7 +622,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 21, 2012.<br/>
+      Last updated on Mar 22, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
