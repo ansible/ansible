@@ -272,6 +272,9 @@ def template(text, vars):
     template = jinja2.Template(text)
     return template.render(vars)
 
+def double_template(text, vars):
+    return template(template(text, vars), vars)
+
 def template_from_file(path, vars):
     ''' run a file through the templating engine '''
     data = file(path).read()
@@ -287,4 +290,12 @@ def parse_yaml_from_file(path):
         raise errors.AnsibleError("file not found: %s" % path)
     return parse_yaml(data)
 
+def parse_kv(args):
+    ''' convert a string of key/value items to a dict '''
+    options = {}
+    for x in args:
+        if x.find("=") != -1:
+            k, v = x.split("=")
+            options[k]=v
+    return options
 

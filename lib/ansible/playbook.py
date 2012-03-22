@@ -295,7 +295,7 @@ class PlayBook(object):
             remote_user=remote_user,
             setup_cache=SETUP_CACHE,
             basedir=self.basedir,
-            conditionally_execute_if=only_if
+            conditional=only_if
         )
 
         if async_seconds == 0:
