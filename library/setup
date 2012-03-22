@@ -33,12 +33,18 @@ except ImportError:
 
 if len(sys.argv) == 1:
     sys.exit(1)
+
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
     sys.exit(1)
+
 input_data = shlex.split(open(argfile, 'r').read())
 
-new_options = dict([ x.split('=') for x in input_data ])
+# turn urlencoded k=v string (space delimited) to regular k=v directionary
+splitted = [x.split('=',1) for x in input_data ]
+splitted = [ (x[0], x[1].replace("~~~"," ")) for x in splitted ]
+new_options = dict(splitted)
+
 ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
 ansible_dir = os.path.dirname(ansible_file)
 

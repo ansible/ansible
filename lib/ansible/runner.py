@@ -27,6 +27,7 @@ import random
 import traceback
 import tempfile
 import subprocess
+import urllib
 
 import ansible.constants as C 
 import ansible.connection
@@ -295,16 +296,26 @@ class Runner(object):
 
         args = module_args
         if type(args) == list:
-            args = " ".join([ str(x) for x in module_args ])
-        
+            if remote_module_path.endswith('setup'):
+                # briefly converting arguments to strings before file transfer
+                # causes some translation errors.  This is a workaround only
+                # needed for the setup module
+                args = " ".join([ "\"%s\"" % str(x) for x in module_args ])
+            else:        
+	        args = " ".join([ str(x) for x in module_args ])
+
         # by default the args to substitute in the action line are those from the setup cache
         inject_vars = self.setup_cache.get(conn.host,{})
         
         # see if we really need to run this or not...
-        conditional = utils.template(self.conditionally_execute_if, inject_vars)
-        if not eval(conditional):
-            return utils.smjson(dict(skipped=True))
+        # doubly templated so we can store a conditional expression in a variable!
+        conditional = utils.template(
+            utils.template(self.conditionally_execute_if, inject_vars),
+            inject_vars
+        )
 
+        if not eval(conditional):
+            return [ utils.smjson(dict(skipped=True)), 'skipped' ]
 
         # if the host file was an external script, execute it with the hostname
         # as a first parameter to get the variables to use for the host
@@ -333,7 +344,7 @@ class Runner(object):
                 if not k.startswith('facter_') and not k.startswith('ohai_'):
                     if str(v).find(" ") != -1:
                         v = "\"%s\"" % v
-                    args += " %s=%s" % (k, v)
+                args += " %s=%s" % (k, str(v).replace(" ","~~~"))
 
         # the metadata location for the setup module is transparently managed
         # since it's an 'internals' module, kind of a black box. See playbook
