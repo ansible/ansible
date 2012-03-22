@@ -78,7 +78,7 @@ you with questions about Ansible.
 * Visit the `project page <https://github.com/ansible/ansible>`_ on Github
 * View the `issue tracker <https://github.com/ansible/ansible/issues>`_
 * Visit the `Google Group <http://groups.google.com/group/ansible-project>`_
-* Join `#ansible <irc://irc.freenode.net/#ansible>`_ on the `freenode IRC network <http://freenode.net/>`_
+* Chat on `FreeNode <http://webchat.freenode.net/?channels=ansible>`_
 
 .. raw:: html
 
