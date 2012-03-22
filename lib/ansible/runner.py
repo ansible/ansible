@@ -276,7 +276,8 @@ class Runner(object):
                 if str(v).find(" ") != -1:
                     v = "\"%s\"" % v
                 args += " %s=%s" % (k, str(v).replace(" ","~~~"))
-    
+        return args   
+ 
     # *****************************************************
 
     def _add_setup_metadata(self, args):
@@ -287,7 +288,8 @@ class Runner(object):
                 args = "%s metadata=/etc/ansible/setup" % args
             else:
                 args = "%s metadata=~/.ansible/setup" % args
-    
+        return args   
+ 
     # *****************************************************
 
     def _coerce_args_to_string(self, args, remote_module_path):
@@ -316,8 +318,8 @@ class Runner(object):
         if Runner._external_variable_script is not None:
             self._add_variables_from_script(conn, inject)
         if self.module_name == 'setup':
-            self._add_setup_vars(inject, args)
-            self._add_setup_metadata(args)
+            args = self._add_setup_vars(inject, args)
+            args = self._add_setup_metadata(args)
 
         args = utils.template(args, inject)
         module_name_tail = remote_module_path.split("/")[-1]
@@ -602,7 +604,7 @@ class Runner(object):
 
         hosts = [ (self,x) for x in hosts ]
         if self.forks > 1:
-            results = self._parallel_exec(hosts, results)
+            results = self._parallel_exec(hosts)
         else:
             results = [ x._executor(h) for (x,h) in hosts ]
         return self._partition_results(results)
