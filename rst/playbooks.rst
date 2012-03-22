@@ -262,6 +262,7 @@ and allows usage of variables from anywhere in ansible, either denoted with `$do
 pretty simple.::
 
     vars:
+      favcolor: blue
       is_favcolor_blue: "'$favcolor' == 'blue'"
       is_centos: "'$facter_operatingsystem' == 'CentOS'"
     tasks:
