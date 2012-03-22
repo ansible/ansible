@@ -262,16 +262,19 @@ and allows usage of variables from anywhere in ansible, either denoted with `$do
 pretty simple.::
 
     vars:
-      - favcolor: 'red'
+      is_favcolor_blue: "'$favcolor' == 'blue'"
+      is_centos: "'$facter_operatingsystem' == 'CentOS'"
     tasks:
       - name: "shutdown if my favorite color is blue"
         action: command /sbin/shutdown -t now
-        only_if: "'$favcolor' == 'blue'"
+        only_if: '$is_favcolor_blue'
       
-Variables from tools like `facter` and `ohai` can also be used here, if installed.   As a reminder,
+Variables from tools like `facter` and `ohai` can be used here, if installed.   As a reminder,
 these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  The only_if
 expression is actually a tiny small bit of Python, so be sure to quote variables and make something
-that evaluates to `True` or `False`.
+that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' instead of 'vars' to define
+all of your conditional expressions in a way that makes them very easy to reuse between plays
+and playbooks.
 
 .. note::
      Handlers don't support only_if because they don't need to.  If a handler is not notified,

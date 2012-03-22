@@ -386,16 +386,19 @@ and allows usage of variables from anywhere in ansible, either denoted with <cit
 <cite>{{ braces_syntax }}</cite> and then evaluates them with a Python expression.   Don&#8217;t panic &#8211; it&#8217;s actually
 pretty simple.:</p>
 <div class="highlight-python"><pre>vars:
-  - favcolor: 'red'
+  is_favcolor_blue: "'$favcolor' == 'blue'"
+  is_centos: "'$facter_operatingsystem' == 'CentOS'"
 tasks:
   - name: "shutdown if my favorite color is blue"
     action: command /sbin/shutdown -t now
-    only_if: "'$favcolor' == 'blue'"</pre>
+    only_if: '$is_favcolor_blue'</pre>
 </div>
-<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can also be used here, if installed.   As a reminder,
+<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed.   As a reminder,
 these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  The only_if
 expression is actually a tiny small bit of Python, so be sure to quote variables and make something
-that evaluates to <cite>True</cite> or <cite>False</cite>.</p>
+that evaluates to <cite>True</cite> or <cite>False</cite>.  It is a good idea to use &#8216;vars_files&#8217; instead of &#8216;vars&#8217; to define
+all of your conditional expressions in a way that makes them very easy to reuse between plays
+and playbooks.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Handlers don&#8217;t support only_if because they don&#8217;t need to.  If a handler is not notified,
@@ -618,7 +621,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 20, 2012.<br/>
+      Last updated on Mar 21, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
