@@ -18,5 +18,5 @@
   action: service name=iptables state=stopped
 
 - name: made up task just to show variables work here
-  action: command /bin/echo release is {{ release }}
+  action: command /bin/echo release is $release
 

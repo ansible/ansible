@@ -257,7 +257,7 @@ def varReplace(raw, vars):
         # Determine replacement value (if unknown variable then preserve
         # original)
         varname = m.group(1).lower()
-        replacement = vars.get(varname, m.group())
+        replacement = str(vars.get(varname, m.group()))
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -268,7 +268,7 @@ def varReplace(raw, vars):
 
 def template(text, vars):
     ''' run a text buffer through the templating engine '''
-    text = varReplace(text, vars)
+    text = varReplace(str(text), vars)
     template = jinja2.Template(text)
     return template.render(vars)
 

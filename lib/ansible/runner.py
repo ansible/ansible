@@ -64,15 +64,21 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         background=0, basedir=None, setup_cache=None, transport='paramiko',
-        conditional='True', verbose=False):
+        conditional='True', groups={}, verbose=False):
     
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
             basedir = os.getcwd()
+
         self.generated_jid = str(random.randint(0, 999999999999))
         self.connector = ansible.connection.Connection(self, transport)
-        self.host_list, self.groups = self.parse_hosts(host_list)
+
+        if type(host_list) == str:
+            self.host_list, self.groups = self.parse_hosts(host_list)
+        else:
+            self.host_list = host_list
+            self.groups    = groups
 
         self.setup_cache = setup_cache
         self.conditional = conditional
@@ -95,31 +101,37 @@ class Runner(object):
     # *****************************************************
 
     @classmethod
-    def parse_hosts_from_regular_file(cls, host_list, results, groups):
+    def parse_hosts_from_regular_file(cls, host_list):
         ''' parse a textual host file '''
 
+        results = []
+        groups = dict(ungrouped=[])
         lines = file(host_list).read().split("\n")
         group_name = 'ungrouped'
         for item in lines:
             item = item.lstrip().rstrip()
             if item.startswith("#"):
                 # ignore commented out lines
-                continue
-            if item.startswith("["):
+                pass
+            elif item.startswith("["):
                 # looks like a group
                 group_name = item.replace("[","").replace("]","").lstrip().rstrip()
                 groups[group_name] = []
             elif item != "":
                 # looks like a regular host
                 groups[group_name].append(item)
-                results.append(item)
+                if not item in results:
+                    results.append(item)
+        return (results, groups)
 
     # *****************************************************
 
     @classmethod
-    def parse_hosts_from_script(cls, host_list, results, groups):
+    def parse_hosts_from_script(cls, host_list):
         ''' evaluate a script that returns list of hosts by groups '''
 
+        results = []
+        groups = dict(ungrouped=[])
         host_list = os.path.abspath(host_list)
         cls._external_variable_script = host_list
         cmd = subprocess.Popen([host_list], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -132,6 +144,7 @@ class Runner(object):
             for host in hostlist:
                 if host not in results:
                     results.append(host)
+        return (results, groups)
 
     # *****************************************************
 
@@ -140,23 +153,21 @@ class Runner(object):
         ''' parse the host inventory file, returns (hosts, groups) '''
 
         if type(host_list) == list:
-            return (host_list, {})
+            raise Exception("function can only be called on inventory files")
 
         host_list = os.path.expanduser(host_list)
         if not os.path.exists(host_list):
             raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
 
-        results    = []
-        groups     = dict(ungrouped=[])
+        rc = None
         if not os.access(host_list, os.X_OK):
-            Runner.parse_hosts_from_regular_file(host_list, results, groups)
+            return Runner.parse_hosts_from_regular_file(host_list)
         else:
-            Runner.parse_hosts_from_script(host_list, results, groups)
-        return (results, groups)
+            return Runner.parse_hosts_from_script(host_list)
 
     # *****************************************************
 
-    def _matches(self, host_name, pattern=None):
+    def _matches(self, host_name, pattern):
         ''' returns if a hostname is matched by the pattern '''
 
         # a pattern is in fnmatch format but more than one pattern
@@ -168,7 +179,9 @@ class Runner(object):
         pattern = pattern.replace(";",":")
         subpatterns = pattern.split(":")
         for subpattern in subpatterns:
-            if subpattern == 'all' or fnmatch.fnmatch(host_name, subpattern):
+            if subpattern == 'all':
+                return True
+            if fnmatch.fnmatch(host_name, subpattern):
                 return True
             elif subpattern in self.groups:
                 if host_name in self.groups[subpattern]:
@@ -539,7 +552,8 @@ class Runner(object):
     def _match_hosts(self, pattern):
         ''' return all matched hosts fitting a pattern '''
 
-        return [ h for h in self.host_list if self._matches(h, pattern) ]
+        rc = [ h for h in self.host_list if self._matches(h, pattern) ]
+        return rc
 
     # *****************************************************
 
@@ -601,7 +615,7 @@ class Runner(object):
         hosts = self._match_hosts(self.pattern)
         if len(hosts) == 0:
             return dict(contacted={}, dark={})
-
+ 
         hosts = [ (self,x) for x in hosts ]
         if self.forks > 1:
             results = self._parallel_exec(hosts)

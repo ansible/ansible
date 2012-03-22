@@ -85,6 +85,9 @@ class PlayBook(object):
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
+        self.host_list, self.groups = ansible.runner.Runner.parse_hosts(host_list)
+
+
     def _get_vars(self, play, dirname):
         vars = play.get('vars', {})
         if type(vars) != dict:
@@ -165,7 +168,6 @@ class PlayBook(object):
 
         # FIXME: TODO: use callback to reinstate per-host summary
         # and add corresponding code in /bin/ansible-playbook
-        # print results
         return results
 
     def _prune_failed_hosts(self, host_list):
@@ -285,6 +287,7 @@ class PlayBook(object):
         ''' run a particular module step in a playbook '''
         runner = ansible.runner.Runner(
             pattern=pattern,
+            groups=self.groups,
             module_name=module,
             module_args=args,
             host_list=hosts,
@@ -316,13 +319,6 @@ class PlayBook(object):
         run a single task in the playbook and
         recursively run any subtasks.
         '''
-
-        if host_list is None:
-            # pruned host lists occur when running triggered
-            # actions where not all hosts have changed
-            # though top-level tasks will pass in "None" here
-            host_list = self.host_list
-            (host_list, groups) = ansible.runner.Runner.parse_hosts(host_list)
 
         # do not continue to run tasks on hosts that have had failures
         host_list = self._prune_failed_hosts(host_list)
@@ -446,6 +442,8 @@ class PlayBook(object):
         #        in it, which could happen on uncontacted hosts.
 
         if vars_files is not None:
+            if type(vars_files) != list:
+                raise errors.AnsibleError("vars_files must be a list")
             self.callbacks.on_setup_secondary()
             for host in host_list:
                 cache_vars = SETUP_CACHE.get(host,{})
@@ -492,6 +490,7 @@ class PlayBook(object):
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
             pattern=pattern,
+            groups=self.groups,
             module_name='setup',
             module_args=push_var_str,
             host_list=self.host_list,
@@ -540,22 +539,20 @@ class PlayBook(object):
         handlers   = pg.get('handlers', [])
         user       = pg.get('user', C.DEFAULT_REMOTE_USER)
 
-        self.host_list, groups = ansible.runner.Runner.parse_hosts(self.host_list)
-
         self.callbacks.on_play_start(pattern)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        host_list = self._do_setup_step(pattern, vars, user, self.host_list, None)
+        self.host_list = self._do_setup_step(pattern, vars, user, self.host_list, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            host_list = self._do_setup_step(pattern, vars, user, host_list, vars_files)
+            self.host_list = self._do_setup_step(pattern, vars, user, self.host_list, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
             self._run_task(
                 pattern=pattern,
-                host_list=host_list,
+                host_list=self.host_list,
                 task=task, 
                 handlers=handlers,
                 remote_user=user
