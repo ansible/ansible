@@ -6,6 +6,8 @@ Patches and Contributions
    * Seth Vidal - skvidal AT fedoraproject DOT org
    * Tim Bielawa - tbielawa AT redhat DOT com
    * Christopher Johnston - chjohnst AT gmail DOT com 
+   * Stephen Fromm - sfromm AT gmail.com
+
 
 Send in a github pull request to get your name here.
 
