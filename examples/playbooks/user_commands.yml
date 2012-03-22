@@ -1,4 +1,7 @@
 ---
+# this is a demo of how the user commands work and how to reference salted passwords
+# in vars sections.  You could also use vars_files if you like (see other examples)
+
 - hosts: all
   user: root
   vars:
