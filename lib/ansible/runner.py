@@ -27,7 +27,6 @@ import random
 import traceback
 import tempfile
 import subprocess
-import urllib
 
 import ansible.constants as C 
 import ansible.connection
