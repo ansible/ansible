@@ -26,69 +26,12 @@ import ansible.playbook
 import ansible.constants as C
 from ansible import errors
 from ansible import utils
-
-#######################################################
-
-class PlaybookCallbacks(object):
-  
-    def __init__(self):
-        pass
-
-    def set_playbook(self, playbook):
-        self.playbook = playbook
-
-    def on_start(self):
-        print "\n"
-
-    def on_task_start(self, name, is_conditional):
-        print utils.task_start_msg(name, is_conditional)
-
-    def on_setup_primary(self):
-        print "SETUP PHASE ****************************\n"
-    
-    def on_setup_secondary(self):
-        print "\nVARIABLE IMPORT PHASE ******************\n"
-
-    def on_unreachable(self, host, msg):
-        print "unreachable: [%s] => %s" % (host, msg)
-
-    def on_failed(self, host, results):
-        invocation = results.get('invocation',None)
-        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
-            print "failed: [%s] => %s\n" % (host, utils.smjson(results))
-        else: 
-            print "failed: [%s] => %s => %s\n" % (host, invocation, utils.smjson(results))
-
-    def on_ok(self, host, host_result):
-        invocation = host_result.get('invocation',None)
-        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
-            print "ok: [%s]\n" % (host)
-        else:
-            print "ok: [%s] => %s\n" % (host, invocation)
-
-    def on_import_for_host(self, host, imported_file):
-        print "%s: importing %s" % (host, imported_file)
-
-    def on_not_import_for_host(self, host, missing_file):
-        print "%s: not importing file: %s" % (host, missing_file)
-
-    def on_play_start(self, pattern):
-        print "PLAY [%s] ****************************\n" % pattern
-
-    def on_async_confused(self, msg):
-        print msg
-
-    def on_async_poll(self, jid, host, clock, host_result):
-        print utils.async_poll_status(jid, host, clock, host_result)
-
-    def on_dark_host(self, host, msg):
-        print "exception: [%s] => %s" % (host, msg)
+from ansible import callbacks
 
 def summarize(results):
     ''' print out per host statistics '''
 
     print "PLAY RECAP ******************************\n"
-
     hosts = sorted(results.keys())
     for host in hosts:
         print "%s : %s" % (host, utils.smjson(results[host]))
@@ -129,7 +72,7 @@ def main(args):
             forks=options.forks,
             verbose=True,
             remote_pass=sshpass,
-            callbacks=PlaybookCallbacks(),
+            callbacks=callbacks.PlaybookCallbacks(),
             timeout=options.timeout
         )
         try:

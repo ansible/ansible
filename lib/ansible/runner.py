@@ -301,7 +301,7 @@ class Runner(object):
                 # needed for the setup module
                 args = " ".join([ "\"%s\"" % str(x) for x in module_args ])
             else:        
-	        args = " ".join([ str(x) for x in module_args ])
+                args = " ".join([ str(x) for x in module_args ])
 
         # by default the args to substitute in the action line are those from the setup cache
         inject_vars = self.setup_cache.get(conn.host,{})
