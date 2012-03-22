@@ -163,41 +163,40 @@ s.parentNode.insertBefore(ga, s);
   <div class="section" id="command-line-examples">
 <h1>Command Line Examples<a class="headerlink" href="#command-line-examples" title="Permalink to this headline">¶</a></h1>
 <p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running ad-hoc tasks.
-Start here.  For configuration management and deployments, you&#8217;ll want to pick up on
-using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.</p>
+Start here.</p>
+<p>For configuration management and deployments, you&#8217;ll want to pick up on
+using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.
+(See <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for more information about those)</p>
 <div class="section" id="parallelism-and-shell-commands">
 <h2>Parallelism and Shell Commands<a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
-<p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time:</p>
+<p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let&#8217;s
+set up SSH-agent so it can remember our credentials:</p>
 <div class="highlight-python"><pre>ssh-agent bash
-ssh-add ~/.ssh/id_rsa.pub
-
-ansible atlanta -a "/sbin/reboot" -f 10</pre>
+ssh-add ~/.ssh/id_rsa.pub</pre>
 </div>
-<p>The -f 10 specifies the usage of 10 simultaneous processes.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">-m does not always have to be specified to /usr/bin/ansible because &#8216;command&#8217; is the default ansible module</p>
+<p>Now to run the command on all servers in a group, in this case, &#8216;atlanta&#8217;:</p>
+<div class="highlight-python"><pre>ansible atlanta -a "/sbin/reboot" -f 10</pre>
 </div>
-<p>If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
-pipe and redirection operators.   Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
+<p>If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
+<p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
+a <cite>-m</cite> for module name, but the default module name is &#8216;command&#8217;, so we didn&#8217;t need to specify that
+here.  We&#8217;ll use <cite>-m</cite> later to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
+<p>The command module requires absolute paths and does not support shell variables.  If we want to
+execute a module using the shell, we can do those things, and also use pipe and redirection operators.
+Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
 module looks like this:</p>
 <div class="highlight-python"><pre>ansible raleigh -m shell -a "echo \\$TERM"</pre>
 </div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.</p>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Note that other than the command <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>, ansible modules usually do
-not work like simple scripts. They make the remote system look like
-you state, and run the commands necessary to get it there.  This
-is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.  However, we also
-recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.</p>
-</div>
+<p>When running any command with the ansible &#8220;ad hoc&#8221; CLI (as opposed to playbooks), pay particular attention
+to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.</p>
+<p>So far we&#8217;ve been demoing simple command execution, but most ansible modules usually do not work like
+simple scripts. They make the remote system look like you state, and run the commands necessary to
+get it there.  This is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.
+However, we also recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.</p>
 </div>
 <div class="section" id="file-transfer-templating">
 <h2>File Transfer &amp; Templating<a class="headerlink" href="#file-transfer-templating" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s another use case for the <cite>/usr/bin/ansible</cite> command line.</p>
 <p>Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.</p>
 <p>To just transfer a file directly to many different servers:</p>
@@ -248,7 +247,7 @@ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=
 <div class="highlight-python"><pre>ansible-webservers -m yum -a "pkg=acme state=removed"</pre>
 </div>
 <p>Currently Ansible only has a module for managing packages with yum.  You can install
-for other package manages using the command module or contribute a module
+for other packages for now using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.</p>
 </div>
 <div class="section" id="users-and-groups">
@@ -264,7 +263,7 @@ ansible all -m user -a "name=foo state=absent"</pre>
 <div class="section" id="deploying-from-source-control">
 <h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
-<div class="highlight-python"><pre>ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"</pre>
+<div class="highlight-python"><pre>ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"</pre>
 </div>
 <p>Since ansible modules can notify change handlers (see
 <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>) it is possible to tell ansible to run specific tasks

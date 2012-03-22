@@ -2,43 +2,51 @@ Command Line Examples
 =====================
 
 The following examples show how to use `/usr/bin/ansible` for running ad-hoc tasks.
-Start here.  For configuration management and deployments, you'll want to pick up on
-using `/usr/bin/ansible-playbook` -- the concepts port over directly.
+Start here. 
 
+For configuration management and deployments, you'll want to pick up on
+using `/usr/bin/ansible-playbook` -- the concepts port over directly.
+(See :doc:`playbooks` for more information about those)
 
 Parallelism and Shell Commands
 ``````````````````````````````
 
-Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 at a time::
+Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
+set up SSH-agent so it can remember our credentials::
 
     ssh-agent bash
     ssh-add ~/.ssh/id_rsa.pub
 
+Now to run the command on all servers in a group, in this case, 'atlanta'::
+
     ansible atlanta -a "/sbin/reboot" -f 10
 
-The -f 10 specifies the usage of 10 simultaneous processes.
+If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
 
-.. note::
-   -m does not always have to be specified to /usr/bin/ansible because 'command' is the default ansible module
+The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
+a `-m` for module name, but the default module name is 'command', so we didn't need to specify that
+here.  We'll use `-m` later to run some other :doc:`modules`.
 
-If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
-pipe and redirection operators.   Read more about the differences on the :doc:`modules` page.  The shell
+The command module requires absolute paths and does not support shell variables.  If we want to 
+execute a module using the shell, we can do those things, and also use pipe and redirection operators.
+Read more about the differences on the :doc:`modules` page.  The shell
 module looks like this::
 
     ansible raleigh -m shell -a "echo \\$TERM"
 
-.. note::
-   When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.
+When running any command with the ansible "ad hoc" CLI (as opposed to playbooks), pay particular attention
+to shell quoting rules, so the shell doesn't eat a variable before it gets passed to Ansible.
 
-.. note::
-   Note that other than the command :doc:`modules`, ansible modules usually do
-   not work like simple scripts. They make the remote system look like
-   you state, and run the commands necessary to get it there.  This
-   is commonly referred to as 'idempotence', and is a core design goal of ansible.  However, we also
-   recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.
+So far we've been demoing simple command execution, but most ansible modules usually do not work like 
+simple scripts. They make the remote system look like you state, and run the commands necessary to 
+get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.  
+However, we also recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.
+
 
 File Transfer & Templating
 ``````````````````````````
+
+Here's another use case for the `/usr/bin/ansible` command line.
 
 Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.
@@ -104,7 +112,7 @@ Ensure a package is not installed::
     ansible-webservers -m yum -a "pkg=acme state=removed"
 
 Currently Ansible only has a module for managing packages with yum.  You can install
-for other package manages using the command module or contribute a module
+for other packages for now using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
 Users and Groups
@@ -125,7 +133,7 @@ Deploying From Source Control
 
 Deploy your webapp straight from git::
 
-    ansible webservers -m git -a "repo=git://foo dest=/srv/myapp version=HEAD"
+    ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
 
 Since ansible modules can notify change handlers (see
 :doc:`playbooks`) it is possible to tell ansible to run specific tasks
