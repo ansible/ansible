@@ -24,7 +24,7 @@
 # or False
 
      is_favcolor_blue: "'$favcolor' == 'blue'"
-#     is_centos: "'$facter_operatingsystem' == 'CentOS'"
+     is_centos: "'$facter_operatingsystem' == 'CentOS'"
 
 # NOTE:
 #
