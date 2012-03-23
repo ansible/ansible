@@ -498,6 +498,7 @@ class PlayBook(object):
             module_path=self.module_path,
             timeout=self.timeout,
             remote_user=user,
+            remote_pass=self.remote_pass,
             setup_cache=SETUP_CACHE
         ).run()
 
