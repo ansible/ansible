@@ -1,0 +1,22 @@
+---
+- hosts: all
+  user: root
+  vars:
+    # created with:
+    # crypt.crypt('This is my Password', '$1$SomeSalt')
+    password: $1$SomeSalt$UqddPX3r4kH3UL5jq5/ZI.
+
+  tasks:
+
+    # Walk through account creation, modification, and deletion
+    - name: test basic user account creation
+      action: user name=tset comment=TsetUser gid=100 shell=/sbin/nologin createhome=no
+
+    - name: test user account modification
+      action: user name=tset comment=NyetUser
+
+    - name: test user account password change
+      action: user name=tset password=$password
+
+    - name: test user account modification
+      action: user name=tset state=absent
