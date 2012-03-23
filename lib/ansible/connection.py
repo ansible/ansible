@@ -84,7 +84,7 @@ class ParamikoConnection(object):
         try:
             sftp.put(in_path, out_path)
         except IOError:
-            raise errors.AnsibleException("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
 
     def close(self):
