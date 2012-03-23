@@ -1,0 +1,250 @@
+#!/usr/bin/python
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import os
+import pwd
+import shlex
+import spwd
+import subprocess
+import sys
+
+USERADD = "/usr/sbin/useradd"
+USERMOD = "/usr/sbin/usermod"
+USERDEL = "/usr/sbin/userdel"
+
+def debug(msg):
+    # ansible ignores stderr, so it's safe to use for debug
+    print >>sys.stderr, msg
+    #pass
+
+def exit_json(rc=0, **kwargs):
+    if 'name' in kwargs:
+        debug("add user info to exit_json")
+        add_user_info(kwargs)
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
+
+def add_user_info(kwargs):
+    name = kwargs['name']
+    if user_exists(name):
+        kwargs['state'] = 'present'
+        info = user_info(name)
+        kwargs['uid'] = info[2]
+        kwargs['gid'] = info[3]
+        kwargs['comment'] = info[4]
+        kwargs['home'] = info[5]
+        kwargs['shell'] = info[6]
+        kwargs['createhome'] = os.path.exists(info[5])
+    else:
+        kwargs['state'] = 'absent'
+    return kwargs
+
+def user_del(user, **kwargs):
+    cmd = [USERDEL]
+    for key in kwargs:
+        if key == 'force' and kwargs[key]:
+            cmd.append('-f')
+        elif key == 'remove' and kwargs[key]:
+            cmd.append('-r')
+    cmd.append(user)
+    debug("Arguments to userdel: %s" % (" ".join(cmd)))
+    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if rc == 0:
+        return True
+    else:
+        return False
+
+def user_add(user, **kwargs):
+    cmd = [USERADD]
+    for key in kwargs:
+        if key == 'uid' and kwargs[key] is not None:
+            cmd.append('-u')
+            cmd.append(kwargs[key])
+        elif key == 'gid' and kwargs[key] is not None:
+            cmd.append('-g')
+            cmd.append(kwargs[key])
+        elif key == 'comment' and kwargs[key] is not None:
+            cmd.append('-c')
+            cmd.append(kwargs[key])
+        elif key == 'home' and kwargs[key] is not None:
+            cmd.append('-d')
+            cmd.append(kwargs[key])
+        elif key == 'shell' and kwargs[key] is not None:
+            cmd.append('-s')
+            cmd.append(kwargs[key])
+        elif key == 'password' and kwargs[key] is not None:
+            cmd.append('-p')
+            cmd.append(kwargs[key])
+        elif key == 'createhome':
+            if kwargs[key] is not None:
+                if kwargs[key] == 'yes':
+                    cmd.append('-m')
+                else:
+                    cmd.append('-M')
+    cmd.append(user)
+    debug("Arguments to useradd: %s" % (" ".join(cmd)))
+    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if rc == 0:
+        return True
+    else:
+        return False
+
+def user_mod(user, **kwargs):
+    cmd = [USERMOD]
+    info = user_info(user)
+    for key in kwargs:
+        if key == 'uid':
+            if kwargs[key] is not None and info[2] != int(kwargs[key]):
+                cmd.append('-u')
+                cmd.append(kwargs[key])
+        elif key == 'gid':
+            if kwargs[key] is not None and info[3] != int(kwargs[key]):
+                cmd.append('-g')
+                cmd.append(kwargs[key])
+        elif key == 'comment':
+            if kwargs[key] is not None and info[4] != kwargs[key]:
+                cmd.append('-c')
+                cmd.append(kwargs[key])
+        elif key == 'home':
+            if kwargs[key] is not None and info[5] != kwargs[key]:
+                cmd.append('-d')
+                cmd.append(kwargs[key])
+        elif key == 'shell':
+            if kwargs[key] is not None and info[6] != kwargs[key]:
+                cmd.append('-s')
+                cmd.append(kwargs[key])
+        elif key == 'password':
+            if kwargs[key] is not None and info[1] != kwargs[key]:
+                cmd.append('-p')
+                cmd.append(kwargs[key])
+    # skip if no changes to be made
+    if len(cmd) == 1:
+        return False
+    cmd.append(user)
+    debug("Arguments to usermod: %s" % (" ".join(cmd)))
+    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if rc == 0:
+        return True
+    else:
+        return False
+
+def user_exists(user):
+    try:
+        if pwd.getpwnam(user):
+            return True
+    except KeyError:
+        return False
+
+def user_info(user):
+    if not user_exists(user):
+        return False
+    try:
+        info = list(pwd.getpwnam(user))
+        sinfo = spwd.getspnam(user)
+    except KeyError:
+        return False
+    info[1] = sinfo[1]
+    return info
+
+# ===========================================
+
+if not os.path.exists(USERADD):
+    if os.path.exists("/sbin/useradd"):
+        USERADD = "/sbin/useradd"
+    else:
+        fail_json(msg="Cannot find useradd")
+if not os.path.exists(USERMOD):
+    if os.path.exists("/sbin/usermod"):
+        USERMOD = "/sbin/usermod"
+    else:
+        fail_json(msg="Cannot find usermod")
+if not os.path.exists(USERDEL):
+    if os.path.exists("/sbin/userdel"):
+        USERDEL = "/sbin/userdel"
+    else:
+        fail_json(msg="Cannot find userdel")
+
+argfile = sys.argv[1]
+args    = open(argfile, 'r').read()
+items   = shlex.split(args)
+
+if not len(items):
+    fail_json(msg='the module requires arguments -a')
+    sys.exit(1)
+
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+state      = params.get('state','present')
+name       = params.get('name', None)
+uid        = params.get('uid', None)
+gid        = params.get('gid', None)
+comment    = params.get('comment', None)
+home       = params.get('home', None)
+shell      = params.get('shell', None)
+password   = params.get('password', None)
+
+# ===========================================
+# following options are specific to userdel
+force      = params.get('force', False)
+remove     = params.get('remove', False)
+
+# ===========================================
+# following options are specific to useradd
+createhome = params.get('createhome', 'yes')
+
+if state not in [ 'present', 'absent' ]:
+    fail_json(msg='invalid state')
+if createhome not in [ 'yes', 'no' ]:
+    fail_json(msg='invalid createhome')
+if name is None:
+    fail_json(msg='name is required')
+
+changed = False
+rc = 0
+if state == 'absent':
+    if user_exists(name):
+        changed = user_del(name, force=force, remove=remove)
+    exit_json(name=name, changed=changed, force=force, remove=remove)
+elif state == 'present':
+    if not user_exists(name):
+        changed = user_add(name, uid=uid, gid=gid, comment=comment,
+                           home=home, shell=shell, password=password,
+                           createhome=createhome)
+    else:
+        changed = user_mod(name, uid=uid, gid=gid, comment=comment,
+                           home=home, shell=shell, password=password)
+
+    if password is not None:
+        exit_json(name=name, changed=changed, password="XXXXXXXX")
+    else:
+        exit_json(name=name, changed=changed)
+
+fail_json(name=name, msg='Unexpected position reached')
+sys.exit(0)
