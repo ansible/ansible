@@ -336,8 +336,12 @@ class PlayBook(object):
         host_list = self._prune_failed_hosts(host_list)
 
         # load the module name and parameters from the task entry
-        name    = task['name']    # FIXME: error if not set
-        action  = task['action']  # FIXME: error if not set
+        name    = task.get('name', None) 
+        action  = task.get('action', None)
+        if action is None:
+            raise errors.AnsibleError("action is required for each item in tasks")
+        if name is None:
+            name = action
         only_if = task.get('only_if', 'True')
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds

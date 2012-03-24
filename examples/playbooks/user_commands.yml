@@ -15,11 +15,9 @@
     - name: test basic user account creation
       action: user name=tset comment=TsetUser gid=100 shell=/sbin/nologin createhome=no
 
-    - name: test user account modification
-      action: user name=tset comment=NyetUser
+    # the following is just a simple example of how you don't have to include
+    # the 'name' element for each task
 
-    - name: test user account password change
-      action: user name=tset password=$password
-
-    - name: test user account modification
-      action: user name=tset state=absent
+    - action: user name=tset comment=NyetUser
+    - action: user name=tset password=$password
+    - action: user name=tset state=absent
