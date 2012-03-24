@@ -18,8 +18,9 @@ ansible-playbook <filename.yml> ... [options]
 DESCRIPTION
 -----------
 
-*Ansible playbooks* are a configuration and multinode deployment system.  Ansible-playbook is the tool
-used to run them.   See the project home page (link below) for more information.
+*Ansible playbooks* are a configuration and multinode deployment
+system.  Ansible-playbook is the tool used to run them.  See the
+project home page (link below) for more information.
 
 
 ARGUMENTS
@@ -34,19 +35,19 @@ OPTIONS
 -------
 
 
-*-i*, *--inventory*::
+*-i* 'PATH', *--inventory=*'PATH'::
 
-Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
-
-
-*-M*, *--module-path*::
-
-Where to load modules from.  The default is /usr/share/ansible
+The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 
-*-f*, *--forks*::
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
-Desired level of parallelism.  Default 5.
+The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
+
+
+*-f* 'NUM', *--forks=*'NUM'::
+
+Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
 
 *-k*, *--ask-pass*::
@@ -54,9 +55,9 @@ Desired level of parallelism.  Default 5.
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
 
 
-*-T*, *--timeout*::
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
 
-Connection timeout to use when trying to talk to hosts, in seconds.
+Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
 
 ENVIRONMENT
