@@ -50,7 +50,7 @@ def main(args):
         help="ask for SSH password")
     parser.add_option("-M", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
-    parser.add_option('-o', '--override-hosts', dest="override_hosts", default=None,
+    parser.add_option('-O', '--override-hosts', dest="override_hosts", default=None,
         help="run playbook against these hosts regardless of inventory settings")
     parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
         dest='timeout', help="set the SSH timeout in seconds")
