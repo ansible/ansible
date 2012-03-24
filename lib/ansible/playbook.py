@@ -214,7 +214,7 @@ class PlayBook(object):
             self.dark[host] = 1
         for (host, host_result) in contacted_hosts.iteritems():
             self.processed[host] = 1
-            if 'failed' in host_result:
+            if 'failed' in host_result or (int(host_result.get('rc',0)) != 0):
                 self.callbacks.on_failed(host, host_result)
                 self.failures[host] = 1
             elif 'skipped' in host_result:
