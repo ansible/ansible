@@ -185,10 +185,11 @@ here.  We&#8217;ll use <cite>-m</cite> later to run some other <a class="referen
 execute a module using the shell, we can do those things, and also use pipe and redirection operators.
 Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
 module looks like this:</p>
-<div class="highlight-python"><pre>ansible raleigh -m shell -a "echo \\$TERM"</pre>
+<div class="highlight-python"><pre>ansible raleigh -m shell -a 'echo $TERM'</pre>
 </div>
 <p>When running any command with the ansible &#8220;ad hoc&#8221; CLI (as opposed to playbooks), pay particular attention
-to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.</p>
+to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.  For example, u
+using double vs single quotes would evaluate the variable on the box you were on.</p>
 <p>So far we&#8217;ve been demoing simple command execution, but most ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
 get it there.  This is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.
@@ -328,7 +329,7 @@ a simplified syntax for this.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 22, 2012.<br/>
+      Last updated on Mar 23, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

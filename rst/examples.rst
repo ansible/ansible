@@ -32,10 +32,11 @@ execute a module using the shell, we can do those things, and also use pipe and 
 Read more about the differences on the :doc:`modules` page.  The shell
 module looks like this::
 
-    ansible raleigh -m shell -a "echo \\$TERM"
+    ansible raleigh -m shell -a 'echo $TERM'
 
 When running any command with the ansible "ad hoc" CLI (as opposed to playbooks), pay particular attention
-to shell quoting rules, so the shell doesn't eat a variable before it gets passed to Ansible.
+to shell quoting rules, so the shell doesn't eat a variable before it gets passed to Ansible.  For example, u
+using double vs single quotes would evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most ansible modules usually do not work like 
 simple scripts. They make the remote system look like you state, and run the commands necessary to 
