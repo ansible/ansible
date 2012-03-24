@@ -60,6 +60,9 @@ class PlaybookCallbacks(object):
         else:
             print "ok: [%s] => %s\n" % (host, invocation)
 
+    def on_skipped(self, host):
+        print "skipping: [%s]\n" % host
+
     def on_import_for_host(self, host, imported_file):
         print "%s: importing %s" % (host, imported_file)
 

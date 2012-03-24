@@ -32,6 +32,9 @@ class TestCallbacks(object):
     def on_setup_secondary(self):
         self.events.append([ 'secondary_setup' ])
 
+    def on_skipped(self, host):
+        self.events.append([ 'skipped', [ host ]])
+
     def on_import_for_host(self, host, filename):
         self.events.append([ 'import', [ host, filename ]])
 
@@ -47,8 +50,9 @@ class TestCallbacks(object):
     def on_failed(self, host, results):
         self.events.append([ 'failed', [ host, results ]])
 
-    def on_ok(self, host, host_result):
+    def on_ok(self, host, result):
         # delete certain info from host_result to make test comparisons easier
+        host_result = result.copy()
         for k in [ 'ansible_job_id', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
             if k in host_result:
                 del host_result[k]

@@ -38,10 +38,13 @@ class PlayBook(object):
     management, or automation based set of commands to
     run in series.
 
-    multiple patterns do not execute simultaneously,
+    multiple plays/tasks do not execute simultaneously,
     but tasks in each pattern do execute in parallel
-    according to the number of forks requested.
+    (according to the number of forks requested) among
+    the hosts they address
     '''
+
+    # *****************************************************
 
     def __init__(self,
         playbook     =None,
@@ -53,11 +56,6 @@ class PlayBook(object):
         remote_pass  =C.DEFAULT_REMOTE_PASS,
         verbose=False,
         callbacks=None):
-
-        # TODO, once ansible-playbook is it's own script this will
-        # have much LESS parameters to the constructor and will
-        # read most everything per pattern from the playbook
-        # and this will be greatly simplified
 
         self.host_list   = host_list
         self.module_path = module_path
@@ -72,12 +70,12 @@ class PlayBook(object):
         # store the list of changes/invocations/failure counts
         # as a dictionary of integers keyed off the hostname
 
-        self.processed    = {}
         self.dark         = {}
         self.changed      = {}
         self.invocations  = {}
         self.failures     = {}
         self.skipped      = {}
+        self.processed    = {}
 
         # playbook file can be passed in as a path or
         # as file contents (to support API usage)
@@ -86,16 +84,22 @@ class PlayBook(object):
         self.playbook = self._parse_playbook(playbook)
 
         self.host_list, self.groups = ansible.runner.Runner.parse_hosts(host_list)
-
+    
+    # *****************************************************
 
     def _get_vars(self, play, dirname):
+        ''' load the vars section from a play '''
+
         vars = play.get('vars', {})
         if type(vars) != dict:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
         return vars
 
+    # *****************************************************
+
     def _include_tasks(self, play, task, dirname, new_tasks):
-        # an include line looks like:
+        ''' load tasks included from external files. '''
+
         # include: some.yml a=2 b=3 c=4
         include_tokens = task['include'].split()
         path = utils.path_dwim(dirname, include_tokens[0])
@@ -109,13 +113,19 @@ class PlayBook(object):
             for x in included:
                 new_tasks.append(x)
 
+    # *****************************************************
+
     def _include_handlers(self, play, handler, dirname, new_handlers):
+        ''' load handlers from external files '''
+
         path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
         included = utils.template_from_file(path, inject_vars)
         included = utils.parse_yaml(included)
         for x in included:
             new_handlers.append(x)
+
+    # *****************************************************
 
     def _parse_playbook(self, playbook):
         ''' load YAML file, including handling for imported files '''
@@ -146,6 +156,8 @@ class PlayBook(object):
             play['handlers'] = new_handlers
 
         return playbook
+
+    # *****************************************************
         
     def run(self):
         ''' run all patterns in the playbook '''
@@ -158,55 +170,74 @@ class PlayBook(object):
         # summarize the results
         results = {}
         for host in self.processed.keys():
-            results[host]  = {
-                'resources'   : self.invocations.get(host, 0),
-                'changed'     : self.changed.get(host, 0),
-                'dark'        : self.dark.get(host, 0),
-                'failed'      : self.failures.get(host, 0),
-                'skipped'     : self.skipped.get(host, 0)
-            }
-
-        # FIXME: TODO: use callback to reinstate per-host summary
-        # and add corresponding code in /bin/ansible-playbook
+            results[host] = dict(
+                resources = self.invocations.get(host, 0),
+                changed   = self.changed.get(host, 0),
+                dark      = self.dark.get(host, 0),
+                failed    = self.failures.get(host, 0),
+                skipped   = self.skipped.get(host, 0)
+            )
         return results
 
+    # *****************************************************
+
     def _prune_failed_hosts(self, host_list):
+        ''' given a host list, use the global failure information to trim the list '''
+
         new_hosts = []
         for x in host_list:
             if not x in self.failures and not x in self.dark:
                 new_hosts.append(x)
         return new_hosts
 
+    # *****************************************************
+
     def hosts_to_poll(self, results):
         ''' which hosts need more polling? '''
+
         hosts = []
         for (host, res) in results['contacted'].iteritems():
-            # FIXME: make polling pattern in /bin/ansible match
-            # move to common function in utils
             if not 'finished' in res and not 'skipped' in res and 'started' in res:
                 hosts.append(host)
         return hosts
 
+    # ****************************************************
+
+    def _compute_aggregrate_counts(self, results, poll=False, setup=False):
+        ''' prints results about playbook run + computes stats about per host changes '''
+
+        dark_hosts = results.get('dark',{})
+        contacted_hosts = results.get('contacted',{})
+        for (host, error) in dark_hosts.iteritems():
+            self.processed[host] = 1
+            self.callbacks.on_dark_host(host, error)
+            self.dark[host] = 1
+        for (host, host_result) in contacted_hosts.iteritems():
+            self.processed[host] = 1
+            if 'failed' in host_result:
+                self.callbacks.on_failed(host, host_result)
+                self.failures[host] = 1
+            elif 'skipped' in host_result:
+                self.skipped[host] = self.skipped.get(host, 0) + 1
+                self.callbacks.on_skipped(host)
+            if poll:
+                continue
+            if not setup and ('changed' in host_result):
+                self.invocations[host] = self.invocations.get(host, 0) + 1
+                self.changed[host] = self.changed.get(host, 0) + 1
+                self.callbacks.on_ok(host, host_result)
+            else:
+                self.invocations[host] = self.invocations.get(host, 0) + 1
+                self.callbacks.on_ok(host, host_result)
+
+    # *****************************************************
 
     def _async_poll(self, runner, async_seconds, async_poll_interval, only_if):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
-        # TODO: refactor this function
         runner.background = async_seconds
         results = runner.run()
-
-        # TODO -- this block is repeated in lots of places, refactor
-        dark_hosts = results.get('dark',{})
-        contacted_hosts = results.get('contacted',{})
-        for (host, error) in dark_hosts.iteritems():
-            self.callbacks.on_dark_host(host, error)
-            self.dark[host] = 1
-        for (host, host_result) in contacted_hosts.iteritems():
-            if 'failed' in host_result:
-                self.callbacks.on_failed(host, host_result)
-                self.failures[host] = 1
-            if 'skipped' in host_result:
-                self.skipped[host] = self.skipped.get(host, 0) + 1
+        self._compute_aggregrate_counts(results, poll=True)
 
         if async_poll_interval <= 0:
             # if not polling, playbook requested fire and forget
@@ -218,10 +249,11 @@ class PlayBook(object):
             # no hosts launched ok, return that.
             return results
         ahost = poll_hosts[0]
+
         jid = results['contacted'][ahost].get('ansible_job_id', None)
+
         if jid is None:
-            # FIXME this really shouldn't happen.  consider marking hosts failed
-            # and looking for jid in other host.
+            # note: this really shouldn't happen, ever
             self.callbacks.on_async_confused("unexpected error: unable to determine jid")
             return results
 
@@ -231,13 +263,13 @@ class PlayBook(object):
 
         poll_results = results
         while (clock >= 0):
+
+            # poll/loop until polling duration complete
+	    # FIXME: make a "get_async_runner" method like in /bin/ansible
             runner.hosts = poll_hosts
-            # FIXME: make a "get_async_runner" method like in /bin/ansible
-            # loop until polling duration complete
             runner.module_args = [ "jid=%s" % jid ]
             runner.module_name = 'async_status'
-            # FIXME: make it such that if you say 'async_status' you
-            # can't background that op!
+            # FIXME: make it such that if you say 'async_status' you # can't background that op!
             runner.background  = 0  
             runner.pattern     = '*'
             runner.hosts       = self.hosts_to_poll(poll_results)
@@ -248,56 +280,38 @@ class PlayBook(object):
             if poll_results is None:
                 break
 
-            # TODO -- this block is repeated in lots of places, refactor
-            dark_hosts = poll_results.get('dark',{})
-            contacted_hosts = poll_results.get('contacted',{})
-            for (host, error) in dark_hosts.iteritems():
-                self.callbacks.on_dark_host(host, error)
-                self.dark[host] = 1
-            for (host, host_result) in contacted_hosts.iteritems():
-                if 'failed' in host_result:
-                    self.callbacks.on_failed(host, host_result)
-                    self.failures[host] = 1
-                if 'skipped' in host_result:
-                    # NOTE: callbacks on skipped?  should not really
-                    # happen at this point in the loop
-                    self.skipped[host] = self.skipped.get(host, 0) + 1
+            self._compute_aggregrate_counts(poll_results, poll=True)
 
-
+            # mention which hosts we're going to poll again...
             for (host, host_result) in poll_results['contacted'].iteritems():
                 results['contacted'][host] = host_result
                 if not host in self.dark and not host in self.failures:
-                    # override last result with current status result for report
-                    # output if requested
                     self.callbacks.on_async_poll(jid, host, clock, host_result)
+
             # run down the clock
             clock = clock - async_poll_interval
             time.sleep(async_poll_interval)
-            # do not have to poll the completed hosts, smaller list
+
             # mark any hosts that are still listed as started as failed
             # since these likely got killed by async_wrapper
             for (host, host_result) in results['contacted'].iteritems():
                 if 'started' in host_result:
                     results['contacted'][host] = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+
         return results
+
+    # *****************************************************
 
     def _run_module(self, pattern, module, args, hosts, remote_user,
         async_seconds, async_poll_interval, only_if):
-
         ''' run a particular module step in a playbook '''
+
         runner = ansible.runner.Runner(
-            pattern=pattern,
-            groups=self.groups,
-            module_name=module,
-            module_args=args,
-            host_list=hosts,
-            forks=self.forks,
-            remote_pass=self.remote_pass,
-            module_path=self.module_path,
-            timeout=self.timeout,
-            remote_user=remote_user,
-            setup_cache=SETUP_CACHE,
-            basedir=self.basedir,
+            pattern=pattern, groups=self.groups, module_name=module,
+            module_args=args, host_list=hosts, forks=self.forks,
+            remote_pass=self.remote_pass, module_path=self.module_path,
+            timeout=self.timeout, remote_user=remote_user,
+            setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if
         )
 
@@ -312,13 +326,11 @@ class PlayBook(object):
 
         return rc
 
+    # *****************************************************
 
     def _run_task(self, pattern=None, task=None, host_list=None,
         remote_user=None, handlers=None, conditional=False):
-        '''
-        run a single task in the playbook and
-        recursively run any subtasks.
-        '''
+        ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # do not continue to run tasks on hosts that have had failures
         host_list = self._prune_failed_hosts(host_list)
@@ -352,48 +364,7 @@ class PlayBook(object):
         if results is None:
             results = {}
  
-        # walk through the results and build up
-        # summary information about successes and
-        # failures.  FIXME: TODO: split into subfunction!
-
-        dark      = results.get("dark", {})
-        contacted = results.get("contacted", {})
-
-        for host, msg in dark.iteritems():
-            self.processed[host] = 1
-            self.callbacks.on_unreachable(host, msg)
-            if not host in self.dark:
-                self.dark[host] = 1
-            else:
-                self.dark[host] = self.dark[host] + 1
-       
-        # FIXME: refactor
-        for host, results in contacted.iteritems():
-            self.processed[host] = 1
-   
-            if utils.is_failed(results):
-                self.callbacks.on_failed(host, results)
-                if not host in self.failures:
-                    self.failures[host] = 1
-                else:
-                    self.failures[host] = self.failures[host] + 1
-            else:
-                self.callbacks.on_ok(host, results)
-                if not host in self.invocations:
-                    self.invocations[host] = 1
-                else:
-                    self.invocations[host] = self.invocations[host] + 1
-                if results.get('changed', False):
-                    if not host in self.changed:
-                        self.changed[host] = 1
-                    else:
-                        self.changed[host] = self.changed[host] + 1
-                # TODO: verify/test that async steps are skippable
-                if results.get('skipped', False):
-                    if not host in self.changed:
-                        self.skipped[host] = 1
-                    else:
-                        self.skipped[host] = self.skipped[host] + 1
+        self._compute_aggregrate_counts(results)
 
         # flag which notify handlers need to be run
         # this will be on a SUBSET of the actual host list.  For instance
@@ -402,10 +373,12 @@ class PlayBook(object):
 
         subtasks = task.get('notify', [])
         if len(subtasks) > 0:
-            for host, results in contacted.iteritems():
+            for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for subtask in subtasks:
                         self._flag_handler(handlers, subtask, host)
+
+    # *****************************************************
 
     def _flag_handler(self, handlers, match_name, host):
         ''' 
@@ -422,11 +395,12 @@ class PlayBook(object):
             if name is None:
                 raise errors.AnsibleError('handler is missing a name')
             if match_name == name:
-                # flag the handler with the list of hosts
-                # it needs to be run on, it will be run later
+                # flag the handler with the list of hosts it needs to be run on, it will be run later
                 if not 'run' in x:
                     x['run'] = []
                 x['run'].append(host)
+
+    # *****************************************************
 
     def _do_setup_step(self, pattern, vars, user, host_list, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
@@ -489,31 +463,14 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=pattern,
-            groups=self.groups,
-            module_name='setup',
-            module_args=push_var_str,
-            host_list=self.host_list,
-            forks=self.forks,
-            module_path=self.module_path,
-            timeout=self.timeout,
-            remote_user=user,
-            remote_pass=self.remote_pass,
-            setup_cache=SETUP_CACHE
+            pattern=pattern, groups=self.groups, module_name='setup',
+            module_args=push_var_str, host_list=self.host_list,
+            forks=self.forks, module_path=self.module_path,
+            timeout=self.timeout, remote_user=user,
+            remote_pass=self.remote_pass, setup_cache=SETUP_CACHE
         ).run()
 
-        # FIXME: similar logic up in run_task, refactor
-        dark_hosts = setup_results.get('dark',{})
-        contacted_hosts = setup_results.get('contacted',{})
-        for (host, error) in dark_hosts.iteritems():
-            self.callbacks.on_dark_host(host, error)
-            self.dark[host] = 1
-        for (host, host_result) in contacted_hosts.iteritems():
-            if 'failed' in host_result:
-                self.callbacks.on_failed(host, host_result)
-                self.failures[host] = 1
-            else:
-                self.callbacks.on_ok(host, host_result)
+        self._compute_aggregrate_counts(setup_results, setup=True)
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
@@ -526,10 +483,10 @@ class PlayBook(object):
         host_list = self._prune_failed_hosts(host_list)
         return host_list
 
+    # *****************************************************
+
     def _run_play(self, pg):
-        '''
-        run a list of tasks for a given pattern, in order
-        '''
+        ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
         pattern  = pg['hosts']

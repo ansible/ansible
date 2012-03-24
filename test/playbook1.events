@@ -31,7 +31,7 @@
             "import", 
             [
                 "127.0.0.1", 
-                "/home/mdehaan/ansible/test/default_os.yml"
+                "/home/mdehaan/ansible/test/CentOS.yml"
             ]
         ], 
         [
@@ -213,6 +213,28 @@
         [
             "task start", 
             [
+                "this should be skipped", 
+                false
+            ]
+        ], 
+        [
+            "skipped", 
+            [
+                "127.0.0.1"
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "skipped": true
+                }
+            ]
+        ], 
+        [
+            "task start", 
+            [
                 "on change 1", 
                 true
             ]
@@ -222,12 +244,10 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": [
-                        "/bin/true"
-                    ], 
+                    "cmd": "echo this should fire once  ", 
                     "rc": 0, 
                     "stderr": "", 
-                    "stdout": ""
+                    "stdout": "this should fire once"
                 }
             ]
         ], 
@@ -243,12 +263,10 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": [
-                        "/bin/true"
-                    ], 
+                    "cmd": "echo this should fire once also ", 
                     "rc": 0, 
                     "stderr": "", 
-                    "stdout": ""
+                    "stdout": "this should fire once also"
                 }
             ]
         ]
@@ -258,8 +276,9 @@
             "changed": 2, 
             "dark": 0, 
             "failed": 0, 
-            "resources": 9, 
-            "skipped": 0
+            "resources": 12, 
+            "skipped": 1
         }
     }
 }
+
