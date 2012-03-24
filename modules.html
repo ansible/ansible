@@ -210,7 +210,7 @@ paths to commands must be fully qualified.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.</p>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
 </div>
 </div>
@@ -229,7 +229,7 @@ absolute or relative path.</li>
 <li>Remote absolute path where the file should end up.</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
 </div>
 </div>
@@ -267,7 +267,7 @@ to the file module are also available when running the <cite>copy</cite> or <cit
 <ul class="simple">
 <li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
 </ul>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file dest=/etc/foo.conf owner=foo group=foo mode=0644
 file dest=/some/path owner=foo group=foo state=directory
 file dest/path/to/delete state=absent</pre>
@@ -289,7 +289,7 @@ file dest/path/to/delete state=absent</pre>
 <li>What version to check out &#8211; either the git SHA, the literal string
 <tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
 </ul>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
 </div>
 </div>
@@ -324,7 +324,7 @@ unless necessary.  <tt class="docutils literal"><span class="pre">restarted</spa
 <ul class="simple">
 <li>The name of the service.</li>
 </ul>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>service name=httpd state=started
 service name=httpd state=stopped
 service name=httpd state=restarted</pre>
@@ -348,7 +348,7 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
 </ul>
 </div></blockquote>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>vars:
     ntpserver: 'ntp.example.com'
     xyz: 1234</pre>
@@ -427,7 +427,7 @@ example in the github examples directory for what this looks like in a playbook.
 <ul class="simple">
 <li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.</li>
 </ul>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
 user name=mdehaan state=absent</pre>
 </div>
@@ -449,7 +449,7 @@ user name=mdehaan state=absent</pre>
 various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
 &#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.</li>
 </ul>
-<p>Example action from a <tt class="xref doc docutils literal"><span class="pre">playbook</span></tt>:</p>
+<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>yum pkg=httpd ensure=latest
 yum pkg=httpd ensure=removed
 yum pkg=httpd ensure=installed</pre>
@@ -486,7 +486,7 @@ yum pkg=httpd ensure=installed</pre>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 23, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
     </p>
   </div>
 </footer>

@@ -246,7 +246,8 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
      other: 'magic'</pre>
 </div>
 <p>These variables can be used later in the playbook, or on the managed system (in templates), just like this:</p>
-<div class="highlight-python"><pre>{{ varname }}</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">varname</span> <span class="p">}}</span>
+</pre></div>
 </div>
 <p>Within playbooks themselves, but not within templates on the remote machines, it&#8217;s also legal
 to use nicer shorthand like this:</p>
@@ -465,7 +466,8 @@ include files to do this.</p>
 </div>
 <p>Variables passed in can be used in the include files too.  Assume a variable named &#8216;user&#8217;. Using
 <cite>jinja2</cite> syntax, anywhere in the included file, you can say:</p>
-<div class="highlight-python"><pre>{{ user }}</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">user</span> <span class="p">}}</span>
+</pre></div>
 </div>
 <p>I can also pass variables into includes directly.  We might call this a &#8216;parameterized include&#8217;.</p>
 <p>For instance, if deploying multiple wordpress instances, I could
@@ -623,7 +625,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Mar 23, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
     </p>
   </div>
 </footer>
