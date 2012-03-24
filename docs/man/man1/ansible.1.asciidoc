@@ -27,37 +27,38 @@ ARGUMENTS
 
 *host-pattern*::
 
-A name of a group in the inventory file, a shell-like glob selecting hosts in inventory
-file, or any combination of the two seperated by semicolons.
+A name of a group in the inventory file, a shell-like glob selecting
+hosts in inventory file, or any combination of the two separated by
+semicolons.
 
 
 OPTIONS
 -------
 
 
-*-i*, *--inventory*::
+*-i* 'PATH', *--inventory=*'PATH'::
 
-Path to the inventory hosts file, which defaults to /etc/ansible/hosts.
-
-
-*-f*, *--forks*::
-
-Level of parallelism. Specify as an integer, the default is 5.
+The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 
-*-m*, *--module-name*::
+*-f* 'NUM', *--forks=*'NUM'::
 
-Module name to execute.
-
-
-*-M*, *--module-path*::
-
-Where to load modules from.  The default is /usr/share/ansible
+Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
 
-*-a*, *--args*::
+*-m* 'NAME', *--module-name=*'NAME'::
 
-Arguments to pass to the module
+Execute the module called 'NAME'.
+
+
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+
+The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
+
+
+*-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
+
+The 'ARGUMENTS' to pass to the module.
 
 
 *-k*, *--ask-pass*::
@@ -70,29 +71,30 @@ Prompt for the SSH password instead of assuming key-based authentication with ss
 Try to output everything on one line.
 
 
-*-t*, *--tree*::
+*-t* 'DIRECTORY', *--tree=*'DIRECTORY'::
 
-Save contents in this output directory, with the results named in a file named after each host.
-
-
-*-T*, *--timeout*::
-
-Connection timeout to use when trying to talk to hosts, in seconds.
+Save contents in this output 'DIRECTORY', with the results saved in a
+file named after each host.
 
 
-*-B*, *--background*::
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
 
-Runs commands in the background, killing the task after N seconds.
-
-
-*-P*, *--poll*::
-
-Poll a background job every (this many) seconds.  Requires -B.
+Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
 
-*-u*, *--remote-user*::
+*-B* 'NUM', *--background=*'NUM'::
 
-Use this remote username instead of root
+Run commands in the background, killing the task after 'NUM' seconds.
+
+
+*-P* 'NUM', *--poll=*'NUM'::
+
+Poll a background job every 'NUM' seconds. Requires *-B*.
+
+
+*-u* 'USERNAME', *--remote-user=*'USERNAME'::
+
+Use this remote 'USERNAME' instead of root.
 
 
 INVENTORY

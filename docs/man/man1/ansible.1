@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 03/31/2012
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/23/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.1
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "03/31/2012" "Ansible 0\&.0\&.1" "System administration commands"
+.TH "ANSIBLE" "1" "03/23/2012" "Ansible 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -25,38 +34,49 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
 .RS 4
-A name of a group in the inventory file, a shell\-like glob selecting hosts in inventory file, or any combination of the two seperated by semicolons\&.
+A name of a group in the inventory file, a shell\-like glob selecting hosts in inventory file, or any combination of the two separated by semicolons\&.
 .RE
 .SH "OPTIONS"
 .PP
-\fB\-i\fR, \fB\-\-inventory\fR
+\fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
 .RS 4
-Path to the inventory hosts file, which defaults to /etc/ansible/hosts\&.
+The
+\fIPATH\fR
+to the inventory hosts file, which defaults to
+\fI/etc/ansible/hosts\fR\&.
 .RE
 .PP
-\fB\-f\fR, \fB\-\-forks\fR
+\fB\-f\fR \fINUM\fR, \fB\-\-forks=\fR\fINUM\fR
 .RS 4
-Level of parallelism\&. Specify as an integer, the default is 5\&.
+Level of parallelism\&.
+\fINUM\fR
+is specified as an integer, the default is 5\&.
 .RE
 .PP
-\fB\-m\fR, \fB\-\-module\-name\fR
+\fB\-m\fR \fINAME\fR, \fB\-\-module\-name=\fR\fINAME\fR
 .RS 4
-Module name to execute\&.
+Execute the module called
+\fINAME\fR\&.
 .RE
 .PP
-\fB\-M\fR, \fB\-\-module\-path\fR
+\fB\-M\fR \fIDIRECTORY\fR, \fB\-\-module\-path=\fR\fIDIRECTORY\fR
 .RS 4
-Where to load modules from\&. The default is /usr/share/ansible
+The
+\fIDIRECTORY\fR
+to load modules from\&. The default is
+\fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR, \fB\-\-args\fR
+\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
 .RS 4
-Arguments to pass to the module
+The
+\fIARGUMENTS\fR
+to pass to the module\&.
 .RE
 .PP
 \fB\-k\fR, \fB\-\-ask\-pass\fR
@@ -69,29 +89,38 @@ Prompt for the SSH password instead of assuming key\-based authentication with s
 Try to output everything on one line\&.
 .RE
 .PP
-\fB\-t\fR, \fB\-\-tree\fR
+\fB\-t\fR \fIDIRECTORY\fR, \fB\-\-tree=\fR\fIDIRECTORY\fR
 .RS 4
-Save contents in this output directory, with the results named in a file named after each host\&.
+Save contents in this output
+\fIDIRECTORY\fR, with the results saved in a file named after each host\&.
 .RE
 .PP
-\fB\-T\fR, \fB\-\-timeout\fR
+\fB\-T\fR \fISECONDS\fR, \fB\-\-timeout=\fR\fISECONDS\fR
 .RS 4
-Connection timeout to use when trying to talk to hosts, in seconds\&.
+Connection timeout to use when trying to talk to hosts, in
+\fISECONDS\fR\&.
 .RE
 .PP
-\fB\-B\fR, \fB\-\-background\fR
+\fB\-B\fR \fINUM\fR, \fB\-\-background=\fR\fINUM\fR
 .RS 4
-Runs commands in the background, killing the task after N seconds\&.
+Run commands in the background, killing the task after
+\fINUM\fR
+seconds\&.
 .RE
 .PP
-\fB\-P\fR, \fB\-\-poll\fR
+\fB\-P\fR \fINUM\fR, \fB\-\-poll=\fR\fINUM\fR
 .RS 4
-Poll a background job every (this many) seconds\&. Requires \-B\&.
+Poll a background job every
+\fINUM\fR
+seconds\&. Requires
+\fB\-B\fR\&.
 .RE
 .PP
-\fB\-u\fR, \fB\-\-remote\-user\fR
+\fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
 .RS 4
-Use this remote username instead of root
+Use this remote
+\fIUSERNAME\fR
+instead of root\&.
 .RE
 .SH "INVENTORY"
 .sp
