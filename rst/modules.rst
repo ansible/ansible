@@ -56,7 +56,7 @@ This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     command /sbin/shutdown -t now
 
@@ -82,7 +82,7 @@ module.
 
 This module also returns md5sum information about the resultant file.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 
@@ -128,7 +128,7 @@ to the file module are also available when running the `copy` or `template` modu
 
 * name of group that should own the file or directory, as would be given to `chgrp`
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     file dest=/etc/foo.conf owner=foo group=foo mode=0644
     file dest=/some/path owner=foo group=foo state=directory
@@ -153,7 +153,7 @@ Deploys software (or files) from git checkouts.
 * What version to check out -- either the git SHA, the literal string
   ``HEAD``, or a tag name.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
 
@@ -198,7 +198,7 @@ Controls services on remote machines.
 
 * The name of the service.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     service name=httpd state=started
     service name=httpd state=stopped
@@ -226,7 +226,7 @@ tell their source.  All variables are then bubbled up to the caller.
  * Any other parameters can be named basically anything, and set a
    ``key=value`` pair in the JSON file for use in templating.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     vars:
         ntpserver: 'ntp.example.com'
@@ -325,7 +325,7 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 * Defaults to 'present'.  When 'absent', the user account will be removed if present.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
     user name=mdehaan state=absent
@@ -351,7 +351,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
   various configuration attributes.  Values include 'installed', 'updates',
   'available', 'repos', or any package specifier.
 
-Example action from a :doc:`playbook`::
+Example action from a :doc:`playbooks`::
 
     yum pkg=httpd ensure=latest
     yum pkg=httpd ensure=removed
