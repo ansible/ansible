@@ -224,15 +224,6 @@
             ]
         ], 
         [
-            "ok", 
-            [
-                "127.0.0.1", 
-                {
-                    "skipped": true
-                }
-            ]
-        ], 
-        [
             "task start", 
             [
                 "on change 1", 
@@ -276,7 +267,7 @@
             "changed": 2, 
             "dark": 0, 
             "failed": 0, 
-            "resources": 12, 
+            "resources": 11, 
             "skipped": 1
         }
     }

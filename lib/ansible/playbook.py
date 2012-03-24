@@ -220,9 +220,9 @@ class PlayBook(object):
             elif 'skipped' in host_result:
                 self.skipped[host] = self.skipped.get(host, 0) + 1
                 self.callbacks.on_skipped(host)
-            if poll:
+            elif poll:
                 continue
-            if not setup and ('changed' in host_result):
+            elif not setup and ('changed' in host_result):
                 self.invocations[host] = self.invocations.get(host, 0) + 1
                 self.changed[host] = self.changed.get(host, 0) + 1
                 self.callbacks.on_ok(host, host_result)
@@ -402,55 +402,61 @@ class PlayBook(object):
 
     # *****************************************************
 
+    def _do_conditional_imports(self, vars_files, host_list):
+        ''' handle the vars_files section, which can contain variables '''
+        
+        # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
+        # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
+        #        not super optimized yet either, because we wouldn't have hit them, ergo
+        #        it will raise false errors if there is no defaults variable file without any $vars
+        #        in it, which could happen on uncontacted hosts.
+ 
+        if type(vars_files) != list:
+            raise errors.AnsibleError("vars_files must be a list")
+        for host in host_list:
+            cache_vars = SETUP_CACHE.get(host,{})
+            SETUP_CACHE[host] = {}
+            for filename in vars_files:
+                if type(filename) == list:
+                    # loop over all filenames, loading the first one, and failing if # none found
+                    found = False
+                    sequence = []
+                    for real_filename in filename:
+                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
+                        sequence.append(filename2)
+                        if os.path.exists(filename2):
+                            found = True
+                            data = utils.parse_yaml_from_file(filename2)
+                            SETUP_CACHE[host].update(data)
+                            self.callbacks.on_import_for_host(host, filename2)
+                            break
+                        else:
+                            self.callbacks.on_not_import_for_host(host, filename2)
+                    if not found:
+                        raise errors.AnsibleError(
+                            "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
+                        )
+
+                else:
+                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                    if not os.path.exists(filename2):
+                        raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
+                    data = utils.parse_yaml_from_file(filename2)
+                    SETUP_CACHE[host].update(data)
+                    self.callbacks.on_import_for_host(host, filename2)
+
+    # *****************************************************
+
     def _do_setup_step(self, pattern, vars, user, host_list, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
         # after the original pass when we have that data.
         #
-        # FIXME: refactor into subfunction
-        # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
-        # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
-        #        not super optimized yet either, because we wouldn't have hit them, ergo
-        #        it will raise false errors if there is no defaults variable file without any $vars
-        #        in it, which could happen on uncontacted hosts.
 
         if vars_files is not None:
-            if type(vars_files) != list:
-                raise errors.AnsibleError("vars_files must be a list")
             self.callbacks.on_setup_secondary()
-            for host in host_list:
-                cache_vars = SETUP_CACHE.get(host,{})
-                SETUP_CACHE[host] = {}
-                for filename in vars_files:
-                    if type(filename) == list:
-                        # loop over all filenames, loading the first one, and failing if
-                        # none found
-                        found = False
-                        sequence = []
-                        for real_filename in filename:
-                            filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
-                            sequence.append(filename2)
-                            if os.path.exists(filename2):
-                                found = True
-                                data = utils.parse_yaml_from_file(filename2)
-                                SETUP_CACHE[host].update(data)
-                                self.callbacks.on_import_for_host(host, filename2)
-                                break
-                            else:
-                                self.callbacks.on_not_import_for_host(host, filename2)
-                        if not found:
-                            raise errors.AnsibleError(
-                                "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
-                            )
-
-                    else:
-                        filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
-                        if not os.path.exists(filename2):
-                            raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
-                        data = utils.parse_yaml_from_file(filename2)
-                        SETUP_CACHE[host].update(data)
-                        self.callbacks.on_import_for_host(host, filename2)
+            self._do_conditional_imports(vars_files, host_list)
         else:
             self.callbacks.on_setup_primary()
 
