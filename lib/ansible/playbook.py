@@ -47,24 +47,26 @@ class PlayBook(object):
     # *****************************************************
 
     def __init__(self,
-        playbook     =None,
-        host_list    =C.DEFAULT_HOST_LIST,
-        module_path  =C.DEFAULT_MODULE_PATH,
-        forks        =C.DEFAULT_FORKS,
-        timeout      =C.DEFAULT_TIMEOUT,
-        remote_user  =C.DEFAULT_REMOTE_USER,
-        remote_pass  =C.DEFAULT_REMOTE_PASS,
-        verbose=False,
-        callbacks=None):
+        playbook       = None,
+        host_list      = C.DEFAULT_HOST_LIST,
+        module_path    = C.DEFAULT_MODULE_PATH,
+        forks          = C.DEFAULT_FORKS,
+        timeout        = C.DEFAULT_TIMEOUT,
+        remote_user    = C.DEFAULT_REMOTE_USER,
+        remote_pass    = C.DEFAULT_REMOTE_PASS,
+        override_hosts = None,
+        verbose        = False,
+        callbacks      = None):
 
-        self.host_list   = host_list
-        self.module_path = module_path
-        self.forks       = forks
-        self.timeout     = timeout
-        self.remote_user = remote_user
-        self.remote_pass = remote_pass
-        self.verbose     = verbose
-        self.callbacks   = callbacks
+        self.host_list      = host_list
+        self.module_path    = module_path
+        self.forks          = forks
+        self.timeout        = timeout
+        self.remote_user    = remote_user
+        self.remote_pass    = remote_pass
+        self.verbose        = verbose
+        self.callbacks      = callbacks
+        self.override_hosts = override_hosts
         self.callbacks.set_playbook(self)
 
         # store the list of changes/invocations/failure counts
@@ -83,7 +85,8 @@ class PlayBook(object):
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
-        self.host_list, self.groups = ansible.runner.Runner.parse_hosts(host_list)
+        self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
+            host_list, override_hosts=self.override_hosts)
     
     # *****************************************************
 
@@ -499,7 +502,11 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
-        pattern  = pg['hosts']
+        pattern  = pg.get('hosts',None)
+        if self.override_hosts:
+            pattern = 'all'
+        if pattern is None:
+            raise errors.AnsibleError('hosts declaration is required')
 
         vars       = self._get_vars(pg, self.basedir)
         vars_files = pg.get('vars_files', {})

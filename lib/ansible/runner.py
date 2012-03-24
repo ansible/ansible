@@ -149,8 +149,13 @@ class Runner(object):
     # *****************************************************
 
     @classmethod
-    def parse_hosts(cls, host_list):
+    def parse_hosts(cls, host_list, override_hosts=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
+
+        if override_hosts is not None:
+            if type(override_hosts) != list:
+                raise errors.AnsibleError("override hosts must be a list")
+            return (override_hosts, dict(ungrouped=override_hosts))
 
         if type(host_list) == list:
             raise Exception("function can only be called on inventory files")

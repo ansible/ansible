@@ -50,6 +50,8 @@ def main(args):
         help="ask for SSH password")
     parser.add_option("-M", "--module-path", dest="module_path",
         help="path to module library", default=C.DEFAULT_MODULE_PATH)
+    parser.add_option('-o', '--override-hosts', dest="override_hosts", default=None,
+        help="run playbook against these hosts regardless of inventory settings")
     parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
         dest='timeout', help="set the SSH timeout in seconds")
 
@@ -62,6 +64,9 @@ def main(args):
     sshpass = None
     if options.ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
+    override_hosts = None
+    if options.override_hosts:
+        override_hosts = options.override_hosts.split(",")
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -73,7 +78,8 @@ def main(args):
             verbose=True,
             remote_pass=sshpass,
             callbacks=callbacks.PlaybookCallbacks(),
-            timeout=options.timeout
+            timeout=options.timeout,
+            override_hosts=override_hosts,
         )
         try:
             results = pb.run()
