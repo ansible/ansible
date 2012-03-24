@@ -503,7 +503,7 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern  = pg.get('hosts',None)
-        if self.override_hosts:
+        if self.override_hosts and not pattern:
             pattern = 'all'
         if pattern is None:
             raise errors.AnsibleError('hosts declaration is required')
