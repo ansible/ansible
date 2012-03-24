@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-playbook
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 03/31/2012
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/23/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.1
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "03/31/2012" "Ansible 0\&.0\&.1" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "03/23/2012" "Ansible 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,19 +43,27 @@ The names of one or more YAML format files to run as ansible playbooks\&.
 .RE
 .SH "OPTIONS"
 .PP
-\fB\-i\fR, \fB\-\-inventory\fR
+\fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
 .RS 4
-Path to the inventory hosts file, which defaults to /etc/ansible/hosts\&.
+The
+\fIPATH\fR
+to the inventory hosts file, which defaults to
+\fI/etc/ansible/hosts\fR\&.
 .RE
 .PP
-\fB\-M\fR, \fB\-\-module\-path\fR
+\fB\-M\fR \fIDIRECTORY\fR, \fB\-\-module\-path=\fR\fIDIRECTORY\fR
 .RS 4
-Where to load modules from\&. The default is /usr/share/ansible
+The
+\fIDIRECTORY\fR
+to load modules from\&. The default is
+\fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-f\fR, \fB\-\-forks\fR
+\fB\-f\fR \fINUM\fR, \fB\-\-forks=\fR\fINUM\fR
 .RS 4
-Desired level of parallelism\&. Default 5\&.
+Level of parallelism\&.
+\fINUM\fR
+is specified as an integer, the default is 5\&.
 .RE
 .PP
 \fB\-k\fR, \fB\-\-ask\-pass\fR
@@ -54,9 +71,10 @@ Desired level of parallelism\&. Default 5\&.
 Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
 .RE
 .PP
-\fB\-T\fR, \fB\-\-timeout\fR
+\fB\-T\fR \fISECONDS\fR, \fB\-\-timeout=\fR\fISECONDS\fR
 .RS 4
-Connection timeout to use when trying to talk to hosts, in seconds\&.
+Connection timeout to use when trying to talk to hosts, in
+\fISECONDS\fR\&.
 .RE
 .SH "ENVIRONMENT"
 .sp
