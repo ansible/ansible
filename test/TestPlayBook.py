@@ -7,6 +7,7 @@ import unittest
 import getpass
 import ansible.playbook
 import ansible.utils as utils
+import ansible.callbacks as ans_callbacks
 import os
 import shutil
 import time
@@ -15,63 +16,69 @@ try:
 except:
    import simplejson as json
 
+EVENTS = []
+
 class TestCallbacks(object):
+    # using same callbacks class for both runner and playbook
 
     def __init__(self):
-        self.events = []
+        pass
 
     def set_playbook(self, playbook):
         self.playbook = playbook
 
     def on_start(self):
-        self.events.append('start')
+        EVENTS.append('start')
 
     def on_setup_primary(self):
-        self.events.append([ 'primary_setup' ])
+        EVENTS.append([ 'primary_setup' ])
  
     def on_setup_secondary(self):
-        self.events.append([ 'secondary_setup' ])
+        EVENTS.append([ 'secondary_setup' ])
 
     def on_skipped(self, host):
-        self.events.append([ 'skipped', [ host ]])
+        EVENTS.append([ 'skipped', [ host ]])
 
     def on_import_for_host(self, host, filename):
-        self.events.append([ 'import', [ host, filename ]])
+        EVENTS.append([ 'import', [ host, filename ]])
 
     def on_not_import_for_host(self, host, missing_filename):
         pass
 
+    def on_notify(self, host, handler):
+        EVENTS.append([ 'notify', [ host, handler ]])
+
     def on_task_start(self, name, is_conditional):
-        self.events.append([ 'task start', [ name, is_conditional ]])
+        EVENTS.append([ 'task start', [ name, is_conditional ]])
 
     def on_unreachable(self, host, msg):
-        self.events.append([ 'unreachable', [ host, msg ]])
+        EVENTS.append([ 'unreachable', [ host, msg ]])
 
     def on_failed(self, host, results):
-        self.events.append([ 'failed', [ host, results ]])
+        EVENTS.append([ 'failed', [ host, results ]])
 
     def on_ok(self, host, result):
         # delete certain info from host_result to make test comparisons easier
         host_result = result.copy()
-        for k in [ 'ansible_job_id', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
+        for k in [ 'ansible_job_id', 'results_file', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
             if k in host_result:
                 del host_result[k]
         for k in host_result.keys():
             if k.startswith('facter_') or k.startswith('ohai_'):
                 del host_result[k] 
-        self.events.append([ 'ok', [ host, host_result ]])
+        EVENTS.append([ 'ok', [ host, host_result ]])
 
     def on_play_start(self, pattern):
-        self.events.append([ 'play start', [ pattern ]])
+        EVENTS.append([ 'play start', [ pattern ]])
 
     def on_async_confused(self, msg):
-        self.events.append([ 'async confused', [ msg ]])
+        EVENTS.append([ 'async confused', [ msg ]])
 
     def on_async_poll(self, jid, host, clock, host_result):
-        self.events.append([ 'async poll', [ host ]])
+        EVENTS.append([ 'async poll', [ host ]])
 
-    def on_dark_host(self, host, msg):
-        self.events.append([ 'failed/dark', [ host, msg ]])
+    def on_unreachable(self, host, msg):
+        EVENTS.append([ 'failed/dark', [ host, msg ]])
 
     def on_setup_primary(self):
         pass
@@ -125,12 +132,14 @@ class TestRunner(unittest.TestCase):
            remote_user  = self.user,
            remote_pass  = None,
            verbose      = False,
-           callbacks    = self.test_callbacks
+           stats            = ans_callbacks.AggregateStats(),
+           callbacks        = self.test_callbacks,
+           runner_callbacks = self.test_callbacks
        )
        results = self.playbook.run()
        return dict(
            results = results,
-           events = self.test_callbacks.events,
+           events = EVENTS
        ) 
 
    def test_one(self):

@@ -152,6 +152,13 @@
             ]
         ], 
         [
+            "notify", 
+            [
+                "127.0.0.1", 
+                "on change 1"
+            ]
+        ], 
+        [
             "task start", 
             [
                 "test template", 
@@ -173,6 +180,20 @@
             ]
         ], 
         [
+            "notify", 
+            [
+                "127.0.0.1", 
+                "on change 1"
+            ]
+        ], 
+        [
+            "notify", 
+            [
+                "127.0.0.1", 
+                "on change 2"
+            ]
+        ], 
+        [
             "task start", 
             [
                 "async poll test", 
@@ -180,15 +201,36 @@
             ]
         ], 
         [
-            "async poll", 
+            "ok", 
             [
-                "127.0.0.1"
+                "127.0.0.1", 
+                {
+                    "started": 1
+                }
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "started": 1
+                }
             ]
         ], 
         [
             "async poll", 
             [
                 "127.0.0.1"
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
+                    "started": 1
+                }
             ]
         ], 
         [
@@ -235,6 +277,18 @@
             [
                 "127.0.0.1", 
                 {
+                    "cmd": "echo this should fire once ", 
+                    "rc": 0, 
+                    "stderr": "", 
+                    "stdout": "this should fire once"
+                }
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.1", 
+                {
                     "cmd": "echo this should fire once  ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -265,10 +319,10 @@
     "results": {
         "127.0.0.1": {
             "changed": 2, 
-            "dark": 0, 
-            "failed": 0, 
-            "resources": 11, 
-            "skipped": 1
+            "failures": 0, 
+            "ok": 12, 
+            "skipped": 1, 
+            "unreachable": 0
         }
     }
 }

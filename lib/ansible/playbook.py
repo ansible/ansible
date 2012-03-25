@@ -47,47 +47,41 @@ class PlayBook(object):
     # *****************************************************
 
     def __init__(self,
-        playbook       = None,
-        host_list      = C.DEFAULT_HOST_LIST,
-        module_path    = C.DEFAULT_MODULE_PATH,
-        forks          = C.DEFAULT_FORKS,
-        timeout        = C.DEFAULT_TIMEOUT,
-        remote_user    = C.DEFAULT_REMOTE_USER,
-        remote_pass    = C.DEFAULT_REMOTE_PASS,
-        override_hosts = None,
-        verbose        = False,
-        callbacks      = None):
+        playbook         = None,
+        host_list        = C.DEFAULT_HOST_LIST,
+        module_path      = C.DEFAULT_MODULE_PATH,
+        forks            = C.DEFAULT_FORKS,
+        timeout          = C.DEFAULT_TIMEOUT,
+        remote_user      = C.DEFAULT_REMOTE_USER,
+        remote_pass      = C.DEFAULT_REMOTE_PASS,
+        override_hosts   = None,
+        verbose          = False,
+        callbacks        = None,
+        runner_callbacks = None,
+        stats            = None):
 
-        self.host_list      = host_list
-        self.module_path    = module_path
-        self.forks          = forks
-        self.timeout        = timeout
-        self.remote_user    = remote_user
-        self.remote_pass    = remote_pass
-        self.verbose        = verbose
-        self.callbacks      = callbacks
-        self.override_hosts = override_hosts
+        if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
+            raise Exception('missing required arguments')
+
+        self.host_list        = host_list
+        self.module_path      = module_path
+        self.forks            = forks
+        self.timeout          = timeout
+        self.remote_user      = remote_user
+        self.remote_pass      = remote_pass
+        self.verbose          = verbose
+        self.callbacks        = callbacks
+        self.runner_callbacks = runner_callbacks
+        self.override_hosts   = override_hosts
+        self.stats            = stats
+
         self.callbacks.set_playbook(self)
-
-        # store the list of changes/invocations/failure counts
-        # as a dictionary of integers keyed off the hostname
-
-        self.dark         = {}
-        self.changed      = {}
-        self.invocations  = {}
-        self.failures     = {}
-        self.skipped      = {}
-        self.processed    = {}
-
-        # playbook file can be passed in as a path or
-        # as file contents (to support API usage)
-
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
         self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
             host_list, override_hosts=self.override_hosts)
-    
+   
     # *****************************************************
 
     def _get_vars(self, play, dirname):
@@ -172,26 +166,9 @@ class PlayBook(object):
 
         # summarize the results
         results = {}
-        for host in self.processed.keys():
-            results[host] = dict(
-                resources = self.invocations.get(host, 0),
-                changed   = self.changed.get(host, 0),
-                dark      = self.dark.get(host, 0),
-                failed    = self.failures.get(host, 0),
-                skipped   = self.skipped.get(host, 0)
-            )
+        for host in self.stats.processed.keys():
+            results[host] = self.stats.summarize(host)
         return results
-
-    # *****************************************************
-
-    def _prune_failed_hosts(self, host_list):
-        ''' given a host list, use the global failure information to trim the list '''
-
-        new_hosts = []
-        for x in host_list:
-            if not x in self.failures and not x in self.dark:
-                new_hosts.append(x)
-        return new_hosts
 
     # *****************************************************
 
@@ -200,47 +177,21 @@ class PlayBook(object):
 
         hosts = []
         for (host, res) in results['contacted'].iteritems():
+            if (host in self.stats.failures) or (host in self.stats.dark):
+                continue
             if not 'finished' in res and not 'skipped' in res and 'started' in res:
                 hosts.append(host)
         return hosts
 
-    # ****************************************************
-
-    def _compute_aggregrate_counts(self, results, poll=False, setup=False):
-        ''' prints results about playbook run + computes stats about per host changes '''
-
-        dark_hosts = results.get('dark',{})
-        contacted_hosts = results.get('contacted',{})
-        for (host, error) in dark_hosts.iteritems():
-            self.processed[host] = 1
-            self.callbacks.on_dark_host(host, error)
-            self.dark[host] = 1
-        for (host, host_result) in contacted_hosts.iteritems():
-            self.processed[host] = 1
-            if 'failed' in host_result or (int(host_result.get('rc',0)) != 0):
-                self.callbacks.on_failed(host, host_result)
-                self.failures[host] = 1
-            elif 'skipped' in host_result:
-                self.skipped[host] = self.skipped.get(host, 0) + 1
-                self.callbacks.on_skipped(host)
-            elif poll:
-                continue
-            elif not setup and ('changed' in host_result):
-                self.invocations[host] = self.invocations.get(host, 0) + 1
-                self.changed[host] = self.changed.get(host, 0) + 1
-                self.callbacks.on_ok(host, host_result)
-            else:
-                self.invocations[host] = self.invocations.get(host, 0) + 1
-                self.callbacks.on_ok(host, host_result)
-
     # *****************************************************
 
-    def _async_poll(self, runner, async_seconds, async_poll_interval, only_if):
+    def _async_poll(self, runner, hosts, async_seconds, async_poll_interval, only_if):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
+        runner.host_list = hosts
         runner.background = async_seconds
         results = runner.run()
-        self._compute_aggregrate_counts(results, poll=True)
+        self.stats.compute(results, poll=True)
 
         if async_poll_interval <= 0:
             # if not polling, playbook requested fire and forget
@@ -261,53 +212,54 @@ class PlayBook(object):
             return results
 
         clock = async_seconds
-        runner.hosts = self.hosts_to_poll(results)
-        runner.hosts = self._prune_failed_hosts(runner.hosts)
+        runner.host_list = self.hosts_to_poll(results)
 
         poll_results = results
         while (clock >= 0):
 
             # poll/loop until polling duration complete
 	    # FIXME: make a "get_async_runner" method like in /bin/ansible
-            runner.hosts = poll_hosts
             runner.module_args = [ "jid=%s" % jid ]
             runner.module_name = 'async_status'
             # FIXME: make it such that if you say 'async_status' you # can't background that op!
             runner.background  = 0  
             runner.pattern     = '*'
-            runner.hosts       = self.hosts_to_poll(poll_results)
             poll_results       = runner.run()
+            self.stats.compute(poll_results, poll=True)
+            runner.host_list       = self.hosts_to_poll(poll_results)
 
-            if len(runner.hosts) == 0:
+            if len(runner.host_list) == 0:
                 break
             if poll_results is None:
                 break
 
-            self._compute_aggregrate_counts(poll_results, poll=True)
-
             # mention which hosts we're going to poll again...
             for (host, host_result) in poll_results['contacted'].iteritems():
                 results['contacted'][host] = host_result
-                if not host in self.dark and not host in self.failures:
+                if not host in self.stats.dark and not host in self.stats.failures:
                     self.callbacks.on_async_poll(jid, host, clock, host_result)
 
             # run down the clock
             clock = clock - async_poll_interval
             time.sleep(async_poll_interval)
 
-            # mark any hosts that are still listed as started as failed
-            # since these likely got killed by async_wrapper
-            for (host, host_result) in results['contacted'].iteritems():
-                if 'started' in host_result:
-                    results['contacted'][host] = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+        # mark any hosts that are still listed as started as failed
+        # since these likely got killed by async_wrapper
+        for (host, host_result) in poll_results['contacted'].iteritems():
+            if 'started' in host_result:
+                reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+                self.runner_callbacks.on_failed(host, reason)
+                results['contacted'][host] = reason
 
         return results
 
     # *****************************************************
 
-    def _run_module(self, pattern, module, args, hosts, remote_user,
+    def _run_module(self, pattern, host_list, module, args, remote_user,
         async_seconds, async_poll_interval, only_if):
         ''' run a particular module step in a playbook '''
+
+        hosts = [ h for h in host_list if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
         runner = ansible.runner.Runner(
             pattern=pattern, groups=self.groups, module_name=module,
@@ -315,28 +267,19 @@ class PlayBook(object):
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
-            conditional=only_if
+            conditional=only_if, callbacks=self.runner_callbacks,
         )
 
         if async_seconds == 0:
-            rc = runner.run()
+            return runner.run()
         else:
-            rc = self._async_poll(runner, async_seconds, async_poll_interval, only_if)
- 
-        dark_hosts = rc.get('dark',{})
-        for (host, error) in dark_hosts.iteritems():
-            self.callbacks.on_dark_host(host, error)
-
-        return rc
+            return self._async_poll(runner, hosts, async_seconds, async_poll_interval, only_if)
 
     # *****************************************************
 
-    def _run_task(self, pattern=None, task=None, host_list=None,
+    def _run_task(self, pattern=None, host_list=None, task=None, 
         remote_user=None, handlers=None, conditional=False):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
-
-        # do not continue to run tasks on hosts that have had failures
-        host_list = self._prune_failed_hosts(host_list)
 
         # load the module name and parameters from the task entry
         name    = task.get('name', None) 
@@ -362,17 +305,17 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to
         # run the task in parallel
-        results = self._run_module(pattern, module_name, 
-            module_args, host_list, remote_user, 
+        results = self._run_module(pattern, host_list, module_name, 
+            module_args, remote_user, 
             async_seconds, async_poll_interval, only_if)
+
+        self.stats.compute(results)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
         # which would warn you about this
         if results is None:
             results = {}
  
-        self._compute_aggregrate_counts(results)
-
         # flag which notify handlers need to be run
         # this will be on a SUBSET of the actual host list.  For instance
         # a file might need to be written on only half of the nodes so
@@ -402,6 +345,7 @@ class PlayBook(object):
             if name is None:
                 raise errors.AnsibleError('handler is missing a name')
             if match_name == name:
+                self.callbacks.on_notify(host, name)
                 # flag the handler with the list of hosts it needs to be run on, it will be run later
                 if not 'run' in x:
                     x['run'] = []
@@ -454,7 +398,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, host_list, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -463,7 +407,7 @@ class PlayBook(object):
 
         if vars_files is not None:
             self.callbacks.on_setup_secondary()
-            self._do_conditional_imports(vars_files, host_list)
+            self._do_conditional_imports(vars_files, self.host_list)
         else:
             self.callbacks.on_setup_primary()
 
@@ -474,16 +418,18 @@ class PlayBook(object):
         for (k,v) in vars.iteritems():
             push_var_str += "%s=\"%s\" " % (k,v)
 
+        host_list = [ h for h in self.host_list if not (h in self.stats.failures or h in self.stats.dark) ]
+
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
             pattern=pattern, groups=self.groups, module_name='setup',
-            module_args=push_var_str, host_list=self.host_list,
+            module_args=push_var_str, host_list=host_list,
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
-            remote_pass=self.remote_pass, setup_cache=SETUP_CACHE
+            remote_pass=self.remote_pass, setup_cache=SETUP_CACHE,
+            callbacks=self.runner_callbacks,
         ).run()
-
-        self._compute_aggregrate_counts(setup_results, setup=True)
+        self.stats.compute(setup_results, setup=True)
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
@@ -493,7 +439,6 @@ class PlayBook(object):
             for (host, result) in setup_ok.iteritems():
                 SETUP_CACHE[host] = result
 
-        host_list = self._prune_failed_hosts(host_list)
         return host_list
 
     # *****************************************************
@@ -517,11 +462,11 @@ class PlayBook(object):
         self.callbacks.on_play_start(pattern)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self.host_list = self._do_setup_step(pattern, vars, user, self.host_list, None)
+        self._do_setup_step(pattern, vars, user, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self.host_list = self._do_setup_step(pattern, vars, user, self.host_list, vars_files)
+            self._do_setup_step(pattern, vars, user, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -540,12 +485,13 @@ class PlayBook(object):
         # but Apache will only be restarted once (at the end).
 
         for task in handlers:
-            if type(task.get("run", None)) == list:
+            triggered_by = task.get('run', None)
+            if type(triggered_by) == list:
                 self._run_task(
                    pattern=pattern, 
                    task=task,
-                   handlers=handlers,
-                   host_list=task.get('run',[]),
+                   handlers=[],
+                   host_list=triggered_by,
                    conditional=True,
                    remote_user=user
                 )

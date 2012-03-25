@@ -28,14 +28,6 @@ from ansible import errors
 from ansible import utils
 from ansible import callbacks
 
-def summarize(results):
-    ''' print out per host statistics '''
-
-    print "PLAY RECAP ******************************\n"
-    hosts = sorted(results.keys())
-    for host in hosts:
-        print "%s : %s" % (host, utils.smjson(results[host]))
-
 def main(args):
     ''' run ansible-playbook operations '''
 
@@ -70,6 +62,11 @@ def main(args):
 
     # run all playbooks specified on the command line
     for playbook in args:
+
+        stats = callbacks.AggregateStats()
+        playbook_cb = callbacks.PlaybookCallbacks()
+        runner_cb = callbacks.PlaybookRunnerCallbacks(stats)
+
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             host_list=options.inventory,
@@ -77,13 +74,24 @@ def main(args):
             forks=options.forks,
             verbose=True,
             remote_pass=sshpass,
-            callbacks=callbacks.PlaybookCallbacks(),
+            callbacks=playbook_cb,
+            runner_callbacks=runner_cb,
+            stats=stats,
             timeout=options.timeout,
             override_hosts=override_hosts,
         )
         try:
+
             results = pb.run()
-            summarize(results)
+            hosts = sorted(pb.stats.processed.keys())
+            print "\n\nPLAY RECAP **********************\n\n"
+            for h in hosts:
+                t = pb.stats.summarize(h)
+                print "%-30s : ok=%4s changed=%4s unreachable=%4s failed=%4s " % (h, 
+                   t['ok'], t['changed'], t['unreachable'], t['failures']
+                )
+            print "\n"
+
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1

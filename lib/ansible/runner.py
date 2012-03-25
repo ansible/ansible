@@ -32,6 +32,7 @@ import ansible.constants as C
 import ansible.connection
 from ansible import utils
 from ansible import errors
+from ansible import callbacks as ans_callbacks
 
 ################################################
 
@@ -46,13 +47,9 @@ def _executor_hook(job_queue, result_queue):
             result_queue.put(runner._executor(host))
         except Queue.Empty:
             pass
-        except errors.AnsibleError, ae:
-            result_queue.put([host, False, str(ae)])
-        except Exception:
-            # probably should include the full trace
-            result_queue.put([host, False, traceback.format_exc()])
-            
-
+        except:
+            traceback.print_exc()
+ 
 ################################################
 
 class Runner(object):
@@ -64,12 +61,16 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         background=0, basedir=None, setup_cache=None, transport='paramiko',
-        conditional='True', groups={}, verbose=False):
+        conditional='True', groups={}, callbacks=None, verbose=False):
     
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
             basedir = os.getcwd()
+
+        if callbacks is None:
+            callbacks = ans_callbacks.DefaultRunnerCallbacks()
+        self.callbacks = callbacks
 
         self.generated_jid = str(random.randint(0, 999999999999))
         self.connector = ansible.connection.Connection(self, transport)
@@ -492,6 +493,18 @@ class Runner(object):
     # *****************************************************
 
     def _executor(self, host):
+        try:
+            return self._executor_internal(host)
+        except errors.AnsibleError, ae:
+            msg = str(ae)
+            self.callbacks.on_unreachable(host, msg)
+            return [host, False, msg]
+        except Exception:
+            msg = traceback.format_exc()
+            self.callbacks.on_unreachable(host, msg)
+            return [host, False, msg]
+
+    def _executor_internal(self, host):
         ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
 
         ok, conn = self._connect(host)
@@ -515,6 +528,18 @@ class Runner(object):
 
         self._delete_remote_files(conn, tmp)
         conn.close()
+
+        (host, connect_ok, data) = result
+        if not connect_ok:
+            self.callbacks.on_unreachable(host, data)
+        else:
+            if 'failed' in data or 'rc' in data and str(data['rc']) != '0':
+                self.callbacks.on_failed(host, data)
+            elif 'skipped' in data:
+                self.callbacks.on_skipped(host)
+            else:
+                self.callbacks.on_ok(host, data)
+
         return result
 
     # *****************************************************
@@ -566,9 +591,9 @@ class Runner(object):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
         job_queue = multiprocessing.Manager().Queue()
-        result_queue = multiprocessing.Manager().Queue()
-
         [job_queue.put(i) for i in hosts]
+
+        result_queue = multiprocessing.Manager().Queue()
 
         workers = []
         for i in range(self.forks):
@@ -597,6 +622,9 @@ class Runner(object):
 
         results2 = dict(contacted={}, dark={})
 
+        if results is None:
+            return None
+
         for result in results:
             (host, contacted_ok, result) = result
             if contacted_ok:
@@ -622,10 +650,11 @@ class Runner(object):
             return dict(contacted={}, dark={})
  
         hosts = [ (self,x) for x in hosts ]
+        results = None
         if self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
-            results = [ x._executor(h) for (x,h) in hosts ]
+            results = [ self._executor(h[1]) for h in hosts ]
         return self._partition_results(results)
 
 

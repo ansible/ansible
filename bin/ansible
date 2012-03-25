@@ -29,6 +29,7 @@ import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
+from ansible import callbacks
 
 ########################################################
 
@@ -38,7 +39,8 @@ class Cli(object):
     # ----------------------------------------------     
 
     def __init__(self):
-        pass
+        self.stats = callbacks.AggregateStats()
+        self.callbacks = callbacks.DefaultRunnerCallbacks()
 
     # ----------------------------------------------     
 
@@ -98,6 +100,7 @@ class Cli(object):
             forks=options.forks,
             background=options.seconds,
             pattern=pattern,
+            callbacks=self.callbacks,
             verbose=True,
         )
         return (runner, runner.run())
@@ -116,6 +119,7 @@ class Cli(object):
             timeout=old_runner.timeout,
             forks=old_runner.forks,
             pattern='*',
+            callbacks=self.callbacks,
             verbose=True,
         )
 
@@ -178,6 +182,7 @@ class Cli(object):
                 utils.write_tree_file(options.tree, hostname, utils.bigjson(utils.contacted_host_result(results, hostname)))
             buf += msg
             
+        # TODO: remove, callbacks now do this
         if utils.has_dark_hosts(results):
             buf += utils.dark_hosts_msg(results)
 

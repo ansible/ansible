@@ -87,7 +87,6 @@ except Exception, e:
        print json.dumps({
            "results_file" : log_path,
            "ansible_job_id" : jid,
-           "traceback" : str(e),
            "started" : 1,
        })
    else:
