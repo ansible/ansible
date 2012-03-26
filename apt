@@ -1,0 +1,152 @@
+#!/usr/bin/python -tt
+# (c) 2012, Flowroute LLC
+# Written by Matthew Williams <matthew@flowroute.com>
+# Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+import os
+import sys
+import apt
+import shlex
+import subprocess
+
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+def run_apt(command):
+    try:
+        cmd = subprocess.Popen(command, shell=True, 
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+    except (OSError, IOError), e:
+        rc = 1
+        err = str(e)
+        out = ''
+    except:
+        rc = 1
+        err = traceback.format_exc()
+        out = ''
+
+        if out is None:
+           out = ''
+        if err is None:
+           err = ''
+    else:
+        rc = cmd.returncode
+        
+    return rc, out, err
+
+def ensure(state, pkgspec):
+    cache = apt.Cache()
+    cache.update()
+    cache.open(None)
+    try:
+        pkg = cache[pkgspec]
+    except:
+        msg = "No package matching '%s' is available" % pkgsepc
+        return {'changed': False, 'failed': True, 'msg': msg}
+    if state == 'installed':
+        #check if package is installed
+        if pkg.is_installed:
+            return {'changed': False, 'failed': False}
+        cmd = "apt-get -q -y install '%s'" % pkgspec
+        rc, out, err = run_apt(cmd)
+        #pkg.mark_install()
+        #cache.commit(apt.progress.base.OpProgress())
+
+    elif state == 'removed':
+        #check if package is installed
+        if not pkg.is_installed:
+            return {'changed': False, 'failed': False}
+        cmd = "apt-get -q -y remove '%s'" % pkgspec
+        rc, out, err = run_apt(cmd)
+        #pkg.mark_delete()
+        #cache.commit(apt.progress.base.OpProgress())
+    else:
+        return {'failed': True, 'msg': "Unknown state: %s" % state }
+    
+    return {'changed': True, 'failed': False}
+
+def update(args):
+    #generic update routine 
+    pass
+
+def remove_only(pkgspec):
+    # remove this pkg and only this pkg - fail if it will require more to remove
+    pass
+
+def main():
+    # state=installed pkg=pkgspec
+    # state=removed pkg=pkgspec
+    
+    if len(sys.argv) == 1:
+        msg = "the apt module requires arguments (-a)"
+        return 1, msg
+
+    argfile = sys.argv[1]
+    if not os.path.exists(argfile):
+        msg = "Argument file not found"
+        return 1, msg
+
+    args = open(argfile, 'r').read()
+    items = shlex.split(args)
+
+    if not len(items):
+        msg = "the apt module requires arguments (-a)"
+        return 1, msg
+
+    # if nothing else changes - it fails
+    results = { 'changed':False, 
+                'failed':True, 
+                'results':'', 
+                'errors':'', 
+                'msg':"; ".join(items) }
+    params = {}
+    for x in items:
+        try:
+            (k, v) = x.split("=", 1)
+        except ValueError:
+            msg = "invalid arguments: %s" % args
+            return 1, msg
+            
+        params[k] = v
+
+    if 'state' in params:
+        if 'pkg' not in params:
+            results['msg'] = "No pkg specified"
+        else:
+            state = params['state']
+            pkgspec = params['pkg']
+
+            devnull = open(os.devnull, 'w')
+            results = ensure(state, pkgspec)
+    print json.dumps(results)
+    return 0, None
+
+if __name__ == "__main__":
+    rc, msg = main()
+    if rc != 0: # something went wrong emit the msg
+        print json.dumps({
+            "failed" : bool(rc),
+            "msg" : msg
+        })   
+        sys.exit(rc)
+
+
