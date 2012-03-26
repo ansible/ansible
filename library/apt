@@ -17,20 +17,34 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
+try:
+    import json
+except ImportError:
+    import simplejson as json
 import os
 import sys
 import apt
 import shlex
 import subprocess
+import traceback
 
+APT = "/usr/bin/apt-get"
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+def debug(msg):
+    # ansible ignores stderr, so it's safe to use for debug
+    print >>sys.stderr, msg
+    #pass
+    
+def exit_json(rc=0, **kwargs):
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
 
 def run_apt(command):
+    debug(command)
     try:
         cmd = subprocess.Popen(command, shell=True, 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -51,102 +65,86 @@ def run_apt(command):
     else:
         rc = cmd.returncode
         
+    debug(err)
     return rc, out, err
 
-def ensure(state, pkgspec):
+def get_cache():
+    # TODO: Only update the cache if it's old.
     cache = apt.Cache()
     cache.update()
     cache.open(None)
+    return cache
+
+def package_installed(pkgspec):
+    cache = get_cache()
     try:
-        pkg = cache[pkgspec]
+       pkg = cache[pkgspec]
     except:
-        msg = "No package matching '%s' is available" % pkgsepc
-        return {'changed': False, 'failed': True, 'msg': msg}
-    if state == 'installed':
-        #check if package is installed
-        if pkg.is_installed:
-            return {'changed': False, 'failed': False}
-        cmd = "apt-get -q -y install '%s'" % pkgspec
-        rc, out, err = run_apt(cmd)
-        #pkg.mark_install()
-        #cache.commit(apt.progress.base.OpProgress())
+        fail_json(msg="No package matching '%s' is available" % pkgspec)
+    return bool(pkg.is_installed)
 
-    elif state == 'removed':
-        #check if package is installed
-        if not pkg.is_installed:
-            return {'changed': False, 'failed': False}
-        cmd = "apt-get -q -y remove '%s'" % pkgspec
-        rc, out, err = run_apt(cmd)
-        #pkg.mark_delete()
-        #cache.commit(apt.progress.base.OpProgress())
+def install(pkgspec):
+    installed = package_installed(pkgspec)
+    debug("installed: %d" % installed)
+    if installed:
+        return False
     else:
-        return {'failed': True, 'msg': "Unknown state: %s" % state }
-    
-    return {'changed': True, 'failed': False}
+        cmd = "%s -q -y install '%s'" % (APT, pkgspec)
+        rc, out, err = run_apt(cmd)
+        # TODO: Ensure the package was really installed.
+        return True
 
+def remove(pkgspec):
+    installed = package_installed(pkgspec)
+    debug("installed: %d" % installed)
+    if not installed:
+        return False
+    else:
+        cmd = "%s -q -y remove '%s'" % (APT, pkgspec)
+        rc, out, err = run_apt(cmd)
+        # TODO: Ensure the package was really removed.
+        return True
+    
 def update(args):
-    #generic update routine 
+    # TODO: generic update routine 
     pass
 
 def remove_only(pkgspec):
-    # remove this pkg and only this pkg - fail if it will require more to remove
+    # TODO: remove this pkg and only this pkg - fail if it will require more to remove
     pass
 
-def main():
-    # state=installed pkg=pkgspec
-    # state=removed pkg=pkgspec
-    
-    if len(sys.argv) == 1:
-        msg = "the apt module requires arguments (-a)"
-        return 1, msg
+# ===========================================
 
-    argfile = sys.argv[1]
-    if not os.path.exists(argfile):
-        msg = "Argument file not found"
-        return 1, msg
+if not os.path.exists(APT):
+   fail_json(msg="Cannot find apt-get")
 
-    args = open(argfile, 'r').read()
-    items = shlex.split(args)
+argfile = sys.argv[1]
+args    = open(argfile, 'r').read()
+items   = shlex.split(args)
 
-    if not len(items):
-        msg = "the apt module requires arguments (-a)"
-        return 1, msg
+if not len(items):
+    fail_json(msg='the module requires arguments -a')
+    sys.exit(1)
 
-    # if nothing else changes - it fails
-    results = { 'changed':False, 
-                'failed':True, 
-                'results':'', 
-                'errors':'', 
-                'msg':"; ".join(items) }
-    params = {}
-    for x in items:
-        try:
-            (k, v) = x.split("=", 1)
-        except ValueError:
-            msg = "invalid arguments: %s" % args
-            return 1, msg
-            
-        params[k] = v
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
 
-    if 'state' in params:
-        if 'pkg' not in params:
-            results['msg'] = "No pkg specified"
-        else:
-            state = params['state']
-            pkgspec = params['pkg']
+state   = params.get('state','installed')
+package = params.get('pkg', None)
 
-            devnull = open(os.devnull, 'w')
-            results = ensure(state, pkgspec)
-    print json.dumps(results)
-    return 0, None
+if state not in ['installed', 'removed']:
+    fail_json(msg='invalid state')
+if package is None:
+    fail_json(msg='pkg is required')
 
-if __name__ == "__main__":
-    rc, msg = main()
-    if rc != 0: # something went wrong emit the msg
-        print json.dumps({
-            "failed" : bool(rc),
-            "msg" : msg
-        })   
-        sys.exit(rc)
+if state == 'installed':
+    changed = install(package)
+elif state == 'removed':
+    changed = remove(package)
+exit_json(changed=changed)
 
+fail_json(name=name, msg='Unexpected position reached')
+sys.exit(0)
 
