@@ -105,10 +105,10 @@ class PlayBook(object):
             if x.find("=") != -1:
                 (k,v) = x.split("=")
                 inject_vars[k] = v
-            included = utils.template_from_file(path, inject_vars)
-            included = utils.parse_yaml(included)
-            for x in included:
-                new_tasks.append(x)
+        included = utils.template_from_file(path, inject_vars)
+        included = utils.parse_yaml(included)
+        for x in included:
+            new_tasks.append(x)
 
     # *****************************************************
 
