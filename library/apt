@@ -145,6 +145,4 @@ elif state == 'removed':
     changed = remove(package)
 exit_json(changed=changed)
 
-fail_json(name=name, msg='Unexpected position reached')
-sys.exit(0)
 
