@@ -29,13 +29,33 @@ that.  If you're writing your own module, you care, and this means you do
 not have to write modules in any particular language -- you get tho choose.
 
 Most modules other than command are `idempotent`, meaning they will seek
-to avoid changes to the system unless a change needs to be made.  When using ansible
+to avoid changes to the system unless a change needs to be made.  When using Ansible
 playbooks, these modules can trigger 'change events'.  Unless otherwise
 noted, any given module does support change hooks.
 
 Let's see what's available in the Ansible module library, out of the box:
 
 .. _command:
+
+apt
+```
+
+Manages apt-packages (such as for Debian/Ubuntu).
+
+*pkg*:
+
+* A package name or package specifier with version, like name-1.0
+
+*state*:
+
+* Can be either 'installed' or 'removed'.   NOTE:  support
+for 'latest' (see yum, below) is in work.
+
+Example action from Ansible :doc:`playbooks`::
+
+    apt pkg=foo ensure=removed
+    apt pkg=foo ensure=installed
+
 
 command
 ```````
@@ -56,7 +76,7 @@ This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     command /sbin/shutdown -t now
 
@@ -82,7 +102,7 @@ module.
 
 This module also returns md5sum information about the resultant file.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 
@@ -128,7 +148,7 @@ to the file module are also available when running the `copy` or `template` modu
 
 * name of group that should own the file or directory, as would be given to `chgrp`
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     file dest=/etc/foo.conf owner=foo group=foo mode=0644
     file dest=/some/path owner=foo group=foo state=directory
@@ -153,7 +173,7 @@ Deploys software (or files) from git checkouts.
 * What version to check out -- either the git SHA, the literal string
   ``HEAD``, or a tag name.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
 
@@ -198,7 +218,7 @@ Controls services on remote machines.
 
 * The name of the service.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     service name=httpd state=started
     service name=httpd state=stopped
@@ -226,15 +246,15 @@ tell their source.  All variables are then bubbled up to the caller.
  * Any other parameters can be named basically anything, and set a
    ``key=value`` pair in the JSON file for use in templating.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     vars:
         ntpserver: 'ntp.example.com'
         xyz: 1234
 
-Example action from `/usr/bin/ansible`::
+Example action from `/usr/bin/Ansible`::
 
-    ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"
+    Ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"
 
 
 .. _shell:
@@ -325,7 +345,7 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 * Defaults to 'present'.  When 'absent', the user account will be removed if present.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
     user name=mdehaan state=absent
@@ -351,7 +371,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
   various configuration attributes.  Values include 'installed', 'updates',
   'available', 'repos', or any package specifier.
 
-Example action from a :doc:`playbooks`::
+Example action from Ansible :doc:`playbooks`::
 
     yum pkg=httpd ensure=latest
     yum pkg=httpd ensure=removed
@@ -366,14 +386,14 @@ See :doc:`moduledev`.
 .. seealso::
 
    :doc:`examples`
-       Examples of using modules in /usr/bin/ansible
+       Examples of using modules in /usr/bin/Ansible
    :doc:`playbooks`
-       Examples of using modules with /usr/bin/ansible-playbook
+       Examples of using modules with /usr/bin/Ansible-playbook
    :doc:`moduledev`
        How to write your own modules
    :doc:`api`
        Examples of using modules with the Python API
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <http://groups.google.com/group/Ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

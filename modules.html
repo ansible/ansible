@@ -129,7 +129,8 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#command">command</a></li>
+<li><a class="reference internal" href="#apt">apt</a></li>
+<li><a class="reference internal" href="#id1">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
@@ -196,8 +197,25 @@ to avoid changes to the system unless a change needs to be made.  When using ans
 playbooks, these modules can trigger &#8216;change events&#8217;.  Unless otherwise
 noted, any given module does support change hooks.</p>
 <p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
-<div class="section" id="command">
-<span id="id1"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="apt">
+<span id="command"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
+<p>Manages apt-packages (such as for Debian/Ubuntu).</p>
+<p><em>pkg</em>:</p>
+<ul class="simple">
+<li>A package name or package specifier with version, like name-1.0</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>Can be either &#8216;installed&#8217; or &#8216;removed&#8217;.   NOTE:  support</li>
+</ul>
+<p>for &#8216;latest&#8217; (see yum, below) is in work.</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>apt pkg=foo ensure=removed
+apt pkg=foo ensure=installed</pre>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>command<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
 arguments, space delimited.</p>
 <p>If you want to run a command through the shell (say you are using
@@ -210,7 +228,7 @@ paths to commands must be fully qualified.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
 command was running for.</p>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
 </div>
 </div>
@@ -229,7 +247,7 @@ absolute or relative path.</li>
 <li>Remote absolute path where the file should end up.</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
 </div>
 </div>
@@ -267,7 +285,7 @@ to the file module are also available when running the <cite>copy</cite> or <cit
 <ul class="simple">
 <li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
 </ul>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file dest=/etc/foo.conf owner=foo group=foo mode=0644
 file dest=/some/path owner=foo group=foo state=directory
 file dest/path/to/delete state=absent</pre>
@@ -289,7 +307,7 @@ file dest/path/to/delete state=absent</pre>
 <li>What version to check out &#8211; either the git SHA, the literal string
 <tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
 </ul>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
 </div>
 </div>
@@ -324,7 +342,7 @@ unless necessary.  <tt class="docutils literal"><span class="pre">restarted</spa
 <ul class="simple">
 <li>The name of the service.</li>
 </ul>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>service name=httpd state=started
 service name=httpd state=stopped
 service name=httpd state=restarted</pre>
@@ -348,7 +366,7 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
 </ul>
 </div></blockquote>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>vars:
     ntpserver: 'ntp.example.com'
     xyz: 1234</pre>
@@ -427,7 +445,7 @@ example in the github examples directory for what this looks like in a playbook.
 <ul class="simple">
 <li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.</li>
 </ul>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
 user name=mdehaan state=absent</pre>
 </div>
@@ -449,7 +467,7 @@ user name=mdehaan state=absent</pre>
 various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
 &#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.</li>
 </ul>
-<p>Example action from a <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example action from ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>yum pkg=httpd ensure=latest
 yum pkg=httpd ensure=removed
 yum pkg=httpd ensure=installed</pre>
@@ -485,8 +503,8 @@ yum pkg=httpd ensure=installed</pre>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 23, 2012.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.<br/>
+      Last updated on Mar 26, 2012.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
 </footer>

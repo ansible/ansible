@@ -363,10 +363,13 @@ var Search = {
           var fullname = (prefix ? prefix + '.' : '') + name;
           if (fullname.toLowerCase().indexOf(object) > -1) {
             match = objects[prefix][name];
-            descr = objnames[match[1]] + _(', in ') + titles[match[0]];
-            // XXX the generated anchors are not generally correct
-            // XXX there may be custom prefixes
-            result = [filenames[match[0]], fullname, '#'+fullname, descr];
+            descr = objnames[match[1]][2] + _(', in ') + titles[match[0]];
+            anchor = match[3];
+            if (anchor == '')
+              anchor = fullname;
+            else if (anchor == '-')
+              anchor = objnames[match[1]][1] + '-' + fullname;
+            result = [filenames[match[0]], fullname, '#'+anchor, descr];
             switch (match[2]) {
             case 1: objectResults.push(result); break;
             case 0: importantResults.push(result); break;
@@ -489,7 +492,7 @@ var Search = {
             listItem.slideDown(5, function() {
               displayNextItem();
             });
-          });
+          }, "text");
         } else {
           // no source available, just display title
           Search.output.append(listItem);
