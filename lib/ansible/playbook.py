@@ -218,10 +218,8 @@ class PlayBook(object):
         while (clock >= 0):
 
             # poll/loop until polling duration complete
-	    # FIXME: make a "get_async_runner" method like in /bin/ansible
             runner.module_args = [ "jid=%s" % jid ]
             runner.module_name = 'async_status'
-            # FIXME: make it such that if you say 'async_status' you # can't background that op!
             runner.background  = 0  
             runner.pattern     = '*'
             poll_results       = runner.run()
