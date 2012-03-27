@@ -214,13 +214,17 @@ def ensure(my, state, pkgspec):
         return res
                 
     if state == 'latest':
-        if not [ pkg_to_dict(po) for 
-            po in my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates ]:
+        updates = my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates
+        avail =  my.doPackageLists(pkgnarrow='available', patterns=[pkgspec]).available
+        if not updates and not avail:
             # there nothing in updates matching this.
             return { 'changed':False,}
 
-        # we have something in updates
-        cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
+        # we have something in updates or available
+        if not updates:
+            cmd = "yum -c %s -d1 -y install '%s'" % (yumconf, pkgspec)
+        else:
+            cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
         # FIXME if it is - update it and check to see if it applied
         # check to see if there is no longer an update available for the pkgspec
