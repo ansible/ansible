@@ -26,14 +26,20 @@ Ansible's core is a little over 1000 lines.
 
 Ansible isn't just for idempotent configuration -- it's also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
+
 Where Ansible excels though, is expressing complex multi-node 
 deployment processes, executing ordered sequences on 
-different sets of nodes through :doc:`playbooks`.
+different sets of nodes through :doc:`playbooks`.   Playbooks contain one or
+more plays, each executed against a different batch of nodes.  Think about
+webservers, database servers, and backend servers in a multi-node web environment.  A play could address each set of machines in a cycle, ensuring the configurations of the machines were correct and also updating them to the specified
+version of software if required.
 
-Extending ansible does not require programming in any particular
-language -- you can write :doc:`modules` as scripts or programs that return
-simple JSON.  It's also trivially easy to just execute useful shell
-commands.
+Multi-machine software deployment is poorly solved by most systems management tools -- often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.  
+
+Other deployment oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks -- having been designed with this problem in mind -- are good at both deployment & idempotent configuration, meaning you don't have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required -- while avoiding the problem of fragile scripting that assumes certain starting
+or ending states.
+
+Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language -- you can write :doc:`modules` as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it's also trivially easy to just execute useful shell commands.
 
 Why use Ansible versus something else?  (Puppet, Chef, Capistrano, etc?) Ansible will have far
 less code, it will be (by extension) more correct, and it will be the
@@ -41,7 +47,10 @@ easiest thing to hack on and use you'll ever see -- regardless of your
 favorite language of choice.
 
 Systems management doesn't have to be complicated.  Ansible's docs
-will remain short & simple, and the source will be blindingly obvious.
+will remain short & simple, and the source will be blindingly obvious.  
+
+We've learned well from "Infrastructure is Code".  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project -- bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.
+
 
 Architecture
 ````````````

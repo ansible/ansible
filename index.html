@@ -171,20 +171,24 @@ much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
 Ansible&#8217;s core is a little over 1000 lines.</p>
 <p>Ansible isn&#8217;t just for idempotent configuration &#8211; it&#8217;s also great for ad-hoc
-tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>.
-Where Ansible excels though, is expressing complex multi-node
+tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>.</p>
+<p>Where Ansible excels though, is expressing complex multi-node
 deployment processes, executing ordered sequences on
-different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
-<p>Extending ansible does not require programming in any particular
-language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as scripts or programs that return
-simple JSON.  It&#8217;s also trivially easy to just execute useful shell
-commands.</p>
+different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.   Playbooks contain one or
+more plays, each executed against a different batch of nodes.  Think about
+webservers, database servers, and backend servers in a multi-node web environment.  A play could address each set of machines in a cycle, ensuring the configurations of the machines were correct and also updating them to the specified
+version of software if required.</p>
+<p>Multi-machine software deployment is poorly solved by most systems management tools &#8211; often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.</p>
+<p>Other deployment oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks &#8211; having been designed with this problem in mind &#8211; are good at both deployment &amp; idempotent configuration, meaning you don&#8217;t have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required &#8211; while avoiding the problem of fragile scripting that assumes certain starting
+or ending states.</p>
+<p>Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it&#8217;s also trivially easy to just execute useful shell commands.</p>
 <p>Why use Ansible versus something else?  (Puppet, Chef, Capistrano, etc?) Ansible will have far
 less code, it will be (by extension) more correct, and it will be the
 easiest thing to hack on and use you&#8217;ll ever see &#8211; regardless of your
 favorite language of choice.</p>
 <p>Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs
 will remain short &amp; simple, and the source will be blindingly obvious.</p>
+<p>We&#8217;ve learned well from &#8220;Infrastructure is Code&#8221;.  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project &#8211; bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.</p>
 <div class="section" id="architecture">
 <h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
 <img alt="&quot;Architecture Diagram&quot;" src="http://ansible.github.com/ansible_arch.jpg" style="width: 648px; height: 464px;" />
