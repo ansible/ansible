@@ -96,6 +96,8 @@ The mode, owner, and group arguments can also be used on the copy or template li
 Managing Packages
 `````````````````
 
+There are modules available for yum and apt.  Here are some examples with yum.
+
 Ensure a package is installed, but don't update it::
     
     ansible webservers -m yum -a "pkg=acme state=installed"

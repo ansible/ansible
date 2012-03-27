@@ -235,6 +235,7 @@ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=
 </div>
 <div class="section" id="managing-packages">
 <h2>Managing Packages<a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
+<p>There are modules available for yum and apt.  Here are some examples with yum.</p>
 <p>Ensure a package is installed, but don&#8217;t update it:</p>
 <div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=installed"</pre>
 </div>
