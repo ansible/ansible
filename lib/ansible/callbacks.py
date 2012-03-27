@@ -23,7 +23,8 @@ import utils
 #######################################################
 
 class AggregateStats(object):
-    
+    ''' holds stats about per-host activity during playbook runs '''   
+ 
     def __init__(self):
         self.processed   = {}
         self.failures    = {}
@@ -33,11 +34,14 @@ class AggregateStats(object):
         self.skipped     = {}
 
     def _increment(self, what, host):
+        ''' helper function to bump a statistic '''
+
         self.processed[host] = 1
         prev = (getattr(self, what)).get(host, 0)
         getattr(self, what)[host] = prev+1
 
     def compute(self, runner_results, setup=False, poll=False):
+        ''' walk through all results and increment stats '''
  
         for (host, value) in runner_results.get('contacted', {}).iteritems():
             if ('failed' in value and bool(value['failed'])) or ('rc' in value and value['rc'] != 0):
@@ -57,6 +61,8 @@ class AggregateStats(object):
             
 
     def summarize(self, host):
+        ''' return information about a particular host '''
+
         return dict(
             ok          = self.ok.get(host, 0),
             failures    = self.failures.get(host, 0),
@@ -65,7 +71,10 @@ class AggregateStats(object):
             skipped     = self.skipped.get(host, 0)
         )
 
+########################################################################
+
 class DefaultRunnerCallbacks(object):
+    ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
 
     def __init__(self):
         pass
@@ -82,7 +91,10 @@ class DefaultRunnerCallbacks(object):
     def on_unreachable(self, host, res):
         pass
 
+########################################################################
+
 class CliRunnerCallbacks(DefaultRunnerCallbacks):
+    ''' callbacks for use by /usr/bin/ansible '''
 
     def __init__(self):
         # set by /usr/bin/ansible later
@@ -107,7 +119,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.bigjson(result))
 
+########################################################################
+
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
+    ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
     def __init__(self, stats):
         self.stats = stats
@@ -134,7 +149,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     def on_skipped(self, host):
         print "skipping: [%s]\n" % host
 
+########################################################################
+
 class PlaybookCallbacks(object):
+    ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
   
     def __init__(self):
         pass
