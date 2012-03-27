@@ -217,7 +217,9 @@ def ensure(my, state, pkgspec):
         updates = my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates
         avail =  my.doPackageLists(pkgnarrow='available', patterns=[pkgspec]).available
         if not updates and not avail:
-            # there nothing in updates matching this.
+            if not my.doPackageLists(pkgnarrow='installed', patterns=[pkgspec]).installed:
+                msg = "No Package matching '%s' found available, installed or updated" % pkgspec
+                return { 'changed':False, 'failed':True, 'msg': msg }
             return { 'changed':False,}
 
         # we have something in updates or available
@@ -226,6 +228,7 @@ def ensure(my, state, pkgspec):
         else:
             cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
+
         # FIXME if it is - update it and check to see if it applied
         # check to see if there is no longer an update available for the pkgspec
         if rc:
