@@ -41,7 +41,12 @@ def yum_base(conf_file=None, cachedir=False):
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if cachedir:
-        my.setCacheDir()
+        if hasattr(my, 'setCacheDir'):
+            my.setCacheDir()
+        else:
+            cachedir = yum.misc.getCacheDir()
+            my.repos.setCacheDir(cachedir)
+            my.conf.cache = 0 
     
     return my
 
