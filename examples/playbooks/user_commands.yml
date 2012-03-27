@@ -13,7 +13,7 @@
 
     # Walk through account creation, modification, and deletion
     - name: test basic user account creation
-      action: user name=tset comment=TsetUser gid=100 shell=/sbin/nologin createhome=no
+      action: user name=tset comment=TsetUser group=100 shell=/sbin/nologin createhome=no
 
     # the following is just a simple example of how you don't have to include
     # the 'name' element for each task

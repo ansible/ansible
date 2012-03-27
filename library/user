@@ -23,6 +23,7 @@ except ImportError:
     import simplejson as json
 import os
 import pwd
+import grp
 import shlex
 import spwd
 import subprocess
@@ -54,7 +55,7 @@ def add_user_info(kwargs):
         kwargs['state'] = 'present'
         info = user_info(name)
         kwargs['uid'] = info[2]
-        kwargs['gid'] = info[3]
+        kwargs['group'] = info[3]
         kwargs['comment'] = info[4]
         kwargs['home'] = info[5]
         kwargs['shell'] = info[6]
@@ -84,9 +85,12 @@ def user_add(user, **kwargs):
         if key == 'uid' and kwargs[key] is not None:
             cmd.append('-u')
             cmd.append(kwargs[key])
-        elif key == 'gid' and kwargs[key] is not None:
-            cmd.append('-g')
-            cmd.append(kwargs[key])
+        elif key == 'group' and kwargs[key] is not None:
+            if group_exists(kwargs[key]):
+                cmd.append('-g')
+                cmd.append(kwargs[key])
+            else:
+                fail_json(msg="Group %s does not exist" % (kwargs[key]))
         elif key == 'comment' and kwargs[key] is not None:
             cmd.append('-c')
             cmd.append(kwargs[key])
@@ -121,10 +125,14 @@ def user_mod(user, **kwargs):
             if kwargs[key] is not None and info[2] != int(kwargs[key]):
                 cmd.append('-u')
                 cmd.append(kwargs[key])
-        elif key == 'gid':
-            if kwargs[key] is not None and info[3] != int(kwargs[key]):
-                cmd.append('-g')
-                cmd.append(kwargs[key])
+        elif key == 'group' and kwargs[key] is not None:
+            if group_exists(kwargs[key]):
+                ginfo = group_info(group)
+                if info[3] != ginfo[2]:
+                    cmd.append('-g')
+                    cmd.append(kwargs[key])
+            else:
+                fail_json(msg="Group %s does not exist" % (kwargs[key]))
         elif key == 'comment':
             if kwargs[key] is not None and info[4] != kwargs[key]:
                 cmd.append('-c')
@@ -151,6 +159,25 @@ def user_mod(user, **kwargs):
         return True
     else:
         return False
+
+def group_exists(group):
+    try:
+        if group.isdigit():
+            if grp.getgrgid(group):
+                return True
+        else:
+            if grp.getgrnam(group):
+                return True
+    except KeyError:
+        return False
+
+def group_info(group):
+    if not group_exists(group):
+        return False
+    if group.isdigit():
+        return list(grp.getgrgid(group))
+    else:
+        return list(grp.getgrnam(group))
 
 def user_exists(user):
     try:
@@ -204,7 +231,7 @@ for x in items:
 state      = params.get('state','present')
 name       = params.get('name', None)
 uid        = params.get('uid', None)
-gid        = params.get('gid', None)
+group      = params.get('group', None)
 comment    = params.get('comment', None)
 home       = params.get('home', None)
 shell      = params.get('shell', None)
@@ -234,11 +261,11 @@ if state == 'absent':
     exit_json(name=name, changed=changed, force=force, remove=remove)
 elif state == 'present':
     if not user_exists(name):
-        changed = user_add(name, uid=uid, gid=gid, comment=comment,
+        changed = user_add(name, uid=uid, group=group, comment=comment,
                            home=home, shell=shell, password=password,
                            createhome=createhome)
     else:
-        changed = user_mod(name, uid=uid, gid=gid, comment=comment,
+        changed = user_mod(name, uid=uid, group=group, comment=comment,
                            home=home, shell=shell, password=password)
 
     if password is not None:
