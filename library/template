@@ -63,13 +63,6 @@ if not os.path.exists(metadata):
 try:
    f = open(metadata)
    data = json.loads(f.read())
-# Hack by mgw to get nested variables -- use at your own risk
-#   data_in = json.loads(f.read())
-#   for k, v in data_in.items():
-#       try:
-#           data[k] = eval(v)
-#       except:
-#           data[k] = v
    f.close()
 except:
    print json.dumps({
