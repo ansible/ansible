@@ -40,7 +40,8 @@ class Cli(object):
 
     def __init__(self):
         self.stats = callbacks.AggregateStats()
-        self.callbacks = callbacks.DefaultRunnerCallbacks()
+        self.callbacks = callbacks.CliRunnerCallbacks()
+        self.silent_callbacks = callbacks.DefaultRunnerCallbacks()
 
     # ----------------------------------------------     
 
@@ -73,7 +74,8 @@ class Cli(object):
         parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
             dest='remote_user', help='connect as this user')
         options, args = parser.parse_args()
-        
+        self.callbacks.options = options        
+
         if len(args) == 0 or len(args) > 1:
             parser.print_help()
             sys.exit(1)
@@ -88,20 +90,20 @@ class Cli(object):
         sshpass = None
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
+        
+        if options.tree:
+            utils.prepare_writeable_dir(options.tree)
+
+        if options.seconds:
+            print "background launch...\n\n"
 
         runner = ansible.runner.Runner(
-            module_name=options.module_name,
-            module_path=options.module_path,
+            module_name=options.module_name, module_path=options.module_path,
             module_args=shlex.split(options.module_args),
-            remote_user=options.remote_user,
-            remote_pass=sshpass,
-            host_list=options.inventory,
-            timeout=options.timeout,
-            forks=options.forks,
-            background=options.seconds,
-            pattern=pattern,
-            callbacks=self.callbacks,
-            verbose=True,
+            remote_user=options.remote_user, remote_pass=sshpass,
+            host_list=options.inventory, timeout=options.timeout,
+            forks=options.forks, background=options.seconds, pattern=pattern, 
+            callbacks=self.callbacks, verbose=True,
         )
         return (runner, runner.run())
 
@@ -110,17 +112,11 @@ class Cli(object):
 
     def get_polling_runner(self, old_runner, hosts, jid):
         return ansible.runner.Runner(
-            module_name='async_status',
-            module_path=old_runner.module_path,
-            module_args=[ "jid=%s" % jid ],
-            remote_user=old_runner.remote_user,
-            remote_pass=old_runner.remote_pass,
-            host_list=hosts,
-            timeout=old_runner.timeout,
-            forks=old_runner.forks,
-            pattern='*',
-            callbacks=self.callbacks,
-            verbose=True,
+            module_name='async_status', module_path=old_runner.module_path,
+            module_args=[ "jid=%s" % jid ], remote_user=old_runner.remote_user,
+            remote_pass=old_runner.remote_pass, host_list=hosts,
+            timeout=old_runner.timeout, forks=old_runner.forks,
+            pattern='*', callbacks=self.silent_callbacks, verbose=True,
         )
 
     # ----------------------------------------------
@@ -134,13 +130,11 @@ class Cli(object):
 
     # ----------------------------------------------     
 
-    def output(self, runner, results, options, args):
+    def poll_if_needed(self, runner, results, options, args):
         ''' summarize results from Runner '''
 
         if results is None:
            exit("No hosts matched")
-        if options.tree:
-            utils.prepare_writeable_dir(options.tree)
 
         # BACKGROUND POLL LOGIC when -B and -P are specified
         # FIXME: refactor
@@ -163,33 +157,11 @@ class Cli(object):
                     # override last result with current status result for report
                     results['contacted'][host] = host_result
                     print utils.async_poll_status(jid, host, clock, host_result)
+                for (host, host_result) in poll_results['dark'].iteritems():
+                    print "FAILED: %s => %s" % (host, host_result)
                 clock = clock - options.poll_interval
                 time.sleep(options.poll_interval)
                 poll_hosts = self.hosts_to_poll(poll_results)
-            for (host, host_result) in results['contacted'].iteritems():
-                if 'started' in host_result:
-                    results['contacted'][host] = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-
-        buf = '' 
-        for hostname in utils.contacted_hosts(results):
-            msg = utils.host_report_msg(
-                hostname, 
-                options.module_name, 
-                utils.contacted_host_result(results, hostname),
-                options.one_line
-            )
-            if options.tree:
-                utils.write_tree_file(options.tree, hostname, utils.bigjson(utils.contacted_host_result(results, hostname)))
-            buf += msg
-            
-        # TODO: remove, callbacks now do this
-        if utils.has_dark_hosts(results):
-            buf += utils.dark_hosts_msg(results)
-
-        if not utils.has_hosts(results):
-            print "ERROR: no hosts matched"
-
-        print buf
 
 ########################################################
 
@@ -203,5 +175,5 @@ if __name__ == '__main__':
         print "ERROR: %s" % str(e)
         sys.exit(1)
     else:
-        cli.output(runner, results, options, args)
+        cli.poll_if_needed(runner, results, options, args)
 

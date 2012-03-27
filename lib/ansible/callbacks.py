@@ -83,6 +83,31 @@ class DefaultRunnerCallbacks(object):
     def on_unreachable(self, host, res):
         pass
 
+class CliRunnerCallbacks(DefaultRunnerCallbacks):
+
+    def __init__(self):
+        # set by /usr/bin/ansible later
+        self.options = None 
+
+    def on_failed(self, host, res):
+        self._on_any(host,res)
+
+    def on_ok(self, host, res):
+        self._on_any(host,res)
+ 
+    def on_unreachable(self, host, res):
+        print "%s | FAILED => %s" % (host, res)
+        if self.options.tree:
+            utils.write_tree_file(self.options.tree, host, dict(failed=True, msg=res))
+ 
+    def on_skipped(self, host):
+        pass
+
+    def _on_any(self, host, result):
+        print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
+        if self.options.tree:
+            utils.write_tree_file(self.options.tree, host, utils.bigjson(result))
+
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def __init__(self, stats):

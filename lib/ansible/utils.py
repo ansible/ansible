@@ -135,7 +135,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name in [ 'command', 'shell' ]:
+    if module_name in [ 'command', 'shell' ] and 'ansible_job_id' not in result:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:
@@ -147,15 +147,7 @@ def host_report_msg(hostname, module_name, result, oneline):
             buf = regular_failure_msg(hostname, result, oneline)
     return buf
 
-def dark_hosts_msg(results):
-    ''' summarize the results of all uncontactable hosts '''
-    buf = ''
-    if len(results['dark'].keys()) > 0:
-        buf += "\n*** Hosts with fatal errors: ***\n"
-        for hostname in results['dark'].keys():
-            buf += "%s: %s\n" % (hostname, results['dark'][hostname])
-    buf += "\n"
-    return buf
+# FIXME: needed? ... may be able to eliminate many of these...
 
 def has_dark_hosts(results):
     ''' are there any uncontactable hosts? '''

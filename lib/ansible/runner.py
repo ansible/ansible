@@ -494,7 +494,10 @@ class Runner(object):
 
     def _executor(self, host):
         try:
-            return self._executor_internal(host)
+            (host, ok, data) =  self._executor_internal(host)
+            if not ok:
+               self.callbacks.on_unreachable(host, data)
+            return (host, ok, data)
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
