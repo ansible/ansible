@@ -25,7 +25,6 @@ from optparse import OptionParser
 import ansible.playbook
 import ansible.constants as C
 from ansible import errors
-from ansible import utils
 from ansible import callbacks
 
 def main(args):
@@ -82,7 +81,7 @@ def main(args):
         )
         try:
 
-            results = pb.run()
+            pb.run()
             hosts = sorted(pb.stats.processed.keys())
             print "\n\nPLAY RECAP **********************\n\n"
             for h in hosts:
