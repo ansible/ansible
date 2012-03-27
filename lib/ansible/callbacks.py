@@ -98,7 +98,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_unreachable(self, host, res):
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, dict(failed=True, msg=res))
+            utils.write_tree_file(self.options.tree, host, utils.bigjson(dict(failed=True, msg=res)))
  
     def on_skipped(self, host):
         pass
