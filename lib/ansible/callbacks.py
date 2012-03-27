@@ -139,10 +139,6 @@ class PlaybookCallbacks(object):
     def __init__(self):
         pass
 
-    # TOOD: -- remove this
-    def set_playbook(self, playbook):
-        self.playbook = playbook
-
     def on_start(self):
         print "\n"
 

@@ -75,7 +75,6 @@ class PlayBook(object):
         self.override_hosts   = override_hosts
         self.stats            = stats
 
-        self.callbacks.set_playbook(self)
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
