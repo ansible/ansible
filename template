@@ -26,6 +26,8 @@ try:
 except ImportError:
     import simplejson as json
 
+environment = jinja2.Environment()
+
 # ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
@@ -57,9 +59,17 @@ if not os.path.exists(metadata):
     sys.exit(1)
 
 # raise an error if we can't parse the template metadata
+#data = {}
 try:
    f = open(metadata)
    data = json.loads(f.read())
+# Hack by mgw to get nested variables -- use at your own risk
+#   data_in = json.loads(f.read())
+#   for k, v in data_in.items():
+#       try:
+#           data[k] = eval(v)
+#       except:
+#           data[k] = v
    f.close()
 except:
    print json.dumps({
@@ -90,15 +100,19 @@ md5sum = None
 if os.path.exists(dest):
     md5sum = os.popen("md5sum %s" % dest).read().split()[0]
 
-# call Jinja2 here and save the new template file
-template = jinja2.Template(source)
-data_out = template.render(data)
+try:
+    # call Jinja2 here and save the new template file
+    template = environment.from_string(source)
+    data_out = template.render(data)
+except jinja2.TemplateError as  e:
+    print json.dumps({
+        "failed": True,
+        "msg"   : e.message
+    })
+    sys.exit(1)
 f = open(dest, "w+")
 f.write(data_out)
 f.close()
-
-# TODO: catch templating errors and do not clobber the file on the
-# other end unless things were successful
 
 # record m5sum and return success and whether things have changed
 md5sum2 = os.popen("md5sum %s" % dest).read().split()[0]
