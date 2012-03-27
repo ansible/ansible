@@ -19,28 +19,12 @@
 
 import sys
 import os
-import collections
 import jinja2
 import shlex
 try:
     import json
 except ImportError:
     import simplejson as json
-
-environment = jinja2.Environment()
-
-def format_advanced(fmt, data):
-    # jinja2 filter to use advanced python string formatting
-    # e.g, {{ "{0} {1} {2}"|format_advanced(['a', 'b', 'c']) }}
-    # see http://docs.python.org/library/string.html#formatstrings
-    if isinstance(data, collections.Mapping):
-        return fmt.format(**data)
-    elif isinstance(data, collections.Sequence):
-        return fmt.format(*data)
-    else:
-        return data
-
-environment.filters['format_advanced'] = format_advanced
 
 # ===========================================
 # convert arguments of form a=b c=d
@@ -107,7 +91,7 @@ if os.path.exists(dest):
     md5sum = os.popen("md5sum %s" % dest).read().split()[0]
 
 # call Jinja2 here and save the new template file
-template = environment.from_string(source)
+template = jinja2.Template(source)
 data_out = template.render(data)
 f = open(dest, "w+")
 f.write(data_out)
