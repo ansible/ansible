@@ -165,7 +165,6 @@ class Runner(object):
         if not os.path.exists(host_list):
             raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
 
-        rc = None
         if not os.access(host_list, os.X_OK):
             return Runner.parse_hosts_from_regular_file(host_list)
         else:
@@ -437,7 +436,7 @@ class Runner(object):
         if ok:
             return self._chain_file_module(conn, tmp, data, options, executed)
         else:
-            return results1  
+            return (host, ok, data) 
 
     # *****************************************************
 
@@ -488,13 +487,16 @@ class Runner(object):
         if ok:
             return self._chain_file_module(conn, tmp, data, options, executed)
         else:
-            return results1
+            return (host, ok, data)
 
     # *****************************************************
 
     def _executor(self, host):
         try:
-            return self._executor_internal(host)
+            (host, ok, data) = self._executor_internal(host)
+            if not ok:
+                self.callbacks.on_unreachable(host, data)
+            return (host, ok, data)
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)

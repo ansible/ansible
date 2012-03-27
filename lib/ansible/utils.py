@@ -135,7 +135,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name in [ 'command', 'shell' ]:
+    if module_name in [ 'command', 'shell' ] and 'ansible_job_id' not in result:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:
@@ -146,36 +146,6 @@ def host_report_msg(hostname, module_name, result, oneline):
         else:
             buf = regular_failure_msg(hostname, result, oneline)
     return buf
-
-def dark_hosts_msg(results):
-    ''' summarize the results of all uncontactable hosts '''
-    buf = ''
-    if len(results['dark'].keys()) > 0:
-        buf += "\n*** Hosts with fatal errors: ***\n"
-        for hostname in results['dark'].keys():
-            buf += "%s: %s\n" % (hostname, results['dark'][hostname])
-    buf += "\n"
-    return buf
-
-def has_dark_hosts(results):
-    ''' are there any uncontactable hosts? '''
-    return len(results['dark'].keys()) > 0
-
-def has_contacted_hosts(results):
-    ''' are there any contacted hosts? '''
-    return len(results['contacted'].keys()) > 0
-
-def has_hosts(results):
-    ''' did ansible run against any hosts at all? '''
-    return has_contacted_hosts(results) or has_dark_hosts(results)
-
-def contacted_hosts(results):
-    ''' what are the contactable hosts? '''
-    return sorted(results['contacted'])
-
-def contacted_host_result(results, hostname):
-    ''' what are the results for a given host? '''
-    return results['contacted'][hostname]
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''

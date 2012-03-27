@@ -43,7 +43,7 @@ cp -v library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%doc README.md AUTHORS.md PKG-INFO
+%doc README.md PKG-INFO
 %defattr(-,root,root)
 %{_mandir}/man1/*.gz
 %{python_sitelib}/*

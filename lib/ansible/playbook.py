@@ -75,7 +75,6 @@ class PlayBook(object):
         self.override_hosts   = override_hosts
         self.stats            = stats
 
-        self.callbacks.set_playbook(self)
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
@@ -218,10 +217,8 @@ class PlayBook(object):
         while (clock >= 0):
 
             # poll/loop until polling duration complete
-	    # FIXME: make a "get_async_runner" method like in /bin/ansible
             runner.module_args = [ "jid=%s" % jid ]
             runner.module_name = 'async_status'
-            # FIXME: make it such that if you say 'async_status' you # can't background that op!
             runner.background  = 0  
             runner.pattern     = '*'
             poll_results       = runner.run()
@@ -340,16 +337,20 @@ class PlayBook(object):
         # for all registered handlers in the ansible playbook
         # for this particular pattern group
 
+        found = False
         for x in handlers:
             name = x.get('name', None)
             if name is None:
                 raise errors.AnsibleError('handler is missing a name')
             if match_name == name:
+                found = True
                 self.callbacks.on_notify(host, name)
                 # flag the handler with the list of hosts it needs to be run on, it will be run later
                 if not 'run' in x:
                     x['run'] = []
                 x['run'].append(host)
+        if not found:
+            raise errors.AnsibleError("change handler (%s) is not defined" % match_name)
 
     # *****************************************************
 
