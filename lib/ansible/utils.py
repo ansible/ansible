@@ -147,28 +147,6 @@ def host_report_msg(hostname, module_name, result, oneline):
             buf = regular_failure_msg(hostname, result, oneline)
     return buf
 
-# FIXME: needed? ... may be able to eliminate many of these...
-
-def has_dark_hosts(results):
-    ''' are there any uncontactable hosts? '''
-    return len(results['dark'].keys()) > 0
-
-def has_contacted_hosts(results):
-    ''' are there any contacted hosts? '''
-    return len(results['contacted'].keys()) > 0
-
-def has_hosts(results):
-    ''' did ansible run against any hosts at all? '''
-    return has_contacted_hosts(results) or has_dark_hosts(results)
-
-def contacted_hosts(results):
-    ''' what are the contactable hosts? '''
-    return sorted(results['contacted'])
-
-def contacted_host_result(results, hostname):
-    ''' what are the results for a given host? '''
-    return results['contacted'][hostname]
-
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
     if tree != '/':
