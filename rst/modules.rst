@@ -324,9 +324,9 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 * Optionally sets the description of the user
 
-*gid*:
+*group*:
 
-* Optionally sets the primary group GID.  The user module will also be able to manipulate this.
+* Optionally sets the user's primary group, takes a group name.
 
 *shell*:
 
