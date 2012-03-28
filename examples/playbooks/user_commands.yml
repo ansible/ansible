@@ -19,7 +19,7 @@
     # the 'name' element for each task
 
     - action: user name=tset comment=NyetUser
-    - action: user name=tset password=$password supplementary
+    - action: user name=tset password=$password
 
     # The following will add the user to supplementary groups.
 
