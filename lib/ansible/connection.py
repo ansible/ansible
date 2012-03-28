@@ -65,7 +65,8 @@ class ParamikoConnection(object):
                 allow_agent=True,
                 look_for_keys=True, 
                 password=self.runner.remote_pass, 
-                timeout=self.runner.timeout
+                timeout=self.runner.timeout,
+ 	        port=self.runner.remote_port
             )
         except Exception, e:
             raise errors.AnsibleConnectionFailed(str(e))

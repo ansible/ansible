@@ -54,6 +54,7 @@ class PlayBook(object):
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
+        remote_port      = C.DEFAULT_REMOTE_PORT,
         override_hosts   = None,
         verbose          = False,
         callbacks        = None,
@@ -69,6 +70,7 @@ class PlayBook(object):
         self.timeout          = timeout
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
+        self.remote_port      = remote_port
         self.verbose          = verbose
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
@@ -262,7 +264,7 @@ class PlayBook(object):
             pattern=pattern, groups=self.groups, module_name=module,
             module_args=args, host_list=hosts, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=remote_user,
+            timeout=self.timeout, remote_user=remote_user, remote_port=self.remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks,
         )
@@ -426,7 +428,7 @@ class PlayBook(object):
             pattern=pattern, groups=self.groups, module_name='setup',
             module_args=push_var_str, host_list=host_list,
             forks=self.forks, module_path=self.module_path,
-            timeout=self.timeout, remote_user=user,
+            timeout=self.timeout, remote_user=user, remote_port=self.remote_port,
             remote_pass=self.remote_pass, setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks,
         ).run()

@@ -60,8 +60,8 @@ class Runner(object):
         module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
-        background=0, basedir=None, setup_cache=None, transport='paramiko',
-        conditional='True', groups={}, callbacks=None, verbose=False):
+        remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
+        transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False):
     
         if setup_cache is None:
             setup_cache = {}
@@ -92,6 +92,7 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
+        self.remote_port = remote_port
         self.background  = background
         self.basedir = basedir
 
