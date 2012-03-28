@@ -1,0 +1,20 @@
+---
+# This is a demo of how the group command works.
+
+- hosts: all
+  user: root
+
+  tasks:
+
+    # Walk through group creation, modification, and deletion
+    - name: create a group
+      action: group name=tset
+
+    - name: add a member to tset
+      action: group name=tset member=nobody memberstate=present
+
+    - name: remove member
+      action: group name=tset member=nobody memberstate=absent
+
+    - name: remove group
+      action: group name=tset state=absent
