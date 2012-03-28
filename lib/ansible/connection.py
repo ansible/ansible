@@ -65,10 +65,14 @@ class ParamikoConnection(object):
                 allow_agent=True,
                 look_for_keys=True, 
                 password=self.runner.remote_pass, 
-                timeout=self.runner.timeout
+                timeout=self.runner.timeout,
+ 	        port=self.runner.remote_port
             )
         except Exception, e:
-            raise errors.AnsibleConnectionFailed(str(e))
+            if str(e).find("PID check failed") != -1:
+                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the overlord")
+            else: 
+                raise errors.AnsibleConnectionFailed(str(e))
         return self
 
     def exec_command(self, cmd):

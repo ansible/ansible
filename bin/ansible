@@ -49,30 +49,32 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = OptionParser(usage = 'ansible <host-pattern> [options]')
-        parser.add_option("-a", "--args", dest="module_args",
+        parser.add_option('-a', '--args', dest='module_args',
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
-        parser.add_option("-B", "--background", dest="seconds", type='int', default=0,
-            help="run asynchronously, failing after X seconds")
+        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
+            help='run asynchronously, failing after X seconds')
         parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
             help='number of parallel processes to use')
-        parser.add_option("-i", "--inventory-file", dest="inventory",
-           help="inventory host file", default=C.DEFAULT_HOST_LIST)
-        parser.add_option("-k", "--ask-pass", default=False, action="store_true",
-            help="ask for SSH password")
-        parser.add_option("-M", "--module-path", dest="module_path",
+        parser.add_option('-i', '--inventory-file', dest='inventory',
+           help='inventory host file', default=C.DEFAULT_HOST_LIST)
+        parser.add_option('-k', '--ask-pass', default=False, action='store_true',
+            help='ask for SSH password')
+        parser.add_option('-M', '--module-path', dest='module_path',
            help="path to module library", default=C.DEFAULT_MODULE_PATH)
-        parser.add_option("-m", "--module-name", dest="module_name",
+        parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute", default=C.DEFAULT_MODULE_NAME)
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-            help="condense output")
+            help='condense output')
         parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval', help="set the poll interval if using -B")
+            dest='poll_interval', help='set the poll interval if using -B')
         parser.add_option('-t', '--tree', dest='tree', default=None,
-            help="log output to this directory")
+            help='log output to this directory')
         parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
-            dest='timeout', help="set the SSH timeout in seconds")
+            dest='timeout', help='set the SSH timeout in seconds')
         parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
             dest='remote_user', help='connect as this user')
+        parser.add_option('-p', '--port', default=C.DEFAULT_REMOTE_PORT, type='int',
+            dest='remote_port', help='set the remote ssh port')
         options, args = parser.parse_args()
         self.callbacks.options = options        
 
@@ -101,8 +103,9 @@ class Cli(object):
             module_name=options.module_name, module_path=options.module_path,
             module_args=shlex.split(options.module_args),
             remote_user=options.remote_user, remote_pass=sshpass,
-            host_list=options.inventory, timeout=options.timeout,
-            forks=options.forks, background=options.seconds, pattern=pattern, 
+            host_list=options.inventory, timeout=options.timeout, 
+            remote_port=options.remote_port, forks=options.forks, 
+            background=options.seconds, pattern=pattern, 
             callbacks=self.callbacks, verbose=True,
         )
         return (runner, runner.run())
@@ -116,7 +119,8 @@ class Cli(object):
             module_args=[ "jid=%s" % jid ], remote_user=old_runner.remote_user,
             remote_pass=old_runner.remote_pass, host_list=hosts,
             timeout=old_runner.timeout, forks=old_runner.forks,
-            pattern='*', callbacks=self.silent_callbacks, verbose=True,
+            remote_port=old_runner.remote_port, pattern='*', 
+            callbacks=self.silent_callbacks, verbose=True,
         )
 
     # ----------------------------------------------

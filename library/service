@@ -44,7 +44,8 @@ for x in items:
 name = params['name']
 state = params.get('state','unknown')
 
-if state not in [ 'running', 'stopped', 'restarted' ]:
+# running and started are the same
+if state not in [ 'running', 'started', 'stopped', 'restarted' ]:
     print "failed=True msg='invalid state'"
     sys.exit(1)
 
@@ -82,10 +83,9 @@ def _run(cmd):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE, shell=True)
 
-
 rc = 0
 if changed:
-    if state == 'started':
+    if state in ('started', 'running'):
         rc = _run("/sbin/service %s start" %  name)
     elif state == 'stopped':
         rc = _run("/sbin/service %s stop" % name)
