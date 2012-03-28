@@ -60,6 +60,9 @@ def add_user_info(kwargs):
         kwargs['home'] = info[5]
         kwargs['shell'] = info[6]
         kwargs['createhome'] = os.path.exists(info[5])
+        groups = user_group_membership(name)
+        if len(groups) > 0:
+            kwargs['groups'] = groups
     else:
         kwargs['state'] = 'absent'
     return kwargs
@@ -86,11 +89,16 @@ def user_add(user, **kwargs):
             cmd.append('-u')
             cmd.append(kwargs[key])
         elif key == 'group' and kwargs[key] is not None:
-            if group_exists(kwargs[key]):
-                cmd.append('-g')
-                cmd.append(kwargs[key])
-            else:
+            if not group_exists(kwargs[key]):
                 fail_json(msg="Group %s does not exist" % (kwargs[key]))
+            cmd.append('-g')
+            cmd.append(kwargs[key])
+        elif key == 'groups' and kwargs[key] is not None:
+            for g in kwargs[key].split(','):
+                if not group_exists(g):
+                    fail_json(msg="Group %s does not exist" % (g))
+            cmd.append('-G')
+            cmd.append(kwargs[key])
         elif key == 'comment' and kwargs[key] is not None:
             cmd.append('-c')
             cmd.append(kwargs[key])
@@ -126,13 +134,20 @@ def user_mod(user, **kwargs):
                 cmd.append('-u')
                 cmd.append(kwargs[key])
         elif key == 'group' and kwargs[key] is not None:
-            if group_exists(kwargs[key]):
-                ginfo = group_info(group)
-                if info[3] != ginfo[2]:
-                    cmd.append('-g')
-                    cmd.append(kwargs[key])
-            else:
+            if not group_exists(kwargs[key]):
                 fail_json(msg="Group %s does not exist" % (kwargs[key]))
+            ginfo = group_info(group)
+            if info[3] != ginfo[2]:
+                cmd.append('-g')
+                cmd.append(kwargs[key])
+        elif key == 'groups' and kwargs[key] is not None:
+            for g in kwargs[key].split(','):
+                if not group_exists(g):
+                    fail_json(msg="Group %s does not exist" % (g))
+            groups = ",".join(user_group_membership(user))
+            if groups != kwargs[key]:
+                cmd.append('-G')
+                cmd.append(kwargs[key])
         elif key == 'comment':
             if kwargs[key] is not None and info[4] != kwargs[key]:
                 cmd.append('-c')
@@ -149,6 +164,10 @@ def user_mod(user, **kwargs):
             if kwargs[key] is not None and info[1] != kwargs[key]:
                 cmd.append('-p')
                 cmd.append(kwargs[key])
+        elif key == 'append':
+            if kwargs[key] is not None and kwargs[key] == 'yes':
+                if 'groups' in kwargs and kwargs['groups'] is not None:
+                    cmd.append('-a')
     # skip if no changes to be made
     if len(cmd) == 1:
         return False
@@ -179,6 +198,14 @@ def group_info(group):
     else:
         return list(grp.getgrnam(group))
 
+def user_group_membership(user):
+    groups = []
+    info = get_pwd_info(user)
+    for group in grp.getgrall():
+        if user in group[3] and info[3] != group[2]:
+            groups.append(group[0])
+    return groups
+
 def user_exists(user):
     try:
         if pwd.getpwnam(user):
@@ -186,11 +213,16 @@ def user_exists(user):
     except KeyError:
         return False
 
+def get_pwd_info(user):
+    if not user_exists(user):
+        return False
+    return list(pwd.getpwnam(user))
+
 def user_info(user):
     if not user_exists(user):
         return False
     try:
-        info = list(pwd.getpwnam(user))
+        info = get_pwd_info(user)
         sinfo = spwd.getspnam(user)
     except KeyError:
         return False
@@ -232,6 +264,7 @@ state      = params.get('state','present')
 name       = params.get('name', None)
 uid        = params.get('uid', None)
 group      = params.get('group', None)
+groups     = params.get('groups', None)
 comment    = params.get('comment', None)
 home       = params.get('home', None)
 shell      = params.get('shell', None)
@@ -246,10 +279,16 @@ remove     = params.get('remove', False)
 # following options are specific to useradd
 createhome = params.get('createhome', 'yes')
 
+# ===========================================
+# following options are specific to usermod
+append     = params.get('append', 'no')
+
 if state not in [ 'present', 'absent' ]:
     fail_json(msg='invalid state')
 if createhome not in [ 'yes', 'no' ]:
     fail_json(msg='invalid createhome')
+if append not in [ 'yes', 'no' ]:
+    fail_json(msg='invalid append')
 if name is None:
     fail_json(msg='name is required')
 
@@ -261,12 +300,13 @@ if state == 'absent':
     exit_json(name=name, changed=changed, force=force, remove=remove)
 elif state == 'present':
     if not user_exists(name):
-        changed = user_add(name, uid=uid, group=group, comment=comment,
-                           home=home, shell=shell, password=password,
-                           createhome=createhome)
+        changed = user_add(name, uid=uid, group=group, groups=groups,
+                           comment=comment, home=home, shell=shell,
+                           password=password, createhome=createhome)
     else:
-        changed = user_mod(name, uid=uid, group=group, comment=comment,
-                           home=home, shell=shell, password=password)
+        changed = user_mod(name, uid=uid, group=group, groups=groups,
+                           comment=comment, home=home, shell=shell,
+                           password=password, append=append)
 
     if password is not None:
         exit_json(name=name, changed=changed, password="XXXXXXXX")
