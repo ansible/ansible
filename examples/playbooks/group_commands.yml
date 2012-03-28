@@ -10,11 +10,8 @@
     - name: create a group
       action: group name=tset
 
-    - name: add a member to tset
-      action: group name=tset member=nobody memberstate=present
+    # You can only modify the group's gid
+    - action: group name=tset gid=7777
 
-    - name: remove member
-      action: group name=tset member=nobody memberstate=absent
-
-    - name: remove group
-      action: group name=tset state=absent
+    # And finally remove the group
+    - action: group name=tset state=absent
