@@ -69,7 +69,10 @@ class ParamikoConnection(object):
  	        port=self.runner.remote_port
             )
         except Exception, e:
-            raise errors.AnsibleConnectionFailed(str(e))
+            if str(e).find("PID check failed") != -1:
+                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the overlord")
+            else: 
+                raise errors.AnsibleConnectionFailed(str(e))
         return self
 
     def exec_command(self, cmd):
