@@ -93,8 +93,8 @@ recurse   = params.get('recurse', 'false')
 # presently unused, implement (FIXME)
 secontext = params.get('secontext', None)
 
-if state not in [ 'file', 'directory', 'link' 'absent']:
-    fail_json(msg='invalid state')
+if state not in [ 'file', 'directory', 'link', 'absent']:
+    fail_json(msg='invalid state: %s' % state)
 if path is None:
     fail_json(msg='path is required')
 
@@ -247,7 +247,12 @@ elif state == 'directory':
 elif state == 'link':
     if not target:
         fail_json(path=path, msg='target parameter required for links')
-    if not os.path.exists(target):
+    
+    if os.path.isabs(target):
+        abstarget = target
+    else:
+        abstarget = os.path.join(os.path.dirname(path))
+    if not os.path.exists(abstarget):
         fail_json(path=path, target=target, msg='target file does not exist')
     
     debug('requesting link')
@@ -256,8 +261,8 @@ elif state == 'link':
         changed = True
     else:
         old_target = os.readlink(path)
-        if not os.path.isabs(old_tablet):
-            old_target = os.path.join(os.path.dirname(path))
+        if not os.path.isabs(old_target):
+            old_target = os.path.join(os.path.dirname(path), old_target)
         if old_target != target:
             debug('changing target')
             os.unlink(path)
