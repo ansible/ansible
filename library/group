@@ -30,7 +30,6 @@ import sys
 GROUPADD = "/usr/sbin/groupadd"
 GROUPDEL = "/usr/sbin/groupdel"
 GROUPMOD = "/usr/sbin/groupmod"
-GPASSWD  = "/usr/bin/gpasswd"
 
 def debug(msg):
     # ansible ignores stderr, so it's safe to use for debug
@@ -54,7 +53,6 @@ def add_group_info(kwargs):
         kwargs['state'] = 'present'
         info = group_info(name)
         kwargs['gid'] = info[2]
-        kwargs['members'] = info[3]
     else:
         kwargs['state'] = 'absent'
     return kwargs
@@ -100,33 +98,6 @@ def group_mod(group, **kwargs):
     else:
         return False
 
-def group_has_member(group, member):
-    if not group_exists(group):
-        return False
-    info = group_info(group)
-    if member in info[3]:
-        return True
-    else:
-        return False
-
-def group_add_member(group, member):
-    cmd = [GPASSWD, '-a', member, group]
-    debug("Arguments to gpasswd: %s" % (" ".join(cmd)))
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
-
-def group_del_member(group, member):
-    cmd = [GPASSWD, '-d', member, group]
-    debug("Arguments to gpasswd: %s" % (" ".join(cmd)))
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
-
 def group_exists(group):
     try:
         if grp.getgrnam(group):
@@ -160,11 +131,6 @@ if not os.path.exists(GROUPMOD):
         GROUPDEL = "/sbin/groupmod"
     else:
         fail_json(msg="Cannot find groupmod")
-if not os.path.exists(GPASSWD):
-    if os.path.exists("/bin/gpasswd"):
-        GROUPDEL = "/bin/gpasswd"
-    else:
-        fail_json(msg="Cannot find gpasswd")
 
 if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
     argfile = sys.argv[1]
@@ -186,15 +152,8 @@ state       = params.get('state','present')
 name        = params.get('name', None)
 gid         = params.get('gid', None)
 
-# ===========================================
-# the following controls group membership
-member      = params.get('member', None)
-memberstate = params.get('memberstate', 'present')
-
 if state not in [ 'present', 'absent' ]:
     fail_json(msg='invalid state')
-if memberstate not in [ 'present', 'absent' ]:
-    fail_json(msg='invalid memberstate')
 if name is None:
     fail_json(msg='name is required')
 
@@ -209,16 +168,6 @@ elif state == 'present':
         changed = group_add(name, gid=gid)
     else:
         changed = group_mod(name, gid=gid)
-
-    if member is not None:
-        if memberstate == 'present':
-            if not group_has_member(name, member):
-                changed = group_add_member(name, member)
-        elif memberstate == 'absent':
-            if group_has_member(name, member):
-                changed = group_del_member(name, member)
-        else:
-            fail_json(name=name, msg='Unexpected position reached')
 
     exit_json(name=name, changed=changed)
 
