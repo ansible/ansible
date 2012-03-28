@@ -75,6 +75,7 @@ class Cli(object):
             dest='remote_user', help='connect as this user')
         parser.add_option('-p', '--port', default=C.DEFAULT_REMOTE_PORT, type='int',
             dest='remote_port', help='set the remote ssh port')
+
         options, args = parser.parse_args()
         self.callbacks.options = options        
 
