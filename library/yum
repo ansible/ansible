@@ -41,7 +41,12 @@ def yum_base(conf_file=None, cachedir=False):
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if cachedir:
-        my.setCacheDir()
+        if hasattr(my, 'setCacheDir'):
+            my.setCacheDir()
+        else:
+            cachedir = yum.misc.getCacheDir()
+            my.repos.setCacheDir(cachedir)
+            my.conf.cache = 0 
     
     return my
 
@@ -209,14 +214,21 @@ def ensure(my, state, pkgspec):
         return res
                 
     if state == 'latest':
-        if not [ pkg_to_dict(po) for 
-            po in my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates ]:
-            # there nothing in updates matching this.
+        updates = my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates
+        avail =  my.doPackageLists(pkgnarrow='available', patterns=[pkgspec]).available
+        if not updates and not avail:
+            if not my.doPackageLists(pkgnarrow='installed', patterns=[pkgspec]).installed:
+                msg = "No Package matching '%s' found available, installed or updated" % pkgspec
+                return { 'changed':False, 'failed':True, 'msg': msg }
             return { 'changed':False,}
 
-        # we have something in updates
-        cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
+        # we have something in updates or available
+        if not updates:
+            cmd = "yum -c %s -d1 -y install '%s'" % (yumconf, pkgspec)
+        else:
+            cmd = "yum -c %s -d1 -y update '%s'" % (yumconf, pkgspec)
         rc, out, err = run_yum(cmd)
+
         # FIXME if it is - update it and check to see if it applied
         # check to see if there is no longer an update available for the pkgspec
         if rc:
