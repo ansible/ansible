@@ -254,8 +254,8 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_module(self, pattern, host_list, module, args, remote_user,
-        async_seconds, async_poll_interval, only_if):
+    def _run_module(self, pattern, host_list, module, args, remote_user, 
+        remote_port, async_seconds, async_poll_interval, only_if):
         ''' run a particular module step in a playbook '''
 
         hosts = [ h for h in host_list if (h not in self.stats.failures) and (h not in self.stats.dark)]
@@ -264,7 +264,7 @@ class PlayBook(object):
             pattern=pattern, groups=self.groups, module_name=module,
             module_args=args, host_list=hosts, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=remote_user, remote_port=self.remote_port,
+            timeout=self.timeout, remote_user=remote_user, remote_port=remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks,
         )
@@ -277,7 +277,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_task(self, pattern=None, host_list=None, task=None, 
-        remote_user=None, handlers=None, conditional=False):
+        remote_user=None, remote_port=None, handlers=None, conditional=False):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # load the module name and parameters from the task entry
@@ -305,8 +305,7 @@ class PlayBook(object):
         # load up an appropriate ansible runner to
         # run the task in parallel
         results = self._run_module(pattern, host_list, module_name, 
-            module_args, remote_user, 
-            async_seconds, async_poll_interval, only_if)
+            module_args, remote_user, remote_port, async_seconds, async_poll_interval, only_if)
 
         self.stats.compute(results)
 
@@ -401,7 +400,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, port, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -428,7 +427,7 @@ class PlayBook(object):
             pattern=pattern, groups=self.groups, module_name='setup',
             module_args=push_var_str, host_list=host_list,
             forks=self.forks, module_path=self.module_path,
-            timeout=self.timeout, remote_user=user, remote_port=self.remote_port,
+            timeout=self.timeout, remote_user=user, remote_port=port,
             remote_pass=self.remote_pass, setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks,
         ).run()
@@ -461,15 +460,16 @@ class PlayBook(object):
         tasks      = pg.get('tasks', [])
         handlers   = pg.get('handlers', [])
         user       = pg.get('user', C.DEFAULT_REMOTE_USER)
+        port       = pg.get('port', C.DEFAULT_REMOTE_PORT)
 
         self.callbacks.on_play_start(pattern)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self._do_setup_step(pattern, vars, user, None)
+        self._do_setup_step(pattern, vars, user, port, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self._do_setup_step(pattern, vars, user, vars_files)
+            self._do_setup_step(pattern, vars, user, port, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -478,7 +478,8 @@ class PlayBook(object):
                 host_list=self.host_list,
                 task=task, 
                 handlers=handlers,
-                remote_user=user
+                remote_user=user,
+                remote_port=port
             )
 
         # handlers only run on certain nodes, they are flagged by _flag_handlers
@@ -496,7 +497,8 @@ class PlayBook(object):
                    handlers=[],
                    host_list=triggered_by,
                    conditional=True,
-                   remote_user=user
+                   remote_user=user,
+                   remote_port=port
                 )
 
         # end of execution for this particular pattern.  Multiple patterns
