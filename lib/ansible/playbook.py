@@ -54,6 +54,7 @@ class PlayBook(object):
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
+        remote_port      = C.DEFAULT_REMOTE_PORT,
         override_hosts   = None,
         verbose          = False,
         callbacks        = None,
@@ -69,6 +70,7 @@ class PlayBook(object):
         self.timeout          = timeout
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
+        self.remote_port      = remote_port
         self.verbose          = verbose
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
@@ -252,7 +254,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_module(self, pattern, host_list, module, args, remote_user,
+    def _run_module(self, pattern, host_list, module, args, remote_user, 
         async_seconds, async_poll_interval, only_if):
         ''' run a particular module step in a playbook '''
 
@@ -262,7 +264,8 @@ class PlayBook(object):
             pattern=pattern, groups=self.groups, module_name=module,
             module_args=args, host_list=hosts, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=remote_user,
+            timeout=self.timeout, remote_user=remote_user, 
+            remote_port=self.remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks,
         )
@@ -303,8 +306,8 @@ class PlayBook(object):
         # load up an appropriate ansible runner to
         # run the task in parallel
         results = self._run_module(pattern, host_list, module_name, 
-            module_args, remote_user, 
-            async_seconds, async_poll_interval, only_if)
+            module_args, remote_user, async_seconds, 
+            async_poll_interval, only_if)
 
         self.stats.compute(results)
 
@@ -399,7 +402,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, port, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -427,7 +430,8 @@ class PlayBook(object):
             module_args=push_var_str, host_list=host_list,
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
-            remote_pass=self.remote_pass, setup_cache=SETUP_CACHE,
+            remote_pass=self.remote_pass, remote_port=self.remote_port,
+            setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks,
         ).run()
         self.stats.compute(setup_results, setup=True)
@@ -459,15 +463,16 @@ class PlayBook(object):
         tasks      = pg.get('tasks', [])
         handlers   = pg.get('handlers', [])
         user       = pg.get('user', C.DEFAULT_REMOTE_USER)
+        port       = pg.get('port', C.DEFAULT_REMOTE_PORT)
 
         self.callbacks.on_play_start(pattern)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self._do_setup_step(pattern, vars, user, None)
+        self._do_setup_step(pattern, vars, user, port, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self._do_setup_step(pattern, vars, user, vars_files)
+            self._do_setup_step(pattern, vars, user, port, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -476,7 +481,7 @@ class PlayBook(object):
                 host_list=self.host_list,
                 task=task, 
                 handlers=handlers,
-                remote_user=user
+                remote_user=user,
             )
 
         # handlers only run on certain nodes, they are flagged by _flag_handlers

@@ -19,7 +19,9 @@
 ################################################
 
 import paramiko
+import traceback
 import os
+import time
 from ansible import errors
 
 ################################################
@@ -53,28 +55,68 @@ class ParamikoConnection(object):
         self.runner = runner
         self.host = host
 
+    def _get_conn(self):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            ssh.connect(
+                self.host, username=self.runner.remote_user,
+                allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
+                timeout=self.runner.timeout, port=self.runner.remote_port
+            )
+        except Exception, e:
+            if str(e).find("PID check failed") != -1:
+                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+            else:
+                raise errors.AnsibleConnectionFailed(str(e))
+
+        return ssh
+
+
     def connect(self):
         ''' connect to the remote host '''
 
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            self.ssh.connect(
-                self.host, 
-                username=self.runner.remote_user, 
-                allow_agent=True,
-                look_for_keys=True, 
-                password=self.runner.remote_pass, 
-                timeout=self.runner.timeout
-            )
-        except Exception, e:
-            raise errors.AnsibleConnectionFailed(str(e))
+        self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd):
+    def exec_command(self, cmd, sudoable=True):
+
         ''' run a command on the remote host '''
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        return (stdin, stdout, stderr)
+        if not self.runner.sudo or not sudoable: 
+            stdin, stdout, stderr = self.ssh.exec_command(cmd)
+            return (stdin, stdout, stderr)
+        else:
+            # this code is a work in progress, so it's disabled...
+            self.ssh.close()
+            ssh_sudo = self._get_conn()
+            sudo_chan = ssh_sudo.invoke_shell()
+            sudo_chan.send("sudo -s\n")
+            sudo_chan.recv(1024)
+            sudo_chan.send("echo && %s && echo\n" % cmd)
+            while not sudo_chan.recv_ready():
+                # TODO: timeout support
+                time.sleep(1)
+            out = sudo_chan.recv(1024)
+            sudo_chan.close()
+            self.ssh = self._get_conn()
+            out = self._expect_like(out)
+            return (None, out, '')
+
+    def _expect_like(self, msg):
+        ''' hack to make invoke_shell more or less work for sudo usage '''
+        lines = msg.split("\n")
+        index = 0
+        for x in lines:
+            if x == '\r':
+                break
+            index += 1
+        index2 = index+1 
+        for x in lines[index:]:
+            if x == '\r':
+                break
+            index2 += 1
+        return "\n".join(lines[index+1:index2+1]).strip()
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -84,6 +126,7 @@ class ParamikoConnection(object):
         try:
             sftp.put(in_path, out_path)
         except IOError:
+            traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
 

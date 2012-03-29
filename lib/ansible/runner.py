@@ -33,11 +33,23 @@ import ansible.connection
 from ansible import utils
 from ansible import errors
 from ansible import callbacks as ans_callbacks
+    
+HAS_ATFORK=True
+try:
+    from Crypto.Random import atfork
+except ImportError:
+    HAS_ATFORK=False
 
 ################################################
 
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
+
+    # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
+    # does not occur for everyone, some claim still occurs on newer paramiko
+    # this function not present in CentOS 6
+    if HAS_ATFORK:
+        atfork()
 
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while not job_queue.empty():
@@ -60,8 +72,9 @@ class Runner(object):
         module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
-        background=0, basedir=None, setup_cache=None, transport='paramiko',
-        conditional='True', groups={}, callbacks=None, verbose=False):
+        remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
+        transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
+        sudo=False):
     
         if setup_cache is None:
             setup_cache = {}
@@ -92,8 +105,10 @@ class Runner(object):
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
+        self.remote_port = remote_port
         self.background  = background
-        self.basedir = basedir
+        self.basedir     = basedir
+        self.sudo        = sudo
 
         self._tmp_paths  = {}
         random.seed()
@@ -230,13 +245,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_file(self, conn, source, dest):
-        ''' transfers a remote file '''
-
-        conn.put_file(source, dest)
-
-    # *****************************************************
-
     def _transfer_module(self, conn, tmp, module):
         ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
 
@@ -256,7 +264,7 @@ class Runner(object):
         args_fo.close()
 
         args_remote = os.path.join(tmp, 'arguments')
-        self._transfer_file(conn, args_file, args_remote)
+        conn.put_file(args_file, args_remote)
         os.unlink(args_file)
 
         return args_remote
@@ -348,7 +356,7 @@ class Runner(object):
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
-        return [ self._exec_command(conn, cmd), client_executed_str ]
+        return [ self._exec_command(conn, cmd, sudoable=True), client_executed_str ]
 
     # *****************************************************
 
@@ -422,7 +430,7 @@ class Runner(object):
         
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
-        self._transfer_file(conn, utils.path_dwim(self.basedir, source), tmp_src)
+        conn.put_file(utils.path_dwim(self.basedir, source), tmp_src)
 
         # install the copy  module
         self.module_name = 'copy'
@@ -474,7 +482,7 @@ class Runner(object):
 
         # first copy the source template over
         temppath = tmp + os.path.split(source)[-1]
-        self._transfer_file(conn, utils.path_dwim(self.basedir, source), temppath)
+        conn.put_file(utils.path_dwim(self.basedir, source), temppath)
 
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')
@@ -518,6 +526,7 @@ class Runner(object):
 
         tmp = self._get_tmp_path(conn)
         result = None
+
         if self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'template':
@@ -546,23 +555,28 @@ class Runner(object):
 
     # *****************************************************
 
-    def _exec_command(self, conn, cmd):
+    def _exec_command(self, conn, cmd, sudoable=False):
         ''' execute a command string over SSH, return the output '''
 
         msg = '%s: %s' % (self.module_name, cmd)
         # log remote command execution
         conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
         # now run actual command
-        stdin, stdout, stderr = conn.exec_command(cmd)
-        return "\n".join(stdout.readlines())
+        stdin, stdout, stderr = conn.exec_command(cmd, sudoable=sudoable)
+        if type(stdout) != str:
+            return "\n".join(stdout.readlines())
+        else:
+            return stdout
 
     # *****************************************************
 
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
-        return result.split("\n")[0] + '/'
+        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", sudoable=False)
+        cleaned = result.split("\n")[0].strip() + '/'
+        return cleaned
+
 
     # *****************************************************
 
