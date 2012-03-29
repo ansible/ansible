@@ -356,7 +356,7 @@ class Runner(object):
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
-        return [ self._exec_command(conn, cmd), client_executed_str ]
+        return [ self._exec_command(conn, cmd, sudoable=True), client_executed_str ]
 
     # *****************************************************
 
