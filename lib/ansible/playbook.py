@@ -56,6 +56,7 @@ class PlayBook(object):
         remote_pass      = C.DEFAULT_REMOTE_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         override_hosts   = None,
+        extra_vars       = None,
         verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -75,13 +76,14 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.override_hosts   = override_hosts
+        self.extra_vars       = extra_vars
         self.stats            = stats
 
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
         self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
-            host_list, override_hosts=self.override_hosts)
+            host_list, override_hosts=self.override_hosts, extra_vars=self.extra_vars)
    
     # *****************************************************
 
@@ -267,7 +269,7 @@ class PlayBook(object):
             timeout=self.timeout, remote_user=remote_user, 
             remote_port=self.remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
-            conditional=only_if, callbacks=self.runner_callbacks,
+            conditional=only_if, callbacks=self.runner_callbacks, extra_vars=self.extra_vars
         )
 
         if async_seconds == 0:
@@ -443,6 +445,17 @@ class PlayBook(object):
             # first pass only or we'll erase good work
             for (host, result) in setup_ok.iteritems():
                 SETUP_CACHE[host] = result
+
+        if self.extra_vars:
+            print self.extra_vars
+            extra_vars = utils.parse_kv(shlex.split(self.extra_vars))
+            print extra_vars
+            print "^^^^^^^^^^^^^"
+            for h in self.host_list:
+                SETUP_CACHE[h].update(extra_vars)
+
+
+        print SETUP_CACHE
 
         return host_list
 

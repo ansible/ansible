@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/matthew/overlord/lib/ve/bin/python
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
@@ -37,6 +37,8 @@ def main(args):
         help='set the number of forks to start up')
     parser.add_option("-i", "--inventory-file", dest="inventory",
         help="inventory host file", default=C.DEFAULT_HOST_LIST)
+    parser.add_option('-e', '--extra-vars', dest='extra_vars',
+        help='arguments to pass to the inventory script')
     parser.add_option("-k", "--ask-pass", default=False, action="store_true",
         help="ask for SSH password")
     parser.add_option("-M", "--module-path", dest="module_path",
@@ -72,6 +74,7 @@ def main(args):
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             host_list=options.inventory,
+            extra_vars=options.extra_vars,
             module_path=options.module_path,
             forks=options.forks,
             verbose=True,
