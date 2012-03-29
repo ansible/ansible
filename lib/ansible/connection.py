@@ -83,7 +83,7 @@ class ParamikoConnection(object):
     def exec_command(self, cmd, sudoable=True):
 
         ''' run a command on the remote host '''
-        if not False: # if not self.runner.sudo or not sudoable: 
+        if not self.runner.sudo or not sudoable: 
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
@@ -91,15 +91,32 @@ class ParamikoConnection(object):
             self.ssh.close()
             ssh_sudo = self._get_conn()
             sudo_chan = ssh_sudo.invoke_shell()
-            sudo_chan.exec_command("sudo -s")
+            sudo_chan.send("sudo -s\n")
             sudo_chan.recv(1024)
-            sudo_chan.send("%s\n" % cmd)
-            # TODO: wait for ready... 
+            sudo_chan.send("echo && %s && echo\n" % cmd)
+            while not sudo_chan.recv_ready():
+                # TODO: timeout support
+                time.sleep(1)
             out = sudo_chan.recv(1024)
             sudo_chan.close()
             self.ssh = self._get_conn()
-            return (None, "\n".join(out), '')
+            out = self._expect_like(out)
+            return (None, out, '')
 
+    def _expect_like(self, msg):
+        ''' hack to make invoke_shell more or less work for sudo usage '''
+        lines = msg.split("\n")
+        index = 0
+        for x in lines:
+            if x == '\r':
+                break
+            index += 1
+        index2 = index+1 
+        for x in lines[index:]:
+            if x == '\r':
+                break
+            index2 += 1
+        return "\n".join(lines[index+1:index2+1]).strip()
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
