@@ -74,7 +74,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
-        sudo=True): # FIXME FIXME FIXME
+        sudo=False):
     
         if setup_cache is None:
             setup_cache = {}
