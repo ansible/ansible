@@ -33,11 +33,25 @@ import ansible.connection
 from ansible import utils
 from ansible import errors
 from ansible import callbacks as ans_callbacks
+    
+HAS_ATFORK=True
+try:
+    print "DEBUG: I have atfork"
+    from Crypto.Random import atfork
+except ImportError:
+    print "DEBUG: I have no atfork, this won't help my problem"
+    HAS_ATFORK=False
 
 ################################################
 
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
+
+    # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
+    # does not occur for everyone, some claim still occurs on newer paramiko
+    # this function not present in CentOS 6
+    if HAS_ATFORK:
+        atfork()
 
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while not job_queue.empty():
