@@ -70,7 +70,7 @@ class ParamikoConnection(object):
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
-                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the overlord")
+                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             else: 
                 raise errors.AnsibleConnectionFailed(str(e))
         return self
