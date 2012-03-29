@@ -289,7 +289,7 @@ class PlayBook(object):
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
 
-        tokens = shlex.split(action)
+        tokens = shlex.split(action, posix=C.DEFAULT_USE_POSIX)
         module_name = tokens[0]
         module_args = tokens[1:]
 
@@ -353,6 +353,48 @@ class PlayBook(object):
             raise errors.AnsibleError("change handler (%s) is not defined" % match_name)
 
     # *****************************************************
+    
+    def _do_conditional_imports_for_host(self, vars_files, host, is_include=False):
+        cache_vars = SETUP_CACHE.get(host,{})
+        #SETUP_CACHE[host] = {}
+
+        for filename in vars_files:
+            if type(filename) == dict and filename.has_key('include'):
+                filename = filename['include']
+                filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                if not os.path.exists(filename2):
+                    raise errors.AnsibleError("no file matched for vars_file include: %s" % filename2)
+                data = utils.parse_yaml_from_file(filename2)
+                self._do_conditional_imports_for_host(data, host, is_include=True)
+            elif type(filename) == list:
+                # loop over all filenames, loading the first one, and failing if # none found
+                found = False
+                sequence = []
+                for real_filename in filename:
+                    filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
+                    sequence.append(filename2)
+                    if os.path.exists(filename2):
+                        found = True
+                        data = utils.parse_yaml_from_file(filename2)
+                        SETUP_CACHE[host].update(data)
+                        self.callbacks.on_import_for_host(host, filename2)
+                        break
+                    else:
+                        self.callbacks.on_not_import_for_host(host, filename2)
+                if not found:
+                    raise errors.AnsibleError(
+                        "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
+                    )
+
+            else:
+                filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                if not os.path.exists(filename2):
+                    raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
+                data = utils.parse_yaml_from_file(filename2)
+                SETUP_CACHE[host].update(data)
+                self.callbacks.on_import_for_host(host, filename2)
+
+    # *****************************************************
 
     def _do_conditional_imports(self, vars_files, host_list):
         ''' handle the vars_files section, which can contain variables '''
@@ -366,36 +408,8 @@ class PlayBook(object):
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
         for host in host_list:
-            cache_vars = SETUP_CACHE.get(host,{})
-            SETUP_CACHE[host] = {}
-            for filename in vars_files:
-                if type(filename) == list:
-                    # loop over all filenames, loading the first one, and failing if # none found
-                    found = False
-                    sequence = []
-                    for real_filename in filename:
-                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
-                        sequence.append(filename2)
-                        if os.path.exists(filename2):
-                            found = True
-                            data = utils.parse_yaml_from_file(filename2)
-                            SETUP_CACHE[host].update(data)
-                            self.callbacks.on_import_for_host(host, filename2)
-                            break
-                        else:
-                            self.callbacks.on_not_import_for_host(host, filename2)
-                    if not found:
-                        raise errors.AnsibleError(
-                            "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
-                        )
+            self._do_conditional_imports_for_host(vars_files, host)
 
-                else:
-                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
-                    if not os.path.exists(filename2):
-                        raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
-                    data = utils.parse_yaml_from_file(filename2)
-                    SETUP_CACHE[host].update(data)
-                    self.callbacks.on_import_for_host(host, filename2)
 
     # *****************************************************
 

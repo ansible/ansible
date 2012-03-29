@@ -24,6 +24,8 @@ DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS',
                                         '/etc/ansible/hosts')
 DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY',
                                         '/usr/share/ansible')
+DEFAULT_USE_POSIX      = os.environ.get('ANSIBLE_USE_POSIX',
+                                        True)
 DEFAULT_MODULE_NAME    = 'command'
 DEFAULT_PATTERN        = '*'
 DEFAULT_FORKS          = 5
