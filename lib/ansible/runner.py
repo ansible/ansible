@@ -36,10 +36,8 @@ from ansible import callbacks as ans_callbacks
     
 HAS_ATFORK=True
 try:
-    print "DEBUG: I have atfork"
     from Crypto.Random import atfork
 except ImportError:
-    print "DEBUG: I have no atfork, this won't help my problem"
     HAS_ATFORK=False
 
 ################################################

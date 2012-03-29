@@ -58,27 +58,37 @@ class ParamikoConnection(object):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
         try:
             self.ssh.connect(
-                self.host, 
-                username=self.runner.remote_user, 
-                allow_agent=True,
-                look_for_keys=True, 
-                password=self.runner.remote_pass, 
-                timeout=self.runner.timeout,
- 	        port=self.runner.remote_port
+                self.host, username=self.runner.remote_user, 
+                allow_agent=True, look_for_keys=True, password=self.runner.remote_pass, 
+                timeout=self.runner.timeout, port=self.runner.remote_port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             else: 
                 raise errors.AnsibleConnectionFailed(str(e))
+
         return self
 
     def exec_command(self, cmd):
         ''' run a command on the remote host '''
+        #if not False:
         stdin, stdout, stderr = self.ssh.exec_command(cmd)
         return (stdin, stdout, stderr)
+        #else:
+        #    sudo_chan = self.ssh.get_transport().open_session()
+        #    sudo_chan = chan.get_pty()
+        #    sudo_chan.exec_command("sudo %s" % cmd)
+        #    output = channel.makefile('rb', -1).readlines()
+        #    if not output:
+        #        output = channel.makefile_stderr('rb', -1).readlines()
+        #    print "DEBUG: output: %s" % output
+        #    channel.close()
+        #    return (None, '', output) 
+
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
