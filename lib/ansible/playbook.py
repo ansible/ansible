@@ -499,8 +499,7 @@ class PlayBook(object):
                    handlers=[],
                    host_list=triggered_by,
                    conditional=True,
-                   remote_user=user,
-                   remote_port=self.remote_port
+                   remote_user=user
                 )
 
         # end of execution for this particular pattern.  Multiple patterns
