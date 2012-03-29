@@ -45,7 +45,6 @@ def main(args):
         help="run playbook against these hosts regardless of inventory settings")
     parser.add_option('-p', '--port', default=C.DEFAULT_REMOTE_PORT, type='int',
         dest='remote_port', help='set the remote ssh port')
-
     parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
         dest='timeout', help="set the SSH timeout in seconds")
 

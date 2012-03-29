@@ -87,17 +87,19 @@ class ParamikoConnection(object):
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
-            # this code is a work in progress, so it's disabled...
             self.ssh.close()
             ssh_sudo = self._get_conn()
             sudo_chan = ssh_sudo.invoke_shell()
             sudo_chan.send("sudo -s\n")
-            sudo_chan.recv(1024)
-            sudo_chan.send("echo && %s && echo\n" % cmd)
+            sudo_chan.send("echo 'START==>';%s;echo '<==STOP'\n" % cmd)
+            timeout = 60 # make configurable?
+            time.sleep(1)
             while not sudo_chan.recv_ready():
-                # TODO: timeout support
                 time.sleep(1)
-            out = sudo_chan.recv(1024)
+                timeout -= 1
+                if timeout < 0:
+                    return (None, json.dumps(dict(failed=True, msg="sudo timeout")), '')
+            out = sudo_chan.recv(2058)
             sudo_chan.close()
             self.ssh = self._get_conn()
             out = self._expect_like(out)
@@ -105,18 +107,9 @@ class ParamikoConnection(object):
 
     def _expect_like(self, msg):
         ''' hack to make invoke_shell more or less work for sudo usage '''
-        lines = msg.split("\n")
-        index = 0
-        for x in lines:
-            if x == '\r':
-                break
-            index += 1
-        index2 = index+1 
-        for x in lines[index:]:
-            if x == '\r':
-                break
-            index2 += 1
-        return "\n".join(lines[index+1:index2+1]).strip()
+        left = msg.rindex("START==>")
+        right = msg.rindex("<==STOP")
+        return msg[left+8:right].lstrip().rstrip()
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
