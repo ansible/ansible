@@ -1,4 +1,4 @@
-#!/home/matthew/overlord/lib/ve/bin/python
+#!/usr/bin/env python
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
