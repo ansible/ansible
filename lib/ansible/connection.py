@@ -19,7 +19,9 @@
 ################################################
 
 import paramiko
+import traceback
 import os
+import time
 from ansible import errors
 
 ################################################
@@ -53,41 +55,50 @@ class ParamikoConnection(object):
         self.runner = runner
         self.host = host
 
-    def connect(self):
-        ''' connect to the remote host '''
-
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    def _get_conn(self):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            self.ssh.connect(
-                self.host, username=self.runner.remote_user, 
-                allow_agent=True, look_for_keys=True, password=self.runner.remote_pass, 
+            ssh.connect(
+                self.host, username=self.runner.remote_user,
+                allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
                 timeout=self.runner.timeout, port=self.runner.remote_port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            else: 
+            else:
                 raise errors.AnsibleConnectionFailed(str(e))
 
+        return ssh
+
+
+    def connect(self):
+        ''' connect to the remote host '''
+
+        self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd):
+    def exec_command(self, cmd, sudoable=True):
+
         ''' run a command on the remote host '''
-        #if not False:
-        stdin, stdout, stderr = self.ssh.exec_command(cmd)
-        return (stdin, stdout, stderr)
-        #else:
-        #    sudo_chan = self.ssh.get_transport().open_session()
-        #    sudo_chan = chan.get_pty()
-        #    sudo_chan.exec_command("sudo %s" % cmd)
-        #    output = channel.makefile('rb', -1).readlines()
-        #    if not output:
-        #        output = channel.makefile_stderr('rb', -1).readlines()
-        #    print "DEBUG: output: %s" % output
-        #    channel.close()
-        #    return (None, '', output) 
+        if not False: # if not self.runner.sudo or not sudoable: 
+            stdin, stdout, stderr = self.ssh.exec_command(cmd)
+            return (stdin, stdout, stderr)
+        else:
+            # this code is a work in progress, so it's disabled...
+            self.ssh.close()
+            ssh_sudo = self._get_conn()
+            sudo_chan = ssh_sudo.invoke_shell()
+            sudo_chan.exec_command("sudo -s")
+            sudo_chan.recv(1024)
+            sudo_chan.send("%s\n" % cmd)
+            # TODO: wait for ready... 
+            out = sudo_chan.recv(1024)
+            sudo_chan.close()
+            self.ssh = self._get_conn()
+            return (None, "\n".join(out), '')
 
 
     def put_file(self, in_path, out_path):
@@ -98,6 +109,7 @@ class ParamikoConnection(object):
         try:
             sftp.put(in_path, out_path)
         except IOError:
+            traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
 

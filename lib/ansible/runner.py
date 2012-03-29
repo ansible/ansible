@@ -73,7 +73,8 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
-        transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False):
+        transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
+        sudo=True): # FIXME FIXME FIXME
     
         if setup_cache is None:
             setup_cache = {}
@@ -106,7 +107,8 @@ class Runner(object):
         self.remote_pass = remote_pass
         self.remote_port = remote_port
         self.background  = background
-        self.basedir = basedir
+        self.basedir     = basedir
+        self.sudo        = sudo
 
         self._tmp_paths  = {}
         random.seed()
@@ -243,13 +245,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_file(self, conn, source, dest):
-        ''' transfers a remote file '''
-
-        conn.put_file(source, dest)
-
-    # *****************************************************
-
     def _transfer_module(self, conn, tmp, module):
         ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
 
@@ -269,7 +264,7 @@ class Runner(object):
         args_fo.close()
 
         args_remote = os.path.join(tmp, 'arguments')
-        self._transfer_file(conn, args_file, args_remote)
+        conn.put_file(args_file, args_remote)
         os.unlink(args_file)
 
         return args_remote
@@ -435,7 +430,7 @@ class Runner(object):
         
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
-        self._transfer_file(conn, utils.path_dwim(self.basedir, source), tmp_src)
+        conn.put_file(utils.path_dwim(self.basedir, source), tmp_src)
 
         # install the copy  module
         self.module_name = 'copy'
@@ -487,7 +482,7 @@ class Runner(object):
 
         # first copy the source template over
         temppath = tmp + os.path.split(source)[-1]
-        self._transfer_file(conn, utils.path_dwim(self.basedir, source), temppath)
+        conn.put_file(utils.path_dwim(self.basedir, source), temppath)
 
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')
@@ -531,6 +526,7 @@ class Runner(object):
 
         tmp = self._get_tmp_path(conn)
         result = None
+
         if self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'template':
@@ -559,23 +555,28 @@ class Runner(object):
 
     # *****************************************************
 
-    def _exec_command(self, conn, cmd):
+    def _exec_command(self, conn, cmd, sudoable=False):
         ''' execute a command string over SSH, return the output '''
 
         msg = '%s: %s' % (self.module_name, cmd)
         # log remote command execution
         conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
         # now run actual command
-        stdin, stdout, stderr = conn.exec_command(cmd)
-        return "\n".join(stdout.readlines())
+        stdin, stdout, stderr = conn.exec_command(cmd, sudoable=sudoable)
+        if type(stdout) != str:
+            return "\n".join(stdout.readlines())
+        else:
+            return stdout
 
     # *****************************************************
 
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX")
-        return result.split("\n")[0] + '/'
+        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", sudoable=False)
+        cleaned = result.split("\n")[0].strip() + '/'
+        return cleaned
+
 
     # *****************************************************
 
