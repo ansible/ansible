@@ -294,7 +294,7 @@ class PlayBook(object):
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
 
-        tokens = shlex.split(action)
+        tokens = shlex.split(action, posix=False)
         module_name = tokens[0]
         module_args = tokens[1:]
 
@@ -372,7 +372,7 @@ class PlayBook(object):
             raise errors.AnsibleError("vars_files must be a list")
         for host in host_list:
             cache_vars = SETUP_CACHE.get(host,{})
-            SETUP_CACHE[host] = {}
+            #SETUP_CACHE[host] = {}
             for filename in vars_files:
                 if type(filename) == list:
                     # loop over all filenames, loading the first one, and failing if # none found
@@ -447,15 +447,9 @@ class PlayBook(object):
                 SETUP_CACHE[host] = result
 
         if self.extra_vars:
-            print self.extra_vars
             extra_vars = utils.parse_kv(shlex.split(self.extra_vars))
-            print extra_vars
-            print "^^^^^^^^^^^^^"
             for h in self.host_list:
                 SETUP_CACHE[h].update(extra_vars)
-
-
-        print SETUP_CACHE
 
         return host_list
 
