@@ -67,6 +67,8 @@ class Cli(object):
             help='condense output')
         parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
             dest='poll_interval', help='set the poll interval if using -B')
+        parser.add_option("-s", "--sudo", default=False, action="store_true",
+            dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-t', '--tree', dest='tree', default=None,
             help='log output to this directory')
         parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int',
@@ -107,7 +109,7 @@ class Cli(object):
             host_list=options.inventory, timeout=options.timeout, 
             remote_port=options.remote_port, forks=options.forks, 
             background=options.seconds, pattern=pattern, 
-            callbacks=self.callbacks, verbose=True,
+            callbacks=self.callbacks, sudo=options.sudo, verbose=True,
         )
         return (runner, runner.run())
 

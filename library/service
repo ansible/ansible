@@ -79,9 +79,7 @@ elif state == "restarted":
 # run change commands if we need to
 
 def _run(cmd):
-    return subprocess.call(cmd, 
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, shell=True)
+    return subprocess.call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
 rc = 0
 if changed:
