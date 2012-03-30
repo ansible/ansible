@@ -294,7 +294,7 @@ class PlayBook(object):
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
 
-        tokens = shlex.split(action, posix=False)
+        tokens = shlex.split(action, posix=True)
         module_name = tokens[0]
         module_args = tokens[1:]
 
