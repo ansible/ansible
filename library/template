@@ -97,7 +97,7 @@ try:
     # call Jinja2 here and save the new template file
     template = environment.from_string(source)
     data_out = template.render(data)
-except jinja2.TemplateError as  e:
+except jinja2.TemplateError, e:
     print json.dumps({
         "failed": True,
         "msg"   : e.message
