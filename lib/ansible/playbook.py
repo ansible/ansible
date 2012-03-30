@@ -287,7 +287,7 @@ class PlayBook(object):
         name    = task.get('name', None) 
         action  = task.get('action', None)
         if action is None:
-            raise errors.AnsibleError("action is required for each item in tasks")
+            raise errors.AnsibleError("action is required for each item in tasks: offending task is %s" % name if name else "unknown")
         if name is None:
             name = action
         only_if = task.get('only_if', 'True')
@@ -449,8 +449,10 @@ class PlayBook(object):
         if self.extra_vars:
             extra_vars = utils.parse_kv(shlex.split(self.extra_vars))
             for h in self.host_list:
-                SETUP_CACHE[h].update(extra_vars)
-
+                try:
+                    SETUP_CACHE[h].update(extra_vars)
+                except:
+                    SETUP_CACHE[h] = extra_vars
         return host_list
 
     # *****************************************************
