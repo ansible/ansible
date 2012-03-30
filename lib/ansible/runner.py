@@ -29,6 +29,7 @@ import random
 import jinja2
 import traceback
 import tempfile
+import subprocess
 
 # FIXME: stop importing *, use as utils/errors
 from ansible.utils import *
@@ -135,24 +136,41 @@ class Runner(object):
         if not os.path.exists(host_list):
             raise AnsibleFileNotFound("inventory file not found: %s" % host_list)
 
-        lines = file(host_list).read().split("\n")
-        groups     = {}
-        groups['ungrouped'] = []
-        group_name = 'ungrouped'
         results    = []
-        for item in lines:
-            item = item.lstrip().rstrip()
-            if item.startswith("#"): 
-                # ignore commented out lines
-                continue
-            if item.startswith("["):
-                # looks like a group
-                group_name = item.replace("[","").replace("]","").lstrip().rstrip()
-                groups[group_name] = []
-            else:
-                # looks like a regular host
-                groups[group_name].append(item)
-                results.append(item)
+        groups     = { 'ungrouped' : [] }
+        if not os.access(host_list, os.X_OK):
+            # it's a regular file
+            lines = file(host_list).read().split("\n")
+            group_name = 'ungrouped'
+            results    = []
+            for item in lines:
+                item = item.lstrip().rstrip()
+                if item.startswith("#"): 
+                    # ignore commented out lines
+                    continue
+                if item.startswith("["):
+                    # looks like a group
+                    group_name = item.replace("[","").replace("]","").lstrip().rstrip()
+                    groups[group_name] = []
+                else:
+                    # looks like a regular host
+                    groups[group_name].append(item)
+                    results.append(item)
+        else:
+            host_list = os.path.abspath(host_list)
+            cls._external_variable_script = host_list
+            # it's a script -- expect a return of a JSON hash with group names keyed
+            # to lists of hosts
+            cmd = subprocess.Popen([host_list], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+            out, err = cmd.communicate()
+            try:
+                groups = json.loads(out)
+            except:
+                raise AnsibleError("invalid JSON response from script: %s" % host_list)
+            for (groupname, hostlist) in groups.iteritems():
+                for host in hostlist:
+                    if host not in results:
+                        results.append(host)
 
         return (results, groups)
 
@@ -271,6 +289,31 @@ class Runner(object):
             args = [ str(x) for x in module_args ]
             args = " ".join(args)
         inject_vars = self.setup_cache.get(conn.host,{})
+
+        # if the host file was an external script, execute it with the hostname
+        # as a first parameter to get the variables to use for the host
+        if Runner._external_variable_script is not None:
+            host = conn.host
+            cmd = subprocess.Popen([Runner._external_variable_script, host],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=False
+            )
+            out, err = cmd.communicate()
+            inject2 = {}
+            try:
+                inject2 = json.loads(out)
+            except:
+                raise AnsibleError("%s returned invalid result when called with hostname %s" % (
+                    Runner._external_variable_script,
+                    host
+                ))
+            inject_vars.update(inject2)    
+
+        # store injected variables in the templates
+        if self.module_name == 'setup':
+            for (k,v) in inject2.iteritems():
+                args = "%s %s=%s" % (args, k, v)
 
         # the metadata location for the setup module is transparently managed
         # since it's an 'internals' module, kind of a black box. See playbook
