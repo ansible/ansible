@@ -33,6 +33,8 @@ def main(args):
     # create parser for CLI options
     parser = OptionParser()
     parser.usage = "ans-playbook playbook.yml ..."
+    parser.add_option('-d','--debug', default=False, action="store_true",
+        help='enable standard error debugging of modules.')
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
         help='set the number of forks to start up')
     parser.add_option("-i", "--inventory-file", dest="inventory",
@@ -76,6 +78,7 @@ def main(args):
             extra_vars=options.extra_vars,
             module_path=options.module_path,
             forks=options.forks,
+            debug=options.debug,
             verbose=True,
             remote_pass=sshpass,
             remote_port=options.remote_port,
