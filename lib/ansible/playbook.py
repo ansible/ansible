@@ -370,8 +370,8 @@ class PlayBook(object):
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
         for host in host_list:
-            cache_vars = SETUP_CACHE.get(host,{})
-            SETUP_CACHE[host] = {}
+            cache_vars = SETUP_CACHE.get(host,{}) 
+            SETUP_CACHE[host] = cache_vars
             for filename in vars_files:
                 if type(filename) == list:
                     # loop over all filenames, loading the first one, and failing if # none found
