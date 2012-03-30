@@ -10,6 +10,10 @@
 - hosts: all
   user: root
 
+# could have also have done:
+#  user: mdehaan
+#  sudo: True
+
   # make these variables available inside of templates
   # for when we use the 'template' action/module later on...
 

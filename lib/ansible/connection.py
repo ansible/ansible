@@ -22,6 +22,7 @@ import paramiko
 import traceback
 import os
 import time
+import random
 from ansible import errors
 
 ################################################
@@ -80,36 +81,47 @@ class ParamikoConnection(object):
         self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd, sudoable=True):
-
+    def exec_command(self, cmd, tmp_path, sudoable=False):
         ''' run a command on the remote host '''
         if not self.runner.sudo or not sudoable: 
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
+            # percalculated tmp_path is ONLY required for sudo usage
+            if tmp_path is None:
+                raise Exception("expecting tmp_path")
+            r = random.randint(0,99999)
+            
+            # invoke command using a new connection over sudo
+            result_file = os.path.join(tmp_path, "sudo_result.%s" % r)
             self.ssh.close()
             ssh_sudo = self._get_conn()
             sudo_chan = ssh_sudo.invoke_shell()
             sudo_chan.send("sudo -s\n")
-            sudo_chan.send("echo 'START==>';%s;echo '<==STOP'\n" % cmd)
-            timeout = 60 # make configurable?
+
+            # to avoid ssh expect logic, redirect output to file and move the
+            # file when we are done with it...
+            sudo_chan.send("(%s >%s_pre 2>/dev/null ; mv %s_pre %s) &\n" % (cmd, result_file, result_file, result_file))
             time.sleep(1)
-            while not sudo_chan.recv_ready():
-                time.sleep(1)
-                timeout -= 1
-                if timeout < 0:
-                    return (None, json.dumps(dict(failed=True, msg="sudo timeout")), '')
-            out = sudo_chan.recv(2058)
             sudo_chan.close()
             self.ssh = self._get_conn()
-            out = self._expect_like(out)
-            return (None, out, '')
 
-    def _expect_like(self, msg):
-        ''' hack to make invoke_shell more or less work for sudo usage '''
-        left = msg.rindex("START==>")
-        right = msg.rindex("<==STOP")
-        return msg[left+8:right].lstrip().rstrip()
+            # now load the results of the JSON execution...
+            # FIXME: really need some timeout logic here
+            sftp = self.ssh.open_sftp()
+            while True:
+                # print "waiting on %s" % result_file
+                time.sleep(1)
+                try:
+                    stat = sftp.stat(result_file)
+                    break
+                except IOError:
+                    pass
+            sftp.close()
+            # TODO: see if there's a SFTP way to just get the file contents w/o saving
+            # to disk vs this hack...
+            stdin, stdout, stderr = self.ssh.exec_command("cat %s" % result_file)
+            return (stdin, stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
