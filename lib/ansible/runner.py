@@ -241,7 +241,7 @@ class Runner(object):
         for filename in files:
             if not filename.startswith('/tmp/'):
                 raise Exception("not going to happen")
-            self._exec_command(conn, "rm -rf %s" % filename)
+            self._exec_command(conn, "rm -rf %s" % filename, None)
 
     # *****************************************************
 
@@ -249,7 +249,7 @@ class Runner(object):
         ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
 
         outpath = self._copy_module(conn, tmp, module)
-        self._exec_command(conn, "chmod +x %s" % outpath)
+        self._exec_command(conn, "chmod +x %s" % outpath, tmp)
         return outpath
 
     # *****************************************************
@@ -313,7 +313,7 @@ class Runner(object):
             if self.remote_user == 'root':
                 args = "%s metadata=/etc/ansible/setup" % args
             else:
-                args = "%s metadata=~/.ansible/setup" % args
+                args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
         return args   
  
     # *****************************************************
@@ -356,7 +356,7 @@ class Runner(object):
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
-        return [ self._exec_command(conn, cmd, sudoable=True), client_executed_str ]
+        return [ self._exec_command(conn, cmd, tmp, sudoable=True), client_executed_str ]
 
     # *****************************************************
 
@@ -555,14 +555,14 @@ class Runner(object):
 
     # *****************************************************
 
-    def _exec_command(self, conn, cmd, sudoable=False):
+    def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
 
         msg = '%s: %s' % (self.module_name, cmd)
         # log remote command execution
-        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg)
+        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
         # now run actual command
-        stdin, stdout, stderr = conn.exec_command(cmd, sudoable=sudoable)
+        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
         if type(stdout) != str:
             return "\n".join(stdout.readlines())
         else:
@@ -573,7 +573,7 @@ class Runner(object):
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", sudoable=False)
+        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
         return cleaned
 
