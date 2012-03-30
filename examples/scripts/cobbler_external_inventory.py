@@ -59,6 +59,10 @@ try:
 except:
     import simplejson as json
 
+# NOTE -- this file assumes Ansible is being accessed FROM the cobbler
+# server, so it does not attempt to login with a username and password.
+# this will be addressed in a future version of this script.
+
 conn = xmlrpclib.Server("http://127.0.0.1/cobbler_api", allow_none=True)
 
 ###################################################
