@@ -57,6 +57,7 @@ class PlayBook(object):
         remote_port      = C.DEFAULT_REMOTE_PORT,
         override_hosts   = None,
         extra_vars       = None,
+        debug            = False,
         verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -72,6 +73,7 @@ class PlayBook(object):
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port
+        self.debug            = debug
         self.verbose          = verbose
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
@@ -270,7 +272,7 @@ class PlayBook(object):
             remote_port=self.remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
-            extra_vars=self.extra_vars, sudo=sudo
+            extra_vars=self.extra_vars, debug=self.debug, sudo=sudo
         )
 
         if async_seconds == 0:

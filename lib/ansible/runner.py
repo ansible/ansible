@@ -74,7 +74,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
-        sudo=False, extra_vars=None):
+        debug=False, sudo=False, extra_vars=None):
     
         if setup_cache is None:
             setup_cache = {}
@@ -103,6 +103,7 @@ class Runner(object):
         self.module_args = module_args
         self.extra_vars  = extra_vars
         self.timeout     = timeout
+        self.debug       = debug
         self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
@@ -227,16 +228,18 @@ class Runner(object):
 
     # *****************************************************
 
-    def _return_from_module(self, conn, host, result, executed=None):
+    def _return_from_module(self, conn, host, result, err, executed=None):
         ''' helper function to handle JSON parsing of results '''
 
         try:
             result = utils.parse_json(result) 
             if executed is not None:
                 result['invocation'] = executed
-            return [ host, True, result ]
+                if 'stderr' in result:
+                    err="%s%s"%(err,result['stderr'])
+            return [host, True, result, err]
         except Exception, e:
-            return [ host, False, "%s/%s/%s" % (str(e), result, executed) ]
+            return [host, False, "%s/%s/%s" % (str(e), result, executed), err]
 
     # *****************************************************
 
@@ -337,7 +340,7 @@ class Runner(object):
         inject = self.setup_cache.get(conn.host,{})
         conditional = utils.double_template(self.conditional, inject)
         if not eval(conditional):
-            return [ utils.smjson(dict(skipped=True)), 'skipped' ]
+            return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
         if Runner._external_variable_script is not None:
             self._add_variables_from_script(conn, inject)
@@ -354,7 +357,8 @@ class Runner(object):
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
-        return [ self._exec_command(conn, cmd, tmp, sudoable=True), client_executed_str ]
+        res, err = self._exec_command(conn, cmd, tmp, sudoable=True)
+        return ( res, err, client_executed_str )
 
     # *****************************************************
 
@@ -387,12 +391,12 @@ class Runner(object):
             self.module_args += " #USE_SHELL"
 
         module = self._transfer_module(conn, tmp, module_name)
-        (result, executed) = self._execute_module(conn, tmp, module, self.module_args)
+        (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
 
         if module_name == 'setup':
             self._add_result_to_setup_cache(conn, result)
 
-        return self._return_from_module(conn, host, result, executed)
+        return self._return_from_module(conn, host, result, err, executed)
 
     # *****************************************************
 
@@ -408,13 +412,13 @@ class Runner(object):
 
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, module_name)
-        (result, executed) = self._execute_module(conn, tmp, async, module_args,
+        (result, err, executed) = self._execute_module(conn, tmp, async, module_args,
            async_module=module, 
            async_jid=self.generated_jid, 
            async_limit=self.background
         )
 
-        return self._return_from_module(conn, host, result, executed)
+        return self._return_from_module(conn, host, result, err, executed)
 
     # *****************************************************
 
@@ -436,30 +440,30 @@ class Runner(object):
 
         # run the copy module
         args = "src=%s dest=%s" % (tmp_src, dest)
-        (result1, executed) = self._execute_module(conn, tmp, module, args)
-        (host, ok, data) = self._return_from_module(conn, host, result1, executed)
+        (result1, err, executed) = self._execute_module(conn, tmp, module, args)
+        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
 
         if ok:
-            return self._chain_file_module(conn, tmp, data, options, executed)
+            return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
-            return (host, ok, data) 
+            return (host, ok, data, err) 
 
     # *****************************************************
 
-    def _chain_file_module(self, conn, tmp, data, options, executed):
+    def _chain_file_module(self, conn, tmp, data, err, options, executed):
         ''' handles changing file attribs after copy/template operations '''
 
         old_changed = data.get('changed', False)
         module = self._transfer_module(conn, tmp, 'file')
         args = ' '.join([ "%s=%s" % (k,v) for (k,v) in options.items() ])
-        (result2, executed2) = self._execute_module(conn, tmp, module, args)
-        results2 = self._return_from_module(conn, conn.host, result2, executed)
-        (host, ok, data2) = results2
+        (result2, err2, executed2) = self._execute_module(conn, tmp, module, args)
+        results2 = self._return_from_module(conn, conn.host, result2, err2, executed)
+        (host, ok, data2, err2) = results2
         new_changed = data2.get('changed', False)
         data.update(data2)
         if old_changed or new_changed:
             data['changed'] = True
-        return (host, ok, data)
+        return (host, ok, data, "%s%s"%(err,err2))
 
     # *****************************************************
 
@@ -487,19 +491,19 @@ class Runner(object):
 
         # run the template module
         args = "src=%s dest=%s metadata=%s" % (temppath, dest, metadata)
-        (result1, executed) = self._execute_module(conn, tmp, template_module, args)
-        (host, ok, data) = self._return_from_module(conn, host, result1, executed)
+        (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
+        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
 
         if ok:
-            return self._chain_file_module(conn, tmp, data, options, executed)
+            return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
-            return (host, ok, data)
+            return (host, ok, data, err)
 
     # *****************************************************
 
     def _executor(self, host):
         try:
-            (host, ok, data) = self._executor_internal(host)
+            (host, ok, data, err) = self._executor_internal(host)
             if not ok:
                 self.callbacks.on_unreachable(host, data)
             return (host, ok, data)
@@ -517,7 +521,7 @@ class Runner(object):
 
         ok, conn = self._connect(host)
         if not ok:
-            return [ host, False, conn ]
+            return [ host, False, conn , None]
         
         cache = self.setup_cache.get(host, {})
         module_name = utils.template(self.module_name, cache)
@@ -538,7 +542,7 @@ class Runner(object):
         self._delete_remote_files(conn, tmp)
         conn.close()
 
-        (host, connect_ok, data) = result
+        (host, connect_ok, data, err) = result
         if not connect_ok:
             self.callbacks.on_unreachable(host, data)
         else:
@@ -548,6 +552,9 @@ class Runner(object):
                 self.callbacks.on_skipped(host)
             else:
                 self.callbacks.on_ok(host, data)
+
+            if self.debug and err:
+                self.callbacks.on_error(host, err)
 
         return result
 
@@ -561,17 +568,23 @@ class Runner(object):
         conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
         # now run actual command
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
-        if type(stdout) != str:
-            return "\n".join(stdout.readlines())
+
+        if type(stderr) != str:
+            err="\n".join(stderr.readlines())
         else:
-            return stdout
+            err=stderr
+
+        if type(stdout) != str:
+            return "\n".join(stdout.readlines()), err
+        else:
+            return stdout, err
 
     # *****************************************************
 
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
+        result, err = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
         return cleaned
 

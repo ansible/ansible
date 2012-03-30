@@ -19,6 +19,7 @@
 #######################################################
 
 import utils
+import sys
 
 #######################################################
 
@@ -145,6 +146,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print "ok: [%s]\n" % (host)
         else:
             print "ok: [%s] => %s\n" % (host, invocation)
+
+    def on_error(self, host, err):
+        print >>sys.stderr, "stderr: [%s] => %s\n" % (host, err)
 
     def on_skipped(self, host):
         print "skipping: [%s]\n" % host
