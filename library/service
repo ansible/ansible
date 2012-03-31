@@ -33,7 +33,7 @@ args = open(argfile, 'r').read()
 items = shlex.split(args)
 
 if not len(items):
-    print "failed=True msg='the module requires arguments (-a)'"
+    print json.dumps(dict(failed=True, msg='this module requires arguments (-a)'))
     sys.exit(1)
 
 params = {}
@@ -46,13 +46,13 @@ state = params.get('state','unknown')
 
 # running and started are the same
 if state not in [ 'running', 'started', 'stopped', 'restarted' ]:
-    print "failed=True msg='invalid state'"
+    print json.dumps(dict(failed=True, msg='invalid state'))
     sys.exit(1)
 
 # ===========================================
 # get service status
 
-status = os.popen("/sbin/service %s status" % name).read()
+status = os.popen("service %s status" % name).read()
 
 # ===========================================
 # determine if we are going to change anything
@@ -84,12 +84,12 @@ def _run(cmd):
 rc = 0
 if changed:
     if state in ('started', 'running'):
-        rc = _run("/sbin/service %s start" %  name)
+        rc = _run("service %s start" %  name)
     elif state == 'stopped':
-        rc = _run("/sbin/service %s stop" % name)
+        rc = _run("service %s stop" % name)
     elif state == 'restarted':
-        rc1 = _run("/sbin/service %s stop" % name)
-        rc2 = _run("/sbin/service %s start" % name)
+        rc1 = _run("service %s stop" % name)
+        rc2 = _run("service %s start" % name)
         rc  = rc1 and rc2
 
 if rc != 0:
