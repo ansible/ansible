@@ -62,6 +62,8 @@ def _executor_hook(job_queue, result_queue):
 
 class Runner(object):
 
+    _external_variable_script = None
+
     def __init__(self, 
         host_list=C.DEFAULT_HOST_LIST, 
         module_path=C.DEFAULT_MODULE_PATH,
