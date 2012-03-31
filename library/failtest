@@ -17,12 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 try:
     import json
 except ImportError:
     import simplejson as json
 
+print >>sys.stderr, "THIS IS A TEST FAILURE"
+
 print json.dumps({ 
     "failed" : True, 
     "msg"    : "this module always fails" 
 })
+
+

@@ -86,6 +86,9 @@ class DefaultRunnerCallbacks(object):
     def on_ok(self, host, res):
         pass
 
+    def on_error(self, host, msg):
+        pass
+
     def on_skipped(self, host):
         pass
 
@@ -114,6 +117,9 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
  
     def on_skipped(self, host):
         pass
+
+    def on_error(self, host, err):
+        print >>sys.stderr, "stderr: [%s] => %s\n" % (host, err)
 
     def _on_any(self, host, result):
         print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
