@@ -57,7 +57,8 @@ Architecture
 
 .. image:: http://ansible.github.com/ansible_arch2.jpg
    :alt: "Architecture Diagram" 
-   :width: 400
+   :width: 800
+   :align: center
 
 Features
 ````````
