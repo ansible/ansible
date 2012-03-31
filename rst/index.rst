@@ -55,11 +55,10 @@ We've learned well from "Infrastructure is Code".  Infrastructure should be easy
 Architecture
 ````````````
 
-.. image:: http://ansible.github.com/ansible_arch.jpg
+.. image:: http://ansible.github.com/ansible_arch2.jpg
    :alt: "Architecture Diagram" 
-   :width: 648
-   :height: 464
-
+   :width: 65pc
+   :height: 65pc
 
 Features
 ````````

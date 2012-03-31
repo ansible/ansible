@@ -177,7 +177,16 @@ ssh-add ~/.ssh/id_rsa.pub</pre>
 <p>Now to run the command on all servers in a group, in this case, &#8216;atlanta&#8217;:</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/sbin/reboot" -f 10</pre>
 </div>
-<p>If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
+<p>If you want to run commands as a different user than root:</p>
+<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname</pre>
+</div>
+<p>If you want to run commands through sudo:</p>
+<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname --sudo</pre>
+</div>
+<p>If you need to access SSH on a different port:</p>
+<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -p 2112</pre>
+</div>
+<p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
 <p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
 a <cite>-m</cite> for module name, but the default module name is &#8216;command&#8217;, so we didn&#8217;t need to specify that
 here.  We&#8217;ll use <cite>-m</cite> later to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
@@ -330,7 +339,7 @@ a simplified syntax for this.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

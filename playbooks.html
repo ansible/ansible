@@ -232,7 +232,15 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
 - hosts: webservers
   user: root</pre>
 </div>
-<p>Support for running things from sudo is pending.</p>
+<p>Support for running things from sudo is also available.  Sudo must be
+configured to not require a password.</p>
+<blockquote>
+<div><p>&#8212;
+- hosts: webservers</p>
+<blockquote>
+<div>user: yourname
+sudo: True</div></blockquote>
+</div></blockquote>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
@@ -617,7 +625,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

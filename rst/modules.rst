@@ -48,8 +48,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *state*:
 
-* Can be either 'installed' or 'removed'.   NOTE:  support
-for 'latest' (see yum, below) is in work.
+* Can be either 'installed' or 'removed'.   NOTE:  support for 'latest' (see yum, below) is in work.
 
 Example action from Ansible :doc:`playbooks`::
 
