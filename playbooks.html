@@ -232,15 +232,12 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
 - hosts: webservers
   user: root</pre>
 </div>
-<p>Support for running things from sudo is also available.  Sudo must be
-configured to not require a password.</p>
-<blockquote>
-<div><p>&#8212;
-- hosts: webservers</p>
-<blockquote>
-<div>user: yourname
-sudo: True</div></blockquote>
-</div></blockquote>
+<p>Support for running things from sudo is also available:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: yourname
+  sudo: True</pre>
+</div>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>

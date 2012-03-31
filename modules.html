@@ -135,6 +135,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
+<li><a class="reference internal" href="#group">group</a></li>
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
 <li><a class="reference internal" href="#service">service</a></li>
@@ -310,6 +311,26 @@ file dest/path/to/delete state=absent</pre>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
 </div>
 </div>
+<div class="section" id="group">
+<h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<p>Adds or removes groups.</p>
+<p><em>name</em>:</p>
+<ul class="simple">
+<li>name of the group</li>
+</ul>
+<p><em>gid</em>:</p>
+<ul class="simple">
+<li>optional gid to set for the group</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>either &#8216;absent&#8217;, or &#8216;present&#8217;.  &#8216;present&#8217; is the default.</li>
+</ul>
+<p>To control members of the group, see the users resource.</p>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>group name=somegroup state=present</pre>
+</div>
+</div>
 <div class="section" id="ohai">
 <h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
@@ -427,6 +448,14 @@ be a relative or absolute path.</li>
 <ul class="simple">
 <li>Optionally sets the user&#8217;s primary group, takes a group name.</li>
 </ul>
+<p><em>groups</em>:</p>
+<ul class="simple">
+<li>Put the user in the specified groups, takes comma delimited group names.</li>
+</ul>
+<p><em>append</em>:</p>
+<ul class="simple">
+<li>If true, will only add additional groups to the user listed in &#8216;groups&#8217;, rather than making the user only be in those specified groups.</li>
+</ul>
 <p><em>shell</em>:</p>
 <ul class="simple">
 <li>Optionally sets the user&#8217;s shell.</li>
@@ -437,16 +466,24 @@ be a relative or absolute path.</li>
 </ul>
 <p><em>password</em>:</p>
 <ul class="simple">
-<li>Sets the user&#8217;s password to this crypted value.  Pass in a result from crypt.  See the users
-example in the github examples directory for what this looks like in a playbook.</li>
+<li>Sets the user&#8217;s password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.</li>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.</li>
+<li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.  Optionally additional removal behaviors can be set with the &#8216;force&#8217; or &#8216;remove&#8217; parameter values (see below).</li>
+</ul>
+<p><em>force</em>:</p>
+<ul class="simple">
+<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for &#8211;force is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
+</ul>
+<p><em>remove</em>:</p>
+<ul class="simple">
+<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for &#8211;remove is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
-user name=mdehaan state=absent</pre>
+user name=mdehaan groups=wheel,skynet
+user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="yum">

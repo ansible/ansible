@@ -177,6 +177,29 @@ Example action from Ansible :doc:`playbooks`::
     git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
 
 
+group
+`````
+
+Adds or removes groups.
+
+*name*:
+
+* name of the group
+
+*gid*:
+
+* optional gid to set for the group
+
+*state*:
+
+* either 'absent', or 'present'.  'present' is the default.
+
+To control members of the group, see the users resource.
+
+Example action from Ansible :doc:`playbooks`::
+
+   group name=somegroup state=present
+
 ohai
 ````
 
@@ -327,6 +350,14 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 * Optionally sets the user's primary group, takes a group name.
 
+*groups*:
+
+* Put the user in the specified groups, takes comma delimited group names.
+
+*append*:
+
+* If true, will only add additional groups to the user listed in 'groups', rather than making the user only be in those specified groups.
+
 *shell*:
 
 * Optionally sets the user's shell.
@@ -337,17 +368,25 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
     
 *password*:
 
-* Sets the user's password to this crypted value.  Pass in a result from crypt.  See the users
-  example in the github examples directory for what this looks like in a playbook.
+* Sets the user's password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.
 
 *state*:
 
-* Defaults to 'present'.  When 'absent', the user account will be removed if present.
+* Defaults to 'present'.  When 'absent', the user account will be removed if present.  Optionally additional removal behaviors can be set with the 'force' or 'remove' parameter values (see below).
+
+*force*:
+
+* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for --force is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
+
+*remove*:
+
+* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for --remove is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
 
 Example action from Ansible :doc:`playbooks`::
 
     user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
-    user name=mdehaan state=absent
+    user name=mdehaan groups=wheel,skynet
+    user name=mdehaan state=absent force=yes
 
 .. _yum:
 
