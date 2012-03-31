@@ -31,7 +31,7 @@ module looks like this::
    When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.
 
 .. note::
-   Note that other than the :ref:`command` module, ansible modules usually do
+   Note that other than the command :ref:`modules`, ansible modules usually do
    not work like simple scripts. They make the remote system look like
    you state, and run the commands necessary to get it there.  This
    is commonly referred to as 'idempotence', and is a core design goal of ansible.  However, we also
