@@ -277,9 +277,6 @@ that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' inst
 all of your conditional expressions in a way that makes them very easy to reuse between plays
 and playbooks.
 
-.. note::
-     Handlers don't support only_if because they don't need to.  If a handler is not notified,
-     it will not run.  
 
 Conditional Imports
 +++++++++++++++++++
