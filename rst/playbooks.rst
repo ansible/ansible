@@ -73,7 +73,13 @@ documentation.  The `user` is just the name of the user account::
       user: root
 
 
-Support for running things from sudo is pending.
+Support for running things from sudo is also available.  Sudo must be
+configured to not require a password.
+
+    ---
+    - hosts: webservers
+      user: yourname
+      sudo: True
 
 
 Vars section

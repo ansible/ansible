@@ -21,7 +21,19 @@ Now to run the command on all servers in a group, in this case, 'atlanta'::
 
     ansible atlanta -a "/sbin/reboot" -f 10
 
-If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
+If you want to run commands as a different user than root::
+
+    ansible atlanta -a "/usr/bin/foo" -u yourname
+
+If you want to run commands through sudo::
+    
+    ansible atlanta -a "/usr/bin/foo" -u yourname --sudo
+
+If you need to access SSH on a different port::
+    
+    ansible atlanta -a "/usr/bin/foo" -p 2112
+
+Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
 
 The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
 a `-m` for module name, but the default module name is 'command', so we didn't need to specify that
