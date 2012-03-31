@@ -29,7 +29,6 @@ can serve as a configuration management or deployment system.
 
 %build
 python setup.py build
-make docs
 
 %install
 python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
@@ -50,6 +49,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*
 %{_bindir}/ansible*
 %{_datadir}/ansible/*
+%config(noreplace) /etc/ansible/hosts
 %config(noreplace) %{_sysconfdir}/ansible/
 
 

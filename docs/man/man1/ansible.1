@@ -1,0 +1,123 @@
+'\" t
+.\"     Title: ansible
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 03/31/2012
+.\"    Manual: System administration commands
+.\"    Source: Ansible 0.0.1
+.\"  Language: English
+.\"
+.TH "ANSIBLE" "1" "03/31/2012" "Ansible 0\&.0\&.1" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ansible \- run a command somewhere else
+.SH "SYNOPSIS"
+.sp
+ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
+.SH "DESCRIPTION"
+.sp
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
+.SH "ARGUMENTS"
+.PP
+\fBhost\-pattern\fR
+.RS 4
+A name of a group in the inventory file, a shell\-like glob selecting hosts in inventory file, or any combination of the two seperated by semicolons\&.
+.RE
+.SH "OPTIONS"
+.PP
+\fB\-i\fR, \fB\-\-inventory\fR
+.RS 4
+Path to the inventory hosts file, which defaults to /etc/ansible/hosts\&.
+.RE
+.PP
+\fB\-f\fR, \fB\-\-forks\fR
+.RS 4
+Level of parallelism\&. Specify as an integer, the default is 5\&.
+.RE
+.PP
+\fB\-m\fR, \fB\-\-module\-name\fR
+.RS 4
+Module name to execute\&.
+.RE
+.PP
+\fB\-M\fR, \fB\-\-module\-path\fR
+.RS 4
+Where to load modules from\&. The default is /usr/share/ansible
+.RE
+.PP
+\fB\-a\fR, \fB\-\-args\fR
+.RS 4
+Arguments to pass to the module
+.RE
+.PP
+\fB\-k\fR, \fB\-\-ask\-pass\fR
+.RS 4
+Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
+.RE
+.PP
+\fB\-o\fR, \fB\-\-one\-line\fR
+.RS 4
+Try to output everything on one line\&.
+.RE
+.PP
+\fB\-t\fR, \fB\-\-tree\fR
+.RS 4
+Save contents in this output directory, with the results named in a file named after each host\&.
+.RE
+.PP
+\fB\-T\fR, \fB\-\-timeout\fR
+.RS 4
+Connection timeout to use when trying to talk to hosts, in seconds\&.
+.RE
+.PP
+\fB\-B\fR, \fB\-\-background\fR
+.RS 4
+Runs commands in the background, killing the task after N seconds\&.
+.RE
+.PP
+\fB\-P\fR, \fB\-\-poll\fR
+.RS 4
+Poll a background job every (this many) seconds\&. Requires \-B\&.
+.RE
+.PP
+\fB\-u\fR, \fB\-\-remote\-user\fR
+.RS 4
+Use this remote username instead of root
+.RE
+.SH "INVENTORY"
+.sp
+Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets\&.
+.SH "FILES"
+.sp
+/etc/ansible/hosts \(em Default inventory file
+.sp
+/usr/share/ansible/ \(em Default module library
+.SH "ENVIRONMENT"
+.sp
+The following environment variables may specified\&.
+.sp
+ANSIBLE_HOSTS  \(em Override the default ansible hosts file
+.sp
+ANSIBLE_LIBRARY \(em Override the default ansible module library path
+.SH "AUTHOR"
+.sp
+Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
+.SH "COPYRIGHT"
+.sp
+Copyright \(co 2012, Michael DeHaan
+.sp
+Ansible is released under the terms of the GPLv3 License\&.
+.SH "SEE ALSO"
+.sp
+\fBansible\-playbook\fR(1)
+.sp
+Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/

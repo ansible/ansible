@@ -44,7 +44,7 @@ clean:
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up asciidoc to man transformations and results"
-	find ./docs/man -type f \( -name "*.xml" -or -regex ".*\.[0-9]$$" \) -delete
+	find ./docs/man -type f -name "*.xml" -delete
 	@echo "Cleaning up output from test runs"
 	-rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
