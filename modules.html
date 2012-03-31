@@ -168,19 +168,33 @@ s.parentNode.insertBefore(ga, s);
    
   <div class="section" id="ansible-modules">
 <h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
-<p>Ansible ships with a number of modules that can be executed directly
-on remote hosts or through ansible playbooks.</p>
-<p>Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt> parameters, space delimited.  Some modules take
-no parameters, and the command/shell modules simply take the string
+<p>Ansible ships with a number of modules (called the &#8216;module library&#8217;)
+that can be executed directly on remote hosts or through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.
+Users can also write their own modules.   These modules can control system
+resources, like services, packages, or files (anything really), or
+handle executing system commands.</p>
+<p>Let&#8217;s review how we execute three different modules from the command line:</p>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=running"
+ansible webservers -m ping
+ansible webservers -m command -a "/sbin/reboot -t now"</pre>
+</div>
+<p>Each module supports taking arguments.  Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt>
+arguments, space delimited.  Some modules take
+no arguments, and the command/shell modules simply take the string
 of the command you want to run.</p>
-<p>All modules return JSON format data, though if you are using the
+<p>From playbooks, Ansible modules are executed in a very similar way:</p>
+<div class="highlight-python"><pre>- name: reboot the servers
+  action: command /sbin/reboot -t now</pre>
+</div>
+<p>All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don&#8217;t really need to know much about
-that.</p>
-<p>Most modules other than command are idempotent, meaning they will seek
-to avoid changes unless a change needs to be made.  When using ansible
-playbooks, these modules can trigger change events.  Unless otherwise
-noted, all modules support change hooks.</p>
-<p>Stock modules:</p>
+that.  If you&#8217;re writing your own module, you care, and this means you do
+not have to write modules in any particular language &#8211; you get tho choose.</p>
+<p>Most modules other than command are <cite>idempotent</cite>, meaning they will seek
+to avoid changes to the system unless a change needs to be made.  When using ansible
+playbooks, these modules can trigger &#8216;change events&#8217;.  Unless otherwise
+noted, any given module does support change hooks.</p>
+<p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
 <div class="section" id="command">
 <span id="id1"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of

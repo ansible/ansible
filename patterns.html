@@ -157,13 +157,12 @@ s.parentNode.insertBefore(ga, s);
    
   <div class="section" id="the-inventory-file-patterns-and-groups">
 <span id="patterns"></span><h1>The Inventory File, Patterns, and Groups<a class="headerlink" href="#the-inventory-file-patterns-and-groups" title="Permalink to this headline">¶</a></h1>
-<p>How to define and select hosts you wish to manage</p>
-<div class="section" id="inventory-file-format">
-<span id="inventoryformat"></span><h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
-Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts, and
-looks like this:</p>
+Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
+<div class="section" id="inventory-file-format">
+<span id="inventoryformat"></span><h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
+<p>The format for /etc/ansible/hosts looks like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 
 <span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
@@ -181,7 +180,16 @@ but they are useful.</p>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
-<p>These patterns target all hosts in the inventory file:</p>
+<p>We&#8217;ll go over how to use the command line in <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> section, however, basically it looks like this:</p>
+<div class="highlight-python"><pre>ansible &lt;pattern_goes_here&gt; -m &lt;module_name&gt; -a &lt;arguments&gt;</pre>
+</div>
+<p>Such as:</p>
+<blockquote>
+<div>ansible &lt;pattern_goes_here&gt; -m service -a &#8220;name=httpd state=running&#8221;</div></blockquote>
+<p>Within <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>, these patterns can also be used, for even greater purposes.</p>
+<p>Anyway, to use Ansible, you&#8217;ll first need to know how to tell Ansible which hosts in your inventory file to talk to.
+This is done by designating particular host names or groups of hosts.</p>
+<p>The following patterns target all hosts in the inventory file:</p>
 <div class="highlight-python"><pre>all
 *</pre>
 </div>

@@ -3,17 +3,16 @@
 The Inventory File, Patterns, and Groups
 ========================================
 
-How to define and select hosts you wish to manage
+Ansible works against multiple systems in your infrastructure at the
+same time.  It does this by selecting portions of systems listed in
+Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. _inventoryformat:
 
 Inventory File Format
 +++++++++++++++++++++
 
-Ansible works against multiple systems in your infrastructure at the
-same time.  It does this by selecting portions of systems listed in
-Ansible's inventory file, which defaults to /etc/ansible/hosts, and
-looks like this::
+The format for /etc/ansible/hosts looks like this::
 
     mail.example.com
 
@@ -32,7 +31,20 @@ but they are useful.
 Selecting Targets
 +++++++++++++++++
 
-These patterns target all hosts in the inventory file::
+We'll go over how to use the command line in :doc:`examples` section, however, basically it looks like this::
+
+    ansible <pattern_goes_here> -m <module_name> -a <arguments>
+    
+Such as::
+
+    ansible webservers -m service -a "name=httpd state=restarted"
+
+Within :doc:`playbooks`, these patterns can also be used, for even greater purposes.
+
+Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory file to talk to.
+This is done by designating particular host names or groups of hosts.
+
+The following patterns target all hosts in the inventory file::
 
     all
     *    

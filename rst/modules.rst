@@ -1,23 +1,39 @@
 Ansible Modules
 ===============
 
-Ansible ships with a number of modules that can be executed directly
-on remote hosts or through ansible playbooks.
+Ansible ships with a number of modules (called the 'module library') 
+that can be executed directly on remote hosts or through :doc:`playbooks`.
+Users can also write their own modules.   These modules can control system
+resources, like services, packages, or files (anything really), or 
+handle executing system commands.  
 
-Nearly all modules take ``key=value`` parameters, space delimited.  Some modules take
-no parameters, and the command/shell modules simply take the string
+Let's review how we execute three different modules from the command line::
+
+    ansible webservers -m service -a "name=httpd state=running"
+    ansible webservers -m ping
+    ansible webservers -m command -a "/sbin/reboot -t now"
+
+Each module supports taking arguments.  Nearly all modules take ``key=value`` 
+arguments, space delimited.  Some modules take
+no arguments, and the command/shell modules simply take the string
 of the command you want to run.
 
-All modules return JSON format data, though if you are using the
+From playbooks, Ansible modules are executed in a very similar way::
+
+    - name: reboot the servers
+      action: command /sbin/reboot -t now 
+
+All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don't really need to know much about
-that.
+that.  If you're writing your own module, you care, and this means you do
+not have to write modules in any particular language -- you get tho choose.
 
-Most modules other than command are idempotent, meaning they will seek
-to avoid changes unless a change needs to be made.  When using ansible
-playbooks, these modules can trigger change events.  Unless otherwise
-noted, all modules support change hooks.
+Most modules other than command are `idempotent`, meaning they will seek
+to avoid changes to the system unless a change needs to be made.  When using ansible
+playbooks, these modules can trigger 'change events'.  Unless otherwise
+noted, any given module does support change hooks.
 
-Stock modules:
+Let's see what's available in the Ansible module library, out of the box:
 
 .. _command:
 
