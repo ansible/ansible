@@ -184,8 +184,8 @@ but they are useful.</p>
 <div class="highlight-python"><pre>ansible &lt;pattern_goes_here&gt; -m &lt;module_name&gt; -a &lt;arguments&gt;</pre>
 </div>
 <p>Such as:</p>
-<blockquote>
-<div>ansible &lt;pattern_goes_here&gt; -m service -a &#8220;name=httpd state=running&#8221;</div></blockquote>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=restarted"</pre>
+</div>
 <p>Within <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>, these patterns can also be used, for even greater purposes.</p>
 <p>Anyway, to use Ansible, you&#8217;ll first need to know how to tell Ansible which hosts in your inventory file to talk to.
 This is done by designating particular host names or groups of hosts.</p>

@@ -87,8 +87,8 @@ Ensure a package is at the latest version::
 
     ansible webservers -m yum -a "pkg=acme state=latest" 
 
-Ensure a package is not installed:
-    
+Ensure a package is not installed::
+ 
     ansible-webservers -m yum -a "pkg=acme state=removed"
 
 Currently Ansible only has a module for managing packages with yum.  You can install
