@@ -174,17 +174,21 @@ s.parentNode.insertBefore(ga, s);
   <div class="section" id="playbooks">
 <h1>Playbooks<a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
 <p>Playbooks are a completely different way to use ansible and are
-particularly awesome.</p>
-<p>They are the basis for a really simple configuration management and
-multi-machine deployment system, unlike any that already exist, and
+particularly awesome.   They are the basis for a really simple
+configuration management and multi-machine deployment system,
+unlike any that already exist, and
 one that is very well suited to deploying complex applications.</p>
-<p>Playbooks can declare configurations, or they can automate steps of
-a manual ordered process.  They can launch tasks synchronously or asynchronously.</p>
+<p>Playbooks can declare configurations, but they can also orchestrate steps of
+any manual ordered process, even as different steps must bounce back and forth
+between sets of machines in particular orders.  They can launch tasks
+synchronously or asynchronously.</p>
 <p>While you might run the main /usr/bin/ansible program for ad-hoc
 tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.</p>
-<p>Let&#8217;s dive in and see how they work.</p>
+<p>Let&#8217;s dive in and see how they work.  As you go, you may wish to open
+the <a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">github examples directory</a> in
+another tab, so you can apply the theory to what things look like in practice.</p>
 <div class="section" id="playbook-example">
 <h2>Playbook Example<a class="headerlink" href="#playbook-example" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks are expressed in YAML format and have a minimum of syntax.
