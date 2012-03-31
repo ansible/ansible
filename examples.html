@@ -175,10 +175,24 @@ ansible atlanta -a "/sbin/reboot" -f 10</pre>
 <p>The -f 10 specifies the usage of 10 simultaneous processes.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Note that other than the <a class="reference internal" href="modules.html#command"><em>command</em></a> module, ansible modules do
+<p class="last">-m does not always have to be specified to /usr/bin/ansible because &#8216;command&#8217; is the default ansible module</p>
+</div>
+<p>If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
+pipe and redirection operators.   Read more about the differences on the <em class="xref std std-ref">modules</em> page.  The shell
+module looks like this:</p>
+<div class="highlight-python"><pre>ansible raleigh -m shell -a "echo \\$TERM"</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that other than the <a class="reference internal" href="modules.html#command"><em>command</em></a> module, ansible modules usually do
 not work like simple scripts. They make the remote system look like
 you state, and run the commands necessary to get it there.  This
-is commonly referred to as &#8216;idempotent&#8217;.</p>
+is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.  However, we also
+recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.</p>
 </div>
 </div>
 <div class="section" id="file-transfer-templating">

@@ -19,11 +19,23 @@ Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 a
 The -f 10 specifies the usage of 10 simultaneous processes.
 
 .. note::
+   -m does not always have to be specified to /usr/bin/ansible because 'command' is the default ansible module
 
-   Note that other than the :ref:`command` module, ansible modules do
+If we want to execute a module using the shell, we can avoid using absolute paths, and can also include
+pipe and redirection operators.   Read more about the differences on the :ref:`modules` page.  The shell
+module looks like this::
+
+    ansible raleigh -m shell -a "echo \\$TERM"
+
+.. note::
+   When using ansible to run commands, and in particular the shell module, be careful of shell quoting rules.
+
+.. note::
+   Note that other than the :ref:`command` module, ansible modules usually do
    not work like simple scripts. They make the remote system look like
    you state, and run the commands necessary to get it there.  This
-   is commonly referred to as 'idempotent'.
+   is commonly referred to as 'idempotence', and is a core design goal of ansible.  However, we also
+   recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.
 
 File Transfer & Templating
 ``````````````````````````
