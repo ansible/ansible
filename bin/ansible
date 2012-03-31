@@ -52,6 +52,8 @@ class Cli(object):
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds')
+        parser.add_option('-D','--debug', default=False, action="store_true",
+            help='enable standard error debugging of modules.')
         parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
             help='number of parallel processes to use')
         parser.add_option('-i', '--inventory-file', dest='inventory',
@@ -109,6 +111,7 @@ class Cli(object):
             remote_port=options.remote_port, forks=options.forks, 
             background=options.seconds, pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, verbose=True,
+            debug=options.debug
         )
         return (runner, runner.run())
 
