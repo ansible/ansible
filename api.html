@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using the Python API &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>API &amp; Integrations &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -117,7 +117,7 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Using the Python API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="man.html">Man Pages</a></li>
@@ -128,8 +128,12 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Using the Python API</a><ul>
+<li><a class="reference internal" href="#">API &amp; Integrations</a><ul>
+<li><a class="reference internal" href="#python-api">Python API</a><ul>
 <li><a class="reference internal" href="#detailed-api-example">Detailed API Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#external-inventory">External Inventory</a></li>
 </ul>
 </li>
 </ul>
@@ -169,8 +173,16 @@ alt="Fork me on GitHub"
    alt="Fork me on GitHub"></a>
 <div class="container">
    
-  <div class="section" id="using-the-python-api">
-<h1>Using the Python API<a class="headerlink" href="#using-the-python-api" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="api-integrations">
+<h1>API &amp; Integrations<a class="headerlink" href="#api-integrations" title="Permalink to this headline">¶</a></h1>
+<p>There are two major ways to use Ansible from an API perspective.   The primary way
+is to use the Ansible python API to control nodes.  Ansible is written in it&#8217;s own
+API so you have a considerable amount of power there.</p>
+<p>Also covered here, Ansible&#8217;s
+list of hosts, groups, and variables assigned to each host can be driven from
+external sources.   We&#8217;ll start with the Python API.</p>
+<div class="section" id="python-api">
+<h2>Python API<a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h2>
 <p>The Python API is very powerful, and is how the ansible CLI and ansible-playbook
 are implemented.</p>
 <p>It&#8217;s pretty simple:</p>
@@ -200,7 +212,7 @@ expressed in the &#8216;ansible-modules&#8217; documentation.:</p>
 <p>A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.</p>
 <div class="section" id="detailed-api-example">
-<h2>Detailed API Example<a class="headerlink" href="#detailed-api-example" title="Permalink to this headline">¶</a></h2>
+<h3>Detailed API Example<a class="headerlink" href="#detailed-api-example" title="Permalink to this headline">¶</a></h3>
 <p>The following script prints out the uptime information for all hosts:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
 
@@ -237,6 +249,73 @@ it uses the Runner() API (with all available options) to implement the
 command line tools <tt class="docutils literal"><span class="pre">ansible</span></tt> and <tt class="docutils literal"><span class="pre">ansible-playbook</span></tt>.</p>
 </div>
 </div>
+<div class="section" id="external-inventory">
+<h2>External Inventory<a class="headerlink" href="#external-inventory" title="Permalink to this headline">¶</a></h2>
+<p>Often a user of a configuration management system will want to keep inventory
+in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
+or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
+of these options via an external interventory system.</p>
+<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding,J
+but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
+<p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
+<p>When the external node script is called with no arguments, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&#39;databases&#39;</span>  <span class="p">:</span> <span class="p">[</span> <span class="s">&#39;host1.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host2.example.com&#39;</span> <span class="p">],</span>
+    <span class="s">&#39;webservers&#39;</span> <span class="p">:</span> <span class="p">[</span> <span class="s">&#39;host2.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host3.example.com&#39;</span> <span class="p">],</span>
+    <span class="s">&#39;atlanta&#39;</span>    <span class="p">:</span> <span class="p">[</span> <span class="s">&#39;host1.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host4.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host5.example.com&#39;</span> <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When called with a single argument, the name of a host from above, the script must return either an empty JSON
+hash/dictionary, or a list of key/value variables to make available to templates.  Returning variables is optional,
+if the script does not wish to do this, returning an empty hash/dictionary is the way to go:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&#39;favcolor&#39;</span>   <span class="p">:</span> <span class="s">&#39;red&#39;</span><span class="p">,</span>
+    <span class="s">&#39;ntpserver&#39;</span>  <span class="p">:</span> <span class="s">&#39;wolf.example.com&#39;</span><span class="p">,</span>
+    <span class="s">&#39;monitoring&#39;</span> <span class="p">:</span> <span class="s">&#39;pack.example.com&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>It is expected that many Ansible users will also be <a class="reference external" href="http://cobbler.github.com">Cobbler</a> users.  Cobbler has a generic
+layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
+been referred to as a &#8216;lightweight CMDB&#8217; by some admins.   This particular script will communicate with Cobbler
+using Cobbler&#8217;s XMLRPC API.</p>
+<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <cite>this script &lt;https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py&gt;</cite> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
+to be running when you are using Ansible.</p>
+<p>Test the file by running <cite>./etc/ansible/hosts</cite> directly.   You should see some JSON data output, but it may not have
+anything in it just yet.</p>
+<p>Let&#8217;s explore what this does.  In cobbler, assume a scenario somewhat like the following:</p>
+<div class="highlight-python"><pre>cobbler profile add --name=webserver --distro=CentOS6-x86_64
+cobbler profile edit --name=webserver --mgmt-classes="webserver" --ksmeta="a=2 b=3"
+cobbler system edit --name=foo --dns-name="foo.example.com" --mgmt-classes="atlanta" --ksmeta="c=4"
+cobbler system edit --name=bar --dns-name="bar.example.com" --mgmt-classes="atlanta" --ksmeta="c=5"</pre>
+</div>
+<p>In the example above, the system &#8216;foo.example.com&#8217; will be addressable by ansible directly, but will also be addressable when using the group names &#8216;webserver&#8217; or &#8216;atlanta&#8217;.  Since Ansible uses SSH, we&#8217;ll try to contract system foo over &#8216;foo.example.com&#8217;, only, never just &#8216;foo&#8217;.  Similarly, if you try &#8220;ansible foo&#8221; it wouldn&#8217;t find the system... but &#8220;ansible &#8216;foo*&#8217;&#8221; would, because the system DNS name starts with &#8216;foo&#8217;.</p>
+<p>The script doesn&#8217;t just provide host and group info.  In addition, as a bonus, when the &#8216;setup&#8217; module is run (which happens automatically when using playbooks), the variables &#8216;a&#8217;, &#8216;b&#8217;, and &#8216;c&#8217; will all be auto-populated in the templates:</p>
+<div class="highlight-python"><pre># file: /srv/motd.j2
+Welcome, I am templated with a value of a={{ a }}, b={{ b }}, and c={{ c }}</pre>
+</div>
+<p>Which could be executed just like this:</p>
+<div class="highlight-python"><pre>ansible webserver -m setup
+ansible webserver -m template -a "src=/tmp/motd.j2 dest=/etc/motd"</pre>
+</div>
+<p>Note that the name &#8216;webserver&#8217; came from cobbler, as did the variables for the config file.  You can still
+pass in your own variables like normal in Ansible, but variables from the external inventory script will
+override any that have the same name.</p>
+<p>So, with the template above (motd.j2), this would result in the following data being written to /etc/motd for system &#8216;foo&#8217;:</p>
+<div class="highlight-python"><pre>Welcome, I am templated with a value of a=2, b=3, and c=4</pre>
+</div>
+<p>And on system &#8216;bar&#8217; (bar.example.com):</p>
+<div class="highlight-python"><pre>Welcome, I am templated with a value of a=2, b=3, and c=5</pre>
+</div>
+<p>And technically, though there is no major good reason to do it, this also works too:</p>
+<div class="highlight-python"><pre>ansible webserver -m shell -a "echo {{ a }}"</pre>
+</div>
+<p>So in other words, you can use those variables in arguments/actions as well.  You might use this to name
+a conf.d file appropriately or something similar.  Who knows.</p>
+<p>So that&#8217;s the Cobbler integration support &#8211; using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.</p>
+</div>
+</div>
 
 
 </div>
@@ -245,7 +324,7 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 15, 2012.<br/>
+      Last updated on Mar 30, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
