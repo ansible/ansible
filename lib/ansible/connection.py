@@ -113,7 +113,7 @@ class ParamikoConnection(object):
                 # print "waiting on %s" % result_file
                 time.sleep(1)
                 try:
-                    stat = sftp.stat(result_file)
+                    sftp.stat(result_file)
                     break
                 except IOError:
                     pass
