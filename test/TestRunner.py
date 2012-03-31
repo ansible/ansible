@@ -21,7 +21,7 @@ class TestRunner(unittest.TestCase):
        self.runner = ansible.runner.Runner(
            module_name='ping',
            module_path='library/',
-           module_args=[],
+           module_args='',
            remote_user=self.user,
            remote_pass=None,
            host_list='test/ansible_hosts',
@@ -58,7 +58,9 @@ class TestRunner(unittest.TestCase):
    def _run(self, module_name, module_args, background=0):
        ''' run a module and get the localhost results '''
        self.runner.module_name = module_name
-       self.runner.module_args = module_args
+       args = ' '.join(module_args)
+       print "DEBUG: using args=%s" % args
+       self.runner.module_args = args
        self.runner.background  = background
        results = self.runner.run()
        # when using nosetests this will only show up on failure

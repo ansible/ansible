@@ -221,7 +221,7 @@ class PlayBook(object):
         while (clock >= 0):
 
             # poll/loop until polling duration complete
-            runner.module_args = [ "jid=%s" % jid ]
+            runner.module_args = "jid=%s" % jid
             runner.module_name = 'async_status'
             runner.background  = 0  
             runner.pattern     = '*'
