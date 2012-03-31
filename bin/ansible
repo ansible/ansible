@@ -104,7 +104,7 @@ class Cli(object):
 
         runner = ansible.runner.Runner(
             module_name=options.module_name, module_path=options.module_path,
-            module_args=shlex.split(options.module_args),
+            module_args=options.module_args,
             remote_user=options.remote_user, remote_pass=sshpass,
             host_list=options.inventory, timeout=options.timeout, 
             remote_port=options.remote_port, forks=options.forks, 
@@ -119,7 +119,7 @@ class Cli(object):
     def get_polling_runner(self, old_runner, hosts, jid):
         return ansible.runner.Runner(
             module_name='async_status', module_path=old_runner.module_path,
-            module_args=[ "jid=%s" % jid ], remote_user=old_runner.remote_user,
+            module_args="jid=%s" % jid, remote_user=old_runner.remote_user,
             remote_pass=old_runner.remote_pass, host_list=hosts,
             timeout=old_runner.timeout, forks=old_runner.forks,
             remote_port=old_runner.remote_port, pattern='*', 

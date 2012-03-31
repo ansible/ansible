@@ -111,6 +111,9 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
 
+        if type(self.module_args) != str:
+            raise Exception("module_args must be a string: %s" % self.module_args)
+
         self._tmp_paths  = {}
         random.seed()
 
@@ -327,24 +330,10 @@ class Runner(object):
  
     # *****************************************************
 
-    def _coerce_args_to_string(self, args, remote_module_path):
-        ''' final arguments must always be made a string '''
-
-        if type(args) == list:
-            if remote_module_path.endswith('setup'):
-                # quote long strings so setup module gets them unscathed
-                args = " ".join([ "\"%s\"" % str(x) for x in args ])
-            else:
-                args = " ".join([ str(x) for x in args ])
-        return args
-    
-    # *****************************************************
-
     def _execute_module(self, conn, tmp, remote_module_path, args, 
         async_jid=None, async_module=None, async_limit=None):
         ''' runs a module that has already been transferred '''
 
-        args = self._coerce_args_to_string(args, remote_module_path)
         inject = self.setup_cache.get(conn.host,{})
         conditional = utils.double_template(self.conditional, inject)
         if not eval(conditional):
@@ -393,13 +382,9 @@ class Runner(object):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
         # shell and command are the same module
-        # FIXME: keep these args as strings as long as possible...
         if module_name == 'shell':
             module_name = 'command'
-            if type(self.module_args) == list:
-                self.module_args.append("#USE_SHELL")
-            else:
-                self.module_args += " #USE_SHELL"
+            self.module_args += " #USE_SHELL"
 
         module = self._transfer_module(conn, tmp, module_name)
         (result, executed) = self._execute_module(conn, tmp, module, self.module_args)
@@ -419,12 +404,7 @@ class Runner(object):
         module_args = self.module_args
         if module_name == 'shell':
             module_name = 'command'
-            # FIXME: this will become cleaner once we keep args as a string
-            # throughout the app
-            if type(module_args) == list:
-                module_args.append("#USE_SHELL")
-            else:
-                module_args += " #USE_SHELL"
+            module_args += " #USE_SHELL"
 
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, module_name)
@@ -455,7 +435,7 @@ class Runner(object):
         module = self._transfer_module(conn, tmp, 'copy')
 
         # run the copy module
-        args = [ "src=%s" % tmp_src, "dest=%s" % dest ]
+        args = "src=%s dest=%s" % (tmp_src, dest)
         (result1, executed) = self._execute_module(conn, tmp, module, args)
         (host, ok, data) = self._return_from_module(conn, host, result1, executed)
 
@@ -471,7 +451,7 @@ class Runner(object):
 
         old_changed = data.get('changed', False)
         module = self._transfer_module(conn, tmp, 'file')
-        args = [ "%s=%s" % (k,v) for (k,v) in options.items() ]
+        args = ' '.join([ "%s=%s" % (k,v) for (k,v) in options.items() ])
         (result2, executed2) = self._execute_module(conn, tmp, module, args)
         results2 = self._return_from_module(conn, conn.host, result2, executed)
         (host, ok, data2) = results2
@@ -506,7 +486,7 @@ class Runner(object):
         template_module = self._transfer_module(conn, tmp, 'template')
 
         # run the template module
-        args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
+        args = "src=%s dest=%s metadata=%s" % (temppath, dest, metadata)
         (result1, executed) = self._execute_module(conn, tmp, template_module, args)
         (host, ok, data) = self._return_from_module(conn, host, result1, executed)
 
@@ -616,8 +596,7 @@ class Runner(object):
     def _match_hosts(self, pattern):
         ''' return all matched hosts fitting a pattern '''
 
-        rc = [ h for h in self.host_list if self._matches(h, pattern) ]
-        return rc
+        return [ h for h in self.host_list if self._matches(h, pattern) ]
 
     # *****************************************************
 
