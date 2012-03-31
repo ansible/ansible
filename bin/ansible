@@ -21,7 +21,6 @@
 
 import sys
 import getpass
-import shlex
 import time
 from optparse import OptionParser
 
