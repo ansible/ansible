@@ -74,7 +74,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
-        sudo=False):
+        sudo=False, extra_vars=None):
     
         if setup_cache is None:
             setup_cache = {}
@@ -101,6 +101,7 @@ class Runner(object):
         self.forks       = int(forks)
         self.pattern     = pattern
         self.module_args = module_args
+        self.extra_vars  = extra_vars
         self.timeout     = timeout
         self.verbose     = verbose
         self.remote_user = remote_user
@@ -143,14 +144,17 @@ class Runner(object):
     # *****************************************************
 
     @classmethod
-    def parse_hosts_from_script(cls, host_list):
+    def parse_hosts_from_script(cls, host_list, extra_vars):
         ''' evaluate a script that returns list of hosts by groups '''
 
         results = []
         groups = dict(ungrouped=[])
         host_list = os.path.abspath(host_list)
         cls._external_variable_script = host_list
-        cmd = subprocess.Popen([host_list], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        cmd = [host_list, '--list']
+        if extra_vars:
+            cmd.extend(['--extra-vars', extra_vars])
+        cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         out, err = cmd.communicate()
         try:
             groups = utils.json_loads(out)
@@ -165,7 +169,7 @@ class Runner(object):
     # *****************************************************
 
     @classmethod
-    def parse_hosts(cls, host_list, override_hosts=None):
+    def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
 
         if override_hosts is not None:
@@ -183,7 +187,7 @@ class Runner(object):
         if not os.access(host_list, os.X_OK):
             return Runner.parse_hosts_from_regular_file(host_list)
         else:
-            return Runner.parse_hosts_from_script(host_list)
+            return Runner.parse_hosts_from_script(host_list, extra_vars)
 
     # *****************************************************
 
@@ -275,7 +279,12 @@ class Runner(object):
         ''' support per system variabes from external variable scripts, see web docs '''
 
         host = conn.host
-        cmd = subprocess.Popen([Runner._external_variable_script, host],
+
+        cmd = [Runner._external_variable_script, '--host', host]
+        if self.extra_vars:
+            cmd.extend(['--extra-vars', self.extra_vars])
+
+        cmd = subprocess.Popen(cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False
