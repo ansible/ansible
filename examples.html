@@ -272,14 +272,15 @@ to poll, it looks like this:</p>
 <p>Polling is built-in and looks like this:</p>
 <div class="highlight-python"><pre>ansible all -B 3600 -P 60 -a "/usr/bin/long_running_operation --do-stuff"</pre>
 </div>
-<p>The above example says &#8220;run for 60 minutes max (60*60=3600), poll for status every 60 seconds&#8221;.
-Poll mode is smart so all jobs will be started before polling will begin on any machine.
+<p>The above example says &#8220;run for 60 minutes max (60*60=3600), poll for status every 60 seconds&#8221;.</p>
+<p>Poll mode is smart so all jobs will be started before polling will begin on any machine.
 Be sure to use a high enough <cite>&#8211;forks</cite> value if you want to get all of your jobs started
 very quickly. After the time limit (in seconds) runs out (<tt class="docutils literal"><span class="pre">-B</span></tt>), the process on
 the remote nodes will be terminated.</p>
 <p>Any module other than <a class="reference internal" href="modules.html#copy"><em>copy</em></a> or <a class="reference internal" href="modules.html#template"><em>template</em></a> can be
 backgrounded.  Typically you&#8217;ll be backgrounding long-running
-shell commands or software upgrades only.</p>
+shell commands or software upgrades only.  ref:<cite>playbooks</cite> also support polling, and have
+a simplified syntax for this.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
