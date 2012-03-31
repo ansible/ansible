@@ -260,29 +260,13 @@ def parse_yaml_from_file(path):
         raise errors.AnsibleError("file not found: %s" % path)
     return parse_yaml(data)
 
-def unquote_string(string):
-    ''' remove single or double quotes from beginning/end of string'''
-    if (string.startswith('"') and string.endswith('"')) or \
-        (string.startswith("'") and string.endswith("'")):
-        return string[1:-1]
-    else:
-        return string
-
-def parse_kv(args, unquote=True):
+def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    # FIXME: this should be mostly unneccessary once we convert
-    # things to stop parsing/unparsing
-    if type(args) == list:
-       vargs = args
-    else:
-       vargs = shlex.split(args, posix=True) 
+    vargs = shlex.split(args, posix=True) 
     for x in vargs:
         if x.find("=") != -1:
             k, v = x.split("=")
-            if unquote:
-                options[k]=unquote_string(v) 
-            else:
-                v
+            options[k]=v
     return options
 
