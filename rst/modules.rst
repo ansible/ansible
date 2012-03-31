@@ -4,15 +4,6 @@ Ansible Modules
 Ansible ships with a number of modules that can be executed directly
 on remote hosts or through ansible playbooks.
 
-.. seealso::
-
-   :doc:`examples`
-       Examples of using modules in /usr/bin/ansible
-   :doc:`playbooks`
-       Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`api`
-       Examples of using modules with the Python API
-
 Nearly all modules take ``key=value`` parameters, space delimited.  Some modules take
 no parameters, and the command/shell modules simply take the string
 of the command you want to run.
@@ -301,3 +292,12 @@ When shipping modules, drop them in /usr/share/ansible, or specify the
 module path to the command line tool or API.  It is easy to test
 modules by running them directly on the command line, passing them
 arguments just like they would be passed with ansible.
+
+.. seealso::
+
+   :doc:`examples`
+       Examples of using modules in /usr/bin/ansible
+   :doc:`playbooks`
+       Examples of using modules with /usr/bin/ansible-playbook
+   :doc:`api`
+       Examples of using modules with the Python API

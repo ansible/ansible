@@ -109,7 +109,7 @@ s.parentNode.insertBefore(ga, s);
           
             <li class="dropdown" data-dropdown="dropdown">
   <a href="index.html"
-     class="dropdown-toggle">Site</a>
+     class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
@@ -124,32 +124,6 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </span>
 </li>
-            <li class="dropdown" data-dropdown="dropdown">
-  <a href="#"
-     class="dropdown-toggle">Page</a>
-  <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Command Line Examples</a><ul>
-<li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
-<li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
-<li><a class="reference internal" href="#managing-packages">Managing Packages</a></li>
-<li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
-<li><a class="reference internal" href="#managing-services">Managing Services</a></li>
-<li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
-</ul>
-</li>
-</ul>
-</span>
-</li>
-          
-          
-            
-  <li><a href="patterns.html"
-         title="previous chapter">&laquo; The Inventory File, Patterns, and Groups</a></li>
-  <li><a href="modules.html"
-         title="next chapter">Ansible Modules &raquo;</a></li>
-          
-          
-            
           
         </ul>
         <ul class="nav secondary-nav">
@@ -167,11 +141,6 @@ s.parentNode.insertBefore(ga, s);
   </div>
 
 
-<a href="https://github.com/ansible/ansible"><img
-   style="position: absolute; top: 40px; right: 0; border: 0;"
-   src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67"
-alt="Fork me on GitHub"
-   alt="Fork me on GitHub"></a>
 <div class="container">
    
   <div class="section" id="command-line-examples">
@@ -179,15 +148,6 @@ alt="Fork me on GitHub"
 <p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running ad-hoc tasks.
 Start here.  For configuration management and deployments, you&#8217;ll want to pick up on
 using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.</p>
-<div class="admonition-see-also admonition seealso">
-<p class="first admonition-title">See also</p>
-<dl class="last docutils">
-<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
-<dd>A list of available modules</dd>
-<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
-<dd>Alternative ways to use ansible</dd>
-</dl>
-</div>
 <div class="section" id="parallelism-and-shell-commands">
 <h2>Parallelism and Shell Commands<a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time:</p>
@@ -304,6 +264,15 @@ the remote nodes will be terminated.</p>
 <p>Any module other than <a class="reference internal" href="modules.html#copy"><em>copy</em></a> or <a class="reference internal" href="modules.html#template"><em>template</em></a> can be
 backgrounded.  Typically you&#8217;ll be backgrounding long-running
 shell commands or software upgrades only.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>A list of available modules</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Using ansible for configuration management &amp; deployment</dd>
+</dl>
+</div>
 </div>
 </div>
 
@@ -314,7 +283,7 @@ shell commands or software upgrades only.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

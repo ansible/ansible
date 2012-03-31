@@ -3,13 +3,6 @@ Downloads & Getting Started
 
 How to download ansible and get started using it
 
-.. seealso::
-
-   :doc:`examples`
-       Examples of basic commands
-   :doc:`playbooks`
-       Learning ansible's configuration management language
-
 Requirements
 ````````````
 

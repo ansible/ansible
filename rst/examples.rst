@@ -5,13 +5,6 @@ The following examples show how to use `/usr/bin/ansible` for running ad-hoc tas
 Start here.  For configuration management and deployments, you'll want to pick up on
 using `/usr/bin/ansible-playbook` -- the concepts port over directly.
 
-.. seealso::
-
-   :doc:`modules`
-       A list of available modules
-   :doc:`playbooks`
-       Alternative ways to use ansible
-
 
 Parallelism and Shell Commands
 ``````````````````````````````
@@ -157,6 +150,11 @@ Any module other than :ref:`copy` or :ref:`template` can be
 backgrounded.  Typically you'll be backgrounding long-running 
 shell commands or software upgrades only.
 
-  
+.. seealso::
+
+   :doc:`modules`
+       A list of available modules
+   :doc:`playbooks`
+       Using ansible for configuration management & deployment
 
 

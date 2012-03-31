@@ -109,7 +109,7 @@ s.parentNode.insertBefore(ga, s);
           
             <li class="dropdown" data-dropdown="dropdown">
   <a href="index.html"
-     class="dropdown-toggle">Site</a>
+     class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
@@ -124,42 +124,6 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </span>
 </li>
-            <li class="dropdown" data-dropdown="dropdown">
-  <a href="#"
-     class="dropdown-toggle">Page</a>
-  <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Playbooks</a><ul>
-<li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
-<li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
-<li><a class="reference internal" href="#user-line">User line</a></li>
-<li><a class="reference internal" href="#vars-section">Vars section</a></li>
-<li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
-<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
-<li><a class="reference internal" href="#notify-statements">Notify statements</a></li>
-<li><a class="reference internal" href="#handlers">Handlers</a></li>
-<li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
-<li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
-<li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
-<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
-<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
-</ul>
-</li>
-</ul>
-</span>
-</li>
-          
-          
-            
-  <li><a href="YAMLSyntax.html"
-         title="previous chapter">&laquo; YAML Syntax</a></li>
-  <li><a href="api.html"
-         title="next chapter">API &amp; Integrations &raquo;</a></li>
-          
-          
-            
           
         </ul>
         <ul class="nav secondary-nav">
@@ -177,30 +141,10 @@ s.parentNode.insertBefore(ga, s);
   </div>
 
 
-<a href="https://github.com/ansible/ansible"><img
-   style="position: absolute; top: 40px; right: 0; border: 0;"
-   src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67"
-alt="Fork me on GitHub"
-   alt="Fork me on GitHub"></a>
 <div class="container">
    
   <div class="section" id="playbooks">
 <h1>Playbooks<a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
-<div class="admonition-see-also admonition seealso">
-<p class="first admonition-title">See also</p>
-<dl class="last docutils">
-<dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
-<dd>Learn about YAML syntax</dd>
-<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
-<dd>Learn about available modules</dd>
-<dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
-<dd>Learn how to extend Ansible by writing your own modules</dd>
-<dt><a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a></dt>
-<dd>Learn about how to select hosts</dd>
-<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
-<dd>Complete playbook files from the github project source</dd>
-</dl>
-</div>
 <p>Playbooks are a completely different way to use ansible and are
 particularly awesome.</p>
 <p>They are the basis for a really simple configuration management and
@@ -529,9 +473,20 @@ tasks even faster.  This also increases the efficiency of polling.</p>
 Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <div class="highlight-python"><pre>ansible-playbook playbook.yml -f 10</pre>
 </div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Don&#8217;t forget to check out the <a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a> for examples of playbooks in action, so you can see how all of these features can be put together.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
+<dd>Learn about YAML syntax</dd>
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>Learn about available modules</dd>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
+<dd>Learn how to extend Ansible by writing your own modules</dd>
+<dt><a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a></dt>
+<dd>Learn about how to select hosts</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
+<dd>Complete playbook files from the github project source</dd>
+</dl>
 </div>
 </div>
 </div>
@@ -543,7 +498,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

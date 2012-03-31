@@ -109,7 +109,7 @@ s.parentNode.insertBefore(ga, s);
           
             <li class="dropdown" data-dropdown="dropdown">
   <a href="index.html"
-     class="dropdown-toggle">Site</a>
+     class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
@@ -124,39 +124,6 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </span>
 </li>
-            <li class="dropdown" data-dropdown="dropdown">
-  <a href="#"
-     class="dropdown-toggle">Page</a>
-  <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#command">command</a></li>
-<li><a class="reference internal" href="#copy">copy</a></li>
-<li><a class="reference internal" href="#facter">facter</a></li>
-<li><a class="reference internal" href="#file">file</a></li>
-<li><a class="reference internal" href="#git">git</a></li>
-<li><a class="reference internal" href="#ohai">ohai</a></li>
-<li><a class="reference internal" href="#ping">ping</a></li>
-<li><a class="reference internal" href="#service">service</a></li>
-<li><a class="reference internal" href="#setup">setup</a></li>
-<li><a class="reference internal" href="#shell">shell</a></li>
-<li><a class="reference internal" href="#template">template</a></li>
-<li><a class="reference internal" href="#yum">yum</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
-</ul>
-</li>
-</ul>
-</span>
-</li>
-          
-          
-            
-  <li><a href="examples.html"
-         title="previous chapter">&laquo; Command Line Examples</a></li>
-  <li><a href="YAMLSyntax.html"
-         title="next chapter">YAML Syntax &raquo;</a></li>
-          
-          
-            
           
         </ul>
         <ul class="nav secondary-nav">
@@ -174,28 +141,12 @@ s.parentNode.insertBefore(ga, s);
   </div>
 
 
-<a href="https://github.com/ansible/ansible"><img
-   style="position: absolute; top: 40px; right: 0; border: 0;"
-   src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67"
-alt="Fork me on GitHub"
-   alt="Fork me on GitHub"></a>
 <div class="container">
    
   <div class="section" id="ansible-modules">
 <h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
 <p>Ansible ships with a number of modules that can be executed directly
 on remote hosts or through ansible playbooks.</p>
-<div class="admonition-see-also admonition seealso">
-<p class="first admonition-title">See also</p>
-<dl class="last docutils">
-<dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
-<dd>Examples of using modules in /usr/bin/ansible</dd>
-<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
-<dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
-<dt><a class="reference internal" href="api.html"><em>API &amp; Integrations</em></a></dt>
-<dd>Examples of using modules with the Python API</dd>
-</dl>
-</div>
 <p>Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt> parameters, space delimited.  Some modules take
 no parameters, and the command/shell modules simply take the string
 of the command you want to run.</p>
@@ -425,6 +376,17 @@ the module:</p>
 module path to the command line tool or API.  It is easy to test
 modules by running them directly on the command line, passing them
 arguments just like they would be passed with ansible.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
+<dd>Examples of using modules in /usr/bin/ansible</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
+<dt><a class="reference internal" href="api.html"><em>API &amp; Integrations</em></a></dt>
+<dd>Examples of using modules with the Python API</dd>
+</dl>
+</div>
 </div>
 </div>
 
@@ -435,7 +397,7 @@ arguments just like they would be passed with ansible.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

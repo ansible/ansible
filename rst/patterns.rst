@@ -3,15 +3,7 @@
 The Inventory File, Patterns, and Groups
 ========================================
 
-How to select hosts you wish to manage
-
-.. seealso::
-
-   :doc:`examples`
-       Examples of basic commands
-   :doc:`playbooks`
-       Learning ansible's configuration management language
-
+How to define and select hosts you wish to manage
 
 .. _inventoryformat:
 
@@ -73,4 +65,10 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
 Easy enough.  Now see :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 
+.. seealso::
+
+   :doc:`examples`
+       Examples of basic commands
+   :doc:`playbooks`
+       Learning ansible's configuration management language
 

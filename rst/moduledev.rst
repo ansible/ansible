@@ -1,14 +1,6 @@
 Module Development Guide
 ========================
 
-.. seealso::
-
-   :doc:`modules`
-       Learn about available modules
-   `Github modules directory <https://github.com/ansible/ansible/tree/master/library>`_
-       Browse source of core modules
-
-
 Ansible modules are reusable units of magic that can be used by the Ansible API, 
 or by the `ansible` or `ansible-playbook` programs.
 
@@ -250,4 +242,10 @@ can be included in the core, but core modules (just due to the programming
 preferences of the developers) will need to be implemented in Python.
 Stop by the mailing list to inquire about requirements.
 
+.. seealso::
+
+   :doc:`modules`
+       Learn about available modules
+   `Github modules directory <https://github.com/ansible/ansible/tree/master/library>`_
+       Browse source of core modules
 

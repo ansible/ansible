@@ -8,13 +8,8 @@ We use YAML because it is easier to read and write for humans than other common
 data formats like XML or JSON.  Further, there are libraries available for reading
 and writing YAML in most programming languages.  
 
-You may also wish to read playbook examples at the same time to see how this
+You may also wish to read :ref:`playbooks` at the same time to see how this
 is used in practice.
-
-.. seealso::
-
-   :doc:`playbooks`
-       See YAML examples in practice in playbooks
 
 
 YAML Basics
@@ -91,4 +86,7 @@ That's all you really need to know about YAML to get started writing
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems
+   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
+       Complete playbook files from the github project source
+
 

@@ -11,13 +11,6 @@
         <ul class="nav">
           {% block sidebartoc %}
             {% include "globaltoc.html" %}
-            {% include "localtoc.html" %}
-          {% endblock %}
-          {% block sidebarrel %}
-            {% include "relations.html" %}
-          {% endblock %}
-          {% block sidebarsourcelink %}
-            {% include "sourcelink.html" %}
           {% endblock %}
         </ul>
         <ul class="nav secondary-nav">
@@ -113,11 +106,6 @@ s.parentNode.insertBefore(ga, s);
 
 {%- block content %}
 
-<a href="https://github.com/ansible/ansible"><img
-   style="position: absolute; top: 40px; right: 0; border: 0;"
-   src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67"
-alt="Fork me on GitHub"
-   alt="Fork me on GitHub"></a>
 <div class="container">
    {% block body %} {% endblock %}
 </div>

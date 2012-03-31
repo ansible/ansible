@@ -1,20 +1,6 @@
 Playbooks
 =========
 
-.. seealso::
-
-   :doc:`YAMLSyntax`
-       Learn about YAML syntax
-   :doc:`modules`
-       Learn about available modules
-   :doc:`moduledev`
-       Learn how to extend Ansible by writing your own modules
-   :doc:`patterns`
-       Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
-       Complete playbook files from the github project source
-
-
 Playbooks are a completely different way to use ansible and are
 particularly awesome.
 
@@ -398,7 +384,16 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-.. note::
-    Don't forget to check out the `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_ for examples of playbooks in action, so you can see how all of these features can be put together.
+.. seealso::
 
+   :doc:`YAMLSyntax`
+       Learn about YAML syntax
+   :doc:`modules`
+       Learn about available modules
+   :doc:`moduledev`
+       Learn how to extend Ansible by writing your own modules
+   :doc:`patterns`
+       Learn about how to select hosts
+   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
+       Complete playbook files from the github project source
 

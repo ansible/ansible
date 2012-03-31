@@ -109,7 +109,7 @@ s.parentNode.insertBefore(ga, s);
           
             <li class="dropdown" data-dropdown="dropdown">
   <a href="index.html"
-     class="dropdown-toggle">Site</a>
+     class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
@@ -124,34 +124,6 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </span>
 </li>
-            <li class="dropdown" data-dropdown="dropdown">
-  <a href="#"
-     class="dropdown-toggle">Page</a>
-  <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Module Development Guide</a><ul>
-<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
-<li><a class="reference internal" href="#testing-modules">Testing Modules</a></li>
-<li><a class="reference internal" href="#reading-input">Reading Input</a></li>
-<li><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a></li>
-<li><a class="reference internal" href="#conventions">Conventions</a></li>
-<li><a class="reference internal" href="#shorthand-vs-json">Shorthand Vs JSON</a></li>
-<li><a class="reference internal" href="#sharing-your-module">Sharing Your Module</a></li>
-<li><a class="reference internal" href="#getting-your-module-into-core">Getting Your Module Into Core</a></li>
-</ul>
-</li>
-</ul>
-</span>
-</li>
-          
-          
-            
-  <li><a href="api.html"
-         title="previous chapter">&laquo; API &amp; Integrations</a></li>
-  <li><a href="faq.html"
-         title="next chapter">Frequently Asked Questions &raquo;</a></li>
-          
-          
-            
           
         </ul>
         <ul class="nav secondary-nav">
@@ -169,24 +141,10 @@ s.parentNode.insertBefore(ga, s);
   </div>
 
 
-<a href="https://github.com/ansible/ansible"><img
-   style="position: absolute; top: 40px; right: 0; border: 0;"
-   src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67"
-alt="Fork me on GitHub"
-   alt="Fork me on GitHub"></a>
 <div class="container">
    
   <div class="section" id="module-development-guide">
 <h1>Module Development Guide<a class="headerlink" href="#module-development-guide" title="Permalink to this headline">¶</a></h1>
-<div class="admonition-see-also admonition seealso">
-<p class="first admonition-title">See also</p>
-<dl class="last docutils">
-<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
-<dd>Learn about available modules</dd>
-<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/library">Github modules directory</a></dt>
-<dd>Browse source of core modules</dd>
-</dl>
-</div>
 <p>Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the <cite>ansible</cite> or <cite>ansible-playbook</cite> programs.</p>
 <p>Modules can be written in any language and are found in the path specified
@@ -395,6 +353,15 @@ up as many of these as possible in as many languages as possible.</p>
 can be included in the core, but core modules (just due to the programming
 preferences of the developers) will need to be implemented in Python.
 Stop by the mailing list to inquire about requirements.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>Learn about available modules</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/library">Github modules directory</a></dt>
+<dd>Browse source of core modules</dd>
+</dl>
+</div>
 </div>
 </div>
 
@@ -405,7 +372,7 @@ Stop by the mailing list to inquire about requirements.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 30, 2012.<br/>
+      Last updated on Mar 31, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

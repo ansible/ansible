@@ -16,3 +16,12 @@ ansible-playbook(1)
 
 * `View ansible-playbook.1 <man/ansible-playbook.1.html>`_
 
+.. seealso::
+
+   :doc:`examples`
+       Examples of basic commands
+   :doc:`modules`
+       List of built-in modules
+   :doc:`playbooks`
+       Learning ansible's configuration management language
+

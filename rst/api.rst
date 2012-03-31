@@ -170,4 +170,8 @@ a conf.d file appropriately or something similar.  Who knows.
 
 So that's the Cobbler integration support -- using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.
 
+.. seealso::
+
+   :doc:`modules`
+       List of built-in modules
 
