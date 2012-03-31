@@ -291,6 +291,7 @@ class Runner(object):
             args = [ str(x) for x in module_args ]
             args = " ".join(args)
         inject_vars = self.setup_cache.get(conn.host,{})
+        inject2 = {}
 
         # if the host file was an external script, execute it with the hostname
         # as a first parameter to get the variables to use for the host
