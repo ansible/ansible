@@ -96,7 +96,7 @@ If you are familiar with Puppet terminology, this concept is basically the same 
 
 
 Script Conventions
-++++++++++++++++++
+``````````````````
 
 When the external node script is called with no arguments, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so::
 
@@ -117,7 +117,7 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
     }
 
 Example: The Cobbler External Inventory Script
-++++++++++++++++++++++++++++++++++++++++++++++
+``````````````````````````````````````````````
 
 It is expected that many Ansible users will also be `Cobbler <http://cobbler.github.com>`_ users.  Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
@@ -174,4 +174,8 @@ So that's the Cobbler integration support -- using the cobbler script as an exam
 
    :doc:`modules`
        List of built-in modules
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

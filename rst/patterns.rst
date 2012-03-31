@@ -71,4 +71,8 @@ Easy enough.  Now see :doc:`examples` and then :doc:`playbooks` for how to do th
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

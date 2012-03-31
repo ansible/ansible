@@ -301,3 +301,8 @@ arguments just like they would be passed with ansible.
        Examples of using modules with /usr/bin/ansible-playbook
    :doc:`api`
        Examples of using modules with the Python API
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+

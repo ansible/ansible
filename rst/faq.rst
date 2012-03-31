@@ -187,4 +187,8 @@ tasks -- whether for a QA sytem, build system, or anything you can think of.
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

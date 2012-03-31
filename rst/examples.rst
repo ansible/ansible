@@ -156,5 +156,11 @@ shell commands or software upgrades only.
        A list of available modules
    :doc:`playbooks`
        Using ansible for configuration management & deployment
+   `Mailing List <http://groups.google.com/group/ansible-project>`_ 
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+
 
 

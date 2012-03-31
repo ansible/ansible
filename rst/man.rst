@@ -24,4 +24,8 @@ ansible-playbook(1)
        List of built-in modules
    :doc:`playbooks`
        Learning ansible's configuration management language
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

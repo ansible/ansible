@@ -248,4 +248,8 @@ Stop by the mailing list to inquire about requirements.
        Learn about available modules
    `Github modules directory <https://github.com/ansible/ansible/tree/master/library>`_
        Browse source of core modules
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 
