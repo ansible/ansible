@@ -53,9 +53,11 @@ For starters, here's a playbook that contains just one play.::
 
 Below, we'll break down what the various features of the playbook language are.
 
+Basics
+``````
 
 Hosts line
-```````````
+++++++++++
 
 The `hosts` line is a list of one or more groups or host patterns,
 separated by colons, as described in the :ref:`patterns`
@@ -65,7 +67,7 @@ documentation.  This is just like the first parameter to
 Each play gets to designate it's own choice of patterns.
 
 User line
-`````````
++++++++++
 
 Playbook steps on the remote system can be executed as any user.  The default is root,
 but you can specify others.  Sudo support is pending.::
@@ -73,7 +75,7 @@ but you can specify others.  Sudo support is pending.::
     user: mdehaan
 
 Vars section
-````````````
+++++++++++++
 
 The `vars' section contains a list of variables and values that can be used in the plays.  These
 can be used in templates or tasks and are dereferenced using
@@ -98,7 +100,7 @@ And in /srv/templates/motd.j2::
 But we're getting ahead of ourselves.  Let's talk about tasks.
 
 Tasks list
-``````````
+++++++++++
 
 Each play contains a list of tasks.  Tasks are executed in order, one
 at a time, against all machines matched by the host pattern,
@@ -117,7 +119,7 @@ like 'chmod' or 'setsebool', etc.
 
 
 Task name and action
-`````````````````````
+++++++++++++++++++++
 
 Every task must have a name, which is included in the output from
 running the playbook.
@@ -142,8 +144,8 @@ a variable called 'vhost' in the 'vars' section, you could do this::
 
 Those same variables are usable in templates, which we'll get to later.
 
-Notify statements
-`````````````````
+Notify statements & Handlers
+````````````````````````````
 
 As we've mentioned, nearly all modules are written to be 'idempotent' and can signal when
 they have affected a change on the remote system.   Playbooks recognize this and
@@ -166,9 +168,6 @@ Next up, we'll show what a handler looks like.
 
 .. note::
    Notify handlers are always run in the order written.
-
-Handlers
-````````
 
 Handlers are lists of tasks, not really any different from regular
 tasks, that are referenced by name.  Handlers are what notifiers

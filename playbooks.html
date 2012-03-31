@@ -124,6 +124,34 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </span>
 </li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Playbooks</a><ul>
+<li><a class="reference internal" href="#playbook-example">Playbook Example</a></li>
+<li><a class="reference internal" href="#basics">Basics</a><ul>
+<li><a class="reference internal" href="#hosts-line">Hosts line</a></li>
+<li><a class="reference internal" href="#user-line">User line</a></li>
+<li><a class="reference internal" href="#vars-section">Vars section</a></li>
+<li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
+<li><a class="reference internal" href="#task-name-and-action">Task name and action</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#notify-statements-handlers">Notify statements &amp; Handlers</a></li>
+<li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
+<li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
+<li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
+<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
+<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
           
         </ul>
         <ul class="nav secondary-nav">
@@ -187,8 +215,10 @@ server group, then more commands back on the webservers group, etc.</p>
 </div>
 <p>Below, we&#8217;ll break down what the various features of the playbook language are.</p>
 </div>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="hosts-line">
-<h2>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h2>
+<h3>Hosts line<a class="headerlink" href="#hosts-line" title="Permalink to this headline">¶</a></h3>
 <p>The <cite>hosts</cite> line is a list of one or more groups or host patterns,
 separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
 documentation.  This is just like the first parameter to
@@ -196,14 +226,14 @@ documentation.  This is just like the first parameter to
 <p>Each play gets to designate it&#8217;s own choice of patterns.</p>
 </div>
 <div class="section" id="user-line">
-<h2>User line<a class="headerlink" href="#user-line" title="Permalink to this headline">¶</a></h2>
+<h3>User line<a class="headerlink" href="#user-line" title="Permalink to this headline">¶</a></h3>
 <p>Playbook steps on the remote system can be executed as any user.  The default is root,
 but you can specify others.  Sudo support is pending.:</p>
 <div class="highlight-python"><pre>user: mdehaan</pre>
 </div>
 </div>
 <div class="section" id="vars-section">
-<h2>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h2>
+<h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
 <p>The <cite>vars&#8217; section contains a list of variables and values that can be used in the plays.  These
 can be used in templates or tasks and are dereferenced using
 `jinja2</cite> syntax like this:</p>
@@ -224,7 +254,7 @@ to write the hostname into the /etc/motd file, I could say:</p>
 <p>But we&#8217;re getting ahead of ourselves.  Let&#8217;s talk about tasks.</p>
 </div>
 <div class="section" id="tasks-list">
-<h2>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h2>
+<h3>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h3>
 <p>Each play contains a list of tasks.  Tasks are executed in order, one
 at a time, against all machines matched by the host pattern,
 before moving on to the next task.</p>
@@ -239,7 +269,7 @@ same command again, which is totally ok if the command is something
 like &#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
 </div>
 <div class="section" id="task-name-and-action">
-<h2>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h2>
+<h3>Task name and action<a class="headerlink" href="#task-name-and-action" title="Permalink to this headline">¶</a></h3>
 <p>Every task must have a name, which is included in the output from
 running the playbook.</p>
 <p>The action line is the name of an ansible module followed by
@@ -259,8 +289,9 @@ a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you cou
 </div>
 <p>Those same variables are usable in templates, which we&#8217;ll get to later.</p>
 </div>
-<div class="section" id="notify-statements">
-<h2>Notify statements<a class="headerlink" href="#notify-statements" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="notify-statements-handlers">
+<h2>Notify statements &amp; Handlers<a class="headerlink" href="#notify-statements-handlers" title="Permalink to this headline">¶</a></h2>
 <p>As we&#8217;ve mentioned, nearly all modules are written to be &#8216;idempotent&#8217; and can signal when
 they have affected a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.</p>
@@ -280,9 +311,6 @@ change, but only if the file changes:</p>
 <p class="first admonition-title">Note</p>
 <p class="last">Notify handlers are always run in the order written.</p>
 </div>
-</div>
-<div class="section" id="handlers">
-<h2>Handlers<a class="headerlink" href="#handlers" title="Permalink to this headline">¶</a></h2>
 <p>Handlers are lists of tasks, not really any different from regular
 tasks, that are referenced by name.  Handlers are what notifiers
 notify.  If nothing notifies a handler, it will not run.  Regardless
