@@ -24,6 +24,24 @@ Get Involved
    * [ansible-project mailing list](http://groups.google.com/group/ansible-project)
    * irc.freenode.net: #ansible
 
+Patch Instructions
+==================
+
+Contributions to the core and modules are greatly welcome.
+
+   * Required Process:
+       * Submit github pull requests to the "ansible/integration" branch
+       * Make sure "make tests" passes before submitting any requests.
+   * Bonus points:
+       * Joining the mailing list
+       * Using squash merges
+       * Updating the "rst/*" files in the docs project and "docs/" manpage content
+       * Adding more unit tests 
+   * Avoid:
+       * Sending patches to the mailing list directly.
+       * Sending pull requests to the 'master' branch instead of the integration branch.
+       * Sending pull requests to mpdehaan's personal ansible fork.
+
 Author
 ======
 
