@@ -12,7 +12,7 @@ RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)"
 all: clean python
 
 tests: 
-	PYTHONPATH=./lib nosetests
+	PYTHONPATH=./lib nosetests -v
 
 docs: $(MANPAGES)
 
