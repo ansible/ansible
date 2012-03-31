@@ -274,5 +274,9 @@ def parse_kv(args, unquote=True):
     for x in args:
         if x.find("=") != -1:
             k, v = x.split("=")
-            options[k]=unquote_string(v) if unquote else v
+            if unquote:
+                options[k]=unquote_string(v) 
+            else:
+                v
     return options
+

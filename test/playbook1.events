@@ -277,7 +277,7 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": "echo this should fire once ", 
+                    "cmd": "echo 'this should fire once' ", 
                     "rc": 0, 
                     "stderr": "", 
                     "stdout": "this should fire once"
@@ -289,7 +289,7 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": "echo this should fire once  ", 
+                    "cmd": "echo 'this should fire once'  ", 
                     "rc": 0, 
                     "stderr": "", 
                     "stdout": "this should fire once"
@@ -308,7 +308,7 @@
             [
                 "127.0.0.1", 
                 {
-                    "cmd": "echo this should fire once also ", 
+                    "cmd": "echo 'this should fire once also' ", 
                     "rc": 0, 
                     "stderr": "", 
                     "stdout": "this should fire once also"
