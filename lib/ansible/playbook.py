@@ -472,8 +472,8 @@ class PlayBook(object):
         vars_files = pg.get('vars_files', {})
         tasks      = pg.get('tasks', [])
         handlers   = pg.get('handlers', [])
-        user       = pg.get('user', C.DEFAULT_REMOTE_USER)
-        port       = pg.get('port', C.DEFAULT_REMOTE_PORT)
+        user       = pg.get('user', self.remote_user)
+        port       = pg.get('port', self.remote_port)
         sudo       = pg.get('sudo', False)
 
         self.callbacks.on_play_start(pattern)
