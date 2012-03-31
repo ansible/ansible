@@ -56,6 +56,7 @@ class PlayBook(object):
         remote_pass      = C.DEFAULT_REMOTE_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         override_hosts   = None,
+        extra_vars       = None,
         verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -75,13 +76,14 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.override_hosts   = override_hosts
+        self.extra_vars       = extra_vars
         self.stats            = stats
 
         self.basedir = os.path.dirname(playbook)
         self.playbook = self._parse_playbook(playbook)
 
         self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
-            host_list, override_hosts=self.override_hosts)
+            host_list, override_hosts=self.override_hosts, extra_vars=self.extra_vars)
    
     # *****************************************************
 
@@ -267,8 +269,8 @@ class PlayBook(object):
             timeout=self.timeout, remote_user=remote_user, 
             remote_port=self.remote_port,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
-            conditional=only_if, callbacks=self.runner_callbacks,
-            sudo=sudo
+            conditional=only_if, callbacks=self.runner_callbacks, 
+            extra_vars=self.extra_vars, sudo=sudo
         )
 
         if async_seconds == 0:
@@ -286,16 +288,16 @@ class PlayBook(object):
         name    = task.get('name', None) 
         action  = task.get('action', None)
         if action is None:
-            raise errors.AnsibleError("action is required for each item in tasks")
+            raise errors.AnsibleError("action is required for each item in tasks: offending task is %s" % name if name else "unknown")
         if name is None:
             name = action
         only_if = task.get('only_if', 'True')
         async_seconds = int(task.get('async', 0))  # not async by default
         async_poll_interval = int(task.get('poll', 10))  # default poll = 10 seconds
 
-        tokens = shlex.split(action, posix=False)
+        tokens = action.split(None, 1)
         module_name = tokens[0]
-        module_args = tokens[1:]
+        module_args = tokens[1]
 
         # tasks can be direct (run on all nodes matching
         # the pattern) or conditional, where they ran
@@ -445,6 +447,13 @@ class PlayBook(object):
             for (host, result) in setup_ok.iteritems():
                 SETUP_CACHE[host] = result
 
+        if self.extra_vars:
+            extra_vars = utils.parse_kv(shlex.split(self.extra_vars))
+            for h in self.host_list:
+                try:
+                    SETUP_CACHE[h].update(extra_vars)
+                except:
+                    SETUP_CACHE[h] = extra_vars
         return host_list
 
     # *****************************************************
