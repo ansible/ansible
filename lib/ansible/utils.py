@@ -271,7 +271,13 @@ def unquote_string(string):
 def parse_kv(args, unquote=True):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    for x in args:
+    # FIXME: this should be mostly unneccessary once we convert
+    # things to stop parsing/unparsing
+    if type(args) == list:
+       vargs = args
+    else:
+       vargs = shlex.split(args, posix=True) 
+    for x in vargs:
         if x.find("=") != -1:
             k, v = x.split("=")
             if unquote:
