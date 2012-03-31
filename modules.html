@@ -373,32 +373,7 @@ various configuration attributes.  Values include &#8216;installed&#8217;, &#821
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
-<p>To write your own modules, simply follow the convention of those
-already available in /usr/share/ansible.  Modules must return JSON but
-can be written in any language.  Modules should return hashes, but
-hashes can be nested.</p>
-<p>To support change hooks, modules should return hashes with a changed:
-True/False element at the top level:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s">&#39;changed&#39;</span>   <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-    <span class="s">&#39;something&#39;</span> <span class="p">:</span> <span class="mi">42</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>Modules can also choose to indicate a failure scenario by returning a
-top level <tt class="docutils literal"><span class="pre">failure</span></tt> element with a True value, and a <tt class="docutils literal"><span class="pre">msg</span></tt> element
-describing the nature of the failure.  Other return values are up to
-the module:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s">&#39;failure&#39;</span>   <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-    <span class="s">&#39;msg&#39;</span>       <span class="p">:</span> <span class="s">&quot;here is what happened...&quot;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>When shipping modules, drop them in /usr/share/ansible, or specify the
-module path to the command line tool or API.  It is easy to test
-modules by running them directly on the command line, passing them
-arguments just like they would be passed with ansible.</p>
+<p>See <a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a>.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -406,6 +381,8 @@ arguments just like they would be passed with ansible.</p>
 <dd>Examples of using modules in /usr/bin/ansible</dd>
 <dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
 <dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
+<dd>How to write your own modules</dd>
 <dt><a class="reference internal" href="api.html"><em>API &amp; Integrations</em></a></dt>
 <dd>Examples of using modules with the Python API</dd>
 <dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>

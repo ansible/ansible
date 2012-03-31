@@ -265,33 +265,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 Writing your own modules
 ````````````````````````
 
-To write your own modules, simply follow the convention of those
-already available in /usr/share/ansible.  Modules must return JSON but
-can be written in any language.  Modules should return hashes, but
-hashes can be nested.
-
-To support change hooks, modules should return hashes with a changed:
-True/False element at the top level::
-
-    {
-        'changed'   : True,
-        'something' : 42
-    }
-
-Modules can also choose to indicate a failure scenario by returning a
-top level ``failure`` element with a True value, and a ``msg`` element
-describing the nature of the failure.  Other return values are up to
-the module::
-
-    {
-        'failure'   : True,
-        'msg'       : "here is what happened..."
-    }
-
-When shipping modules, drop them in /usr/share/ansible, or specify the
-module path to the command line tool or API.  It is easy to test
-modules by running them directly on the command line, passing them
-arguments just like they would be passed with ansible.
+See :doc:`moduledev`.
 
 .. seealso::
 
@@ -299,6 +273,8 @@ arguments just like they would be passed with ansible.
        Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
+   :doc:`moduledev`
+       How to write your own modules
    :doc:`api`
        Examples of using modules with the Python API
    `Mailing List <http://groups.google.com/group/ansible-project>`_
