@@ -45,7 +45,7 @@ optionally use them as template sources.
 
 To just transfer a file directly to many different servers::
 
-    ansible atlanta -m copy -a "/etc/hosts /tmp/hosts"
+    ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
 To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
@@ -81,7 +81,7 @@ As well as delete directories (recursively) and delete files::
     
     ansible webservers -m file -a "dest=/path/to/c state=absent"
 
-The mode, owner, and group flags can also be used on the copy or template lines.
+The mode, owner, and group arguments can also be used on the copy or template lines.
 
 
 Managing Packages
