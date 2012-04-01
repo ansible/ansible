@@ -243,7 +243,7 @@ elif state == 'directory':
     # set modes owners and context as needed
     changed = set_context_if_different(path, secontext, changed)
     changed = set_owner_if_different(path, owner, changed)
-    changed = set_group_if_different(path, owner, changed)
+    changed = set_group_if_different(path, group, changed)
     changed = set_mode_if_different(path, mode, changed)
 
     exit_json(path=path, changed=changed)
@@ -260,18 +260,20 @@ elif state == 'link':
     if prev_state == 'absent':
         os.symlink(src, dest)
         changed = True
-    else:
+    elif prev_state == 'link':
         old_src = os.readlink(dest)
         if not os.path.isabs(old_src):
             old_src = os.path.join(os.path.dirname(dest), old_src)
         if old_src != src:
             os.unlink(dest)
             os.symlink(src, dest)
+    else:
+        fail_json(dest=dest, src=src, msg='unexpected position reached')
 
     # set modes owners and context as needed
     changed = set_context_if_different(dest, secontext, changed)
     changed = set_owner_if_different(dest, owner, changed)
-    changed = set_group_if_different(dest, owner, changed)
+    changed = set_group_if_different(dest, group, changed)
     changed = set_mode_if_different(dest, mode, changed)
 
     exit_json(dest=dest, src=src, changed=changed)
