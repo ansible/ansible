@@ -134,6 +134,11 @@ if pid != 0:
    # print "RETURNING SUCCESS IN PARENT"
    print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
    sys.stdout.flush()
+   # we need to not return immmediately such that the launched command has an attempt
+   # to initialize PRIOR to ansible trying to clean up the launch directory (and argsfile)
+   # this probably could be done with some IPC later.  Modules should always read
+   # the argsfile at the very first start of their execution anyway
+   time.sleep(1)
    sys.exit(0)
 else:
    # the kid manages the job
