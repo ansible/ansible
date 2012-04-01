@@ -55,7 +55,9 @@ def add_path_info(kwargs):
         st = os.stat(path)
         kwargs['mode']  = stat.S_IMODE(st[stat.ST_MODE])
         # secontext not yet supported
-        if os.path.isfile(path):
+        if os.path.islink(path):
+            kwargs['state'] = 'link'
+        elif os.path.isfile(path):
             kwargs['state'] = 'file'
         else:
             kwargs['state'] = 'directory'
@@ -80,6 +82,8 @@ for x in items:
 
 state     = params.get('state','file')
 path      = params.get('path', params.get('dest', params.get('name', None)))
+src       = params.get('src', None)
+dest      = params.get('dest', None)
 mode      = params.get('mode', None)
 owner     = params.get('owner', None)
 group     = params.get('group', None)
@@ -90,10 +94,13 @@ recurse   = params.get('recurse', 'false')
 # presently unused, implement (FIXME)
 secontext = params.get('secontext', None)
 
-if state not in [ 'file', 'directory', 'absent' ]:
-    fail_json(msg='invalid state')
-if path is None:
-    fail_json(msg='path is required')
+if state not in [ 'file', 'directory', 'link', 'absent']:
+    fail_json(msg='invalid state: %s' % state)
+
+if state = 'link' and (src is None or dest is None):
+    fail_json(msg='src and dest are required for "link" state')
+elif path is None:
+    fail_json(msg='path is required for "%s" state' % state)
 
 changed = False
 
@@ -152,7 +159,7 @@ def set_mode_if_different(path, mode, changed):
        return changed
    try:
        # FIXME: support English modes
-       mode = int("0%s" % mode)
+       mode = int(mode, 8)
    except Exception, e:
        fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
  
@@ -175,6 +182,7 @@ def set_mode_if_different(path, mode, changed):
            return True
    return changed
 
+
 def rmtree_error(func, path, exc_info):
    fail_json(path=path, msg='failed to remove directory')
 
@@ -183,7 +191,9 @@ def rmtree_error(func, path, exc_info):
 
 prev_state = 'absent'
 if os.path.exists(path):
-    if os.path.isfile(path):
+    if os.path.islink(path):
+        prev_state = 'link'
+    elif os.path.isfile(path):
         prev_state = 'file'
     else:
         prev_state = 'directory'
@@ -204,7 +214,7 @@ if prev_state != 'absent' and state == 'absent':
     sys.exit(0)
 
 if prev_state != 'absent' and prev_state != state:
-    fail_json(path=path, msg='refusing to convert between file and directory')
+    fail_json(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
 
 if prev_state == 'absent' and state == 'absent':
     exit_json(path=path, changed=False)
@@ -234,9 +244,38 @@ elif state == 'directory':
     changed = set_context_if_different(path, secontext, changed)
     changed = set_owner_if_different(path, owner, changed)
     changed = set_group_if_different(path, owner, changed)
-    changed = set_mode_if_different(path, owner, changed)
+    changed = set_mode_if_different(path, mode, changed)
 
     exit_json(path=path, changed=changed)
+
+elif state == 'link':
+    
+    if os.path.isabs(src):
+        abs_src = src
+    else:
+        abs_src = os.path.join(os.path.dirname(dest))
+    if not os.path.exists(abssrc):
+        fail_json(dest=dest, src=src, msg='src file does not exist')
+   
+    if prev_state == 'absent':
+        os.symlink(src, dest)
+        changed = True
+    else:
+        old_src = os.readlink(dest)
+        if not os.path.isabs(old_src):
+            old_src = os.path.join(os.path.dirname(dest), old_src)
+        if old_src != src:
+            os.unlink(dest)
+            os.symlink(src, dest)
+
+    # set modes owners and context as needed
+    changed = set_context_if_different(dest, secontext, changed)
+    changed = set_owner_if_different(dest, owner, changed)
+    changed = set_group_if_different(dest, owner, changed)
+    changed = set_mode_if_different(dest, mode, changed)
+
+    exit_json(dest=dest, src=src, changed=changed)
+
 
 fail_json(path=path, msg='unexpected position reached')
 sys.exit(0)
