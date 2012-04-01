@@ -265,13 +265,14 @@ def remove_only(pkgspec):
 def main():
     # state=installed pkg=pkgspec
     # state=removed pkg=pkgspec
-    # list=installed
-    # list=updates
-    # list=available
-    # list=repos
-    # list=pkgspec
-    # update="args"?
+    # state=latest pkg=pkgspec
     #
+    # informational commands:
+    #   list=installed
+    #   list=updates
+    #   list=available
+    #   list=repos
+    #   list=pkgspec
     
     if len(sys.argv) == 1:
         msg = "the yum module requires arguments (-a)"
