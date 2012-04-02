@@ -20,6 +20,7 @@
 
 import utils
 import sys
+import getpass
 
 #######################################################
 
@@ -176,6 +177,12 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         print utils.task_start_msg(name, is_conditional)
 
+    def on_vars_prompt(self, varname, private=True):
+        msg = 'input for %s: ' % varname
+        if private:
+            return getpass.getpass(msg)
+        return raw_input(msg)
+        
     def on_setup_primary(self):
         print "SETUP PHASE ****************************\n"
     
