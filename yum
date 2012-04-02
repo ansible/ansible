@@ -311,16 +311,23 @@ def main():
 
     
     if 'list' in params:
-        my = yum_base(conf_file=params['conf_file'], cachedir=True)
-        results = dict(results=list_stuff(my, params['list']))
+        try:
+            my = yum_base(conf_file=params['conf_file'], cachedir=True)
+            results = dict(results=list_stuff(my, params['list']))
+        except Exception, e:
+            return 1, str(e)
+            
     elif 'state' in params:
         if 'pkg' not in params:
             results['msg'] = "No pkg specified"
         else:
-            my = yum_base(conf_file=params['conf_file'], cachedir=True)        
-            state = params['state']
-            pkgspec = params['pkg']
-            results = ensure(my, state, pkgspec)
+            try:
+                my = yum_base(conf_file=params['conf_file'], cachedir=True)        
+                state = params['state']
+                pkgspec = params['pkg']
+                results = ensure(my, state, pkgspec)
+            except Exception, e:
+                return 1, str(e)
 
     print json.dumps(results)
     return 0, None
