@@ -28,7 +28,8 @@ import shlex
 import subprocess
 import traceback
 
-APT = "/usr/bin/apt-get"
+APT_PATH = "/usr/bin/apt-get"
+APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
 def debug(msg):
     # ansible ignores stderr, so it's safe to use for debug
@@ -44,7 +45,6 @@ def fail_json(**kwargs):
     exit_json(rc=1, **kwargs)
 
 def run_apt(command):
-    debug(command)
     try:
         cmd = subprocess.Popen(command, shell=True, 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -57,65 +57,44 @@ def run_apt(command):
         rc = 1
         err = traceback.format_exc()
         out = ''
-
-        if out is None:
-           out = ''
-        if err is None:
-           err = ''
     else:
         rc = cmd.returncode
-        
-    debug(err)
-    return rc, out, err
+        return rc, out, err
 
-def get_cache():
-    # TODO: Only update the cache if it's old.
-    cache = apt.Cache()
-    cache.update()
-    cache.open(None)
-    return cache
-
-def package_installed(pkgspec):
-    cache = get_cache()
+def package_status(pkgspec, cache):
     try:
        pkg = cache[pkgspec]
     except:
         fail_json(msg="No package matching '%s' is available" % pkgspec)
-    return bool(pkg.is_installed)
+    return (pkg.is_installed, pkg.is_upgradable)
 
-def install(pkgspec):
-    installed = package_installed(pkgspec)
-    debug("installed: %d" % installed)
-    if installed:
+def install(pkgspec, cache, upgrade=False):
+    (installed, upgradable) = package_status(pkgspec, cache)
+    if installed or not upgrade or not upgradable:
         return False
     else:
         cmd = "%s -q -y install '%s'" % (APT, pkgspec)
         rc, out, err = run_apt(cmd)
-        # TODO: Ensure the package was really installed.
+        if rc:
+            json_fail(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
         return True
 
-def remove(pkgspec):
-    installed = package_installed(pkgspec)
-    debug("installed: %d" % installed)
+def remove(pkgspec, cache, purge=False):
+    (installed, upgradable) = package_status(pkgspec, cache)
     if not installed:
         return False
     else:
-        cmd = "%s -q -y remove '%s'" % (APT, pkgspec)
+        purge = '--purge' if purge else ''
+        cmd = "%s -q -y %s remove '%s'" % (APT, purge, pkgspec)
         rc, out, err = run_apt(cmd)
-        # TODO: Ensure the package was really removed.
+        if rc:
+            json_fail(msg="'apt-get remove %s' failed: %s" % (pkgspec, err))
         return True
     
-def update(args):
-    # TODO: generic update routine 
-    pass
-
-def remove_only(pkgspec):
-    # TODO: remove this pkg and only this pkg - fail if it will require more to remove
-    pass
 
 # ===========================================
 
-if not os.path.exists(APT):
+if not os.path.exists(APT_PATH):
    fail_json(msg="Cannot find apt-get")
 
 argfile = sys.argv[1]
@@ -131,18 +110,31 @@ for x in items:
     (k, v) = x.split("=")
     params[k] = v
 
-state   = params.get('state','installed')
-package = params.get('pkg', None)
+state        = params.get('state','installed')
+package      = params.get('pkg', None)
+update_cache = params.get('update-cache', 'no')
+purge        = params.get('purge', 'no')
 
-if state not in ['installed', 'removed']:
+if state not in ['installed', 'latest', 'removed']:
     fail_json(msg='invalid state')
-if package is None:
-    fail_json(msg='pkg is required')
+if update_cache not in ['yes', 'no']:
+    fail_json(msg='invalid value for update_cache (requires yes or no -- default is no')
+if purge not in ['yes', 'no']:
+    fail_json(msg='invalid value for purge (requires yes or no -- default is no)')
+if package is None and update-cache != 'yes':
+    fail_json(msg='pkg=name and/or update-cache=yes is required')
 
+cache = apt.Cache()
+if update_cache == 'yes':
+    cache.update()
+    cache.open()
+
+if state == 'latest':
+    changed = install(package, cache, upgrade=True)
 if state == 'installed':
-    changed = install(package)
+    changed = install(package, cache)
 elif state == 'removed':
-    changed = remove(package)
+    changed = remove(package, cache, purge == 'yes')
 exit_json(changed=changed)
 
 
