@@ -224,13 +224,16 @@ Now that you have the basics down, let's learn some more advanced
 things you can do with playbooks.
 
 
-External Variables And Sensitive Data
-+++++++++++++++++++++++++++++++++++++
+External Variables And Prompted or Sensitive Data
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
-important variables private.  You can do this by using an external
-variables file, or files, just like this::
+important variables private.  Similarly, sometimes you may just
+want to keep certain information in different files, away from
+the main playbook.
+
+You can do this by using an external variables file, or files, just like this::
 
     ---
     - hosts: all
@@ -254,7 +257,10 @@ The contents of each variables file is a simple YAML dictionary, like this::
     password: magic
 
 Alternatively, you may wish to prompt the user for certain input, and can
-do so with the similarly named 'vars_prompt' section::
+do so with the similarly named 'vars_prompt' section.  This has uses
+beyond security, for instance, you may use the same playbook for all
+software releases and would prompt for a particular release version
+in a push-script::
 
     ---
     - hosts: all
@@ -267,6 +273,11 @@ do so with the similarly named 'vars_prompt' section::
         favcolor: "what is your favorite color?"
 
 There are full examples of both of these items in the github examples/playbooks directory.
+
+Finally, there exists one more option, which feeds variables in from the command line, 
+rather than sourcing them from the usual means::
+
+    ansible-playbook foo.yml --extra-vars="release_version=1234 capital_of_assyria=idontknow"
 
 
 Conditional Execution

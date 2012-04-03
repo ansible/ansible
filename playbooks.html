@@ -139,7 +139,7 @@ s.parentNode.insertBefore(ga, s);
 </li>
 <li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
-<li><a class="reference internal" href="#external-variables-and-sensitive-data">External Variables And Sensitive Data</a></li>
+<li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables And Prompted or Sensitive Data</a></li>
 <li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
@@ -356,12 +356,14 @@ won&#8217;t need them for much else.</p>
 <h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
 <p>Now that you have the basics down, let&#8217;s learn some more advanced
 things you can do with playbooks.</p>
-<div class="section" id="external-variables-and-sensitive-data">
-<h3>External Variables And Sensitive Data<a class="headerlink" href="#external-variables-and-sensitive-data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="external-variables-and-prompted-or-sensitive-data">
+<h3>External Variables And Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>
 <p>It&#8217;s a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
-important variables private.  You can do this by using an external
-variables file, or files, just like this:</p>
+important variables private.  Similarly, sometimes you may just
+want to keep certain information in different files, away from
+the main playbook.</p>
+<p>You can do this by using an external variables file, or files, just like this:</p>
 <div class="highlight-python"><pre>---
 - hosts: all
   user: root
@@ -382,7 +384,10 @@ somevar: somevalue
 password: magic</pre>
 </div>
 <p>Alternatively, you may wish to prompt the user for certain input, and can
-do so with the similarly named &#8216;vars_prompt&#8217; section:</p>
+do so with the similarly named &#8216;vars_prompt&#8217; section.  This has uses
+beyond security, for instance, you may use the same playbook for all
+software releases and would prompt for a particular release version
+in a push-script:</p>
 <div class="highlight-python"><pre>---
 - hosts: all
   user: root
@@ -394,6 +399,10 @@ do so with the similarly named &#8216;vars_prompt&#8217; section:</p>
     favcolor: "what is your favorite color?"</pre>
 </div>
 <p>There are full examples of both of these items in the github examples/playbooks directory.</p>
+<p>Finally, there exists one more option, which feeds variables in from the command line,
+rather than sourcing them from the usual means:</p>
+<div class="highlight-python"><pre>ansible-playbook foo.yml --extra-vars="release_version=1234 capital_of_assyria=idontknow"</pre>
+</div>
 </div>
 <div class="section" id="conditional-execution">
 <h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h3>
