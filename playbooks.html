@@ -381,6 +381,19 @@ sharing your playbook source with them.</p>
 somevar: somevalue
 password: magic</pre>
 </div>
+<p>Alternatively, you may wish to prompt the user for certain input, and can
+do so with the similarly named &#8216;vars_prompt&#8217; section:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars:
+    from: "camelot"
+  vars_prompt:
+    name: "what is your name?"
+    quest: "what is your quest?"
+    favcolor: "what is your favorite color?"</pre>
+</div>
+<p>There are full examples of both of these items in the github examples/playbooks directory.</p>
 </div>
 <div class="section" id="conditional-execution">
 <h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h3>
@@ -623,7 +636,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Mar 31, 2012.<br/>
+      Last updated on Apr 02, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

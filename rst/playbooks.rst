@@ -253,6 +253,21 @@ The contents of each variables file is a simple YAML dictionary, like this::
     somevar: somevalue
     password: magic
 
+Alternatively, you may wish to prompt the user for certain input, and can
+do so with the similarly named 'vars_prompt' section::
+
+    ---
+    - hosts: all
+      user: root
+      vars:
+        from: "camelot"
+      vars_prompt:
+        name: "what is your name?"
+        quest: "what is your quest?"
+        favcolor: "what is your favorite color?"
+
+There are full examples of both of these items in the github examples/playbooks directory.
+
 
 Conditional Execution
 +++++++++++++++++++++
