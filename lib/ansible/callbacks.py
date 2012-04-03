@@ -1,4 +1,3 @@
-#!/usr/bin/python -tt
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible

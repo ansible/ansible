@@ -160,6 +160,9 @@ class Runner(object):
             cmd.extend(['--extra-vars', extra_vars])
         cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         out, err = cmd.communicate()
+        rc = cmd.returncode
+        if rc:
+            raise errors.AnsibleError("%s: %s" % (host_list, err))
         try:
             groups = utils.json_loads(out)
         except:
