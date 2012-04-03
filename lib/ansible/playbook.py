@@ -95,6 +95,13 @@ class PlayBook(object):
         vars = play.get('vars', {})
         if type(vars) != dict:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
+        vars_prompt = play.get('vars_prompt', {})
+        if type(vars_prompt) != dict:
+            raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
+        for vname in vars_prompt:
+            print vars_prompt[vname]
+            # FIXME - need some way to know that this prompt should be getpass or raw_input
+            vars[vname] =  self.callbacks.on_vars_prompt(vname)
         return vars
 
     # *****************************************************
