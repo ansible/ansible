@@ -67,21 +67,21 @@ def run_apt(command):
 
 def package_status(pkgspec, cache):
     try:
-       pkg = cache[pkgspec]
+        pkg = cache[pkgspec]
     except:
         fail_json(msg="No package matching '%s' is available" % pkgspec)
     return (pkg.is_installed, pkg.is_upgradable)
 
 def install(pkgspec, cache, upgrade=False):
     (installed, upgradable) = package_status(pkgspec, cache)
-    if installed or not upgrade or not upgradable:
-        return False
-    else:
+    if (not installed) or (upgrade and upgradable):
         cmd = "%s -q -y install '%s'" % (APT, pkgspec)
         rc, out, err = run_apt(cmd)
         if rc:
             json_fail(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
         return True
+    else:
+        return False
 
 def remove(pkgspec, cache, purge=False):
     (installed, upgradable) = package_status(pkgspec, cache)
@@ -128,7 +128,7 @@ if update_cache not in ['yes', 'no']:
 if purge not in ['yes', 'no']:
     fail_json(msg='invalid value for purge (requires yes or no -- default is no)')
 
-if package is None and update-cache != 'yes':
+if package is None and update_cache != 'yes':
     fail_json(msg='pkg=name and/or update-cache=yes is required')
 
 cache = apt.Cache()
@@ -136,6 +136,8 @@ cache = apt.Cache()
 if update_cache == 'yes':
     cache.update()
     cache.open()
+    if package == None:
+        exit_json(changed=False)
 
 if state == 'latest':
     changed = install(package, cache, upgrade=True)
