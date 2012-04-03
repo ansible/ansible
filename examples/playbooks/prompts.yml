@@ -12,7 +12,12 @@
      this_is_a_regular_var: 'moo'
      so_is_this: 'quack'
 
-# prompted variables
+# prompted variables are a list of variable names and a description
+# that will be presented to the user.
+#
+# alternatively, they can ALSO be passed in from the outside:
+#    ansible-playbook foo.yml --extra-vars="foo=100 bar=101"
+# or through external inventory scripts (see online API docs)
 
   vars_prompt:
      release_version: "product release version"
@@ -24,5 +29,5 @@
 # a package version to use with the yum module.
 
   - name: imagine this did something interesting with $release_version
-    action: shell echo foo >> /tmp/$release_version
+    action: shell echo foo >> /tmp/$release_version-$alpha
 
