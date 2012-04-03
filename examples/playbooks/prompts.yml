@@ -1,0 +1,28 @@
+---
+
+# it is possible to ask for variables from the user at the start
+# of a playbook run, for example, as part of a release script.
+
+- hosts: all
+  user: root
+
+# regular variables are a dictionary of keys and values
+
+  vars:
+     this_is_a_regular_var: 'moo'
+     so_is_this: 'quack'
+
+# prompted variables
+
+  vars_prompt:
+     release_version: "product release version"
+
+  tasks:
+
+# this is just a simple example to show that vars_prompt works, but
+# you might ask for a tag to use with the git module or perhaps
+# a package version to use with the yum module.
+
+  - name: imagine this did something interesting with $release_version
+    action: shell echo foo >> /tmp/$release_version
+
