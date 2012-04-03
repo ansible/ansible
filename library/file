@@ -97,10 +97,10 @@ secontext = params.get('secontext', None)
 if state not in [ 'file', 'directory', 'link', 'absent']:
     fail_json(msg='invalid state: %s' % state)
 
-if state = 'link' and (src is None or dest is None):
+if state == 'link' and (src is None or dest is None):
     fail_json(msg='src and dest are required for "link" state')
 elif path is None:
-    fail_json(msg='path is required for "%s" state' % state)
+    fail_json(msg='path is required')
 
 changed = False
 
