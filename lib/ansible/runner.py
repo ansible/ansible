@@ -357,6 +357,12 @@ class Runner(object):
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
+
+        # log command as the full command not as the path to args file - helps with debugging
+        msg = '%s: "%s"' % (self.module_name, args)
+        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
+
+                    
         res, err = self._exec_command(conn, cmd, tmp, sudoable=True)
         return ( res, err, client_executed_str )
 
