@@ -43,7 +43,7 @@ class TestCallbacks(object):
         EVENTS.append([ 'import', [ host, filename ]])
 
     def on_error(self, host, msg):
-        EVENTS.append([ 'stderr', [ host, msg ])
+        EVENTS.append([ 'stderr', [ host, msg ]])
 
     def on_not_import_for_host(self, host, missing_filename):
         pass
