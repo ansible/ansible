@@ -329,6 +329,10 @@ def main():
             except Exception, e:
                 return 1, str(e)
 
+    else:
+        print json.dumps(dict(failed=True, msg='invalid module parameters'))
+        sys.exit(1)
+
     print json.dumps(results)
     return 0, None
 
