@@ -23,7 +23,6 @@ except ImportError:
     import simplejson as json
 import os
 import sys
-import apt
 import shlex
 import subprocess
 import traceback
@@ -43,6 +42,11 @@ def exit_json(rc=0, **kwargs):
 def fail_json(**kwargs):
     kwargs['failed'] = True
     exit_json(rc=1, **kwargs)
+
+try:
+    import apt
+except ImportError:
+    fail_json(msg="could not import apt")
 
 def run_apt(command):
     try:
@@ -117,24 +121,29 @@ purge        = params.get('purge', 'no')
 
 if state not in ['installed', 'latest', 'removed']:
     fail_json(msg='invalid state')
+
 if update_cache not in ['yes', 'no']:
     fail_json(msg='invalid value for update_cache (requires yes or no -- default is no')
+
 if purge not in ['yes', 'no']:
     fail_json(msg='invalid value for purge (requires yes or no -- default is no)')
+
 if package is None and update-cache != 'yes':
     fail_json(msg='pkg=name and/or update-cache=yes is required')
 
 cache = apt.Cache()
+
 if update_cache == 'yes':
     cache.update()
     cache.open()
 
 if state == 'latest':
     changed = install(package, cache, upgrade=True)
-if state == 'installed':
+elif state == 'installed':
     changed = install(package, cache)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
+
 exit_json(changed=changed)
 
 
