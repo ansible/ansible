@@ -101,7 +101,7 @@ class PlayBook(object):
         for vname in vars_prompt:
             print vars_prompt[vname]
             # FIXME - need some way to know that this prompt should be getpass or raw_input
-            vars[vname] =  self.callbacks.on_vars_prompt(vname)
+            vars[vname] = self.callbacks.on_vars_prompt(vname)
         return vars
 
     # *****************************************************
