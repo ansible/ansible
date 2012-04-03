@@ -457,7 +457,7 @@ class PlayBook(object):
                 SETUP_CACHE[host] = result
 
         if self.extra_vars:
-            extra_vars = utils.parse_kv(shlex.split(self.extra_vars))
+            extra_vars = utils.parse_kv(self.extra_vars)
             for h in self.host_list:
                 try:
                     SETUP_CACHE[h].update(extra_vars)
