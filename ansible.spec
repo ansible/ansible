@@ -3,7 +3,7 @@
 Name: ansible
 Release: 1
 Summary: Minimal SSH command and control
-Version: 0.0.1
+Version: 0.0.2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Group: Development/Libraries
@@ -54,5 +54,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Apr  3 2012 John Eckersberg <jeckersb@redhat.com> - 0.0.2-1
+- Release of 0.0.2
+
 * Sat Mar 10 2012  <tbielawa@redhat.com> - 0.0.1-1
 - Release of 0.0.1
