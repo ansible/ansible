@@ -353,16 +353,11 @@ def main():
                 'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
     host_commands = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
     
-    
     msg = """
     virtmodule arguments:
-    - queryvm guest <queryable item from libvirt domain api> <more of those>
-    - guest commands: (all require a single guest name an argument)
-       %s
-    - host commands:
-       %s
-    
-    """ % (', '.join(sorted(vm_commands)), ', '.join(sorted(host_commands)))
+      state=[running|shutdown] guest=guestname
+      command=some_virt_command  [guest=guestname]
+    """
     
     if len(sys.argv) == 1:
         return VIRT_FAILED, msg
@@ -378,43 +373,60 @@ def main():
     if not len(items):
         return VIRT_FAILED, msg
 
-    basecmd = items[0]
-    v = Virt()
 
-    if basecmd in ('queryvm'):
-        if len(items) < 3:
-            msg = "queryvm requires at least 2 arguments: guest itemname [itemname]"
-            return VIRT_FAILED, msg
-        
-        guest = items[1]
-        reqs = items[2:]
-        res = {}
-        for req in reqs:
-            vm = v.get_vm(guest)
-            if hasattr(vm, req):
-                data = getattr(vm,req)()
-                res[req] = data
-        return rc, res
-        
-    # any methods that require the guest/vmid as the argument must be listed here
-    elif basecmd in vm_commands:
-        if len(items) < 2:
-            msg = "%s requires 1 argument: guest" % basecmd
-        return VIRT_FAILED, msg
-                         
-        guest = items[1]
-        res = getattr(v, basecmd)(guest)
-        if type(res) != dict:
-            res = { basecmd: res }
-        return rc, res
+    # vm=name state=[running|shutdown|destroyed|undefined]
+    # command=[some command] [vm=name]
     
-    elif hasattr(v, basecmd):
-        res = getattr(v, basecmd)()
-        return rc, res
+    params = {}
+    for x in items:
+        (k, v) = x.split("=")
+        params[k] = v
+
+    state      = params.get('state', None)
+    guest      = params.get('guest', None)
+    command    = params.get('command', None)
+    options    = params.get('options', [])
+
+    v = Virt()
+    res = {}
+    
+    if state:
+        if not guest:
+            msg = "state change requires a guest specified"
+            return VIRT_FAILED, msg
+      
+        res['changed'] = False
+        if state == 'running':
+            if v.status(guest) is not 'running':
+                res['changed'] = True 
+                res['msg'] = v.start(guest)
+        elif state == 'shutdown':
+            if v.status(guest) is not 'shutdown':
+                res['changed'] = True
+                res['msg'] = v.shutdown(guest)
         
-    else:
-        msg = "Command %s not recognized" % basecmd
-        rc = VIRT_FAILED
+        return VIRT_SUCCESS, res
+        
+    if command:
+        if command in vm_commands:
+            if not guest:
+                msg = "%s requires 1 argument: guest" % command
+                return VIRT_FAILED, msg
+                             
+            res = getattr(v, command)(guest)
+            if type(res) != dict:
+                res = { command: res }
+            return rc, res
+        
+        elif hasattr(v, command):
+            res = getattr(v, command)()
+            if type(res) != dict:
+                res = { command: res }
+            return rc, res
+            
+        else:
+            msg = "Command %s not recognized" % basecmd
+            rc = VIRT_FAILED
         
     return rc, msg
     
