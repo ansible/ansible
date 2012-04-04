@@ -38,8 +38,6 @@ if len(sys.argv) < 3:
     })
     sys.exit(1)
 
-print sys.argv
-
 jid = sys.argv[1]
 time_limit = sys.argv[2]
 wrapped_module = sys.argv[3]

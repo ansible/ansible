@@ -57,6 +57,8 @@ class TestRunner(unittest.TestCase):
        self.runner.module_args = module_args
        self.runner.background  = background
        results = self.runner.run()
+       # when using nosetests this will only show up on failure
+       # which is pretty useful
        print "RESULTS=%s" % results
        assert "127.0.0.1" in results['contacted']
        return results['contacted']['127.0.0.1'] 
@@ -139,17 +141,14 @@ class TestRunner(unittest.TestCase):
    def test_async(self):
        # test async launch and job status
        # of any particular module
-       result = self._run('command', [ "/bin/sleep", "10" ], background=20)
-       print "RESULT1=%s" % result
+       result = self._run('command', [ "/bin/sleep", "3" ], background=20)
        assert 'ansible_job_id' in result
        assert 'started' in result
        jid = result['ansible_job_id']
        # no real chance of this op taking a while, but whatever
-       time.sleep(1)
-       # TODO: verify we are still running
-       time.sleep(12)
+       time.sleep(5)
        # CLI will abstract this, but this is how it works internally
-       result = self._run('async_status', [ "jid=%s" % ansible_job_id ])
+       result = self._run('async_status', [ "jid=%s" % jid ])
        # TODO: would be nice to have tests for supervisory process
        # killing job after X seconds
        assert 'finished' in result
