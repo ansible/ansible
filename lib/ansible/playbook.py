@@ -91,8 +91,9 @@ class PlayBook(object):
 
     def _get_vars(self, play, dirname):
         ''' load the vars section from a play '''
-
-        vars = play.get('vars', {})
+        if play.get('vars') is None:
+            play['vars'] = {}
+        vars = play['vars']
         if type(vars) != dict:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
         vars_prompt = play.get('vars_prompt', {})
