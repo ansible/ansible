@@ -34,8 +34,12 @@ import random
 
 ################################################
 
+def noop(*args, **kwargs):
+    pass
+
 def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
+
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while not job_queue.empty():
         try:
@@ -78,7 +82,7 @@ class Runner(object):
         self.host_list, self.groups = self.parse_hosts(host_list)
         self.module_path = module_path
         self.module_name = module_name
-        self.forks       = forks
+        self.forks       = int(forks)
         self.pattern     = pattern
         self.module_args = module_args
         self.timeout     = timeout
@@ -275,8 +279,7 @@ class Runner(object):
         self._transfer_file(conn, source, temppath)
 
         # install the template module
-        self.module_name = 'template'
-        module = self._transfer_module(conn, tmp)
+        module = self._transfer_module(conn, tmp, 'template')
 
         # run the template module
         args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
@@ -318,6 +321,7 @@ class Runner(object):
             raise Exception("???")
         self._delete_remote_files(conn, tmp)
         conn.close()
+        
         return result
 
     def remote_log(self, conn, msg):
@@ -355,18 +359,19 @@ class Runner(object):
 
     def run(self):
         ''' xfer & run module on all matched hosts '''
-        
+       
         # find hosts that match the pattern
         hosts = self.match_hosts(self.pattern)
         if len(hosts) == 0:
             return None       
- 
+
         # attack pool of hosts in N forks
         # _executor_hook does all of the work
         hosts = [ (self,x) for x in hosts ]
+
         if self.forks > 1:
-            job_queue = multiprocessing.Queue()
-            result_queue = multiprocessing.Queue()
+            job_queue = multiprocessing.Manager().Queue()
+            result_queue = multiprocessing.Manager().Queue()
  
             for i in hosts:
                 job_queue.put(i)

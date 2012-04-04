@@ -20,7 +20,7 @@
 DEFAULT_HOST_LIST      = '/etc/ansible/hosts'
 DEFAULT_MODULE_PATH    = '/usr/share/ansible'
 DEFAULT_MODULE_NAME    = 'command'
-DEFAULT_PATTERN        = None
+DEFAULT_PATTERN        = '*'
 DEFAULT_FORKS          = 5
 DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 10
