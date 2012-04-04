@@ -9,6 +9,10 @@ import ansible.runner
 import os
 import shutil
 import time
+try:
+   import json
+except:
+   import simplejson as json
 
 class TestRunner(unittest.TestCase):
 
@@ -138,6 +142,20 @@ class TestRunner(unittest.TestCase):
        assert 'failed' in result
        assert 'rc' not in result
 
+   def test_setup(self):
+       output = self._get_stage_file('output.json')
+       result = self._run('setup', [ "metadata=%s" % output, "a=2", "b=3", "c=4" ])
+       assert 'failed' not in result
+       assert 'md5sum' in result
+       assert result['changed'] == True
+       outds = json.loads(file(output).read())
+       assert outds['c'] == '4'
+       # not bothering to test change hooks here since ohai/facter results change
+       # almost every time so changed is always true, this just tests that
+       # rewriting the file is ok
+       result = self._run('setup', [ "metadata=%s" % output, "a=2", "b=3", "c=4" ])
+       assert 'md5sum' in result
+
    def test_async(self):
        # test async launch and job status
        # of any particular module
@@ -156,4 +174,13 @@ class TestRunner(unittest.TestCase):
        assert 'rc' in result
        assert 'stdout' in result
        assert result['ansible_job_id'] == jid
+
+   def test_git(self):
+       # TODO: tests for the git module
+       pass
+
+   def test_service(self):
+       # TODO: tests for the service module
+       pass
+
 
