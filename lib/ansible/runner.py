@@ -74,7 +74,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None):
+        debug=False, sudo=False, extra_vars=None, module_vars=None):
    
         if setup_cache is None:
             setup_cache = {}
@@ -101,6 +101,7 @@ class Runner(object):
         self.forks       = int(forks)
         self.pattern     = pattern
         self.module_args = module_args
+        self.module_vars = module_vars
         self.extra_vars  = extra_vars
         self.timeout     = timeout
         self.debug       = debug
@@ -498,8 +499,16 @@ class Runner(object):
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')
 
+        # transfer module vars
+        if self.module_vars:
+            vars = utils.bigjson(self.module_vars)
+            vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
+            vars_arg=" vars=%s"%(vars_path)
+        else:
+            vars_arg=""
+        
         # run the template module
-        args = "src=%s dest=%s metadata=%s" % (temppath, dest, metadata)
+        args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
         (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
         (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
 
