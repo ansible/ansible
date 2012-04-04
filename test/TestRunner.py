@@ -1,0 +1,145 @@
+
+# tests are fairly 'live' (but safe to run)
+# setup authorized_keys for logged in user such
+# that the user can log in as themselves before running tests
+
+import unittest
+import getpass
+import ansible.runner
+import os
+import shutil
+
+class TestRunner(unittest.TestCase):
+
+   def setUp(self):
+       self.user = getpass.getuser()
+       self.runner = ansible.runner.Runner(
+           module_name='ping',
+           module_path='library/',
+           module_args=[],
+           remote_user='root',
+           remote_pass=None,
+           host_list='test/ansible_hosts',
+           timeout=5,
+           forks=1,
+           background=0,
+           pattern='all',
+           verbose=True,
+       )
+       self.cwd = os.getcwd()
+       self.test_dir = os.path.join(self.cwd, 'test')
+       self.stage_dir = self._prepare_stage_dir()
+
+   def _prepare_stage_dir(self):
+       stage_path = os.path.join(self.test_dir, 'test_data')
+       if os.path.exists(stage_path):
+           shutil.rmtree(stage_path, ignore_errors=False)
+           assert not os.path.exists(stage_path)
+       os.makedirs(stage_path)
+       assert os.path.exists(stage_path)
+       return stage_path
+
+   def _get_test_file(self, filename):
+       # get a file inside the test input directory
+       filename = os.path.join(self.test_dir, filename)
+       assert os.path.exists(filename)
+       return filename
+ 
+   def _get_stage_file(self, filename):
+       # get a file inside the test output directory
+       filename = os.path.join(self.stage_dir, filename)
+       return filename
+
+   def _run(self, module_name, module_args):
+       ''' run a module and get the localhost results '''
+       self.runner.module_name = module_name
+       self.runner.module_args = module_args
+       results = self.runner.run()
+       print "RESULTS=%s" % results
+       assert "127.0.0.1" in results['contacted']
+       return results['contacted']['127.0.0.1'] 
+
+   def test_ping(self):
+       result = self._run('ping',[])
+       assert "ping" in result
+
+   def test_facter(self):
+       result = self._run('facter',[])
+       assert "hostname" in result
+
+   def test_ohai(self):
+       result = self._run('ohai',[])
+       assert "hostname" in result
+
+   def test_copy(self):
+       # test copy module, change trigger, etc
+       pass
+
+   def test_copy(self):
+       input = self._get_test_file('sample.j2')
+       output = self._get_stage_file('sample.out')
+       assert not os.path.exists(output)
+       result = self._run('copy', [
+           "src=%s" % input,
+           "dest=%s" % output,
+       ])
+       assert os.path.exists(output)
+       data_in = file(input).read()
+       data_out = file(output).read()
+       assert data_in == data_out
+       assert 'failed' not in result
+       assert result['changed'] == True
+       assert 'md5sum' in result
+       result = self._run('copy', [
+           "src=%s" % input,
+           "dest=%s" % output,
+       ])
+       assert result['changed'] == False
+
+   def test_template(self):
+       input = self._get_test_file('sample.j2')
+       metadata = self._get_test_file('metadata.json')
+       output = self._get_stage_file('sample.out')
+       result = self._run('template', [
+           "src=%s" % input,
+           "dest=%s" % output,
+           "metadata=%s" % metadata
+       ])
+       assert os.path.exists(output)
+       out = file(output).read()
+       assert out.find("duck") != -1
+       assert result['changed'] == True
+       assert 'md5sum' in result
+       assert 'failed' not in result
+       result = self._run('template', [
+           "src=%s" % input,
+           "dest=%s" % output,
+           "metadata=%s" % metadata
+       ])
+       assert result['changed'] == False
+
+   def test_command(self):
+       # test command module, change trigger, etc
+       result = self._run('command', [ "/bin/echo", "hi" ])
+       assert "failed" not in result
+       assert "msg" not in result
+       assert result['rc'] == 0
+       assert result['stdout'] == 'hi'
+       assert result['stderr'] == ''
+       result = self._run('command', [ "/bin/false" ])
+       assert result['rc'] == 1
+       assert 'failed' not in result
+       result = self._run('command', [ "/usr/bin/this_does_not_exist", "splat" ]) 
+       assert 'msg' in result
+       assert 'failed' in result
+       assert 'rc' not in result
+
+   def test_async(self):
+       # test async launch and job status
+       # of any particular module
+       pass
+
+
+  
+
+ 
