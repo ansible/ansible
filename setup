@@ -46,7 +46,7 @@ md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = os.popen("md5sum %s" % ansible_file).read()
+    md5sum = os.popen("md5sum %s" % ansible_file).read().split()[0]
 
 # if facter is installed, and we can use --json because
 # ruby-json is ALSO installed, include facter data in the JSON
@@ -91,14 +91,15 @@ reformat = json.dumps(new_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
-md5sum2 = os.popen("md5sum %s" % ansible_file).read()
+md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
 
 if md5sum != md5sum2:
    changed = True
 
 result = {
+   "written" : ansible_file,
    "changed" : changed,
-   "md5sum"  : md5sum
+   "md5sum"  : md5sum2
 }
 
 print json.dumps(result)
