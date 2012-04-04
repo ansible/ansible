@@ -374,8 +374,8 @@ def main():
         return VIRT_FAILED, msg
 
 
-    # vm=name state=[running|shutdown|destroyed|undefined]
-    # command=[some command] [vm=name]
+    # guest=name state=[running|shutdown|destroyed|undefined]
+    # command=[some command] [guest=name]
     
     params = {}
     for x in items:
