@@ -8,6 +8,7 @@ import getpass
 import ansible.runner
 import os
 import shutil
+import time
 
 class TestRunner(unittest.TestCase):
 
@@ -50,10 +51,11 @@ class TestRunner(unittest.TestCase):
        filename = os.path.join(self.stage_dir, filename)
        return filename
 
-   def _run(self, module_name, module_args):
+   def _run(self, module_name, module_args, background=0):
        ''' run a module and get the localhost results '''
        self.runner.module_name = module_name
        self.runner.module_args = module_args
+       self.runner.background  = background
        results = self.runner.run()
        print "RESULTS=%s" % results
        assert "127.0.0.1" in results['contacted']
@@ -137,9 +139,22 @@ class TestRunner(unittest.TestCase):
    def test_async(self):
        # test async launch and job status
        # of any particular module
-       pass
+       result = self._run('command', [ "/bin/sleep", "10" ], background=20)
+       print "RESULT1=%s" % result
+       assert 'ansible_job_id' in result
+       assert 'started' in result
+       jid = result['ansible_job_id']
+       # no real chance of this op taking a while, but whatever
+       time.sleep(1)
+       # TODO: verify we are still running
+       time.sleep(12)
+       # CLI will abstract this, but this is how it works internally
+       result = self._run('async_status', [ "jid=%s" % ansible_job_id ])
+       # TODO: would be nice to have tests for supervisory process
+       # killing job after X seconds
+       assert 'finished' in result
+       assert 'failed' not in result
+       assert 'rc' in result
+       assert 'stdout' in result
+       assert result['ansible_job_id'] == jid
 
-
-  
-
- 

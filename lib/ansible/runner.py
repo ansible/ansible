@@ -202,7 +202,8 @@ class Runner(object):
         ''' 
         runs a module that has already been transferred
         '''
-        args = " ".join(module_args)
+        args = [ str(x) for x in module_args ]
+        args = " ".join(args)
         cmd = "%s %s" % (remote_module_path, args)
         result = self._exec_command(conn, cmd)
         self._delete_remote_files(conn, [ tmp ])
@@ -226,7 +227,7 @@ class Runner(object):
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, self.module_name)
         new_args = [] 
-        new_args = [ self.generated_jid, module, self.background ]
+        new_args = [ self.generated_jid, self.background, module ]
         new_args.extend(self.module_args)
         result = self._execute_module(conn, tmp, async, new_args)
         return self._return_from_module(conn, host, result)
