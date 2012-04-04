@@ -162,16 +162,16 @@ class Runner(object):
             return [ True, ssh ]
         except Exception, e:
             # it failed somehow, return the failure string
-            return [ False, str(e) ]
+            return [ False, "FAILED: %s" % str(e) ]
 
     def _return_from_module(self, conn, host, result):
         ''' helper function to handle JSON parsing of results '''
         try:
             # try to parse the JSON response
             return [ host, True, json.loads(result) ]
-        except:
+        except Exception, e:
             # it failed, say so, but return the string anyway
-            return [ host, False, result ]
+            return [ host, False, "%s/%s" % (str(e), result) ]
 
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
@@ -279,11 +279,11 @@ class Runner(object):
         self._transfer_file(conn, source, temppath)
 
         # install the template module
-        module = self._transfer_module(conn, tmp, 'template')
+        template_module = self._transfer_module(conn, tmp, 'template')
 
         # run the template module
         args = [ "src=%s" % temppath, "dest=%s" % dest, "metadata=%s" % metadata ]
-        result = self._execute_module(conn, tmp, module, args)
+        result = self._execute_module(conn, tmp, template_module, args)
         self._delete_remote_files(conn, [ tpath ])
         return self._return_from_module(conn, host, result)
 
