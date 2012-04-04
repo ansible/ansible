@@ -64,8 +64,8 @@ if err is None:
    err = ''
 
 result = {
-   "stdout" : out,
-   "stderr" : err,
+   "stdout" : out.strip(),
+   "stderr" : err.strip(),
    "rc"     : cmd.returncode,
    "start"  : str(startd),
    "end"    : str(endd),
