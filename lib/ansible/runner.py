@@ -75,7 +75,7 @@ class Runner(object):
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
         debug=False, sudo=False, extra_vars=None):
-    
+   
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
@@ -637,13 +637,13 @@ class Runner(object):
             prc.start()
             workers.append(prc)
 
-            try:
-                for worker in workers:
-                    worker.join()
-            except KeyboardInterrupt:
-                for worker in workers:
-                    worker.terminate()
-                    worker.join()
+        try:
+            for worker in workers:
+                worker.join()
+        except KeyboardInterrupt:
+            for worker in workers:
+                worker.terminate()
+                worker.join()
 
         results = []
         while not result_queue.empty():
