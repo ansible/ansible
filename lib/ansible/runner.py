@@ -267,7 +267,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_argsfile(self, conn, tmp, args_str):
+    def _transfer_str(self, conn, tmp, name, args_str):
         ''' transfer arguments as a single file to be fed to the module. '''
 
         args_fd, args_file = tempfile.mkstemp()
@@ -276,7 +276,7 @@ class Runner(object):
         args_fo.flush()
         args_fo.close()
 
-        args_remote = os.path.join(tmp, 'arguments')
+        args_remote = os.path.join(tmp, name)
         conn.put_file(args_file, args_remote)
         os.unlink(args_file)
 
@@ -355,7 +355,7 @@ class Runner(object):
         module_name_tail = remote_module_path.split("/")[-1]
         client_executed_str = "%s %s" % (module_name_tail, args.strip())
 
-        argsfile = self._transfer_argsfile(conn, tmp, args)
+        argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
