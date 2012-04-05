@@ -48,7 +48,7 @@ for x in items:
 source  = params['src']
 dest    = params['dest']
 metadata = params.get('metadata', '/etc/ansible/setup') 
-
+module_vars = params.get('vars')
  
 # raise an error if there is no template metadata
 if not os.path.exists(metadata):
@@ -70,6 +70,19 @@ except:
        "msg"    : "Failed to parse/load %s, rerun the setup module?" % metadata
    })
    sys.exit(1)
+
+if module_vars:
+    try:
+        f = open(module_vars)
+        vars = json.loads(f.read())
+        data.update(vars)
+        f.close()
+    except:
+        print json.dumps({
+            "failed" : 1,
+            "msg"    : "Failed to parse/load %s." % module_vars
+        })
+        sys.exit(1)
 
 if not os.path.exists(source):
     print json.dumps({
