@@ -194,9 +194,7 @@ class Virt(object):
                 "nrVirtCpu" : data[3],
                 "cpuTime"   : str(data[4]),
             }
-            thisvm = self.conn.find_vm(vm)
-            if hasattr(thisvm, 'autostart'):
-                info[vm]["autostart"] = thisvm.autostart()
+            info[vm]["autostart"] =  self.conn.get_autostart(vm)
 
         return info
 
@@ -378,6 +376,10 @@ def main():
     # command=[some command] [guest=name]
     
     params = {}
+    if '=' not in args:
+        msg = "No proper arguments provided to virt module: %s" % args
+        return VIRT_FAILED, msg
+        
     for x in items:
         (k, v) = x.split("=")
         params[k] = v
