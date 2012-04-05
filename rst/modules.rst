@@ -134,7 +134,7 @@ All parameters available to the file module are also available when running the 
 
 *state*:
 
-* either 'file', 'link', 'directory', or 'absent'.  The default is 'file'.  If 'directory', the directory and all immediate subdirectories will be created if they do not exist.  If 'file', the file will NOT be created if it does not exist, specify `copy` or `template` for the module name instead if you need to put content at the specified location.  if 'link', the symbolic link will be created or changed.  If 'absent', directories will be recursively deleted, and files or symlinks will be unlinked.
+* either 'file', 'link', 'directory', or 'absent'.  The default is 'file'.  If 'directory', the directory and all immediate subdirectories will be created if they do not exist.  If 'file', the file will NOT be created if it does not exist, specify `copy` or `template` for the module name instead if you need to put content at the specified location.  If 'link', the symbolic link will be created or changed.  If 'absent', directories will be recursively deleted, and files or symlinks will be unlinked.
 
 *mode*:
 
@@ -150,18 +150,18 @@ All parameters available to the file module are also available when running the 
 
 *src*:
 
-* path to the file to link to (applies only to 'link' state)
+* path of the file to link to (applies only to 'link' state)
 
 *dest*:
 
-* location where the symlink is to be created (applies only to 'link' state)
+* location where the symlink will be created for 'link' state, also an alias for 'path'.
 
 
 Example action from Ansible :doc:`playbooks`::
 
     file path=/etc/foo.conf owner=foo group=foo mode=0644
     file path=/some/path owner=foo group=foo state=directory
-    file /path/to/delete state=absent
+    file path=/path/to/delete state=absent
     file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 
 git
