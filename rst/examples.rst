@@ -140,8 +140,8 @@ as removal of user accounts that may exist::
 
     ansible all -m user -a "name=foo state=absent"
 
-See the :doc:`modules` section for details on all of the available options.
-
+See the :doc:`modules` section for details on all of the available options, including
+how to manipulate groups and group membership.
 
 Deploying From Source Control
 `````````````````````````````
