@@ -113,14 +113,19 @@ class PlayBook(object):
         # include: some.yml a=2 b=3 c=4
         include_tokens = task['include'].split()
         path = utils.path_dwim(dirname, include_tokens[0])
-        inject_vars = self._get_vars(play, dirname)
+        play_vars = self._get_vars(play, dirname)
+        include_vars = {}
         for i,x in enumerate(include_tokens):
             if x.find("=") != -1:
                 (k,v) = x.split("=")
-                inject_vars[k] = v
+                include_vars[k] = v
+        inject_vars = play_vars.copy()
+        inject_vars.update(include_vars)
         included = utils.template_from_file(path, inject_vars)
         included = utils.parse_yaml(included)
         for x in included:
+            if len(include_vars):
+                x["vars"] = include_vars
             new_tasks.append(x)
 
     # *****************************************************
@@ -266,7 +271,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_module(self, pattern, host_list, module, args, remote_user, 
+    def _run_module(self, pattern, host_list, module, args, vars, remote_user, 
         async_seconds, async_poll_interval, only_if, sudo):
         ''' run a particular module step in a playbook '''
 
@@ -277,7 +282,7 @@ class PlayBook(object):
             module_args=args, host_list=hosts, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user, 
-            remote_port=self.remote_port,
+            remote_port=self.remote_port, module_vars=vars,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             extra_vars=self.extra_vars, debug=self.debug, sudo=sudo
@@ -309,6 +314,9 @@ class PlayBook(object):
         module_name = tokens[0]
         module_args = tokens[1]
 
+        # include task specific vars
+        module_vars = task.get('vars')
+
         # tasks can be direct (run on all nodes matching
         # the pattern) or conditional, where they ran
         # as the result of a change handler on a subset
@@ -319,7 +327,7 @@ class PlayBook(object):
         # load up an appropriate ansible runner to
         # run the task in parallel
         results = self._run_module(pattern, host_list, module_name, 
-            module_args, remote_user, async_seconds, 
+            module_args, module_vars, remote_user, async_seconds, 
             async_poll_interval, only_if, sudo)
 
         self.stats.compute(results)
