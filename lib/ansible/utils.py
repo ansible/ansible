@@ -23,6 +23,8 @@ import shlex
 import re
 import jinja2
 import yaml
+from optparse import OptionParser
+
 
 try:
     import json
@@ -30,6 +32,8 @@ except ImportError:
     import simplejson as json
 
 from ansible import errors
+import ansible.constants as C
+
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -270,3 +274,41 @@ def parse_kv(args):
             options[k]=v
     return options
 
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False):
+    ''' create an options parser for any ansible script '''
+
+    parser = OptionParser(usage)
+    parser.add_option('-D','--debug', default=False, action="store_true",
+        help='enable standard error debugging of modules.')
+    parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
+        help='number of parallel processes to use')
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+       help='inventory host file', default=constants.DEFAULT_HOST_LIST)
+    parser.add_option('-k', '--ask-pass', default=False, action='store_true',
+        help='ask for SSH password')
+    parser.add_option('-M', '--module-path', dest='module_path',
+       help="path to module library", default=constants.DEFAULT_MODULE_PATH)
+    parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
+        dest='timeout', help='set the SSH timeout in seconds')
+    parser.add_option('-p', '--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
+        dest='remote_port', help='set the remote ssh port')
+
+    if output_opts:
+        parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
+            help='condense output')
+        parser.add_option('-t', '--tree', dest='tree', default=None,
+            help='log output to this directory')
+
+    if runas_opts:
+        parser.add_option("-s", "--sudo", default=False, action="store_true",
+            dest='sudo', help="run operations with sudo (nopasswd)")
+        parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
+            dest='remote_user', help='connect as this user')
+    
+    if async_opts:
+        parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
+            dest='poll_interval', help='set the poll interval if using -B')
+        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
+            help='run asynchronously, failing after X seconds')
+
+    return parser
