@@ -74,8 +74,8 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
         transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None):
-    
+        debug=False, sudo=False, extra_vars=None, module_vars=None):
+   
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
@@ -101,6 +101,7 @@ class Runner(object):
         self.forks       = int(forks)
         self.pattern     = pattern
         self.module_args = module_args
+        self.module_vars = module_vars
         self.extra_vars  = extra_vars
         self.timeout     = timeout
         self.debug       = debug
@@ -267,7 +268,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_argsfile(self, conn, tmp, args_str):
+    def _transfer_str(self, conn, tmp, name, args_str):
         ''' transfer arguments as a single file to be fed to the module. '''
 
         args_fd, args_file = tempfile.mkstemp()
@@ -276,7 +277,7 @@ class Runner(object):
         args_fo.flush()
         args_fo.close()
 
-        args_remote = os.path.join(tmp, 'arguments')
+        args_remote = os.path.join(tmp, name)
         conn.put_file(args_file, args_remote)
         os.unlink(args_file)
 
@@ -355,7 +356,7 @@ class Runner(object):
         module_name_tail = remote_module_path.split("/")[-1]
         client_executed_str = "%s %s" % (module_name_tail, args.strip())
 
-        argsfile = self._transfer_argsfile(conn, tmp, args)
+        argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
             cmd = "%s %s" % (remote_module_path, argsfile)
         else:
@@ -498,8 +499,16 @@ class Runner(object):
         # install the template module
         template_module = self._transfer_module(conn, tmp, 'template')
 
+        # transfer module vars
+        if self.module_vars:
+            vars = utils.bigjson(self.module_vars)
+            vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
+            vars_arg=" vars=%s"%(vars_path)
+        else:
+            vars_arg=""
+        
         # run the template module
-        args = "src=%s dest=%s metadata=%s" % (temppath, dest, metadata)
+        args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
         (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
         (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
 
@@ -637,13 +646,13 @@ class Runner(object):
             prc.start()
             workers.append(prc)
 
-            try:
-                for worker in workers:
-                    worker.join()
-            except KeyboardInterrupt:
-                for worker in workers:
-                    worker.terminate()
-                    worker.join()
+        try:
+            for worker in workers:
+                worker.join()
+        except KeyboardInterrupt:
+            for worker in workers:
+                worker.terminate()
+                worker.join()
 
         results = []
         while not result_queue.empty():
