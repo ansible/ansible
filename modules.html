@@ -264,15 +264,16 @@ module behind the scenes.</p>
 </div>
 <div class="section" id="file">
 <h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
-<p>Sets attributes of files and directories, or removes files/directories.  All parameters available
-to the file module are also available when running the <cite>copy</cite> or <cite>template</cite> modules.</p>
+<p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.
+All parameters available to the file module are also available when running the <cite>copy</cite> or
+<cite>template</cite> modules.</p>
 <p><em>dest</em>:</p>
 <ul class="simple">
 <li>absolute path to a file on the filesystem.</li>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>either &#8216;file&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  The default is &#8216;file&#8217;.  If &#8216;directory&#8217;, the directory and all immediate subdirectories will be created if they do not exist.  If &#8216;file&#8217;, the file will NOT be created if it does not exist, specify <cite>copy</cite> or <cite>template</cite> for the module name instead if you need to put content at the specified location.  If &#8216;absent&#8217;, directories will be recursively deleted, and files or symlinks will be unlinked.</li>
+<li>either &#8216;file&#8217;, &#8216;link&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  The default is &#8216;file&#8217;.  If &#8216;directory&#8217;, the directory and all immediate subdirectories will be created if they do not exist.  If &#8216;file&#8217;, the file will NOT be created if it does not exist, specify <cite>copy</cite> or <cite>template</cite> for the module name instead if you need to put content at the specified location.  If &#8216;link&#8217;, the symbolic link will be created or changed.  If &#8216;absent&#8217;, directories will be recursively deleted, and files or symlinks will be unlinked.</li>
 </ul>
 <p><em>mode</em>:</p>
 <ul class="simple">
@@ -286,10 +287,19 @@ to the file module are also available when running the <cite>copy</cite> or <cit
 <ul class="simple">
 <li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
 </ul>
+<p><em>src</em>:</p>
+<ul class="simple">
+<li>path of the file to link to (applies only to &#8216;link&#8217; state)</li>
+</ul>
+<p><em>dest</em>:</p>
+<ul class="simple">
+<li>location where the symlink will be created for &#8216;link&#8217; state, also an alias for &#8216;path&#8217;.</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>file dest=/etc/foo.conf owner=foo group=foo mode=0644
-file dest=/some/path owner=foo group=foo state=directory
-file dest/path/to/delete state=absent</pre>
+<div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
+file path=/some/path owner=foo group=foo state=directory
+file path=/path/to/delete state=absent
+file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</pre>
 </div>
 </div>
 <div class="section" id="git">
@@ -540,7 +550,7 @@ yum pkg=httpd ensure=installed</pre>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 02, 2012.<br/>
+      Last updated on Apr 04, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
