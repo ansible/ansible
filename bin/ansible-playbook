@@ -35,9 +35,9 @@ def main(args):
     usage = "ans-playbook playbook.yml"
     parser = utils.base_parser(constants=C, usage=usage)
     parser.add_option('-e', '--extra-vars', dest='extra_vars',
-        help='arguments to pass to the inventory script')
+        help='pass in extra key=value variables from outside the playbook')
     parser.add_option('-O', '--override-hosts', dest="override_hosts", default=None,
-        help="run playbook against these hosts regardless of inventory settings")
+        help="run playbook against only hosts, ignorning the inventory file")
 
     options, args = parser.parse_args(args)
 
