@@ -23,8 +23,7 @@ import shlex
 import re
 import jinja2
 import yaml
-from optparse import OptionParser
-
+import optparse
 
 try:
     import json
@@ -274,41 +273,70 @@ def parse_kv(args):
             options[k]=v
     return options
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False):
-    ''' create an options parser for any ansible script '''
+def make_parser(add_options, constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False):
+    ''' create an options parser w/ common options for any ansible program '''
 
-    parser = OptionParser(usage)
-    parser.add_option('-D','--debug', default=False, action="store_true",
-        help='enable standard error debugging of modules.')
-    parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
-        help='number of parallel processes to use')
-    parser.add_option('-i', '--inventory-file', dest='inventory',
-       help='inventory host file', default=constants.DEFAULT_HOST_LIST)
-    parser.add_option('-k', '--ask-pass', default=False, action='store_true',
-        help='ask for SSH password')
-    parser.add_option('-M', '--module-path', dest='module_path',
-       help="path to module library", default=constants.DEFAULT_MODULE_PATH)
-    parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout', help='set the SSH timeout in seconds')
-    parser.add_option('-p', '--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
-        dest='remote_port', help='set the remote ssh port')
+    options = base_parser_options(
+        constants=constants, 
+        output_opts=output_opts, 
+        runas_opts=runas_opts,
+        async_opts=async_opts
+    )
+    options.update(add_options)
+
+    parser = optparse.OptionParser()
+    names = sorted(options.keys())
+    for n in names:
+        data  = options[n].copy()
+        long  = data['long']
+        del data['long']
+        parser.add_option(n, long, **data)
+    return parser
+
+def base_parser_options(constants=C, output_opts=False, runas_opts=False, async_opts=False):
+    ''' creates common options for ansible programs '''
+
+    options = {
+        '-D': dict(long='--debug', default=False, action="store_true",
+                   help='show debug/verbose module output'),
+        '-f': dict(long='--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
+                   help='number of parallel processes to use'),
+        '-i': dict(long='--inventory-file', dest='inventory',
+                   help='path to inventory host file', default=constants.DEFAULT_HOST_LIST),
+        '-k': dict(long='--ask-pass', default=False, action='store_true',
+                   help='ask for SSH password'),
+        '-M': dict(long='--module-path', dest='module_path',
+                   help="path to module library directory", default=constants.DEFAULT_MODULE_PATH),
+        '-T': dict(long='--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
+                   dest='timeout', help='set the SSH connection timeout in seconds'),
+        '-p': dict(long='--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
+                   dest='remote_port', help='use this remote SSH port'),
+    }
 
     if output_opts:
-        parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-            help='condense output')
-        parser.add_option('-t', '--tree', dest='tree', default=None,
-            help='log output to this directory')
+        options.update({
+            '-o' : dict(long='--one-line', dest='one_line', action='store_true',
+                        help='condense output'),
+            '-t' : dict(long='--tree', dest='tree', default=None,
+                        help='log results to this directory')
+        })
 
     if runas_opts:
-        parser.add_option("-s", "--sudo", default=False, action="store_true",
-            dest='sudo', help="run operations with sudo (nopasswd)")
-        parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='connect as this user')
+        options.update({
+            '-s' : dict(long="--sudo", default=False, action="store_true",
+                        dest='sudo', help="run operations with sudo (nopasswd)"),
+            '-u' : dict(long='--user', default=constants.DEFAULT_REMOTE_USER,
+                        dest='remote_user', help='connect as this user'),
+        })
     
     if async_opts:
-        parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval', help='set the poll interval if using -B')
-        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-            help='run asynchronously, failing after X seconds')
+        options.update({
+            '-P' : dict(long='--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
+                        dest='poll_interval', help='set the poll interval if using -B'),
+            '-B' : dict(long='--background', dest='seconds', type='int', default=0,
+                        help='run asynchronously, failing after X seconds'),
+        })
 
-    return parser
+    return options
+
+
