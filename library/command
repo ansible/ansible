@@ -39,6 +39,26 @@ if args.find("#USE_SHELL") != -1:
    args = args.replace("#USE_SHELL", "")
    shell = True
 
+check_args = shlex.split(args)
+for x in check_args:
+   if x.startswith("creates="):
+       # do not run the command if the line contains creates=filename
+       # and the filename already exists.  This allows idempotence 
+       # of command executions.
+       (k,v) = x.split("=",1)
+       if os.path.exists(v):
+           print json.dumps({
+               "cmd"     : args,
+               "stdout"  : "skipped, since %s exists" % v,
+               "skipped" : True,
+               "changed" : False,
+               "stderr"  : "",
+               "rc"      : 0,
+           })
+           sys.exit(0)
+       args = args.replace(x,'')
+       
+
 if not shell:
     args = shlex.split(args)
 
@@ -71,13 +91,14 @@ if err is None:
    err = ''
 
 result = {
-   "cmd"    : args,
-   "stdout" : out.strip(),
-   "stderr" : err.strip(),
-   "rc"     : cmd.returncode,
-   "start"  : str(startd),
-   "end"    : str(endd),
-   "delta"  : str(delta),
+   "cmd"     : args,
+   "stdout"  : out.strip(),
+   "stderr"  : err.strip(),
+   "rc"      : cmd.returncode,
+   "start"   : str(startd),
+   "end"     : str(endd),
+   "delta"   : str(delta),
+   "changed" : True
 }
 
 print json.dumps(result)
