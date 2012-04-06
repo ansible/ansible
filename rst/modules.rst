@@ -35,7 +35,7 @@ noted, any given module does support change hooks.
 
 Let's see what's available in the Ansible module library, out of the box:
 
-.. _command:
+.. _apt:
 
 apt
 ```
@@ -48,13 +48,18 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *state*:
 
-* Can be either 'installed' or 'removed'.   NOTE:  support for 'latest' (see yum, below) is in work.
+* Can be either 'installed', 'removed', or 'latest'.
 
 Example action from Ansible :doc:`playbooks`::
 
     apt pkg=foo ensure=removed
     apt pkg=foo ensure=installed
+    apt pkg=foo ensure=latest
 
+NOTE: the apt module cannot currently request installation of a specific software version, as the yum
+module can.  This should be available in a future release.
+
+.. _command:
 
 command
 ```````
@@ -78,6 +83,13 @@ command was running for.
 Example action from Ansible :doc:`playbooks`::
 
     command /sbin/shutdown -t now
+
+If you only want to run a command if a certain file does not exist, you can do the
+following::
+
+    command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+
+The `creates=` option will not be passed to the executable.
 
 
 .. _copy:
@@ -120,6 +132,8 @@ This module is informative only - it takes no parameters & does not
 support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
+
+.. _file:
 
 file
 ````
@@ -164,6 +178,8 @@ Example action from Ansible :doc:`playbooks`::
     file path=/path/to/delete state=absent
     file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 
+.. _git:
+
 git
 ```
 
@@ -186,6 +202,7 @@ Example action from Ansible :doc:`playbooks`::
 
     git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
 
+.. _group:
 
 group
 `````
@@ -210,6 +227,8 @@ Example action from Ansible :doc:`playbooks`::
 
    group name=somegroup state=present
 
+.. _ohai:
+
 ohai
 ````
 
@@ -224,6 +243,8 @@ support change hooks, nor does it make any changes on the system.
 Playbooks should not call the ohai module, playbooks call the
 :ref:`setup` module behind the scenes instead.
 
+.. _ping:
+
 ping
 ````
 
@@ -234,6 +255,7 @@ This module does not support change hooks and is informative only - it
 takes no parameters & does not support change hooks, nor does it make
 any changes on the system.
 
+.. _service:
 
 service
 ```````
@@ -397,6 +419,49 @@ Example action from Ansible :doc:`playbooks`::
     user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
     user name=mdehaan groups=wheel,skynet
     user name=mdehaan state=absent force=yes
+
+.. _virt:
+
+virt
+````
+
+Manages virtual machines supported by libvirt.  Requires that libvirt be installed
+on the managed machine.
+
+*guest*:
+
+* The name of the guest VM being managed
+
+*state*
+
+* Desired state of the VM.  Either `running`, `shutdown`, `destroyed`, or `undefined`.  Note that there may be some lag for state requests like 'shutdown', and these states only refer to the virtual machine states.  After starting a guest, the guest OS may not be immediately accessible.
+
+*command*:
+
+* In addition to state management, various non-idempotent commands are available for API and script usage (but don't make much sense in a playbook).  These mostly return information, though some also affect state.  See examples below.
+
+Example action from Ansible :doc:`playbooks`::
+
+    virt guest=alpha state=running
+    virt guest=alpha state=shutdown
+    virt guest=alpha state=destroyed
+    virt guest=alpha state=undefined
+
+Example guest management commands from /usr/bin/ansible::
+
+    ansible host -m virt -a "guest=foo command=status"
+    ansible host -m virt -a "guest=foo command=pause"
+    ansible host -m virt -a "guest=foo command=unpause"
+    ansible host -m virt -a "guest=foo command=get_xml"
+    ansible host -m virt -a "guest=foo command=autostart"
+
+Example host (hypervisor) management commands from /usr/bin/ansible::
+
+    ansible host -m virt -a "freemem"
+    ansible host -m virt -a "list_vms"
+    ansible host -m virt -a "info"
+    ansible host -m virt -a "nodeinfo"
+    ansible host -m virt -a "virttype"
 
 .. _yum:
 

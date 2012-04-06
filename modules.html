@@ -131,7 +131,7 @@ s.parentNode.insertBefore(ga, s);
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
 <li><a class="reference internal" href="#apt">apt</a></li>
-<li><a class="reference internal" href="#id1">command</a></li>
+<li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
@@ -144,6 +144,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
+<li><a class="reference internal" href="#virt">virt</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
 </ul>
@@ -200,7 +201,7 @@ playbooks, these modules can trigger &#8216;change events&#8217;.  Unless otherw
 noted, any given module does support change hooks.</p>
 <p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
 <div class="section" id="apt">
-<span id="command"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -208,15 +209,18 @@ noted, any given module does support change hooks.</p>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Can be either &#8216;installed&#8217; or &#8216;removed&#8217;.   NOTE:  support for &#8216;latest&#8217; (see yum, below) is in work.</li>
+<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo ensure=removed
-apt pkg=foo ensure=installed</pre>
+apt pkg=foo ensure=installed
+apt pkg=foo ensure=latest</pre>
 </div>
+<p>NOTE: the apt module cannot currently request installation of a specific software version, as the yum
+module can.  This should be available in a future release.</p>
 </div>
-<div class="section" id="id1">
-<h2>command<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="command">
+<span id="id2"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
 arguments, space delimited.</p>
 <p>If you want to run a command through the shell (say you are using
@@ -232,9 +236,14 @@ command was running for.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
 </div>
+<p>If you only want to run a command if a certain file does not exist, you can do the
+following:</p>
+<div class="highlight-python"><pre>command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database</pre>
+</div>
+<p>The <cite>creates=</cite> option will not be passed to the executable.</p>
 </div>
 <div class="section" id="copy">
-<span id="id2"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
 <p>The copy module moves a file on the local box to remote locations.  In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
 module.</p>
@@ -253,7 +262,7 @@ absolute or relative path.</li>
 </div>
 </div>
 <div class="section" id="facter">
-<span id="id3"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
 <p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
@@ -263,7 +272,7 @@ Playbooks do not actually use this module, they use the <a class="reference inte
 module behind the scenes.</p>
 </div>
 <div class="section" id="file">
-<h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
 <p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.
 All parameters available to the file module are also available when running the <cite>copy</cite> or
 <cite>template</cite> modules.</p>
@@ -303,7 +312,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</
 </div>
 </div>
 <div class="section" id="git">
-<h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
 <ul class="simple">
@@ -323,7 +332,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</
 </div>
 </div>
 <div class="section" id="group">
-<h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -343,7 +352,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</
 </div>
 </div>
 <div class="section" id="ohai">
-<h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -353,7 +362,7 @@ support change hooks, nor does it make any changes on the system.</p>
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
-<h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
 <p>This module does not support change hooks and is informative only - it
@@ -361,7 +370,7 @@ takes no parameters &amp; does not support change hooks, nor does it make
 any changes on the system.</p>
 </div>
 <div class="section" id="service">
-<h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <p><em>state</em>:</p>
 <ul class="simple">
@@ -380,7 +389,7 @@ service name=httpd state=restarted</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id4"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the <a class="reference internal" href="#template"><em>template</em></a> module.  Playbooks
 will execute this module automatically as the first step in each play
@@ -407,7 +416,7 @@ tell their source.  All variables are then bubbled up to the caller.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id5"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the shell rather than directly.</p>
@@ -425,7 +434,7 @@ command was running for.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id6"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
 prior to usage if you are not running from a playbook.   In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
@@ -445,7 +454,7 @@ be a relative or absolute path.</li>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id7"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -497,8 +506,45 @@ user name=mdehaan groups=wheel,skynet
 user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
+<div class="section" id="virt">
+<span id="id15"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
+on the managed machine.</p>
+<p><em>guest</em>:</p>
+<ul class="simple">
+<li>The name of the guest VM being managed</li>
+</ul>
+<p><em>state</em></p>
+<ul class="simple">
+<li>Desired state of the VM.  Either <cite>running</cite>, <cite>shutdown</cite>, <cite>destroyed</cite>, or <cite>undefined</cite>.  Note that there may be some lag for state requests like &#8216;shutdown&#8217;, and these states only refer to the virtual machine states.  After starting a guest, the guest OS may not be immediately accessible.</li>
+</ul>
+<p><em>command</em>:</p>
+<ul class="simple">
+<li>In addition to state management, various non-idempotent commands are available for API and script usage (but don&#8217;t make much sense in a playbook).  These mostly return information, though some also affect state.  See examples below.</li>
+</ul>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>virt guest=alpha state=running
+virt guest=alpha state=shutdown
+virt guest=alpha state=destroyed
+virt guest=alpha state=undefined</pre>
+</div>
+<p>Example guest management commands from /usr/bin/ansible:</p>
+<div class="highlight-python"><pre>ansible host -m virt -a "guest=foo command=status"
+ansible host -m virt -a "guest=foo command=pause"
+ansible host -m virt -a "guest=foo command=unpause"
+ansible host -m virt -a "guest=foo command=get_xml"
+ansible host -m virt -a "guest=foo command=autostart"</pre>
+</div>
+<p>Example host (hypervisor) management commands from /usr/bin/ansible:</p>
+<div class="highlight-python"><pre>ansible host -m virt -a "freemem"
+ansible host -m virt -a "list_vms"
+ansible host -m virt -a "info"
+ansible host -m virt -a "nodeinfo"
+ansible host -m virt -a "virttype"</pre>
+</div>
+</div>
 <div class="section" id="yum">
-<span id="id8"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -550,7 +596,7 @@ yum pkg=httpd ensure=installed</pre>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 04, 2012.<br/>
+      Last updated on Apr 06, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
