@@ -10,7 +10,7 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "answer": "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels.", 
                     "changed": true, 
@@ -23,21 +23,21 @@
         [
             "import", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 "/home/mdehaan/ansible/test/common_vars.yml"
             ]
         ], 
         [
             "import", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 "/home/mdehaan/ansible/test/CentOS.yml"
             ]
         ], 
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "answer": "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels.", 
                     "changed": true, 
@@ -60,8 +60,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": [
                         "/bin/true"
                     ], 
@@ -81,8 +82,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": [
                         "/bin/true"
                     ], 
@@ -102,8 +104,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "echo $HOME 5150 5150 ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -121,8 +124,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "echo quack moo default ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -140,7 +144,7 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "changed": true, 
                     "group": "root", 
@@ -154,7 +158,7 @@
         [
             "notify", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 "on change 1"
             ]
         ], 
@@ -168,7 +172,7 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "changed": true, 
                     "group": "root", 
@@ -182,14 +186,14 @@
         [
             "notify", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 "on change 1"
             ]
         ], 
         [
             "notify", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 "on change 2"
             ]
         ], 
@@ -203,7 +207,7 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "started": 1
                 }
@@ -212,7 +216,7 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
                     "started": 1
                 }
@@ -221,14 +225,15 @@
         [
             "async poll", 
             [
-                "127.0.0.1"
+                "127.0.0.2"
             ]
         ], 
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "sleep 5 ", 
                     "finished": 1, 
                     "rc": 0, 
@@ -247,7 +252,7 @@
         [
             "skipped", 
             [
-                "127.0.0.1"
+                "127.0.0.2"
             ]
         ], 
         [
@@ -260,8 +265,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "echo 'this should fire once' ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -272,8 +278,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "echo 'this should fire once'  ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -291,8 +298,9 @@
         [
             "ok", 
             [
-                "127.0.0.1", 
+                "127.0.0.2", 
                 {
+                    "changed": true, 
                     "cmd": "echo 'this should fire once also' ", 
                     "rc": 0, 
                     "stderr": "", 
@@ -302,8 +310,8 @@
         ]
     ], 
     "results": {
-        "127.0.0.1": {
-            "changed": 2, 
+        "127.0.0.2": {
+            "changed": 9, 
             "failures": 0, 
             "ok": 12, 
             "skipped": 1, 
@@ -311,3 +319,4 @@
         }
     }
 }
+

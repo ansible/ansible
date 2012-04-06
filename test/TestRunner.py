@@ -66,8 +66,8 @@ class TestRunner(unittest.TestCase):
        # when using nosetests this will only show up on failure
        # which is pretty useful
        print "RESULTS=%s" % results
-       assert "127.0.0.1" in results['contacted']
-       return results['contacted']['127.0.0.1'] 
+       assert "127.0.0.2" in results['contacted']
+       return results['contacted']['127.0.0.2'] 
 
    def test_ping(self):
        result = self._run('ping',[])
