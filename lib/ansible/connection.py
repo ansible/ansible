@@ -23,6 +23,9 @@ import traceback
 import os
 import time
 import random
+import re
+import shutil
+import subprocess
 from ansible import errors
 
 ################################################
@@ -30,13 +33,17 @@ from ansible import errors
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
 
+    _LOCALHOSTRE = re.compile(r"^(127.0.0.1|localhost|%s)$" % os.uname()[1])
+
     def __init__(self, runner, transport):
         self.runner = runner
         self.transport = transport
 
     def connect(self, host):
         conn = None
-        if self.transport == 'paramiko':
+        if self._LOCALHOSTRE.search(host):
+            conn = LocalConnection(self.runner, host)
+        elif self.transport == 'paramiko':
             conn = ParamikoConnection(self.runner, host)
         if conn is None:
             raise Exception("unsupported connection type")
@@ -143,4 +150,42 @@ class ParamikoConnection(object):
 ############################################
 # add other connection types here
 
+class LocalConnection(object):
+    ''' Local based connections '''
+
+    def __init__(self, runner, host):
+        self.runner = runner
+        self.host = host
+
+    def connect(self):
+        ''' connect to the local host; nothing to do here '''
+
+        return self
+
+    def exec_command(self, cmd, tmp_path, sudoable=False):
+        ''' run a command on the local host '''
+        if self.runner.sudo and sudoable:
+            cmd = "sudo -s %s" % cmd
+        p = subprocess.Popen(cmd, shell=True, stdin=None,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        return ("", stdout, stderr)
+
+    def put_file(self, in_path, out_path):
+        ''' transfer a file from local to local '''
+        if not os.path.exists(in_path):
+            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+        try:
+            shutil.copyfile(in_path, out_path)
+        except shutil.Error:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+        except IOError:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+
+    def close(self):
+        ''' terminate the connection; nothing to do here '''
+
+        pass
 
