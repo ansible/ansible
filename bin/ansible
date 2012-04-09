@@ -57,7 +57,7 @@ class Cli(object):
 
         parser = utils.make_parser(
 	    options,
-            usage='ansible <host-pattern> [options]',
+            usage='%prog <host-pattern> [options]',
             runas_opts=True, 
             async_opts=True,
             output_opts=True, 

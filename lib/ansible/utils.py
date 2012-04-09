@@ -284,7 +284,9 @@ def make_parser(add_options, constants=C, usage="", output_opts=False, runas_opt
     )
     options.update(add_options)
 
+    #NOTE: optparse deprecated in Python >= 2.7. 
     parser = optparse.OptionParser()
+    parser.set_usage(usage)
     names = sorted(options.keys())
     for n in names:
         data  = options[n].copy()
