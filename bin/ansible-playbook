@@ -32,7 +32,7 @@ def main(args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
-    usage = "ansible-playbook playbook.yml [options]"
+    usage = "%prog <playbook-file1 [playbook-file2...]> [options]"
     options = {
        '-e' : dict(long='--extra-vars', dest='extra_vars',
                    help='pass in extra key=value variables from outside the playbook'),
@@ -43,7 +43,9 @@ def main(args):
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
-        print >> sys.stderr, "playbook path is a required argument"
+        parser.print_help(file=sys.stderr)
+        #QUESTION for M.D. This would match bin/ansible's behavior. Do we want them consistent?
+        #parser.print_help()
         return 1
 
     sshpass = None
