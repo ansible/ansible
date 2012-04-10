@@ -22,6 +22,7 @@ import fnmatch
 import multiprocessing
 import signal
 import os
+import pwd
 import Queue
 import random
 import traceback
@@ -115,6 +116,9 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
 
+        euid = pwd.getpwuid(os.geteuid())[0]
+        if self.transport == 'local' and self.remote_user != euid:
+            raise Exception("User mismatch: expected %s, but is %s" % (self.remote_user, euid))
         if type(self.module_args) != str:
             raise Exception("module_args must be a string: %s" % self.module_args)
 
