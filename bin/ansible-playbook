@@ -32,7 +32,7 @@ def main(args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
-    usage = "ansible-playbook playbook.yml [options]"
+    usage = "%prog playbook.yml [options]"
     options = {
        '-e' : dict(long='--extra-vars', dest='extra_vars',
                    help='pass in extra key=value variables from outside the playbook'),
