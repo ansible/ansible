@@ -26,12 +26,36 @@ except ImportError:
 
 import sys, os
 
+class Module(object):
+    """Basic module behavior."""
 
-def results():
-    r = dict( msg="Just a test")
-    print json.dumps( r)
-def main():
-    results()
-    
+    def prerequisites(self):
+        """Make sure things that have to be present to continue are here."""
+        return True
 
-main()
+    def verify(self):
+        """Check if we need to act.
+
+        :return: True means already installed.
+        """
+        return True
+
+    def install(self):
+        """Ensure the resource is installed according to the args."""
+        return True
+
+    def remove(self):
+        """Ensure that the resource is not present."""
+        return True
+
+    def run(self):
+        """Execute the module according to the args passed in. Returns a structure ready for JSON."""
+        result = dict(stub=True, msg="Just testing.")
+        return result
+
+class SshKey(Module):
+    """Install or remove ssh keys."""
+    pass
+
+result = SshKey().run()
+print json.dumps( result)
