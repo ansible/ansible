@@ -273,14 +273,15 @@ def parse_kv(args):
             options[k]=v
     return options
 
-def make_parser(add_options, constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False):
+def make_parser(add_options, constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser w/ common options for any ansible program '''
 
     options = base_parser_options(
         constants=constants, 
         output_opts=output_opts, 
         runas_opts=runas_opts,
-        async_opts=async_opts
+        async_opts=async_opts,
+        connect_opts=connect_opts
     )
     options.update(add_options)
 
@@ -293,7 +294,7 @@ def make_parser(add_options, constants=C, usage="", output_opts=False, runas_opt
         parser.add_option(n, long, **data)
     return parser
 
-def base_parser_options(constants=C, output_opts=False, runas_opts=False, async_opts=False):
+def base_parser_options(constants=C, output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' creates common options for ansible programs '''
 
     options = {
@@ -329,6 +330,14 @@ def base_parser_options(constants=C, output_opts=False, runas_opts=False, async_
                         dest='remote_user', help='connect as this user'),
         })
     
+    if connect_opts:
+        options.update({
+            '-c' : dict(long='--connection', dest='connection',
+                        choices=C.DEFAULT_TRANSPORT_OPTS,
+                        default=C.DEFAULT_TRANSPORT,
+                        help="connection type to use")
+        })
+
     if async_opts:
         options.update({
             '-P' : dict(long='--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
