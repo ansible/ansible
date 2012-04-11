@@ -15,7 +15,7 @@
                     "answer": "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels.", 
                     "changed": true, 
                     "metadata": "/etc/ansible/setup", 
-                    "port": "5150", 
+                    "port": 5150, 
                     "written": "/etc/ansible/setup"
                 }
             ]
@@ -44,7 +44,7 @@
                     "cow": "moo", 
                     "duck": "quack", 
                     "metadata": "/etc/ansible/setup", 
-                    "port": "5150", 
+                    "port": 5150, 
                     "testing": "default", 
                     "written": "/etc/ansible/setup"
                 }
@@ -211,6 +211,21 @@
                 {
                     "started": 1
                 }
+            ]
+        ], 
+        [
+            "ok", 
+            [
+                "127.0.0.2", 
+                {
+                    "started": 1
+                }
+            ]
+        ], 
+        [
+            "async poll", 
+            [
+                "127.0.0.2"
             ]
         ], 
         [
