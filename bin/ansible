@@ -58,7 +58,7 @@ class Cli(object):
         self.callbacks.options = options        
 
         if len(args) == 0 or len(args) > 1:
-            parser.print_help()
+            parser.print_help(sys.stderr)
             sys.exit(1)
         return (options, args)   
     

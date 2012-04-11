@@ -43,8 +43,6 @@ def main(args):
 
     if len(args) == 0:
         parser.print_help(file=sys.stderr)
-        #QUESTION for M.D. This would match bin/ansible's behavior. Do we want them consistent?
-        #parser.print_help()
         return 1
 
     sshpass = None
