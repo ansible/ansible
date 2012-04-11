@@ -436,24 +436,17 @@ class PlayBook(object):
         else:
             self.callbacks.on_setup_primary()
 
-        # first run the setup task on every node, which gets the variables
-        # written to the JSON file and will also bubble facts back up via
-        # magic in Runner()
-        push_var_str=''
-        for (k,v) in vars.iteritems():
-            push_var_str += "%s=\"%s\" " % (k,v)
-
         host_list = [ h for h in self.host_list if not (h in self.stats.failures or h in self.stats.dark) ]
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
             pattern=pattern, groups=self.groups, module_name='setup',
-            module_args=push_var_str, host_list=host_list,
+            module_args=vars, host_list=host_list,
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
             remote_pass=self.remote_pass, remote_port=self.remote_port,
             setup_cache=SETUP_CACHE,
-            callbacks=self.runner_callbacks, sudo=sudo,
+            callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
         ).run()
         self.stats.compute(setup_results, setup=True)
 

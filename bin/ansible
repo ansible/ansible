@@ -47,29 +47,18 @@ class Cli(object):
     def parse(self):
         ''' create an options parser for bin/ansible '''
         
-
-        options = {
-            '-a' : dict(long='--args', dest='module_args', 
-                       help="module arguments", default=C.DEFAULT_MODULE_ARGS),
-            '-m' : dict(long='--module-name', dest='module_name', 
-                       help="module name to execute", default=C.DEFAULT_MODULE_NAME)
-        }        
-
-        parser = utils.make_parser(
-	    options,
-            usage='%prog <host-pattern> [options]',
-            runas_opts=True, 
-            async_opts=True,
-            output_opts=True, 
-            
-        )
-
+        parser = utils.base_parser(constants=C, runas_opts=True, async_opts=True,
+            output_opts=True, usage='%prog <host-pattern> [options]')
+        parser.add_option('-a', '--args', dest='module_args',
+            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+        parser.add_option('-m', '--module-name', dest='module_name',
+            help="module name to execute", default=C.DEFAULT_MODULE_NAME)
 
         options, args = parser.parse_args()
         self.callbacks.options = options        
 
         if len(args) == 0 or len(args) > 1:
-            parser.print_help()
+            parser.print_help(sys.stderr)
             sys.exit(1)
         return (options, args)   
     
