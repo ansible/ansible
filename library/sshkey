@@ -36,6 +36,7 @@ class Module(object):
     """Basic module behavior."""
     def __init__(self):
         if not hasattr(self, "argnames"): self.argnames = set()
+        self.debug=False
         self.message=""
         self.parseargs()
 
@@ -122,6 +123,9 @@ class Module(object):
                 self.message = "Error while trying to alter authorized keys: %s." % e.message
             else:
                 self.message = "Unexplained %s while trying to alter auth key." % type(e)
+            if self.debug: #production version should not have tracebacks
+                import traceback
+                self.message += "(%s)" % traceback.format_exc()
             self.fail()
             
             
@@ -131,6 +135,7 @@ class SshKey(Module):
     def __init__(self):
         self.argnames=set(["user","key","ensure"])
         super(SshKey,self).__init__()
+        self.debug = True
         self.key = self.args["key"]
         try:
             user_entry = pwd.getpwnam(self.args["user"])
@@ -144,11 +149,10 @@ class SshKey(Module):
             self.fail()
      
     def verify(self):
-        #bad, need to re-read
         self.message = ""
         self.keys = []
         if not isfile(self.keysfile): 
-            self.message("File doesn't exist: %s." % self.keysfile)
+            self.message = "File doesn't exist: %s." % self.keysfile
             return False
         try:
             with file(self.keysfile) as f:
@@ -162,7 +166,8 @@ class SshKey(Module):
         return False
 
     def write_keys(self):
-        if not exists(self.sshdir): os.mkdir(self.sshdir, 0700)
+        if not exists(self.sshdir): 
+            os.mkdir(self.sshdir, 0700)
         with file(self.keysfile, "w") as f:
             f.writelines( ( key + "\n" for key in self.keys) )
         os.chown(self.sshdir, self.uid, self.gid)
