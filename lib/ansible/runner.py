@@ -113,8 +113,8 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
 
-        if type(self.module_args) != str:
-            raise Exception("module_args must be a string: %s" % self.module_args)
+        if type(self.module_args) != str and type(self.module_args) != dict:
+            raise Exception("module_args must be a string or dict: %s" % self.module_args)
 
         self._tmp_paths  = {}
         random.seed()
@@ -271,6 +271,9 @@ class Runner(object):
     def _transfer_str(self, conn, tmp, name, args_str):
         ''' transfer arguments as a single file to be fed to the module. '''
 
+        if type(args_str) == dict:
+            args_str = utils.smjson(args_str)
+
         args_fd, args_file = tempfile.mkstemp()
         args_fo = os.fdopen(args_fd, 'w')
         args_fo.write(args_str)
@@ -316,23 +319,43 @@ class Runner(object):
     def _add_setup_vars(self, inject, args):
         ''' setup module variables need special handling '''
 
+        is_dict = False
+        if type(args) == dict:
+            is_dict = True
+
+        # TODO: keep this as a dict through the whole path to simplify this code
         for (k,v) in inject.iteritems():
             if not k.startswith('facter_') and not k.startswith('ohai_'):
-                if str(v).find(" ") != -1:
-                    v = "\"%s\"" % v
-                args += " %s=%s" % (k, str(v).replace(" ","~~~"))
+                if not is_dict:
+                    if str(v).find(" ") != -1:
+                        v = "\"%s\"" % v
+                    args += " %s=%s" % (k, str(v).replace(" ","~~~"))
+                else:
+                    args[k]=v
         return args   
  
     # *****************************************************
 
     def _add_setup_metadata(self, args):
         ''' automatically determine where to store variables for the setup module '''
+        
+        is_dict = False
+        if type(args) == dict:
+            is_dict = True
 
-        if args.find("metadata=") == -1:
-            if self.remote_user == 'root':
-                args = "%s metadata=/etc/ansible/setup" % args
-            else:
-                args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+        # TODO: keep this as a dict through the whole path to simplify this code
+        if not is_dict:
+            if args.find("metadata=") == -1:
+                if self.remote_user == 'root':
+                    args = "%s metadata=/etc/ansible/setup" % args
+                else:
+                    args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+        else:
+            if not 'metadata' in args:
+                if self.remote_user == 'root':
+                    args['metadata'] = '/etc/ansible/setup'
+                else:
+                    args['metadata'] = "/home/%s/.ansible/setup" % (self.remote_user)
         return args   
  
     # *****************************************************
@@ -352,9 +375,11 @@ class Runner(object):
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
 
+        if type(args) == dict:
+           args = utils.bigjson(args)
         args = utils.template(args, inject)
+
         module_name_tail = remote_module_path.split("/")[-1]
-        client_executed_str = "%s %s" % (module_name_tail, args.strip())
 
         argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
@@ -368,6 +393,7 @@ class Runner(object):
 
                     
         res, err = self._exec_command(conn, cmd, tmp, sudoable=True)
+        client_executed_str = "%s %s" % (module_name_tail, args.strip())
         return ( res, err, client_executed_str )
 
     # *****************************************************
