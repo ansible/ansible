@@ -92,8 +92,9 @@ class Module(object):
         """Execute the module according to the args passed in. Returns a structure ready for JSON.
         Any overrides of run must guarantee that verify executes before install or remove.
         """
+        action = self.args.get("ensure","present")
         try:
-            if self.args.get("ensure","present")=="absent":
+            if action=="absent":
                 if self.verify()==False: #exit if there's nothing to do
                     self.args["changed"] = False
                     self.succeed()
@@ -102,7 +103,7 @@ class Module(object):
                     self.succeed( self.args)
                 else:
                     self.fail()  #set message in remove
-            else:
+            elif action=="present":
                 if self.verify()==True: #exit if there's nothing to do
                     self.args["changed"] = False
                     self.succeed()
@@ -123,7 +124,7 @@ class SshKey(Module):
     """Install or remove ssh keys."""
     
     def __init__(self):
-        self.argnames=set(["user","key"])
+        self.argnames=set(["user","key","ensure"])
         super(SshKey,self).__init__()
         self.key = self.args["key"]
         try:
@@ -165,9 +166,9 @@ class SshKey(Module):
         os.chmod(self.keysfile, 0600)
 
     def remove(self):
-        return False
-        #self.keylines.remove(self.key)
-        #self.writekeys()
+        self.keys.remove(self.key)
+        self.writekeys()
+        return True
         
     def install(self):
         self.keys.append(self.key)
