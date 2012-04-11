@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 """Ansible module to add authorized_keys for ssh logins.
 
+Usage:
+    user = username
+    key = line to add to authorized_keys for user
+    ensure = absent|present (default: present)
+
 (c) 2012, Brad Olson <brado@movedbylight.com>
 
 This file is part of Ansible
@@ -100,7 +105,7 @@ class Module(object):
                     self.succeed()
                 if self.remove() and (self.verify()==False):
                     self.args["changed"] = True
-                    self.succeed( self.args)
+                    self.succeed()
                 else:
                     self.fail()  #set message in remove
             elif action=="present":
@@ -167,7 +172,7 @@ class SshKey(Module):
 
     def remove(self):
         self.keys.remove(self.key)
-        self.writekeys()
+        self.write_keys()
         return True
         
     def install(self):
