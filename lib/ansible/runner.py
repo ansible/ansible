@@ -466,7 +466,9 @@ class Runner(object):
         #load up options
         options = utils.parse_kv(self.module_args)
         source = options['src']
-        dest   = options['dest']
+
+        filename = os.path.basename(source)
+        dest   = "%s/%s/%s" % (options['dest'], host, filename)
 
         changed = False
         failed = None
@@ -482,6 +484,8 @@ class Runner(object):
         remote_md5 = self._exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
 
         if remote_md5 != local_md5:
+            #create the containing directories, if needed
+            os.makedirs(os.path.dirname(dest))
             #fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
