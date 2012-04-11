@@ -486,6 +486,52 @@ class Runner(object):
 
     # *****************************************************
 
+    def _execute_fetch(self, conn, host, tmp):
+        ''' handler for fetch operations '''
+
+        #load up options
+        options = utils.parse_kv(self.module_args)
+        source = options['src']
+
+        filename = os.path.basename(source)
+        dest   = "%s/%s/%s" % (options['dest'], host, filename)
+
+        changed = False
+        failed = None
+        ok = True
+        error = None
+
+        #get old md5
+        local_md5 = None
+        if os.path.exists(dest):
+            local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
+
+        #get new md5
+        remote_md5 = self._exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
+
+        if remote_md5 != local_md5:
+            #create the containing directories, if needed
+            os.makedirs(os.path.dirname(dest))
+            #fetch the file and check for changes
+            conn.fetch_file(source, dest)
+            new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
+            changed = (new_md5 != local_md5)
+            if new_md5 != remote_md5:
+                error = "new md5 does not match remote md5"
+        else:
+            new_md5 = local_md5
+        
+        if error:
+            ok = False
+            failed = True
+            data = {'msg': error, 'failed': True, 'md5sum': new_md5, 'changed': changed}
+        else:
+            data = {'changed': changed, 'md5sum': new_md5}
+        
+        return (host, ok, data, failed)
+        
+    # *****************************************************
+
     def _chain_file_module(self, conn, tmp, data, err, options, executed):
         ''' handles changing file attribs after copy/template operations '''
 
@@ -575,6 +621,8 @@ class Runner(object):
 
         if self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
+        elif self.module_name == 'fetch':
+            result = self._execute_fetch(conn, host, tmp)
         elif self.module_name == 'template':
             result = self._execute_template(conn, host, tmp)
         else:
