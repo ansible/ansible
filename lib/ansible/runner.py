@@ -387,11 +387,6 @@ class Runner(object):
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
 
-        # log command as the full command not as the path to args file - helps with debugging
-        msg = '%s: "%s"' % (self.module_name, args)
-        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
-
-                    
         res, err = self._exec_command(conn, cmd, tmp, sudoable=True)
         client_executed_str = "%s %s" % (module_name_tail, args.strip())
         return ( res, err, client_executed_str )
@@ -642,10 +637,6 @@ class Runner(object):
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
 
-        msg = '%s: %s' % (self.module_name, cmd)
-        # log remote command execution
-        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
-        # now run actual command
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
 
         if type(stderr) != str:
