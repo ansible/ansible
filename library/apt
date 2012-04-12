@@ -113,7 +113,7 @@ for x in items:
     params[k] = v
 
 state        = params.get('state','installed')
-package      = params.get('pkg', None)
+package      = params.get('pkg', params.get('package', params.get('name', None)))
 update_cache = params.get('update-cache', 'no')
 purge        = params.get('purge', 'no')
 
