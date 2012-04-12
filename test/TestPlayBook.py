@@ -139,20 +139,27 @@ class TestPlaybook(unittest.TestCase):
            callbacks        = self.test_callbacks,
            runner_callbacks = self.test_callbacks
        )
-       results = self.playbook.run()
-       return dict(
-           results = results,
-           events = EVENTS
-       ) 
+       return self.playbook.run()
 
    def test_one(self):
        pb = os.path.join(self.test_dir, 'playbook1.yml')
-       expected = os.path.join(self.test_dir, 'playbook1.events')
-       expected = utils.json_loads(file(expected).read())
        actual = self._run(pb)
+
        # if different, this will output to screen 
+       print "**ACTUAL**"
        print utils.bigjson(actual)
-       assert cmp(expected, actual) == 0, "expected events match actual events"
+       expected =  { 
+            "127.0.0.2": {
+                "changed": 9, 
+                "failures": 0, 
+                "ok": 12, 
+                "skipped": 1, 
+                "unreachable": 0
+            }
+       }
+       print "**EXPECTED**"
+       print utils.bigjson(expected)
+       assert utils.bigjson(expected) == utils.bigjson(actual)
 
        # make sure the template module took options from the vars section
        data = file('/tmp/ansible_test_data_template.out').read()
