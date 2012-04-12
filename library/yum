@@ -317,21 +317,17 @@ def main():
         except Exception, e:
             return 1, str(e)
             
-    elif 'state' in params:
-        if 'pkg' not in params:
+    else:
+        pkg = params.get('pkg', params.get('package', params.get('name', None))) 
+        if 'pkg' is None:
             results['msg'] = "No pkg specified"
         else:
             try:
                 my = yum_base(conf_file=params['conf_file'], cachedir=True)        
-                state = params['state']
-                pkgspec = params['pkg']
-                results = ensure(my, state, pkgspec)
+                state = params.get('state', 'installed')
+                results = ensure(my, state, pkg)
             except Exception, e:
                 return 1, str(e)
-
-    else:
-        print json.dumps(dict(failed=True, msg='invalid module parameters'))
-        sys.exit(1)
 
     print json.dumps(results)
     return 0, None
