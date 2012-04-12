@@ -32,7 +32,7 @@ orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
 server group, then more commands back on the webservers group, etc. 
 
-For starters, here's a playbook that contains just one play.::
+For starters, here's a playbook that contains just one play::
 
     ---
     - hosts: webservers
@@ -290,7 +290,7 @@ or it could be something like performing some cleanup steps if a filesystem is g
 This is easy to do in Ansible, with the `only_if` clause.  This clause can be applied to any task,
 and allows usage of variables from anywhere in ansible, either denoted with `$dollar_sign_syntax` or
 `{{ braces_syntax }}` and then evaluates them with a Python expression.   Don't panic -- it's actually
-pretty simple.::
+pretty simple::
 
     vars:
       favcolor: blue
@@ -474,7 +474,7 @@ to kick them off all at once and then poll until they are done.
 You will also want to use asynchronous mode on very long running 
 operations that might be subject to timeout.
 
-To launch a task asynchronously, specify it's maximum runtime
+To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
 poll value is 10 seconds if you do not specify a value for `poll`::
 

@@ -83,7 +83,7 @@ as it can.  A system shouldn't be half correct, especially if we're planning on 
 other systems that depend on that system.
 
 Ansible also has a VERY short learning curve -- but it also has less language constructs and
-does not create it's own programming language.   What constructs Ansible does have should be enough to cover 80% or so of the cases of most Puppet users, and it should scale equally well (not having a server is
+does not create its own programming language.   What constructs Ansible does have should be enough to cover 80% or so of the cases of most Puppet users, and it should scale equally well (not having a server is
 almost like cheating).
 
 I also suspect some Ansible users will actually use Ansible to trigger Puppet -- using the git
@@ -146,7 +146,7 @@ Python's multiprocessing module.
 
 If you need to address 500 machines you can decide if you want to try 
 to contact 5 at a time, or 50 at a time.
-It's up to you and how much power you can throw at it, but it's heritage
+It's up to you and how much power you can throw at it, but its heritage
 is about handling those kinds of use cases.   
 
 There are no daemons so it's entirely up to you.  When you are aren't using

@@ -306,9 +306,9 @@ Example action from Ansible :doc:`playbooks`::
         ntpserver: 'ntp.example.com'
         xyz: 1234
 
-Example action from `/usr/bin/Ansible`::
+Example action from `/usr/bin/ansible`::
 
-    Ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"
+    ansible all -m setup -a "ntpserver=ntp.example.com xyz=1234"
 
 
 .. _shell:
@@ -499,14 +499,14 @@ See :doc:`moduledev`.
 .. seealso::
 
    :doc:`examples`
-       Examples of using modules in /usr/bin/Ansible
+       Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
-       Examples of using modules with /usr/bin/Ansible-playbook
+       Examples of using modules with /usr/bin/ansible-playbook
    :doc:`moduledev`
        How to write your own modules
    :doc:`api`
        Examples of using modules with the Python API
-   `Mailing List <http://groups.google.com/group/Ansible-project>`_
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

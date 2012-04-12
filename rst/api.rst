@@ -2,7 +2,7 @@ API & Integrations
 ==================
 
 There are two major ways to use Ansible from an API perspective.   The primary way
-is to use the Ansible python API to control nodes.  Ansible is written in it's own
+is to use the Ansible python API to control nodes.  Ansible is written in its own
 API so you have a considerable amount of power there.  
 
 Also covered here, Ansible's
@@ -89,8 +89,7 @@ in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
 of these options via an external interventory system.  
 
-If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding,J
-but we have a `Cobbler example <https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
+If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding, but we have a `Cobbler example <https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
 
 If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
 
