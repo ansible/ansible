@@ -32,7 +32,8 @@ import random
 import re
 import shutil
 import subprocess
-from ansible import errors
+import urlparse
+from ansible import errors, scp as scp_client
 
 ################################################
 
@@ -74,10 +75,16 @@ class ParamikoConnection(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
+            remote_port = self.runner.remote_port
+            
+            url = urlparse.urlparse("ssh://" + self.host)
+            self.host = url.hostname
+            if url.port:
+                remote_port = url.port
             ssh.connect(
                 self.host, username=self.runner.remote_user,
                 allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.runner.remote_port
+                timeout=self.runner.timeout, port=remote_port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
@@ -118,7 +125,7 @@ class ParamikoConnection(object):
             time.sleep(1)
             sudo_chan.close()
             self.ssh = self._get_conn()
-
+            
             # now load the results of the JSON execution...
             # FIXME: really need some timeout logic here
             sftp = self.ssh.open_sftp()
@@ -131,6 +138,7 @@ class ParamikoConnection(object):
                 except IOError:
                     pass
             sftp.close()
+            
             # TODO: see if there's a SFTP way to just get the file contents w/o saving
             # to disk vs this hack...
             stdin, stdout, stderr = self.ssh.exec_command("cat %s" % result_file)
@@ -140,22 +148,41 @@ class ParamikoConnection(object):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        sftp = self.ssh.open_sftp()
+        
         try:
-            sftp.put(in_path, out_path)
-        except IOError:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-        sftp.close()
+            sftp = self.ssh.open_sftp()
+            try:
+                sftp.put(in_path, out_path)
+            except IOError:
+                traceback.print_exc()
+                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            sftp.close()
+        except paramiko.SSHException:
+            # Try with scp
+            scp = scp_client.SCPClient(self.ssh.get_transport())
+            try:
+                scp.put(in_path, out_path)
+            except paramiko.SSHException:
+                traceback.print_exc()
+                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
-        sftp = self.ssh.open_sftp()
         try:
-            sftp.get(in_path, out_path)
-        except IOError:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file from %s" % in_path)
-        sftp.close()
+            sftp = self.ssh.open_sftp()
+            try:
+                sftp.get(in_path, out_path)
+            except IOError:
+                traceback.print_exc()
+                raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+            sftp.close()
+        except paramiko.SSHException:
+            # Try with scp
+            scp = scp.SCPClient(self.ssh.get_transport())
+            try:
+                scp.get(in_path, out_path)
+            except (scp.SCPException, paramiko.SSHException):
+                traceback.print_exc()
+                raise errors.AnsibleError("failed to transfer file from %s" % in_path)
 
     def close(self):
         ''' terminate the connection '''
