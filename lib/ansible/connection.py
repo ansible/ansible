@@ -74,10 +74,15 @@ class ParamikoConnection(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
+            remote_port = self.runner.remote_port
+            
+            if self.host.find(":") > -1:
+                self.host, remote_port = self.host.split(":")
+                remote_port = int(remote_port)
             ssh.connect(
                 self.host, username=self.runner.remote_user,
                 allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.runner.remote_port
+                timeout=self.runner.timeout, port=remote_port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
