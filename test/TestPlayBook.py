@@ -90,7 +90,7 @@ class TestCallbacks(object):
         pass
 
 
-class TestRunner(unittest.TestCase):
+class TestPlaybook(unittest.TestCase):
 
    def setUp(self):
        self.user = getpass.getuser()
