@@ -42,7 +42,7 @@ class Module(object):
 
     def parseargs(self):
         """Get args from the conventional ansible args file."""
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         with file(sys.argv[1]) as f:            #read the args file
             argsdata = f.read()
         args = dict(                            # make a dictionary of...
