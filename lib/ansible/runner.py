@@ -458,8 +458,10 @@ class Runner(object):
 
         # load up options
         options = utils.parse_kv(self.module_args)
-        source = options['src']
-        dest   = options['dest']
+        source = options.get('src', None)
+        dest   = options.get('dest', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
         
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
@@ -486,11 +488,14 @@ class Runner(object):
 
         # load up options
         options = utils.parse_kv(self.module_args)
-        source = options['src']
+        source = options.get('src', None)
+        dest = options.get('dest', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # files are saved in dest dir, with a subdir for each host, then the filename
         filename = os.path.basename(source)
-        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, options['dest']), host, filename)
+        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, filename)
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -536,9 +541,11 @@ class Runner(object):
 
         # load up options
         options  = utils.parse_kv(self.module_args)
-        source   = options['src']
-        dest     = options['dest']
+        source   = options.get('src', None)
+        dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         if metadata is None:
             if self.remote_user == 'root':
