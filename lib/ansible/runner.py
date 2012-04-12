@@ -489,46 +489,33 @@ class Runner(object):
     def _execute_fetch(self, conn, host, tmp):
         ''' handler for fetch operations '''
 
-        #load up options
+        # load up options
         options = utils.parse_kv(self.module_args)
         source = options['src']
 
+        # files are saved in dest dir, with a subdir for each host, then the filename
         filename = os.path.basename(source)
-        dest   = "%s/%s/%s" % (options['dest'], host, filename)
+        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, options['dest']), host, filename)
 
-        changed = False
-        failed = None
-        ok = True
-        error = None
-
-        #get old md5
+        # compare old and new md5 for support of change hooks
         local_md5 = None
         if os.path.exists(dest):
             local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-
-        #get new md5
         remote_md5 = self._exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
 
         if remote_md5 != local_md5:
-            #create the containing directories, if needed
+            # create the containing directories, if needed
             os.makedirs(os.path.dirname(dest))
-            #fetch the file and check for changes
+            # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
             changed = (new_md5 != local_md5)
             if new_md5 != remote_md5:
-                error = "new md5 does not match remote md5"
+                return (host, True, dict(failed=True, msg="md5 mismatch", md5sum=new_md5), '')
+            return (host, True, dict(changed=True, md5sum=new_md5), '')
         else:
-            new_md5 = local_md5
+            return (host, True, dict(changed=False, md5sum=local_md5), '')
         
-        if error:
-            ok = False
-            failed = True
-            data = {'msg': error, 'failed': True, 'md5sum': new_md5, 'changed': changed}
-        else:
-            data = {'changed': changed, 'md5sum': new_md5}
-        
-        return (host, ok, data, failed)
         
     # *****************************************************
 

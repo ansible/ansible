@@ -189,6 +189,14 @@ class TestRunner(unittest.TestCase):
        assert 'stdout' in result
        assert result['ansible_job_id'] == jid
 
+   def test_fetch(self):
+       input = self._get_test_file('sample.j2')
+       output = self._get_stage_file('127.0.0.2/sample.j2')
+       result = self._run('fetch', [ "src=%s" % input, "dest=%s" % self.stage_dir ])
+       print "output file=%s" % output
+       assert os.path.exists(output)
+       assert open(input).read() == open(output).read()
+
    def test_yum(self):
        result = self._run('yum', [ "list=repos" ])
        assert 'failed' not in result
