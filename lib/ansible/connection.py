@@ -32,6 +32,7 @@ import random
 import re
 import shutil
 import subprocess
+import urlparse
 from ansible import errors, scp as scp_client
 
 ################################################
@@ -76,9 +77,10 @@ class ParamikoConnection(object):
         try:
             remote_port = self.runner.remote_port
             
-            if self.host.find(":") > -1:
-                self.host, remote_port = self.host.split(":")
-                remote_port = int(remote_port)
+            url = urlparse.urlparse("ssh://" + self.host)
+            self.host = url.hostname
+            if url.port:
+                remote_port = url.port
             ssh.connect(
                 self.host, username=self.runner.remote_user,
                 allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
