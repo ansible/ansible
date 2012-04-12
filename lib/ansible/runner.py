@@ -750,6 +750,7 @@ class Runner(object):
         # find hosts that match the pattern
         hosts = self._match_hosts(self.pattern)
         if len(hosts) == 0:
+            self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
  
         hosts = [ (self,x) for x in hosts ]
