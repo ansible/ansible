@@ -29,6 +29,11 @@ import shutil
 import stat
 import grp
 import pwd
+try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
 
 def debug(msg):
     # ansible ignores stderr, so it's safe to use for debug
@@ -61,6 +66,8 @@ def add_path_info(kwargs):
             kwargs['state'] = 'file'
         else:
             kwargs['state'] = 'directory'
+        if HAVE_SELINUX:
+            kwargs['secontext'] = ':'.join(selinux_context(path))
     else:
         kwargs['state'] = 'absent'
     return kwargs 
@@ -91,8 +98,12 @@ group     = params.get('group', None)
 # presently unused, we always use -R (FIXME?)
 recurse   = params.get('recurse', 'false')
 
-# presently unused, implement (FIXME)
-secontext = params.get('secontext', None)
+# selinux related options
+seuser    = params.get('seuser', None)
+serole    = params.get('serole', None)
+setype    = params.get('setype', None)
+serange   = params.get('serange', 's0')
+secontext = [seuser, serole, setype, serange]
 
 if state not in [ 'file', 'directory', 'link', 'absent']:
     fail_json(msg='invalid state: %s' % state)
@@ -119,12 +130,59 @@ def user_and_group(filename):
     debug("got user=%s and group=%s" % (user, group))
     return (user, group)
 
-    
+def selinux_context(path):
+    context = [None, None, None, None]
+    if not HAVE_SELINUX:
+        return context
+    try:
+        ret = selinux.lgetfilecon(path)
+    except:
+        fail_json(path=path, msg='failed to retrieve selinux context')
+    if ret[0] == -1:
+        return context
+    context = ret[1].split(':')
+    debug("got current secontext=%s" % ret[1])
+    return context
+
+# If selinux fails to find a default, return an array of None
+def selinux_default_context(path, mode=0):
+    context = [None, None, None, None]
+    print >>sys.stderr, path
+    if not HAVE_SELINUX:
+        return context
+    try:
+        ret = selinux.matchpathcon(path, mode)
+    except OSError:
+        return context
+    if ret[0] == -1:
+        return context
+    context = ret[1].split(':')
+    debug("got default secontext=%s" % ret[1])
+    return context
+
 def set_context_if_different(path, context, changed):
-   if context is None:
-       return changed
-   if context is not None:
-       fail_json(path=path, msg='context not yet supported')
+    if not HAVE_SELINUX:
+        return changed
+    cur_context = selinux_context(path)
+    new_context = selinux_default_context(path)
+    for i in range(len(context)):
+        if context[i] is not None and context[i] != cur_context[i]:
+            debug('new context was %s' % new_context[i])
+            new_context[i] = context[i]
+            debug('new context is %s' % new_context[i])
+        elif new_context[i] is None:
+            new_context[i] = cur_context[i]
+    debug("current secontext is %s" % ':'.join(cur_context))
+    debug("new secontext is %s" % ':'.join(new_context))
+    if cur_context != new_context:
+        try:
+            rc = selinux.lsetfilecon(path, ':'.join(new_context))
+        except OSError:
+            fail_json(path=path, msg='invalid selinux context')
+        if rc != 0:
+            fail_json(path=path, msg='set selinux context failed')
+        changed = True
+    return changed
     
 def set_owner_if_different(path, owner, changed):
    if owner is None:
