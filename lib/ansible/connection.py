@@ -18,7 +18,13 @@
 
 ################################################
 
-import paramiko
+import warnings
+# prevent paramiko warning noise
+# see http://stackoverflow.com/questions/3920502/
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import paramiko
+
 import traceback
 import os
 import time
