@@ -89,6 +89,8 @@ class TestCallbacks(object):
     def on_setup_secondary(self):
         pass
 
+    def on_no_hosts(self):
+        pass
 
 class TestPlaybook(unittest.TestCase):
 

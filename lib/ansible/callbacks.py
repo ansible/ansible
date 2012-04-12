@@ -95,6 +95,9 @@ class DefaultRunnerCallbacks(object):
     def on_unreachable(self, host, res):
         pass
 
+    def on_no_hosts(self):
+        pass
+
 ########################################################################
 
 class CliRunnerCallbacks(DefaultRunnerCallbacks):
@@ -120,6 +123,9 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_error(self, host, err):
         print >>sys.stderr, "stderr: [%s] => %s\n" % (host, err)
+    
+    def on_no_hosts(self):
+        print >>sys.stderr, "no hosts matched\n"
 
     def _on_any(self, host, result):
         print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
@@ -158,6 +164,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_skipped(self, host):
         print "skipping: [%s]\n" % host
+
+    def on_no_hosts(self):
+        print "no hosts matched or remaining\n"
 
 ########################################################################
 
