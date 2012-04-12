@@ -23,6 +23,7 @@ import sys
 import os
 import shlex
 import subprocess
+import traceback
 
 try:
     import json
@@ -34,18 +35,22 @@ except ImportError:
 if len(sys.argv) == 1:
     sys.exit(1)
 
+
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
     sys.exit(1)
 
-input_data = shlex.split(open(argfile, 'r').read())
+setup_options = open(argfile).read().strip()
+try:
+   setup_options = json.loads(setup_options)
+except:
+   list_options = shlex.split(setup_options)
+   setup_options = {}
+   for opt in list_options:
+       (k,v) = opt.split("=")
+       setup_options[k]=v   
 
-# turn urlencoded k=v string (space delimited) to regular k=v directionary
-splitted = [x.split('=',1) for x in input_data ]
-splitted = [ (x[0], x[1].replace("~~~"," ")) for x in splitted ]
-new_options = dict(splitted)
-
-ansible_file = new_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
+ansible_file = setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
 ansible_dir = os.path.dirname(ansible_file)
 
 # create the config dir if it doesn't exist
@@ -74,7 +79,7 @@ if os.path.exists("/usr/bin/facter"):
        facter = False
    if facter:
        for (k,v) in facter_ds.items():
-           new_options["facter_%s" % k] = v
+           setup_options["facter_%s" % k] = v
 
 # ditto for ohai, but just top level string keys
 # because it contains a lot of nested stuff we can't use for
@@ -93,13 +98,13 @@ if os.path.exists("/usr/bin/ohai"):
        for (k,v) in ohai_ds.items():
            if type(v) == str or type(v) == unicode:
                k2 = "ohai_%s" % k
-               new_options[k2] = v
+               setup_options[k2] = v
 
 # write the template/settings file using
 # instructions from server
 
 f = open(ansible_file, "w+")
-reformat = json.dumps(new_options, sort_keys=True, indent=4)
+reformat = json.dumps(setup_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
@@ -108,9 +113,9 @@ md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
 if md5sum != md5sum2:
    changed = True
 
-new_options['written'] = ansible_file
-new_options['changed'] = changed
-new_options['md5sum']  = md5sum2 
+setup_options['written'] = ansible_file
+setup_options['changed'] = changed
+setup_options['md5sum']  = md5sum2 
 
-print json.dumps(new_options)
+print json.dumps(setup_options)
 

@@ -119,8 +119,8 @@ class Runner(object):
         euid = pwd.getpwuid(os.geteuid())[0]
         if self.transport == 'local' and self.remote_user != euid:
             raise Exception("User mismatch: expected %s, but is %s" % (self.remote_user, euid))
-        if type(self.module_args) != str:
-            raise Exception("module_args must be a string: %s" % self.module_args)
+        if type(self.module_args) != str and type(self.module_args) != dict:
+            raise Exception("module_args must be a string or dict: %s" % self.module_args)
 
         self._tmp_paths  = {}
         random.seed()
@@ -277,6 +277,9 @@ class Runner(object):
     def _transfer_str(self, conn, tmp, name, args_str):
         ''' transfer arguments as a single file to be fed to the module. '''
 
+        if type(args_str) == dict:
+            args_str = utils.smjson(args_str)
+
         args_fd, args_file = tempfile.mkstemp()
         args_fo = os.fdopen(args_fd, 'w')
         args_fo.write(args_str)
@@ -322,23 +325,43 @@ class Runner(object):
     def _add_setup_vars(self, inject, args):
         ''' setup module variables need special handling '''
 
+        is_dict = False
+        if type(args) == dict:
+            is_dict = True
+
+        # TODO: keep this as a dict through the whole path to simplify this code
         for (k,v) in inject.iteritems():
             if not k.startswith('facter_') and not k.startswith('ohai_'):
-                if str(v).find(" ") != -1:
-                    v = "\"%s\"" % v
-                args += " %s=%s" % (k, str(v).replace(" ","~~~"))
+                if not is_dict:
+                    if str(v).find(" ") != -1:
+                        v = "\"%s\"" % v
+                    args += " %s=%s" % (k, str(v).replace(" ","~~~"))
+                else:
+                    args[k]=v
         return args   
  
     # *****************************************************
 
     def _add_setup_metadata(self, args):
         ''' automatically determine where to store variables for the setup module '''
+        
+        is_dict = False
+        if type(args) == dict:
+            is_dict = True
 
-        if args.find("metadata=") == -1:
-            if self.remote_user == 'root':
-                args = "%s metadata=/etc/ansible/setup" % args
-            else:
-                args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+        # TODO: keep this as a dict through the whole path to simplify this code
+        if not is_dict:
+            if args.find("metadata=") == -1:
+                if self.remote_user == 'root':
+                    args = "%s metadata=/etc/ansible/setup" % args
+                else:
+                    args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+        else:
+            if not 'metadata' in args:
+                if self.remote_user == 'root':
+                    args['metadata'] = '/etc/ansible/setup'
+                else:
+                    args['metadata'] = "/home/%s/.ansible/setup" % (self.remote_user)
         return args   
  
     # *****************************************************
@@ -358,9 +381,11 @@ class Runner(object):
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
 
+        if type(args) == dict:
+           args = utils.bigjson(args)
         args = utils.template(args, inject)
+
         module_name_tail = remote_module_path.split("/")[-1]
-        client_executed_str = "%s %s" % (module_name_tail, args.strip())
 
         argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
@@ -368,12 +393,8 @@ class Runner(object):
         else:
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
 
-        # log command as the full command not as the path to args file - helps with debugging
-        msg = '%s: "%s"' % (self.module_name, args)
-        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
-
-                    
         res, err = self._exec_command(conn, cmd, tmp, sudoable=True)
+        client_executed_str = "%s %s" % (module_name_tail, args.strip())
         return ( res, err, client_executed_str )
 
     # *****************************************************
@@ -443,8 +464,10 @@ class Runner(object):
 
         # load up options
         options = utils.parse_kv(self.module_args)
-        source = options['src']
-        dest   = options['dest']
+        source = options.get('src', None)
+        dest   = options.get('dest', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
         
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
@@ -464,6 +487,42 @@ class Runner(object):
         else:
             return (host, ok, data, err) 
 
+    # *****************************************************
+
+    def _execute_fetch(self, conn, host, tmp):
+        ''' handler for fetch operations '''
+
+        # load up options
+        options = utils.parse_kv(self.module_args)
+        source = options.get('src', None)
+        dest = options.get('dest', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
+
+        # files are saved in dest dir, with a subdir for each host, then the filename
+        filename = os.path.basename(source)
+        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, filename)
+
+        # compare old and new md5 for support of change hooks
+        local_md5 = None
+        if os.path.exists(dest):
+            local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
+        remote_md5 = self._exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
+
+        if remote_md5 != local_md5:
+            # create the containing directories, if needed
+            os.makedirs(os.path.dirname(dest))
+            # fetch the file and check for changes
+            conn.fetch_file(source, dest)
+            new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
+            changed = (new_md5 != local_md5)
+            if new_md5 != remote_md5:
+                return (host, True, dict(failed=True, msg="md5 mismatch", md5sum=new_md5), '')
+            return (host, True, dict(changed=True, md5sum=new_md5), '')
+        else:
+            return (host, True, dict(changed=False, md5sum=local_md5), '')
+        
+        
     # *****************************************************
 
     def _chain_file_module(self, conn, tmp, data, err, options, executed):
@@ -488,9 +547,11 @@ class Runner(object):
 
         # load up options
         options  = utils.parse_kv(self.module_args)
-        source   = options['src']
-        dest     = options['dest']
+        source   = options.get('src', None)
+        dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         if metadata is None:
             if self.remote_user == 'root':
@@ -555,6 +616,8 @@ class Runner(object):
 
         if self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
+        elif self.module_name == 'fetch':
+            result = self._execute_fetch(conn, host, tmp)
         elif self.module_name == 'template':
             result = self._execute_template(conn, host, tmp)
         else:
@@ -587,10 +650,6 @@ class Runner(object):
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
 
-        msg = '%s: %s' % (self.module_name, cmd)
-        # log remote command execution
-        conn.exec_command('/usr/bin/logger -t ansible -p auth.info "%s"' % msg, None)
-        # now run actual command
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
 
         if type(stderr) != str:
@@ -697,6 +756,7 @@ class Runner(object):
         # find hosts that match the pattern
         hosts = self._match_hosts(self.pattern)
         if len(hosts) == 0:
+            self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
  
         hosts = [ (self,x) for x in hosts ]

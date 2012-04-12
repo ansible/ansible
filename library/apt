@@ -31,9 +31,7 @@ APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
 def debug(msg):
-    # ansible ignores stderr, so it's safe to use for debug
     print >>sys.stderr, msg
-    #pass
     
 def exit_json(rc=0, **kwargs):
     print json.dumps(kwargs)
@@ -46,7 +44,7 @@ def fail_json(**kwargs):
 try:
     import apt
 except ImportError:
-    fail_json(msg="could not import apt")
+    fail_json(msg="could not import apt, please install the python-apt package on this host")
 
 def run_apt(command):
     try:
@@ -115,7 +113,7 @@ for x in items:
     params[k] = v
 
 state        = params.get('state','installed')
-package      = params.get('pkg', None)
+package      = params.get('pkg', params.get('package', params.get('name', None)))
 update_cache = params.get('update-cache', 'no')
 purge        = params.get('purge', 'no')
 

@@ -18,7 +18,13 @@
 
 ################################################
 
-import paramiko
+import warnings
+# prevent paramiko warning noise
+# see http://stackoverflow.com/questions/3920502/
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import paramiko
+
 import traceback
 import os
 import time
@@ -142,6 +148,15 @@ class ParamikoConnection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
 
+    def fetch_file(self, in_path, out_path):
+        sftp = self.ssh.open_sftp()
+        try:
+            sftp.get(in_path, out_path)
+        except IOError:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+        sftp.close()
+
     def close(self):
         ''' terminate the connection '''
 
@@ -183,6 +198,10 @@ class LocalConnection(object):
         except IOError:
             traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+
+    def fetch_file(self, in_path, out_path):
+        ''' fetch a file from local to local -- for copatibility '''
+        self.put_file(in_path, out_path)
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
