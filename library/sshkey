@@ -42,10 +42,11 @@ class Module(object):
 
     def parseargs(self):
         """Get args from the conventional ansible args file."""
+        import pdb; pdb.set_trace()
         with file(sys.argv[1]) as f:            #read the args file
             argsdata = f.read()
         args = dict(                            # make a dictionary of...
-            [ arg.split("=")                    # assignment pairs 
+            [ arg.split("=", 1)                 # assignment pairs 
               for arg in shlex.split(argsdata)  # using shell lexing
               if "=" in arg                     # ignoring tokens without assignment
             ])
