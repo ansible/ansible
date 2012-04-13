@@ -48,7 +48,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *state*:
 
-* Can be either 'installed', 'removed', or 'latest'.
+* Can be either 'installed', 'removed', or 'latest'.  The default is 'installed'.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -133,7 +133,25 @@ support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
 
-.. _file:
+
+fetch
+`````
+
+This module works like 'copy', but in reverse.  It is used for fetching files
+from remote machines and storing them locally in a file tree, organized by hostname.
+
+*src*:
+
+* The file on the remote system to fetch.  This needs to be a file, not a directory. Recursive fetching may be supported later.
+
+*dest*:
+
+* A directory to save the file into.  For example, if the 'dest' directory is '/foo', a src file named '/tmp/bar' on host 'host.example.com', would be saved into '/foo/host.example.com/bar'.
+
+The fetch module is a useful way to gather log files from remote systems.  If you require
+fetching multiple files from remote systems, you may wish to execute a tar command and
+then fetch the tarball.
+
 
 file
 ````
@@ -476,7 +494,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 
 *state*:
 
-* Can be either 'installed', 'latest', or 'removed'
+* Can be either 'installed', 'latest', or 'removed'.  The default is 'installed'.
 
 *list*:
 
