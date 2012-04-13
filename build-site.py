@@ -63,11 +63,6 @@ class SphinxBuilder(object):
 
             app.builder.build_all()
 
-            # We also have the HTML man pages to handle now as well
-            #if os.system("make htmlman"):
-            #    print "There was an error while building the HTML man pages."
-            #    print "Run 'make htmlman' to recreate the problem."
-            #print "Your docs are now in %s" % outdir
         except ImportError, ie:
             traceback.print_exc()
         except Exception, ex:
@@ -79,11 +74,6 @@ class SphinxBuilder(object):
 
 def build_rst_docs():
     docgen = SphinxBuilder()
-
-
-def build_html_manpages():
-    os.system("make htmlman")
-
 
 if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
@@ -100,7 +90,6 @@ if __name__ == '__main__':
         # By default, preform the rst->html transformation and then
         # the asciidoc->html trasnformation
         build_rst_docs()
-        build_html_manpages()
 
     if "view" in sys.argv:
         import webbrowser
