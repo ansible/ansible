@@ -640,8 +640,9 @@ class Runner(object):
             else:
                 self.callbacks.on_ok(host, data)
 
-            if self.debug and err:
-                self.callbacks.on_error(host, err)
+            if err:
+                if self.debug or data.get('parsed', True) == False:
+                    self.callbacks.on_error(host, err)
 
         return result
 
