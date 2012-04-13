@@ -121,7 +121,7 @@ class Runner(object):
         euid = pwd.getpwuid(os.geteuid())[0]
         if self.transport == 'local' and self.remote_user != euid:
             raise Exception("User mismatch: expected %s, but is %s" % (self.remote_user, euid))
-        if type(self.module_args) != str and type(self.module_args) != dict:
+        if type(self.module_args) not in [str, unicode, dict]:
             raise Exception("module_args must be a string or dict: %s" % self.module_args)
 
         self._tmp_paths  = {}
