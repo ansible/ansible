@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 04/03/2012
+.\"      Date: 04/10/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.2
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "04/03/2012" "Ansible 0\&.0\&.2" "System administration commands"
+.TH "ANSIBLE" "1" "04/10/2012" "Ansible 0\&.0\&.2" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -121,6 +121,14 @@ seconds\&. Requires
 Use this remote
 \fIUSERNAME\fR
 instead of root\&.
+.RE
+.PP
+\fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
+.RS 4
+Connection type to use\&. Possible options are
+\fIparamiko\fR
+and
+\fIlocal\fR\&.
 .RE
 .SH "INVENTORY"
 .sp
