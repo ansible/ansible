@@ -196,6 +196,8 @@ Example action from Ansible :doc:`playbooks`::
     file path=/path/to/delete state=absent
     file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 
+The file module also supports numerous SELinux attributes (documentation on this pending).
+
 .. _git:
 
 git
