@@ -32,6 +32,7 @@ import random
 import re
 import shutil
 import subprocess
+import urlparse
 from ansible import errors
 
 ################################################
@@ -74,10 +75,19 @@ class ParamikoConnection(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
+            remote_port = self.runner.remote_port
+            
+            if self.host.find("://") == -1:
+                url = urlparse.urlparse("ssh://" + self.host)
+            else:
+                url = urlparse.urlparse(self.host)
+            self.host = url.hostname
+            if url.port:
+                remote_port = url.port
             ssh.connect(
                 self.host, username=self.runner.remote_user,
                 allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.runner.remote_port
+                timeout=self.runner.timeout, port=remote_port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
@@ -118,7 +128,7 @@ class ParamikoConnection(object):
             time.sleep(1)
             sudo_chan.close()
             self.ssh = self._get_conn()
-
+            
             # now load the results of the JSON execution...
             # FIXME: really need some timeout logic here
             sftp = self.ssh.open_sftp()
@@ -131,6 +141,7 @@ class ParamikoConnection(object):
                 except IOError:
                     pass
             sftp.close()
+            
             # TODO: see if there's a SFTP way to just get the file contents w/o saving
             # to disk vs this hack...
             stdin, stdout, stderr = self.ssh.exec_command("cat %s" % result_file)
@@ -140,6 +151,7 @@ class ParamikoConnection(object):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+        
         sftp = self.ssh.open_sftp()
         try:
             sftp.put(in_path, out_path)
@@ -147,7 +159,7 @@ class ParamikoConnection(object):
             traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
-
+        
     def fetch_file(self, in_path, out_path):
         sftp = self.ssh.open_sftp()
         try:
