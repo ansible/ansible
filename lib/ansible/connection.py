@@ -33,7 +33,7 @@ import re
 import shutil
 import subprocess
 import urlparse
-from ansible import errors, scp as scp_client
+from ansible import errors
 
 ################################################
 
@@ -77,7 +77,10 @@ class ParamikoConnection(object):
         try:
             remote_port = self.runner.remote_port
             
-            url = urlparse.urlparse("ssh://" + self.host)
+            if self.host.find("://") == -1:
+                url = urlparse.urlparse("ssh://" + self.host)
+            else:
+                url = urlparse.urlparse(self.host)
             self.host = url.hostname
             if url.port:
                 remote_port = url.port
@@ -149,40 +152,22 @@ class ParamikoConnection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         
+        sftp = self.ssh.open_sftp()
         try:
-            sftp = self.ssh.open_sftp()
-            try:
-                sftp.put(in_path, out_path)
-            except IOError:
-                traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-            sftp.close()
-        except paramiko.SSHException:
-            # Try with scp
-            scp = scp_client.SCPClient(self.ssh.get_transport())
-            try:
-                scp.put(in_path, out_path)
-            except paramiko.SSHException:
-                traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-
+            sftp.put(in_path, out_path)
+        except IOError:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+        sftp.close()
+        
     def fetch_file(self, in_path, out_path):
+        sftp = self.ssh.open_sftp()
         try:
-            sftp = self.ssh.open_sftp()
-            try:
-                sftp.get(in_path, out_path)
-            except IOError:
-                traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file from %s" % in_path)
-            sftp.close()
-        except paramiko.SSHException:
-            # Try with scp
-            scp = scp.SCPClient(self.ssh.get_transport())
-            try:
-                scp.get(in_path, out_path)
-            except (scp.SCPException, paramiko.SSHException):
-                traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+            sftp.get(in_path, out_path)
+        except IOError:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+        sftp.close()
 
     def close(self):
         ''' terminate the connection '''
