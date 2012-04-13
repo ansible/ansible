@@ -151,6 +151,8 @@ class Cli(object):
                 clock = clock - options.poll_interval
                 time.sleep(options.poll_interval)
                 poll_hosts = self.hosts_to_poll(poll_results)
+                if len(poll_hosts)==0:
+                    break
 
 ########################################################
 
