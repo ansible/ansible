@@ -6,21 +6,25 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-If you are running python 2.6 on the **overlord** machine (the machine
+If you are running python 2.6 or later on the **overlord** machine (the machine
 that you'll be talking to the remote machines from), you will need:
 
 * ``paramiko``
 * ``PyYAML``
 * ``python-jinja2`` (for playbooks)
 
-If you are running less than Python 2.6, you will also need:
+If you are only running Python 2.5, you will also need:
 
-* The Python 2.4 or 2.5 backport of the ``multiprocessing`` module (`see here <http://code.google.com/p/python-multiprocessing/wiki/Install>`_)
+* The Python 2.5 backport of the ``multiprocessing`` module (`see here <http://code.google.com/p/python-multiprocessing/wiki/Install>`_)
 * ``python-simplejson``
 
 On the managed nodes, to use templates, you will also need:
 
 * ``python-jinja2`` (you can easily install this using ansible)
+
+And if you have any managed-nodes with python older than 2.6, you will also need:
+
+* ``python-simplejson``
 
 Getting Ansible
 ```````````````
