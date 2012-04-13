@@ -60,7 +60,7 @@ Reading Input
 Let's modify the module to allow setting the current time.  We'll do this by seeing
 if a key value pair in the form `time=<string>` is passed in to the module.
 
-Ansible internally saves arguments to a arguments file.  So we must read the file
+Ansible internally saves arguments to an arguments file.  So we must read the file
 and parse it.  The arguments file is just a string, so any form of arguments are legal.
 Here we'll do some basic parsing to treat the input as key=value.
 
