@@ -1,22 +1,13 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 04/10/2012
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 04/13/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.2
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "04/10/2012" "Ansible 0\&.0\&.2" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE" "1" "04/13/2012" "Ansible 0\&.0\&.2" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,7 +25,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -72,64 +63,56 @@ to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
+\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
 .RS 4
 The
 \fIARGUMENTS\fR
 to pass to the module\&.
 .RE
-.PP
+.sp
+\fB\-D\fR, \fB\-\-debug\fR
+.sp
+Print any messages the remote module sends to standard error to the console
+.sp
 \fB\-k\fR, \fB\-\-ask\-pass\fR
-.RS 4
+.sp
 Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
-.RE
-.PP
+.sp
+\fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
+.sp
+Prompt for the password to use with \-\-sudo, if any
+.sp
 \fB\-o\fR, \fB\-\-one\-line\fR
-.RS 4
+.sp
 Try to output everything on one line\&.
-.RE
-.PP
+.sp
+\fB\-s\fR, \fB\-\-sudo\fR
+.sp
+Run the command as the user given by \-u and sudo to root\&.
+.sp
 \fB\-t\fR \fIDIRECTORY\fR, \fB\-\-tree=\fR\fIDIRECTORY\fR
-.RS 4
-Save contents in this output
-\fIDIRECTORY\fR, with the results saved in a file named after each host\&.
-.RE
-.PP
+.sp
+Save contents in this output \fIDIRECTORY\fR, with the results saved in a file named after each host\&.
+.sp
 \fB\-T\fR \fISECONDS\fR, \fB\-\-timeout=\fR\fISECONDS\fR
-.RS 4
-Connection timeout to use when trying to talk to hosts, in
-\fISECONDS\fR\&.
-.RE
-.PP
+.sp
+Connection timeout to use when trying to talk to hosts, in \fISECONDS\fR\&.
+.sp
 \fB\-B\fR \fINUM\fR, \fB\-\-background=\fR\fINUM\fR
-.RS 4
-Run commands in the background, killing the task after
-\fINUM\fR
-seconds\&.
-.RE
-.PP
+.sp
+Run commands in the background, killing the task after \fINUM\fR seconds\&.
+.sp
 \fB\-P\fR \fINUM\fR, \fB\-\-poll=\fR\fINUM\fR
-.RS 4
-Poll a background job every
-\fINUM\fR
-seconds\&. Requires
-\fB\-B\fR\&.
-.RE
-.PP
+.sp
+Poll a background job every \fINUM\fR seconds\&. Requires \fB\-B\fR\&.
+.sp
 \fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
-.RS 4
-Use this remote
-\fIUSERNAME\fR
-instead of root\&.
-.RE
-.PP
+.sp
+Use this remote \fIUSERNAME\fR instead of root\&.
+.sp
 \fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
-.RS 4
-Connection type to use\&. Possible options are
-\fIparamiko\fR
-and
-\fIlocal\fR\&.
-.RE
+.sp
+Connection type to use\&. Possible options are \fIparamiko\fR (SSH) and \fIlocal\fR\&. Local is mostly useful for crontab or kickstarts\&.
 .SH "INVENTORY"
 .sp
 Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets\&.
