@@ -118,7 +118,6 @@ Contents
    api
    moduledev
    faq
-   man
 
 About the Author
 ````````````````
