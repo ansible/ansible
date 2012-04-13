@@ -223,6 +223,23 @@ Power Tricks
 Now that you have the basics down, let's learn some more advanced
 things you can do with playbooks.
 
+Local Playbooks
++++++++++++++++
+
+It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
+for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+to run a playbook inside a OS installer, such as an Anaconda kickstart.
+
+To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
+
+    playbook playbook.yml --connection=local
+
+Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
+use the default remote connection type::
+
+    hosts: 127.0.0.1
+    connection: local
+
 
 External Variables And Prompted or Sensitive Data
 +++++++++++++++++++++++++++++++++++++++++++++++++
