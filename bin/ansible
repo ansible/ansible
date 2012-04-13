@@ -52,7 +52,8 @@ class Cli(object):
         parser.add_option('-a', '--args', dest='module_args',
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-m', '--module-name', dest='module_name',
-            help="module name to execute", default=C.DEFAULT_MODULE_NAME)
+            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME, 
+            default=C.DEFAULT_MODULE_NAME)
 
         options, args = parser.parse_args()
         self.callbacks.options = options        
