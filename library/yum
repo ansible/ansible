@@ -68,7 +68,7 @@ def pkg_to_dict(po):
     return d
     
 def list_stuff(my, stuff):
-    # FIXME - there are poitential tracebacks that could occur here
+    # FIXME - there are potential tracebacks that could occur here
     # need some more catching for them so we can see what happened
     if stuff == 'installed':
         return [ pkg_to_dict(po) for po in my.rpmdb ]

@@ -297,7 +297,7 @@ class Virt(object):
 
         """
         Stop a domain, and then wipe it from the face of the earth.
-        by deleting the disk image and it's configuration file.
+        by deleting the disk image and its configuration file.
         """
 
         self.__get_conn()
@@ -316,7 +316,7 @@ class Virt(object):
 
     def get_xml(self, vmid):
         """
-        Recieve a Vm id as input
+        Receive a Vm id as input
         Return an xml describing vm config returned by a libvirt call
         """
         conn = libvirt.openReadOnly(None)
