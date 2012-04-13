@@ -1,22 +1,13 @@
 '\" t
 .\"     Title: ansible-playbook
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 04/03/2012
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 04/13/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.2
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "04/03/2012" "Ansible 0\&.0\&.2" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE\-PLAYBOOK" "1" "04/13/2012" "Ansible 0\&.0\&.2" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -42,6 +33,10 @@ ansible\-playbook <filename\&.yml> \&... [options]
 The names of one or more YAML format files to run as ansible playbooks\&.
 .RE
 .SH "OPTIONS"
+.sp
+\fB\-D\fR, \fB\-\-debug\fR
+.sp
+Print any messages the remote module sends to standard error to the console
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
 .RS 4
@@ -71,10 +66,27 @@ is specified as an integer, the default is 5\&.
 Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
 .RE
 .PP
+\fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
+.RS 4
+Prompt for the password to use for playbook plays that request sudo access, if any
+.RE
+.PP
 \fB\-T\fR \fISECONDS\fR, \fB\-\-timeout=\fR\fISECONDS\fR
 .RS 4
 Connection timeout to use when trying to talk to hosts, in
 \fISECONDS\fR\&.
+.RE
+.PP
+\fB\-e\fR \fIEXTRA_VARS\fR, \fB\-\-extra_vars=\fR\fIEXTRA_VARS\fR
+.RS 4
+An additional list of space delimited key=value pairs to pass into the playbook that are not declared in the vars section of the playbook\&.
+.RE
+.PP
+\fB\-O\fR \fIOVERRIDE_HOSTS\fR, \fB\-\-override\-hosts=\fR\fIOVERRIDE_HOSTS\fR
+.RS 4
+Ignore the inventory file and run the playbook against only these hosts\&. "hosts:" line in playbook should be set to
+\fIall\fR
+when using this option\&.
 .RE
 .SH "ENVIRONMENT"
 .sp
