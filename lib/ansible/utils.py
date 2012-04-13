@@ -314,7 +314,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option('-c', '--connection', dest='connection',
                           choices=C.DEFAULT_TRANSPORT_OPTS,
                           default=C.DEFAULT_TRANSPORT,
-                          help="connection type to use")
+                          help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
