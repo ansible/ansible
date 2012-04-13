@@ -284,19 +284,23 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     parser = SortedOptParser(usage)
     parser.add_option('-D','--debug', default=False, action="store_true",
-        help='enable standard error debugging of modules.')
+        help='debug standard error output of remote modules')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
-        help='number of parallel processes to use')
+        help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
-       help='inventory host file', default=constants.DEFAULT_HOST_LIST)
+        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST, 
+        default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, action='store_true',
         help='ask for SSH password')
     parser.add_option('-M', '--module-path', dest='module_path',
-       help="path to module library", default=constants.DEFAULT_MODULE_PATH)
+        help="specify path to module library (default=%s)" % constants.DEFAULT_MODULE_PATH, 
+        default=constants.DEFAULT_MODULE_PATH)
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout', help='set the SSH timeout in seconds')
+        dest='timeout', 
+        help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
     parser.add_option('-p', '--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
-        dest='remote_port', help='set the remote ssh port')
+        dest='remote_port', 
+        help="override the remote ssh port (default=%s)" % constants.DEFAULT_REMOTE_PORT)
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
@@ -308,7 +312,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option("-s", "--sudo", default=False, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='connect as this user')
+            dest='remote_user', 
+            help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
     
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
@@ -318,9 +323,10 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval', help='set the poll interval if using -B')
+            dest='poll_interval', 
+            help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-            help='run asynchronously, failing after X seconds')
+            help='run asynchronously, failing after X seconds (default=N/A)')
 
     return parser
 
