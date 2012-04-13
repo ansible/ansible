@@ -47,7 +47,7 @@ to use it::
 
 You can optionally specify an inventory file (see doc:`patterns`) other than /etc/ansible/hosts::
 
-    $ cat "127.0.0.1" > ~/ansible_hosts
+    $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_HOSTS=~/ansible_hosts
 
 Now let's test things::
