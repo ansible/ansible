@@ -13,7 +13,6 @@ Source0: https://github.com/downloads/ansible/ansible/%{name}-%{version}.tar.gz
 Url: http://ansible.github.com
 
 BuildArch: noarch
-BuildRequires: asciidoc
 BuildRequires: python-devel
 
 Requires: python-paramiko
