@@ -133,6 +133,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
+<li><a class="reference internal" href="#fetch">fetch</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
 <li><a class="reference internal" href="#group">group</a></li>
@@ -208,7 +209,7 @@ noted, any given module does support change hooks.</p>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.</li>
+<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.  The default is &#8216;installed&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo ensure=removed
@@ -270,8 +271,24 @@ support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the <a class="reference internal" href="#setup"><em>setup</em></a>
 module behind the scenes.</p>
 </div>
+<div class="section" id="fetch">
+<h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
+<p>This module works like &#8216;copy&#8217;, but in reverse.  It is used for fetching files
+from remote machines and storing them locally in a file tree, organized by hostname.</p>
+<p><em>src</em>:</p>
+<ul class="simple">
+<li>The file on the remote system to fetch.  This needs to be a file, not a directory. Recursive fetching may be supported later.</li>
+</ul>
+<p><em>dest</em>:</p>
+<ul class="simple">
+<li>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory is &#8216;/foo&#8217;, a src file named &#8216;/tmp/bar&#8217; on host &#8216;host.example.com&#8217;, would be saved into &#8216;/foo/host.example.com/bar&#8217;.</li>
+</ul>
+<p>The fetch module is a useful way to gather log files from remote systems.  If you require
+fetching multiple files from remote systems, you may wish to execute a tar command and
+then fetch the tarball.</p>
+</div>
 <div class="section" id="file">
-<span id="id5"></span><h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
 <p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.
 All parameters available to the file module are also available when running the <cite>copy</cite> or
 <cite>template</cite> modules.</p>
@@ -309,9 +326,10 @@ file path=/some/path owner=foo group=foo state=directory
 file path=/path/to/delete state=absent
 file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</pre>
 </div>
+<p>The file module also supports numerous SELinux attributes (documentation on this pending).</p>
 </div>
 <div class="section" id="git">
-<span id="id6"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
 <ul class="simple">
@@ -331,7 +349,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</
 </div>
 </div>
 <div class="section" id="group">
-<span id="id7"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -351,7 +369,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</
 </div>
 </div>
 <div class="section" id="ohai">
-<span id="id8"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -361,7 +379,7 @@ support change hooks, nor does it make any changes on the system.</p>
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
-<span id="id9"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
 <p>This module does not support change hooks and is informative only - it
@@ -369,7 +387,7 @@ takes no parameters &amp; does not support change hooks, nor does it make
 any changes on the system.</p>
 </div>
 <div class="section" id="service">
-<span id="id10"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <p><em>state</em>:</p>
 <ul class="simple">
@@ -388,7 +406,7 @@ service name=httpd state=restarted</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id11"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the <a class="reference internal" href="#template"><em>template</em></a> module.  Playbooks
 will execute this module automatically as the first step in each play
@@ -410,12 +428,12 @@ tell their source.  All variables are then bubbled up to the caller.</p>
     ntpserver: 'ntp.example.com'
     xyz: 1234</pre>
 </div>
-<p>Example action from <cite>/usr/bin/Ansible</cite>:</p>
-<div class="highlight-python"><pre>Ansible -m all setup -a "ntpserver=ntp.example.com xyz=1234"</pre>
+<p>Example action from <cite>/usr/bin/ansible</cite>:</p>
+<div class="highlight-python"><pre>ansible all -m setup -a "ntpserver=ntp.example.com xyz=1234"</pre>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id12"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the shell rather than directly.</p>
@@ -433,7 +451,7 @@ command was running for.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id13"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
 prior to usage if you are not running from a playbook.   In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
@@ -453,7 +471,7 @@ be a relative or absolute path.</li>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id14"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -506,7 +524,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id15"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <p><em>guest</em>:</p>
@@ -535,15 +553,15 @@ ansible host -m virt -a "guest=foo command=get_xml"
 ansible host -m virt -a "guest=foo command=autostart"</pre>
 </div>
 <p>Example host (hypervisor) management commands from /usr/bin/ansible:</p>
-<div class="highlight-python"><pre>ansible host -m virt -a "freemem"
-ansible host -m virt -a "list_vms"
-ansible host -m virt -a "info"
-ansible host -m virt -a "nodeinfo"
-ansible host -m virt -a "virttype"</pre>
+<div class="highlight-python"><pre>ansible host -m virt -a "command=freemem"
+ansible host -m virt -a "command=list_vms"
+ansible host -m virt -a "command=info"
+ansible host -m virt -a "command=nodeinfo"
+ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id16"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -551,7 +569,7 @@ ansible host -m virt -a "virttype"</pre>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;latest&#8217;, or &#8216;removed&#8217;</li>
+<li>Can be either &#8216;installed&#8217;, &#8216;latest&#8217;, or &#8216;removed&#8217;.  The default is &#8216;installed&#8217;.</li>
 </ul>
 <p><em>list</em>:</p>
 <ul class="simple">
@@ -572,14 +590,14 @@ yum pkg=httpd ensure=installed</pre>
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
 <dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
-<dd>Examples of using modules in /usr/bin/Ansible</dd>
+<dd>Examples of using modules in /usr/bin/ansible</dd>
 <dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
-<dd>Examples of using modules with /usr/bin/Ansible-playbook</dd>
+<dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
 <dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
 <dd>How to write your own modules</dd>
 <dt><a class="reference internal" href="api.html"><em>API &amp; Integrations</em></a></dt>
 <dd>Examples of using modules with the Python API</dd>
-<dt><a class="reference external" href="http://groups.google.com/group/Ansible-project">Mailing List</a></dt>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
 <dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
 <dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
 <dd>#ansible IRC chat channel</dd>

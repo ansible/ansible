@@ -138,6 +138,7 @@ s.parentNode.insertBefore(ga, s);
 </li>
 <li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
+<li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
 <li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables And Prompted or Sensitive Data</a></li>
 <li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
@@ -197,7 +198,7 @@ Each playbook is composed of one or more &#8216;plays&#8217; in a list.</p>
 orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
 server group, then more commands back on the webservers group, etc.</p>
-<p>For starters, here&#8217;s a playbook that contains just one play.:</p>
+<p>For starters, here&#8217;s a playbook that contains just one play:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   vars:
@@ -355,6 +356,20 @@ won&#8217;t need them for much else.</p>
 <h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
 <p>Now that you have the basics down, let&#8217;s learn some more advanced
 things you can do with playbooks.</p>
+<div class="section" id="local-playbooks">
+<h3>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h3>
+<p>It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
+for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
+<p>To run an entire playbook locally, just set the &#8220;hosts:&#8221; line to &#8220;hosts:127.0.0.1&#8221; and then run the playbook like so:</p>
+<div class="highlight-python"><pre>playbook playbook.yml --connection=local</pre>
+</div>
+<p>Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
+use the default remote connection type:</p>
+<div class="highlight-python"><pre>hosts: 127.0.0.1
+connection: local</pre>
+</div>
+</div>
 <div class="section" id="external-variables-and-prompted-or-sensitive-data">
 <h3>External Variables And Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>
 <p>It&#8217;s a great idea to keep your playbooks under source control, but
@@ -411,7 +426,7 @@ or it could be something like performing some cleanup steps if a filesystem is g
 <p>This is easy to do in Ansible, with the <cite>only_if</cite> clause.  This clause can be applied to any task,
 and allows usage of variables from anywhere in ansible, either denoted with <cite>$dollar_sign_syntax</cite> or
 <cite>{{ braces_syntax }}</cite> and then evaluates them with a Python expression.   Don&#8217;t panic &#8211; it&#8217;s actually
-pretty simple.:</p>
+pretty simple:</p>
 <div class="highlight-python"><pre>vars:
   favcolor: blue
   is_favcolor_blue: "'$favcolor' == 'blue'"
@@ -569,7 +584,7 @@ running operations can go faster.  The easiest way to do this is
 to kick them off all at once and then poll until they are done.</p>
 <p>You will also want to use asynchronous mode on very long running
 operations that might be subject to timeout.</p>
-<p>To launch a task asynchronously, specify it&#8217;s maximum runtime
+<p>To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
 poll value is 10 seconds if you do not specify a value for <cite>poll</cite>:</p>
 <div class="highlight-python"><pre>---

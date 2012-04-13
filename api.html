@@ -165,7 +165,7 @@ s.parentNode.insertBefore(ga, s);
   <div class="section" id="api-integrations">
 <h1>API &amp; Integrations<a class="headerlink" href="#api-integrations" title="Permalink to this headline">¶</a></h1>
 <p>There are two major ways to use Ansible from an API perspective.   The primary way
-is to use the Ansible python API to control nodes.  Ansible is written in it&#8217;s own
+is to use the Ansible python API to control nodes.  Ansible is written in its own
 API so you have a considerable amount of power there.</p>
 <p>Also covered here, Ansible&#8217;s
 list of hosts, groups, and variables assigned to each host can be driven from
@@ -244,8 +244,7 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
 of these options via an external interventory system.</p>
-<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding,J
-but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
+<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding, but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
 <p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>

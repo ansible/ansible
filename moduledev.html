@@ -212,7 +212,7 @@ chmod +x ansible/hacking/test-module</pre>
 <h2>Reading Input<a class="headerlink" href="#reading-input" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s modify the module to allow setting the current time.  We&#8217;ll do this by seeing
 if a key value pair in the form <cite>time=&lt;string&gt;</cite> is passed in to the module.</p>
-<p>Ansible internally saves arguments to a arguments file.  So we must read the file
+<p>Ansible internally saves arguments to an arguments file.  So we must read the file
 and parse it.  The arguments file is just a string, so any form of arguments are legal.
 Here we&#8217;ll do some basic parsing to treat the input as key=value.</p>
 <p>The example usage we are trying to achieve to set the time is:</p>
