@@ -67,7 +67,7 @@ def main(args):
             host_list=options.inventory, override_hosts=override_hosts,
             extra_vars=options.extra_vars,
             forks=options.forks, debug=options.debug, verbose=True,
-            remote_pass=sshpass, remote_port=options.remote_port,
+            remote_pass=sshpass, 
             callbacks=playbook_cb, runner_callbacks=runner_cb, stats=stats,
             timeout=options.timeout, transport=options.connection,
             sudo_pass=sudopass

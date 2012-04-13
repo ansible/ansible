@@ -34,6 +34,10 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
+*-D*, *--debug*          
+
+Print any messages the remote module sends to standard error to the console
+
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
@@ -55,9 +59,26 @@ Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
 
 
+*-K*, *--ask-sudo-pass*::
+
+Prompt for the password to use for playbook plays that request sudo access, if any
+
+
 *-T* 'SECONDS', *--timeout=*'SECONDS'::
 
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
+
+
+*-e* 'EXTRA_VARS', *--extra_vars=*'EXTRA_VARS'::
+
+An additional list of space delimited key=value pairs to pass into the playbook that are not
+declared in the vars section of the playbook.
+
+
+*-O* 'OVERRIDE_HOSTS', *--override-hosts=*'OVERRIDE_HOSTS'::
+
+Ignore the inventory file and run the playbook against only these hosts.  "hosts:" line
+in playbook should be set to 'all' when using this option.
 
 
 ENVIRONMENT
