@@ -54,6 +54,7 @@ class PlayBook(object):
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
+        sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
         override_hosts   = None,
@@ -82,9 +83,10 @@ class PlayBook(object):
         self.override_hosts   = override_hosts
         self.extra_vars       = extra_vars
         self.stats            = stats
+        self.sudo_pass        = sudo_pass
 
-        self.basedir = os.path.dirname(playbook)
-        self.playbook = self._parse_playbook(playbook)
+        self.basedir          = os.path.dirname(playbook)
+        self.playbook         = self._parse_playbook(playbook)
 
         self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
             host_list, override_hosts=self.override_hosts, extra_vars=self.extra_vars)
@@ -288,7 +290,7 @@ class PlayBook(object):
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             extra_vars=self.extra_vars, debug=self.debug, sudo=sudo,
-            transport=transport
+            transport=transport, sudo_pass=self.sudo_pass
         )
 
         if async_seconds == 0:
@@ -450,7 +452,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=self.remote_port,
             setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
-            transport=transport,
+            transport=transport, sudo_pass=self.sudo_pass
         ).run()
         self.stats.compute(setup_results, setup=True)
 

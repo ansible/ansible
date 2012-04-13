@@ -46,8 +46,11 @@ def main(args):
         return 1
 
     sshpass = None
+    sudopass = None
     if options.ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
+    if options.ask_sudo_pass:
+        sudopass = getpass.getpass(prompt="sudo password: ")
     override_hosts = None
     if options.override_hosts:
         override_hosts = options.override_hosts.split(",")
@@ -66,7 +69,8 @@ def main(args):
             forks=options.forks, debug=options.debug, verbose=True,
             remote_pass=sshpass, remote_port=options.remote_port,
             callbacks=playbook_cb, runner_callbacks=runner_cb, stats=stats,
-            timeout=options.timeout, transport=options.connection
+            timeout=options.timeout, transport=options.connection,
+            sudo_pass=sudopass
         )
         try:
 
