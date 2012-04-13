@@ -477,11 +477,11 @@ Example guest management commands from /usr/bin/ansible::
 
 Example host (hypervisor) management commands from /usr/bin/ansible::
 
-    ansible host -m virt -a "freemem"
-    ansible host -m virt -a "list_vms"
-    ansible host -m virt -a "info"
-    ansible host -m virt -a "nodeinfo"
-    ansible host -m virt -a "virttype"
+    ansible host -m virt -a "command=freemem"
+    ansible host -m virt -a "command=list_vms"
+    ansible host -m virt -a "command=info"
+    ansible host -m virt -a "command=nodeinfo"
+    ansible host -m virt -a "command=virttype"
 
 .. _yum:
 
