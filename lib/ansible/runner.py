@@ -73,8 +73,9 @@ class Runner(object):
         module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
-        remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
-        transport=C.DEFAULT_TRANSPORT, conditional='True', groups={}, callbacks=None, verbose=False,
+        sudo_pass=C.DEFAULT_SUDO_PASS, remote_port=C.DEFAULT_REMOTE_PORT, background=0, 
+        basedir=None, setup_cache=None, transport=C.DEFAULT_TRANSPORT, 
+        conditional='True', groups={}, callbacks=None, verbose=False,
         debug=False, sudo=False, extra_vars=None, module_vars=None):
    
         if setup_cache is None:
@@ -115,6 +116,7 @@ class Runner(object):
         self.background  = background
         self.basedir     = basedir
         self.sudo        = sudo
+        self.sudo_pass   = sudo_pass
 
         euid = pwd.getpwuid(os.geteuid())[0]
         if self.transport == 'local' and self.remote_user != euid:

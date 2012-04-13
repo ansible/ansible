@@ -112,15 +112,26 @@ class ParamikoConnection(object):
             sudo_chan = ssh_sudo.invoke_shell()
             sudo_chan.send("sudo -s\n")
 
+            # FIXME: using sudo with a password adds more delay, someone may wish
+            # to optimize to see when the channel is actually ready
+            if self.runner.sudo_pass:
+                time.sleep(0.1) # this is conservative
+                sudo_chan.send("%s\n" % self.runner.sudo_pass)
+                time.sleep(0.1)
+
             # to avoid ssh expect logic, redirect output to file and move the
             # file when we are done with it...
             sudo_chan.send("(%s >%s_pre 2>/dev/null ; mv %s_pre %s) &\n" % (cmd, result_file, result_file, result_file))
+            # FIXME: someone may wish to optimize to not background the launch, and tell when the command
+            # returns, removing the time.sleep(1) here
             time.sleep(1)
             sudo_chan.close()
             self.ssh = self._get_conn()
 
             # now load the results of the JSON execution...
             # FIXME: really need some timeout logic here
+            # though it doesn't make since to use the SSH timeout or impose any particular
+            # limit.  Upgrades welcome.
             sftp = self.ssh.open_sftp()
             while True:
                 # print "waiting on %s" % result_file
@@ -181,6 +192,12 @@ class LocalConnection(object):
         ''' run a command on the local host '''
         if self.runner.sudo and sudoable:
             cmd = "sudo -s %s" % cmd
+        if self.runner.sudo_pass:
+            # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
+            # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
+            # so this doesn't seem to be a huge priority
+            raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
+
         p = subprocess.Popen(cmd, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
