@@ -33,7 +33,7 @@ def main(args):
 
     # create parser for CLI options
     usage = "%prog playbook.yml"
-    parser = utils.base_parser(constants=C, usage=usage)
+    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True)
     parser.add_option('-e', '--extra-vars', dest='extra_vars',
         help='arguments to pass to the inventory script')
     parser.add_option('-O', '--override-hosts', dest="override_hosts", default=None,
@@ -43,8 +43,6 @@ def main(args):
 
     if len(args) == 0:
         parser.print_help(file=sys.stderr)
-        #QUESTION for M.D. This would match bin/ansible's behavior. Do we want them consistent?
-        #parser.print_help()
         return 1
 
     sshpass = None
@@ -68,7 +66,7 @@ def main(args):
             forks=options.forks, debug=options.debug, verbose=True,
             remote_pass=sshpass, remote_port=options.remote_port,
             callbacks=playbook_cb, runner_callbacks=runner_cb, stats=stats,
-            timeout=options.timeout,
+            timeout=options.timeout, transport=options.connection
         )
         try:
 
