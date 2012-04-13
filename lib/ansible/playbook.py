@@ -55,6 +55,7 @@ class PlayBook(object):
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
+        transport        = C.DEFAULT_TRANSPORT,
         override_hosts   = None,
         extra_vars       = None,
         debug            = False,
@@ -73,6 +74,7 @@ class PlayBook(object):
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port
+        self.transport        = transport
         self.debug            = debug
         self.verbose          = verbose
         self.callbacks        = callbacks
@@ -272,7 +274,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_module(self, pattern, host_list, module, args, vars, remote_user, 
-        async_seconds, async_poll_interval, only_if, sudo):
+        async_seconds, async_poll_interval, only_if, sudo, transport):
         ''' run a particular module step in a playbook '''
 
         hosts = [ h for h in host_list if (h not in self.stats.failures) and (h not in self.stats.dark)]
@@ -285,7 +287,8 @@ class PlayBook(object):
             remote_port=self.remote_port, module_vars=vars,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
-            extra_vars=self.extra_vars, debug=self.debug, sudo=sudo
+            extra_vars=self.extra_vars, debug=self.debug, sudo=sudo,
+            transport=transport
         )
 
         if async_seconds == 0:
@@ -296,7 +299,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_task(self, pattern=None, host_list=None, task=None, 
-        remote_user=None, handlers=None, conditional=False, sudo=False):
+        remote_user=None, handlers=None, conditional=False, sudo=False, transport=None):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # load the module name and parameters from the task entry
@@ -328,7 +331,7 @@ class PlayBook(object):
         # run the task in parallel
         results = self._run_module(pattern, host_list, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
-            async_poll_interval, only_if, sudo)
+            async_poll_interval, only_if, sudo, transport)
 
         self.stats.compute(results)
 
@@ -423,7 +426,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, port, sudo, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, port, sudo, transport, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -447,6 +450,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=self.remote_port,
             setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
+            transport=transport,
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -486,15 +490,16 @@ class PlayBook(object):
         user       = pg.get('user', self.remote_user)
         port       = pg.get('port', self.remote_port)
         sudo       = pg.get('sudo', False)
+        transport  = pg.get('connection', self.transport)
 
         self.callbacks.on_play_start(pattern)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self._do_setup_step(pattern, vars, user, port, sudo, None)
+        self._do_setup_step(pattern, vars, user, port, sudo, transport, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self._do_setup_step(pattern, vars, user, port, sudo, vars_files)
+            self._do_setup_step(pattern, vars, user, port, sudo, transport, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -504,7 +509,8 @@ class PlayBook(object):
                 task=task, 
                 handlers=handlers,
                 remote_user=user,
-                sudo=sudo
+                sudo=sudo,
+                transport=transport
             )
 
         # handlers only run on certain nodes, they are flagged by _flag_handlers
@@ -523,7 +529,8 @@ class PlayBook(object):
                    host_list=triggered_by,
                    conditional=True,
                    remote_user=user,
-                   sudo=sudo
+                   sudo=sudo,
+                   transport=transport
                 )
 
         # end of execution for this particular pattern.  Multiple patterns

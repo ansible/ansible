@@ -96,6 +96,10 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 Use this remote 'USERNAME' instead of root.
 
+*-c* 'CONNECTION', *--connection=*'CONNECTION'::
+
+Connection type to use.  Possible options are 'paramiko' and 'local'.
+
 
 INVENTORY
 ---------

@@ -22,6 +22,7 @@ import fnmatch
 import multiprocessing
 import signal
 import os
+import pwd
 import Queue
 import random
 import traceback
@@ -73,7 +74,7 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
         remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
         remote_port=C.DEFAULT_REMOTE_PORT, background=0, basedir=None, setup_cache=None,
-        transport='paramiko', conditional='True', groups={}, callbacks=None, verbose=False,
+        transport=C.DEFAULT_TRANSPORT, conditional='True', groups={}, callbacks=None, verbose=False,
         debug=False, sudo=False, extra_vars=None, module_vars=None):
    
         if setup_cache is None:
@@ -86,7 +87,9 @@ class Runner(object):
         self.callbacks = callbacks
 
         self.generated_jid = str(random.randint(0, 999999999999))
-        self.connector = ansible.connection.Connection(self, transport)
+
+        self.transport = transport
+        self.connector = ansible.connection.Connection(self, self.transport)
 
         if type(host_list) == str:
             self.host_list, self.groups = self.parse_hosts(host_list)
@@ -113,6 +116,9 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
 
+        euid = pwd.getpwuid(os.geteuid())[0]
+        if self.transport == 'local' and self.remote_user != euid:
+            raise Exception("User mismatch: expected %s, but is %s" % (self.remote_user, euid))
         if type(self.module_args) != str and type(self.module_args) != dict:
             raise Exception("module_args must be a string or dict: %s" % self.module_args)
 

@@ -279,7 +279,7 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage)
@@ -310,6 +310,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
             dest='remote_user', help='connect as this user')
     
+    if connect_opts:
+        parser.add_option('-c', '--connection', dest='connection',
+                          choices=C.DEFAULT_TRANSPORT_OPTS,
+                          default=C.DEFAULT_TRANSPORT,
+                          help="connection type to use")
+
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
             dest='poll_interval', help='set the poll interval if using -B')
