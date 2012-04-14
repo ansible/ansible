@@ -163,7 +163,30 @@ class PlayBook(object):
                     self._include_tasks(play, task, dirname, new_tasks)
                 else:
                     new_tasks.append(task)
-            play['tasks'] = new_tasks
+
+            # now new_tasks contains a list of tasks, but tasks may contain
+            # lists of with_items to loop over.  Do that.
+            # TODO: refactor into subfunction
+            new_tasks2 = []
+            for task in new_tasks:
+                if 'with_items' in task:
+                    for item in task['with_items']:
+                        produced_task = {}
+                        name    = task.get('name', task.get('action', 'unnamed task'))
+                        action  = task.get('action', None)
+                        only_if = task.get('only_if', None)
+                        if action is None:
+                            raise errors.AnsibleError('action is required')
+                        produced_task = task.copy()
+                        produced_task['action'] = utils.template(action, dict(item=item))
+                        produced_task['name'] = utils.template(name, dict(item=item))
+                        if only_if:
+                            produced_task['only_if'] = utils.template(only_if, dict(item=item))
+                        new_tasks2.append(produced_task)
+                else:
+                    new_tasks2.append(task)
+
+            play['tasks'] = new_tasks2
 
             # process handlers as well as imported handlers
             new_handlers = [] 
