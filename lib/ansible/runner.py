@@ -76,7 +76,7 @@ class Runner(object):
         sudo_pass=C.DEFAULT_SUDO_PASS, remote_port=C.DEFAULT_REMOTE_PORT, background=0, 
         basedir=None, setup_cache=None, transport=C.DEFAULT_TRANSPORT, 
         conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None, module_vars=None):
+        debug=False, sudo=False, extra_vars=None, module_vars=None, is_playbook=False):
    
         if setup_cache is None:
             setup_cache = {}
@@ -117,6 +117,7 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
         self.sudo_pass   = sudo_pass
+        self.is_playbook = is_playbook
 
         euid = pwd.getpwuid(os.geteuid())[0]
         if self.transport == 'local' and self.remote_user != euid:
@@ -401,6 +402,23 @@ class Runner(object):
 
     # *****************************************************
 
+    def _save_setup_result_to_disk(self, conn, result):
+       ''' cache results of calling setup '''
+
+       dest = os.path.expanduser("~/.ansible/setup_data")
+       if self.remote_user == 'root':
+           dest = "/var/lib/ansible/setup_data"
+       if not os.path.exists(dest):
+           os.makedirs(dest)
+
+       fh = open(os.path.join(dest, conn.host), "w")
+       fh.write(result)
+       fh.close()
+
+       return result
+
+    # *****************************************************
+
     def _add_result_to_setup_cache(self, conn, result):
         ''' allows discovered variables to be used in templates and action statements '''
 
@@ -434,6 +452,8 @@ class Runner(object):
 
         if module_name == 'setup':
             self._add_result_to_setup_cache(conn, result)
+            if self.is_playbook:
+                self._save_setup_result_to_disk(conn, result)
 
         return self._return_from_module(conn, host, result, err, executed)
 
