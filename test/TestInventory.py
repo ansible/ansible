@@ -2,6 +2,7 @@ import os
 import unittest
 
 from ansible.inventory import Inventory
+from ansible.runner import Runner
 
 class TestInventory(unittest.TestCase):
 
@@ -141,3 +142,26 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('thor', 'simple=yes')
 
         assert vars == {"hammer":True, "simple": "yes"}
+
+    ### Test Runner class method
+
+    def test_class_method(self):
+        hosts, groups = Runner.parse_hosts(self.inventory_file)
+
+        expected_hosts = ['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+        expected_groups= {
+            'ungrouped': ['jupiter', 'saturn'],
+            'greek': ['zeus', 'hera', 'poseidon'],
+            'norse': ['thor', 'odin', 'loki']
+        }
+        assert groups == expected_groups
+
+    def test_class_override(self):
+        override_hosts = ['thor', 'odin']
+        hosts, groups = Runner.parse_hosts(self.inventory_file, override_hosts)
+
+        assert hosts == override_hosts
+
+        assert groups == { 'ungrouped': override_hosts }
