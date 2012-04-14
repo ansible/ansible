@@ -105,6 +105,9 @@ class Inventory(object):
                 groups[group_name] = []
             elif item != "":
                 # looks like a regular host
+                if ":" in item:
+                    # a port was specified
+                    item, port = item.split(":")
                 groups[group_name].append(item)
                 if not item in results:
                     results.append(item)
