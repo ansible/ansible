@@ -25,9 +25,11 @@ If you want to run commands as a different user than root::
 
     ansible atlanta -a "/usr/bin/foo" -u yourname
 
-If you want to run commands through sudo::
+If you want to run commands through sudo:
     
-    ansible atlanta -a "/usr/bin/foo" -u yourname --sudo
+    ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]
+
+Use --ask-sudo-pass (-K) if you are not using passwordless sudo.
 
 If you need to access SSH on a different port::
     
