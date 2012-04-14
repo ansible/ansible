@@ -28,7 +28,7 @@ Ansible isn't just for idempotent configuration -- it's also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
 
 Innovative Multi-node Control
-+++++++++++++++++++++++++++++
+`````````````````````````````
 
 Where Ansible excels though, is expressing complex multi-node 
 deployment processes, executing ordered sequences on 
@@ -40,7 +40,7 @@ version of software if required.
 Multi-machine software deployment is poorly solved by most systems management tools -- often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.  
 
 Deployment and Configuration, Unified
-+++++++++++++++++++++++++++++++++++++
+`````````````````````````````````````
 
 Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks -- having been designed with this problem in mind -- are good at both deployment & idempotent configuration, meaning you don't have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required -- while avoiding the problem of fragile scripting that assumes certain starting
 or ending states.
