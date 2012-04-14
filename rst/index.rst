@@ -41,15 +41,19 @@ or ending states.
 
 Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language -- you can write :doc:`modules` as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it's also trivially easy to just execute useful shell commands.
 
-Why use Ansible versus something else?  (Puppet, Chef, Capistrano, etc?) Ansible will have far
+Why use Ansible versus other configuration management tools?  (Puppet, Chef, etc?) Ansible will have far
 less code, it will be (by extension) more correct, and it will be the
 easiest thing to hack on and use you'll ever see -- regardless of your
-favorite language of choice.
+favorite language of choice.  Versus other deployment tools?  (Capistrano, Fabric?).  Ansible playbooks are easier
+to use (not being code) and also allows intermixing of idempotent configuration management rules for a higher level
+of control.  Further, it was designed for deploying multi-node applications from the beginning.
 
-Systems management doesn't have to be complicated.  Ansible's docs
-will remain short & simple, and the source will be blindingly obvious.  
+Compared with most configuration managememnt tools, Ansible is also more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with it's own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as neccesssary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
+If a central server containing your playbooks are comprimised, your nodes are not -- which is NOT the case
+of these other tools, which can, more or less, turn into a botnet.  Our security approach is to avoid writing custom
+crypto code altogether, and rely on the most secure part of the Linux/Unix subsystem that your machines are already using.
 
-We've learned well from "Infrastructure is Code".  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project -- bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.
+Systems management doesn't have to be complicated.  Ansible's docs will remain short & simple, and the source will be blindingly obvious.  We've learned well from "Infrastructure is Code".  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project -- bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.
 
 
 Architecture

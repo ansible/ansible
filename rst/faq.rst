@@ -137,6 +137,24 @@ useful for sysadmins (not just web developers), and can also be used for firing 
 Other Questions
 ---------------
 
+What is Ansible's approach to security?
++++++++++++++++++++++++++++++++++++++++
+
+Ansible aims to not develop custom daemon code but rely heavily on OpenSSH, which is extremely well
+peer reviewed and the most widely used security subsystem in the industry.  As a result, Ansible
+has a lower attack surface than any configuration management tool featuring daemons that run
+as root, and you do not have to worry about network security vulnerabilities in the tool itself.  
+
+If your central server is taken over (or even logged into by a malicious employee), 
+provided you were using SSH-agent and passwords with keys (and/or sudo with a password), 
+your keys are still locked and no one can take control of your nodes.
+
+Compared with something like Chef/Puppet/other, compromised manifests would lead
+to a loss of the whole network, with your network turning into an easily controllable
+botnet.  Further by not running daemon infrastructure, you have more
+free RAM and compute resources, which should be relevant to users wanting to maximize their
+computing investments.
+
 How does Ansible scale?
 +++++++++++++++++++++++
 
