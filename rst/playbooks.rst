@@ -80,6 +80,9 @@ Support for running things from sudo is also available::
       user: yourname
       sudo: True
 
+If you need to specify a password to sudo, run `ansible-playbook` with `--ask-sudo-pass` (`-K`).
+If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
+Just `Control-C` to kill it and run it again with `-K`.
 
 Vars section
 ++++++++++++

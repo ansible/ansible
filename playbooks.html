@@ -239,6 +239,9 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
   user: yourname
   sudo: True</pre>
 </div>
+<p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <cite>&#8211;ask-sudo-pass</cite> (<cite>-K</cite>).
+If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
+Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
@@ -659,7 +662,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 12, 2012.<br/>
+      Last updated on Apr 14, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

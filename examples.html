@@ -181,8 +181,9 @@ ssh-add ~/.ssh/id_rsa.pub</pre>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname</pre>
 </div>
 <p>If you want to run commands through sudo:</p>
-<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname --sudo</pre>
-</div>
+<blockquote>
+<div>ansible atlanta -a &#8220;/usr/bin/foo&#8221; -u yourname &#8211;sudo [&#8211;ask-sudo-pass]</div></blockquote>
+<p>Use &#8211;ask-sudo-pass (-K) if you are not using passwordless sudo.</p>
 <p>If you need to access SSH on a different port:</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -p 2112</pre>
 </div>
@@ -340,7 +341,7 @@ a simplified syntax for this.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 12, 2012.<br/>
+      Last updated on Apr 14, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

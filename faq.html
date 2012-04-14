@@ -137,6 +137,7 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </li>
 <li><a class="reference internal" href="#other-questions">Other Questions</a><ul>
+<li><a class="reference internal" href="#what-is-ansible-s-approach-to-security">What is Ansible&#8217;s approach to security?</a></li>
 <li><a class="reference internal" href="#how-does-ansible-scale">How does Ansible scale?</a></li>
 <li><a class="reference internal" href="#are-transports-other-than-ssh-supported">Are transports other than SSH supported?</a></li>
 <li><a class="reference internal" href="#what-are-some-ideal-uses-for-ansible">What are some ideal uses for Ansible?</a></li>
@@ -277,6 +278,21 @@ useful for sysadmins (not just web developers), and can also be used for firing 
 </div>
 <div class="section" id="other-questions">
 <h2>Other Questions<a class="headerlink" href="#other-questions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-is-ansible-s-approach-to-security">
+<h3>What is Ansible&#8217;s approach to security?<a class="headerlink" href="#what-is-ansible-s-approach-to-security" title="Permalink to this headline">¶</a></h3>
+<p>Ansible aims to not develop custom daemon code but rely heavily on OpenSSH, which is extremely well
+peer reviewed and the most widely used security subsystem in the industry.  As a result, Ansible
+has a lower attack surface than any configuration management tool featuring daemons that run
+as root, and you do not have to worry about network security vulnerabilities in the tool itself.</p>
+<p>If your central server is taken over (or even logged into by a malicious employee),
+provided you were using SSH-agent and encrypted keys (and/or sudo with a password),
+your keys are still locked and no one can take control of your nodes.</p>
+<p>Compared with something like Chef/Puppet/other, compromised manifests would lead
+to a loss of the whole network, with your network turning into an easily controllable
+botnet.  Further by not running daemon infrastructure, you have more
+free RAM and compute resources, which should be relevant to users wanting to maximize their
+computing investments.</p>
+</div>
 <div class="section" id="how-does-ansible-scale">
 <h3>How does Ansible scale?<a class="headerlink" href="#how-does-ansible-scale" title="Permalink to this headline">¶</a></h3>
 <p>Whether in single-execution mode or using ansible playbooks, ansible can
@@ -335,7 +351,7 @@ tasks &#8211; whether for a QA sytem, build system, or anything you can think of
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 12, 2012.<br/>
+      Last updated on Apr 14, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

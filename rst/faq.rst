@@ -146,7 +146,7 @@ has a lower attack surface than any configuration management tool featuring daem
 as root, and you do not have to worry about network security vulnerabilities in the tool itself.  
 
 If your central server is taken over (or even logged into by a malicious employee), 
-provided you were using SSH-agent and passwords with keys (and/or sudo with a password), 
+provided you were using SSH-agent and encrypted keys (and/or sudo with a password), 
 your keys are still locked and no one can take control of your nodes.
 
 Compared with something like Chef/Puppet/other, compromised manifests would lead
