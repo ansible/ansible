@@ -128,15 +128,20 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Introducing Ansible</a><ul>
+<li><a class="reference internal" href="#innovative-multi-node-control">Innovative Multi-node Control</a></li>
+<li><a class="reference internal" href="#deployment-and-configuration-unified">Deployment and Configuration, Unified</a><ul>
+<li><a class="reference internal" href="#simple-secure-by-default">Simple &amp; Secure By Default</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#architecture">Architecture</a></li>
 <li><a class="reference internal" href="#features">Features</a></li>
 <li><a class="reference internal" href="#resources">Resources</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#contents">Contents</a><ul>
-<li><a class="reference internal" href="#about-the-author">About the Author</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#about-the-author">About the Author</a></li>
 </ul>
 </span>
 </li>
@@ -172,6 +177,8 @@ For comparison, Puppet and Chef have about 60k lines of code.
 Ansible&#8217;s core is a little over 1000 lines.</p>
 <p>Ansible isn&#8217;t just for idempotent configuration &#8211; it&#8217;s also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>.</p>
+<div class="section" id="innovative-multi-node-control">
+<h2>Innovative Multi-node Control<a class="headerlink" href="#innovative-multi-node-control" title="Permalink to this headline">¶</a></h2>
 <p>Where Ansible excels though, is expressing complex multi-node
 deployment processes, executing ordered sequences on
 different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.   Playbooks contain one or
@@ -179,6 +186,9 @@ more plays, each executed against a different batch of nodes.  Think about
 webservers, database servers, and backend servers in a multi-node web environment.  A play could address each set of machines in a cycle, ensuring the configurations of the machines were correct and also updating them to the specified
 version of software if required.</p>
 <p>Multi-machine software deployment is poorly solved by most systems management tools &#8211; often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.</p>
+</div>
+<div class="section" id="deployment-and-configuration-unified">
+<h2>Deployment and Configuration, Unified<a class="headerlink" href="#deployment-and-configuration-unified" title="Permalink to this headline">¶</a></h2>
 <p>Other deployment oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks &#8211; having been designed with this problem in mind &#8211; are good at both deployment &amp; idempotent configuration, meaning you don&#8217;t have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required &#8211; while avoiding the problem of fragile scripting that assumes certain starting
 or ending states.</p>
 <p>Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it&#8217;s also trivially easy to just execute useful shell commands.</p>
@@ -188,17 +198,23 @@ easiest thing to hack on and use you&#8217;ll ever see &#8211; regardless of you
 favorite language of choice.  Versus other deployment tools?  (Capistrano, Fabric?).  Ansible playbooks are easier
 to use (not being code) and also allows intermixing of idempotent configuration management rules for a higher level
 of control.  Further, it was designed for deploying multi-node applications from the beginning.</p>
-<p>Compared with most configuration managememnt tools, Ansible is also more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with it&#8217;s own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as neccesssary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
+<div class="section" id="simple-secure-by-default">
+<h3>Simple &amp; Secure By Default<a class="headerlink" href="#simple-secure-by-default" title="Permalink to this headline">¶</a></h3>
+<p>Compared with most configuration managememnt tools, Ansible is also more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with its own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as neccesssary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
 If a central server containing your playbooks are comprimised, your nodes are not &#8211; which is NOT the case
 of these other tools, which can, more or less, turn into a botnet.  Our security approach is to avoid writing custom
-crypto code altogether, and rely on the most secure part of the Linux/Unix subsystem that your machines are already using.</p>
+crypto code altogether, and rely on the most secure part of the Linux/Unix subsystem that your machines are already using.  There is no PKI subsystem to maintain, which can be a frequent source of problems, particularly when reinstalling or migrating
+hosts.</p>
 <p>Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs will remain short &amp; simple, and the source will be blindingly obvious.  We&#8217;ve learned well from &#8220;Infrastructure is Code&#8221;.  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project &#8211; bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.</p>
+</div>
+</div>
+</div>
 <div class="section" id="architecture">
-<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
+<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
 <div align="center" class="align-center"><img alt="&quot;Architecture Diagram&quot;" class="align-center" src="http://ansible.github.com/ansible_arch2.jpg" style="width: 800px;" /></div>
 </div>
 <div class="section" id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Dead simple setup</li>
 <li>Super fast &amp; parallel by default</li>
@@ -215,7 +231,7 @@ crypto code altogether, and rely on the most secure part of the Linux/Unix subsy
 </ul>
 </div>
 <div class="section" id="resources">
-<h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
+<h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
 <p>Your ideas and contributions are welcome.  We&#8217;re also happy to help
 you with questions about Ansible.</p>
 <ul class="simple">
@@ -236,7 +252,6 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <br/></br>
 </form>
 <br/></div>
-</div>
 <div class="section" id="contents">
 <h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
@@ -359,8 +374,9 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 </li>
 </ul>
 </div>
+</div>
 <div class="section" id="about-the-author">
-<h2>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h2>
+<h1>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h1>
 <p>Ansible was originally developed by <a class="reference external" href="http://michaeldehaan.net">Michael DeHaan</a> (<a class="reference external" href="http://twitter.com/#!/laserllama">&#64;laserllama</a>), a Raleigh, NC
 based software developer and architect.  He created the popular
 DevOps program <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>.
@@ -371,7 +387,6 @@ helped co-author <a class="reference external" href="http://fedorahosted.org/fun
 orchestrate systems in lots of diverse places.  He&#8217;s worked on systems
 software for IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group,
 Puppet Labs, and rPath.  Reach Michael by email <a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">here</a>.</p>
-</div>
 </div>
 
 
