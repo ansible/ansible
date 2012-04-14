@@ -313,7 +313,7 @@ class PlayBook(object):
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             extra_vars=self.extra_vars, debug=self.debug, sudo=sudo,
-            transport=transport, sudo_pass=self.sudo_pass
+            transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
         if async_seconds == 0:
@@ -475,7 +475,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=self.remote_port,
             setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
-            transport=transport, sudo_pass=self.sudo_pass
+            transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
 
