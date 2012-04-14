@@ -28,6 +28,7 @@ import random
 import traceback
 import tempfile
 import subprocess
+import getpass
 
 import ansible.constants as C 
 import ansible.connection
@@ -405,8 +406,9 @@ class Runner(object):
     def _save_setup_result_to_disk(self, conn, result):
        ''' cache results of calling setup '''
 
-       dest = os.path.expanduser("~/.ansible/setup_data")
-       if self.remote_user == 'root':
+       dest = os.path.expanduser("~/.ansible_setup_data")
+       user = getpass.getuser()
+       if user == 'root':
            dest = "/var/lib/ansible/setup_data"
        if not os.path.exists(dest):
            os.makedirs(dest)
