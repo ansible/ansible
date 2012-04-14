@@ -123,6 +123,17 @@ class Runner(object):
         self._tmp_paths  = {}
         random.seed()
 
+    # *****************************************************
+
+    @classmethod
+    def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
+        ''' parse the host inventory file, returns (hosts, groups) '''
+        if override_hosts is None:
+            inventory = ansible.inventory.Inventory(host_list, extra_vars)
+        else:
+            inventory = ansible.inventory.Inventory(override_hosts)
+
+        return inventory.host_list, inventory.groups
 
     # *****************************************************
 
