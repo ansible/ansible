@@ -35,6 +35,7 @@ class Inventory(object):
     def __init__(self, host_list=C.DEFAULT_HOST_LIST, extra_vars=None):
 
         self._restriction = None
+        self._variables = {}
 
         if type(host_list) == list:
             self.host_list = host_list
@@ -80,6 +81,9 @@ class Inventory(object):
     def get_variables(self, host, extra_vars=None):
         """ Return the variables associated with this host. """
 
+        if host in self._variables:
+            return self._variables[host]
+
         if not self._is_script:
             return {}
 
@@ -108,6 +112,11 @@ class Inventory(object):
                 if ":" in item:
                     # a port was specified
                     item, port = item.split(":")
+                    try:
+                        port = int(port)
+                    except ValueError:
+                        raise errors.AnsibleError("SSH port for %s in inventory (%s) should be numerical."%(item, port))
+                    self._set_variable(item, "ansible_ssh_port", port)
                 groups[group_name].append(item)
                 if not item in results:
                     results.append(item)
@@ -169,6 +178,11 @@ class Inventory(object):
                 host
             ))
         return variables
+
+    def _set_variable(self, host, key, value):
+        if not host in self._variables:
+            self._variables[host] = {}
+        self._variables[host][key] = value
 
     def _matches(self, host_name, pattern):
         ''' returns if a hostname is matched by the pattern '''
