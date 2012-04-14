@@ -12,6 +12,7 @@ class TestInventory(unittest.TestCase):
 
         self.inventory_file = os.path.join(self.test_dir, 'simple_hosts')
         self.inventory_script = os.path.join(self.test_dir, 'inventory_api.py')
+        self.inventory_yaml = os.path.join(self.test_dir, 'yaml_hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -25,6 +26,9 @@ class TestInventory(unittest.TestCase):
 
     def script_inventory(self):
         return Inventory( self.inventory_script )
+
+    def yaml_inventory(self):
+        return Inventory( self.inventory_yaml )
 
     def test_simple(self):
         inventory = self.simple_inventory()
@@ -148,6 +152,76 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('thor', 'simple=yes')
 
         assert vars == {"hammer":True, "simple": "yes"}
+
+    ### Tests for yaml inventory file
+
+    def test_yaml(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts()
+        print hosts
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+    def test_yaml_all(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts('all')
+
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+    def test_yaml_norse(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("norse")
+
+        expected_hosts=['thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+    def test_yaml_combined(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("norse:greek")
+
+        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+    def test_yaml_restrict(self):
+        inventory = self.yaml_inventory()
+
+        restricted_hosts = ['hera', 'poseidon', 'thor']
+        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+
+        inventory.restrict_to(restricted_hosts)
+        hosts = inventory.list_hosts("norse:greek")
+
+        assert hosts == restricted_hosts
+
+        inventory.lift_restriction()
+        hosts = inventory.list_hosts("norse:greek")
+
+        assert hosts == expected_hosts
+
+    def test_yaml_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('thor')
+
+        assert vars == {"hammer":True}
+
+    def test_yaml_host_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('saturn')
+
+        assert vars == {"moon":"titan"}
+
+    def test_yaml_extra_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('thor', 'a=5')
+
+        assert vars == {"hammer":True}
+
+    def test_yaml_port(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('hera')
+
+        assert vars == {'ansible_ssh_port': 3000}
 
     ### Test Runner class method
 

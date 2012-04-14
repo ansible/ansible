@@ -97,6 +97,8 @@ class Inventory(object):
         results = []
         groups = dict(ungrouped=[])
         lines = file(self.inventory_file).read().split("\n")
+        if "---" in lines:
+            return self._parse_yaml()
         group_name = 'ungrouped'
         for item in lines:
             item = item.lstrip().rstrip()
@@ -153,6 +155,76 @@ class Inventory(object):
         return (results, groups)
 
     # *****************************************************
+
+    def _parse_yaml(self):
+        """ Load the inventory from a yaml file.
+
+        returns hosts and groups"""
+        data = utils.parse_yaml_from_file(self.inventory_file)
+
+        if type(data) != list:
+            raise errors.AnsibleError("YAML inventory should be a list.")
+
+        hosts = []
+        groups = {}
+
+        for item in data:
+            if type(item) == dict:
+                if "group" in item:
+                    group_name = item["group"]
+
+                    group_vars = []
+                    if "vars" in item:
+                        group_vars = item["vars"]
+
+                    group_hosts = []
+                    if "hosts" in item:
+                        for host in item["hosts"]:
+                            host_name = self._parse_yaml_host(host, group_vars)
+                            group_hosts.append(host_name)
+
+                    groups[group_name] = group_hosts
+                    hosts.extend(group_hosts)
+
+                # or a host
+                elif "host" in item:
+                    host_name = self._parse_yaml_host(item)
+                    hosts.append(host_name)
+            else:
+                host_name = self._parse_yaml_host(item)
+                hosts.append(host_name)
+
+        # filter duplicate hosts
+        output_hosts = []
+        for host in hosts:
+            if host not in output_hosts:
+                output_hosts.append(host)
+
+        return output_hosts, groups
+
+    def _parse_yaml_host(self, item, variables=[]):
+        def set_variables(host, variables):
+            for variable in variables:
+                if len(variable) != 1:
+                    raise AnsibleError("Only one item expected in %s"%(variable))
+                k, v = variable.items()[0]
+                self._set_variable(host, k, v)
+
+        if type(item) in [str, unicode]:
+            set_variables(item, variables)
+            return item
+        elif type(item) == dict:
+            if "host" in item:
+                host_name = item["host"]
+                set_variables(host_name, variables)
+
+                if "vars" in item:
+                    set_variables(host_name, item["vars"])
+
+                return host_name
+        else:
+            raise AnsibleError("Unknown item in inventory: %s"%(item))
+
 
     def _get_variables_from_script(self, host, extra_vars=None):
         ''' support per system variabes from external variable scripts, see web docs '''
