@@ -82,6 +82,12 @@ class TestInventory(unittest.TestCase):
 
         assert vars == {}
 
+    def test_simple_port(self):
+        inventory = self.simple_inventory()
+        vars = inventory.get_variables('hera')
+
+        assert vars == {'ansible_ssh_port': 3000}
+
     ### Inventory API tests
 
     def test_script(self):
