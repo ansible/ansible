@@ -1,0 +1,30 @@
+---
+# this is an example of how to run repeated task elements over lists
+# of items, for example, installing multiple packages or configuring
+# multiple users
+
+- hosts: all
+  user: root
+
+  tasks:
+
+  - name: install $item
+    action: yum pkg=$item state=installed
+    with_items:
+       - cobbler
+       - httpd
+
+  - name: configure user $item
+    action: user name=$item state=present groups=wheel
+    with_items:
+       - testuser1
+       - testuser2
+
+  - name: remove user $item
+    action: user name=$item state=absent
+    with_items:
+        - testuser1
+        - testuser2
+
+
+
