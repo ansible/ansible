@@ -7,3 +7,6 @@ build
 MANIFEST
 dist
 rpm-build
+# Eclipse/PyDev stuff...
+.project
+.pydevproject
