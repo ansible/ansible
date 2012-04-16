@@ -219,6 +219,15 @@ class TestInventory(unittest.TestCase):
 
         assert vars == {"hammer":True}
 
+    def test_yaml_change_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('thor')
+
+        vars["hammer"] = False
+
+        vars = inventory.get_variables('thor')
+        assert vars == {"hammer":True}
+
     def test_yaml_host_vars(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('saturn')
