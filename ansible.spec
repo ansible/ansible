@@ -51,7 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %{_datadir}/ansible
-%config(noreplace) %{_sysconfdir}/ansible/*
+%config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO
 %doc %{_mandir}/man1/ansible*
 
