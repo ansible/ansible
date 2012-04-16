@@ -14,12 +14,17 @@ all: clean python
 tests: 
 	PYTHONPATH=./lib nosetests -v
 
+# To force a rebuild of the docs run 'touch ansible.spec && make docs'
 docs: $(MANPAGES)
 
-%.1.asciidoc.gen: %.1.asciidoc ansible.spec
+# Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
+# recently than %.1.asciidoc.
+%.1.asciidoc: %.1.asciidoc.in
 	sed "s/%VERSION%/$(RPMVERSION)/" $< > $@
 
-%.1: %.1.asciidoc.gen
+# Regenerate %.1 if %.1.asciidoc or ansible.spec has been modified
+# more recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
+%.1: %.1.asciidoc ansible.spec
 	$(ASCII2MAN)
 
 loc:
@@ -45,7 +50,7 @@ clean:
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up asciidoc to man transformations and results"
 	find ./docs/man -type f -name "*.xml" -delete
-	find ./docs/man -type f -name "*.gen" -delete
+	find ./docs/man -type f -name "*.asciidoc" -delete
 	@echo "Cleaning up output from test runs"
 	-rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
