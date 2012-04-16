@@ -51,6 +51,13 @@ class TestInventory(unittest.TestCase):
         expected_hosts=['thor', 'odin', 'loki']
         assert hosts == expected_hosts
 
+    def test_simple_ungrouped(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("ungrouped")
+
+        expected_hosts=['jupiter', 'saturn']
+        assert hosts == expected_hosts
+
     def test_simple_combined(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("norse:greek")
@@ -174,6 +181,13 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts("norse")
 
         expected_hosts=['thor', 'odin', 'loki']
+        assert hosts == expected_hosts
+
+    def test_simple_ungrouped(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("ungrouped")
+
+        expected_hosts=['jupiter']
         assert hosts == expected_hosts
 
     def test_yaml_combined(self):

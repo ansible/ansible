@@ -5,6 +5,8 @@
   vars:
   - moon: titan
 
+- zeus
+
 - group: greek
   hosts:
   - zeus
