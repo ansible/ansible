@@ -20,9 +20,17 @@ Requires: python-paramiko
 Requires: python-jinja2
 
 %description
-Ansible is a extra-simple tool/API for doing 'parallel remote things' over SSH
-executing commands, running "modules", or executing larger 'playbooks' that
-can serve as a configuration management or deployment system.
+
+Ansible is a radically simple deployment, model-driven configuration
+management, and command execution framework. What you get is both an
+extra-simple tool and an API for doing 'parallel remote things' over
+SSH.
+
+Ansible modules are reusable units of magic that can be used by the
+Ansible API, or by the ansible or ansible-playbook programs. Modules
+can be written in any language. Ansible ships with a standard library
+of modules.
+
 
 %prep
 %setup -q
