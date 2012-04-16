@@ -98,11 +98,11 @@ class Cli(object):
 
     # ----------------------------------------------
 
-    def get_polling_runner(self, old_runner, hosts, jid):
+    def get_polling_runner(self, old_runner, jid):
         return ansible.runner.Runner(
             module_name='async_status', module_path=old_runner.module_path,
             module_args="jid=%s" % jid, remote_user=old_runner.remote_user,
-            remote_pass=old_runner.remote_pass, host_list=hosts,
+            remote_pass=old_runner.remote_pass, inventory=old_runner.inventory,
             timeout=old_runner.timeout, forks=old_runner.forks,
             remote_port=old_runner.remote_port, pattern='*', 
             callbacks=self.silent_callbacks, verbose=True,
@@ -138,8 +138,10 @@ class Cli(object):
 
             clock = options.seconds
             while (clock >= 0):
-                polling_runner = self.get_polling_runner(runner, poll_hosts, jid)
+                runner.inventory.restrict_to(poll_hosts)
+                polling_runner = self.get_polling_runner(runner, jid)
                 poll_results = polling_runner.run()
+                runner.inventory.lift_restrictions()
                 if poll_results is None:
                     break
                 for (host, host_result) in poll_results['contacted'].iteritems():
