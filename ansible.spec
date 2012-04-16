@@ -21,15 +21,11 @@ Requires: python-jinja2
 
 %description
 
-Ansible is a radically simple deployment, model-driven configuration
-management, and command execution framework. What you get is both an
-extra-simple tool and an API for doing 'parallel remote things' over
-SSH.
-
-Ansible modules are reusable units of magic that can be used by the
-Ansible API, or by the ansible or ansible-playbook programs. Modules
-can be written in any language. Ansible ships with a standard library
-of modules.
+Ansible is a radically simple model-driven configuration management,
+multi-node deployment, and remote task execution system. Ansible works
+over SSH and does not require any software or daemons to be installed
+on remote nodes. Extension modules can be written in any language and
+are transferred to managed machines automatically.
 
 
 %prep
