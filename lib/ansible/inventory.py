@@ -168,6 +168,8 @@ class Inventory(object):
         hosts = []
         groups = {}
 
+        ungrouped = []
+
         for item in data:
             if type(item) == dict:
                 if "group" in item:
@@ -186,19 +188,32 @@ class Inventory(object):
                     groups[group_name] = group_hosts
                     hosts.extend(group_hosts)
 
-                # or a host
                 elif "host" in item:
                     host_name = self._parse_yaml_host(item)
                     hosts.append(host_name)
+                    ungrouped.append(host_name)
             else:
                 host_name = self._parse_yaml_host(item)
                 hosts.append(host_name)
+                ungrouped.append(host_name)
 
         # filter duplicate hosts
         output_hosts = []
         for host in hosts:
             if host not in output_hosts:
                 output_hosts.append(host)
+
+        if len(ungrouped) > 0 :
+            # hosts can be defined top-level, but also in a group
+            really_ungrouped = []
+            for host in ungrouped:
+                already_grouped = False
+                for name, group_hosts in groups.items():
+                    if host in group_hosts:
+                        already_grouped = True
+                if not already_grouped:
+                    really_ungrouped.append(host)
+            groups["ungrouped"] = really_ungrouped
 
         return output_hosts, groups
 
