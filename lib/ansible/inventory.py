@@ -82,7 +82,7 @@ class Inventory(object):
         """ Return the variables associated with this host. """
 
         if host in self._variables:
-            return self._variables[host]
+            return self._variables[host].copy()
 
         if not self._is_script:
             return {}
