@@ -64,7 +64,8 @@ class PlayBook(object):
         verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
-        stats            = None):
+        stats            = None,
+        sudo             = False):
 
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
@@ -83,6 +84,7 @@ class PlayBook(object):
         self.override_hosts   = override_hosts
         self.extra_vars       = extra_vars
         self.stats            = stats
+        self.sudo             = sudo
         self.sudo_pass        = sudo_pass
 
         self.basedir          = os.path.dirname(playbook)
@@ -529,7 +531,7 @@ class PlayBook(object):
         handlers   = pg.get('handlers', [])
         user       = pg.get('user', self.remote_user)
         port       = pg.get('port', self.remote_port)
-        sudo       = pg.get('sudo', False)
+        sudo       = pg.get('sudo', self.sudo)
         transport  = pg.get('connection', self.transport)
 
         self.callbacks.on_play_start(pattern)

@@ -279,7 +279,7 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
-def base_parser(constants=C, usage="", output_opts=False, port_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage)
@@ -300,11 +300,6 @@ def base_parser(constants=C, usage="", output_opts=False, port_opts=False, runas
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout', 
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
-
-    if port_opts:
-        parser.add_option('-p', '--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
-            dest='remote_port', 
-            help="override the remote ssh port (default=%s)" % constants.DEFAULT_REMOTE_PORT)
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
