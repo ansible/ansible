@@ -18,7 +18,6 @@
 
 ################################################
 
-import fnmatch
 import multiprocessing
 import signal
 import os
@@ -32,6 +31,7 @@ import getpass
 
 import ansible.constants as C 
 import ansible.connection
+import ansible.inventory
 from ansible import utils
 from ansible import errors
 from ansible import callbacks as ans_callbacks
@@ -68,8 +68,6 @@ def _executor_hook(job_queue, result_queue):
 
 class Runner(object):
 
-    _external_variable_script = None
-
     def __init__(self, host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
         module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
@@ -77,7 +75,8 @@ class Runner(object):
         sudo_pass=C.DEFAULT_SUDO_PASS, remote_port=C.DEFAULT_REMOTE_PORT, background=0, 
         basedir=None, setup_cache=None, transport=C.DEFAULT_TRANSPORT, 
         conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None, module_vars=None, is_playbook=False):
+        debug=False, sudo=False, extra_vars=None, 
+        module_vars=None, is_playbook=False, inventory=None):
    
         if setup_cache is None:
             setup_cache = {}
@@ -93,11 +92,10 @@ class Runner(object):
         self.transport = transport
         self.connector = ansible.connection.Connection(self, self.transport)
 
-        if type(host_list) == str:
-            self.host_list, self.groups = self.parse_hosts(host_list)
+        if inventory is None:
+            self.inventory = ansible.inventory.Inventory(host_list, extra_vars)
         else:
-            self.host_list = host_list
-            self.groups    = groups
+            self.inventory = inventory
 
         self.setup_cache = setup_cache
         self.conditional = conditional
@@ -129,106 +127,17 @@ class Runner(object):
         self._tmp_paths  = {}
         random.seed()
 
-
-    # *****************************************************
-
-    @classmethod
-    def parse_hosts_from_regular_file(cls, host_list):
-        ''' parse a textual host file '''
-
-        results = []
-        groups = dict(ungrouped=[])
-        lines = file(host_list).read().split("\n")
-        group_name = 'ungrouped'
-        for item in lines:
-            item = item.lstrip().rstrip()
-            if item.startswith("#"):
-                # ignore commented out lines
-                pass
-            elif item.startswith("["):
-                # looks like a group
-                group_name = item.replace("[","").replace("]","").lstrip().rstrip()
-                groups[group_name] = []
-            elif item != "":
-                # looks like a regular host
-                groups[group_name].append(item)
-                if not item in results:
-                    results.append(item)
-        return (results, groups)
-
-    # *****************************************************
-
-    @classmethod
-    def parse_hosts_from_script(cls, host_list, extra_vars):
-        ''' evaluate a script that returns list of hosts by groups '''
-
-        results = []
-        groups = dict(ungrouped=[])
-        host_list = os.path.abspath(host_list)
-        cls._external_variable_script = host_list
-        cmd = [host_list, '--list']
-        if extra_vars:
-            cmd.extend(['--extra-vars', extra_vars])
-        cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-        out, err = cmd.communicate()
-        rc = cmd.returncode
-        if rc:
-            raise errors.AnsibleError("%s: %s" % (host_list, err))
-        try:
-            groups = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("invalid JSON response from script: %s" % host_list)
-        for (groupname, hostlist) in groups.iteritems():
-            for host in hostlist:
-                if host not in results:
-                    results.append(host)
-        return (results, groups)
-
     # *****************************************************
 
     @classmethod
     def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
-
-        if override_hosts is not None:
-            if type(override_hosts) != list:
-                raise errors.AnsibleError("override hosts must be a list")
-            return (override_hosts, dict(ungrouped=override_hosts))
-
-        if type(host_list) == list:
-            raise Exception("function can only be called on inventory files")
-
-        host_list = os.path.expanduser(host_list)
-        if not os.path.exists(host_list):
-            raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
-
-        if not os.access(host_list, os.X_OK):
-            return Runner.parse_hosts_from_regular_file(host_list)
+        if override_hosts is None:
+            inventory = ansible.inventory.Inventory(host_list, extra_vars)
         else:
-            return Runner.parse_hosts_from_script(host_list, extra_vars)
+            inventory = ansible.inventory.Inventory(override_hosts)
 
-    # *****************************************************
-
-    def _matches(self, host_name, pattern):
-        ''' returns if a hostname is matched by the pattern '''
-
-        # a pattern is in fnmatch format but more than one pattern
-        # can be strung together with semicolons. ex:
-        #   atlanta-web*.example.com;dc-web*.example.com
-
-        if host_name == '':
-            return False
-        pattern = pattern.replace(";",":")
-        subpatterns = pattern.split(":")
-        for subpattern in subpatterns:
-            if subpattern == 'all':
-                return True
-            if fnmatch.fnmatch(host_name, subpattern):
-                return True
-            elif subpattern in self.groups:
-                if host_name in self.groups[subpattern]:
-                    return True
-        return False
+        return inventory.host_list, inventory.groups
 
     # *****************************************************
 
@@ -298,34 +207,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _add_variables_from_script(self, conn, inject):
-        ''' support per system variabes from external variable scripts, see web docs '''
-
-        host = conn.host
-
-        cmd = [Runner._external_variable_script, '--host', host]
-        if self.extra_vars:
-            cmd.extend(['--extra-vars', self.extra_vars])
-
-        cmd = subprocess.Popen(cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False
-        )
-        out, err = cmd.communicate()
-        inject2 = {}
-        try:
-            inject2 = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("%s returned invalid result when called with hostname %s" % (
-                Runner._external_variable_script,
-                host
-            ))
-        # store injected variables in the templates
-        inject.update(inject2)
-
-    # *****************************************************
-
     def _add_setup_vars(self, inject, args):
         ''' setup module variables need special handling '''
 
@@ -379,8 +260,9 @@ class Runner(object):
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
-        if Runner._external_variable_script is not None:
-            self._add_variables_from_script(conn, inject)
+        host_variables = self.inventory.get_variables(conn.host, self.extra_vars)
+        inject.update(host_variables)
+
         if self.module_name == 'setup':
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
@@ -714,13 +596,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _match_hosts(self, pattern):
-        ''' return all matched hosts fitting a pattern '''
-
-        return [ h for h in self.host_list if self._matches(h, pattern) ]
-
-    # *****************************************************
-
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
@@ -767,7 +642,7 @@ class Runner(object):
                 results2["dark"][host] = result
 
         # hosts which were contacted but never got a chance to return
-        for host in self._match_hosts(self.pattern):
+        for host in self.inventory.list_hosts(self.pattern):
             if not (host in results2['dark'] or host in results2['contacted']):
                 results2["dark"][host] = {}
 
@@ -779,7 +654,7 @@ class Runner(object):
         ''' xfer & run module on all matched hosts '''
        
         # find hosts that match the pattern
-        hosts = self._match_hosts(self.pattern)
+        hosts = self.inventory.list_hosts(self.pattern)
         if len(hosts) == 0:
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})

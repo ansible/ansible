@@ -17,6 +17,7 @@
 
 #############################################
 
+import ansible.inventory
 import ansible.runner
 import ansible.constants as C
 from ansible import utils
@@ -68,7 +69,6 @@ class PlayBook(object):
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
-        self.host_list        = host_list
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -88,9 +88,13 @@ class PlayBook(object):
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
 
-        self.host_list, self.groups = ansible.runner.Runner.parse_hosts(
-            host_list, override_hosts=self.override_hosts, extra_vars=self.extra_vars)
-   
+        if override_hosts is not None:
+            if type(override_hosts) != list:
+                raise errors.AnsibleError("override hosts must be a list")
+            self.inventory = ansible.inventory.Inventory(override_hosts)
+        else:
+            self.inventory = ansible.inventory.Inventory(host_list)
+
     # *****************************************************
 
     def _get_vars(self, play, dirname):
@@ -233,7 +237,6 @@ class PlayBook(object):
     def _async_poll(self, runner, hosts, async_seconds, async_poll_interval, only_if):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
-        runner.host_list = hosts
         runner.background = async_seconds
         results = runner.run()
         self.stats.compute(results, poll=True)
@@ -257,7 +260,7 @@ class PlayBook(object):
             return results
 
         clock = async_seconds
-        runner.host_list = self.hosts_to_poll(results)
+        host_list = self.hosts_to_poll(results)
 
         poll_results = results
         while (clock >= 0):
@@ -267,11 +270,13 @@ class PlayBook(object):
             runner.module_name = 'async_status'
             runner.background  = 0  
             runner.pattern     = '*'
+            self.inventory.restrict_to(host_list)
             poll_results       = runner.run()
             self.stats.compute(poll_results, poll=True)
-            runner.host_list       = self.hosts_to_poll(poll_results)
+            host_list          = self.hosts_to_poll(poll_results)
+            self.inventory.lift_restriction()
 
-            if len(runner.host_list) == 0:
+            if len(host_list) == 0:
                 break
             if poll_results is None:
                 break
@@ -298,15 +303,16 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_module(self, pattern, host_list, module, args, vars, remote_user, 
+    def _run_module(self, pattern, module, args, vars, remote_user, 
         async_seconds, async_poll_interval, only_if, sudo, transport):
         ''' run a particular module step in a playbook '''
 
-        hosts = [ h for h in host_list if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        hosts = [ h for h in self.inventory.list_hosts() if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
-            pattern=pattern, groups=self.groups, module_name=module,
-            module_args=args, host_list=hosts, forks=self.forks,
+            pattern=pattern, inventory=self.inventory, module_name=module,
+            module_args=args, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user, 
             remote_port=self.remote_port, module_vars=vars,
@@ -317,13 +323,16 @@ class PlayBook(object):
         )
 
         if async_seconds == 0:
-            return runner.run()
+            results = runner.run()
         else:
-            return self._async_poll(runner, hosts, async_seconds, async_poll_interval, only_if)
+            results = self._async_poll(runner, hosts, async_seconds, async_poll_interval, only_if)
+
+        self.inventory.lift_restriction()
+        return results
 
     # *****************************************************
 
-    def _run_task(self, pattern=None, host_list=None, task=None, 
+    def _run_task(self, pattern=None, task=None, 
         remote_user=None, handlers=None, conditional=False, sudo=False, transport=None):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
@@ -354,7 +363,7 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to
         # run the task in parallel
-        results = self._run_module(pattern, host_list, module_name, 
+        results = self._run_module(pattern, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
             async_poll_interval, only_if, sudo, transport)
 
@@ -406,7 +415,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_conditional_imports(self, vars_files, host_list):
+    def _do_conditional_imports(self, vars_files):
         ''' handle the vars_files section, which can contain variables '''
         
         # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
@@ -417,7 +426,7 @@ class PlayBook(object):
  
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
-        for host in host_list:
+        for host in self.inventory.list_hosts():
             cache_vars = SETUP_CACHE.get(host,{}) 
             SETUP_CACHE[host] = cache_vars
             for filename in vars_files:
@@ -460,16 +469,18 @@ class PlayBook(object):
 
         if vars_files is not None:
             self.callbacks.on_setup_secondary()
-            self._do_conditional_imports(vars_files, self.host_list)
+            self._do_conditional_imports(vars_files)
         else:
             self.callbacks.on_setup_primary()
 
-        host_list = [ h for h in self.host_list if not (h in self.stats.failures or h in self.stats.dark) ]
+        host_list = [ h for h in self.inventory.list_hosts(pattern) 
+                        if not (h in self.stats.failures or h in self.stats.dark) ]
+        self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=pattern, groups=self.groups, module_name='setup',
-            module_args=vars, host_list=host_list,
+            pattern=pattern, module_name='setup',
+            module_args=vars, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
             remote_pass=self.remote_pass, remote_port=self.remote_port,
@@ -478,6 +489,8 @@ class PlayBook(object):
             transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
+
+        self.inventory.lift_restriction()
 
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
@@ -494,7 +507,6 @@ class PlayBook(object):
                     SETUP_CACHE[h].update(extra_vars)
                 except:
                     SETUP_CACHE[h] = extra_vars
-        return host_list
 
     # *****************************************************
 
@@ -530,7 +542,6 @@ class PlayBook(object):
         for task in tasks:
             self._run_task(
                 pattern=pattern,
-                host_list=self.host_list,
                 task=task, 
                 handlers=handlers,
                 remote_user=user,
@@ -547,16 +558,17 @@ class PlayBook(object):
         for task in handlers:
             triggered_by = task.get('run', None)
             if type(triggered_by) == list:
+                self.inventory.restrict_to(triggered_by)
                 self._run_task(
                    pattern=pattern, 
                    task=task,
                    handlers=[],
-                   host_list=triggered_by,
                    conditional=True,
                    remote_user=user,
                    sudo=sudo,
                    transport=transport
                 )
+                self.inventory.lift_restriction()
 
         # end of execution for this particular pattern.  Multiple patterns
         # can be in a single playbook file
