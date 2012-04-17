@@ -32,7 +32,7 @@ class Inventory(object):
     systems, or a script that will be called with --list or --host.
     """
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, extra_vars=None):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
         self._restriction = None
         self._variables = {}
@@ -50,7 +50,7 @@ class Inventory(object):
         self.inventory_file = os.path.abspath(inventory_file)
 
         if os.access(self.inventory_file, os.X_OK):
-            self.host_list, self.groups = self._parse_from_script(extra_vars)
+            self.host_list, self.groups = self._parse_from_script()
             self._is_script = True
         else:
             self.host_list, self.groups = self._parse_from_file()
@@ -78,7 +78,7 @@ class Inventory(object):
         """ Do not restrict list operations """
         self._restriction = None
 
-    def get_variables(self, host, extra_vars=None):
+    def get_variables(self, host):
         """ Return the variables associated with this host. """
 
         if host in self._variables:
@@ -87,7 +87,7 @@ class Inventory(object):
         if not self._is_script:
             return {}
 
-        return self._get_variables_from_script(host, extra_vars)
+        return self._get_variables_from_script(host)
 
     # *****************************************************
 
@@ -126,16 +126,13 @@ class Inventory(object):
 
     # *****************************************************
 
-    def _parse_from_script(self, extra_vars=None):
+    def _parse_from_script(self):
         ''' evaluate a script that returns list of hosts by groups '''
 
         results = []
         groups = dict(ungrouped=[])
 
         cmd = [self.inventory_file, '--list']
-
-        if extra_vars:
-            cmd.extend(['--extra-vars', extra_vars])
 
         cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         out, err = cmd.communicate()
@@ -241,13 +238,10 @@ class Inventory(object):
             raise AnsibleError("Unknown item in inventory: %s"%(item))
 
 
-    def _get_variables_from_script(self, host, extra_vars=None):
+    def _get_variables_from_script(self, host):
         ''' support per system variabes from external variable scripts, see web docs '''
 
         cmd = [self.inventory_file, '--host', host]
-
-        if extra_vars:
-            cmd.extend(['--extra-vars', extra_vars])
 
         cmd = subprocess.Popen(cmd,
             stdout=subprocess.PIPE,

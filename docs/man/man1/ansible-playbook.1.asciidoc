@@ -69,12 +69,6 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
 
-*-e* 'EXTRA_VARS', *--extra_vars=*'EXTRA_VARS'::
-
-An additional list of space delimited key=value pairs to pass into the playbook that are not
-declared in the vars section of the playbook.
-
-
 *-O* 'OVERRIDE_HOSTS', *--override-hosts=*'OVERRIDE_HOSTS'::
 
 Ignore the inventory file and run the playbook against only these hosts.  "hosts:" line
