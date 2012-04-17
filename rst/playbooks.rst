@@ -294,12 +294,6 @@ in a push-script::
 
 There are full examples of both of these items in the github examples/playbooks directory.
 
-Finally, there exists one more option, which feeds variables in from the command line, 
-rather than sourcing them from the usual means::
-
-    ansible-playbook foo.yml --extra-vars="release_version=1234 capital_of_assyria=idontknow"
-
-
 Conditional Execution
 +++++++++++++++++++++
 
