@@ -218,7 +218,7 @@ class Inventory(object):
         def set_variables(host, variables):
             for variable in variables:
                 if len(variable) != 1:
-                    raise AnsibleError("Only one item expected in %s"%(variable))
+                    raise errors.AnsibleError("Only one item expected in %s"%(variable))
                 k, v = variable.items()[0]
                 self._set_variable(host, k, v)
 
@@ -235,7 +235,7 @@ class Inventory(object):
 
                 return host_name
         else:
-            raise AnsibleError("Unknown item in inventory: %s"%(item))
+            raise errors.AnsibleError("Unknown item in inventory: %s"%(item))
 
 
     def _get_variables_from_script(self, host):
