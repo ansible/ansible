@@ -86,7 +86,6 @@ class Runner(object):
         transport=C.DEFAULT_TRANSPORT, 
         conditional='True', 
         callbacks=None, 
-        verbose=False,
         debug=False, 
         sudo=False, 
         module_vars=None, 
@@ -146,7 +145,6 @@ class Runner(object):
         self.module_vars = module_vars
         self.timeout     = timeout
         self.debug       = debug
-        self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.remote_port = remote_port

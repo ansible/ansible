@@ -67,7 +67,6 @@ def main(args):
             override_hosts=override_hosts,
             forks=options.forks, 
             debug=options.debug, 
-            verbose=True,
             remote_user=options.remote_user,
             remote_pass=sshpass, 
             callbacks=playbook_cb, 
