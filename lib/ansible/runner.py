@@ -299,24 +299,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _save_setup_result_to_disk(self, conn, result):
-       ''' cache results of calling setup '''
-
-       dest = os.path.expanduser("~/.ansible_setup_data")
-       user = getpass.getuser()
-       if user == 'root':
-           dest = "/var/lib/ansible/setup_data"
-       if not os.path.exists(dest):
-           os.makedirs(dest)
-
-       fh = open(os.path.join(dest, conn.host), "w")
-       fh.write(result)
-       fh.close()
-
-       return result
-
-    # *****************************************************
-
     def _add_result_to_setup_cache(self, conn, result):
         ''' allows discovered variables to be used in templates and action statements '''
 
@@ -350,8 +332,6 @@ class Runner(object):
 
         if module_name == 'setup':
             self._add_result_to_setup_cache(conn, result)
-            if self.is_playbook:
-                self._save_setup_result_to_disk(conn, result)
 
         return self._return_from_module(conn, host, result, err, executed)
 
