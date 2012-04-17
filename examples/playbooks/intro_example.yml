@@ -9,7 +9,6 @@
 
 - hosts: all
   user: root
-  port: 3000
 
 # could have also have done:
 #  user: mdehaan
