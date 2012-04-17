@@ -136,7 +136,6 @@ class TestPlaybook(unittest.TestCase):
            timeout      = 5,
            remote_user  = self.user,
            remote_pass  = None,
-           verbose      = False,
            stats            = ans_callbacks.AggregateStats(),
            callbacks        = self.test_callbacks,
            runner_callbacks = self.test_callbacks

@@ -90,7 +90,7 @@ class Cli(object):
             forks=options.forks, 
             background=options.seconds, pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
-            sudo_pass=sudopass, verbose=True,
+            sudo_pass=sudopass,
             transport=options.connection, debug=options.debug
         )
         return (runner, runner.run())

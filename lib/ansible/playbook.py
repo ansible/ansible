@@ -60,7 +60,6 @@ class PlayBook(object):
         transport        = C.DEFAULT_TRANSPORT,
         override_hosts   = None,
         debug            = False,
-        verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
@@ -95,7 +94,6 @@ class PlayBook(object):
         self.remote_port      = remote_port
         self.transport        = transport
         self.debug            = debug
-        self.verbose          = verbose
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.override_hosts   = override_hosts
