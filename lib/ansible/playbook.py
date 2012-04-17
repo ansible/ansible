@@ -66,6 +66,24 @@ class PlayBook(object):
         stats            = None,
         sudo             = False):
 
+        """
+        playbook:         path to a playbook file
+        host_list:        path to a file like /etc/ansible/hosts
+        module_path:      path to ansible modules, like /usr/share/ansible/
+        forks:            desired level of paralellism
+        timeout:          connection timeout
+        remote_user:      run as this user if not specified in a particular play
+        remote_pass:      use this remote password (for all plays) vs using SSH keys
+        sudo_pass:        if sudo==True, and a password is required, this is the sudo password
+        remote_port:      default remote port to use if not specified with the host or play
+        transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
+        override_hosts:   skip the inventory file, just talk to these hosts
+        callbacks         output callbacks for the playbook
+        runner_callbacks: more callbacks, this time for the runner API
+        stats:            holds aggregrate data about events occuring to each host
+        sudo:             if not specified per play, requests all plays use sudo mode
+        """
+
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
