@@ -86,7 +86,7 @@ simpler::
 
 Ansible variables are used in templates by using the name surrounded by double
 curly-braces.  If facter or ohai were installed on the remote machine, variables
-from those programs can be accessed too, which the appropriate prefix::
+from those programs can be accessed too, using the appropriate prefix::
 
     This is an Ansible variable: {{ favcolor }}
     This is a facter variable: {{ facter_hostname }}
