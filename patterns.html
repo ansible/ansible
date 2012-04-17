@@ -178,6 +178,10 @@ Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
 </div>
 <p>The things in brackets are group names, you don&#8217;t have to have them,
 but they are useful.</p>
+<p>If you have hosts that run on non-standard SSH ports you can put the port number
+after the hostname with a colon.  This requires Ansible 0.3 (integration branch):</p>
+<div class="highlight-python"><pre>four.example.com:5309</pre>
+</div>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>

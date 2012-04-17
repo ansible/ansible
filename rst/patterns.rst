@@ -28,6 +28,11 @@ The format for /etc/ansible/hosts looks like this::
 The things in brackets are group names, you don't have to have them,
 but they are useful.
 
+If you have hosts that run on non-standard SSH ports you can put the port number
+after the hostname with a colon.  This requires Ansible 0.3 (integration branch)::
+
+    four.example.com:5309
+
 Selecting Targets
 +++++++++++++++++
 
