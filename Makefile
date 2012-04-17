@@ -16,10 +16,10 @@ tests:
 
 docs: $(MANPAGES)
 
-%.1: %.1.asciidoc
-	$(ASCII2MAN)
+%.1.asciidoc.gen: %.1.asciidoc ansible.spec
+	sed "s/%VERSION%/$(RPMVERSION)/" $< > $@
 
-%.5: %.5.asciidoc
+%.1: %.1.asciidoc.gen
 	$(ASCII2MAN)
 
 loc:
@@ -45,6 +45,7 @@ clean:
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up asciidoc to man transformations and results"
 	find ./docs/man -type f -name "*.xml" -delete
+	find ./docs/man -type f -name "*.gen" -delete
 	@echo "Cleaning up output from test runs"
 	-rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
