@@ -1,0 +1,28 @@
+---
+
+- jupiter
+- host: saturn
+  vars:
+  - moon: titan
+
+- zeus
+
+- group: greek
+  hosts:
+  - zeus
+  - hera
+  - poseidon
+  vars:
+  - ansible_ssh_port: 3000
+
+- group: norse
+  hosts:
+  - host: thor
+    vars:
+    - hammer: True
+  - odin
+  - loki
+
+- group: multiple
+  hosts:
+  - saturn
