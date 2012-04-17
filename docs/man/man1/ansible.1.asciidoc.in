@@ -2,7 +2,7 @@ ansible(1)
 =========
 :doctype:manpage
 :man source:   Ansible
-:man version:  0.0.2
+:man version:  %VERSION%
 :man manual:   System administration commands
 
 NAME

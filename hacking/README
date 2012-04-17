@@ -6,6 +6,3 @@ To use it from the root of a checkout:
     $ . ./hacking/env-setup
 
 Note the space between the '.' and the './'
-
-Man pages will not load until you run 'make docs' from the root of the
-checkout.
