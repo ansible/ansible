@@ -75,12 +75,12 @@ Ignore the inventory file and run the playbook against only these hosts.  "hosts
 in playbook should be set to 'all' when using this option.
 
 
-*-s*, *--sudo*
+*-s*, *--sudo*::
 
 Force all plays to use sudo, even if not marked as such.
 
 
-*-u* 'USERNAME', *--remote-user=*'USERNAME'
+*-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
 Use this remote user name on playbook steps that do not indicate a user name to run as.
 
