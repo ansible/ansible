@@ -2,12 +2,12 @@
 .\"     Title: ansible-playbook
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 04/13/2012
+.\"      Date: 04/16/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.2
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "04/13/2012" "Ansible 0\&.0\&.2" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "04/16/2012" "Ansible 0\&.0\&.2" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -88,6 +88,14 @@ Ignore the inventory file and run the playbook against only these hosts\&. "host
 \fIall\fR
 when using this option\&.
 .RE
+.sp
+\fB\-s\fR, \fB\-\-sudo\fR
+.sp
+Force all plays to use sudo, even if not marked as such\&.
+.sp
+\fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
+.sp
+Use this remote user name on playbook steps that do not indicate a user name to run as\&.
 .SH "ENVIRONMENT"
 .sp
 The following environment variables may specified\&.
