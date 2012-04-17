@@ -9,8 +9,8 @@ Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. _inventoryformat:
 
-Inventory File Format
-+++++++++++++++++++++
+Baisc Inventory File Format
++++++++++++++++++++++++++++
 
 The format for /etc/ansible/hosts looks like this::
 
@@ -75,7 +75,54 @@ It's also ok to mix wildcard patterns and groups at the same time::
 .. note::
     It is not possible to target a host not in the inventory file.   This is a safety feature.
 
-Easy enough.  Now see :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
+Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
+
+Advanced Inventory File Format
+++++++++++++++++++++++++++++++
+
+(This features requires the integration branch of Ansible, soon to be release 0.3)
+
+Once you read about playbooks you'll quickly see how useful it will be to assign particular variables
+to particular hosts and groups of hosts.  While the default INI-style host format doesn't allow this,
+switching to the YAML inventory format can add some compelling capabilities.  Just replace your INI
+style file with a YAML one.::
+
+    ---
+    
+    # some ungrouped hosts, either use the short string form or the "host: " prefix
+    - host: jupiter
+    - mars
+
+    # variables can be assigned like this...
+    - host: saturn
+      vars:
+      - moon: titan
+
+    # groups can also set variables to all hosts in the group
+    # here are a bunch of hosts using a non-standard SSH port
+    # and also defining a variable 'ntpserver'
+    - group: greek
+      hosts:
+      - zeus
+      - hera
+      - poseidon
+      vars:
+      - ansible_ssh_port: 3000
+      - ntp_server: olympus.example.com
+
+    # individual hosts can still set variables inside of groups too
+    # so you aren't limited to just group variables and host variables.
+    - group: norse
+      hosts:
+      - host: thor
+        vars:
+        - hammer: True
+      - odin
+      - loki
+      vars:
+        - asdf: 1234
+
+Tip: Be sure to start your YAML file with the YAML record designator "---".
 
 .. seealso::
 

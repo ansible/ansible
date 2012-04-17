@@ -129,8 +129,9 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">The Inventory File, Patterns, and Groups</a><ul>
-<li><a class="reference internal" href="#inventory-file-format">Inventory File Format</a></li>
+<li><a class="reference internal" href="#baisc-inventory-file-format">Baisc Inventory File Format</a></li>
 <li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
+<li><a class="reference internal" href="#advanced-inventory-file-format">Advanced Inventory File Format</a></li>
 </ul>
 </li>
 </ul>
@@ -160,8 +161,8 @@ s.parentNode.insertBefore(ga, s);
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
-<div class="section" id="inventory-file-format">
-<span id="inventoryformat"></span><h2>Inventory File Format<a class="headerlink" href="#inventory-file-format" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="baisc-inventory-file-format">
+<span id="inventoryformat"></span><h2>Baisc Inventory File Format<a class="headerlink" href="#baisc-inventory-file-format" title="Permalink to this headline">¶</a></h2>
 <p>The format for /etc/ansible/hosts looks like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 
@@ -216,7 +217,51 @@ wildcards:</p>
 <p class="first admonition-title">Note</p>
 <p class="last">It is not possible to target a host not in the inventory file.   This is a safety feature.</p>
 </div>
-<p>Easy enough.  Now see <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
+<p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
+</div>
+<div class="section" id="advanced-inventory-file-format">
+<h2>Advanced Inventory File Format<a class="headerlink" href="#advanced-inventory-file-format" title="Permalink to this headline">¶</a></h2>
+<p>(This features requires the integration branch of Ansible, soon to be release 0.3)</p>
+<p>Once you read about playbooks you&#8217;ll quickly see how useful it will be to assign particular variables
+to particular hosts and groups of hosts.  While the default INI-style host format doesn&#8217;t allow this,
+switching to the YAML inventory format can add some compelling capabilities.  Just replace your INI
+style file with a YAML one.:</p>
+<div class="highlight-python"><pre>---
+
+# some ungrouped hosts, either use the short string form or the "host: " prefix
+- host: jupiter
+- mars
+
+# variables can be assigned like this...
+- host: saturn
+  vars:
+  - moon: titan
+
+# groups can also set variables to all hosts in the group
+# here are a bunch of hosts using a non-standard SSH port
+# and also defining a variable 'ntpserver'
+- group: greek
+  hosts:
+  - zeus
+  - hera
+  - poseidon
+  vars:
+  - ansible_ssh_port: 3000
+  - ntp_server: olympus.example.com
+
+# individual hosts can still set variables inside of groups too
+# so you aren't limited to just group variables and host variables.
+- group: norse
+  hosts:
+  - host: thor
+    vars:
+    - hammer: True
+  - odin
+  - loki
+  vars:
+    - asdf: 1234</pre>
+</div>
+<p>Tip: Be sure to start your YAML file with the YAML record designator &#8220;&#8212;&#8221;.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -240,7 +285,7 @@ wildcards:</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 16, 2012.<br/>
+      Last updated on Apr 17, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

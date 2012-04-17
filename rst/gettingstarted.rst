@@ -90,9 +90,12 @@ same version.  This is perfectly safe to do.
 Other Package Distributions
 +++++++++++++++++++++++++++
 
-If you would like to package Ansible for Debian/Ubuntu, Homebrew, or BSD,
-please stop by the mailing list and say hi.  We'd love to have that as well
-and it shouldn't be difficult and would be happy to help.
+`Gentoo eBuilds are here <https://github.com/uu/ubuilds>`_
+
+Debian packages are in progress.
+
+If you would like to package Ansible for Homebrew, BSD, or others,
+please stop by the mailing list and say hi.
 
 
 Tagged Releases
