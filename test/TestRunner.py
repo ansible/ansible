@@ -14,6 +14,15 @@ try:
 except:
    import simplejson as json
 
+from nose.plugins.skip import SkipTest
+
+def get_binary(name):
+    for directory in os.environ["PATH"].split(os.pathsep):
+        path = os.path.join(directory, name)
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None
+
 class TestRunner(unittest.TestCase):
 
    def setUp(self):
@@ -73,6 +82,8 @@ class TestRunner(unittest.TestCase):
        assert "ping" in result
 
    def test_facter(self):
+       if not get_binary("facter"):
+           raise SkipTest
        result = self._run('facter',[])
        assert "hostname" in result
 
@@ -172,7 +183,7 @@ class TestRunner(unittest.TestCase):
    def test_async(self):
        # test async launch and job status
        # of any particular module
-       result = self._run('command', [ "/bin/sleep", "3" ], background=20)
+       result = self._run('command', [ get_binary("sleep"), "3" ], background=20)
        assert 'ansible_job_id' in result
        assert 'started' in result
        jid = result['ansible_job_id']
@@ -197,6 +208,8 @@ class TestRunner(unittest.TestCase):
        assert open(input).read() == open(output).read()
 
    def test_yum(self):
+       if not get_binary("yum"):
+           raise SkipTest
        result = self._run('yum', [ "list=repos" ])
        assert 'failed' not in result
 
