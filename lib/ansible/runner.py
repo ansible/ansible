@@ -69,28 +69,15 @@ def _executor_hook(job_queue, result_queue):
 class Runner(object):
 
     def __init__(self, 
-        host_list=C.DEFAULT_HOST_LIST, 
-        module_path=C.DEFAULT_MODULE_PATH,
-        module_name=C.DEFAULT_MODULE_NAME, 
-        module_args=C.DEFAULT_MODULE_ARGS, 
-        forks=C.DEFAULT_FORKS, 
-        timeout=C.DEFAULT_TIMEOUT, 
-        pattern=C.DEFAULT_PATTERN,
-        remote_user=C.DEFAULT_REMOTE_USER, 
-        remote_pass=C.DEFAULT_REMOTE_PASS,
-        remote_port=C.DEFAULT_REMOTE_PORT, 
-        sudo_pass=C.DEFAULT_SUDO_PASS, 
-        background=0, 
-        basedir=None, 
-        setup_cache=None, 
-        transport=C.DEFAULT_TRANSPORT, 
-        conditional='True', 
-        callbacks=None, 
-        debug=False, 
-        sudo=False, 
-        module_vars=None, 
-        is_playbook=False, 
-        inventory=None):
+        host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
+        module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
+        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
+        pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
+        remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
+        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
+        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
+        callbacks=None, debug=False, sudo=False, module_vars=None, 
+        is_playbook=False, inventory=None):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
