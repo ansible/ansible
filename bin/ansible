@@ -47,7 +47,7 @@ class Cli(object):
     def parse(self):
         ''' create an options parser for bin/ansible '''
         
-        parser = utils.base_parser(constants=C, port_opts=True, runas_opts=True, async_opts=True,
+        parser = utils.base_parser(constants=C, runas_opts=True, async_opts=True,
             output_opts=True, connect_opts=True, usage='%prog <host-pattern> [options]')
         parser.add_option('-a', '--args', dest='module_args',
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
@@ -87,7 +87,7 @@ class Cli(object):
             module_args=options.module_args,
             remote_user=options.remote_user, remote_pass=sshpass,
             host_list=options.inventory, timeout=options.timeout, 
-            remote_port=options.remote_port, forks=options.forks, 
+            forks=options.forks, 
             background=options.seconds, pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
             sudo_pass=sudopass, verbose=True,
@@ -104,8 +104,7 @@ class Cli(object):
             module_args="jid=%s" % jid, remote_user=old_runner.remote_user,
             remote_pass=old_runner.remote_pass, inventory=old_runner.inventory,
             timeout=old_runner.timeout, forks=old_runner.forks,
-            remote_port=old_runner.remote_port, pattern='*', 
-            callbacks=self.silent_callbacks, verbose=True,
+            pattern='*', callbacks=self.silent_callbacks, verbose=True,
         )
 
     # ----------------------------------------------
