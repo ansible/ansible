@@ -60,48 +60,48 @@ The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
 
 The 'ARGUMENTS' to pass to the module.
 
-*-D*, *--debug*          
+*-D*, *--debug*::
 
 Print any messages the remote module sends to standard error to the console
 
-*-k*, *--ask-pass*
+*-k*, *--ask-pass*::
 
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
 
-*-K*, *--ask-sudo-pass*
+*-K*, *--ask-sudo-pass*::
 
 Prompt for the password to use with --sudo, if any
 
-*-o*, *--one-line*
+*-o*, *--one-line*::
 
 Try to output everything on one line.
 
-*-s*, *--sudo*
+*-s*, *--sudo*::
 
 Run the command as the user given by -u and sudo to root.
 
-*-t* 'DIRECTORY', *--tree=*'DIRECTORY'
+*-t* 'DIRECTORY', *--tree=*'DIRECTORY'::
 
 Save contents in this output 'DIRECTORY', with the results saved in a
 file named after each host.
 
-*-T* 'SECONDS', *--timeout=*'SECONDS'
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
 
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
-*-B* 'NUM', *--background=*'NUM'
+*-B* 'NUM', *--background=*'NUM'::
 
 Run commands in the background, killing the task after 'NUM' seconds.
 
-*-P* 'NUM', *--poll=*'NUM'
+*-P* 'NUM', *--poll=*'NUM'::
 
 Poll a background job every 'NUM' seconds. Requires *-B*.
 
-*-u* 'USERNAME', *--remote-user=*'USERNAME'
+*-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
 Use this remote 'USERNAME' instead of root.
 
-*-c* 'CONNECTION', *--connection=*'CONNECTION'
+*-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
 Connection type to use.  Possible options are 'paramiko' (SSH) and 'local'.
 Local is mostly useful for crontab or kickstarts.
