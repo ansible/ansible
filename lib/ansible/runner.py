@@ -85,7 +85,6 @@ class Runner(object):
         setup_cache=None, 
         transport=C.DEFAULT_TRANSPORT, 
         conditional='True', 
-        groups={}, 
         callbacks=None, 
         verbose=False,
         debug=False, 
@@ -93,6 +92,31 @@ class Runner(object):
         module_vars=None, 
         is_playbook=False, 
         inventory=None):
+
+        """
+        host_list    : path to a host list file, like /etc/ansible/hosts
+        module_path  : path to modules, like /usr/share/ansible
+        module_name  : which module to run (string)
+        module_args  : args to pass to the module (string)
+        forks        : desired level of paralellism (hosts to run on at a time)
+        timeout      : connection timeout, such as a SSH timeout, in seconds
+        pattern      : pattern or groups to select from in inventory
+        remote_user  : connect as this remote username
+        remote_pass  : supply this password (if not using keys)
+        remote_port  : use this default remote port (if not set by the inventory system)
+        sudo_pass    : sudo password if using sudo and sudo requires a password
+        background   : run asynchronously with a cap of this many # of seconds (if not 0)
+        basedir      : paths used by modules if not absolute are relative to here
+        setup_cache  : this is a internalism that is going away
+        transport    : transport mode (paramiko, local)
+        conditional  : only execute if this string, evaluated, is True
+        callbacks    : output callback class
+        sudo         : log in as remote user and immediately sudo to root
+        module_vars  : provides additional variables to a template.  FIXME: just use module_args, remove
+        is_playbook  : indicates Runner is being used by a playbook.  affects behavior in various ways.
+        inventory    : inventory object, if host_list is not provided
+        """
+
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
