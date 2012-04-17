@@ -68,16 +68,32 @@ def _executor_hook(job_queue, result_queue):
 
 class Runner(object):
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
-        module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
-        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
-        remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
-        sudo_pass=C.DEFAULT_SUDO_PASS, remote_port=C.DEFAULT_REMOTE_PORT, background=0, 
-        basedir=None, setup_cache=None, transport=C.DEFAULT_TRANSPORT, 
-        conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None, 
-        module_vars=None, is_playbook=False, inventory=None):
-   
+    def __init__(self, 
+        host_list=C.DEFAULT_HOST_LIST, 
+        module_path=C.DEFAULT_MODULE_PATH,
+        module_name=C.DEFAULT_MODULE_NAME, 
+        module_args=C.DEFAULT_MODULE_ARGS, 
+        forks=C.DEFAULT_FORKS, 
+        timeout=C.DEFAULT_TIMEOUT, 
+        pattern=C.DEFAULT_PATTERN,
+        remote_user=C.DEFAULT_REMOTE_USER, 
+        remote_pass=C.DEFAULT_REMOTE_PASS,
+        remote_port=C.DEFAULT_REMOTE_PORT, 
+        sudo_pass=C.DEFAULT_SUDO_PASS, 
+        background=0, 
+        basedir=None, 
+        setup_cache=None, 
+        transport=C.DEFAULT_TRANSPORT, 
+        conditional='True', 
+        groups={}, 
+        callbacks=None, 
+        verbose=False,
+        debug=False, 
+        sudo=False, 
+        extra_vars=None, 
+        module_vars=None, 
+        is_playbook=False, 
+        inventory=None):
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
@@ -132,22 +148,13 @@ class Runner(object):
     @classmethod
     def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
+
         if override_hosts is None:
             inventory = ansible.inventory.Inventory(host_list, extra_vars)
         else:
-            inventory = ansible.inventory.Inventory(override_hosts)
+            inventory = ansible.inventory.Inventory(override_hosts, extra_vars)
 
         return inventory.host_list, inventory.groups
-
-    # *****************************************************
-
-    def _connect(self, host):
-        ''' connects to a host, returns (is_successful, connection_object OR traceback_string) '''
-
-        try:
-            return [ True, self.connector.connect(host) ]
-        except errors.AnsibleConnectionFailed, e:
-            return [ False, "FAILED: %s" % str(e) ]
 
     # *****************************************************
 
@@ -510,10 +517,15 @@ class Runner(object):
     def _executor_internal(self, host):
         ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
 
-        ok, conn = self._connect(host)
-        if not ok:
-            return [ host, False, conn , None]
-        
+        host_variables = self.inventory.get_variables(host, self.extra_vars)
+        port = host_variables.get('ansible_ssh_port', self.remote_port)
+
+        conn = None
+        try:
+            conn = self.connector.connect(host, port)
+        except errors.AnsibleConnectionFailed, e:
+            return [ host, False, "FAILED: %s" % str(e), None ]
+
         cache = self.setup_cache.get(host, {})
         module_name = utils.template(self.module_name, cache)
 

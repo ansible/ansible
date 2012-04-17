@@ -304,18 +304,21 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_module(self, pattern, module, args, vars, remote_user, 
-        async_seconds, async_poll_interval, only_if, sudo, transport):
+        async_seconds, async_poll_interval, only_if, sudo, transport, port):
         ''' run a particular module step in a playbook '''
 
         hosts = [ h for h in self.inventory.list_hosts() if (h not in self.stats.failures) and (h not in self.stats.dark)]
         self.inventory.restrict_to(hosts)
+
+        if port is None:
+            port=self.remote_port
 
         runner = ansible.runner.Runner(
             pattern=pattern, inventory=self.inventory, module_name=module,
             module_args=args, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user, 
-            remote_port=self.remote_port, module_vars=vars,
+            remote_port=port, module_vars=vars,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             extra_vars=self.extra_vars, debug=self.debug, sudo=sudo,
@@ -333,7 +336,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_task(self, pattern=None, task=None, 
-        remote_user=None, handlers=None, conditional=False, sudo=False, transport=None):
+        remote_user=None, handlers=None, conditional=False, sudo=False, transport=None, port=None):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # load the module name and parameters from the task entry
@@ -365,7 +368,7 @@ class PlayBook(object):
         # run the task in parallel
         results = self._run_module(pattern, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
-            async_poll_interval, only_if, sudo, transport)
+            async_poll_interval, only_if, sudo, transport, port)
 
         self.stats.compute(results)
 
@@ -483,7 +486,7 @@ class PlayBook(object):
             module_args=vars, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
-            remote_pass=self.remote_pass, remote_port=self.remote_port,
+            remote_pass=self.remote_pass, remote_port=port,
             setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
             transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
@@ -546,7 +549,8 @@ class PlayBook(object):
                 handlers=handlers,
                 remote_user=user,
                 sudo=sudo,
-                transport=transport
+                transport=transport,
+                port=port
             )
 
         # handlers only run on certain nodes, they are flagged by _flag_handlers
@@ -566,7 +570,8 @@ class PlayBook(object):
                    conditional=True,
                    remote_user=user,
                    sudo=sudo,
-                   transport=transport
+                   transport=transport,
+                   port=port
                 )
                 self.inventory.lift_restriction()
 
