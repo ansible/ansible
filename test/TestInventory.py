@@ -87,12 +87,6 @@ class TestInventory(unittest.TestCase):
 
         assert vars == {}
 
-    def test_simple_extra_vars(self):
-        inventory = self.simple_inventory()
-        vars = inventory.get_variables('thor', 'a=5')
-
-        assert vars == {}
-
     def test_simple_port(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('hera')
@@ -153,12 +147,6 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('thor')
 
         assert vars == {"hammer":True}
-
-    def test_script_extra_vars(self):
-        inventory = self.script_inventory()
-        vars = inventory.get_variables('thor', 'simple=yes')
-
-        assert vars == {"hammer":True, "simple": "yes"}
 
     ### Tests for yaml inventory file
 
@@ -233,12 +221,6 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('saturn')
 
         assert vars == {"moon":"titan"}
-
-    def test_yaml_extra_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('thor', 'a=5')
-
-        assert vars == {"hammer":True}
 
     def test_yaml_port(self):
         inventory = self.yaml_inventory()

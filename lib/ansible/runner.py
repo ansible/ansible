@@ -90,7 +90,6 @@ class Runner(object):
         verbose=False,
         debug=False, 
         sudo=False, 
-        extra_vars=None, 
         module_vars=None, 
         is_playbook=False, 
         inventory=None):
@@ -109,7 +108,7 @@ class Runner(object):
         self.connector = ansible.connection.Connection(self, self.transport)
 
         if inventory is None:
-            self.inventory = ansible.inventory.Inventory(host_list, extra_vars)
+            self.inventory = ansible.inventory.Inventory(host_list)
         else:
             self.inventory = inventory
 
@@ -121,7 +120,6 @@ class Runner(object):
         self.pattern     = pattern
         self.module_args = module_args
         self.module_vars = module_vars
-        self.extra_vars  = extra_vars
         self.timeout     = timeout
         self.debug       = debug
         self.verbose     = verbose
@@ -146,13 +144,13 @@ class Runner(object):
     # *****************************************************
 
     @classmethod
-    def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
+    def parse_hosts(cls, host_list, override_hosts=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
 
         if override_hosts is None:
-            inventory = ansible.inventory.Inventory(host_list, extra_vars)
+            inventory = ansible.inventory.Inventory(host_list)
         else:
-            inventory = ansible.inventory.Inventory(override_hosts, extra_vars)
+            inventory = ansible.inventory.Inventory(override_hosts)
 
         return inventory.host_list, inventory.groups
 
@@ -267,7 +265,7 @@ class Runner(object):
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
-        host_variables = self.inventory.get_variables(conn.host, self.extra_vars)
+        host_variables = self.inventory.get_variables(conn.host)
         inject.update(host_variables)
 
         if self.module_name == 'setup':
@@ -517,7 +515,7 @@ class Runner(object):
     def _executor_internal(self, host):
         ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
 
-        host_variables = self.inventory.get_variables(host, self.extra_vars)
+        host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
 
         conn = None

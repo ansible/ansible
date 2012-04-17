@@ -59,7 +59,6 @@ class PlayBook(object):
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
         override_hosts   = None,
-        extra_vars       = None,
         debug            = False,
         verbose          = False,
         callbacks        = None,
@@ -82,7 +81,6 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.override_hosts   = override_hosts
-        self.extra_vars       = extra_vars
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
@@ -323,7 +321,7 @@ class PlayBook(object):
             remote_port=port, module_vars=vars,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
-            extra_vars=self.extra_vars, debug=self.debug, sudo=sudo,
+            debug=self.debug, sudo=sudo,
             transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
@@ -504,14 +502,6 @@ class PlayBook(object):
             # first pass only or we'll erase good work
             for (host, result) in setup_ok.iteritems():
                 SETUP_CACHE[host] = result
-
-        if self.extra_vars:
-            extra_vars = utils.parse_kv(self.extra_vars)
-            for h in self.host_list:
-                try:
-                    SETUP_CACHE[h].update(extra_vars)
-                except:
-                    SETUP_CACHE[h] = extra_vars
 
     # *****************************************************
 
