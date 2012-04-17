@@ -1,30 +1,36 @@
 #!/usr/bin/make
 
 NAME = "ansible"
+# This doesn't evaluate until it's called. The -D argument is the
+# directory of the target file ($@), kinda like `dirname`.
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
+# Space separated list of all the manpages we want to end up with.
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+VERSION := $(shell cat VERSION)
+# These are for building the RPM.
 RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
 RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
-RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)"
+RPMDIST = $(shell rpm --eval '%dist')
+RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 all: clean python
 
 tests: 
 	PYTHONPATH=./lib nosetests -v
 
-# To force a rebuild of the docs run 'touch ansible.spec && make docs'
+# To force a rebuild of the docs run 'touch VERSION && make docs'
 docs: $(MANPAGES)
 
 # Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
 # recently than %.1.asciidoc.
 %.1.asciidoc: %.1.asciidoc.in
-	sed "s/%VERSION%/$(RPMVERSION)/" $< > $@
+	sed "s/%VERSION%/$(VERSION)/" $< > $@
 
-# Regenerate %.1 if %.1.asciidoc or ansible.spec has been modified
-# more recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
-%.1: %.1.asciidoc ansible.spec
+# Regenerate %.1 if %.1.asciidoc or VERSION has been modified more
+# recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
+%.1: %.1.asciidoc VERSION
 	$(ASCII2MAN)
 
 loc:
@@ -41,10 +47,10 @@ pyflakes:
 
 clean:
 	@echo "Cleaning up distutils stuff"
-	-rm -rf build
-	-rm -rf dist
+	rm -rf build
+	rm -rf dist
 	@echo "Cleaning up byte compiled python stuff"
-	find . -regex ".*\.py[co]$$" -delete
+	find . -type f -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
@@ -52,9 +58,9 @@ clean:
 	find ./docs/man -type f -name "*.xml" -delete
 	find ./docs/man -type f -name "*.asciidoc" -delete
 	@echo "Cleaning up output from test runs"
-	-rm -rf test/test_data
+	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
-	-rm -rf MANIFEST rpm-build
+	rm -rf MANIFEST rpm-build
 
 python:
 	python setup.py build
@@ -96,6 +102,3 @@ rpm: rpmcommon
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
-
-.PHONEY: docs manual clean pep8
-vpath %.asciidoc docs/man/man1
