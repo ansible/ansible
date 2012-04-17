@@ -47,7 +47,8 @@ for x in items:
 
 source  = params['src']
 dest    = params['dest']
-metadata = params.get('metadata', '/etc/ansible/setup') 
+metadata = params.get('metadata', '/etc/ansible/setup')
+metadata = os.path.expanduser(metadata)
 module_vars = params.get('vars')
  
 # raise an error if there is no template metadata
