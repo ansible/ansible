@@ -104,3 +104,10 @@ rpm: rpmcommon
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
+
+# Recipes for unittests
+rpmname:
+	@echo "rpm-build/noarch/$(RPMNVR).noarch.rpm"
+
+srpmname:
+	@echo "rpm-build/$(RPMNVR).src.rpm"
