@@ -188,6 +188,22 @@ All parameters available to the file module are also available when running the 
 
 * location where the symlink will be created for 'link' state, also an alias for 'path'.
 
+*seuser*:
+
+* 'user' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+
+*serole*:
+
+* 'role' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+
+*setype*:
+
+* 'type' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+
+*selevel*:
+
+* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to 's0'.  Only used only used on hosts with SELinux present.
+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -195,8 +211,7 @@ Example action from Ansible :doc:`playbooks`::
     file path=/some/path owner=foo group=foo state=directory
     file path=/path/to/delete state=absent
     file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-
-The file module also supports numerous SELinux attributes (documentation on this pending).
+    file path=/some/path state=directory setype=httpd_sys_content_t
 
 .. _git:
 
