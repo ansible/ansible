@@ -1,9 +1,3 @@
-.. image:: http://ansible.github.com/ansible-logo.png
-   :alt: "Ansible"
-   :target: http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf
-
-Introducing Ansible
-===================
 
 Ansible is a radically simple deployment, model-driven configuration management, 
 and command execution framework. Other tools in this space have been too
