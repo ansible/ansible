@@ -18,13 +18,13 @@ If you are only running Python 2.5, you will also need:
 * The Python 2.5 backport of the ``multiprocessing`` module (`see here <http://code.google.com/p/python-multiprocessing/wiki/Install>`_)
 * ``python-simplejson``
 
-On the managed nodes, to use templates, you will also need:
-
-* ``python-jinja2`` (you can easily install this using ansible)
-
-And if you have any managed-nodes with python older than 2.6, you will also need:
+If you have any managed-nodes with python older than 2.6, you will also need:
 
 * ``python-simplejson``
+
+On the managed nodes, to use templates, you will also need:
+
+* ``python-jinja2`` (you can easily install this using ansible, and this will not be required in version 0.3)
 
 Getting Ansible
 ```````````````

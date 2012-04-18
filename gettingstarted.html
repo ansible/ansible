@@ -181,13 +181,13 @@ that you&#8217;ll be talking to the remote machines from), you will need:</p>
 <li>The Python 2.5 backport of the <tt class="docutils literal"><span class="pre">multiprocessing</span></tt> module (<a class="reference external" href="http://code.google.com/p/python-multiprocessing/wiki/Install">see here</a>)</li>
 <li><tt class="docutils literal"><span class="pre">python-simplejson</span></tt></li>
 </ul>
-<p>On the managed nodes, to use templates, you will also need:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can easily install this using ansible)</li>
-</ul>
-<p>And if you have any managed-nodes with python older than 2.6, you will also need:</p>
+<p>If you have any managed-nodes with python older than 2.6, you will also need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">python-simplejson</span></tt></li>
+</ul>
+<p>On the managed nodes, to use templates, you will also need:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt> (you can easily install this using ansible, and this will not be required in version 0.3)</li>
 </ul>
 </div>
 <div class="section" id="getting-ansible">
