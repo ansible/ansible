@@ -1,4 +1,4 @@
-include README.md ansible.spec
+include README.md packaging/rpm/ansible.spec
 include examples/hosts
 recursive-include docs *
 recursive-include library *
