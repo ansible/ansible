@@ -144,6 +144,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
 <li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
+<li><a class="reference internal" href="#loop-shorthand">Loop Shorthand</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
 </ul>
 </li>
@@ -572,6 +573,16 @@ customize it depending on what class or nature of machines they are.</p>
 <p class="last">Playbooks do not always have to be declarative; you can do something
 similar to model a push process for a multi-tier web application.  This is
 actually one of the things playbooks were invented to do.</p>
+</div>
+</div>
+<div class="section" id="loop-shorthand">
+<h3>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h3>
+<p>To save some typing, repeated tasks can be written in short-hand like so:</p>
+<div class="highlight-python"><pre>- name: add user $item
+  action: user name=$item state=present groups=wheel
+  with_items:
+     - testuser1
+     - testuser2</pre>
 </div>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">

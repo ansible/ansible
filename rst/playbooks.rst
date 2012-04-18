@@ -475,6 +475,17 @@ customize it depending on what class or nature of machines they are.
    similar to model a push process for a multi-tier web application.  This is
    actually one of the things playbooks were invented to do.
 
+Loop Shorthand
+++++++++++++++
+
+To save some typing, repeated tasks can be written in short-hand like so::
+
+    - name: add user $item
+      action: user name=$item state=present groups=wheel
+      with_items:
+         - testuser1
+         - testuser2
+
 
 Asynchronous Actions and Polling
 ++++++++++++++++++++++++++++++++
