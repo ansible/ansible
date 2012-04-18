@@ -31,12 +31,6 @@ If you want to run commands through sudo:
 
 Use --ask-sudo-pass (-K) if you are not using passwordless sudo.
 
-If you need to access SSH on a different port::
-    
-    ansible atlanta -a "/usr/bin/foo" -p 2112
-
-(NOTE: this will be changing to just use the inventory file for per-host port settings)
-
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
 
 The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
