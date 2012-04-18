@@ -320,13 +320,29 @@ All parameters available to the file module are also available when running the 
 <ul class="simple">
 <li>location where the symlink will be created for &#8216;link&#8217; state, also an alias for &#8216;path&#8217;.</li>
 </ul>
+<p><em>seuser</em>:</p>
+<ul class="simple">
+<li>&#8216;user&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+</ul>
+<p><em>serole</em>:</p>
+<ul class="simple">
+<li>&#8216;role&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+</ul>
+<p><em>setype</em>:</p>
+<ul class="simple">
+<li>&#8216;type&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+</ul>
+<p><em>selevel</em>:</p>
+<ul class="simple">
+<li>&#8216;level&#8217; part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to &#8216;s0&#8217;.  Only used only used on hosts with SELinux present.</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
 file path=/some/path owner=foo group=foo state=directory
 file path=/path/to/delete state=absent
-file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link</pre>
+file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
+file path=/some/path state=directory setype=httpd_sys_content_t</pre>
 </div>
-<p>The file module also supports numerous SELinux attributes (documentation on this pending).</p>
 </div>
 <div class="section" id="git">
 <span id="id5"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
