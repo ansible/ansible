@@ -1,4 +1,4 @@
-hosts etc/ansible
-python/* usr/share/ansible
-man/man1/* usr/share/man/man1
+examples/hosts etc/ansible
+library/* usr/share/ansible
+docs/man/man1/* usr/share/man/man1
 bin/* usr/bin
