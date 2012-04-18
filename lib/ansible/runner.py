@@ -368,7 +368,11 @@ class Runner(object):
         dest   = options.get('dest', None)
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
-        
+
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject)
+
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
         conn.put_file(utils.path_dwim(self.basedir, source), tmp_src)
@@ -458,6 +462,10 @@ class Runner(object):
                 metadata = '/etc/ansible/setup'
             else:
                 metadata = '~/.ansible/setup'
+
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject)
 
         # first copy the source template over
         temppath = tmp + os.path.split(source)[-1]
