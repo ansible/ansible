@@ -7,7 +7,7 @@
   <div class="topbar" data-scrollspy="scrollspy" >
     <div class="topbar-inner">
       <div class="container">
-        <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>
+        <!-- <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a> -->
         <ul class="nav">
           {% block sidebartoc %}
             {% include "globaltoc.html" %}
@@ -108,6 +108,7 @@ s.parentNode.insertBefore(ga, s);
 {%- block content %}
 
 <div class="container">
+   <img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/><br/>
    {% block body %} {% endblock %}
 </div>
 {%- endblock %}

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Introducing Ansible &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Innovative Multi-node Control &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -104,7 +104,7 @@ s.parentNode.insertBefore(ga, s);
   <div class="topbar" data-scrollspy="scrollspy" >
     <div class="topbar-inner">
       <div class="container">
-        <a class="brand" href="#">Ansible</a>
+        <!-- <a class="brand" href="#">Ansible</a> -->
         <ul class="nav">
           
             <li class="dropdown" data-dropdown="dropdown">
@@ -127,12 +127,9 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Introducing Ansible</a><ul>
-<li><a class="reference internal" href="#innovative-multi-node-control">Innovative Multi-node Control</a></li>
+<li><a class="reference internal" href="#">Innovative Multi-node Control</a></li>
 <li><a class="reference internal" href="#deployment-and-configuration-unified">Deployment and Configuration, Unified</a></li>
-<li><a class="reference internal" href="#simple-secure-by-default">Simple &amp; Secure By Default</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#simple-secure-by-default">Simple &amp; Secure By Default</a><ul>
 <li><a class="reference internal" href="#architecture">Architecture</a></li>
 <li><a class="reference internal" href="#features">Features</a></li>
 <li><a class="reference internal" href="#resources">Resources</a></li>
@@ -140,6 +137,8 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </li>
 <li><a class="reference internal" href="#about-the-author">About the Author</a></li>
+</ul>
+</li>
 </ul>
 </span>
 </li>
@@ -161,11 +160,9 @@ s.parentNode.insertBefore(ga, s);
 
 
 <div class="container">
+   <img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/><br/>
    
-  <a class="reference external image-reference" href="http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf"><img alt="&quot;Ansible&quot;" src="http://ansible.github.com/ansible-logo.png" /></a>
-<div class="section" id="introducing-ansible">
-<h1>Introducing Ansible<a class="headerlink" href="#introducing-ansible" title="Permalink to this headline">¶</a></h1>
-<p>Ansible is a radically simple deployment, model-driven configuration management,
+  <p>Ansible is a radically simple deployment, model-driven configuration management,
 and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
@@ -174,7 +171,7 @@ Ansible&#8217;s core is a little over 1000 lines.</p>
 <p>Ansible isn&#8217;t just for idempotent configuration &#8211; it&#8217;s also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a>.</p>
 <div class="section" id="innovative-multi-node-control">
-<h2>Innovative Multi-node Control<a class="headerlink" href="#innovative-multi-node-control" title="Permalink to this headline">¶</a></h2>
+<h1>Innovative Multi-node Control<a class="headerlink" href="#innovative-multi-node-control" title="Permalink to this headline">¶</a></h1>
 <p>Where Ansible excels though, is expressing complex multi-node
 deployment processes, executing ordered sequences on
 different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.   Playbooks contain one or
@@ -184,7 +181,7 @@ version of software if required.</p>
 <p>Multi-machine software deployment is poorly solved by most systems management tools &#8211; often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.</p>
 </div>
 <div class="section" id="deployment-and-configuration-unified">
-<h2>Deployment and Configuration, Unified<a class="headerlink" href="#deployment-and-configuration-unified" title="Permalink to this headline">¶</a></h2>
+<h1>Deployment and Configuration, Unified<a class="headerlink" href="#deployment-and-configuration-unified" title="Permalink to this headline">¶</a></h1>
 <p>Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks &#8211; having been designed with this problem in mind &#8211; are good at both deployment &amp; idempotent configuration, meaning you don&#8217;t have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required &#8211; while avoiding the problem of fragile scripting that assumes certain starting
 or ending states.</p>
 <p>Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it&#8217;s also trivially easy to just execute useful shell commands.</p>
@@ -196,21 +193,19 @@ to use (not being code) and also allows intermixing of idempotent configuration 
 of control.  Further, it was designed for deploying multi-node applications from the beginning.</p>
 </div>
 <div class="section" id="simple-secure-by-default">
-<h2>Simple &amp; Secure By Default<a class="headerlink" href="#simple-secure-by-default" title="Permalink to this headline">¶</a></h2>
+<h1>Simple &amp; Secure By Default<a class="headerlink" href="#simple-secure-by-default" title="Permalink to this headline">¶</a></h1>
 <p>Compared with most configuration managememnt tools, Ansible is also much more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with its own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as neccesssary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
 If a central server containing your playbooks are comprimised, your nodes are not &#8211; which is NOT the case
 of these other tools, which can, more or less, turn into a botnet.  Our security approach is to avoid writing custom
 crypto code altogether, and rely on the most secure part of the Linux/Unix subsystem that your machines are already using.  There is no PKI subsystem to maintain, which can be a frequent source of problems, particularly when reinstalling or migrating
 hosts.</p>
 <p>Systems management doesn&#8217;t have to be complicated.  Ansible&#8217;s docs will remain short &amp; simple, and the source will be blindingly obvious.  We&#8217;ve learned well from &#8220;Infrastructure is Code&#8221;.  Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project &#8211; bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.</p>
-</div>
-</div>
 <div class="section" id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
 <div align="center" class="align-center"><img alt="&quot;Architecture Diagram&quot;" class="align-center" src="http://ansible.github.com/ansible_arch2.jpg" style="width: 800px;" /></div>
 </div>
 <div class="section" id="features">
-<h1>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h1>
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Dead simple setup</li>
 <li>Super fast &amp; parallel by default</li>
@@ -227,7 +222,7 @@ hosts.</p>
 </ul>
 </div>
 <div class="section" id="resources">
-<h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
+<h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
 <p>Your ideas and contributions are welcome.  We&#8217;re also happy to help
 you with questions about Ansible.</p>
 <ul class="simple">
@@ -248,7 +243,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 </form>
 <br/></div>
 <div class="section" id="contents">
-<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a><ul>
@@ -373,7 +368,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 </div>
 </div>
 <div class="section" id="about-the-author">
-<h1>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h1>
+<h2>About the Author<a class="headerlink" href="#about-the-author" title="Permalink to this headline">¶</a></h2>
 <p>Ansible was originally developed by <a class="reference external" href="http://michaeldehaan.net">Michael DeHaan</a> (<a class="reference external" href="http://twitter.com/#!/laserllama">&#64;laserllama</a>), a Raleigh, NC
 based software developer and architect.  He created the popular
 DevOps program <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>.
@@ -384,6 +379,7 @@ helped co-author <a class="reference external" href="http://fedorahosted.org/fun
 orchestrate systems in lots of diverse places.  He&#8217;s worked on systems
 software for IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group,
 Puppet Labs, and rPath.  Reach Michael by email <a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">here</a>.</p>
+</div>
 </div>
 
 
