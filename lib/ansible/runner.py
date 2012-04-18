@@ -463,6 +463,10 @@ class Runner(object):
             else:
                 metadata = '~/.ansible/setup'
 
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject)
+
         # first copy the source template over
         temppath = tmp + os.path.split(source)[-1]
         conn.put_file(utils.path_dwim(self.basedir, source), temppath)
