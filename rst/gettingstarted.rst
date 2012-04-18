@@ -24,7 +24,7 @@ If you have any managed-nodes with python older than 2.6, you will also need:
 
 On the managed nodes, to use templates, you will also need:
 
-* ``python-jinja2`` (you can easily install this using ansible, and this will not be required in version 0.3)
+* ``python-jinja2`` (you can easily install this using ansible, and this will not be required in version 0.3 as templates will be evaluated locally)
 
 Getting Ansible
 ```````````````
