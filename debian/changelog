@@ -1,5 +1,5 @@
-ansible (0.0.2) nattyl; urgency=low
+ansible (0.0.2) debian; urgency=low
 
-  * Initial Release test
+  * Initial Release
 
  -- Henry Graham (hzgraham) <Henry.Graham@mail.wvu.edu>  Tue, 17 Apr 2012 17:17:01 -0400
