@@ -218,11 +218,11 @@ that Func didn&#8217;t have.</p>
 <h3>vs Puppet?<a class="headerlink" href="#vs-puppet" title="Permalink to this headline">¶</a></h3>
 <p>First off, Ansible wouldn&#8217;t have happened without Puppet.  Puppet took configuration
 management ideas from cfengine and made them sane.  However, I still think they can
-be simpler.</p>
+be much simpler.</p>
 <p>Ansible playbooks ARE a complete configuration management system.  Unlike Puppet, playbooks
 are implicitly ordered (more like Chef), but still retain the ability to signal
 notification events (like Puppet).  This is kind of a &#8216;best of both worlds&#8217; thing.</p>
-<p>There is no central server to promote scaling, and Ansible is
+<p>There is no central server subject to thundering herd problems, and Ansible is
 also designed with multi-node deployment in mind from day-one &#8211; something that is difficult
 for Puppet because of the pull architecture.  Ansible is push based,
 so you can do things in an ordered fashion, addressing batches of servers
@@ -238,11 +238,9 @@ other systems that depend on that system.</p>
 <p>Ansible also has a VERY short learning curve &#8211; but it also has less language constructs and
 does not create its own programming language.   What constructs Ansible does have should be enough to cover 80% or so of the cases of most Puppet users, and it should scale equally well (not having a server is
 almost like cheating).</p>
-<p>I also suspect some Ansible users will actually use Ansible to trigger Puppet &#8211; using the git
-module to checkout a Puppet module hierachy from source, and the command module to run
-&#8216;puppet apply&#8217;.  That&#8217;s ok too, but you may find playbooks do all you need.</p>
 <p>Ansible does support gathering variables from &#8216;facter&#8217;, if installed, and Ansible templates
-in jinja2 in a way just like Puppet does with erb.</p>
+in jinja2 in a way just like Puppet does with erb.  Ansible in version 0.3 will have it&#8217;s own facts,
+however, so it will not need to rely on facter, but can use it if available.</p>
 </div>
 <div class="section" id="vs-chef">
 <h3>vs Chef?<a class="headerlink" href="#vs-chef" title="Permalink to this headline">¶</a></h3>
@@ -262,10 +260,9 @@ Chef and Puppet are around 60k+ lines of code, while Ansible is a much simpler
 program.  I believe this strongly leads to more reliable software and a richer
 open source community &#8211; the code is kept simple so it is easy for anyone to
 submit a patch or module.</p>
-<p>Just like with puppet, some users may wish to use Ansible to trigger chef-solo to
-avoid using the server, after checking out some chef content using Ansible&#8217;s git
-support.</p>
-<p>Ansible does support gathering variables from &#8216;ohai&#8217;, if installed.</p>
+<p>Ansible does support gathering variables from &#8216;ohai&#8217;, if installed.  As of release
+0.3, Ansible will also have it&#8217;s own facts system so you will not need to use ohai
+or facter (or have a dependency on Ruby).</p>
 </div>
 <div class="section" id="vs-capistrano-fabric">
 <h3>vs Capistrano/Fabric?<a class="headerlink" href="#vs-capistrano-fabric" title="Permalink to this headline">¶</a></h3>
@@ -273,7 +270,8 @@ support.</p>
 typically about pushing software out for web deployment and automating steps.</p>
 <p>Meanwhile Ansible is designed for other types of configuration management, and contains some
 advanced scaling features.</p>
-<p>The ansible playbook syntax is documented within a page of text and also has a MUCH lower learning curve.  And because Ansible is designed for more than pushing webapps, it&#8217;s more generally
+<p>The ansible playbook syntax is documented within one HTML page and also has a MUCH lower learning curve.
+And because Ansible is designed for more than pushing webapps, it&#8217;s more generally
 useful for sysadmins (not just web developers), and can also be used for firing off ad-hoc tasks.</p>
 </div>
 </div>
@@ -281,7 +279,7 @@ useful for sysadmins (not just web developers), and can also be used for firing 
 <h2>Other Questions<a class="headerlink" href="#other-questions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="what-is-ansible-s-approach-to-security">
 <h3>What is Ansible&#8217;s approach to security?<a class="headerlink" href="#what-is-ansible-s-approach-to-security" title="Permalink to this headline">¶</a></h3>
-<p>Ansible aims to not develop custom daemon code but rely heavily on OpenSSH, which is extremely well
+<p>Ansible aims to not develop custom daemon or PKI code but rely heavily on OpenSSH, which is extremely well
 peer reviewed and the most widely used security subsystem in the industry.  As a result, Ansible
 has a lower attack surface than any configuration management tool featuring daemons that run
 as root, and you do not have to worry about network security vulnerabilities in the tool itself.</p>
@@ -307,14 +305,17 @@ is about handling those kinds of use cases.</p>
 Ansible, it is not consuming any resources.</p>
 <p>If you have 10,000 systems, running a single ansible playbook against all of
 them probably isn&#8217;t always appropriate, but most users shouldn&#8217;t have any problems.
-If you want to kick off an async task/module, it&#8217;s probably fine.</p>
+If you want to kick off an async task/module, it&#8217;s probably fine.  We also
+support a local connection mode (&#8211;connection=local) that will enable pull
+based usage for those that want that.  Look for future features in this area.</p>
 <p>If you&#8217;d like to discuss scaling, please hop on the mailing list.</p>
 </div>
 <div class="section" id="are-transports-other-than-ssh-supported">
 <h3>Are transports other than SSH supported?<a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
-<p>Currently SSH is the only transport, though the interface is pluggable so a
+<p>Currently SSH is the only remote transport, though the interface is pluggable so a
 small patch could bring transport over message bus or XMPP as an option.
-Stop by the mailing list if you have ideas.</p>
+Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
+are all abstracted away from the core implementation so it is very easy to extend.</p>
 </div>
 <div class="section" id="what-are-some-ideal-uses-for-ansible">
 <h3>What are some ideal uses for Ansible?<a class="headerlink" href="#what-are-some-ideal-uses-for-ansible" title="Permalink to this headline">¶</a></h3>

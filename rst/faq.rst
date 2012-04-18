@@ -60,13 +60,13 @@ vs Puppet?
 
 First off, Ansible wouldn't have happened without Puppet.  Puppet took configuration
 management ideas from cfengine and made them sane.  However, I still think they can
-be simpler.
+be much simpler.
 
 Ansible playbooks ARE a complete configuration management system.  Unlike Puppet, playbooks
 are implicitly ordered (more like Chef), but still retain the ability to signal
 notification events (like Puppet).  This is kind of a 'best of both worlds' thing.
 
-There is no central server to promote scaling, and Ansible is 
+There is no central server subject to thundering herd problems, and Ansible is 
 also designed with multi-node deployment in mind from day-one -- something that is difficult
 for Puppet because of the pull architecture.  Ansible is push based,
 so you can do things in an ordered fashion, addressing batches of servers
@@ -86,12 +86,9 @@ Ansible also has a VERY short learning curve -- but it also has less language co
 does not create its own programming language.   What constructs Ansible does have should be enough to cover 80% or so of the cases of most Puppet users, and it should scale equally well (not having a server is
 almost like cheating).
 
-I also suspect some Ansible users will actually use Ansible to trigger Puppet -- using the git
-module to checkout a Puppet module hierachy from source, and the command module to run
-'puppet apply'.  That's ok too, but you may find playbooks do all you need.
-
 Ansible does support gathering variables from 'facter', if installed, and Ansible templates
-in jinja2 in a way just like Puppet does with erb.
+in jinja2 in a way just like Puppet does with erb.  Ansible in version 0.3 will have it's own facts,
+however, so it will not need to rely on facter, but can use it if available.
 
 vs Chef?
 ++++++++
@@ -116,11 +113,9 @@ program.  I believe this strongly leads to more reliable software and a richer
 open source community -- the code is kept simple so it is easy for anyone to
 submit a patch or module.
 
-Just like with puppet, some users may wish to use Ansible to trigger chef-solo to
-avoid using the server, after checking out some chef content using Ansible's git
-support.
-
-Ansible does support gathering variables from 'ohai', if installed.
+Ansible does support gathering variables from 'ohai', if installed.  As of release
+0.3, Ansible will also have it's own facts system so you will not need to use ohai
+or facter (or have a dependency on Ruby).
 
 vs Capistrano/Fabric?
 +++++++++++++++++++++
@@ -131,7 +126,8 @@ typically about pushing software out for web deployment and automating steps.
 Meanwhile Ansible is designed for other types of configuration management, and contains some
 advanced scaling features.  
 
-The ansible playbook syntax is documented within a page of text and also has a MUCH lower learning curve.  And because Ansible is designed for more than pushing webapps, it's more generally 
+The ansible playbook syntax is documented within one HTML page and also has a MUCH lower learning curve.  
+And because Ansible is designed for more than pushing webapps, it's more generally 
 useful for sysadmins (not just web developers), and can also be used for firing off ad-hoc tasks.
 
 Other Questions
@@ -140,7 +136,7 @@ Other Questions
 What is Ansible's approach to security?
 +++++++++++++++++++++++++++++++++++++++
 
-Ansible aims to not develop custom daemon code but rely heavily on OpenSSH, which is extremely well
+Ansible aims to not develop custom daemon or PKI code but rely heavily on OpenSSH, which is extremely well
 peer reviewed and the most widely used security subsystem in the industry.  As a result, Ansible
 has a lower attack surface than any configuration management tool featuring daemons that run
 as root, and you do not have to worry about network security vulnerabilities in the tool itself.  
@@ -172,16 +168,19 @@ Ansible, it is not consuming any resources.
 
 If you have 10,000 systems, running a single ansible playbook against all of
 them probably isn't always appropriate, but most users shouldn't have any problems.
-If you want to kick off an async task/module, it's probably fine.
+If you want to kick off an async task/module, it's probably fine.  We also
+support a local connection mode (--connection=local) that will enable pull
+based usage for those that want that.  Look for future features in this area.
 
 If you'd like to discuss scaling, please hop on the mailing list.
 
 Are transports other than SSH supported?
 ++++++++++++++++++++++++++++++++++++++++
 
-Currently SSH is the only transport, though the interface is pluggable so a 
+Currently SSH is the only remote transport, though the interface is pluggable so a 
 small patch could bring transport over message bus or XMPP as an option.
-Stop by the mailing list if you have ideas.
+Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
+are all abstracted away from the core implementation so it is very easy to extend.
 
 What are some ideal uses for Ansible?
 +++++++++++++++++++++++++++++++++++++
