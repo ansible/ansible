@@ -1,18 +1,6 @@
-.. image:: http://ansible.github.com/mpd_rings.jpg
-   :height: 225
-   :width: 300
-   :alt: ""
+.. image:: http://ansible.github.com/ansible-logo.png
+   :alt: "Ansible"
    :target: http://photos.michaeldehaan.net/infrared/h3d850bdf#h3d850bdf
-.. image:: http://ansible.github.com/mpd_tunnel.jpg
-   :height: 225
-   :width: 337
-   :alt: "" 
-   :target: http://photos.michaeldehaan.net/favorites/h2428aca7#h2428aca7
-.. image:: http://ansible.github.com/mpd_tubes.jpg
-   :height: 225
-   :width: 225
-   :alt: "" 
-   :target: http://photos.michaeldehaan.net/ncsu/h3b63b68e#h3b63b68e
 
 Introducing Ansible
 ===================
