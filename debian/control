@@ -8,6 +8,6 @@ Homepage: http://ansible.github.com/
 
 Package: ansible
 Architecture: all
-Depends: python-jinja2, python-yaml, python-paramiko
-Description: The Ansible Application
+Depends: python, python-support (>= 0.90), python-jinja2, python-yaml, python-paramiko
+Description: Ansible Application
  Ansible is a extra-simple tool/API for doing 'parallel remote things' over SSH executing commands, running "modules", or executing larger 'playbooks' that can serve as a configuration management or deployment system.
