@@ -10,8 +10,10 @@ MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 VERSION := $(shell cat VERSION)
 # These are for building the RPM.
-RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
-RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < ansible.spec | cut -d "%" -f1)
+RPMSPECDIR= packaging/rpm
+RPMSPEC = $(RPMSPECDIR)/ansible.spec
+RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
+RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
 RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
 
@@ -82,9 +84,9 @@ srpm: rpmcommon
 	--define "_builddir %{_topdir}" \
 	--define "_rpmdir %{_topdir}" \
 	--define "_srcrpmdir %{_topdir}" \
-	--define "_specdir %{_topdir}" \
+	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	-bs ansible.spec
+	-bs $(RPMSPEC)
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo "    rpm-build/$(RPMNVR).src.rpm"
@@ -95,9 +97,9 @@ rpm: rpmcommon
 	--define "_builddir %{_topdir}" \
 	--define "_rpmdir %{_topdir}" \
 	--define "_srcrpmdir %{_topdir}" \
-	--define "_specdir %{_topdir}" \
+	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	-ba ansible.spec
+	-ba $(RPMSPEC)
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
