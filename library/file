@@ -102,8 +102,8 @@ recurse   = params.get('recurse', 'false')
 seuser    = params.get('seuser', None)
 serole    = params.get('serole', None)
 setype    = params.get('setype', None)
-serange   = params.get('serange', 's0')
-secontext = [seuser, serole, setype, serange]
+selevel   = params.get('serange', 's0')
+secontext = [seuser, serole, setype, selevel]
 
 if state not in [ 'file', 'directory', 'link', 'absent']:
     fail_json(msg='invalid state: %s' % state)
