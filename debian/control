@@ -1,0 +1,12 @@
+Source: ansible
+Section: admin
+Priority: optional
+Maintainer: Henry Graham (hzgraham) <Henry.Graham@mail.wvu.edu>
+Build-Depends: cdbs, debhelper (>= 5.0.0)
+Standards-Version: 3.9.1
+
+Package: ansible
+Architecture: all
+Depends: python-jinja2, python-yaml, python-paramiko
+Description: The Ansible ssh management application
+ This package installs Ansible, which is an ssh based configuration management application
