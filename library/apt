@@ -76,7 +76,7 @@ def install(pkgspec, cache, upgrade=False):
         cmd = "%s -q -y install '%s'" % (APT, pkgspec)
         rc, out, err = run_apt(cmd)
         if rc:
-            json_fail(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
+            fail_json(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
         return True
     else:
         return False
@@ -90,7 +90,7 @@ def remove(pkgspec, cache, purge=False):
         cmd = "%s -q -y %s remove '%s'" % (APT, purge, pkgspec)
         rc, out, err = run_apt(cmd)
         if rc:
-            json_fail(msg="'apt-get remove %s' failed: %s" % (pkgspec, err))
+            fail_json(msg="'apt-get remove %s' failed: %s" % (pkgspec, err))
         return True
     
 
