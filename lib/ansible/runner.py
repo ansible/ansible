@@ -229,7 +229,7 @@ class Runner(object):
 
         # TODO: keep this as a dict through the whole path to simplify this code
         for (k,v) in inject.iteritems():
-            if not k.startswith('facter_') and not k.startswith('ohai_'):
+            if not k.startswith('facter_') and not k.startswith('ohai_') and not k.startswith('ansible_'):
                 if not is_dict:
                     if str(v).find(" ") != -1:
                         v = "\"%s\"" % v
