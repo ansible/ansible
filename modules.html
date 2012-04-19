@@ -435,7 +435,11 @@ calls to setup within a playbook.</p>
 <p>If facter or ohai are installed, variables from these programs will
 also be snapshotted into the JSON file for usage in templating. These
 variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and <tt class="docutils literal"><span class="pre">ohai_</span></tt> so it&#8217;s easy to
-tell their source.  All variables are then bubbled up to the caller.</p>
+tell their source.  Ansible also provides it&#8217;s own &#8216;facts&#8217; about the
+remote system, which are prefixed with <tt class="docutils literal"><span class="pre">ansible_</span></tt>.  All variables are
+then bubbled up to the caller.  Using the ansible facts and chosing
+to not install facter and ohai means you can avoid ruby-dependencies
+on your remote systems.</p>
 <p><em>anything</em>:</p>
 <blockquote>
 <div><ul class="simple">

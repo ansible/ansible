@@ -87,7 +87,7 @@ does not create its own programming language.   What constructs Ansible does hav
 almost like cheating).
 
 Ansible does support gathering variables from 'facter', if installed, and Ansible templates
-in jinja2 in a way just like Puppet does with erb.  Ansible in version 0.3 will have it's own facts,
+in jinja2 in a way just like Puppet does with erb.  Ansible in version 0.3 will has it's own facts,
 however, so it will not need to rely on facter, but can use it if available.
 
 vs Chef?

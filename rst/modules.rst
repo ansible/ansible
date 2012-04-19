@@ -332,7 +332,11 @@ calls to setup within a playbook.
 If facter or ohai are installed, variables from these programs will
 also be snapshotted into the JSON file for usage in templating. These
 variables are prefixed with ``facter_`` and ``ohai_`` so it's easy to
-tell their source.  All variables are then bubbled up to the caller.
+tell their source.  Ansible also provides it's own 'facts' about the
+remote system, which are prefixed with ``ansible_``.  All variables are 
+then bubbled up to the caller.  Using the ansible facts and chosing
+to not install facter and ohai means you can avoid ruby-dependencies
+on your remote systems.
 
 *anything*:
 

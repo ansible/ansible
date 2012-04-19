@@ -86,6 +86,10 @@ from those programs can be accessed too, using the appropriate prefix::
     This is a facter variable: {{ facter_hostname }}
     This is an ohai variable: {{ ohai_foo }}
 
+NOTE: Ansible 0.3 (releasing very soon) will also supply built-in facts, so you won't
+need to install ruby on any of your remote machines if you don't want to.  These
+are prefixed with `ansible_`.
+
 The `file` module allows changing ownership and permissions on files.  These
 same options can be passed directly to the `copy` or `template` modules as well::
 
