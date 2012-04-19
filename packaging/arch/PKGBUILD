@@ -6,8 +6,8 @@ pkgdesc="A radically simple deployment, model-driven configuration management, a
 arch=('any')
 url="https://github.com/ansible/ansible"
 license=('GPL3')
-depends=('python2' 'python-paramiko>=1.7.7' 'python2-jinja' 'python-simplejson')
-makedepends=('git' 'asciidoc')
+depends=('python2' 'python2-yaml' 'python-paramiko>=1.7.7' 'python2-jinja' 'python-simplejson')
+makedepends=('git' 'asciidoc' 'fakeroot')
 
 _gitroot="https://github.com/ansible/ansible"
 _gitname="ansible"
