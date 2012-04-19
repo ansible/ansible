@@ -216,7 +216,8 @@ noted, any given module does support change hooks.</p>
 <p><em>update-cache</em>:</p>
 <ul class="simple">
 <li>Whether apt cache must be updated prior operation. Optional, and can be
-&#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.</li>
+&#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.  This can be done as the part of a
+package operation or as a seperate step.</li>
 </ul>
 <p><em>purge</em>:</p>
 <ul class="simple">
@@ -224,7 +225,8 @@ noted, any given module does support change hooks.</p>
 Defaults to &#8216;no&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>apt pkg=foo ensure=removed
+<div class="highlight-python"><pre>apt pkg=foo update-cache=yes
+apt pkg=foo ensure=removed
 apt pkg=foo ensure=installed
 apt pkg=foo ensure=latest update-cache=yes</pre>
 </div>
