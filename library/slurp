@@ -50,7 +50,7 @@ source  = params['src']
 if not os.path.exists(source):
     print json.dumps(dict(
         failed = 1,
-        msg    = "file not found: %s" % metadata
+        msg    = "file not found: %s" % source
     ))
     sys.exit(1)
 
