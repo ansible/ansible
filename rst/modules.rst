@@ -53,7 +53,8 @@ Manages apt-packages (such as for Debian/Ubuntu).
 *update-cache*:
 
 * Whether apt cache must be updated prior operation. Optional, and can be
-  'yes', or 'no'. The default is 'no'.
+  'yes', or 'no'. The default is 'no'.  This can be done as the part of a
+  package operation or as a seperate step.
 
 *purge*:
 
@@ -62,6 +63,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 Example action from Ansible :doc:`playbooks`::
 
+    apt pkg=foo update-cache=yes
     apt pkg=foo ensure=removed
     apt pkg=foo ensure=installed
     apt pkg=foo ensure=latest update-cache=yes
