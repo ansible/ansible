@@ -178,6 +178,7 @@ class TestRunner(unittest.TestCase):
        # almost every time so changed is always true, this just tests that
        # rewriting the file is ok
        result = self._run('setup', [ "metadata=%s" % output, "a=2", "b=3", "c=4" ])
+       print "RAW RESULT=%s" % result
        assert 'md5sum' in result
 
    def test_async(self):
