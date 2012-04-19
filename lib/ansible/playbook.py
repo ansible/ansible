@@ -118,8 +118,18 @@ class PlayBook(object):
         if play.get('vars') is None:
             play['vars'] = {}
         vars = play['vars']
-        if type(vars) != dict:
+        if type(vars) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
+
+        # translate a list of vars into a dict
+        if type(vars) == list:
+            varlist = vars
+            vars =  {}
+            for item in varlist:
+                k, v = item.items()[0]
+                vars[k] = v
+            play['vars'] = vars
+
         vars_prompt = play.get('vars_prompt', {})
         if type(vars_prompt) != dict:
             raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")

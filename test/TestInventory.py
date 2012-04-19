@@ -220,13 +220,13 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('saturn')
 
-        assert vars == {"moon":"titan"}
+        assert vars == {"moon":"titan", "moon2":"enceladus"}
 
     def test_yaml_port(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('hera')
 
-        assert vars == {'ansible_ssh_port': 3000}
+        assert vars == {'ansible_ssh_port': 3000, 'ntp_server': 'olympus.example.com'}
 
     ### Test Runner class method
 

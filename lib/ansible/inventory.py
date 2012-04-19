@@ -216,11 +216,16 @@ class Inventory(object):
 
     def _parse_yaml_host(self, item, variables=[]):
         def set_variables(host, variables):
-            for variable in variables:
-                if len(variable) != 1:
-                    raise errors.AnsibleError("Only one item expected in %s"%(variable))
-                k, v = variable.items()[0]
-                self._set_variable(host, k, v)
+            if type(variables) == list:
+                for variable in variables:
+                    if len(variable) != 1:
+                        raise errors.AnsibleError("Only one item expected in %s"%(variable))
+                    k, v = variable.items()[0]
+                    self._set_variable(host, k, v)
+            elif type(variables) == dict:
+                for k, v in variables.iteritems():
+                    self._set_variable(host, k, v)
+
 
         if type(item) in [str, unicode]:
             set_variables(item, variables)
