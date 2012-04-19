@@ -52,7 +52,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *update-cache*:
 
-* Whether to apt cache must be updated prior operation. Optional, and can be
+* Whether apt cache must be updated prior operation. Optional, and can be
   'yes', or 'no'. The default is 'no'.
 
 *purge*:
