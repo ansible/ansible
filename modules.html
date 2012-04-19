@@ -213,10 +213,20 @@ noted, any given module does support change hooks.</p>
 <ul class="simple">
 <li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.  The default is &#8216;installed&#8217;.</li>
 </ul>
+<p><em>update-cache</em>:</p>
+<ul class="simple">
+<li>Whether apt cache must be updated prior operation. Optional, and can be
+&#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.</li>
+</ul>
+<p><em>purge</em>:</p>
+<ul class="simple">
+<li>Will force purge of configuration file for when ensure is set to &#8216;removed&#8217;.
+Defaults to &#8216;no&#8217;.</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo ensure=removed
 apt pkg=foo ensure=installed
-apt pkg=foo ensure=latest</pre>
+apt pkg=foo ensure=latest update-cache=yes</pre>
 </div>
 <p>NOTE: the apt module cannot currently request installation of a specific software version, as the yum
 module can.  This should be available in a future release.</p>
