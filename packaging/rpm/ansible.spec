@@ -16,6 +16,7 @@ Url: http://ansible.github.com
 BuildArch: noarch
 BuildRequires: python2-devel
 
+Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 
