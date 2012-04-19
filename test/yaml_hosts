@@ -3,7 +3,8 @@
 - jupiter
 - host: saturn
   vars:
-  - moon: titan
+    moon: titan
+    moon2: enceladus
 
 - zeus
 
@@ -14,6 +15,7 @@
   - poseidon
   vars:
   - ansible_ssh_port: 3000
+  - ntp_server: olympus.example.com
 
 - group: norse
   hosts:
