@@ -146,11 +146,15 @@ from remote machines and storing them locally in a file tree, organized by hostn
 
 *dest*:
 
-* A directory to save the file into.  For example, if the 'dest' directory is '/foo', a src file named '/tmp/bar' on host 'host.example.com', would be saved into '/foo/host.example.com/bar'.
+* A directory to save the file into.  For example, if the 'dest' directory is '/foo', a src file named '/tmp/bar' on host 'host.example.com', would be saved into '/foo/host.example.com/tmp/bar' (in Ansible 0.0.3 and later).
 
 The fetch module is a useful way to gather log files from remote systems.  If you require
 fetching multiple files from remote systems, you may wish to execute a tar command and
 then fetch the tarball.
+
+Example::
+
+    fetch src=/var/log/messages dest=/home/logtree
 
 
 file
