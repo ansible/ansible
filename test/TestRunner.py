@@ -201,9 +201,8 @@ class TestRunner(unittest.TestCase):
 
    def test_fetch(self):
        input = self._get_test_file('sample.j2')
-       output = self._get_stage_file('127.0.0.2/sample.j2')
+       output = os.path.join(self.stage_dir, '127.0.0.2', input)
        result = self._run('fetch', [ "src=%s" % input, "dest=%s" % self.stage_dir ])
-       print "output file=%s" % output
        assert os.path.exists(output)
        assert open(input).read() == open(output).read()
 
