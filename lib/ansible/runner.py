@@ -201,23 +201,22 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_str(self, conn, tmp, name, args_str):
-        ''' transfer arguments as a single file to be fed to the module. '''
+    def _transfer_str(self, conn, tmp, name, data):
+        ''' transfer string to remote file '''
 
-        if type(args_str) == dict:
-            args_str = utils.smjson(args_str)
+        if type(data) == dict:
+            data = utils.smjson(data)
 
-        args_fd, args_file = tempfile.mkstemp()
-        args_fo = os.fdopen(args_fd, 'w')
-        args_fo.write(args_str)
-        args_fo.flush()
-        args_fo.close()
+        afd, afile = tempfile.mkstemp()
+        afo = os.fdopen(afd, 'w')
+        afo.write(data)
+        afo.flush()
+        afo.close()
 
-        args_remote = os.path.join(tmp, name)
-        conn.put_file(args_file, args_remote)
-        os.unlink(args_file)
-
-        return args_remote
+        remote = os.path.join(tmp, name)
+        conn.put_file(afile, remote)
+        os.unlink(afile)
+        return remote
 
     # *****************************************************
 
@@ -406,7 +405,6 @@ class Runner(object):
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
-        print "DEST=%s" % dest
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -468,25 +466,56 @@ class Runner(object):
         inject = self.setup_cache.get(conn.host,{})
         source = utils.template(source, inject)
 
-        # first copy the source template over
-        temppath = tmp + os.path.split(source)[-1]
-        conn.put_file(utils.path_dwim(self.basedir, source), temppath)
+        (host, ok, data, err) = (None, None, None, None)
 
-        # install the template module
-        template_module = self._transfer_module(conn, tmp, 'template')
+        if not self.is_playbook:
 
-        # transfer module vars
-        if self.module_vars:
-            vars = utils.bigjson(self.module_vars)
-            vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
-            vars_arg=" vars=%s"%(vars_path)
-        else:
-            vars_arg=""
+            # templating remotely, since we don't have the benefit of SETUP_CACHE
+            # TODO: maybe just fetch the setup file to a tempfile            
+
+            # first copy the source template over
+            temppath = tmp + os.path.split(source)[-1]
+            conn.put_file(utils.path_dwim(self.basedir, source), temppath)
+
+            # install the template module
+            template_module = self._transfer_module(conn, tmp, 'template')
+
+            # transfer module vars
+            if self.module_vars:
+                vars = utils.bigjson(self.module_vars)
+                vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
+                vars_arg=" vars=%s"%(vars_path)
+            else:
+                vars_arg=""
         
-        # run the template module
-        args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
-        (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
-        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
+            # run the template module
+            args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
+            (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
+            (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
+
+        else:
+            # templating LOCALLY to avoid Jinja2 dependency on nodes inside playbook runs
+            # non-playbook path can be moved to use this IF it is willing to fetch
+            # the metadata file first
+
+            # install the template module
+            copy_module = self._transfer_module(conn, tmp, 'copy')
+
+            # playbooks can template locally to avoid the jinja2 dependency
+            source_data = file(utils.path_dwim(self.basedir, source)).read()
+
+            resultant = ''            
+            try:
+                resultant = utils.template(source_data, inject)
+            except Exception, e:
+                return (host, False, dict(failed=True, msg=str(e)), '')
+            xfered = self._transfer_str(conn, tmp, 'source', resultant)
+            
+            # run the COPY module
+            args = "src=%s dest=%s" % (xfered, dest)
+            (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
+            (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
+ 
 
         if ok:
             return self._chain_file_module(conn, tmp, data, err, options, executed)
