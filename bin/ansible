@@ -104,7 +104,7 @@ class Cli(object):
             module_args="jid=%s" % jid, remote_user=old_runner.remote_user,
             remote_pass=old_runner.remote_pass, inventory=old_runner.inventory,
             timeout=old_runner.timeout, forks=old_runner.forks,
-            pattern='*', callbacks=self.silent_callbacks, verbose=True,
+            pattern='*', callbacks=self.silent_callbacks, 
         )
 
     # ----------------------------------------------
@@ -140,7 +140,7 @@ class Cli(object):
                 runner.inventory.restrict_to(poll_hosts)
                 polling_runner = self.get_polling_runner(runner, jid)
                 poll_results = polling_runner.run()
-                runner.inventory.lift_restrictions()
+                runner.inventory.lift_restriction()
                 if poll_results is None:
                     break
                 for (host, host_result) in poll_results['contacted'].iteritems():
