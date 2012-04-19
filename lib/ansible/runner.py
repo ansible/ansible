@@ -28,6 +28,7 @@ import traceback
 import tempfile
 import subprocess
 import getpass
+import base64
 
 import ansible.constants as C 
 import ansible.connection
@@ -456,13 +457,7 @@ class Runner(object):
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
-        if metadata is None:
-            if self.remote_user == 'root':
-                metadata = '/etc/ansible/setup'
-            else:
-                metadata = '~/.ansible/setup'
-
-        # apply templating to source argument
+        # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
         source = utils.template(source, inject)
 
@@ -470,53 +465,45 @@ class Runner(object):
 
         if not self.is_playbook:
 
-            # templating remotely, since we don't have the benefit of SETUP_CACHE
-            # TODO: maybe just fetch the setup file to a tempfile            
-
-            # first copy the source template over
-            temppath = tmp + os.path.split(source)[-1]
-            conn.put_file(utils.path_dwim(self.basedir, source), temppath)
-
-            # install the template module
-            template_module = self._transfer_module(conn, tmp, 'template')
-
-            # transfer module vars
-            if self.module_vars:
-                vars = utils.bigjson(self.module_vars)
-                vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
-                vars_arg=" vars=%s"%(vars_path)
-            else:
-                vars_arg=""
-        
-            # run the template module
-            args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
-            (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
-            (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
-
-        else:
-            # templating LOCALLY to avoid Jinja2 dependency on nodes inside playbook runs
-            # non-playbook path can be moved to use this IF it is willing to fetch
-            # the metadata file first
-
-            # install the template module
-            copy_module = self._transfer_module(conn, tmp, 'copy')
-
-            # playbooks can template locally to avoid the jinja2 dependency
-            source_data = file(utils.path_dwim(self.basedir, source)).read()
-
-            resultant = ''            
-            try:
-                resultant = utils.template(source_data, inject)
-            except Exception, e:
-                return (host, False, dict(failed=True, msg=str(e)), '')
-            xfered = self._transfer_str(conn, tmp, 'source', resultant)
+            # not running from a playbook so we have to fetch the remote
+            # setup file contents before proceeding...
+            if metadata is None:
+                if self.remote_user == 'root':
+                    metadata = '/etc/ansible/setup'
+                else:
+                    metadata = '~/.ansible/setup'
             
-            # run the COPY module
-            args = "src=%s dest=%s" % (xfered, dest)
-            (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
-            (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
- 
+            # install the template module
+            slurp_module = self._transfer_module(conn, tmp, 'slurp')
 
+            # run the slurp module to get the metadata file
+            args = "src=%s" % metadata
+            (result1, err, executed) = self._execute_module(conn, tmp, slurp_module, args)
+            result1 = utils.json_loads(result1)
+            if not 'content' in result1 or result1.get('encoding','base64') != 'base64':
+                result1['failed'] = True
+                return self._return_from_module(conn, host, result1, err, executed)
+            content = base64.b64decode(result1['content'])
+            inject = utils.json_loads(content)
+
+        # install the template module
+        copy_module = self._transfer_module(conn, tmp, 'copy')
+
+        # template the source data locally
+        source_data = file(utils.path_dwim(self.basedir, source)).read()
+        resultant = ''            
+        try:
+            resultant = utils.template(source_data, inject)
+        except Exception, e:
+            return (host, False, dict(failed=True, msg=str(e)), '')
+        xfered = self._transfer_str(conn, tmp, 'source', resultant)
+            
+        # run the COPY module
+        args = "src=%s dest=%s" % (xfered, dest)
+        (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
+        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
+ 
+        # modify file attribs if needed
         if ok:
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
