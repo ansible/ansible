@@ -1,8 +1,9 @@
 *.py[co]
 build
-# Emacs backup files...
+# editor backup files...
 *~
 .\#*
+*.swp
 # (s)rpm building stuff
 MANIFEST
 dist
