@@ -1,6 +1,6 @@
 
-The Future of Systems Management Is Now
-```````````````````````````````````````
+The Future Is Now
+`````````````````
 
 Ansible is a radically simple model-driven configuration management, deployment, 
 and command execution framework. Other tools in this space have been too
