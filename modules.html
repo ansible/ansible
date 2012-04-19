@@ -282,11 +282,14 @@ from remote machines and storing them locally in a file tree, organized by hostn
 </ul>
 <p><em>dest</em>:</p>
 <ul class="simple">
-<li>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory is &#8216;/foo&#8217;, a src file named &#8216;/tmp/bar&#8217; on host &#8216;host.example.com&#8217;, would be saved into &#8216;/foo/host.example.com/bar&#8217;.</li>
+<li>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory is &#8216;/foo&#8217;, a src file named &#8216;/tmp/bar&#8217; on host &#8216;host.example.com&#8217;, would be saved into &#8216;/foo/host.example.com/tmp/bar&#8217; (in Ansible 0.0.3 and later).</li>
 </ul>
 <p>The fetch module is a useful way to gather log files from remote systems.  If you require
 fetching multiple files from remote systems, you may wish to execute a tar command and
 then fetch the tarball.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>fetch src=/var/log/messages dest=/home/logtree</pre>
+</div>
 </div>
 <div class="section" id="file">
 <h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
@@ -630,7 +633,7 @@ yum pkg=httpd ensure=installed</pre>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 17, 2012.<br/>
+      Last updated on Apr 18, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
