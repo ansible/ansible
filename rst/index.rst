@@ -1,5 +1,8 @@
 
-Ansible is a radically simple deployment, model-driven configuration management, 
+The Future of Systems Management Is Now
+```````````````````````````````````````
+
+Ansible is a radically simple model-driven configuration management, deployment, 
 and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
