@@ -52,7 +52,7 @@ Systems management doesn't have to be complicated.  Ansible's docs will remain s
 
 
 Architecture
-============
+````````````
 
 .. image:: http://ansible.github.com/ansible_arch2.jpg
    :alt: "Architecture Diagram" 
@@ -60,7 +60,7 @@ Architecture
    :align: center
 
 Features
-========
+````````
 
 * Dead simple setup
 * Super fast & parallel by default
@@ -77,7 +77,7 @@ Features
 
 
 Resources
-=========
+`````````
 
 Your ideas and contributions are welcome.  We're also happy to help 
 you with questions about Ansible.
@@ -103,7 +103,7 @@ you with questions about Ansible.
 
 
 Contents
-========
+````````
 
 .. toctree::
    :maxdepth: 3
@@ -118,12 +118,12 @@ Contents
    moduledev
    faq
 
-About the Author
-================
+Presented By...
+```````````````
 
-Ansible was originally developed by `Michael DeHaan <http://michaeldehaan.net>`_ (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC
-based software developer and architect.  He created the popular
-DevOps program `Cobbler <http://cobbler.github.com/>`_.
+Ansible was created and is run by `Michael DeHaan <http://michaeldehaan.net>`_ (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC
+based software developer and architect, who also created the popular
+DevOps install server `Cobbler <http://cobbler.github.com/>`_.
 Cobbler is used to deploy mission critical systems all over the
 planet, in industries ranging from massively multiplayer gaming, core
 internet infrastructure, finance, chip design, and more.  Michael also
@@ -131,3 +131,5 @@ helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible
 orchestrate systems in lots of diverse places.  He's worked on systems
 software for IBM, Motorola, Red Hat's Emerging Technologies Group,
 Puppet Labs, and rPath.  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
+
+

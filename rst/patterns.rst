@@ -9,7 +9,7 @@ Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. _inventoryformat:
 
-Baisc Inventory File Format
+Basic Inventory File Format
 +++++++++++++++++++++++++++
 
 The format for /etc/ansible/hosts looks like this::
