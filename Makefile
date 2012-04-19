@@ -16,6 +16,11 @@ RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%"
 RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
 RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
+# Python distutils options
+DUDIR = packaging/distutils
+DUSETUP = $(DUDIR)/setup.py
+DUMANIFEST = $(DUDIR)/MANIFEST.in
+
 
 all: clean python
 
@@ -65,15 +70,15 @@ clean:
 	rm -rf MANIFEST rpm-build
 
 python:
-	python setup.py build
+	python $(DUSETUP) build
 
 install:
 	mkdir -p /usr/share/ansible
 	cp ./library/* /usr/share/ansible/
-	python setup.py install
+	python $(DUSETUP) install
 
 sdist: clean
-	python ./setup.py sdist
+	python ./$(DUSETUP) sdist -t $(DUMANIFEST)
 
 rpmcommon: sdist
 	@mkdir -p rpm-build
