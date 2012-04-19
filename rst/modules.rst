@@ -50,11 +50,22 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 * Can be either 'installed', 'removed', or 'latest'.  The default is 'installed'.
 
+*update-cache*:
+
+* Whether to apt cache must be updated prior operation. Optional, and can be
+  'yes', or 'no'. The default is 'no'.
+
+*purge*:
+
+* Will force purge of configuration file for when ensure is set to 'removed'.
+  Defaults to 'no'.
+
 Example action from Ansible :doc:`playbooks`::
 
     apt pkg=foo ensure=removed
     apt pkg=foo ensure=installed
-    apt pkg=foo ensure=latest
+    apt pkg=foo ensure=latest update-cache=yes
+
 
 NOTE: the apt module cannot currently request installation of a specific software version, as the yum
 module can.  This should be available in a future release.
