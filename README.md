@@ -31,6 +31,7 @@ Contributions to the core and modules are greatly welcome.
 
    * Required Process:
        * Submit github pull requests to the "ansible/integration" branch
+       * (This branch will be renamed 'devel' in the very near future)
        * Make sure "make tests" passes before submitting any requests.
    * Bonus points:
        * Joining the mailing list
