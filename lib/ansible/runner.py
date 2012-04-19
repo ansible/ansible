@@ -404,8 +404,9 @@ class Runner(object):
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # files are saved in dest dir, with a subdir for each host, then the filename
-        filename = os.path.basename(source)
-        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, filename)
+        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
+        dest   = dest.replace("//","/")
+        print "DEST=%s" % dest
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
