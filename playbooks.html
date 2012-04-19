@@ -263,12 +263,13 @@ Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p
 to use nicer shorthand like this:</p>
 <div class="highlight-python"><pre>$varname</pre>
 </div>
-<p>Further, if there are discovered variables about the system (say, if
-facter or ohai were installed) these variables bubble up back into the
+<p>Further, if there are discovered variables about the system (ansible provides some of these,
+plus we include ones taken from facter or ohai if installed) these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set
 variables.</p>
 <p>Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
-variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  So for instance, if I wanted
+variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  Ansible variables (0.3 and later)
+are not surprisingly prefixed with <tt class="docutils literal"><span class="pre">ansible_</span></tt>.  So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say:</p>
 <div class="highlight-python"><pre>- name: write the motd
   action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
@@ -437,8 +438,10 @@ tasks:
     action: command /sbin/shutdown -t now
     only_if: '$is_favcolor_blue'</pre>
 </div>
-<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed.   As a reminder,
-these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  The only_if
+<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed, or you can
+use variables that bubble up from ansible (0.3 and later).   As a reminder,
+these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  Ansible&#8217;s
+built in variables are prefixed with <cite>ansible_</cite>. The only_if
 expression is actually a tiny small bit of Python, so be sure to quote variables and make something
 that evaluates to <cite>True</cite> or <cite>False</cite>.  It is a good idea to use &#8216;vars_files&#8217; instead of &#8216;vars&#8217; to define
 all of your conditional expressions in a way that makes them very easy to reuse between plays

@@ -106,13 +106,14 @@ to use nicer shorthand like this::
 
     $varname
 
-Further, if there are discovered variables about the system (say, if
-facter or ohai were installed) these variables bubble up back into the
+Further, if there are discovered variables about the system (ansible provides some of these,
+plus we include ones taken from facter or ohai if installed) these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set
 variables.  
 
 Facter variables are prefixed with ``facter_`` and Ohai
-variables are prefixed with ``ohai_``.  So for instance, if I wanted
+variables are prefixed with ``ohai_``.  Ansible variables (0.3 and later) 
+are not surprisingly prefixed with ``ansible_``.  So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say::
 
    - name: write the motd
@@ -315,8 +316,10 @@ pretty simple::
         action: command /sbin/shutdown -t now
         only_if: '$is_favcolor_blue'
       
-Variables from tools like `facter` and `ohai` can be used here, if installed.   As a reminder,
-these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  The only_if
+Variables from tools like `facter` and `ohai` can be used here, if installed, or you can
+use variables that bubble up from ansible (0.3 and later).   As a reminder,
+these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  Ansible's
+built in variables are prefixed with `ansible_`. The only_if
 expression is actually a tiny small bit of Python, so be sure to quote variables and make something
 that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' instead of 'vars' to define
 all of your conditional expressions in a way that makes them very easy to reuse between plays

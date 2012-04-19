@@ -228,6 +228,9 @@ from those programs can be accessed too, using the appropriate prefix:</p>
 This is a facter variable: {{ facter_hostname }}
 This is an ohai variable: {{ ohai_foo }}</pre>
 </div>
+<p>NOTE: Ansible 0.3 (releasing very soon) will also supply built-in facts, so you won&#8217;t
+need to install ruby on any of your remote machines if you don&#8217;t want to.  These
+are prefixed with <cite>ansible_</cite>.</p>
 <p>The <cite>file</cite> module allows changing ownership and permissions on files.  These
 same options can be passed directly to the <cite>copy</cite> or <cite>template</cite> modules as well:</p>
 <div class="highlight-python"><pre>ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
