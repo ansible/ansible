@@ -1,5 +1,6 @@
 include README.md packaging/rpm/ansible.spec
 include examples/hosts
+include packaging/distutils/setup.py
 recursive-include docs *
 recursive-include library *
 include Makefile
