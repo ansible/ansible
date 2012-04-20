@@ -88,8 +88,8 @@ for x in items:
     params[k] = v
 
 state     = params.get('state','file')
-path      = params.get('path', params.get('dest', params.get('name', None)))
-src       = params.get('src', None)
+path      = os.path.expanduser(params.get('path', params.get('dest', params.get('name', None))))
+src       = os.path.expanduser(params.get('src', None))
 dest      = params.get('dest', None)
 mode      = params.get('mode', None)
 owner     = params.get('owner', None)
