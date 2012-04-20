@@ -42,7 +42,7 @@ params = {}
 for x in items:
     (k, v) = x.split("=")
     params[k] = v
-source  = params['src']
+source  = os.path.expanduser(params['src'])
 
 # ==========================================
  
