@@ -93,7 +93,7 @@ if path:
    path = os.path.expanduser(path)
 src       = params.get('src', None)
 if src:
-   path = os.path.expanduser(src)
+   src = os.path.expanduser(src)
 dest      = params.get('dest', None)
 mode      = params.get('mode', None)
 owner     = params.get('owner', None)
