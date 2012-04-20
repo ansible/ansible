@@ -40,8 +40,8 @@ for x in items:
     (k, v) = x.split("=")
     params[k] = v
 
-src  = params['src']
-dest = params['dest']
+src  = os.path.expanduser(params['src'])
+dest = os.path.expanduser(params['dest'])
 
  
 # raise an error if there is no src file
