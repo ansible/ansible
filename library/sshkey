@@ -1,12 +1,34 @@
 #!/usr/bin/env python
 """Ansible module to add authorized_keys for ssh logins.
 
-Usage:
+(c) 2012, Brad Olson <brado@movedbylight.com>
+
+Results: Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
+
+Arguments
+=========
     user = username
     key = line to add to authorized_keys for user
     ensure = absent|present (default: present)
 
-(c) 2012, Brad Olson <brado@movedbylight.com>
+Command Line Example 
+====================
+
+ansible somehost -m sshkey -a user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+
+Playbook Example 
+================
+
+---
+# include like this:
+# - include: tasks/logins.yaml users=charlie,sue
+- name: create user charlie
+  action: user name=charlie shell=/bin/bash createhome=yes groups=www-data 
+  only_if: "'charlie' in '$users'"
+- name: add public key for charlie
+  action: sshkey user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+  only_if: "'charlie' in '$users'"
+
 
 This file is part of Ansible
 
