@@ -140,7 +140,9 @@ class TestPlaybook(unittest.TestCase):
            callbacks        = self.test_callbacks,
            runner_callbacks = self.test_callbacks
        )
-       return self.playbook.run()
+       result = self.playbook.run()
+       print utils.bigjson(dict(events=EVENTS))
+       return result
 
    def test_one(self):
        pb = os.path.join(self.test_dir, 'playbook1.yml')
