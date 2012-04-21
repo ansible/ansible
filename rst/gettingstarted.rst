@@ -94,6 +94,11 @@ Other Package Distributions
 
 Debian packages are in progress.
 
+`Arch PKGBUILD is available on AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
+If you have python3 installed on Arch, you probably want to symlink python to python2.::
+
+    sudo ln -sf /usr/bin/python2 /usr/bin/python
+
 If you would like to package Ansible for Homebrew, BSD, or others,
 please stop by the mailing list and say hi.
 
