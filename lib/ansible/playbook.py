@@ -123,7 +123,7 @@ class PlayBook(object):
         # translate a list of vars into a dict
         if type(vars) == list:
             varlist = vars
-            vars =  {}
+            vars = {}
             for item in varlist:
                 k, v = item.items()[0]
                 vars[k] = v
