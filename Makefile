@@ -16,11 +16,6 @@ RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%"
 RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
 RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
-# Python distutils options
-DUDIR = packaging/distutils
-DUSETUP = $(DUDIR)/setup.py
-DUMANIFEST = $(DUDIR)/MANIFEST.in
-
 
 all: clean python
 
@@ -70,15 +65,15 @@ clean:
 	rm -rf MANIFEST rpm-build
 
 python:
-	python $(DUSETUP) build
+	python setup.py build
 
 install:
 	mkdir -p /usr/share/ansible
 	cp ./library/* /usr/share/ansible/
-	python $(DUSETUP) install
+	python setup.py install
 
 sdist: clean
-	python ./$(DUSETUP) sdist -t $(DUMANIFEST)
+	python setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
 	@mkdir -p rpm-build
@@ -109,3 +104,10 @@ rpm: rpmcommon
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
+
+debian:
+	# stub target, FIXME!
+	(cd packaging/debian; dpkg-buildpackage -us -uc -rfakeroot)
+
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+
