@@ -268,7 +268,7 @@ class Runner(object):
         ''' runs a module that has already been transferred '''
 
         inject = self.setup_cache.get(conn.host,{})
-        conditional = utils.double_template(self.conditional, inject)
+        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
@@ -281,7 +281,7 @@ class Runner(object):
 
         if type(args) == dict:
             args = utils.bigjson(args)
-        args = utils.template(args, inject)
+        args = utils.template(args, inject, self.setup_cache)
 
         module_name_tail = remote_module_path.split("/")[-1]
 
@@ -369,7 +369,7 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
-        source = utils.template(source, inject)
+        source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
@@ -456,7 +456,7 @@ class Runner(object):
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
-        source = utils.template(source, inject)
+        source = utils.template(source, inject, self.setup_cache)
 
         (host, ok, data, err) = (None, None, None, None)
 
@@ -491,7 +491,7 @@ class Runner(object):
         source_data = file(utils.path_dwim(self.basedir, source)).read()
         resultant = ''            
         try:
-            resultant = utils.template(source_data, inject)
+            resultant = utils.template(source_data, inject, self.setup_cache)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
@@ -537,7 +537,7 @@ class Runner(object):
             return [ host, False, "FAILED: %s" % str(e), None ]
 
         cache = self.setup_cache.get(host, {})
-        module_name = utils.template(self.module_name, cache)
+        module_name = utils.template(self.module_name, cache, self.setup_cache)
 
         tmp = self._get_tmp_path(conn)
         result = None

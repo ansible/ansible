@@ -30,7 +30,7 @@ import sys
 import os
 import subprocess
 import traceback
-import ansible.utils
+from ansible import utils
 
 try:
     import json
@@ -70,7 +70,7 @@ try:
     print "***********************************"
     print "RAW OUTPUT"
     print out
-    results = ansible.utils.parse_json(out)
+    results = utils.parse_json(out)
     
 except:
     print "***********************************"
@@ -82,7 +82,7 @@ except:
 print "***********************************"
 print "PARSED OUTPUT"
 
-print results
+print utils.bigjson(results)
 
 sys.exit(0)
 

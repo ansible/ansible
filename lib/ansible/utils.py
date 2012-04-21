@@ -33,7 +33,6 @@ except ImportError:
 from ansible import errors
 import ansible.constants as C
 
-
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -239,14 +238,16 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars):
+def template(text, vars, setup_cache):
     ''' run a text buffer through the templating engine '''
+    vars = vars.copy()
     text = varReplace(str(text), vars)
+    vars['hostvars'] = setup_cache
     template = jinja2.Template(text)
     return template.render(vars)
 
-def double_template(text, vars):
-    return template(template(text, vars), vars)
+def double_template(text, vars, setup_cache):
+    return template(template(text, vars, setup_cache), vars, setup_cache)
 
 def template_from_file(path, vars):
     ''' run a file through the templating engine '''
