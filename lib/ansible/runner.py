@@ -280,7 +280,7 @@ class Runner(object):
             args = self._add_setup_metadata(args)
 
         if type(args) == dict:
-           args = utils.bigjson(args)
+            args = utils.bigjson(args)
         args = utils.template(args, inject)
 
         module_name_tail = remote_module_path.split("/")[-1]
@@ -598,10 +598,10 @@ class Runner(object):
 
         basetmp = "/var/tmp"
         if self.remote_user != 'root':
-           basetmp = "/home/%s/.ansible/tmp" % self.remote_user
+            basetmp = "/home/%s/.ansible/tmp" % self.remote_user
         cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp 
         if self.remote_user != 'root':
-           cmd = "mkdir -p %s && %s" % (basetmp, cmd)
+            cmd = "mkdir -p %s && %s" % (basetmp, cmd)
 
         result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
