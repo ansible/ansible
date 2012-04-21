@@ -378,7 +378,9 @@ class PlayBook(object):
 
         tokens = action.split(None, 1)
         module_name = tokens[0]
-        module_args = tokens[1]
+        module_args = ''
+        if len(tokens) > 1:
+            module_args = tokens[1]
 
         # include task specific vars
         module_vars = task.get('vars')
