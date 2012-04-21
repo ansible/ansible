@@ -22,7 +22,6 @@ import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-import shlex
 import os
 import time
 

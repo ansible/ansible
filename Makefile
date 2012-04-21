@@ -1,21 +1,42 @@
 #!/usr/bin/make
 
+########################################################
+# Makefile for Ansible
+#
+# useful targets:
+#   make sdist ---------------- produce a tarball
+#   make rpm  ----------------- produce RPMs
+#   make debian --------------- produce a dpkg (FIXME?)
+#   make docs ----------------- rebuild the manpages (results are checked in)
+#   make tests ---------------- run the tests
+#   make pyflakes, make pep8 -- source code checks  
+
+########################################################
+# variable section
+
 NAME = "ansible"
+
+# Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
-# Space separated list of all the manpages we want to end up with.
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1
+
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+
+# VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
-# These are for building the RPM.
+
+# RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
 RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
+
+########################################################
 
 all: clean python
 
