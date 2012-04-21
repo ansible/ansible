@@ -87,14 +87,15 @@ bumped with every source code change.  To get around this, you can use
 rpm `-Uvh` with `--force` when RPM tells you the package is still at the
 same version.  This is perfectly safe to do.
 
-Other Package Distributions
-+++++++++++++++++++++++++++
+Debian, Gentoo, Arch, Others
+++++++++++++++++++++++++++++
 
-`Gentoo eBuilds are here <https://github.com/uu/ubuilds>`_
+Gentoo eBuilds are available `here <https://github.com/uu/ubuilds>`_
 
-Debian packages are in progress.
+Debian package recipes are in progress -- see the source checkout, in the packaging/debian
+directory.
 
-`Arch PKGBUILD is available on AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
+An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
 If you have python3 installed on Arch, you probably want to symlink python to python2.::
 
     sudo ln -sf /usr/bin/python2 /usr/bin/python
