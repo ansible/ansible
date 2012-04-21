@@ -417,7 +417,6 @@ class Runner(object):
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-            changed = (new_md5 != local_md5)
             if new_md5 != remote_md5:
                 return (host, True, dict(failed=True, msg="md5 mismatch", md5sum=new_md5), '')
             return (host, True, dict(changed=True, md5sum=new_md5), '')
