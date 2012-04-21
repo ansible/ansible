@@ -2,8 +2,6 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %endif
-%define _dusetup   packaging/distutils/setup.py
-
 
 Name: ansible
 Release: 1%{?dist}
@@ -35,10 +33,10 @@ are transferred to managed machines automatically.
 %setup -q
 
 %build
-%{__python} %{_dusetup} build
+%{__python} setup.py build
 
 %install
-%{__python} %{_dusetup} install -O1 --root=$RPM_BUILD_ROOT
+%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
 cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/man1/
