@@ -134,7 +134,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#running-from-checkout">Running From Checkout</a></li>
 <li><a class="reference internal" href="#make-install">Make Install</a></li>
 <li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
-<li><a class="reference internal" href="#other-package-distributions">Other Package Distributions</a></li>
+<li><a class="reference internal" href="#debian-gentoo-arch-others">Debian, Gentoo, Arch, Others</a></li>
 <li><a class="reference internal" href="#tagged-releases">Tagged Releases</a></li>
 </ul>
 </li>
@@ -240,10 +240,15 @@ bumped with every source code change.  To get around this, you can use
 rpm <cite>-Uvh</cite> with <cite>&#8211;force</cite> when RPM tells you the package is still at the
 same version.  This is perfectly safe to do.</p>
 </div>
-<div class="section" id="other-package-distributions">
-<h3>Other Package Distributions<a class="headerlink" href="#other-package-distributions" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="https://github.com/uu/ubuilds">Gentoo eBuilds are here</a></p>
-<p>Debian packages are in progress.</p>
+<div class="section" id="debian-gentoo-arch-others">
+<h3>Debian, Gentoo, Arch, Others<a class="headerlink" href="#debian-gentoo-arch-others" title="Permalink to this headline">¶</a></h3>
+<p>Gentoo eBuilds are available <a class="reference external" href="https://github.com/uu/ubuilds">here</a></p>
+<p>Debian package recipes are in progress &#8211; see the source checkout, in the packaging/debian
+directory.</p>
+<p>An Arch PKGBUILD is available on <a class="reference external" href="https://aur.archlinux.org/packages.php?ID=58621">AUR</a>
+If you have python3 installed on Arch, you probably want to symlink python to python2.:</p>
+<div class="highlight-python"><pre>sudo ln -sf /usr/bin/python2 /usr/bin/python</pre>
+</div>
 <p>If you would like to package Ansible for Homebrew, BSD, or others,
 please stop by the mailing list and say hi.</p>
 </div>
@@ -306,7 +311,7 @@ explore, but you already have a fully working infrastructure!</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 19, 2012.<br/>
+      Last updated on Apr 21, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>
