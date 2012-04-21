@@ -187,7 +187,7 @@ class Runner(object):
         if type(files) == str:
             files = [ files ]
         for filename in files:
-            if not filename.startswith('/tmp/'):
+            if filename.find('/tmp/') == -1:
                 raise Exception("not going to happen")
             self._exec_command(conn, "rm -rf %s" % filename, None)
 
@@ -599,7 +599,14 @@ class Runner(object):
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result, err = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
+        basetmp = "/var/tmp"
+        if self.remote_user != 'root':
+           basetmp = "/home/%s/.ansible/tmp" % self.remote_user
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp 
+        if self.remote_user != 'root':
+           cmd = "mkdir -p %s && %s" % (basetmp, cmd)
+
+        result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
         return cleaned
 
