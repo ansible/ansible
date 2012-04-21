@@ -22,7 +22,6 @@
 import sys
 import getpass
 import time
-from optparse import OptionParser
 
 import ansible.runner
 import ansible.constants as C
