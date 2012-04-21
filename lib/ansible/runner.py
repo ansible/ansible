@@ -26,7 +26,6 @@ import Queue
 import random
 import traceback
 import tempfile
-import getpass
 import base64
 
 import ansible.constants as C 
