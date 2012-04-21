@@ -207,10 +207,10 @@ class PlayBook(object):
                         if action is None:
                             raise errors.AnsibleError('action is required')
                         produced_task = task.copy()
-                        produced_task['action'] = utils.template(action, dict(item=item))
-                        produced_task['name'] = utils.template(name, dict(item=item))
+                        produced_task['action'] = utils.template(action, dict(item=item), SETUP_CACHE)
+                        produced_task['name'] = utils.template(name, dict(item=item), SETUP_CACHE)
                         if only_if:
-                            produced_task['only_if'] = utils.template(only_if, dict(item=item))
+                            produced_task['only_if'] = utils.template(only_if, dict(item=item), SETUP_CACHE)
                         new_tasks2.append(produced_task)
                 else:
                     new_tasks2.append(task)
@@ -465,7 +465,7 @@ class PlayBook(object):
                     found = False
                     sequence = []
                     for real_filename in filename:
-                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
+                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars, SETUP_CACHE))
                         sequence.append(filename2)
                         if os.path.exists(filename2):
                             found = True
@@ -481,7 +481,7 @@ class PlayBook(object):
                         )
 
                 else:
-                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars, SETUP_CACHE))
                     if not os.path.exists(filename2):
                         raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
                     data = utils.parse_yaml_from_file(filename2)
