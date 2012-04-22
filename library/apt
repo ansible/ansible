@@ -63,16 +63,27 @@ def run_apt(command):
         rc = cmd.returncode
         return rc, out, err
 
-def package_status(pkgspec, cache):
+def package_split(pkgspec):
+    parts = pkgspec.split('=')
+    if len(parts) > 1:
+        return parts[0], parts[1]
+    else:
+        return parts[0], None
+
+def package_status(pkgname, version, cache):
     try:
-        pkg = cache[pkgspec]
-    except:
-        fail_json(msg="No package matching '%s' is available" % pkgspec)
-    return (pkg.is_installed, pkg.is_upgradable)
+        pkg = cache[pkgname]
+    except KeyError:
+        fail_json(msg="No package matching '%s' is available" % pkgname)
+    if version:
+        return pkg.is_installed and pkg.installed.version == version, False
+    else:
+        return pkg.is_installed, pkg.is_upgradable
 
 def install(pkgspec, cache, upgrade=False):
-    (installed, upgradable) = package_status(pkgspec, cache)
-    if (not installed) or (upgrade and upgradable):
+    name, version = package_split(pkgspec)
+    installed, upgradable = package_status(name, version, cache)
+    if not installed or (upgrade and upgradable):
         cmd = "%s -q -y install '%s'" % (APT, pkgspec)
         rc, out, err = run_apt(cmd)
         if rc:
@@ -82,15 +93,16 @@ def install(pkgspec, cache, upgrade=False):
         return False
 
 def remove(pkgspec, cache, purge=False):
-    (installed, upgradable) = package_status(pkgspec, cache)
+    name, version = package_split(pkgspec)
+    installed, upgradable = package_status(name, version, cache)
     if not installed:
         return False
     else:
         purge = '--purge' if purge else ''
-        cmd = "%s -q -y %s remove '%s'" % (APT, purge, pkgspec)
+        cmd = "%s -q -y %s remove '%s'" % (APT, purge, name)
         rc, out, err = run_apt(cmd)
         if rc:
-            fail_json(msg="'apt-get remove %s' failed: %s" % (pkgspec, err))
+            fail_json(msg="'apt-get remove %s' failed: %s" % (name, err))
         return True
     
 
@@ -109,7 +121,7 @@ if not len(items):
 
 params = {}
 for x in items:
-    (k, v) = x.split("=")
+    (k, v) = x.split("=", 1)
     params[k] = v
 
 state        = params.get('state','installed')
@@ -137,7 +149,12 @@ if update_cache == 'yes':
     if package == None:
         exit_json(changed=False)
 
+if package.count('=') > 1:
+    fail_json(msg='invalid package spec')
+
 if state == 'latest':
+    if '=' in package:
+        fail_json(msg='version number inconsistent with state=latest')
     changed = install(package, cache, upgrade=True)
 elif state == 'installed':
     changed = install(package, cache)
