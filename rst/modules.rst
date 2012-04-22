@@ -221,6 +221,9 @@ All parameters available to the file module are also available when running the 
 
 * 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to 's0'.  Only used only used on hosts with SELinux present.
 
+*context*:
+
+* accepts only 'default' as value.  This will restore a file's selinux context to the default context in the policy.  Does nothing if no default is available.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -229,6 +232,7 @@ Example action from Ansible :doc:`playbooks`::
     file path=/path/to/delete state=absent
     file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
     file path=/some/path state=directory setype=httpd_sys_content_t
+    file path=/some/path state=directory context=default
 
 .. _git:
 
