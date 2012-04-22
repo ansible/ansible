@@ -42,7 +42,7 @@ def fail_json(**kwargs):
     exit_json(rc=1, **kwargs)
 
 try:
-    import apt
+    import apt, apt_pkg
 except ImportError:
     fail_json(msg="could not import apt, please install the python-apt package on this host")
 
@@ -80,11 +80,13 @@ def package_status(pkgname, version, cache):
     else:
         return pkg.is_installed, pkg.is_upgradable
 
-def install(pkgspec, cache, upgrade=False):
+def install(pkgspec, cache, upgrade=False, default_release=None):
     name, version = package_split(pkgspec)
     installed, upgradable = package_status(name, version, cache)
     if not installed or (upgrade and upgradable):
         cmd = "%s -q -y install '%s'" % (APT, pkgspec)
+        if default_release:
+            cmd += " -t '%s'" % (default_release,)
         rc, out, err = run_apt(cmd)
         if rc:
             fail_json(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
@@ -124,10 +126,11 @@ for x in items:
     (k, v) = x.split("=", 1)
     params[k] = v
 
-state        = params.get('state','installed')
-package      = params.get('pkg', params.get('package', params.get('name', None)))
-update_cache = params.get('update-cache', 'no')
-purge        = params.get('purge', 'no')
+state            = params.get('state', 'installed')
+package          = params.get('pkg', params.get('package', params.get('name', None)))
+update_cache     = params.get('update-cache', 'no')
+purge            = params.get('purge', 'no')
+default_release  = params.get('default-release', None)
 
 if state not in ['installed', 'latest', 'removed']:
     fail_json(msg='invalid state')
@@ -142,6 +145,10 @@ if package is None and update_cache != 'yes':
     fail_json(msg='pkg=name and/or update-cache=yes is required')
 
 cache = apt.Cache()
+if default_release:
+    apt_pkg.config['APT::Default-Release'] = default_release
+    # reopen cache w/ modified config
+    cache.open()
 
 if update_cache == 'yes':
     cache.update()
@@ -155,9 +162,10 @@ if package.count('=') > 1:
 if state == 'latest':
     if '=' in package:
         fail_json(msg='version number inconsistent with state=latest')
-    changed = install(package, cache, upgrade=True)
+    changed = install(package, cache, upgrade=True,
+                      default_release=default_release)
 elif state == 'installed':
-    changed = install(package, cache)
+    changed = install(package, cache, default_release=default_release)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
