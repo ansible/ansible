@@ -75,6 +75,12 @@ Features
 * Source host info & variables from files or external software
 * The easiest config management system to use, ever.
 
+What People Are Saying
+``````````````````````
+
+"I've been trying to grok Chef these last weeks, and really, I don't get it. I discovered ansible yesterday at noon, successfully ran it at 1pm, made my first playbook by 2pm, and pushed two small [contributions to the project] before the office closed... Do that with any other config management software!"
+
+"Ansible is also much more firewall-friendly.  I have a number of hosts that are only accessible via reverse SSH tunnels, and let me tell you getting puppet or chef to play nice with that is a nightmare."
 
 Resources
 `````````
