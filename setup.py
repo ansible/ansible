@@ -4,7 +4,6 @@
 # for you, you should go through "make install" or "make RPMs" 
 # for that, or manually copy modules over.
 
-import glob
 import os
 import sys
 
@@ -19,7 +18,8 @@ setup(name='ansible',
       author_email='michael.dehaan@gmail.com',
       url='http://ansible.github.com/',
       license='GPLv3',
-      package_dir = { 'ansible' : 'lib/ansible' },
+      install_requires=['paramiko', 'jinja2', "PyYAML"],
+      package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
       ],
