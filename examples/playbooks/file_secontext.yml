@@ -1,0 +1,12 @@
+---
+# This is a demo of how to manage the selinux context using the file module
+- hosts: test
+  user: root
+  tasks:
+    - name: Change setype of /etc/exports to non-default value
+      action: file path=/etc/exports setype=etc_t
+    - name: Change seuser of /etc/exports to non-default value
+      action: file path=/etc/exports seuser=unconfined_u
+    - name: Set selinux context back to default value
+      action: file path=/etc/exports context=default
+  
