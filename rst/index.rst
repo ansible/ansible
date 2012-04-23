@@ -80,7 +80,10 @@ What People Are Saying
 
 "I've been trying to grok Chef these last weeks, and really, I don't get it. I discovered ansible yesterday at noon, successfully ran it at 1pm, made my first playbook by 2pm, and pushed two small [contributions to the project] before the office closed... Do that with any other config management software!"
 
-"Ansible is also much more firewall-friendly.  I have a number of hosts that are only accessible via reverse SSH tunnels, and let me tell you getting puppet or chef to play nice with that is a nightmare."
+"Ansible is much more firewall-friendly.  I have a number of hosts that are only accessible via reverse SSH tunnels, and let me tell you getting puppet or chef to play nice with that is a nightmare."
+
+"This software has really changed my life as an network admin, the simplicity ansible comes with is really childs-play and I really adore its design. No more hassle with SSL keys, DNS based 'server entries' (e.g. puppet and what not). Just plain (secure!) SSH keys and one is good to go."
+
 
 Resources
 `````````
