@@ -28,13 +28,13 @@ import traceback
 import tempfile
 import base64
 
-import ansible.constants as C 
+import ansible.constants as C
 import ansible.connection
 import ansible.inventory
 from ansible import utils
 from ansible import errors
 from ansible import callbacks as ans_callbacks
-    
+
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -62,20 +62,20 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
- 
+
 ################################################
 
 class Runner(object):
 
-    def __init__(self, 
+    def __init__(self,
         host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
-        module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
-        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
-        pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
-        remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
-        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
-        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
-        callbacks=None, debug=False, sudo=False, module_vars=None, 
+        module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS,
+        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT,
+        pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER,
+        remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT,
+        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None,
+        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True',
+        callbacks=None, debug=False, sudo=False, module_vars=None,
         is_playbook=False, inventory=None):
 
         """
@@ -104,7 +104,7 @@ class Runner(object):
 
         if setup_cache is None:
             setup_cache = {}
-        if basedir is None: 
+        if basedir is None:
             basedir = os.getcwd()
 
         if callbacks is None:
@@ -168,7 +168,7 @@ class Runner(object):
         ''' helper function to handle JSON parsing of results '''
 
         try:
-            result = utils.parse_json(result) 
+            result = utils.parse_json(result)
             if executed is not None:
                 result['invocation'] = executed
                 if 'stderr' in result:
@@ -235,13 +235,13 @@ class Runner(object):
                     args += " %s=%s" % (k, str(v).replace(" ","~~~"))
                 else:
                     args[k]=v
-        return args   
- 
+        return args
+
     # *****************************************************
 
     def _add_setup_metadata(self, args):
         ''' automatically determine where to store variables for the setup module '''
-        
+
         is_dict = False
         if type(args) == dict:
             is_dict = True
@@ -259,11 +259,11 @@ class Runner(object):
                     args['metadata'] = '/etc/ansible/setup'
                 else:
                     args['metadata'] = "/home/%s/.ansible/setup" % (self.remote_user)
-        return args   
- 
+        return args
+
     # *****************************************************
 
-    def _execute_module(self, conn, tmp, remote_module_path, args, 
+    def _execute_module(self, conn, tmp, remote_module_path, args,
         async_jid=None, async_module=None, async_limit=None):
         ''' runs a module that has already been transferred '''
 
@@ -348,8 +348,8 @@ class Runner(object):
         async  = self._transfer_module(conn, tmp, 'async_wrapper')
         module = self._transfer_module(conn, tmp, module_name)
         (result, err, executed) = self._execute_module(conn, tmp, async, module_args,
-           async_module=module, 
-           async_jid=self.generated_jid, 
+           async_module=module,
+           async_jid=self.generated_jid,
            async_limit=self.background
         )
 
@@ -387,7 +387,7 @@ class Runner(object):
         if ok:
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
-            return (host, ok, data, err) 
+            return (host, ok, data, err)
 
     # *****************************************************
 
@@ -422,9 +422,20 @@ class Runner(object):
             return (host, True, dict(changed=True, md5sum=new_md5), '')
         else:
             return (host, True, dict(changed=False, md5sum=local_md5), '')
-        
-        
+
+
     # *****************************************************
+
+    def _execute_raw(self, conn, host, tmp):
+        ''' execute the command in raw form '''
+
+        stdout, stderr = self._exec_command( conn, self.module_args, tmp, sudoable = True )
+        data = { u'stdout' : stdout }
+        if stderr:
+            data[ u'stderr' ] = stderr
+        return (host, True, data, '')
+
+    # ***************************************************
 
     def _chain_file_module(self, conn, tmp, data, err, options, executed):
         ''' handles changing file attribs after copy/template operations '''
@@ -470,7 +481,7 @@ class Runner(object):
                 else:
                     # path is expanded on remote side
                     metadata = "~/.ansible/setup"
-            
+
             # install the template module
             slurp_module = self._transfer_module(conn, tmp, 'slurp')
 
@@ -489,18 +500,18 @@ class Runner(object):
 
         # template the source data locally
         source_data = file(utils.path_dwim(self.basedir, source)).read()
-        resultant = ''            
+        resultant = ''
         try:
             resultant = utils.template(source_data, inject, self.setup_cache)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
-            
+
         # run the COPY module
         args = "src=%s dest=%s" % (xfered, dest)
         (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
         (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
- 
+
         # modify file attribs if needed
         if ok:
             return self._chain_file_module(conn, tmp, data, err, options, executed)
@@ -542,7 +553,10 @@ class Runner(object):
         tmp = self._get_tmp_path(conn)
         result = None
 
-        if self.module_name == 'copy':
+
+        if self.module_name == 'raw':
+            result = self._execute_raw(conn, host, tmp)
+        elif self.module_name == 'copy':
             result = self._execute_copy(conn, host, tmp)
         elif self.module_name == 'fetch':
             result = self._execute_fetch(conn, host, tmp)
@@ -554,7 +568,8 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, host, tmp, module_name)
 
-        self._delete_remote_files(conn, tmp)
+        if self.module_name != 'raw':
+            self._delete_remote_files(conn, tmp)
         conn.close()
 
         (host, connect_ok, data, err) = result
@@ -582,12 +597,12 @@ class Runner(object):
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
 
         if type(stderr) != str:
-            err="\n".join(stderr.readlines())
+            err="".join(stderr.readlines())
         else:
             err=stderr
 
         if type(stdout) != str:
-            return "\n".join(stdout.readlines()), err
+            return "".join(stdout.readlines()), err
         else:
             return stdout, err
 
@@ -599,7 +614,7 @@ class Runner(object):
         basetmp = "/var/tmp"
         if self.remote_user != 'root':
             basetmp = "/home/%s/.ansible/tmp" % self.remote_user
-        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp 
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
         if self.remote_user != 'root':
             cmd = "mkdir -p %s && %s" % (basetmp, cmd)
 
@@ -681,13 +696,13 @@ class Runner(object):
 
     def run(self):
         ''' xfer & run module on all matched hosts '''
-       
+
         # find hosts that match the pattern
         hosts = self.inventory.list_hosts(self.pattern)
         if len(hosts) == 0:
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
- 
+
         hosts = [ (self,x) for x in hosts ]
         results = None
         if self.forks > 1:
