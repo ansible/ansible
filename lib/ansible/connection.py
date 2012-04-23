@@ -75,7 +75,7 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
-	credentials = None 
+	credentials = {}  
 	user = self.runner.remote_user 
 	keypair = None 
 
@@ -84,15 +84,17 @@ class ParamikoConnection(object):
 	try:
             ssh_config = paramiko.SSHConfig()
 	    config_file = ('~/.ssh/config')
-            ssh_config.parse(open(os.path.expanduser(config_file)))
-  	    credentials = ssh_config.lookup(self.host) 
-	    if 'hostname' in credentials: 
-               self.host = credentials['hostname']	
-	    if 'port' in credentials: 
-               self.port = credentials['port']	
+	    if  os.path.exists(os.path.expanduser(config_file)):
+	       ssh_config.parse(open(os.path.expanduser(config_file)))
+  	       credentials = ssh_config.lookup(self.host) 
+
         except IOError,e:
                 raise errors.AnsibleConnectionFailed(str(e))
 
+	if 'hostname' in credentials: 
+            self.host = credentials['hostname']	
+	if 'port' in credentials: 
+            self.port = credentials['port']	
 	if 'user' in credentials: 
             user = credentials['user']	
 	if 'identityfile' in credentials:
