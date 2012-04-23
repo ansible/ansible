@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/env python -tt
 # (c) 2012, Flowroute LLC
 # Written by Matthew Williams <matthew@flowroute.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
