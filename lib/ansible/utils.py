@@ -24,7 +24,16 @@ import re
 import jinja2
 import yaml
 import optparse
-from operator import methodcaller
+try:
+    from operator import methodcaller
+
+except ImportError:
+    def methodcaller(name, *args, **kwargs):
+        def caller(obj):
+            return getattr(obj, name)(*args, **kwargs)
+
+        return caller
+
 try:
     import json
 except ImportError:

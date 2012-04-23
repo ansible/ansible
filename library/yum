@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/env python -tt
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
 #

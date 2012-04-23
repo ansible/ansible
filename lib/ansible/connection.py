@@ -18,11 +18,15 @@
 
 ################################################
 
+from __future__ import with_statement
 import warnings
 # prevent paramiko warning noise
 # see http://stackoverflow.com/questions/3920502/
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+if hasattr(warnings, "catch_warnings"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import paramiko
+else:
     import paramiko
 
 import traceback
