@@ -353,12 +353,17 @@ All parameters available to the file module are also available when running the 
 <ul class="simple">
 <li>&#8216;level&#8217; part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to &#8216;s0&#8217;.  Only used only used on hosts with SELinux present.</li>
 </ul>
+<p><em>context</em>:</p>
+<ul class="simple">
+<li>accepts only &#8216;default&#8217; as value.  This will restore a file&#8217;s selinux context to the default context in the policy.  Does nothing if no default is available.</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
 file path=/some/path owner=foo group=foo state=directory
 file path=/path/to/delete state=absent
 file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-file path=/some/path state=directory setype=httpd_sys_content_t</pre>
+file path=/some/path state=directory setype=httpd_sys_content_t
+file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="git">
