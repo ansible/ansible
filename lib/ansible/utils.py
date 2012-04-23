@@ -130,14 +130,14 @@ def is_failed(result):
         failed = result.get('failed', 0)
         rc     = result.get('rc', 0)
     if rc != 0:
-        return True    
+        return True
     return failed
 
 def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name in [ 'command', 'shell' ] and 'ansible_job_id' not in result:
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:
@@ -200,7 +200,7 @@ def parse_json(data):
                 elif value.lower() in [ 'false', '0' ]:
                     value = False
             if key == 'rc':
-                value = int(value)     
+                value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : data }
@@ -211,7 +211,7 @@ _KEYCRE = re.compile(r"\$(\w+)")
 def varReplace(raw, vars):
     '''Perform variable replacement of $vars
 
-    @param raw: String to perform substitution on.  
+    @param raw: String to perform substitution on.
     @param vars: Dictionary of variables to replace. Key is variable name
         (without $ prefix). Value is replacement string.
     @return: Input raw string with substituted values.
@@ -256,7 +256,7 @@ def template_from_file(path, vars):
 
 def parse_yaml(data):
     return yaml.load(data)
-  
+
 def parse_yaml_from_file(path):
     try:
         data = file(path).read()
@@ -267,7 +267,7 @@ def parse_yaml_from_file(path):
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    vargs = shlex.split(args, posix=True) 
+    vargs = shlex.split(args, posix=True)
     for x in vargs:
         if x.find("=") != -1:
             k, v = x.split("=")
@@ -289,17 +289,17 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
-        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST, 
+        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
-        help="specify path to module library (default=%s)" % constants.DEFAULT_MODULE_PATH, 
+        help="specify path to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout', 
+        dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
 
     if output_opts:
@@ -312,9 +312,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option("-s", "--sudo", default=False, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user', 
+            dest='remote_user',
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
-    
+
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
                           choices=C.DEFAULT_TRANSPORT_OPTS,
@@ -323,7 +323,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval', 
+            dest='poll_interval',
             help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds (default=N/A)')

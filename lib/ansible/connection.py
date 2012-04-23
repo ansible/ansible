@@ -78,12 +78,12 @@ class ParamikoConnection(object):
 
         try:
             ssh.connect(
-                self.host, 
+                self.host,
                 username=self.runner.remote_user,
-                allow_agent=True, 
-                look_for_keys=True, 
+                allow_agent=True,
+                look_for_keys=True,
                 password=self.runner.remote_pass,
-                timeout=self.runner.timeout, 
+                timeout=self.runner.timeout,
                 port=self.port
             )
         except Exception, e:
@@ -103,7 +103,7 @@ class ParamikoConnection(object):
 
     def exec_command(self, cmd, tmp_path, sudoable=False):
         ''' run a command on the remote host '''
-        if not self.runner.sudo or not sudoable: 
+        if not self.runner.sudo or not sudoable:
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
@@ -111,7 +111,7 @@ class ParamikoConnection(object):
             if tmp_path is None:
                 raise Exception("expecting tmp_path")
             r = random.randint(0,99999)
-            
+
             # invoke command using a new connection over sudo
             result_file = os.path.join(tmp_path, "sudo_result.%s" % r)
             self.ssh.close()
