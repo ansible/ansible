@@ -22,6 +22,4 @@
 #    facter
 #    ruby-json
 
-echo '{ "ansible_facts":'
 /usr/bin/facter --json
-echo '}'
