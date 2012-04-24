@@ -336,27 +336,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_normal_module(self, conn, host, tmp, module_name):
-        ''' transfer & execute a module that is not 'copy' or 'template' '''
-
-        # shell and command are the same module
-        if module_name == 'shell':
-            module_name = 'command'
-            self.module_args += " #USE_SHELL"
-
-        module = self._transfer_module(conn, tmp, module_name)
-        (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
-
-        if module_name == 'setup':
-            self._add_result_to_setup_cache(conn, result)
-            if self.is_playbook:
-                self._save_setup_result_to_disk(conn, result)
-
-        return self._return_from_module(conn, host, result, err, executed)
-
-
-    # *****************************************************
-
     def _execute_async_module(self, conn, host, tmp, module_name):
         ''' transfer the given module name, plus the async module, then run it '''
 
