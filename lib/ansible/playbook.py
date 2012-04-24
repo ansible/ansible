@@ -544,6 +544,8 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern  = pg.get('hosts',None)
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
         if self.override_hosts:
             pattern = 'all'
         if pattern is None:
