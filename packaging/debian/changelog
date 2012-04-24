@@ -1,3 +1,9 @@
+ansible (0.3) debian; urgency=low
+
+  * 0.3 update
+
+ -- Michael DeHaan <michael.dehaan@gmail.com> Mon, 23 Apr 2012 11:08:00 -0400
+
 ansible (0.0.2) debian; urgency=low
 
   * Initial Release
