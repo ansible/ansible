@@ -76,43 +76,43 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
-	credentials = {}  
-	user = self.runner.remote_user 
-	keypair = None 
+        credentials = {}
+        user = self.runner.remote_user
+        keypair = None
 
-	# Read file ~/.ssh/config, get data hostname, keyfile, port, etc
-	# This overrides the ansible defined username,hostname and port 
-	try:
+        # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
+        # This overrides the ansible defined username,hostname and port 
+        try:
             ssh_config = paramiko.SSHConfig()
-	    config_file = ('~/.ssh/config')
-	    if  os.path.exists(os.path.expanduser(config_file)):
-	       ssh_config.parse(open(os.path.expanduser(config_file)))
-  	       credentials = ssh_config.lookup(self.host) 
+            config_file = ('~/.ssh/config')
+            if  os.path.exists(os.path.expanduser(config_file)):
+                ssh_config.parse(open(os.path.expanduser(config_file)))
+                credentials = ssh_config.lookup(self.host)
 
         except IOError,e:
                 raise errors.AnsibleConnectionFailed(str(e))
 
-	if 'hostname' in credentials: 
-            self.host = credentials['hostname']	
-	if 'port' in credentials: 
+        if 'hostname' in credentials:
+            self.host = credentials['hostname']
+        if 'port' in credentials:
             self.port = int(credentials['port'])
-	if 'user' in credentials: 
-            user = credentials['user']	
-	if 'identityfile' in credentials:
-            keypair = credentials['identityfile']	
+        if 'user' in credentials:
+            user = credentials['user']
+        if 'identityfile' in credentials:
+            keypair = credentials['identityfile']
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
             ssh.connect(
-                self.host, 
+                self.host,
                 username=user,
-                allow_agent=True, 
-                look_for_keys=True, 
+                allow_agent=True,
+                look_for_keys=True,
                 password=self.runner.remote_pass,
-		key_filename=keypair,
-                timeout=self.runner.timeout, 
+                key_filename=keypair,
+                timeout=self.runner.timeout,
                 port=self.port
             )
         except Exception, e:
@@ -131,7 +131,7 @@ class ParamikoConnection(object):
 
     def exec_command(self, cmd, tmp_path, sudoable=False):          # pylint: disable-msg=W0613
         ''' run a command on the remote host '''
-        if not self.runner.sudo or not sudoable: 
+        if not self.runner.sudo or not sudoable:
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
@@ -145,7 +145,7 @@ class ParamikoConnection(object):
             bufsize = 4096                              # Could make this a Runner param if needed
             timeout_secs = self.runner.timeout          # Reusing runner's TCP connect timeout as command progress timeout
             chan = self.ssh.get_transport().open_session()
-            chan.settimeout(timeout_secs)         
+            chan.settimeout(timeout_secs)
             chan.get_pty()                              # Many sudo setups require a terminal
             #print "exec_command: " + sudocmd
             chan.exec_command(sudocmd)
@@ -153,10 +153,10 @@ class ParamikoConnection(object):
                 while not chan.recv_ready():
                     time.sleep(0.25)
                 sudo_output = chan.recv(bufsize)        # Pull prompt, catch errors, eat sudo output
-                #print "exec_command: " + sudo_output     
+                #print "exec_command: " + sudo_output
                 #print "exec_command: sending password"
                 chan.sendall(self.runner.sudo_pass + '\n')
-                
+
             stdin = chan.makefile('wb', bufsize) 
             stdout = chan.makefile('rb', bufsize)
             stderr = chan.makefile_stderr('rb', bufsize) 
