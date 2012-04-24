@@ -99,7 +99,7 @@ class ParamikoConnection(object):
         if 'user' in credentials:
             user = credentials['user']
         if 'identityfile' in credentials:
-            keypair = credentials['identityfile']
+            keypair = os.path.expanduser(credentials['identityfile'])
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
