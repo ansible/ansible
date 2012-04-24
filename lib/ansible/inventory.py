@@ -134,8 +134,12 @@ class Inventory(object):
 
         cmd = [self.inventory_file, '--list']
 
-        cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-        out, err = cmd.communicate()
+        try:
+            cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+            out, err = cmd.communicate()
+        except Exception, e:
+            raise errors.AnsibleError("Failure executing %s to produce host list:\n %s" % (self.inventory_file, str(e)))
+
         rc = cmd.returncode
         if rc:
             raise errors.AnsibleError("%s: %s" % self.inventory_file, err)
