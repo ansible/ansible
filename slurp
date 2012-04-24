@@ -16,16 +16,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 import sys
 import os
 import shlex
+import base64
+
+try:
+   import json
+except ImportError:
+   import simplejson as json
 
 # ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
-# FIXME: make more idiomatic
 
 if len(sys.argv) == 1:
     sys.exit(1)
@@ -34,36 +38,34 @@ if not os.path.exists(argfile):
     sys.exit(1)
 items = shlex.split(open(argfile, 'r').read())
 
-
 params = {}
 for x in items:
     (k, v) = x.split("=")
     params[k] = v
+source  = os.path.expanduser(params['src'])
 
-src  = params['src']
-dest = params['dest']
-if src:
-   src = os.path.expanduser(src)
-if dest:
-   dest = os.path.expanduser(dest)
+# ==========================================
  
-# raise an error if there is no src file
-if not os.path.exists(src):
-    print "failed=1 msg='Source %s failed to transfer'" % src
+# raise an error if there is no template metadata
+if not os.path.exists(source):
+    print json.dumps(dict(
+        failed = 1,
+        msg    = "file not found: %s" % source
+    ))
     sys.exit(1)
 
-md5sum = None
-changed = False
-if os.path.exists(dest):
-    md5sum = os.popen("md5sum %s" % dest).read().split()[0]
+if not os.access(source, os.R_OK):
+    print json.dumps(dict(
+        failed = 1,
+        msg    = "file is not readable: %s" % source
+    ))
+    sys.exit(1)
 
-md5sum2 = os.popen("md5sum %s" % src).read().split()[0]
+# ==========================================
 
-if md5sum != md5sum2:
-    os.system("cp %s %s" % (src, dest))
-    changed = True
+data = file(source).read()
+data = base64.b64encode(data)
 
-# mission accomplished
-print "md5sum=%s changed=%s" % (md5sum2, changed)
-
+print json.dumps(dict(content=data, encoding='base64'))
+sys.exit(0)
 
