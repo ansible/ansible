@@ -33,7 +33,6 @@ except ImportError:
 from ansible import errors
 import ansible.constants as C
 
-
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -239,14 +238,16 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars):
+def template(text, vars, setup_cache):
     ''' run a text buffer through the templating engine '''
+    vars = vars.copy()
     text = varReplace(str(text), vars)
+    vars['hostvars'] = setup_cache
     template = jinja2.Template(text)
     return template.render(vars)
 
-def double_template(text, vars):
-    return template(template(text, vars), vars)
+def double_template(text, vars, setup_cache):
+    return template(template(text, vars, setup_cache), vars, setup_cache)
 
 def template_from_file(path, vars):
     ''' run a file through the templating engine '''
@@ -279,7 +280,7 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
-def base_parser(constants=C, usage="", output_opts=False, port_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage)
@@ -300,11 +301,6 @@ def base_parser(constants=C, usage="", output_opts=False, port_opts=False, runas
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout', 
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
-
-    if port_opts:
-        parser.add_option('-p', '--port', default=constants.DEFAULT_REMOTE_PORT, type='int',
-            dest='remote_port', 
-            help="override the remote ssh port (default=%s)" % constants.DEFAULT_REMOTE_PORT)
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',

@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-playbook
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 04/13/2012
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 04/17/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.0.2
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "04/13/2012" "Ansible 0\&.0\&.2" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "04/17/2012" "Ansible 0\&.0\&.2" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -77,16 +86,21 @@ Connection timeout to use when trying to talk to hosts, in
 \fISECONDS\fR\&.
 .RE
 .PP
-\fB\-e\fR \fIEXTRA_VARS\fR, \fB\-\-extra_vars=\fR\fIEXTRA_VARS\fR
-.RS 4
-An additional list of space delimited key=value pairs to pass into the playbook that are not declared in the vars section of the playbook\&.
-.RE
-.PP
 \fB\-O\fR \fIOVERRIDE_HOSTS\fR, \fB\-\-override\-hosts=\fR\fIOVERRIDE_HOSTS\fR
 .RS 4
 Ignore the inventory file and run the playbook against only these hosts\&. "hosts:" line in playbook should be set to
 \fIall\fR
 when using this option\&.
+.RE
+.PP
+\fB\-s\fR, \fB\-\-sudo\fR
+.RS 4
+Force all plays to use sudo, even if not marked as such\&.
+.RE
+.PP
+\fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
+.RS 4
+Use this remote user name on playbook steps that do not indicate a user name to run as\&.
 .RE
 .SH "ENVIRONMENT"
 .sp
