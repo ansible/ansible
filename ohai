@@ -18,6 +18,4 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-echo '{ "ansible_facts":'
 /usr/bin/ohai
-echo '}'
