@@ -85,15 +85,17 @@ class TestRunner(unittest.TestCase):
        if not get_binary("facter"):
            raise SkipTest
        result = self._run('facter',[])
-       assert "hostname" in result
+       assert "hostname" in result['ansible_facts']
 
    # temporarily disbabled since it occasionally hangs
    # ohai's fault, setup module doesn't actually run this
    # to get ohai's "facts" anyway
    #
    #def test_ohai(self):
+   #    if not get_binary("facter"):
+   #            raise SkipTest
    #    result = self._run('ohai',[])
-   #    assert "hostname" in result
+   #    assert "hostname" in result['ansible_facts']
 
    def test_copy(self):
        # test copy module, change trigger, etc

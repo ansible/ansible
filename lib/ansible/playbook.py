@@ -397,6 +397,12 @@ class PlayBook(object):
             module_args, module_vars, remote_user, async_seconds, 
             async_poll_interval, only_if, sudo, transport, port)
 
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            if "ansible_facts" in result:
+                for k,v in result['ansible_facts'].iteritems():
+                    SETUP_CACHE[host][k]=v
+
         self.stats.compute(results)
 
         # if no hosts are matched, carry on, unlike /bin/ansible
@@ -528,7 +534,8 @@ class PlayBook(object):
         if vars_files is None:
             # first pass only or we'll erase good work
             for (host, result) in setup_ok.iteritems():
-                SETUP_CACHE[host] = result
+                if 'ansible_facts' in result:
+                    SETUP_CACHE[host] = result['ansible_facts']
 
     # *****************************************************
 
