@@ -320,9 +320,9 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        try:
-            var_result = utils.parse_json(result)
-        except:
+        if 'ansible_facts' in result:
+            var_result = result['ansible_facts']
+        else:
             var_result = {}
 
         # note: do not allow variables from playbook to be stomped on
@@ -349,10 +349,12 @@ class Runner(object):
 
         if module_name == 'setup':
             self._add_result_to_setup_cache(conn, result)
-            if self.is_playbook:
-                self._save_setup_result_to_disk(conn, result)
+        (host, ok, data, err) = self._return_from_module(conn, host, result, err, executed)
 
-        return self._return_from_module(conn, host, result, err, executed)
+        if ok:
+            self._add_result_to_setup_cache(conn, data)
+
+        return (host, ok, data, err)
 
     # *****************************************************
 
