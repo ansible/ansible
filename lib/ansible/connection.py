@@ -95,7 +95,7 @@ class ParamikoConnection(object):
 	if 'hostname' in credentials: 
             self.host = credentials['hostname']	
 	if 'port' in credentials: 
-            self.port = credentials['port']	
+            self.port = int(credentials['port'])
 	if 'user' in credentials: 
             user = credentials['user']	
 	if 'identityfile' in credentials:
