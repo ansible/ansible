@@ -19,20 +19,21 @@
 ################################################
 
 import warnings
+import traceback
+import os
+import time
+import re
+import shutil
+import subprocess
+import pipes
+
+from ansible import errors
 # prevent paramiko warning noise
 # see http://stackoverflow.com/questions/3920502/
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import paramiko
 
-import traceback
-import os
-import time
-import random
-import re
-import shutil
-import subprocess
-from ansible import errors
 
 ################################################
 
@@ -94,65 +95,44 @@ class ParamikoConnection(object):
 
         return ssh
 
-
     def connect(self):
         ''' connect to the remote host '''
 
         self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudoable=False):          # pylint: disable-msg=W0613
         ''' run a command on the remote host '''
         if not self.runner.sudo or not sudoable: 
             stdin, stdout, stderr = self.ssh.exec_command(cmd)
             return (stdin, stdout, stderr)
         else:
-            # percalculated tmp_path is ONLY required for sudo usage
-            if tmp_path is None:
-                raise Exception("expecting tmp_path")
-            r = random.randint(0,99999)
-            
-            # invoke command using a new connection over sudo
-            result_file = os.path.join(tmp_path, "sudo_result.%s" % r)
-            self.ssh.close()
-            ssh_sudo = self._get_conn()
-            sudo_chan = ssh_sudo.invoke_shell()
-            sudo_chan.send("sudo -s\n")
-
-            # FIXME: using sudo with a password adds more delay, someone may wish
-            # to optimize to see when the channel is actually ready
+            # Rather than detect if sudo wants a password this time, -k makes 
+            # sudo always ask for a password if one is required. The "--"
+            # tells sudo that this is the end of sudo options and the command
+            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # directly doesn't work, so we shellquote it with pipes.quote() 
+            # and pass the quoted string to the user's shell.
+            sudocmd = 'sudo -k -- "$SHELL" -c ' + pipes.quote(cmd) 
+            bufsize = 4096                              # Could make this a Runner param if needed
+            timeout_secs = self.runner.timeout          # Reusing runner's TCP connect timeout as command progress timeout
+            chan = self.ssh.get_transport().open_session()
+            chan.settimeout(timeout_secs)         
+            chan.get_pty()                              # Many sudo setups require a terminal
+            #print "exec_command: " + sudocmd
+            chan.exec_command(sudocmd)
             if self.runner.sudo_pass:
-                time.sleep(0.1) # this is conservative
-                sudo_chan.send("%s\n" % self.runner.sudo_pass)
-                time.sleep(0.1)
-
-            # to avoid ssh expect logic, redirect output to file and move the
-            # file when we are done with it...
-            sudo_chan.send("(%s >%s_pre 2>/dev/null ; mv %s_pre %s) &\n" % (cmd, result_file, result_file, result_file))
-            # FIXME: someone may wish to optimize to not background the launch, and tell when the command
-            # returns, removing the time.sleep(1) here
-            time.sleep(1)
-            sudo_chan.close()
-            self.ssh = self._get_conn()
-
-            # now load the results of the JSON execution...
-            # FIXME: really need some timeout logic here
-            # though it doesn't make since to use the SSH timeout or impose any particular
-            # limit.  Upgrades welcome.
-            sftp = self.ssh.open_sftp()
-            while True:
-                # print "waiting on %s" % result_file
-                time.sleep(1)
-                try:
-                    sftp.stat(result_file)
-                    break
-                except IOError:
-                    pass
-            sftp.close()
-            # TODO: see if there's a SFTP way to just get the file contents w/o saving
-            # to disk vs this hack...
-            stdin, stdout, stderr = self.ssh.exec_command("cat %s" % result_file)
-            return (stdin, stdout, stderr)
+                while not chan.recv_ready():
+                    time.sleep(0.25)
+                sudo_output = chan.recv(bufsize)        # Pull prompt, catch errors, eat sudo output
+                #print "exec_command: " + sudo_output     
+                #print "exec_command: sending password"
+                chan.sendall(self.runner.sudo_pass + '\n')
+                
+            stdin = chan.makefile('wb', bufsize) 
+            stdout = chan.makefile('rb', bufsize)
+            stderr = chan.makefile_stderr('rb', bufsize) 
+            return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -231,4 +211,3 @@ class LocalConnection(object):
         ''' terminate the connection; nothing to do here '''
 
         pass
-
