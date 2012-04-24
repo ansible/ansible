@@ -17,7 +17,7 @@
 #
 
 import os
-
+from getpass import getuser
 
 DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS',
     '/etc/ansible/hosts')
@@ -30,10 +30,9 @@ DEFAULT_FORKS          = 5
 DEFAULT_MODULE_ARGS    = ''
 DEFAULT_TIMEOUT        = 10
 DEFAULT_POLL_INTERVAL  = 15
-DEFAULT_REMOTE_USER    = 'root'
+DEFAULT_REMOTE_USER    = getuser()
 DEFAULT_REMOTE_PASS    = None
 DEFAULT_SUDO_PASS      = None
 DEFAULT_REMOTE_PORT    = 22
 DEFAULT_TRANSPORT      = 'paramiko'
 DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko']
-
