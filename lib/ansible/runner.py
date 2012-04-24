@@ -347,8 +347,6 @@ class Runner(object):
         module = self._transfer_module(conn, tmp, module_name)
         (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
 
-        if module_name == 'setup':
-            self._add_result_to_setup_cache(conn, result)
         (host, ok, data, err) = self._return_from_module(conn, host, result, err, executed)
 
         if ok:
