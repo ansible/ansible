@@ -456,8 +456,11 @@ class Runner(object):
         (result2, err2, executed2) = self._execute_module(conn, tmp, module, args)
         results2 = self._return_from_module(conn, conn.host, result2, err2, executed)
         (host, ok, data2, err2) = results2
-        new_changed = data2.get('changed', False)
-        data.update(data2)
+        if ok:
+            new_changed = data2.get('changed', False)
+            data.update(data2)
+        else:
+            new_changed = False
         if old_changed or new_changed:
             data['changed'] = True
         return (host, ok, data, "%s%s"%(err,err2))
