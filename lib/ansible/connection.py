@@ -36,6 +36,8 @@ from ansible import errors
 
 ################################################
 
+
+
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
 
@@ -73,16 +75,42 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
+	credentials = {}  
+	user = self.runner.remote_user 
+	keypair = None 
+
+	# Read file ~/.ssh/config, get data hostname, keyfile, port, etc
+	# This overrides the ansible defined username,hostname and port 
+	try:
+            ssh_config = paramiko.SSHConfig()
+	    config_file = ('~/.ssh/config')
+	    if  os.path.exists(os.path.expanduser(config_file)):
+	       ssh_config.parse(open(os.path.expanduser(config_file)))
+  	       credentials = ssh_config.lookup(self.host) 
+
+        except IOError,e:
+                raise errors.AnsibleConnectionFailed(str(e))
+
+	if 'hostname' in credentials: 
+            self.host = credentials['hostname']	
+	if 'port' in credentials: 
+            self.port = credentials['port']	
+	if 'user' in credentials: 
+            user = credentials['user']	
+	if 'identityfile' in credentials:
+            keypair = credentials['identityfile']	
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
             ssh.connect(
                 self.host, 
-                username=self.runner.remote_user,
+                username=user,
                 allow_agent=True, 
                 look_for_keys=True, 
                 password=self.runner.remote_pass,
+		key_filename=keypair,
                 timeout=self.runner.timeout, 
                 port=self.port
             )
