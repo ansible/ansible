@@ -19,9 +19,16 @@
 
 DEFAULT_ANSIBLE_SETUP     = "/etc/ansible/setup"
 
+import array
+import fcntl
+import glob
 import sys
 import os
+import platform
+import re
 import shlex
+import socket
+import struct
 import subprocess
 import traceback
 
@@ -29,6 +36,244 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+_I386RE = re.compile(r'i[3456]86')
+SIOCGIFCONF   = 0x8912
+SIOCGIFHWADDR = 0x8927
+MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+# DMI bits
+DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
+             'product_name': '/sys/devices/virtual/dmi/id/product_name',
+             'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
+             'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
+             'product_version': '/sys/devices/virtual/dmi/id/product_version',
+             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor' }
+# From smolt and DMI spec
+FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
+                "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
+                "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
+                "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
+                "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
+                "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
+                "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
+                "CompactPCI", "AdvancedTCA" ]
+# For the most part, we assume that platform.dist() will tell the truth.
+# This is the fallback to handle unknowns or exceptions
+OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
+                '/etc/vmware-release': 'VMwareESX' }
+
+def get_file_content(path):
+    if os.path.exists(path) and os.access(path, os.R_OK):
+        data = open(path).read().strip()
+        if len(data) == 0:
+            data = None
+    else:
+        data = None
+    return data
+
+# platform.dist() is deprecated in 2.6
+# in 2.6 and newer, you should use platform.linux_distribution()
+def get_distribution_facts(facts):
+    dist = platform.dist()
+    facts['distribution'] = dist[0].capitalize() or 'NA'
+    facts['distribution_version'] = dist[1] or 'NA'
+    facts['distribution_release'] = dist[2] or 'NA'
+    # Try to handle the exceptions now ...
+    for (path, name) in OSDIST_DICT.items():
+        if os.path.exists(path):
+            if facts['distribution'] == 'Fedora':
+                pass
+            elif name == 'RedHat':
+                data = get_file_content(path)
+                if 'Red Hat' in data:
+                    facts['distribution'] = name
+                else:
+                    facts['distribution'] = data.split()[0]
+            else:
+                facts['distribution'] = name
+
+# Platform
+# patform.system() can be Linux, Darwin, Java, or Windows
+def get_platform_facts(facts):
+    facts['system'] = platform.system()
+    facts['kernel'] = platform.release()
+    facts['machine'] = platform.machine()
+    facts['python_version'] = platform.python_version()
+    if facts['machine'] == 'x86_64':
+        facts['architecture'] = facts['machine']
+    elif _I386RE.search(facts['machine']):
+        facts['architecture'] = 'i386'
+    else:
+        facts['archtecture'] = facts['machine']
+    if facts['system'] == 'Linux':
+        get_distribution_facts(facts)
+
+def get_memory_facts(facts):
+    if not os.access("/proc/meminfo", os.R_OK):
+        return facts
+    for line in open("/proc/meminfo").readlines():
+        data = line.split(":", 1)
+        key = data[0]
+        if key in MEMORY_FACTS:
+            val = data[1].strip().split(' ')[0]
+            facts["%s_mb" % key.lower()] = long(val) / 1024
+
+def get_cpu_facts(facts):
+    i = 0
+    physid = 0
+    sockets = {}
+    if not os.access("/proc/cpuinfo", os.R_OK):
+        return facts
+    for line in open("/proc/cpuinfo").readlines():
+        data = line.split(":", 1)
+        key = data[0].strip()
+        if key == 'model name':
+            if 'processor' not in facts:
+                facts['processor'] = []
+            facts['processor'].append(data[1].strip())
+            i += 1
+        elif key == 'physical id':
+            physid = data[1].strip()
+            if physid not in sockets:
+                sockets[physid] = 1
+        elif key == 'cpu cores':
+            sockets[physid] = int(data[1].strip())
+    if len(sockets) > 0:
+        facts['processor_count'] = len(sockets)
+        facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+    else:
+        facts['processor_count'] = i
+        facts['processor_cores'] = 'NA'
+
+def get_hardware_facts(facts):
+    get_memory_facts(facts)
+    get_cpu_facts(facts)
+    for (key,path) in DMI_DICT.items():
+        data = get_file_content(path)
+        if data is not None:
+            if key == 'form_factor':
+                facts['form_factor'] = FORM_FACTOR[int(data)]
+            else:
+                facts[key] = data
+        else:
+            facts[key] = 'NA'
+
+def get_linux_virtual_facts(facts):
+    if os.path.exists("/proc/xen"):
+        facts['virtualization_type'] = 'xen'
+        facts['virtualization_role'] = 'guest'
+        if os.path.exists("/proc/xen/capabilities"):
+            facts['virtualization_role'] = 'host'
+    if os.path.exists("/proc/modules"):
+        modules = []
+        for line in open("/proc/modules").readlines():
+            data = line.split(" ", 1)
+            modules.append(data[0])
+        if 'kvm' in modules:
+            facts['virtualization_type'] = 'kvm'
+            facts['virtualization_role'] = 'host'
+        elif 'vboxdrv' in modules:
+            facts['virtualization_type'] = 'virtualbox'
+            facts['virtualization_role'] = 'host'
+        elif 'vboxguest' in modules:
+            facts['virtualization_type'] = 'virtualbox'
+            facts['virtualization_role'] = 'guest'
+    if 'QEMU' in facts['processor'][0]:
+        facts['virtualization_type'] = 'kvm'
+        facts['virtualization_role'] = 'guest'
+    if facts['distribution'] == 'VMwareESX':
+        facts['virtualization_type'] = 'VMware'
+        facts['virtualization_role'] = 'host'
+    # You can spawn a dmidecode process and parse that or infer from devices
+    for dev_model in glob.glob('/proc/ide/hd*/model'):
+        info = open(dev_model).read()
+        if 'VMware' in info:
+            facts['virtualization_type'] = 'VMware'
+            facts['virtualization_role'] = 'guest'
+        elif 'Virtual HD' in info or 'Virtual CD' in info:
+            facts['virtualization_type'] = 'VirtualPC'
+            facts['virtualization_role'] = 'guest'
+
+def get_virtual_facts(facts):
+    facts['virtualization_type'] = 'None'
+    facts['virtualization_role'] = 'None'
+    if facts['system'] == 'Linux':
+        facts = get_linux_virtual_facts(facts)
+
+# get list of interfaces that are up
+def get_interfaces():
+    length = 4096
+    offset = 32
+    step = 32
+    if platform.architecture()[0] == '64bit':
+        offset = 16
+        step = 40
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    names = array.array('B', '\0' * length)
+    bytelen = struct.unpack('iL', fcntl.ioctl(
+        s.fileno(), SIOCGIFCONF, struct.pack(
+            'iL', length, names.buffer_info()[0])
+        ))[0]
+    return [names.tostring()[i:i+offset].split('\0', 1)[0]
+            for i in range(0, bytelen, step)]
+
+def get_iface_hwaddr(iface):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    info = fcntl.ioctl(s.fileno(), SIOCGIFHWADDR,
+                       struct.pack('256s', iface[:15]))
+    return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+
+def get_network_facts(facts):
+    facts['fqdn'] = socket.gethostname()
+    facts['hostname'] = facts['fqdn'].split('.')[0]
+    facts['interfaces'] = get_interfaces()
+    for iface in facts['interfaces']:
+        facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
+        # This is lame, but there doesn't appear to be a good way
+        # to get all addresses for both IPv4 and IPv6.
+        cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        for line in out.split('\n'):
+            data = line.split()
+            if 'inet addr' in line:
+                if 'ipv4' not in facts[iface]:
+                    facts[iface]['ipv4'] = {}
+                facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
+                                         'netmask': data[-1].split(':')[1] }
+            if 'inet6 addr' in line:
+                (ip, prefix) = data[2].split('/')
+                scope = data[3].split(':')[1].lower()
+                if 'ipv6' not in facts[iface]:
+                    facts[iface]['ipv6'] = []
+                facts[iface]['ipv6'].append( { 'address': ip,
+                                               'prefix': prefix,
+                                               'scope': scope } )
+    return facts
+
+def get_public_ssh_host_keys(facts):
+    dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
+    rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
+    if dsa is None:
+        dsa = 'NA'
+    else:
+        facts['ssh_host_key_dsa_public'] = dsa.split()[1]
+    if rsa is None:
+        rsa = 'NA'
+    else:
+        facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+
+def get_service_facts(facts):
+    get_public_ssh_host_keys(facts)
+
+def ansible_facts():
+    facts = {}
+    get_platform_facts(facts)
+    get_hardware_facts(facts)
+    get_virtual_facts(facts)
+    get_network_facts(facts)
+    get_service_facts(facts)
+    return facts
 
 # load config & template variables
 
@@ -64,6 +309,10 @@ if not os.path.exists(ansible_file):
     changed = True
 else:
     md5sum = os.popen("md5sum %s" % ansible_file).read().split()[0]
+
+# Get some basic facts in case facter or ohai are not installed
+for (k, v) in ansible_facts().items():
+    setup_options["ansible_%s" % k] = v
 
 # if facter is installed, and we can use --json because
 # ruby-json is ALSO installed, include facter data in the JSON

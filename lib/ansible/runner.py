@@ -18,7 +18,6 @@
 
 ################################################
 
-import fnmatch
 import multiprocessing
 import signal
 import os
@@ -27,11 +26,11 @@ import Queue
 import random
 import traceback
 import tempfile
-import subprocess
-import getpass
+import base64
 
 import ansible.constants as C 
 import ansible.connection
+import ansible.inventory
 from ansible import utils
 from ansible import errors
 from ansible import callbacks as ans_callbacks
@@ -68,17 +67,41 @@ def _executor_hook(job_queue, result_queue):
 
 class Runner(object):
 
-    _external_variable_script = None
-
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
+    def __init__(self, 
+        host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
         module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
-        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, pattern=C.DEFAULT_PATTERN,
-        remote_user=C.DEFAULT_REMOTE_USER, remote_pass=C.DEFAULT_REMOTE_PASS,
-        sudo_pass=C.DEFAULT_SUDO_PASS, remote_port=C.DEFAULT_REMOTE_PORT, background=0, 
-        basedir=None, setup_cache=None, transport=C.DEFAULT_TRANSPORT, 
-        conditional='True', groups={}, callbacks=None, verbose=False,
-        debug=False, sudo=False, extra_vars=None, module_vars=None, is_playbook=False):
-   
+        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
+        pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
+        remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
+        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
+        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
+        callbacks=None, debug=False, sudo=False, module_vars=None, 
+        is_playbook=False, inventory=None):
+
+        """
+        host_list    : path to a host list file, like /etc/ansible/hosts
+        module_path  : path to modules, like /usr/share/ansible
+        module_name  : which module to run (string)
+        module_args  : args to pass to the module (string)
+        forks        : desired level of paralellism (hosts to run on at a time)
+        timeout      : connection timeout, such as a SSH timeout, in seconds
+        pattern      : pattern or groups to select from in inventory
+        remote_user  : connect as this remote username
+        remote_pass  : supply this password (if not using keys)
+        remote_port  : use this default remote port (if not set by the inventory system)
+        sudo_pass    : sudo password if using sudo and sudo requires a password
+        background   : run asynchronously with a cap of this many # of seconds (if not 0)
+        basedir      : paths used by modules if not absolute are relative to here
+        setup_cache  : this is a internalism that is going away
+        transport    : transport mode (paramiko, local)
+        conditional  : only execute if this string, evaluated, is True
+        callbacks    : output callback class
+        sudo         : log in as remote user and immediately sudo to root
+        module_vars  : provides additional variables to a template.  FIXME: just use module_args, remove
+        is_playbook  : indicates Runner is being used by a playbook.  affects behavior in various ways.
+        inventory    : inventory object, if host_list is not provided
+        """
+
         if setup_cache is None:
             setup_cache = {}
         if basedir is None: 
@@ -93,11 +116,10 @@ class Runner(object):
         self.transport = transport
         self.connector = ansible.connection.Connection(self, self.transport)
 
-        if type(host_list) == str:
-            self.host_list, self.groups = self.parse_hosts(host_list)
+        if inventory is None:
+            self.inventory = ansible.inventory.Inventory(host_list)
         else:
-            self.host_list = host_list
-            self.groups    = groups
+            self.inventory = inventory
 
         self.setup_cache = setup_cache
         self.conditional = conditional
@@ -107,10 +129,8 @@ class Runner(object):
         self.pattern     = pattern
         self.module_args = module_args
         self.module_vars = module_vars
-        self.extra_vars  = extra_vars
         self.timeout     = timeout
         self.debug       = debug
-        self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.remote_port = remote_port
@@ -129,116 +149,18 @@ class Runner(object):
         self._tmp_paths  = {}
         random.seed()
 
-
     # *****************************************************
 
     @classmethod
-    def parse_hosts_from_regular_file(cls, host_list):
-        ''' parse a textual host file '''
-
-        results = []
-        groups = dict(ungrouped=[])
-        lines = file(host_list).read().split("\n")
-        group_name = 'ungrouped'
-        for item in lines:
-            item = item.lstrip().rstrip()
-            if item.startswith("#"):
-                # ignore commented out lines
-                pass
-            elif item.startswith("["):
-                # looks like a group
-                group_name = item.replace("[","").replace("]","").lstrip().rstrip()
-                groups[group_name] = []
-            elif item != "":
-                # looks like a regular host
-                groups[group_name].append(item)
-                if not item in results:
-                    results.append(item)
-        return (results, groups)
-
-    # *****************************************************
-
-    @classmethod
-    def parse_hosts_from_script(cls, host_list, extra_vars):
-        ''' evaluate a script that returns list of hosts by groups '''
-
-        results = []
-        groups = dict(ungrouped=[])
-        host_list = os.path.abspath(host_list)
-        cls._external_variable_script = host_list
-        cmd = [host_list, '--list']
-        if extra_vars:
-            cmd.extend(['--extra-vars', extra_vars])
-        cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-        out, err = cmd.communicate()
-        rc = cmd.returncode
-        if rc:
-            raise errors.AnsibleError("%s: %s" % (host_list, err))
-        try:
-            groups = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("invalid JSON response from script: %s" % host_list)
-        for (groupname, hostlist) in groups.iteritems():
-            for host in hostlist:
-                if host not in results:
-                    results.append(host)
-        return (results, groups)
-
-    # *****************************************************
-
-    @classmethod
-    def parse_hosts(cls, host_list, override_hosts=None, extra_vars=None):
+    def parse_hosts(cls, host_list, override_hosts=None):
         ''' parse the host inventory file, returns (hosts, groups) '''
 
-        if override_hosts is not None:
-            if type(override_hosts) != list:
-                raise errors.AnsibleError("override hosts must be a list")
-            return (override_hosts, dict(ungrouped=override_hosts))
-
-        if type(host_list) == list:
-            raise Exception("function can only be called on inventory files")
-
-        host_list = os.path.expanduser(host_list)
-        if not os.path.exists(host_list):
-            raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
-
-        if not os.access(host_list, os.X_OK):
-            return Runner.parse_hosts_from_regular_file(host_list)
+        if override_hosts is None:
+            inventory = ansible.inventory.Inventory(host_list)
         else:
-            return Runner.parse_hosts_from_script(host_list, extra_vars)
+            inventory = ansible.inventory.Inventory(override_hosts)
 
-    # *****************************************************
-
-    def _matches(self, host_name, pattern):
-        ''' returns if a hostname is matched by the pattern '''
-
-        # a pattern is in fnmatch format but more than one pattern
-        # can be strung together with semicolons. ex:
-        #   atlanta-web*.example.com;dc-web*.example.com
-
-        if host_name == '':
-            return False
-        pattern = pattern.replace(";",":")
-        subpatterns = pattern.split(":")
-        for subpattern in subpatterns:
-            if subpattern == 'all':
-                return True
-            if fnmatch.fnmatch(host_name, subpattern):
-                return True
-            elif subpattern in self.groups:
-                if host_name in self.groups[subpattern]:
-                    return True
-        return False
-
-    # *****************************************************
-
-    def _connect(self, host):
-        ''' connects to a host, returns (is_successful, connection_object OR traceback_string) '''
-
-        try:
-            return [ True, self.connector.connect(host) ]
-        except errors.AnsibleConnectionFailed, e:
-            return [ False, "FAILED: %s" % str(e) ]
+        return inventory.host_list, inventory.groups
 
     # *****************************************************
 
@@ -263,7 +185,7 @@ class Runner(object):
         if type(files) == str:
             files = [ files ]
         for filename in files:
-            if not filename.startswith('/tmp/'):
+            if filename.find('/tmp/') == -1:
                 raise Exception("not going to happen")
             self._exec_command(conn, "rm -rf %s" % filename, None)
 
@@ -278,51 +200,22 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_str(self, conn, tmp, name, args_str):
-        ''' transfer arguments as a single file to be fed to the module. '''
+    def _transfer_str(self, conn, tmp, name, data):
+        ''' transfer string to remote file '''
 
-        if type(args_str) == dict:
-            args_str = utils.smjson(args_str)
+        if type(data) == dict:
+            data = utils.smjson(data)
 
-        args_fd, args_file = tempfile.mkstemp()
-        args_fo = os.fdopen(args_fd, 'w')
-        args_fo.write(args_str)
-        args_fo.flush()
-        args_fo.close()
+        afd, afile = tempfile.mkstemp()
+        afo = os.fdopen(afd, 'w')
+        afo.write(data)
+        afo.flush()
+        afo.close()
 
-        args_remote = os.path.join(tmp, name)
-        conn.put_file(args_file, args_remote)
-        os.unlink(args_file)
-
-        return args_remote
-
-    # *****************************************************
-
-    def _add_variables_from_script(self, conn, inject):
-        ''' support per system variabes from external variable scripts, see web docs '''
-
-        host = conn.host
-
-        cmd = [Runner._external_variable_script, '--host', host]
-        if self.extra_vars:
-            cmd.extend(['--extra-vars', self.extra_vars])
-
-        cmd = subprocess.Popen(cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False
-        )
-        out, err = cmd.communicate()
-        inject2 = {}
-        try:
-            inject2 = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("%s returned invalid result when called with hostname %s" % (
-                Runner._external_variable_script,
-                host
-            ))
-        # store injected variables in the templates
-        inject.update(inject2)
+        remote = os.path.join(tmp, name)
+        conn.put_file(afile, remote)
+        os.unlink(afile)
+        return remote
 
     # *****************************************************
 
@@ -335,7 +228,7 @@ class Runner(object):
 
         # TODO: keep this as a dict through the whole path to simplify this code
         for (k,v) in inject.iteritems():
-            if not k.startswith('facter_') and not k.startswith('ohai_'):
+            if not k.startswith('facter_') and not k.startswith('ohai_') and not k.startswith('ansible_'):
                 if not is_dict:
                     if str(v).find(" ") != -1:
                         v = "\"%s\"" % v
@@ -375,19 +268,20 @@ class Runner(object):
         ''' runs a module that has already been transferred '''
 
         inject = self.setup_cache.get(conn.host,{})
-        conditional = utils.double_template(self.conditional, inject)
+        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
-        if Runner._external_variable_script is not None:
-            self._add_variables_from_script(conn, inject)
+        host_variables = self.inventory.get_variables(conn.host)
+        inject.update(host_variables)
+
         if self.module_name == 'setup':
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
 
         if type(args) == dict:
-           args = utils.bigjson(args)
-        args = utils.template(args, inject)
+            args = utils.bigjson(args)
+        args = utils.template(args, inject, self.setup_cache)
 
         module_name_tail = remote_module_path.split("/")[-1]
 
@@ -492,7 +386,11 @@ class Runner(object):
         dest   = options.get('dest', None)
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
-        
+
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject, self.setup_cache)
+
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
         conn.put_file(utils.path_dwim(self.basedir, source), tmp_src)
@@ -524,8 +422,8 @@ class Runner(object):
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # files are saved in dest dir, with a subdir for each host, then the filename
-        filename = os.path.basename(source)
-        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, filename)
+        dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
+        dest   = dest.replace("//","/")
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -539,7 +437,6 @@ class Runner(object):
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-            changed = (new_md5 != local_md5)
             if new_md5 != remote_md5:
                 return (host, True, dict(failed=True, msg="md5 mismatch", md5sum=new_md5), '')
             return (host, True, dict(changed=True, md5sum=new_md5), '')
@@ -577,32 +474,54 @@ class Runner(object):
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
-        if metadata is None:
-            if self.remote_user == 'root':
-                metadata = '/etc/ansible/setup'
-            else:
-                metadata = '~/.ansible/setup'
+        # apply templating to source argument so vars can be used in the path
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject, self.setup_cache)
 
-        # first copy the source template over
-        temppath = tmp + os.path.split(source)[-1]
-        conn.put_file(utils.path_dwim(self.basedir, source), temppath)
+        (host, ok, data, err) = (None, None, None, None)
+
+        if not self.is_playbook:
+
+            # not running from a playbook so we have to fetch the remote
+            # setup file contents before proceeding...
+            if metadata is None:
+                if self.remote_user == 'root':
+                    metadata = '/etc/ansible/setup'
+                else:
+                    # path is expanded on remote side
+                    metadata = "~/.ansible/setup"
+            
+            # install the template module
+            slurp_module = self._transfer_module(conn, tmp, 'slurp')
+
+            # run the slurp module to get the metadata file
+            args = "src=%s" % metadata
+            (result1, err, executed) = self._execute_module(conn, tmp, slurp_module, args)
+            result1 = utils.json_loads(result1)
+            if not 'content' in result1 or result1.get('encoding','base64') != 'base64':
+                result1['failed'] = True
+                return self._return_from_module(conn, host, result1, err, executed)
+            content = base64.b64decode(result1['content'])
+            inject = utils.json_loads(content)
 
         # install the template module
-        template_module = self._transfer_module(conn, tmp, 'template')
+        copy_module = self._transfer_module(conn, tmp, 'copy')
 
-        # transfer module vars
-        if self.module_vars:
-            vars = utils.bigjson(self.module_vars)
-            vars_path = self._transfer_str(conn, tmp, 'module_vars', vars)
-            vars_arg=" vars=%s"%(vars_path)
-        else:
-            vars_arg=""
-        
-        # run the template module
-        args = "src=%s dest=%s metadata=%s%s" % (temppath, dest, metadata, vars_arg)
-        (result1, err, executed) = self._execute_module(conn, tmp, template_module, args)
+        # template the source data locally
+        source_data = file(utils.path_dwim(self.basedir, source)).read()
+        resultant = ''            
+        try:
+            resultant = utils.template(source_data, inject, self.setup_cache)
+        except Exception, e:
+            return (host, False, dict(failed=True, msg=str(e)), '')
+        xfered = self._transfer_str(conn, tmp, 'source', resultant)
+            
+        # run the COPY module
+        args = "src=%s dest=%s" % (xfered, dest)
+        (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
         (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
-
+ 
+        # modify file attribs if needed
         if ok:
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
@@ -628,12 +547,17 @@ class Runner(object):
     def _executor_internal(self, host):
         ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
 
-        ok, conn = self._connect(host)
-        if not ok:
-            return [ host, False, conn , None]
-        
+        host_variables = self.inventory.get_variables(host)
+        port = host_variables.get('ansible_ssh_port', self.remote_port)
+
+        conn = None
+        try:
+            conn = self.connector.connect(host, port)
+        except errors.AnsibleConnectionFailed, e:
+            return [ host, False, "FAILED: %s" % str(e), None ]
+
         cache = self.setup_cache.get(host, {})
-        module_name = utils.template(self.module_name, cache)
+        module_name = utils.template(self.module_name, cache, self.setup_cache)
 
         tmp = self._get_tmp_path(conn)
         result = None
@@ -692,7 +616,14 @@ class Runner(object):
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result, err = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
+        basetmp = "/var/tmp"
+        if self.remote_user != 'root':
+            basetmp = "/home/%s/.ansible/tmp" % self.remote_user
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp 
+        if self.remote_user != 'root':
+            cmd = "mkdir -p %s && %s" % (basetmp, cmd)
+
+        result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
         return cleaned
 
@@ -711,13 +642,6 @@ class Runner(object):
         out_path = tmp + module
         conn.put_file(in_path, out_path)
         return out_path
-
-    # *****************************************************
-
-    def _match_hosts(self, pattern):
-        ''' return all matched hosts fitting a pattern '''
-
-        return [ h for h in self.host_list if self._matches(h, pattern) ]
 
     # *****************************************************
 
@@ -767,7 +691,7 @@ class Runner(object):
                 results2["dark"][host] = result
 
         # hosts which were contacted but never got a chance to return
-        for host in self._match_hosts(self.pattern):
+        for host in self.inventory.list_hosts(self.pattern):
             if not (host in results2['dark'] or host in results2['contacted']):
                 results2["dark"][host] = {}
 
@@ -779,7 +703,7 @@ class Runner(object):
         ''' xfer & run module on all matched hosts '''
        
         # find hosts that match the pattern
-        hosts = self._match_hosts(self.pattern)
+        hosts = self.inventory.list_hosts(self.pattern)
         if len(hosts) == 0:
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})

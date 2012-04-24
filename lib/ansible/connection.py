@@ -45,12 +45,12 @@ class Connection(object):
         self.runner = runner
         self.transport = transport
 
-    def connect(self, host):
+    def connect(self, host, port=None):
         conn = None
         if self.transport == 'local' and self._LOCALHOSTRE.search(host):
-            conn = LocalConnection(self.runner, host)
+            conn = LocalConnection(self.runner, host, None)
         elif self.transport == 'paramiko':
-            conn = ParamikoConnection(self.runner, host)
+            conn = ParamikoConnection(self.runner, host, port)
         if conn is None:
             raise Exception("unsupported connection type")
         return conn.connect()
@@ -64,10 +64,13 @@ class Connection(object):
 class ParamikoConnection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host):
+    def __init__(self, runner, host, port=None):
         self.ssh = None
         self.runner = runner
         self.host = host
+        self.port = port
+        if port is None:
+            self.port = self.runner.remote_port
 
     def _get_conn(self):
         ssh = paramiko.SSHClient()
@@ -75,9 +78,13 @@ class ParamikoConnection(object):
 
         try:
             ssh.connect(
-                self.host, username=self.runner.remote_user,
-                allow_agent=True, look_for_keys=True, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.runner.remote_port
+                self.host, 
+                username=self.runner.remote_user,
+                allow_agent=True, 
+                look_for_keys=True, 
+                password=self.runner.remote_pass,
+                timeout=self.runner.timeout, 
+                port=self.port
             )
         except Exception, e:
             if str(e).find("PID check failed") != -1:
@@ -183,7 +190,7 @@ class LocalConnection(object):
         self.runner = runner
         self.host = host
 
-    def connect(self):
+    def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
 
         return self
