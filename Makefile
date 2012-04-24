@@ -84,6 +84,9 @@ clean:
 	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
 	rm -rf MANIFEST rpm-build
+	@echo "Cleaning up Debian building stuff"
+	rm -rf debian
+	rm -rf deb-build
 
 python:
 	python setup.py build
@@ -126,9 +129,13 @@ rpm: rpmcommon
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
 
-debian:
-	# stub target, FIXME!
-	(cd packaging/debian; dpkg-buildpackage -us -uc -rfakeroot)
+debian: sdist
+deb: debian
+	cp -r packaging/debian ./
+	chmod 755 debian/rules
+	fakeroot debian/rules clean
+	fakeroot dh_install
+	fakeroot debian/rules binary
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
