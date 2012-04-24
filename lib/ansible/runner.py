@@ -27,6 +27,7 @@ import random
 import traceback
 import tempfile
 import base64
+import getpass
 
 import ansible.constants as C 
 import ansible.connection
