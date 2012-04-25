@@ -432,13 +432,10 @@ class Runner(object):
         if os.path.exists(dest):
             utils.get_md5sum(dest)
 
-        remote_md5 = self._exec_command(conn, """python -c 'import hashlib
-        import sys
-        md5 = hashlib.md5()
-        with open(sys.argv[1]) as f:
-            for chunk in iter(lambda: f.read(128), b""):
-        md5.update(chunk)
-        print md5.hexdigest()' %s""" % source, tmp, True)[0]
+        try:
+            remote_md5 = self._exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
+        except:
+            remote_md5 = self._exec_command(conn, "md5 -q %s" % source, tmp, True)[0]
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
