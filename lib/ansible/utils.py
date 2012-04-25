@@ -24,6 +24,7 @@ import re
 import jinja2
 import yaml
 import optparse
+import hashlib
 from operator import methodcaller
 try:
     import json
@@ -330,4 +331,10 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     return parser
 
-
+def get_md5sum(filename):
+    ''' get the md5sum for a given file '''
+    md5 = hashlib.md5()
+    with open(filename) as f:
+        for chunk in iter(lambda: f.read(128), b''):
+            md5.update(chunk)
+    return md5.hexdigest()

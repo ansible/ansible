@@ -30,6 +30,7 @@ import shlex
 import socket
 import struct
 import subprocess
+import hashlib
 import traceback
 
 try:
@@ -70,6 +71,13 @@ def get_file_content(path):
     else:
         data = None
     return data
+
+def get_md5sum(filename):
+    md5 = hashlib.md5()
+    with open(filename) as f:
+        for chunk in iter(lambda: f.read(128), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 # platform.dist() is deprecated in 2.6
 # in 2.6 and newer, you should use platform.linux_distribution()
@@ -226,29 +234,31 @@ def get_iface_hwaddr(iface):
 def get_network_facts(facts):
     facts['fqdn'] = socket.gethostname()
     facts['hostname'] = facts['fqdn'].split('.')[0]
-    facts['interfaces'] = get_interfaces()
-    for iface in facts['interfaces']:
-        facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
-        # This is lame, but there doesn't appear to be a good way
-        # to get all addresses for both IPv4 and IPv6.
-        cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        for line in out.split('\n'):
-            data = line.split()
-            if 'inet addr' in line:
-                if 'ipv4' not in facts[iface]:
-                    facts[iface]['ipv4'] = {}
-                facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
-                                         'netmask': data[-1].split(':')[1] }
-            if 'inet6 addr' in line:
-                (ip, prefix) = data[2].split('/')
-                scope = data[3].split(':')[1].lower()
-                if 'ipv6' not in facts[iface]:
-                    facts[iface]['ipv6'] = []
-                facts[iface]['ipv6'].append( { 'address': ip,
-                                               'prefix': prefix,
-                                               'scope': scope } )
+    # TODO: Only support Linux interfaces facts right now, need to support the rest
+    if facts['system'] == "Linux":
+        facts['interfaces'] = get_interfaces()
+        for iface in facts['interfaces']:
+            facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
+            # This is lame, but there doesn't appear to be a good way
+            # to get all addresses for both IPv4 and IPv6.
+            cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            for line in out.split('\n'):
+                data = line.split()
+                if 'inet addr' in line:
+                    if 'ipv4' not in facts[iface]:
+                        facts[iface]['ipv4'] = {}
+                    facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
+                                             'netmask': data[-1].split(':')[1] }
+                if 'inet6 addr' in line:
+                    (ip, prefix) = data[2].split('/')
+                    scope = data[3].split(':')[1].lower()
+                    if 'ipv6' not in facts[iface]:
+                        facts[iface]['ipv6'] = []
+                    facts[iface]['ipv6'].append( { 'address': ip,
+                                                   'prefix': prefix,
+                                                   'scope': scope } )
     return facts
 
 def get_public_ssh_host_keys(facts):
@@ -295,7 +305,7 @@ except:
        (k,v) = opt.split("=")
        setup_options[k]=v   
 
-ansible_file = setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
+ansible_file = os.path.expanduser(setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP))
 ansible_dir = os.path.dirname(ansible_file)
 
 # create the config dir if it doesn't exist
@@ -308,7 +318,7 @@ md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = os.popen("md5sum %s" % ansible_file).read().split()[0]
+    md5sum = get_md5sum(ansible_file)
 
 # Get some basic facts in case facter or ohai are not installed
 for (k, v) in ansible_facts().items():
@@ -357,7 +367,7 @@ reformat = json.dumps(setup_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
-md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
+md5sum2 = get_md5sum(ansible_file)
 
 if md5sum != md5sum2:
    changed = True

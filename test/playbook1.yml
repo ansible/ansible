@@ -18,10 +18,10 @@
   tasks:
 
   - name: test basic success command
-    action: command /bin/true
+    action: command true
 
   - name: test basic success command 2
-    action: command /bin/true
+    action: command true
 
   - name: test basic shell, plus two ways to dereference a variable
     action: shell echo $HOME $port {{ port }}
