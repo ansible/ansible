@@ -131,9 +131,15 @@ class ParamikoConnection(object):
 
     def exec_command(self, cmd, tmp_path, sudoable=False):          # pylint: disable-msg=W0613
         ''' run a command on the remote host '''
+        bufsize = 4096                              # Could make this a Runner param if needed
+        timeout_secs = self.runner.timeout          # Reusing runner's TCP connect timeout as command progress timeout
+        chan = self.ssh.get_transport().open_session()
+        chan.settimeout(timeout_secs)
+        chan.get_pty()                              # Many sudo setups require a terminal; use in both cases for consistency
+        
         if not self.runner.sudo or not sudoable:
-            stdin, stdout, stderr = self.ssh.exec_command(cmd)
-            return (stdin, stdout, stderr)
+            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
+            chan.exec_command(quoted_command)
         else:
             # Rather than detect if sudo wants a password this time, -k makes 
             # sudo always ask for a password if one is required. The "--"
@@ -142,25 +148,17 @@ class ParamikoConnection(object):
             # directly doesn't work, so we shellquote it with pipes.quote() 
             # and pass the quoted string to the user's shell.
             sudocmd = 'sudo -k -- "$SHELL" -c ' + pipes.quote(cmd) 
-            bufsize = 4096                              # Could make this a Runner param if needed
-            timeout_secs = self.runner.timeout          # Reusing runner's TCP connect timeout as command progress timeout
-            chan = self.ssh.get_transport().open_session()
-            chan.settimeout(timeout_secs)
-            chan.get_pty()                              # Many sudo setups require a terminal
-            #print "exec_command: " + sudocmd
             chan.exec_command(sudocmd)
             if self.runner.sudo_pass:
                 while not chan.recv_ready():
                     time.sleep(0.25)
                 sudo_output = chan.recv(bufsize)        # Pull prompt, catch errors, eat sudo output
-                #print "exec_command: " + sudo_output
-                #print "exec_command: sending password"
                 chan.sendall(self.runner.sudo_pass + '\n')
 
-            stdin = chan.makefile('wb', bufsize) 
-            stdout = chan.makefile('rb', bufsize)
-            stderr = chan.makefile_stderr('rb', bufsize) 
-            return stdin, stdout, stderr
+        stdin = chan.makefile('wb', bufsize) 
+        stdout = chan.makefile('rb', bufsize)
+        stderr = chan.makefile_stderr('rb', bufsize) 
+        return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
