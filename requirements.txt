@@ -1,7 +1,7 @@
+# These are runtime requirements for ansible
 # Load this up by using pip install -r requirements.txt
 Jinja2==2.6
 PyYAML==3.10
-nose==1.1.2
 paramiko==1.7.7.1
 pycrypto==2.5
 wsgiref==0.1.2
