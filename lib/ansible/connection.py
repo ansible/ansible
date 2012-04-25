@@ -19,22 +19,25 @@
 ################################################
 
 import warnings
+import traceback
+import os
+import time
+import re
+import shutil
+import subprocess
+import pipes
+
+from ansible import errors
 # prevent paramiko warning noise
 # see http://stackoverflow.com/questions/3920502/
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import paramiko
 
-import traceback
-import os
-import time
-import random
-import re
-import shutil
-import subprocess
-from ansible import errors
 
 ################################################
+
+
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
@@ -73,17 +76,43 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
+        credentials = {}
+        user = self.runner.remote_user
+        keypair = None
+
+        # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
+        # This overrides the ansible defined username,hostname and port 
+        try:
+            ssh_config = paramiko.SSHConfig()
+            config_file = ('~/.ssh/config')
+            if  os.path.exists(os.path.expanduser(config_file)):
+                ssh_config.parse(open(os.path.expanduser(config_file)))
+                credentials = ssh_config.lookup(self.host)
+
+        except IOError,e:
+                raise errors.AnsibleConnectionFailed(str(e))
+
+        if 'hostname' in credentials:
+            self.host = credentials['hostname']
+        if 'port' in credentials:
+            self.port = int(credentials['port'])
+        if 'user' in credentials:
+            user = credentials['user']
+        if 'identityfile' in credentials:
+            keypair = os.path.expanduser(credentials['identityfile'])
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
             ssh.connect(
-                self.host, 
-                username=self.runner.remote_user,
-                allow_agent=True, 
-                look_for_keys=True, 
+                self.host,
+                username=user,
+                allow_agent=True,
+                look_for_keys=True,
                 password=self.runner.remote_pass,
-                timeout=self.runner.timeout, 
+                key_filename=keypair,
+                timeout=self.runner.timeout,
                 port=self.port
             )
         except Exception, e:
@@ -94,65 +123,42 @@ class ParamikoConnection(object):
 
         return ssh
 
-
     def connect(self):
         ''' connect to the remote host '''
 
         self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudoable=False):          # pylint: disable-msg=W0613
         ''' run a command on the remote host '''
-        if not self.runner.sudo or not sudoable: 
-            stdin, stdout, stderr = self.ssh.exec_command(cmd)
-            return (stdin, stdout, stderr)
+        bufsize = 4096                              # Could make this a Runner param if needed
+        timeout_secs = self.runner.timeout          # Reusing runner's TCP connect timeout as command progress timeout
+        chan = self.ssh.get_transport().open_session()
+        chan.settimeout(timeout_secs)
+        chan.get_pty()                              # Many sudo setups require a terminal; use in both cases for consistency
+        
+        if not self.runner.sudo or not sudoable:
+            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
+            chan.exec_command(quoted_command)
         else:
-            # percalculated tmp_path is ONLY required for sudo usage
-            if tmp_path is None:
-                raise Exception("expecting tmp_path")
-            r = random.randint(0,99999)
-            
-            # invoke command using a new connection over sudo
-            result_file = os.path.join(tmp_path, "sudo_result.%s" % r)
-            self.ssh.close()
-            ssh_sudo = self._get_conn()
-            sudo_chan = ssh_sudo.invoke_shell()
-            sudo_chan.send("sudo -s\n")
-
-            # FIXME: using sudo with a password adds more delay, someone may wish
-            # to optimize to see when the channel is actually ready
+            # Rather than detect if sudo wants a password this time, -k makes 
+            # sudo always ask for a password if one is required. The "--"
+            # tells sudo that this is the end of sudo options and the command
+            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # directly doesn't work, so we shellquote it with pipes.quote() 
+            # and pass the quoted string to the user's shell.
+            sudocmd = 'sudo -k -- "$SHELL" -c ' + pipes.quote(cmd) 
+            chan.exec_command(sudocmd)
             if self.runner.sudo_pass:
-                time.sleep(0.1) # this is conservative
-                sudo_chan.send("%s\n" % self.runner.sudo_pass)
-                time.sleep(0.1)
+                while not chan.recv_ready():
+                    time.sleep(0.25)
+                sudo_output = chan.recv(bufsize)        # Pull prompt, catch errors, eat sudo output
+                chan.sendall(self.runner.sudo_pass + '\n')
 
-            # to avoid ssh expect logic, redirect output to file and move the
-            # file when we are done with it...
-            sudo_chan.send("(%s >%s_pre 2>/dev/null ; mv %s_pre %s) &\n" % (cmd, result_file, result_file, result_file))
-            # FIXME: someone may wish to optimize to not background the launch, and tell when the command
-            # returns, removing the time.sleep(1) here
-            time.sleep(1)
-            sudo_chan.close()
-            self.ssh = self._get_conn()
-
-            # now load the results of the JSON execution...
-            # FIXME: really need some timeout logic here
-            # though it doesn't make since to use the SSH timeout or impose any particular
-            # limit.  Upgrades welcome.
-            sftp = self.ssh.open_sftp()
-            while True:
-                # print "waiting on %s" % result_file
-                time.sleep(1)
-                try:
-                    sftp.stat(result_file)
-                    break
-                except IOError:
-                    pass
-            sftp.close()
-            # TODO: see if there's a SFTP way to just get the file contents w/o saving
-            # to disk vs this hack...
-            stdin, stdout, stderr = self.ssh.exec_command("cat %s" % result_file)
-            return (stdin, stdout, stderr)
+        stdin = chan.makefile('wb', bufsize) 
+        stdout = chan.makefile('rb', bufsize)
+        stderr = chan.makefile_stderr('rb', bufsize) 
+        return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -231,4 +237,3 @@ class LocalConnection(object):
         ''' terminate the connection; nothing to do here '''
 
         pass
-

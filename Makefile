@@ -1,26 +1,42 @@
 #!/usr/bin/make
 
+########################################################
+# Makefile for Ansible
+#
+# useful targets:
+#   make sdist ---------------- produce a tarball
+#   make rpm  ----------------- produce RPMs
+#   make debian --------------- produce a dpkg (FIXME?)
+#   make docs ----------------- rebuild the manpages (results are checked in)
+#   make tests ---------------- run the tests
+#   make pyflakes, make pep8 -- source code checks  
+
+########################################################
+# variable section
+
 NAME = "ansible"
+
+# Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
-# Space separated list of all the manpages we want to end up with.
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1
+
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+
+# VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
-# These are for building the RPM.
+
+# RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
 RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
-# Python distutils options
-DUDIR = packaging/distutils
-DUSETUP = $(DUDIR)/setup.py
-DUMANIFEST = $(DUDIR)/MANIFEST.in
 
+########################################################
 
 all: clean python
 
@@ -47,7 +63,7 @@ pep8:
 	@echo "#############################################"
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
-	pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225 lib/ bin/
+	pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261 lib/ bin/
 
 pyflakes:
 	pyflakes lib/ansible/*.py bin/*
@@ -68,17 +84,20 @@ clean:
 	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
 	rm -rf MANIFEST rpm-build
+	@echo "Cleaning up Debian building stuff"
+	rm -rf debian
+	rm -rf deb-build
 
 python:
-	python $(DUSETUP) build
+	python setup.py build
 
 install:
 	mkdir -p /usr/share/ansible
 	cp ./library/* /usr/share/ansible/
-	python $(DUSETUP) install
+	python setup.py install
 
 sdist: clean
-	python ./$(DUSETUP) sdist -t $(DUMANIFEST)
+	python setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
 	@mkdir -p rpm-build
@@ -109,3 +128,14 @@ rpm: rpmcommon
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
+
+debian: sdist
+deb: debian
+	cp -r packaging/debian ./
+	chmod 755 debian/rules
+	fakeroot debian/rules clean
+	fakeroot dh_install
+	fakeroot debian/rules binary
+
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+

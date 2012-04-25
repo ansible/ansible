@@ -72,6 +72,43 @@ def add_path_info(kwargs):
         kwargs['state'] = 'absent'
     return kwargs 
  
+# If selinux fails to find a default, return an array of None
+def selinux_default_context(path, mode=0):
+    context = [None, None, None, None]
+    if not HAVE_SELINUX:
+        return context
+    try:
+        ret = selinux.matchpathcon(path, mode)
+    except OSError:
+        return context
+    if ret[0] == -1:
+        return context
+    context = ret[1].split(':')
+    debug("got default secontext=%s" % ret[1])
+    return context
+
+def selinux_context(path):
+    context = [None, None, None, None]
+    if not HAVE_SELINUX:
+        return context
+    try:
+        ret = selinux.lgetfilecon(path)
+    except:
+        fail_json(path=path, msg='failed to retrieve selinux context')
+    if ret[0] == -1:
+        return context
+    context = ret[1].split(':')
+    debug("got current secontext=%s" % ret[1])
+    return context
+
+# Detect whether using selinux that is selevel-aware
+# FWIW, rhel5 is not selevel-aware.
+def selinux_has_selevel(path):
+    r = True
+    if len(selinux_context(path)) == 3:
+        r = False
+    return r
+
 # ===========================================
 
 argfile = sys.argv[1]
@@ -107,7 +144,17 @@ seuser    = params.get('seuser', None)
 serole    = params.get('serole', None)
 setype    = params.get('setype', None)
 selevel   = params.get('serange', 's0')
-secontext = [seuser, serole, setype, selevel]
+context   = params.get('context', None)
+secontext = [seuser, serole, setype]
+if selinux_has_selevel(path):
+    secontext.append(selevel)
+
+if context is not None:
+    if context != 'default':
+        fail_json(msg='invalid context: %s' % context)
+    if seuser is not None or serole is not None or setype is not None:
+        fail_json(msg='cannot define context=default and seuser, serole or setype')
+    secontext = selinux_default_context(path)
 
 if state not in [ 'file', 'directory', 'link', 'absent']:
     fail_json(msg='invalid state: %s' % state)
@@ -134,48 +181,14 @@ def user_and_group(filename):
     debug("got user=%s and group=%s" % (user, group))
     return (user, group)
 
-def selinux_context(path):
-    context = [None, None, None, None]
-    if not HAVE_SELINUX:
-        return context
-    try:
-        ret = selinux.lgetfilecon(path)
-    except:
-        fail_json(path=path, msg='failed to retrieve selinux context')
-    if ret[0] == -1:
-        return context
-    context = ret[1].split(':')
-    debug("got current secontext=%s" % ret[1])
-    return context
-
-# If selinux fails to find a default, return an array of None
-def selinux_default_context(path, mode=0):
-    context = [None, None, None, None]
-    print >>sys.stderr, path
-    if not HAVE_SELINUX:
-        return context
-    try:
-        ret = selinux.matchpathcon(path, mode)
-    except OSError:
-        return context
-    if ret[0] == -1:
-        return context
-    context = ret[1].split(':')
-    debug("got default secontext=%s" % ret[1])
-    return context
-
 def set_context_if_different(path, context, changed):
     if not HAVE_SELINUX:
         return changed
     cur_context = selinux_context(path)
-    new_context = selinux_default_context(path)
+    new_context = list(cur_context)
     for i in range(len(context)):
         if context[i] is not None and context[i] != cur_context[i]:
-            debug('new context was %s' % new_context[i])
             new_context[i] = context[i]
-            debug('new context is %s' % new_context[i])
-        elif new_context[i] is None:
-            new_context[i] = cur_context[i]
     debug("current secontext is %s" % ':'.join(cur_context))
     debug("new secontext is %s" % ':'.join(new_context))
     if cur_context != new_context:
@@ -315,8 +328,9 @@ elif state == 'link':
     if os.path.isabs(src):
         abs_src = src
     else:
-        abs_src = os.path.join(os.path.dirname(dest))
-    if not os.path.exists(abssrc):
+        # FIXME: this does not seem correct? -- MPD
+        abs_src = os.path.dirname(dest)
+    if not os.path.exists(abs_src):
         fail_json(dest=dest, src=src, msg='src file does not exist')
    
     if prev_state == 'absent':

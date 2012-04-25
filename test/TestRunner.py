@@ -92,6 +92,8 @@ class TestRunner(unittest.TestCase):
    # to get ohai's "facts" anyway
    #
    #def test_ohai(self):
+   #    if not get_binary("facter"):
+   #            raise SkipTest
    #    result = self._run('ohai',[])
    #    assert "hostname" in result
 

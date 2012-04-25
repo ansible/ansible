@@ -26,9 +26,8 @@ import Queue
 import random
 import traceback
 import tempfile
-import subprocess
-import getpass
 import base64
+import getpass
 
 import ansible.constants as C 
 import ansible.connection
@@ -187,7 +186,7 @@ class Runner(object):
         if type(files) == str:
             files = [ files ]
         for filename in files:
-            if not filename.startswith('/tmp/'):
+            if filename.find('/tmp/') == -1:
                 raise Exception("not going to happen")
             self._exec_command(conn, "rm -rf %s" % filename, None)
 
@@ -254,13 +253,13 @@ class Runner(object):
                 if self.remote_user == 'root':
                     args = "%s metadata=/etc/ansible/setup" % args
                 else:
-                    args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+                    args = "%s metadata=$HOME/.ansible/setup" % args
         else:
             if not 'metadata' in args:
                 if self.remote_user == 'root':
                     args['metadata'] = '/etc/ansible/setup'
                 else:
-                    args['metadata'] = "/home/%s/.ansible/setup" % (self.remote_user)
+                    args['metadata'] = "$HOME/.ansible/setup"
         return args   
  
     # *****************************************************
@@ -270,7 +269,7 @@ class Runner(object):
         ''' runs a module that has already been transferred '''
 
         inject = self.setup_cache.get(conn.host,{})
-        conditional = utils.double_template(self.conditional, inject)
+        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
@@ -282,8 +281,8 @@ class Runner(object):
             args = self._add_setup_metadata(args)
 
         if type(args) == dict:
-           args = utils.bigjson(args)
-        args = utils.template(args, inject)
+            args = utils.bigjson(args)
+        args = utils.template(args, inject, self.setup_cache)
 
         module_name_tail = remote_module_path.split("/")[-1]
 
@@ -299,13 +298,31 @@ class Runner(object):
 
     # *****************************************************
 
+    def _save_setup_result_to_disk(self, conn, result):
+       ''' cache results of calling setup '''
+
+       dest = os.path.expanduser("~/.ansible_setup_data")
+       user = getpass.getuser()
+       if user == 'root':
+           dest = "/var/lib/ansible/setup_data"
+       if not os.path.exists(dest):
+           os.makedirs(dest)
+
+       fh = open(os.path.join(dest, conn.host), "w")
+       fh.write(result)
+       fh.close()
+
+       return result
+
+    # *****************************************************
+
     def _add_result_to_setup_cache(self, conn, result):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        try:
-            var_result = utils.parse_json(result)
-        except:
+        if 'ansible_facts' in result:
+            var_result = result['ansible_facts']
+        else:
             var_result = {}
 
         # note: do not allow variables from playbook to be stomped on
@@ -330,10 +347,12 @@ class Runner(object):
         module = self._transfer_module(conn, tmp, module_name)
         (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
 
-        if module_name == 'setup':
-            self._add_result_to_setup_cache(conn, result)
+        (host, ok, data, err) = self._return_from_module(conn, host, result, err, executed)
 
-        return self._return_from_module(conn, host, result, err, executed)
+        if ok:
+            self._add_result_to_setup_cache(conn, data)
+
+        return (host, ok, data, err)
 
     # *****************************************************
 
@@ -371,7 +390,7 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
-        source = utils.template(source, inject)
+        source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
@@ -419,7 +438,6 @@ class Runner(object):
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-            changed = (new_md5 != local_md5)
             if new_md5 != remote_md5:
                 return (host, True, dict(failed=True, msg="md5 mismatch", md5sum=new_md5), '')
             return (host, True, dict(changed=True, md5sum=new_md5), '')
@@ -438,8 +456,11 @@ class Runner(object):
         (result2, err2, executed2) = self._execute_module(conn, tmp, module, args)
         results2 = self._return_from_module(conn, conn.host, result2, err2, executed)
         (host, ok, data2, err2) = results2
-        new_changed = data2.get('changed', False)
-        data.update(data2)
+        if ok:
+            new_changed = data2.get('changed', False)
+            data.update(data2)
+        else:
+            new_changed = False
         if old_changed or new_changed:
             data['changed'] = True
         return (host, ok, data, "%s%s"%(err,err2))
@@ -459,7 +480,7 @@ class Runner(object):
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
-        source = utils.template(source, inject)
+        source = utils.template(source, inject, self.setup_cache)
 
         (host, ok, data, err) = (None, None, None, None)
 
@@ -494,7 +515,7 @@ class Runner(object):
         source_data = file(utils.path_dwim(self.basedir, source)).read()
         resultant = ''            
         try:
-            resultant = utils.template(source_data, inject)
+            resultant = utils.template(source_data, inject, self.setup_cache)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
@@ -540,7 +561,7 @@ class Runner(object):
             return [ host, False, "FAILED: %s" % str(e), None ]
 
         cache = self.setup_cache.get(host, {})
-        module_name = utils.template(self.module_name, cache)
+        module_name = utils.template(self.module_name, cache, self.setup_cache)
 
         tmp = self._get_tmp_path(conn)
         result = None
@@ -599,7 +620,18 @@ class Runner(object):
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        result, err = self._exec_command(conn, "mktemp -d /tmp/ansible.XXXXXX", None, sudoable=False)
+        # The problem with this is that it's executed on the
+        # overlord, not on the target so we can't use tempdir and os.path
+        # Only support the *nix world for now by using the $HOME env var
+
+        basetmp = "/var/tmp"
+        if self.remote_user != 'root':
+            basetmp = "$HOME/.ansible/tmp"
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
+        if self.remote_user != 'root':
+            cmd = "mkdir -p %s && %s" % (basetmp, cmd)
+
+        result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
         return cleaned
 

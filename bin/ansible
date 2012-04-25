@@ -22,13 +22,13 @@
 import sys
 import getpass
 import time
-from optparse import OptionParser
 
 import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
 from ansible import callbacks
+from ansible import inventory
 
 ########################################################
 
@@ -69,6 +69,13 @@ class Cli(object):
         ''' use Runner lib to do SSH things '''
 
         pattern = args[0]
+
+        inventory_manager = inventory.Inventory(options.inventory)
+        hosts = inventory_manager.list_hosts(pattern)
+        if len(hosts) == 0:
+             print >>sys.stderr, "No hosts matched"
+             sys.exit(1) 
+        
         sshpass = None
         sudopass = None
         if options.ask_pass:
@@ -78,7 +85,6 @@ class Cli(object):
 
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
-
         if options.seconds:
             print "background launch...\n\n"
 
@@ -86,7 +92,7 @@ class Cli(object):
             module_name=options.module_name, module_path=options.module_path,
             module_args=options.module_args,
             remote_user=options.remote_user, remote_pass=sshpass,
-            host_list=options.inventory, timeout=options.timeout, 
+            inventory=inventory_manager, timeout=options.timeout, 
             forks=options.forks, 
             background=options.seconds, pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 

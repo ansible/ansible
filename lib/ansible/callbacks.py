@@ -151,7 +151,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print "failed: [%s] => %s => %s\n" % (host, invocation, utils.smjson(results))
 
     def on_ok(self, host, host_result):
-        invocation = host_result.get('invocation',None)
+        invocation = host_result.get('invocation','')
         if invocation.startswith('async_status'):
             pass
         elif not invocation or invocation.startswith('setup '):

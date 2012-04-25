@@ -22,7 +22,6 @@ import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-import shlex
 import os
 import time
 
@@ -124,7 +123,7 @@ class PlayBook(object):
         # translate a list of vars into a dict
         if type(vars) == list:
             varlist = vars
-            vars =  {}
+            vars = {}
             for item in varlist:
                 k, v = item.items()[0]
                 vars[k] = v
@@ -155,7 +154,7 @@ class PlayBook(object):
                 include_vars[k] = v
         inject_vars = play_vars.copy()
         inject_vars.update(include_vars)
-        included = utils.template_from_file(path, inject_vars)
+        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
         included = utils.parse_yaml(included)
         for x in included:
             if len(include_vars):
@@ -169,7 +168,7 @@ class PlayBook(object):
 
         path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
-        included = utils.template_from_file(path, inject_vars)
+        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
         included = utils.parse_yaml(included)
         for x in included:
             new_handlers.append(x)
@@ -208,10 +207,10 @@ class PlayBook(object):
                         if action is None:
                             raise errors.AnsibleError('action is required')
                         produced_task = task.copy()
-                        produced_task['action'] = utils.template(action, dict(item=item))
-                        produced_task['name'] = utils.template(name, dict(item=item))
+                        produced_task['action'] = utils.template(action, dict(item=item), SETUP_CACHE)
+                        produced_task['name'] = utils.template(name, dict(item=item), SETUP_CACHE)
                         if only_if:
-                            produced_task['only_if'] = utils.template(only_if, dict(item=item))
+                            produced_task['only_if'] = utils.template(only_if, dict(item=item), SETUP_CACHE)
                         new_tasks2.append(produced_task)
                 else:
                     new_tasks2.append(task)
@@ -378,7 +377,9 @@ class PlayBook(object):
 
         tokens = action.split(None, 1)
         module_name = tokens[0]
-        module_args = tokens[1]
+        module_args = ''
+        if len(tokens) > 1:
+            module_args = tokens[1]
 
         # include task specific vars
         module_vars = task.get('vars')
@@ -395,6 +396,12 @@ class PlayBook(object):
         results = self._run_module(pattern, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
             async_poll_interval, only_if, sudo, transport, port)
+
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            if "ansible_facts" in result:
+                for k,v in result['ansible_facts'].iteritems():
+                    SETUP_CACHE[host][k]=v
 
         self.stats.compute(results)
 
@@ -464,7 +471,7 @@ class PlayBook(object):
                     found = False
                     sequence = []
                     for real_filename in filename:
-                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars))
+                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars, SETUP_CACHE))
                         sequence.append(filename2)
                         if os.path.exists(filename2):
                             found = True
@@ -480,7 +487,7 @@ class PlayBook(object):
                         )
 
                 else:
-                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars))
+                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars, SETUP_CACHE))
                     if not os.path.exists(filename2):
                         raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
                     data = utils.parse_yaml_from_file(filename2)
@@ -527,7 +534,8 @@ class PlayBook(object):
         if vars_files is None:
             # first pass only or we'll erase good work
             for (host, result) in setup_ok.iteritems():
-                SETUP_CACHE[host] = result
+                if 'ansible_facts' in result:
+                    SETUP_CACHE[host] = result['ansible_facts']
 
     # *****************************************************
 
@@ -536,6 +544,8 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern  = pg.get('hosts',None)
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
         if self.override_hosts:
             pattern = 'all'
         if pattern is None:

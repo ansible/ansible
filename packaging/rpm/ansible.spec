@@ -2,13 +2,11 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %endif
-%define _dusetup   packaging/distutils/setup.py
-
 
 Name: ansible
 Release: 1%{?dist}
 Summary: Minimal SSH command and control
-Version: 0.0.2
+Version: 0.3
 
 Group: Development/Libraries
 License: GPLv3
@@ -35,10 +33,10 @@ are transferred to managed machines automatically.
 %setup -q
 
 %build
-%{__python} %{_dusetup} build
+%{__python} setup.py build
 
 %install
-%{__python} %{_dusetup} install -O1 --root=$RPM_BUILD_ROOT
+%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
 cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/man1/
@@ -60,6 +58,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Apr 23 2012 Michael DeHaan <mdehaan@redhat.com> - 0.3-1
+- Release of 0.3
+
 * Tue Apr  3 2012 John Eckersberg <jeckersb@redhat.com> - 0.0.2-1
 - Release of 0.0.2
 

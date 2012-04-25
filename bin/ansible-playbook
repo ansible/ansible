@@ -20,7 +20,6 @@
 
 import sys
 import getpass
-from optparse import OptionParser
 
 import ansible.playbook
 import ansible.constants as C
