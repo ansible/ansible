@@ -249,10 +249,10 @@ def template(text, vars, setup_cache):
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars):
+def template_from_file(path, vars, setup_cache):
     ''' run a file through the templating engine '''
     data = file(path).read()
-    return template(data, vars)
+    return template(data, vars, setup_cache)
 
 def parse_yaml(data):
     return yaml.load(data)
