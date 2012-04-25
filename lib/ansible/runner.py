@@ -320,9 +320,9 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        try:
-            var_result = utils.parse_json(result)
-        except:
+        if 'ansible_facts' in result:
+            var_result = result['ansible_facts']
+        else:
             var_result = {}
 
         # note: do not allow variables from playbook to be stomped on
@@ -333,26 +333,6 @@ class Runner(object):
         for (k, v) in var_result.iteritems():
             if not k in self.setup_cache[host]:
                 self.setup_cache[host][k] = v
-
-    # *****************************************************
-
-    def _execute_normal_module(self, conn, host, tmp, module_name):
-        ''' transfer & execute a module that is not 'copy' or 'template' '''
-
-        # shell and command are the same module
-        if module_name == 'shell':
-            module_name = 'command'
-            self.module_args += " #USE_SHELL"
-
-        module = self._transfer_module(conn, tmp, module_name)
-        (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
-
-        if module_name == 'setup':
-            self._add_result_to_setup_cache(conn, result)
-            if self.is_playbook:
-                self._save_setup_result_to_disk(conn, result)
-
-        return self._return_from_module(conn, host, result, err, executed)
 
     # *****************************************************
 
