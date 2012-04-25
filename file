@@ -87,6 +87,28 @@ def selinux_default_context(path, mode=0):
     debug("got default secontext=%s" % ret[1])
     return context
 
+def selinux_context(path):
+    context = [None, None, None, None]
+    if not HAVE_SELINUX:
+        return context
+    try:
+        ret = selinux.lgetfilecon(path)
+    except:
+        fail_json(path=path, msg='failed to retrieve selinux context')
+    if ret[0] == -1:
+        return context
+    context = ret[1].split(':')
+    debug("got current secontext=%s" % ret[1])
+    return context
+
+# Detect whether using selinux that is selevel-aware
+# FWIW, rhel5 is not selevel-aware.
+def selinux_has_selevel(path):
+    r = True
+    if len(selinux_context(path)) == 3:
+        r = False
+    return r
+
 # ===========================================
 
 argfile = sys.argv[1]
@@ -123,7 +145,9 @@ serole    = params.get('serole', None)
 setype    = params.get('setype', None)
 selevel   = params.get('serange', 's0')
 context   = params.get('context', None)
-secontext = [seuser, serole, setype, selevel]
+secontext = [seuser, serole, setype]
+if selinux_has_selevel(path):
+    secontext.append(selevel)
 
 if context is not None:
     if context != 'default':
@@ -156,20 +180,6 @@ def user_and_group(filename):
     group = grp.getgrgid(gid)[0]
     debug("got user=%s and group=%s" % (user, group))
     return (user, group)
-
-def selinux_context(path):
-    context = [None, None, None, None]
-    if not HAVE_SELINUX:
-        return context
-    try:
-        ret = selinux.lgetfilecon(path)
-    except:
-        fail_json(path=path, msg='failed to retrieve selinux context')
-    if ret[0] == -1:
-        return context
-    context = ret[1].split(':')
-    debug("got current secontext=%s" % ret[1])
-    return context
 
 def set_context_if_different(path, context, changed):
     if not HAVE_SELINUX:
