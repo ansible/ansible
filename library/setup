@@ -295,7 +295,7 @@ except:
        (k,v) = opt.split("=")
        setup_options[k]=v   
 
-ansible_file = setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
+ansible_file = os.path.expandvars(setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP))
 ansible_dir = os.path.dirname(ansible_file)
 
 # create the config dir if it doesn't exist
