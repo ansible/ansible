@@ -29,6 +29,7 @@ import shutil
 import stat
 import grp
 import pwd
+import hashlib
 try:
     import selinux
     HAVE_SELINUX=True
@@ -146,7 +147,11 @@ changed = False
 # support functions
 
 def md5sum(filename):
-    return os.popen("/usr/bin/md5sum %s" % f).read()
+    md5 = hashlib.md5()
+    with open(filename) as f:
+        for chunk in iter(lambda: f.read(128), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 def user_and_group(filename):
     st = os.stat(filename)

@@ -21,6 +21,14 @@
 import sys
 import os
 import shlex
+import hashlib
+
+def get_md5sum(filename):
+    md5 = hashlib.md5()
+    with open(filename) as f:
+        for chunk in iter(lambda: f.read(128), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 # ===========================================
 # convert arguments of form a=b c=d
@@ -55,9 +63,8 @@ if not os.path.exists(src):
 md5sum = None
 changed = False
 if os.path.exists(dest):
-    md5sum = os.popen("md5sum %s" % dest).read().split()[0]
-
-md5sum2 = os.popen("md5sum %s" % src).read().split()[0]
+    md5sum = get_md5sum(dest)
+md5sum2 = get_md5sum(src)
 
 if md5sum != md5sum2:
     os.system("cp %s %s" % (src, dest))

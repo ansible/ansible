@@ -147,14 +147,14 @@ class TestRunner(unittest.TestCase):
    def test_command(self):
    
        # test command module, change trigger, etc
-       result = self._run('command', [ "/bin/echo", "hi" ])
+       result = self._run('command', [ "echo", "hi" ])
        assert "failed" not in result
        assert "msg" not in result
        assert result['rc'] == 0
        assert result['stdout'] == 'hi'
        assert result['stderr'] == ''
    
-       result = self._run('command', [ "/bin/false" ])
+       result = self._run('command', [ "false" ])
        assert result['rc'] == 1
        assert 'failed' not in result
    
@@ -163,7 +163,7 @@ class TestRunner(unittest.TestCase):
        assert 'failed' in result
        assert 'rc' not in result
 
-       result = self._run('shell', [ "/bin/echo", "$HOME" ])
+       result = self._run('shell', [ "echo", "$HOME" ])
        assert 'failed' not in result
        assert result['rc'] == 0 
    
