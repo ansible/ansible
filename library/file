@@ -58,7 +58,7 @@ def add_path_info(kwargs):
         kwargs['user']  = user
         kwargs['group'] = group
         st = os.stat(path)
-        kwargs['mode']  = stat.S_IMODE(st[stat.ST_MODE])
+        kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
         # secontext not yet supported
         if os.path.islink(path):
             kwargs['state'] = 'link'
