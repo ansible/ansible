@@ -66,30 +66,64 @@ def add_path_info(kwargs):
             kwargs['state'] = 'file'
         else:
             kwargs['state'] = 'directory'
-        if HAVE_SELINUX:
+        if HAVE_SELINUX and selinux_enabled():
             kwargs['secontext'] = ':'.join(selinux_context(path))
     else:
         kwargs['state'] = 'absent'
     return kwargs 
- 
+
+# Detect whether using selinux that is MLS-aware.
+# While this means you can set the level/range with
+# selinux.lsetfilecon(), it may or may not mean that you
+# will get the selevel as part of the context returned
+# by selinux.lgetfilecon().
+def selinux_mls_enabled():
+    if not HAVE_SELINUX:
+        return False
+    if selinux.is_selinux_mls_enabled() == 1:
+        debug('selinux mls is enabled')
+        return True
+    else:
+        debug('selinux mls is disabled')
+        return False
+
+def selinux_enabled():
+    if not HAVE_SELINUX:
+        return False
+    if selinux.is_selinux_enabled() == 1:
+        debug('selinux is enabled')
+        return True
+    else:
+        debug('selinux is disabled')
+        return False
+
+# Determine whether we need a placeholder for selevel/mls
+def selinux_initial_context():
+    context = [None, None, None]
+    if selinux_mls_enabled():
+        context.append(None)
+    return context
+
 # If selinux fails to find a default, return an array of None
 def selinux_default_context(path, mode=0):
-    context = [None, None, None, None]
-    if not HAVE_SELINUX:
+    context = selinux_initial_context()
+    if not HAVE_SELINUX or not selinux_enabled():
         return context
     try:
         ret = selinux.matchpathcon(path, mode)
     except OSError:
+        debug("no default context available")
         return context
     if ret[0] == -1:
+        debug("no default context available")
         return context
     context = ret[1].split(':')
     debug("got default secontext=%s" % ret[1])
     return context
 
 def selinux_context(path):
-    context = [None, None, None, None]
-    if not HAVE_SELINUX:
+    context = selinux_initial_context()
+    if not HAVE_SELINUX or not selinux_enabled():
         return context
     try:
         ret = selinux.lgetfilecon(path)
@@ -100,14 +134,6 @@ def selinux_context(path):
     context = ret[1].split(':')
     debug("got current secontext=%s" % ret[1])
     return context
-
-# Detect whether using selinux that is selevel-aware
-# FWIW, rhel5 is not selevel-aware.
-def selinux_has_selevel(path):
-    r = True
-    if len(selinux_context(path)) == 3:
-        r = False
-    return r
 
 # ===========================================
 
@@ -146,7 +172,7 @@ setype    = params.get('setype', None)
 selevel   = params.get('serange', 's0')
 context   = params.get('context', None)
 secontext = [seuser, serole, setype]
-if selinux_has_selevel(path):
+if selinux_mls_enabled():
     secontext.append(selevel)
 
 if context is not None:
@@ -182,14 +208,16 @@ def user_and_group(filename):
     return (user, group)
 
 def set_context_if_different(path, context, changed):
-    if not HAVE_SELINUX:
+    if not HAVE_SELINUX or not selinux_enabled():
         return changed
     cur_context = selinux_context(path)
     new_context = list(cur_context)
-    for i in range(len(context)):
+    debug("current secontext is %s" % ':'.join(cur_context))
+    # Iterate over the current context instead of the
+    # argument context, which may have selevel.
+    for i in range(len(cur_context)):
         if context[i] is not None and context[i] != cur_context[i]:
             new_context[i] = context[i]
-    debug("current secontext is %s" % ':'.join(cur_context))
     debug("new secontext is %s" % ':'.join(new_context))
     if cur_context != new_context:
         try:
