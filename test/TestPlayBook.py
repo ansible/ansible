@@ -141,7 +141,7 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks = self.test_callbacks
        )
        result = self.playbook.run()
-       print utils.bigjson(dict(events=EVENTS))
+       # print utils.bigjson(dict(events=EVENTS))
        return result
 
    def test_one(self):
@@ -166,5 +166,6 @@ class TestPlaybook(unittest.TestCase):
 
        # make sure the template module took options from the vars section
        data = file('/tmp/ansible_test_data_template.out').read()
+       print data
        assert data.find("ears") != -1, "template success"
 
