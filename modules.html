@@ -207,7 +207,7 @@ noted, any given module does support change hooks.</p>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
-<li>A package name or package specifier with version, like name-1.0</li>
+<li>A package name or package specifier with version, like foo=1.0</li>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
@@ -224,11 +224,16 @@ package operation or as a seperate step.</li>
 <li>Will force purge of configuration file for when ensure is set to &#8216;removed&#8217;.
 Defaults to &#8216;no&#8217;.</li>
 </ul>
+<p><em>default-release</em>:</p>
+<ul class="simple">
+<li>Corresponds to the -t option for apt, and sets pin priorities</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo update-cache=yes
-apt pkg=foo ensure=removed
-apt pkg=foo ensure=installed
-apt pkg=foo ensure=latest update-cache=yes</pre>
+apt pkg=foo state=removed
+apt pkg=foo state=installed
+apt pkg=foo=1.00 state=installed
+apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes</pre>
 </div>
 <p>NOTE: the apt module cannot currently request installation of a specific software version, as the yum
 module can.  This should be available in a future release.</p>
