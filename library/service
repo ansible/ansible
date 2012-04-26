@@ -37,9 +37,12 @@ if not len(items):
     sys.exit(1)
 
 params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
+for arg in items:
+    if "=" not in arg:
+        print json.dumps(dict(failed=True, msg='expected arguments of the form name=value'))
+        sys.exit(1)
+    (name, value) = arg.split("=")
+    params[name] = value
 
 name = params['name']
 state = params.get('state','unknown')
