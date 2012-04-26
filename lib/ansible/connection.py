@@ -81,7 +81,8 @@ class ParamikoConnection(object):
         keypair = None
 
         # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
-        # This overrides the ansible defined username,hostname and port 
+        # This will *NOT* overrides the ansible username and hostname " , getting the port and keyfile only.
+	
         try:
             ssh_config = paramiko.SSHConfig()
             config_file = ('~/.ssh/config')
@@ -92,12 +93,12 @@ class ParamikoConnection(object):
         except IOError,e:
                 raise errors.AnsibleConnectionFailed(str(e))
 
-        if 'hostname' in credentials:
-            self.host = credentials['hostname']
+        #if 'hostname' in credentials:
+        #    self.host = credentials['hostname']
         if 'port' in credentials:
             self.port = int(credentials['port'])
-        if 'user' in credentials:
-            user = credentials['user']
+        #if 'user' in credentials:
+        #    user = credentials['user']
         if 'identityfile' in credentials:
             keypair = os.path.expanduser(credentials['identityfile'])
 
