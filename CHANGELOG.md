@@ -1,9 +1,14 @@
 Ansible Changes By Release
 ==========================
 
-0.4 "Unchained" ------- in progress
+0.4 "Unchained" ------- in progress, ETA May 2012
 
-* See the CHANGELOG.md file on the devel branch for a summary
+* custom facts provided by the setup module mean no dependency on Ruby, facter, or ohai
+* sudo improvements, now works much more smoothly
+* some support for reading some default settings from the ssh config file (being refined)
+* OS X support in progress for hosts and clients
+* list of hosts in playbooks can be expressed as a YAML list in addition to ; delimited
+* tweaks to SELinux implementation for file module
 
 0.3 "Baluchitherium" -- April 23, 2012
 
