@@ -51,7 +51,7 @@ class Connection(object):
     def connect(self, host, port=None):
         conn = None
         if self.transport == 'local' and self._LOCALHOSTRE.search(host):
-            conn = LocalConnection(self.runner, host, None)
+            conn = LocalConnection(self.runner, host)
         elif self.transport == 'paramiko':
             conn = ParamikoConnection(self.runner, host, port)
         if conn is None:
