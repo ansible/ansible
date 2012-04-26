@@ -129,6 +129,11 @@ style file with a YAML one.::
 
 Tip: Be sure to start your YAML file with the YAML record designator "---".
 
+NOTE: variables specified in playbooks will override variables specified
+in the host file.  Further, if a host is in multiple groups, currently, the
+variables set by the last loaded group will win over variables set in other
+groups.  This behavior may be refined in future releases.
+
 .. seealso::
 
    :doc:`examples`
