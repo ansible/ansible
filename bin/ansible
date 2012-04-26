@@ -168,6 +168,8 @@ if __name__ == '__main__':
     (options, args) = cli.parse()
     try:
         (runner, results) = cli.run(options, args)
+        print runner
+        print results
     except errors.AnsibleError, e:
         # Generic handler for ansible specific errors
         print "ERROR: %s" % str(e)
