@@ -79,16 +79,19 @@ simpler::
     ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
 
 Ansible variables are used in templates by using the name surrounded by double
-curly-braces.  If facter or ohai were installed on the remote machine, variables
+curly-braces.  Ansible provides some 'facts' about the system being managed
+automatically in playbooks or when the setup module is run manually.  If facter or ohai 
+were installed on the remote machine, variables
 from those programs can be accessed too, using the appropriate prefix::
 
     This is an Ansible variable: {{ favcolor }}
-    This is a facter variable: {{ facter_hostname }}
-    This is an ohai variable: {{ ohai_foo }}
+    This is an Ansible fact: {{ ansible_hostname }}
+    This is a facter fact: {{ facter_hostname }}
+    This is an ohai fact: {{ ohai_foo }}
 
-NOTE: Ansible 0.3 (releasing very soon) will also supply built-in facts, so you won't
-need to install ruby on any of your remote machines if you don't want to.  These
-are prefixed with `ansible_`.
+Using the Ansible facts is generally preferred as that way you can avoid a dependency
+on ruby.  If you want to use facter instead, you will also need rubygem-json because
+the facter packages may forget this as a dependency.
 
 The `file` module allows changing ownership and permissions on files.  These
 same options can be passed directly to the `copy` or `template` modules as well::
