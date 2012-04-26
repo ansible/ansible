@@ -44,7 +44,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *pkg*:
 
-* A package name or package specifier with version, like name-1.0
+* A package name or package specifier with version, like foo=1.0
 
 *state*:
 
@@ -61,12 +61,17 @@ Manages apt-packages (such as for Debian/Ubuntu).
 * Will force purge of configuration file for when ensure is set to 'removed'.
   Defaults to 'no'.
 
+*default-release*:
+
+* Corresponds to the -t option for apt, and sets pin priorities
+
 Example action from Ansible :doc:`playbooks`::
 
     apt pkg=foo update-cache=yes
-    apt pkg=foo ensure=removed
-    apt pkg=foo ensure=installed
-    apt pkg=foo ensure=latest update-cache=yes
+    apt pkg=foo state=removed
+    apt pkg=foo state=installed
+    apt pkg=foo=1.00 state=installed
+    apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
 
 
 NOTE: the apt module cannot currently request installation of a specific software version, as the yum
