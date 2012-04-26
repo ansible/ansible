@@ -35,6 +35,8 @@ def main(args):
     parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True)
     parser.add_option('-O', '--override-hosts', dest="override_hosts", default=None,
         help="run playbook against these hosts regardless of inventory settings")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
+        help="set additional key=value variables from the CLI")
 
     options, args = parser.parse_args(args)
 
@@ -51,6 +53,7 @@ def main(args):
     override_hosts = None
     if options.override_hosts:
         override_hosts = options.override_hosts.split(",")
+    extra_vars = utils.parse_kv(options.extra_vars)
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -74,7 +77,8 @@ def main(args):
             timeout=options.timeout, 
             transport=options.connection,
             sudo=options.sudo,
-            sudo_pass=sudopass
+            sudo_pass=sudopass,
+            extra_vars=extra_vars
         )
         try:
 

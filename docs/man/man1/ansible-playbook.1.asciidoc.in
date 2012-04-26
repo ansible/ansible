@@ -48,6 +48,9 @@ The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
 
+*-e* 'VARS', *--extra-vars=*'VARS'::
+
+Extra variables to inject into a playbook, in key=value key=value format.
 
 *-f* 'NUM', *--forks=*'NUM'::
 
