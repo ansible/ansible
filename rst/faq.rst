@@ -87,8 +87,9 @@ does not create its own programming language.   What constructs Ansible does hav
 almost like cheating).
 
 Ansible does support gathering variables from 'facter', if installed, and Ansible templates
-in jinja2 in a way just like Puppet does with erb.  Ansible in version 0.3 will has it's own facts,
-however, so it will not need to rely on facter, but can use it if available.
+in jinja2 in a way just like Puppet does with erb.  Ansible also has it's own facts though,
+so usage of facter is not required to get variables about the system.
+
 
 vs Chef?
 ++++++++
@@ -113,9 +114,8 @@ program.  I believe this strongly leads to more reliable software and a richer
 open source community -- the code is kept simple so it is easy for anyone to
 submit a patch or module.
 
-Ansible does support gathering variables from 'ohai', if installed.  As of release
-0.3, Ansible will also have it's own facts system so you will not need to use ohai
-or facter (or have a dependency on Ruby).
+Ansible does support gathering variables from 'ohai', if installed.  Ansible also
+has it's own facts so you do not need to use ohai unless you want to.
 
 vs Capistrano/Fabric?
 +++++++++++++++++++++

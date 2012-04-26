@@ -223,15 +223,18 @@ ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
 ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
 </div>
 <p>Ansible variables are used in templates by using the name surrounded by double
-curly-braces.  If facter or ohai were installed on the remote machine, variables
+curly-braces.  Ansible provides some &#8216;facts&#8217; about the system being managed
+automatically in playbooks or when the setup module is run manually.  If facter or ohai
+were installed on the remote machine, variables
 from those programs can be accessed too, using the appropriate prefix:</p>
 <div class="highlight-python"><pre>This is an Ansible variable: {{ favcolor }}
-This is a facter variable: {{ facter_hostname }}
-This is an ohai variable: {{ ohai_foo }}</pre>
+This is an Ansible fact: {{ ansible_hostname }}
+This is a facter fact: {{ facter_hostname }}
+This is an ohai fact: {{ ohai_foo }}</pre>
 </div>
-<p>NOTE: Ansible 0.3 (releasing very soon) will also supply built-in facts, so you won&#8217;t
-need to install ruby on any of your remote machines if you don&#8217;t want to.  These
-are prefixed with <cite>ansible_</cite>.</p>
+<p>Using the Ansible facts is generally preferred as that way you can avoid a dependency
+on ruby.  If you want to use facter instead, you will also need rubygem-json because
+the facter packages may forget this as a dependency.</p>
 <p>The <cite>file</cite> module allows changing ownership and permissions on files.  These
 same options can be passed directly to the <cite>copy</cite> or <cite>template</cite> modules as well:</p>
 <div class="highlight-python"><pre>ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
