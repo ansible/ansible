@@ -24,6 +24,15 @@ Get Involved
    * [ansible-project mailing list](http://groups.google.com/group/ansible-project)
    * irc.freenode.net: #ansible
 
+Branch Info
+===========
+
+   * The master branch corresponds to release 0.3 "Baluchitherium".
+   * Bug fixes WILL be periodically made to the master branch.
+   * The devel branch corresponds to release 0.4 "Unchained".
+   * Note: sudo support works much better in 0.4/devel, consider trying it.
+   * See CHANGELOG.md for release notes to track each release.
+
 Patch Instructions
 ==================
 
