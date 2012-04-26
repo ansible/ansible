@@ -23,7 +23,6 @@ import ansible.constants as C
 from ansible import utils
 from ansible import errors
 import os
-import time
 
 # used to transfer variables to Runner
 SETUP_CACHE={ }
@@ -254,83 +253,17 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def hosts_to_poll(self, results):
-        ''' which hosts need more polling? '''
-
-        hosts = []
-        for (host, res) in results['contacted'].iteritems():
-            if (host in self.stats.failures) or (host in self.stats.dark):
-                continue
-            if not 'finished' in res and not 'skipped' in res and 'started' in res:
-                hosts.append(host)
-        return hosts
-
-    # *****************************************************
-
-    def _async_poll(self, runner, hosts, async_seconds, async_poll_interval, only_if):
+    def _async_poll(self, poller, async_seconds, async_poll_interval):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
-        runner.background = async_seconds
-        results = runner.run()
-        self.stats.compute(results, poll=True)
-
-        if async_poll_interval <= 0:
-            # if not polling, playbook requested fire and forget
-            # trust the user wanted that and return immediately
-            return results
-        
-        poll_hosts = results['contacted'].keys()
-        if len(poll_hosts) == 0:
-            # no hosts launched ok, return that.
-            return results
-        ahost = poll_hosts[0]
-
-        jid = results['contacted'][ahost].get('ansible_job_id', None)
-
-        if jid is None:
-            # note: this really shouldn't happen, ever
-            self.callbacks.on_async_confused("unexpected error: unable to determine jid")
-            return results
-
-        clock = async_seconds
-        host_list = self.hosts_to_poll(results)
-
-        poll_results = results
-        while (clock >= 0):
-
-            # poll/loop until polling duration complete
-            runner.module_args = "jid=%s" % jid
-            runner.module_name = 'async_status'
-            runner.background  = 0  
-            runner.pattern     = '*'
-            self.inventory.restrict_to(host_list)
-            poll_results       = runner.run()
-            self.stats.compute(poll_results, poll=True)
-            host_list          = self.hosts_to_poll(poll_results)
-            self.inventory.lift_restriction()
-
-            if len(host_list) == 0:
-                break
-            if poll_results is None:
-                break
-
-            # mention which hosts we're going to poll again...
-            for (host, host_result) in poll_results['contacted'].iteritems():
-                results['contacted'][host] = host_result
-                if not host in self.stats.dark and not host in self.stats.failures:
-                    self.callbacks.on_async_poll(jid, host, clock, host_result)
-
-            # run down the clock
-            clock = clock - async_poll_interval
-            time.sleep(async_poll_interval)
+        results = poller.wait(async_seconds, async_poll_interval)
 
         # mark any hosts that are still listed as started as failed
         # since these likely got killed by async_wrapper
-        for (host, host_result) in poll_results['contacted'].iteritems():
-            if 'started' in host_result:
-                reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-                self.runner_callbacks.on_failed(host, reason)
-                results['contacted'][host] = reason
+        for host in poller.hosts_to_poll:
+            reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+            self.runner_callbacks.on_failed(host, reason)
+            results['contacted'][host] = reason
 
         return results
 
@@ -361,7 +294,12 @@ class PlayBook(object):
         if async_seconds == 0:
             results = runner.run()
         else:
-            results = self._async_poll(runner, hosts, async_seconds, async_poll_interval, only_if)
+            results, poller = runner.runAsync(async_seconds)
+            self.stats.compute(results)
+            if async_poll_interval > 0:
+                # if not polling, playbook requested fire and forget
+                # trust the user wanted that and return immediately
+                results = self._async_poll(poller, async_seconds, async_poll_interval)
 
         self.inventory.lift_restriction()
         return results

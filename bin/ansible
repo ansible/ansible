@@ -21,7 +21,6 @@
 
 import sys
 import getpass
-import time
 
 import ansible.runner
 import ansible.constants as C
@@ -40,7 +39,6 @@ class Cli(object):
     def __init__(self):
         self.stats = callbacks.AggregateStats()
         self.callbacks = callbacks.CliRunnerCallbacks()
-        self.silent_callbacks = callbacks.DefaultRunnerCallbacks()
 
     # ----------------------------------------------     
 
@@ -85,8 +83,6 @@ class Cli(object):
 
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
-        if options.seconds:
-            print "background launch...\n\n"
 
         runner = ansible.runner.Runner(
             module_name=options.module_name, module_path=options.module_path,
@@ -94,72 +90,32 @@ class Cli(object):
             remote_user=options.remote_user, remote_pass=sshpass,
             inventory=inventory_manager, timeout=options.timeout, 
             forks=options.forks, 
-            background=options.seconds, pattern=pattern, 
+            pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
             sudo_pass=sudopass,
             transport=options.connection, debug=options.debug
         )
-        return (runner, runner.run())
 
+        if options.seconds:
+            print "background launch...\n\n"
+            results, poller = runner.runAsync(options.seconds)
+            results = self.poll_while_needed(poller, options)
+        else:
+            results = runner.run()
 
-    # ----------------------------------------------
-
-    def get_polling_runner(self, old_runner, jid):
-        return ansible.runner.Runner(
-            module_name='async_status', module_path=old_runner.module_path,
-            module_args="jid=%s" % jid, remote_user=old_runner.remote_user,
-            remote_pass=old_runner.remote_pass, inventory=old_runner.inventory,
-            timeout=old_runner.timeout, forks=old_runner.forks,
-            pattern='*', callbacks=self.silent_callbacks, 
-        )
-
-    # ----------------------------------------------
-
-    def hosts_to_poll(self, results):
-        hosts = []
-        for (host, res) in results['contacted'].iteritems():
-            if res.get('started',False):
-                hosts.append(host)
-        return hosts
+        return (runner, results)
 
     # ----------------------------------------------     
 
-    def poll_if_needed(self, runner, results, options, args):
+    def poll_while_needed(self, poller, options):
         ''' summarize results from Runner '''
 
-        if results is None:
-           exit("No hosts matched")
-
         # BACKGROUND POLL LOGIC when -B and -P are specified
-        # FIXME: refactor
         if options.seconds and options.poll_interval > 0:
-            poll_hosts = results['contacted'].keys()
-            if len(poll_hosts) == 0:
-                exit("no jobs were launched successfully")
-            ahost = poll_hosts[0]
-            jid = results['contacted'][ahost].get('ansible_job_id', None)
-            if jid is None:
-                exit("unexpected error: unable to determine jid")
+            poller.wait(options.seconds, options.poll_interval)
 
-            clock = options.seconds
-            while (clock >= 0):
-                runner.inventory.restrict_to(poll_hosts)
-                polling_runner = self.get_polling_runner(runner, jid)
-                poll_results = polling_runner.run()
-                runner.inventory.lift_restriction()
-                if poll_results is None:
-                    break
-                for (host, host_result) in poll_results['contacted'].iteritems():
-                    # override last result with current status result for report
-                    results['contacted'][host] = host_result
-                    print utils.async_poll_status(jid, host, clock, host_result)
-                for (host, host_result) in poll_results['dark'].iteritems():
-                    print "FAILED: %s => %s" % (host, host_result)
-                clock = clock - options.poll_interval
-                time.sleep(options.poll_interval)
-                poll_hosts = self.hosts_to_poll(poll_results)
-                if len(poll_hosts)==0:
-                    break
+        return poller.results
+
 
 ########################################################
 
@@ -172,6 +128,4 @@ if __name__ == '__main__':
         # Generic handler for ansible specific errors
         print "ERROR: %s" % str(e)
         sys.exit(1)
-    else:
-        cli.poll_if_needed(runner, results, options, args)
 

@@ -74,11 +74,14 @@ class TestCallbacks(object):
     def on_play_start(self, pattern):
         EVENTS.append([ 'play start', [ pattern ]])
 
-    def on_async_confused(self, msg):
-        EVENTS.append([ 'async confused', [ msg ]])
+    def on_async_ok(self, host, res, jid):
+        EVENTS.append([ 'async ok', [ host ]])
 
-    def on_async_poll(self, jid, host, clock, host_result):
+    def on_async_poll(self, host, res, jid, clock):
         EVENTS.append([ 'async poll', [ host ]])
+
+    def on_async_failed(self, host, res, jid):
+        EVENTS.append([ 'async failed', [ host ]])
 
     def on_unreachable(self, host, msg):
         EVENTS.append([ 'failed/dark', [ host, msg ]])
