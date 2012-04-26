@@ -193,9 +193,10 @@ class ParamikoConnection(object):
 class LocalConnection(object):
     ''' Local based connections '''
 
-    def __init__(self, runner, host):
+    def __init__(self, runner, host, port=None):
         self.runner = runner
         self.host = host
+        self.port = port
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
