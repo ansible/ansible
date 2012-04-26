@@ -6,25 +6,30 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-If you are running python 2.6 or later on the **overlord** machine (the machine
-that you'll be talking to the remote machines from), you will need:
+Ansible is written for Python 2.6.  If you are running Python 2.5 on an "Enterprise Linux" variant,
+your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
+of Linux and OS X should already have 2.6.
+
+In additon to Python 2.6, you will want the following packages:
 
 * ``paramiko``
 * ``PyYAML``
-* ``python-jinja2`` (for playbooks)
+* ``python-jinja2``
 
-If you are only running Python 2.5, you will also need:
+On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
+also need:
 
-* The Python 2.5 backport of the ``multiprocessing`` module (`see here <http://code.google.com/p/python-multiprocessing/wiki/Install>`_)
-* ``python-simplejson``
+* ``python-simplejson`` 
 
-If you have any managed-nodes with python older than 2.6, you will also need:
+NOTE: Ansible 0.4 will have ways to remote bootstrap this, using Ansible itself.  Stay tuned.
 
-* ``python-simplejson``
+Python 2.6 EPEL instructions for RHEL and CentOS 5
+``````````````````````````````````````````````````
 
-On the managed nodes, to use templates, you will also need:
+These distributions don't have Python 2.6 by default, but it is easily installable.
 
-* ``python-jinja2`` (you can easily install this using ansible, and this will not be required in version 0.3 as templates will be evaluated locally)
+* If you have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
+* yum install python26 python26-PyYAML python26-paramiko python26-jinja2
 
 Getting Ansible
 ```````````````
