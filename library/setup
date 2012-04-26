@@ -224,7 +224,7 @@ def get_iface_hwaddr(iface):
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 def get_network_facts(facts):
-    facts['fqdn'] = socket.gethostname()
+    facts['fqdn'] = socket.getfqdn()
     facts['hostname'] = facts['fqdn'].split('.')[0]
     facts['interfaces'] = get_interfaces()
     for iface in facts['interfaces']:
