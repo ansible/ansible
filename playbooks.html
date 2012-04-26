@@ -139,6 +139,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
 <li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
+<li><a class="reference internal" href="#variables-from-other-hosts">Variables From Other Hosts</a></li>
 <li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables And Prompted or Sensitive Data</a></li>
 <li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
@@ -376,6 +377,15 @@ use the default remote connection type:</p>
 <div class="highlight-python"><pre>hosts: 127.0.0.1
 connection: local</pre>
 </div>
+</div>
+<div class="section" id="variables-from-other-hosts">
+<h3>Variables From Other Hosts<a class="headerlink" href="#variables-from-other-hosts" title="Permalink to this headline">¶</a></h3>
+<p>If your database server wants to check the value of a &#8216;fact&#8217; from another node, it&#8217;s easy to do so
+within a template or even an action line:</p>
+<div class="highlight-python"><pre>{{ hostvars.get('name_of_host').get('name_of_fact') }}</pre>
+</div>
+<p>NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
+want to reference data from must be included in either the current play or any previous play.</p>
 </div>
 <div class="section" id="external-variables-and-prompted-or-sensitive-data">
 <h3>External Variables And Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>

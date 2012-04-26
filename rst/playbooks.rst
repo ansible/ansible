@@ -244,6 +244,16 @@ use the default remote connection type::
     hosts: 127.0.0.1
     connection: local
 
+Variables From Other Hosts
+++++++++++++++++++++++++++
+
+If your database server wants to check the value of a 'fact' from another node, it's easy to do so
+within a template or even an action line::
+
+    {{ hostvars.get('name_of_host').get('name_of_fact') }}
+
+NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
+want to reference data from must be included in either the current play or any previous play.
 
 External Variables And Prompted or Sensitive Data
 +++++++++++++++++++++++++++++++++++++++++++++++++
