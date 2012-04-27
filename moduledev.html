@@ -176,9 +176,9 @@ a module that just outputs the current time.</p>
 <p>We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
 is fine.</p>
-<p>It&#8217;s obvious that you would never really need to build a module to set the system time,
-the &#8216;command&#8217; module could already be used to do this.  However, it makes for a decent example.
-Reading the modules that come with ansible (linked above) is a great way to learn how to write
+<p>So, here&#8217;s an example.  You would never really need to build a module to set the system time,
+the &#8216;command&#8217; module could already be used to do this.  Though we&#8217;re going to make one.</p>
+<p>Reading the modules that come with ansible (linked above) is a great way to learn how to write
 modules.   Keep in mind, though, that some modules in ansible&#8217;s source tree are internalisms,
 so look at <cite>service</cite> or <cite>yum</cite>, and don&#8217;t stare too close into things like <cite>async_wrapper</cite> or
 you&#8217;ll turn to stone.  Nobody ever executes async_wrapper directly.</p>
@@ -331,6 +331,12 @@ json isn&#8217;t in the Python standard library until 2.5.:</p>
 </div>
 <p>Because the output is supposed to be valid JSON.  Except that&#8217;s not quite true,
 but we&#8217;ll get to that later.</p>
+<p>Further, modules must not output anything on stderr, even if the JSON returned
+out stdout is valid.  This is due to the internals of our SSH library, more or less.</p>
+<p>If a module returns stderr or otherwise fails to produce valid JSON, the actual output
+will still be shown in Ansible, however, but the command will not succeed.</p>
+<p>Always use the hacking/test-module script when developing modules and it will warn
+you about these kind of things.</p>
 </div>
 <div class="section" id="conventions">
 <h2>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h2>
@@ -396,7 +402,7 @@ Stop by the mailing list to inquire about requirements.</p>
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 25, 2012.<br/>
+      Last updated on Apr 27, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
     </p>
   </div>

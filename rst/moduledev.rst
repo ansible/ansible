@@ -15,10 +15,11 @@ a module that just outputs the current time.
 
 We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
-is fine.
+is fine.  
 
-It's obvious that you would never really need to build a module to set the system time,
-the 'command' module could already be used to do this.  However, it makes for a decent example.
+So, here's an example.  You would never really need to build a module to set the system time,
+the 'command' module could already be used to do this.  Though we're going to make one.
+
 Reading the modules that come with ansible (linked above) is a great way to learn how to write
 modules.   Keep in mind, though, that some modules in ansible's source tree are internalisms,
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
@@ -186,6 +187,15 @@ You should also never do this in a module::
     
 Because the output is supposed to be valid JSON.  Except that's not quite true,
 but we'll get to that later.
+
+Further, modules must not output anything on stderr, even if the JSON returned
+out stdout is valid.  This is due to the internals of our SSH library, more or less.
+
+If a module returns stderr or otherwise fails to produce valid JSON, the actual output
+will still be shown in Ansible, however, but the command will not succeed.
+
+Always use the hacking/test-module script when developing modules and it will warn
+you about these kind of things.
 
 Conventions
 ```````````
