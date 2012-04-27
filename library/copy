@@ -43,9 +43,9 @@ for x in items:
 src  = params['src']
 dest = params['dest']
 if src:
-   src = os.path.expanduser(src)
+    src = os.path.expanduser(src)
 if dest:
-   dest = os.path.expanduser(dest)
+    dest = os.path.expanduser(dest)
  
 # raise an error if there is no src file
 if not os.path.exists(src):
