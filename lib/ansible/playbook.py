@@ -390,8 +390,10 @@ class PlayBook(object):
             module_args = tokens[1]
 
         # include task specific vars
-        module_vars = task.get('vars')
-
+        module_vars = task.get('vars', {})
+        if 'first_available_file' in task:
+            module_vars['first_available_file'] = task.get('first_available_file')
+        
         # tasks can be direct (run on all nodes matching
         # the pattern) or conditional, where they ran
         # as the result of a change handler on a subset

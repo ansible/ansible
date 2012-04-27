@@ -390,6 +390,20 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
+        
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src"), '')
+        
         source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
@@ -480,6 +494,20 @@ class Runner(object):
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
+
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src"), '')
+
         source = utils.template(source, inject, self.setup_cache)
 
         (host, ok, data, err) = (None, None, None, None)
