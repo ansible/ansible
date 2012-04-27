@@ -33,14 +33,8 @@ USERADD = "/usr/sbin/useradd"
 USERMOD = "/usr/sbin/usermod"
 USERDEL = "/usr/sbin/userdel"
 
-def debug(msg):
-    # ansible ignores stderr, so it's safe to use for debug
-    print >>sys.stderr, msg
-    #pass
-
 def exit_json(rc=0, **kwargs):
     if 'name' in kwargs:
-        debug("add user info to exit_json")
         add_user_info(kwargs)
     print json.dumps(kwargs)
     sys.exit(rc)
@@ -75,7 +69,6 @@ def user_del(user, **kwargs):
         elif key == 'remove' and kwargs[key]:
             cmd.append('-r')
     cmd.append(user)
-    debug("Arguments to userdel: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -118,7 +111,6 @@ def user_add(user, **kwargs):
                 else:
                     cmd.append('-M')
     cmd.append(user)
-    debug("Arguments to useradd: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -172,7 +164,6 @@ def user_mod(user, **kwargs):
     if len(cmd) == 1:
         return False
     cmd.append(user)
-    debug("Arguments to usermod: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True

@@ -122,7 +122,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         pass
 
     def on_error(self, host, err):
-        print >>sys.stderr, "stderr: [%s] => %s\n" % (host, err)
+        print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
     
     def on_no_hosts(self):
         print >>sys.stderr, "no hosts matched\n"
@@ -141,7 +141,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self.stats = stats
 
     def on_unreachable(self, host, msg):
-        print "unreachable: [%s] => %s" % (host, msg)
+        print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
         invocation = results.get('invocation',None)
@@ -160,7 +160,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print "ok: [%s] => %s\n" % (host, invocation)
 
     def on_error(self, host, err):
-        print >>sys.stderr, "stderr: [%s] => %s\n" % (host, err)
+        print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
 
     def on_skipped(self, host):
         print "skipping: [%s]\n" % host

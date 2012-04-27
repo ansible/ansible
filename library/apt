@@ -30,9 +30,6 @@ import traceback
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
-def debug(msg):
-    print >>sys.stderr, msg
-    
 def exit_json(rc=0, **kwargs):
     print json.dumps(kwargs)
     sys.exit(rc)

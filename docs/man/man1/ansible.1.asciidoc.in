@@ -62,7 +62,7 @@ The 'ARGUMENTS' to pass to the module.
 
 *-D*, *--debug*::
 
-Print any messages the remote module sends to standard error to the console
+Debug mode
 
 *-k*, *--ask-pass*::
 

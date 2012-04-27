@@ -637,16 +637,18 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
-
+        err=None
+        out=None
         if type(stderr) != str:
             err="\n".join(stderr.readlines())
         else:
             err=stderr
-
         if type(stdout) != str:
-            return "\n".join(stdout.readlines()), err
+            out="\n".join(stdout.readlines())
         else:
-            return stdout, err
+            out=stdout
+        return (out,err) 
+
 
     # *****************************************************
 
