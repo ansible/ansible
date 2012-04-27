@@ -31,14 +31,8 @@ GROUPADD = "/usr/sbin/groupadd"
 GROUPDEL = "/usr/sbin/groupdel"
 GROUPMOD = "/usr/sbin/groupmod"
 
-def debug(msg):
-    # ansible ignores stderr, so it's safe to use for debug
-    print >>sys.stderr, msg
-    #pass
-
 def exit_json(rc=0, **kwargs):
     if 'name' in kwargs:
-        debug("add group info to exit_json")
         add_group_info(kwargs)
     print json.dumps(kwargs)
     sys.exit(rc)
@@ -59,7 +53,6 @@ def add_group_info(kwargs):
 
 def group_del(group):
     cmd = [GROUPDEL, group]
-    debug("Arguments to groupdel: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -73,7 +66,6 @@ def group_add(group, **kwargs):
             cmd.append('-g')
             cmd.append(kwargs[key])
     cmd.append(group)
-    debug("Arguments to groupadd: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -91,7 +83,6 @@ def group_mod(group, **kwargs):
     if len(cmd) == 1:
         return False
     cmd.append(group)
-    debug("Arguments to groupmod: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
