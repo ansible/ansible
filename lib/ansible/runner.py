@@ -122,6 +122,9 @@ class Runner(object):
         else:
             self.inventory = inventory
 
+        if module_vars is None:
+            module_vars = {}
+
         self.setup_cache = setup_cache
         self.conditional = conditional
         self.module_path = module_path
