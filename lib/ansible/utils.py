@@ -267,11 +267,12 @@ def parse_yaml_from_file(path):
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    vargs = shlex.split(args, posix=True) 
-    for x in vargs:
-        if x.find("=") != -1:
-            k, v = x.split("=")
-            options[k]=v
+    if not args is None:
+        vargs = shlex.split(args, posix=True)
+        for x in vargs:
+            if x.find("=") != -1:
+                k, v = x.split("=")
+                options[k]=v
     return options
 
 class SortedOptParser(optparse.OptionParser):
