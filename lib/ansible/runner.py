@@ -385,7 +385,7 @@ class Runner(object):
         options = utils.parse_kv(self.module_args)
         source = options.get('src', None)
         dest   = options.get('dest', None)
-        if source is None or dest is None:
+        if (source is None and not 'first_available_file' in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument
@@ -402,7 +402,7 @@ class Runner(object):
                     found = True
                     break
             if not found:
-                return (host, True, dict(failed=True, msg="could not find src"), '')
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
         
         source = utils.template(source, inject, self.setup_cache)
 
@@ -489,7 +489,7 @@ class Runner(object):
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
-        if source is None or dest is None:
+        if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument so vars can be used in the path
@@ -506,7 +506,7 @@ class Runner(object):
                     found = True
                     break
             if not found:
-                return (host, True, dict(failed=True, msg="could not find src"), '')
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
 
         source = utils.template(source, inject, self.setup_cache)
 
@@ -555,6 +555,7 @@ class Runner(object):
  
         # modify file attribs if needed
         if ok:
+            executed = executed.replace("copy","template",1)
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
             return (host, ok, data, err)
