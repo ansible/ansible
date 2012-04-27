@@ -267,7 +267,7 @@ def parse_yaml_from_file(path):
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    if not args is None:
+    if args is not None:
         vargs = shlex.split(args, posix=True)
         for x in vargs:
             if x.find("=") != -1:
