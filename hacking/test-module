@@ -63,8 +63,9 @@ cmd = subprocess.Popen("%s %s" % (modfile, argspath),
 
 if err and err != '':
     print "***********************************"
-    print "RECIEVED DATA ON STDERR, THIS WILL BREAK YOUR MODULE:"
+    print "RECIEVED DATA ON STDERR, THIS WILL CRASH YOUR MODULE"
     print err
+    sys.exit(1)
 
 try:
     print "***********************************"
@@ -84,8 +85,6 @@ print "PARSED OUTPUT"
 
 print utils.bigjson(results)
 
-if err and err != '':
-    sys.exit(1)
 sys.exit(0)
 
 

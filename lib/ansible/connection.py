@@ -140,8 +140,7 @@ class ParamikoConnection(object):
         stderr = chan.makefile_stderr('rb', bufsize) 
         chan.get_pty() 
         chan.set_combine_stderr(False)    
-    
-     
+
         if not self.runner.sudo or not sudoable:
             quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
             chan.exec_command(quoted_command)
