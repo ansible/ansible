@@ -13,6 +13,7 @@ Ansible Changes By Release
 * fixes for yum module corner cases on EL5
 * --extra-vars="a=2 b=3" etc, now available to inject parameters into playbooks
 * file module now correctly returns the mode in octal
+* modules can no longer include stderr output (paramiko limitation from sudo)
 
 0.3 "Baluchitherium" -- April 23, 2012
 
