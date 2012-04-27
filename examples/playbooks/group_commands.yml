@@ -3,6 +3,7 @@
 
 - hosts: all
   user: root
+  sudo: True
 
   tasks:
 

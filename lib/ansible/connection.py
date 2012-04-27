@@ -26,6 +26,8 @@ import re
 import shutil
 import subprocess
 import pipes
+import socket
+import random
 
 from ansible import errors
 # prevent paramiko warning noise
@@ -37,6 +39,7 @@ with warnings.catch_warnings():
 
 ################################################
 
+RANDOM_PROMPT_LEN = 32      # 32 random chars in [a-z] gives > 128 bits of entropy 
 
 
 class Connection(object):
