@@ -62,7 +62,8 @@ class PlayBook(object):
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
-        sudo             = False):
+        sudo             = False,
+        extra_vars       = None):
 
         """
         playbook:         path to a playbook file
@@ -85,6 +86,9 @@ class PlayBook(object):
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
+        if extra_vars is None:
+            extra_vars = {}
+       
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -99,6 +103,7 @@ class PlayBook(object):
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
+        self.extra_vars       = extra_vars
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
@@ -114,29 +119,32 @@ class PlayBook(object):
 
     def _get_vars(self, play, dirname):
         ''' load the vars section from a play '''
+
         if play.get('vars') is None:
             play['vars'] = {}
-        vars = play['vars']
-        if type(vars) not in [dict, list]:
+        if type(play['vars']) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
-
+        vars = {}
+        
         # translate a list of vars into a dict
-        if type(vars) == list:
-            varlist = vars
-            vars = {}
-            for item in varlist:
+        if type(play['vars']) == list:
+            for item in play['vars']:
                 k, v = item.items()[0]
                 vars[k] = v
-            play['vars'] = vars
+        else:
+            vars = play['vars']
 
         vars_prompt = play.get('vars_prompt', {})
         if type(vars_prompt) != dict:
             raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
         for vname in vars_prompt:
+            # TODO: make this prompt one line and consider double entry
             print vars_prompt[vname]
-            # FIXME - need some way to know that this prompt should be getpass or raw_input
             vars[vname] = self.callbacks.on_vars_prompt(vname)
-        return vars
+
+        results = self.extra_vars.copy()
+        results.update(vars)
+        return results
 
     # *****************************************************
 

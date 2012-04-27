@@ -26,6 +26,8 @@ import re
 import shutil
 import subprocess
 import pipes
+import socket
+import random
 
 from ansible import errors
 # prevent paramiko warning noise
@@ -37,6 +39,7 @@ with warnings.catch_warnings():
 
 ################################################
 
+RANDOM_PROMPT_LEN = 32      # 32 random chars in [a-z] gives > 128 bits of entropy 
 
 
 class Connection(object):
@@ -51,7 +54,7 @@ class Connection(object):
     def connect(self, host, port=None):
         conn = None
         if self.transport == 'local' and self._LOCALHOSTRE.search(host):
-            conn = LocalConnection(self.runner, host, None)
+            conn = LocalConnection(self.runner, host)
         elif self.transport == 'paramiko':
             conn = ParamikoConnection(self.runner, host, port)
         if conn is None:
@@ -81,7 +84,8 @@ class ParamikoConnection(object):
         keypair = None
 
         # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
-        # This overrides the ansible defined username,hostname and port 
+        # This will *NOT* overrides the ansible username and hostname " , getting the port and keyfile only.
+	
         try:
             ssh_config = paramiko.SSHConfig()
             config_file = ('~/.ssh/config')
@@ -92,12 +96,12 @@ class ParamikoConnection(object):
         except IOError,e:
                 raise errors.AnsibleConnectionFailed(str(e))
 
-        if 'hostname' in credentials:
-            self.host = credentials['hostname']
+        #if 'hostname' in credentials:
+        #    self.host = credentials['hostname']
         if 'port' in credentials:
             self.port = int(credentials['port'])
-        if 'user' in credentials:
-            user = credentials['user']
+        #if 'user' in credentials:
+        #    user = credentials['user']
         if 'identityfile' in credentials:
             keypair = os.path.expanduser(credentials['identityfile'])
 
@@ -141,19 +145,53 @@ class ParamikoConnection(object):
             quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
             chan.exec_command(quoted_command)
         else:
-            # Rather than detect if sudo wants a password this time, -k makes 
-            # sudo always ask for a password if one is required. The "--"
-            # tells sudo that this is the end of sudo options and the command
-            # follows.  Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote() 
-            # and pass the quoted string to the user's shell.
-            sudocmd = 'sudo -k -- "$SHELL" -c ' + pipes.quote(cmd) 
-            chan.exec_command(sudocmd)
-            if self.runner.sudo_pass:
-                while not chan.recv_ready():
-                    time.sleep(0.25)
-                sudo_output = chan.recv(bufsize)        # Pull prompt, catch errors, eat sudo output
-                chan.sendall(self.runner.sudo_pass + '\n')
+            """
+            Sudo strategy:
+            
+            First, if sudo doesn't need a password, it's easy: just run the
+            command.
+            
+            If we need a password, we want to read everything up to and
+            including the prompt before sending the password.  This is so sudo
+            doesn't block sending the prompt, to catch any errors running sudo
+            itself, and so sudo's output doesn't gunk up the command's output.
+            Some systems have large login banners and slow networks, so the
+            prompt isn't guaranteed to be in the first chunk we read.  So, we
+            have to keep reading until we find the password prompt, or timeout
+            trying.
+            
+            In order to detect the password prompt, we set it ourselves with
+            the sudo -p switch.  We use a random prompt so that a) it's
+            exceedingly unlikely anyone's login material contains it and b) you
+            can't forge it.  This can fail if passprompt_override is set in
+            /etc/sudoers.
+            
+            Some systems are set to remember your sudo credentials for a set
+            period across terminals and won't prompt for a password.  We use
+            sudo -k so it always asks for the password every time (if one is
+            required) to avoid dealing with both cases.
+              
+            The "--" tells sudo that this is the end of sudo options and the
+            command follows.
+            
+            We shell quote the command for safety, and since we can't run a quoted
+            command directly with sudo (or sudo -s), we actually run the user's
+            shell and pass the quoted command string to the shell's -c option. 
+            """
+            prompt = '[sudo via ansible, key=%s] password: ' % ''.join(chr(random.randint(ord('a'), ord('z'))) for _ in xrange(RANDOM_PROMPT_LEN))
+            sudocmd = 'sudo -k -p "%s" -- "$SHELL" -c %s' % (prompt, pipes.quote(cmd)) 
+            sudo_output = '' 
+            try:
+                chan.exec_command(sudocmd)
+                if self.runner.sudo_pass:
+                    while not sudo_output.endswith(prompt):
+                        chunk = chan.recv(bufsize)
+                        if not chunk:
+                            raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                        sudo_output += chunk
+                    chan.sendall(self.runner.sudo_pass + '\n')
+            except socket.timeout:
+                raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
         stdin = chan.makefile('wb', bufsize) 
         stdout = chan.makefile('rb', bufsize)
