@@ -391,6 +391,7 @@ class Runner(object):
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
         
+        # FIXME: break duplicate code up into subfunction
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         if 'first_available_file' in self.module_vars:
