@@ -25,6 +25,11 @@
   - odin
   - loki
 
+- group: ruler
+  hosts:
+  - zeus
+  - odin
+
 - group: multiple
   hosts:
   - saturn
