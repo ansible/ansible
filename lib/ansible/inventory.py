@@ -81,13 +81,19 @@ class Inventory(object):
     def get_variables(self, host):
         """ Return the variables associated with this host. """
 
+        variables = {}
         if host in self._variables:
-            return self._variables[host].copy()
+            variables.update(self._variables[host].copy())
 
-        if not self._is_script:
-            return {}
+        if self._is_script:
+            variables.update(self._get_variables_from_script(host))
 
-        return self._get_variables_from_script(host)
+        variables['group_names'] = []
+        for name,hosts in self.groups.iteritems():
+            if host in hosts:
+                variables['group_names'].append(name)
+
+        return variables
 
     # *****************************************************
 
