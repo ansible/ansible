@@ -135,19 +135,17 @@ s.parentNode.insertBefore(ga, s);
 {%- endblock %}
 
 {%- block footer %}
-<footer class="footer">
-
-  <div class="container">
-    <p class="pull-right"><a href="#">Back to top</a></p>
-    <p>
-    <div id="fb-root"></div>
+<p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 <g:plusone annotation="inline"></g:plusone>
-<br/>
 <div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
-<br/>
+</p>
+<footer class="footer">
 
+  <div id="fb-root"></div>
+  <div class="container">
+<p>
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}<br/>
@@ -157,9 +155,6 @@ s.parentNode.insertBefore(ga, s);
     {%- endif %}
     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
-    {%- endif %}
-    {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}<br/>
     {%- endif %}
     </p>
   </div>
