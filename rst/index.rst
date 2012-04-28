@@ -139,6 +139,6 @@ internet infrastructure, finance, chip design, and more.  Michael also
 helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used to
 orchestrate systems in lots of diverse places.  He's worked on systems
 software for IBM, Motorola, Red Hat's Emerging Technologies Group,
-Puppet Labs, and rPath.  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
+Puppet Labs, and is now with `rPath <http://rpath.com>`_  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
 
 
