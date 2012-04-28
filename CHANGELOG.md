@@ -5,15 +5,16 @@ Ansible Changes By Release
 
 * custom facts provided by the setup module mean no dependency on Ruby, facter, or ohai
 * sudo improvements, now works much more smoothly
-* some support for reading some default settings from the ssh config file (being refined)
-* OS X support in progress for hosts and clients
+* some support for reading some default settings from the ssh config file (key pairs, ports)
+* OS X support in progress for ansible on the host and clients (modules still TBA)
 * list of hosts in playbooks can be expressed as a YAML list in addition to ; delimited
 * tweaks to SELinux implementation for file module
 * first_available_file feature, see selective_file_sources.yml in examples/playbooks for info
 * fixes for yum module corner cases on EL5
-* --extra-vars="a=2 b=3" etc, now available to inject parameters into playbooks
+* --extra-vars="a=2 b=3" etc, now available to inject parameters into playbooks from CLI
 * file module now correctly returns the mode in octal
 * modules can no longer include stderr output (paramiko limitation from sudo)
+* 'group_names' is now a variable made available to templates
 
 0.3 "Baluchitherium" -- April 23, 2012
 
