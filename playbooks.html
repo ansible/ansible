@@ -83,6 +83,7 @@
   });
 }());
 </script>
+
 <script type="text/javascript">
 
  var _gaq = _gaq || [];
@@ -99,7 +100,15 @@ s.parentNode.insertBefore(ga, s);
  })();
 
 </script>
-<div id="fb-root"></div>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
 <script>(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
   if (d.getElementById(id)) return;
@@ -695,20 +704,13 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
   <div class="container">
     <p class="pull-right"><a href="#">Back to top</a></p>
     <p>
+    <div id="fb-root"></div>
 <a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-<!-- Place this tag where you want the +1 button to render -->
 <g:plusone annotation="inline"></g:plusone>
-
-<!-- Place this render call where appropriate -->
-<script type="text/javascript">
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
+<br/>
 <div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
+<br/>
         &copy; Copyright 2012 Michael DeHaan.<br/>
       Last updated on Apr 28, 2012.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.<br/>
