@@ -115,6 +115,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def __init__(self):
         # set by /usr/bin/ansible later
         self.options = None 
+        self._async_notified = {}
 
     def on_failed(self, host, res):
         invocation = res.get('invocation','')
@@ -141,7 +142,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         print >>sys.stderr, "no hosts matched\n"
 
     def on_async_poll(self, host, res, jid, clock):
-        print "<job %s> polling on %s, %s remaining"%(jid, host, clock)
+        if jid not in self._async_notified:
+            self._async_notified[jid] = clock + 1
+        if self._async_notified[jid] > clock:
+            self._async_notified[jid] = clock
+            print "<job %s> polling, %ss remaining"%(jid, clock)
 
     def on_async_ok(self, host, res, jid):
         print "<job %s> finished on %s => %s"%(jid, host, utils.bigjson(res))
@@ -161,6 +166,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def __init__(self, stats):
         self.stats = stats
+        self._async_notified = {}
 
     def on_unreachable(self, host, msg):
         print "fatal: [%s] => %s" % (host, msg)
@@ -191,7 +197,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         print "no hosts matched or remaining\n"
 
     def on_async_poll(self, host, res, jid, clock):
-        print "<job %s> polling on %s, %s remaining"%(jid, host, clock)
+        if jid not in self._async_notified:
+            self._async_notified[jid] = clock + 1
+        if self._async_notified[jid] > clock:
+            self._async_notified[jid] = clock
+            print "<job %s> polling, %ss remaining"%(jid, clock)
 
     def on_async_ok(self, host, res, jid):
         print "<job %s> finished on %s"%(jid, host)
