@@ -1,0 +1,19 @@
+---
+- hosts: all
+  user: root
+  vars:
+    # schdule is fed directly to cron
+    schedule: '*/15 * * * *'
+    # User to run ansible-pull as from cron
+    cron_user: root
+    # Directory to where repository will be cloned
+    workdir: /var/lib/ansible/local
+    # Repository to check out
+    repo_url: git://github.com/sfromm/ansible-playbooks.git
+  tasks:
+    - name: Install ansible
+      action: yum pkg=ansible state=installed
+    - name: Create local directory to work from
+      action: file path=$workdir state=directory owner=root group=root mode=0751
+    - name: Create crontab entry to clone/pull git repository
+      action: template src=templates/ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
