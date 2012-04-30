@@ -57,13 +57,24 @@ def pkg_to_dict(po):
         'epoch':po.epoch,
         'release':po.release,
         'version':po.version,
-        'repo':po.ui_from_repo,
-        '_nevra':po.ui_nevra,
         }
+        
     if type(po) == yum.rpmsack.RPMInstalledPackage:
         d['yumstate'] = 'installed'
+        d['repo'] = 'installed'
     else:
         d['yumstate'] = 'available'
+        d['repo'] =  po.repoid
+    
+    if hasattr(po, 'ui_from_repo'):
+        d['repo'] = po.ui_from_repo
+        
+    if hasattr(po, 'ui_nevra'):
+        d['_nevra'] = po.ui_nevra
+    else:
+        d['_nevra'] = '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
+        
+    
 
     return d
     
@@ -215,6 +226,9 @@ def ensure(my, state, pkgspec):
                 
     if state == 'latest':
         updates = my.doPackageLists(pkgnarrow='updates', patterns=[pkgspec]).updates
+        # sucks but this is for rhel5 - won't matter for rhel6 or fedora or whatnot
+        e,m,u = yum.parsePackages(updates, [pkgspec], casematch=True)
+        updates = e + m
         avail =  my.doPackageLists(pkgnarrow='available', patterns=[pkgspec]).available
         if not updates and not avail:
             if not my.doPackageLists(pkgnarrow='installed', patterns=[pkgspec]).installed:

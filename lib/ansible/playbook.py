@@ -390,8 +390,10 @@ class PlayBook(object):
             module_args = tokens[1]
 
         # include task specific vars
-        module_vars = task.get('vars')
-
+        module_vars = task.get('vars', {})
+        if 'first_available_file' in task:
+            module_vars['first_available_file'] = task.get('first_available_file')
+        
         # tasks can be direct (run on all nodes matching
         # the pattern) or conditional, where they ran
         # as the result of a change handler on a subset
@@ -551,7 +553,8 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
-        pattern  = pg.get('hosts',None)
+        pattern = pg.get('hosts',None)
+        name = pg.get('name', pattern)
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
         if self.override_hosts:
@@ -568,7 +571,7 @@ class PlayBook(object):
         sudo       = pg.get('sudo', self.sudo)
         transport  = pg.get('connection', self.transport)
 
-        self.callbacks.on_play_start(pattern)
+        self.callbacks.on_play_start(name)
 
         # push any variables down to the system # and get facts/ohai/other data back up
         self._do_setup_step(pattern, vars, user, port, sudo, transport, None)

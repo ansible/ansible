@@ -9,6 +9,11 @@ Ansible Changes By Release
 * OS X support in progress for hosts and clients
 * list of hosts in playbooks can be expressed as a YAML list in addition to ; delimited
 * tweaks to SELinux implementation for file module
+* first_available_file feature, see selective_file_sources.yml in examples/playbooks for info
+* fixes for yum module corner cases on EL5
+* --extra-vars="a=2 b=3" etc, now available to inject parameters into playbooks
+* file module now correctly returns the mode in octal
+* modules can no longer include stderr output (paramiko limitation from sudo)
 
 0.3 "Baluchitherium" -- April 23, 2012
 

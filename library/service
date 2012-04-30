@@ -21,12 +21,22 @@ try:
     import json
 except ImportError:
     import simplejson as json
-import os
 import sys
 import shlex
 import subprocess
 
+# TODO: switch to fail_json and other helper functions
+# like other modules are using
+
 # ===========================================
+
+SERVICE = '/sbin/service'
+
+def _run(cmd):
+    # returns (rc, stdout, stderr) from shell command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    return (process.returncode, stdout, stderr) 
 
 argfile = sys.argv[1]
 args = open(argfile, 'r').read()
@@ -39,74 +49,113 @@ if not len(items):
 params = {}
 for arg in items:
     if "=" not in arg:
-        print json.dumps(dict(failed=True, msg='expected arguments of the form name=value'))
+        print json.dumps(dict(failed=True, msg='expected key=value format arguments'))
         sys.exit(1)
     (name, value) = arg.split("=")
     params[name] = value
 
-name = params['name']
-state = params.get('state','unknown')
+name = params.get('name', None)
+
+if name is None:
+    print json.dumps(dict(failed=True, msg='missing name'))
+    sys.exit(1)
+
+state = params.get('state', None)
+list_items = params.get('list', None)
 
 # running and started are the same
-if state not in [ 'running', 'started', 'stopped', 'restarted' ]:
-    print json.dumps(dict(failed=True, msg='invalid state'))
+if state and state not in [ 'running', 'started', 'stopped', 'restarted' ]:
+    print json.dumps(dict(failed=True, msg='invalid value for state'))
     sys.exit(1)
+if list_items and list_items not in [ 'status' ]:
+    print json.dumps(dict(failed=True, msg='invalid value for list'))
+    sys.exit(1)
+    
 
 # ===========================================
 # get service status
 
-status = os.popen("service %s status" % name).read()
+rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
+status = status_stdout + status_stderr
 
-# ===========================================
-# determine if we are going to change anything
 
 running = False
-if status.find("not running") != -1:
+if status_stdout.find("not running") != -1:
     running = False
-elif status.find("running") != -1:
+elif status_stdout.find("running") != -1:
     running = True
-elif name == 'iptables' and status.find("ACCEPT") != -1:
+elif name == 'iptables' and status_stdout.find("ACCEPT") != -1:
     # iptables status command output is lame
     # TODO: lookup if we can use a return code for this instead?
     running = True
 
-changed = False
-if not running and state == "started":
-    changed = True
-elif running and state == "stopped":
-    changed = True
-elif state == "restarted":
-    changed = True
 
-# ===========================================
-# run change commands if we need to
+if state:
 
-def _run(cmd):
-    return subprocess.call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    # a state change command has been requested
 
-rc = 0
-if changed:
-    if state in ('started', 'running'):
-        rc = _run("service %s start" %  name)
-    elif state == 'stopped':
-        rc = _run("service %s stop" % name)
-    elif state == 'restarted':
-        rc1 = _run("service %s stop" % name)
-        rc2 = _run("service %s start" % name)
-        rc  = rc1 and rc2
+    # ===========================================
+    # determine if we are going to change anything
 
-if rc != 0:
-    # yeah, should probably include output of failure...
+    changed = False
+    if not running and state == "started":
+        changed = True
+    elif running and state == "stopped":
+        changed = True
+    elif state == "restarted":
+        changed = True
+
+    # ===========================================
+    # run change commands if we need to
+
+    rc = 0
+    if changed:
+        if state in ('started', 'running'):
+            rc, stdout, stderr = _run("%s %s start" % (SERVICE, name))
+        elif state == 'stopped':
+            rc, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
+        elif state == 'restarted':
+            rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
+            rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
+            rc = rc1 and rc2
+            stdout = stdout1 + stdout2
+            stderr = stderr1 + stderr2
+
+    if rc != 0:
+
+        print json.dumps({
+            "failed" : 1,
+            "rc"     : rc,
+        })
+        print >> sys.stderr, stdout + stderr
+        sys.exit(1)
+
+
+    # ===============================================
+    # success
+
+    result = {"changed": changed}
+
+    rc, stdout, stderr = _run("%s %s status" % (SERVICE, name))
+    if list_items and list_items in [ 'status' ]:
+        result['status'] = stdout
+    print json.dumps(result)
+
+    
+elif list_items is not None:
+
+    # solo list=status mode, don't change anything, just return
+    # suitable for /usr/bin/ansible usage or API, playbooks
+    # not so much
+
     print json.dumps({
-        "failed" : 1,
-        "rc"     : rc
+        "status" : status
     })
-    sys.exit(1)
 
-# ===============================================
-# success
+else:
+ 
+    print json.dumps(dict(failed=True, msg="expected state or list parameters"))    
 
-print json.dumps({
-   "changed" : changed
-})
+
+sys.exit(0)
 

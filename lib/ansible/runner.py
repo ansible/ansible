@@ -122,6 +122,9 @@ class Runner(object):
         else:
             self.inventory = inventory
 
+        if module_vars is None:
+            module_vars = {}
+
         self.setup_cache = setup_cache
         self.conditional = conditional
         self.module_path = module_path
@@ -385,11 +388,26 @@ class Runner(object):
         options = utils.parse_kv(self.module_args)
         source = options.get('src', None)
         dest   = options.get('dest', None)
-        if source is None or dest is None:
+        if (source is None and not 'first_available_file' in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
+        
+        # FIXME: break duplicate code up into subfunction
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
+        
         source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
@@ -475,11 +493,25 @@ class Runner(object):
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
-        if source is None or dest is None:
+        if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
+
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
+
         source = utils.template(source, inject, self.setup_cache)
 
         (host, ok, data, err) = (None, None, None, None)
@@ -527,6 +559,7 @@ class Runner(object):
  
         # modify file attribs if needed
         if ok:
+            executed = executed.replace("copy","template",1)
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
             return (host, ok, data, err)
@@ -604,16 +637,18 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
-
+        err=None
+        out=None
         if type(stderr) != str:
             err="\n".join(stderr.readlines())
         else:
             err=stderr
-
         if type(stdout) != str:
-            return "\n".join(stdout.readlines()), err
+            out="\n".join(stdout.readlines())
         else:
-            return stdout, err
+            out=stdout
+        return (out,err) 
+
 
     # *****************************************************
 

@@ -286,7 +286,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     parser = SortedOptParser(usage)
     parser.add_option('-D','--debug', default=False, action="store_true",
-        help='debug standard error output of remote modules')
+        help='debug mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
