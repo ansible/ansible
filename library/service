@@ -31,6 +31,7 @@ import subprocess
 # ===========================================
 
 SERVICE = '/sbin/service'
+CHKCONFIG = '/sbin/chkconfig'
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
@@ -38,6 +39,15 @@ def _run(cmd):
     stdout, stderr = process.communicate()
     return (process.returncode, stdout, stderr) 
 
+
+def _do_enable(name, enable):
+    if enable.lower() in ['on', 'true', 'yes']:
+        rc, stdout, stderr = _run("%s %s on" % (CHKCONFIG, name))
+    elif enable.lower() in ['off', 'false', 'no']:
+        rc, stdout, stderr = _run("%s %s off" % (CHKCONFIG, name))
+    
+    return rc, stdout, stderr
+    
 argfile = sys.argv[1]
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -62,6 +72,7 @@ if name is None:
 
 state = params.get('state', None)
 list_items = params.get('list', None)
+enable = params.get('enable', None)
 
 # running and started are the same
 if state and state not in [ 'running', 'started', 'stopped', 'restarted' ]:
@@ -70,7 +81,10 @@ if state and state not in [ 'running', 'started', 'stopped', 'restarted' ]:
 if list_items and list_items not in [ 'status' ]:
     print json.dumps(dict(failed=True, msg='invalid value for list'))
     sys.exit(1)
-    
+if enable and enable.lower() not in [ 'on', 'off', 'true', 'false', 'yes', 'no' ]:
+    print json.dumps(dict(failed=True, msg='invalid value for enable'))
+    sys.exit(1)
+
 
 # ===========================================
 # get service status
@@ -89,45 +103,57 @@ elif name == 'iptables' and status_stdout.find("ACCEPT") != -1:
     # TODO: lookup if we can use a return code for this instead?
     running = True
 
-
-if state:
-
-    # a state change command has been requested
-
-    # ===========================================
-    # determine if we are going to change anything
-
-    changed = False
-    if not running and state == "started":
-        changed = True
-    elif running and state == "stopped":
-        changed = True
-    elif state == "restarted":
-        changed = True
-
-    # ===========================================
-    # run change commands if we need to
-
+if state or enable:
     rc = 0
-    if changed:
-        if state in ('started', 'running'):
-            rc, stdout, stderr = _run("%s %s start" % (SERVICE, name))
-        elif state == 'stopped':
-            rc, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
-        elif state == 'restarted':
-            rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
-            rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
-            rc = rc1 and rc2
-            stdout = stdout1 + stdout2
-            stderr = stderr1 + stderr2
+    out = ''
+    err = ''
+    changed = False
+        
+    if enable:
+        rc_enable, out_enable, err_enable = _do_enable(name, enable)
+        rc += rc_enable
+        out += out_enable
+        err += err_enable
 
+    if state:
+        # a state change command has been requested
+
+        # ===========================================
+        # determine if we are going to change anything
+
+        if not running and state == "started":
+            changed = True
+        elif running and state == "stopped":
+            changed = True
+        elif state == "restarted":
+            changed = True
+
+        # ===========================================
+        # run change commands if we need to
+
+        if changed:
+            if state in ('started', 'running'):
+                rc_state, stdout, stderr = _run("%s %s start" % (SERVICE, name))
+            elif state == 'stopped':
+                rc_state, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
+            elif state == 'restarted':
+                rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
+                rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
+                rc_state = rc and rc1 and rc2
+                stdout = stdout1 + stdout2
+                stderr = stderr1 + stderr2
+            
+            out += stdout
+            err += stderr
+            rc = rc and rc_state
+        
     if rc != 0:
 
         print json.dumps({
             "failed" : 1,
             "rc"     : rc,
         })
-        print >> sys.stderr, stdout + stderr
+        print >> sys.stderr, out + err
         sys.exit(1)
 
 
