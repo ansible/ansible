@@ -23,7 +23,7 @@ except ImportError:
     import simplejson as json
 import sys
 import shlex
-import subprocess,os
+import subprocess
 
 # TODO: switch to fail_json and other helper functions
 # like other modules are using
