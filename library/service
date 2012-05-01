@@ -30,7 +30,8 @@ import subprocess
 
 # ===========================================
 
-SERVICE = '/sbin/service'
+SERVICE='service'
+
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
