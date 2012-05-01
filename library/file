@@ -356,8 +356,7 @@ elif state == 'link':
     if os.path.isabs(src):
         abs_src = src
     else:
-        # FIXME: this does not seem correct? -- MPD
-        abs_src = os.path.dirname(dest)
+        abs_src = os.path.join(os.path.dirname(dest), src)
     if not os.path.exists(abs_src):
         fail_json(dest=dest, src=src, msg='src file does not exist')
    
