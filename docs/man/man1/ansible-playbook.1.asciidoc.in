@@ -34,7 +34,7 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
-*-D*, *--debug*          
+*-D*, *--debug*::
 
 Print any messages the remote module sends to standard error to the console
 
