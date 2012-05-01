@@ -23,14 +23,15 @@ except ImportError:
     import simplejson as json
 import sys
 import shlex
-import subprocess
+import subprocess,os
 
 # TODO: switch to fail_json and other helper functions
 # like other modules are using
 
 # ===========================================
 
-SERVICE = '/sbin/service'
+SERVICE='service'
+
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
