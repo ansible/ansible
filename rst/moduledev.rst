@@ -5,7 +5,7 @@ Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
 Modules can be written in any language and are found in the path specified 
-by `ANSIBLE_LIBRARY_PATH` or the `--module-path` command line option.
+by `ANSIBLE_LIBRARY_PATH` or the ``--module-path`` command line option.
  
 Tutorial 
 ````````
@@ -53,7 +53,7 @@ You should see output that looks something like this::
 
     {u'time': u'2012-03-14 22:13:48.539183'}
 
-If you did not, you might have a typo in your module, so recheck it and try again
+If you did not, you might have a typo in your module, so recheck it and try again.
 
 Reading Input
 `````````````
@@ -76,7 +76,7 @@ If no time parameter is set, we'll just leave the time as is and return the curr
    use the shell module.  However, it probably makes a decent tutorial.
 
 Let's look at the code.  Read the comments as we'll explain as we go.  Note that this
-highly verbose because it's intended as an educational example.  You can write modules 
+is highly verbose because it's intended as an educational example.  You can write modules
 a lot shorter than this::
 
     #!/usr/bin/python
@@ -188,11 +188,13 @@ You should also never do this in a module::
 Because the output is supposed to be valid JSON.  Except that's not quite true,
 but we'll get to that later.
 
-Further, modules must not output anything on stderr, even if the JSON returned
-out stdout is valid.  This is due to the internals of our SSH library, more or less.
+Modules must not output anything on standard error, because the system will merge
+standard out with standard error and prevent the JSON from parsing. Capturing standard
+error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
+how the command module is implemented.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
-will still be shown in Ansible, however, but the command will not succeed.
+will still be shown in Ansible, but the command will not succeed.
 
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
@@ -203,7 +205,7 @@ Conventions
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
 
-* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file
+* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file.
 
 * Modules must be self contained in one file to be auto-transferred by ansible
 
