@@ -405,12 +405,7 @@ Include directives look like this::
    - tasks:
       - include: tasks/foo.yml
 
-Variables passed in can be used in the include files too.  Assume a variable named 'user'. Using
-`jinja2` syntax, anywhere in the included file, you can say::
-
-   {{ user }}
-
-I can also pass variables into includes directly.  We might call this a 'parameterized include'.
+You can also pass variables into includes directly.  We might call this a 'parameterized include'.
 
 For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
@@ -420,15 +415,22 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
+Variables passed in can be used in the included files.  Using
+`jinja2` syntax, in the included file, you can reference them like this::
+   
+   {{ user }}
+
+or, more simply, using Ansible's simplified variable syntax::
+
+   $user
+
 In addition to the explicitly passed in parameters, all variables from
-the vars section are also available for use here as well.  Variables that bubble
-up from tools like facter and ohai are not usable here though -- but they ARE available for use
-inside 'action' lines and in templates.
+the vars section are also available for use here as well.  
 
 .. note::
    Include statements are only usable from the top level
    playbook file.  This means includes can not include other
-   includes.
+   includes.  This may be implemented in a later release.
 
 Includes can also be used in the 'handlers' section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
