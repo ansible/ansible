@@ -27,8 +27,7 @@ Multi-machine software deployment is poorly solved by most systems management to
 Deployment and Configuration, Unified
 `````````````````````````````````````
 
-Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks -- having been designed with this problem in mind -- are good at both deployment & idempotent configuration, meaning you don't have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required -- while avoiding the problem of fragile scripting that assumes certain starting
-or ending states.
+Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks -- having been designed with this problem in mind -- are good at both deployment & idempotent configuration, meaning you don't have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc). Performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required -- while avoiding the problem of fragile scripting that assumes certain starting or ending states.
 
 Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language -- you can write :doc:`modules` as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it's also trivially easy to just execute useful shell commands.
 
@@ -139,6 +138,6 @@ internet infrastructure, finance, chip design, and more.  Michael also
 helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used to
 orchestrate systems in lots of diverse places.  He's worked on systems
 software for IBM, Motorola, Red Hat's Emerging Technologies Group,
-Puppet Labs, and is now with `rPath <http://rpath.com>`_  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
+Puppet Labs, and is now with `rPath <http://rpath.com>`_.  Reach Michael by email `here <mailto:michael.dehaan@gmail.com>`_.
 
 

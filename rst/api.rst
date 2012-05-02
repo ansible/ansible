@@ -87,7 +87,7 @@ External Inventory
 Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_, 
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external interventory system.  
+of these options via an external inventory system.
 
 If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding, but we have a `Cobbler example <https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
 
@@ -165,7 +165,7 @@ And technically, though there is no major good reason to do it, this also works 
     ansible webserver -m shell -a "echo {{ a }}"
 
 So in other words, you can use those variables in arguments/actions as well.  You might use this to name
-a conf.d file appropriately or something similar.  Who knows.
+a conf.d file appropriately or something similar.  Who knows?
 
 So that's the Cobbler integration support -- using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.
 

@@ -89,7 +89,7 @@ build an RPM you can distribute and install::
 
 Note that if you are tracking the upstream source (i.e. git), the RPM revision will not be 
 bumped with every source code change.  To get around this, you can use
-rpm `-Uvh` with `--force` when RPM tells you the package is still at the
+``rpm -Uvh`` with ``--force`` when RPM tells you the package is still at the
 same version.  This is perfectly safe to do.
 
 Debian, Gentoo, Arch, Others
