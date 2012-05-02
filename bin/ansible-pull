@@ -16,132 +16,49 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import sys
-import socket
-import logging
-
-import ansible.playbook
-import ansible.runner
-import ansible.constants as C
-from ansible import errors
-from ansible import callbacks
-from ansible import utils
-from ansible import inventory
+from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
+
+def _run(cmd):
+    cmd = subprocess.Popen(cmd, shell=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    print out
+    if cmd.returncode != 0:
+        print err
+    return cmd.returncode
 
 def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options]"
-    parser = utils.base_parser(constants=C, usage=usage,
-                               connect_opts=False, runas_opts=False)
-    parser.set_defaults(module_name='git', transport='local',
-                        one_line=False, tree=None)
+    parser = OptionParser()
     parser.add_option('-d', '--directory', dest='dest', default=None,
                       help='Directory to checkout git repository')
-    parser.add_option('-U', '--url', dest='url', default=None,
+    parser.add_option('-U', '--url', dest='url',
+                      default=None,
                       help='URL of git repository')
-    parser.add_option('-C', '--checkout', dest='checkout', default="HEAD",
+    parser.add_option('-C', '--checkout', dest='checkout',
+                      default="HEAD",
                       help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
-    parser.remove_option('-k') # Remove ssh password option
-    parser.remove_option('-K') # Remove sudo password option
-    parser.remove_option('-T') # Remove ssh timeout option
     options, args = parser.parse_args(args)
 
-    clirunner_cb = callbacks.CliRunnerCallbacks()
-    clirunner_cb.options = options        
-
-    # ----------------------------------------------
-    # First git clone/pull
-
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
-    pattern = "localhost"
-    inventory_manager = inventory.Inventory([pattern])
-    
-    """
-    Ideally, changes should be reported via logging and not to STDOUT
-    """
+    cmd = 'ansible all -c local -m git -a "%s"' % git_opts
+    rc = _run(cmd)
+    if rc != 0:
+        return rc
 
-    runner = ansible.runner.Runner(
-            module_name=options.module_name,
-            module_args=git_opts,
-            module_path=options.module_path,
-            inventory=inventory_manager,
-            forks=options.forks, 
-            pattern=pattern,
-            callbacks=clirunner_cb,
-            transport=options.transport,
-            debug=options.debug
-    )
-    try:
-        runner.run()
-    except errors.AnsibleError, e:
-        print >>sys.stderr, "ERROR: %s" % e
-        return 1
-
-    # ----------------------------------------------
-    # Second, run the playbook
-    """
-    Change to the directory where the git checkout is located.
-    Insert 'local.yml' as the first playbook to be run.  This
-    supports multiple playbooks being supplied on the CLI, similar
-    to ansible-playbook.  This then loops on all the playbooks, 
-    instantiates and runs a playbook.  A couple things of note:
-      * The transport uses the default set above, local
-      * The host_list argument to Playbook is set to a list of
-        names.  These are localhost, the fqdn, and hostname.
-    This last point is problematic because it will run a playbook
-    3 times if the playbook is for 'all' hosts.  We do not necessarily
-    want to override 'hosts' in the playbook because they may be generic
-    across the entire infrastructure -- not host specific.
-
-    Finally, this should use the logging module in some manner and
-    not print data to STDOUT.
-    """
-
-    if os.path.exists("%s/%s" % (options.dest, DEFAULT_PLAYBOOK)):
-        args.insert(0, DEFAULT_PLAYBOOK)
     os.chdir(options.dest)
-    hostname = socket.getfqdn()
-    stats = callbacks.AggregateStats()
-    playbook_cb = callbacks.PlaybookCallbacks()
-    pbrunner_cb = callbacks.PlaybookRunnerCallbacks(stats)
-    local_host = [pattern, hostname, hostname.split('.')[0]]
-
-    for playbook in args:
-        pb = ansible.playbook.PlayBook(
-                playbook=playbook,
-                host_list=local_host,
-                module_path=options.module_path,
-                debug=options.debug,
-                runner_callbacks=pbrunner_cb,
-                callbacks=playbook_cb,
-                transport=options.transport,
-                stats=stats
-        )
-        """
-        This just takes the reporting from ansible-playbook. 
-        Ideally, this should use logging to report success/failure/changes.
-        """
-        try:
-            pb.run()
-            hosts = sorted(pb.stats.processed.keys())
-            print "RECAP\n\n"
-            for h in hosts:
-                t = pb.stats.summarize(h)
-                print "%-30s : ok=%4s changed=%4s unreachable=%4s failed=%4s " % (h, 
-                   t['ok'], t['changed'], t['unreachable'], t['failures']
-                )
-            print "\n"
-        except errors.AnsibleError, e:
-            print >>sys.stderr, "ERROR: %s" % e
-            return 1
-
-    return 0
+    cmd = 'ansible-playbook -c local %s' % DEFAULT_PLAYBOOK
+    rc = _run(cmd)
+    return rc
 
 if __name__ == '__main__':
     try:
         sys.exit(main(sys.argv[1:]))
-    except errors.AnsibleError, e:
-        print >>sys.stderr, "ERROR: %s" % e
+    except KeyboardInterrupt, e:
+        print >>sys.stderr, "Exit on user request.\n"
         sys.exit(1)
