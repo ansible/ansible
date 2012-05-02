@@ -10,12 +10,12 @@
 # (B) continual system remediation
 #
 # DO NOT RUN THIS AGAINST YOUR HOSTS WITHOUT CHANGING THE repo_url
-
-
-# FIXME: change the host group for safety
-
+# TO SOMETHING YOU HAVE PERSONALLY VERIFIED
+#
+# 
 ---
-- hosts: all
+
+- hosts: pull_mode_hosts
   user: root
 
   vars:
@@ -29,9 +29,10 @@
     # Directory to where repository will be cloned
     workdir: /var/lib/ansible/local
 
-    # Repository to check out -- YOU WANT TO CHANGE THIS
+    # Repository to check out -- YOU MUST CHANGE THIS
+    # repo must contain a local.yml file at top level
     #repo_url: git://github.com/sfromm/ansible-playbooks.git
-    repo_url: git://github.com/mdehaan/ansible-examples.git
+    repo_url: SUPPLY_YOUR_OWN_GIT_URL_HERE
 
   tasks:
 
