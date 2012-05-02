@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import subprocess
+import sys
+from optparse import OptionParser
+
+DEFAULT_PLAYBOOK = 'local.yml'
+
+def _run(cmd):
+    cmd = subprocess.Popen(cmd, shell=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    print out
+    if cmd.returncode != 0:
+        print err
+    return cmd.returncode
+
+def main(args):
+    """ Set up and run a local playbook """
+    usage = "%prog [options]"
+    parser = OptionParser()
+    parser.add_option('-d', '--directory', dest='dest', default=None,
+                      help='Directory to checkout git repository')
+    parser.add_option('-U', '--url', dest='url',
+                      default=None,
+                      help='URL of git repository')
+    parser.add_option('-C', '--checkout', dest='checkout',
+                      default="HEAD",
+                      help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+    options, args = parser.parse_args(args)
+
+    git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
+    cmd = 'ansible all -c local -m git -a "%s"' % git_opts
+    rc = _run(cmd)
+    if rc != 0:
+        return rc
+
+    os.chdir(options.dest)
+    cmd = 'ansible-playbook -c local %s' % DEFAULT_PLAYBOOK
+    rc = _run(cmd)
+    return rc
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt, e:
+        print >>sys.stderr, "Exit on user request.\n"
+        sys.exit(1)
