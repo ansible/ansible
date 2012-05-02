@@ -230,21 +230,26 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache):
+def template(text, vars, setup_cache, no_engine=False):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     text = varReplace(str(text), vars)
     vars['hostvars'] = setup_cache
-    template = jinja2.Template(text)
-    return template.render(vars)
+    if no_engine:
+        # used when processing include: directives so that Jinja is evaluated
+        # in a later context when more variables are available
+        return text
+    else:
+        template = jinja2.Template(text)
+        return template.render(vars)
 
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars, setup_cache):
+def template_from_file(path, vars, setup_cache, no_engine=False):
     ''' run a file through the templating engine '''
     data = file(path).read()
-    return template(data, vars, setup_cache)
+    return template(data, vars, setup_cache, no_engine=no_engine)
 
 def parse_yaml(data):
     return yaml.load(data)
