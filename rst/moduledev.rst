@@ -188,11 +188,13 @@ You should also never do this in a module::
 Because the output is supposed to be valid JSON.  Except that's not quite true,
 but we'll get to that later.
 
-Further, modules must not output anything on stderr, even if the JSON returned
-out stdout is valid.  This is due to the internals of our SSH library, more or less.
+Modules must not output anything on standard error, because the system will merge
+standard out with standard error and prevent the JSON from parsing. Capturing standard
+error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
+how the command module is implemented.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
-will still be shown in Ansible, however, but the command will not succeed.
+will still be shown in Ansible, but the command will not succeed.
 
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
