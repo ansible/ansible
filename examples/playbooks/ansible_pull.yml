@@ -15,5 +15,8 @@
       action: yum pkg=ansible state=installed
     - name: Create local directory to work from
       action: file path=$workdir state=directory owner=root group=root mode=0751
+    - name: Copy ansible inventory file to client
+      action: copy src=/etc/ansible/hosts dest=/etc/ansible/hosts
+              owner=root group=root mode=0644
     - name: Create crontab entry to clone/pull git repository
       action: template src=templates/ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
