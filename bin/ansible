@@ -22,7 +22,7 @@
 import sys
 import getpass
 
-import ansible.runner
+from ansible.runner import Runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
@@ -84,7 +84,7 @@ class Cli(object):
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
-        runner = ansible.runner.Runner(
+        runner = Runner(
             module_name=options.module_name, module_path=options.module_path,
             module_args=options.module_args,
             remote_user=options.remote_user, remote_pass=sshpass,
