@@ -85,13 +85,16 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
 
-        assert vars == {'group_names': ['norse']}
+        assert vars == {'group_names': ['norse'],
+                        'inventory_hostname': 'thor'}
 
     def test_simple_port(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('hera')
 
-        assert vars == {'ansible_ssh_port': 3000, 'group_names': ['greek']}
+        assert vars == {'ansible_ssh_port': 3000,
+                        'group_names': ['greek'],
+                        'inventory_hostname': 'hera'}
 
     ### Inventory API tests
 
@@ -146,7 +149,9 @@ class TestInventory(unittest.TestCase):
         inventory = self.script_inventory()
         vars = inventory.get_variables('thor')
 
-        assert vars == {"hammer":True, 'group_names': ['norse']}
+        assert vars == {'hammer':True,
+                        'group_names': ['norse'],
+                        'inventory_hostname': 'thor'}
 
     ### Tests for yaml inventory file
 
@@ -204,8 +209,10 @@ class TestInventory(unittest.TestCase):
     def test_yaml_vars(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('thor')
-
-        assert vars == {"hammer":True, 'group_names': ['norse']}
+        print vars
+        assert vars == {'group_names': ['norse'],
+                        'hammer':True,
+                        'inventory_hostname': 'thor'}
 
     def test_yaml_change_vars(self):
         inventory = self.yaml_inventory()
@@ -214,14 +221,17 @@ class TestInventory(unittest.TestCase):
         vars["hammer"] = False
 
         vars = inventory.get_variables('thor')
-        assert vars == {"hammer":True, 'group_names': ['norse']}
+        assert vars == {'hammer':True,
+                        'inventory_hostname': 'thor',
+                        'group_names': ['norse']}
 
     def test_yaml_host_vars(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('saturn')
 
-        assert vars == {"moon":"titan",
-                        "moon2":"enceladus",
+        assert vars == {'inventory_hostname': 'saturn',
+                        'moon': 'titan',
+                        'moon2': 'enceladus',
                         'group_names': ['multiple']}
 
     def test_yaml_port(self):
@@ -229,6 +239,7 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('hera')
 
         assert vars == {'ansible_ssh_port': 3000,
+                        'inventory_hostname': 'hera',
                         'ntp_server': 'olympus.example.com',
                         'group_names': ['greek']}
 

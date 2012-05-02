@@ -81,7 +81,10 @@ class Inventory(object):
     def get_variables(self, host):
         """ Return the variables associated with this host. """
 
-        variables = {}
+        variables = {
+            'inventory_hostname': host,
+        }
+
         if host in self._variables:
             variables.update(self._variables[host].copy())
 
