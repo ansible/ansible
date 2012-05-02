@@ -5,7 +5,7 @@ Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
 Modules can be written in any language and are found in the path specified 
-by `ANSIBLE_LIBRARY_PATH` or the `--module-path` command line option.
+by `ANSIBLE_LIBRARY_PATH` or the ``--module-path`` command line option.
  
 Tutorial 
 ````````
@@ -53,7 +53,7 @@ You should see output that looks something like this::
 
     {u'time': u'2012-03-14 22:13:48.539183'}
 
-If you did not, you might have a typo in your module, so recheck it and try again
+If you did not, you might have a typo in your module, so recheck it and try again.
 
 Reading Input
 `````````````
@@ -76,7 +76,7 @@ If no time parameter is set, we'll just leave the time as is and return the curr
    use the shell module.  However, it probably makes a decent tutorial.
 
 Let's look at the code.  Read the comments as we'll explain as we go.  Note that this
-highly verbose because it's intended as an educational example.  You can write modules 
+is highly verbose because it's intended as an educational example.  You can write modules
 a lot shorter than this::
 
     #!/usr/bin/python
@@ -203,7 +203,7 @@ Conventions
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
 
-* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file
+* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file.
 
 * Modules must be self contained in one file to be auto-transferred by ansible
 

@@ -26,7 +26,7 @@ From playbooks, Ansible modules are executed in a very similar way::
 All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don't really need to know much about
 that.  If you're writing your own module, you care, and this means you do
-not have to write modules in any particular language -- you get tho choose.
+not have to write modules in any particular language -- you get to choose.
 
 Most modules other than command are `idempotent`, meaning they will seek
 to avoid changes to the system unless a change needs to be made.  When using Ansible
@@ -52,7 +52,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *update-cache*:
 
-* Whether apt cache must be updated prior operation. Optional, and can be
+* Whether the apt cache must be updated prior to operation. Optional, and can be
   'yes', or 'no'. The default is 'no'.  This can be done as the part of a
   package operation or as a seperate step.
 
@@ -96,7 +96,7 @@ paths to commands must be fully qualified.
 
 This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
-command was running for.
+command was running.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -196,7 +196,7 @@ All parameters available to the file module are also available when running the 
 
 *owner*:
 
-* name of user that should own the file or directory, as would be given to `chown`.
+* name of user that should own the file or directory, as would be given to `chown`
 
 *group*:
 
@@ -208,7 +208,7 @@ All parameters available to the file module are also available when running the 
 
 *dest*:
 
-* location where the symlink will be created for 'link' state, also an alias for 'path'.
+* location where the symlink will be created for 'link' state, also an alias for 'path'
 
 *seuser*:
 
@@ -224,11 +224,11 @@ All parameters available to the file module are also available when running the 
 
 *selevel*:
 
-* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to 's0'.  Only used only used on hosts with SELinux present.
+* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to 's0'.  Only used on hosts with SELinux present.
 
 *context*:
 
-* accepts only 'default' as value.  This will restore a file's selinux context to the default context in the policy.  Does nothing if no default is available.
+* accepts only 'default' as value.  This will restore a file's selinux context to the default context in the policy.  Does nothing if no default is available. Only used on hosts with SELinux present.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -351,7 +351,7 @@ will execute this module automatically as the first step in each play
 using the variables section, so it is unnecessary to make explicit
 calls to setup within a playbook.
 
-Ansible provides may 'facts' about the system, automatically.
+Ansible provides many 'facts' about the system, automatically.
 
 Some of the variables that are supplied are listed below.  These in particular
 are from a VMWare Fusion 4 VM running CentOS 6.2::
@@ -425,13 +425,13 @@ also be snapshotted into the JSON file for usage in templating. These
 variables are prefixed with ``facter_`` and ``ohai_`` so it's easy to
 tell their source.  
 
-All variables are bubbled up to the caller.  Using the ansible facts and chosing
+All variables are bubbled up to the caller.  Using the ansible facts and choosing
 to not install facter and ohai means you can avoid ruby-dependencies
 on your remote systems.
 
-*anything*:
+*variablename*:
 
- * Any other parameters can be named basically anything, and set a ``key=value`` pair in the JSON file for use in templating.
+ * Arbitrary names can be used as variables. 'variablename' can be basically anything, and sets a ``key=value`` pair in the JSON file for use in templating.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -463,7 +463,7 @@ use your best judgement.
 
 This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
-command was running for.
+command was running.
 
 Example action from a playbook::
 
@@ -477,8 +477,8 @@ template
 
 Templates a file out to a remote server.  Call the :ref:`setup` module
 prior to usage if you are not running from a playbook.   In addition to the options
-listed below, the arguments available to the `file` module can also be passed to the copy
-module.   
+listed below, the arguments available to the `file` and `copy` modules can also be passed
+to the template module.
 
 *src*:
 
@@ -487,7 +487,7 @@ module.
 
 *dest*:
 
-* Location to render the template on the remote server.
+* Location to render the template on the remote server
 
 This module also returns md5sum information about the resultant file.
 
@@ -513,19 +513,19 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 *group*:
 
-* Optionally sets the user's primary group, takes a group name.
+* Optionally sets the user's primary group, takes a group name
 
 *groups*:
 
-* Put the user in the specified groups, takes comma delimited group names.
+* Put the user in the specified groups, takes comma delimited group names
 
 *append*:
 
-* If true, will only add additional groups to the user listed in 'groups', rather than making the user only be in those specified groups.
+* If true, will only add additional groups to the user listed in 'groups', rather than making the user only be in those specified groups
 
 *shell*:
 
-* Optionally sets the user's shell.
+* Optionally sets the user's shell
 
 *createhome*:
 
@@ -541,11 +541,11 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 *force*:
 
-* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for --force is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
+* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for ``--force`` is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
 
 *remove*:
 
-* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for --remove is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
+* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for ``--remove`` is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
 
 Example action from Ansible :doc:`playbooks`::
 
