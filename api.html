@@ -263,7 +263,7 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 <p>Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external interventory system.</p>
+of these options via an external inventory system.</p>
 <p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding, but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
 <p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
@@ -325,7 +325,7 @@ override any that have the same name.</p>
 <div class="highlight-python"><pre>ansible webserver -m shell -a "echo {{ a }}"</pre>
 </div>
 <p>So in other words, you can use those variables in arguments/actions as well.  You might use this to name
-a conf.d file appropriately or something similar.  Who knows.</p>
+a conf.d file appropriately or something similar.  Who knows?</p>
 <p>So that&#8217;s the Cobbler integration support &#8211; using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>

@@ -427,9 +427,7 @@ on your remote systems.
 
 *variablename*:
 
-* Arbitrary variable names, which must be a mix of alphanumeric characters and
-underscores, can also be defined. Setting a variable creates a
-``key=value`` pair in the JSON file for use in templating.
+* Arbitrary variable names, which must be a mix of alphanumeric characters and underscores, can also be defined. Setting a variable creates a ``key=value`` pair in the JSON file for use in templating.
 
 Example action from Ansible :doc:`playbooks`::
 

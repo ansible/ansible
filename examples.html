@@ -201,8 +201,8 @@ ssh-add ~/.ssh/id_rsa.pub</pre>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname</pre>
 </div>
 <p>If you want to run commands through sudo:</p>
-<blockquote>
-<div>ansible atlanta -a &#8220;/usr/bin/foo&#8221; -u yourname &#8211;sudo [&#8211;ask-sudo-pass]</div></blockquote>
+<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]</pre>
+</div>
 <p>Use &#8211;ask-sudo-pass (-K) if you are not using passwordless sudo.</p>
 <p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
 <p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
@@ -215,25 +215,26 @@ module looks like this:</p>
 <div class="highlight-python"><pre>ansible raleigh -m shell -a 'echo $TERM'</pre>
 </div>
 <p>When running any command with the ansible &#8220;ad hoc&#8221; CLI (as opposed to playbooks), pay particular attention
-to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.  For example, u
-using double vs single quotes would evaluate the variable on the box you were on.</p>
+to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.  For example,
+using double vs single quotes in the above example would evaluate the variable on the box you were on.</p>
 <p>So far we&#8217;ve been demoing simple command execution, but most ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
 get it there.  This is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.
-However, we also recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.</p>
+However, we also recognize that running ad-hoc commands is equally important, so Ansible easily supports both.</p>
 </div>
 <div class="section" id="file-transfer-templating">
 <h2>File Transfer &amp; Templating<a class="headerlink" href="#file-transfer-templating" title="Permalink to this headline">¶</a></h2>
 <p>Here&#8217;s another use case for the <cite>/usr/bin/ansible</cite> command line.</p>
 <p>Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.</p>
-<p>To just transfer a file directly to many different servers:</p>
+<p>To transfer a file directly to many different servers:</p>
 <div class="highlight-python"><pre>ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"</pre>
 </div>
 <p>To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
 template module to write the files using those templates.</p>
-<p>Templates are written in Jinja2 format. Playbooks (covered elsewhere in the
+<p>Templates are written in <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2</a> format.
+Playbooks (covered elsewhere in the
 documentation) will run the setup module for you, making this even
 simpler:</p>
 <div class="highlight-python"><pre>ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
@@ -281,7 +282,7 @@ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=
 <p>Ensure a package is not installed:</p>
 <div class="highlight-python"><pre>ansible-webservers -m yum -a "pkg=acme state=removed"</pre>
 </div>
-<p>Currently Ansible only has a module for managing packages with yum.  You can install
+<p>Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.</p>
 </div>

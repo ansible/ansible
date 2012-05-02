@@ -157,7 +157,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
 <li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
 <li><a class="reference internal" href="#variables-from-other-hosts">Variables From Other Hosts</a></li>
-<li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables And Prompted or Sensitive Data</a></li>
+<li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables and Prompted or Sensitive Data</a></li>
 <li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
@@ -261,7 +261,7 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
   user: yourname
   sudo: True</pre>
 </div>
-<p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <cite>&#8211;ask-sudo-pass</cite> (<cite>-K</cite>).
+<p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<cite>-K</cite>).
 If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
 Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p>
 </div>
@@ -308,12 +308,12 @@ before moving on to the next task.</p>
 playbook.  If things fail, simply correct the playbook file and rerun.</p>
 <p>The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.</p>
-<p>Modules other than <cite>command</cite> are &#8216;idempotent&#8217;, meaning if you run them
+<p>Modules other than <cite>command</cite> and <cite>shell</cite> are &#8216;idempotent&#8217;, meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won&#8217;t change things
 unless they have to change things.</p>
-<p>Command will actually rerun the same command again,
+<p>The <cite>command</cite> and <cite>shell</cite> modules will actually rerun the same command again,
 which is totally ok if the command is something like
 &#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
 <p>Every task must have a name, which is included in the output from
@@ -325,9 +325,9 @@ the service module takes key=value arguments:</p>
   - name: make sure apache is running
     action: service name=httpd state=running</pre>
 </div>
-<p>The command module is the one module that just takes a list
-of arguments, and doesn&#8217;t use the key=value form.  This makes
-it work just like you would expect. Simple:</p>
+<p>The <cite>command</cite> and <cite>shell</cite> modules are the one modules that just takes a list
+of arguments, and don&#8217;t use the key=value form.  This makes
+them work just like you would expect. Simple:</p>
 <div class="highlight-python"><pre>tasks:
   - name: disable selinux
     action: command /sbin/setenforce 0</pre>
@@ -335,7 +335,7 @@ it work just like you would expect. Simple:</p>
 <p>Variables can be used in action lines.   Suppose you defined
 a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you could do this:</p>
 <div class="highlight-python"><pre>tasks:
-  - name: make a directory
+  - name: create a virtual host file for $vhost
     action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost</pre>
 </div>
 <p>Those same variables are usable in templates, which we&#8217;ll get to later.</p>
@@ -344,7 +344,7 @@ a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you cou
 <div class="section" id="running-operations-on-change">
 <h2>Running Operations On Change<a class="headerlink" href="#running-operations-on-change" title="Permalink to this headline">¶</a></h2>
 <p>As we&#8217;ve mentioned, nearly all modules are written to be &#8216;idempotent&#8217; and can relay  when
-they have affected a change on the remote system.   Playbooks recognize this and
+they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.</p>
 <p>These &#8216;notify&#8217; actions are triggered at the end of each &#8216;play&#8217; in a playbook, and
 trigger only once each.  For instance, multiple resources may indicate
@@ -406,7 +406,7 @@ within a template or even an action line:</p>
 want to reference data from must be included in either the current play or any previous play.</p>
 </div>
 <div class="section" id="external-variables-and-prompted-or-sensitive-data">
-<h3>External Variables And Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>
+<h3>External Variables and Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>
 <p>It&#8217;s a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
 important variables private.  Similarly, sometimes you may just
@@ -492,6 +492,8 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook:</p>
   - name: make sure apache is running
     action: service name=$apache state=running</pre>
 </div>
+<p>Note that a variable (<cite>$facter_operatingsystem</cite>) is being interpolated into the list of
+filenames being defined for vars_files.</p>
 <p>As a reminder, the various YAML files contain just keys and values:</p>
 <div class="highlight-python"><pre>---
 # for vars/CentOS.yml
@@ -558,7 +560,7 @@ includes.  This may be implemented in a later release.</p>
 </div>
 <p>Includes can also be used in the &#8216;handlers&#8217; section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
-of your playbooks.  You might make a notifiers.yaml that looked like:</p>
+of your playbooks.  You might make a handlers.yml that looks like:</p>
 <div class="highlight-python"><pre>----
 # this might be in a file like handlers/handlers.yml
 - name: restart apache
@@ -618,12 +620,18 @@ actually one of the things playbooks were invented to do.</p>
      - testuser1
      - testuser2</pre>
 </div>
+<p>The above would be the equivalent of:</p>
+<div class="highlight-python"><pre>- name: add user testuser1
+  action: user name=testuser1 state=present groups=wheel
+- name: add user testuser2
+  action: user name=testuser2 state=present groups=wheel</pre>
+</div>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
 <h3>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h3>
 <p>By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
-a small parallelism value (aka <cite>&#8211;forks</cite>), you may wish that long
+a small parallelism value (aka <tt class="docutils literal"><span class="pre">--forks</span></tt>), you may wish that long
 running operations can go faster.  The easiest way to do this is
 to kick them off all at once and then poll until they are done.</p>
 <p>You will also want to use asynchronous mode on very long running
@@ -665,7 +673,7 @@ commands later in the playbook against those same resources.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Using a higher value for <cite>&#8211;forks</cite> will result in kicking off asynchronous
+<p class="last">Using a higher value for <tt class="docutils literal"><span class="pre">--forks</span></tt> will result in kicking off asynchronous
 tasks even faster.  This also increases the efficiency of polling.</p>
 </div>
 </div>

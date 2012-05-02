@@ -214,7 +214,7 @@ of the command you want to run.</p>
 <p>All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don&#8217;t really need to know much about
 that.  If you&#8217;re writing your own module, you care, and this means you do
-not have to write modules in any particular language &#8211; you get tho choose.</p>
+not have to write modules in any particular language &#8211; you get to choose.</p>
 <p>Most modules other than command are <cite>idempotent</cite>, meaning they will seek
 to avoid changes to the system unless a change needs to be made.  When using Ansible
 playbooks, these modules can trigger &#8216;change events&#8217;.  Unless otherwise
@@ -233,7 +233,7 @@ noted, any given module does support change hooks.</p>
 </ul>
 <p><em>update-cache</em>:</p>
 <ul class="simple">
-<li>Whether apt cache must be updated prior operation. Optional, and can be
+<li>Whether the apt cache must be updated prior to operation. Optional, and can be
 &#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.  This can be done as the part of a
 package operation or as a seperate step.</li>
 </ul>
@@ -269,7 +269,7 @@ operations like &#8220;&lt;&#8221;, &#8220;&gt;&#8221;, &#8220;|&#8221;, and &#8
 paths to commands must be fully qualified.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
-command was running for.</p>
+command was running.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
 </div>
@@ -334,7 +334,7 @@ All parameters available to the file module are also available when running the 
 <cite>template</cite> modules.</p>
 <p><em>dest</em>:</p>
 <ul class="simple">
-<li>absolute path to a file on the filesystem.</li>
+<li>alias for &#8216;path&#8217;. Sets an absolute path to a file on the filesystem when used with &#8216;state=file&#8217;. When used with &#8216;state=link&#8217;, sets the destination to create a symbolic link defined by &#8216;src&#8217; key.</li>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
@@ -346,7 +346,7 @@ All parameters available to the file module are also available when running the 
 </ul>
 <p><em>owner</em>:</p>
 <ul class="simple">
-<li>name of user that should own the file or directory, as would be given to <cite>chown</cite>.</li>
+<li>name of user that should own the file or directory, as would be given to <cite>chown</cite></li>
 </ul>
 <p><em>group</em>:</p>
 <ul class="simple">
@@ -355,10 +355,6 @@ All parameters available to the file module are also available when running the 
 <p><em>src</em>:</p>
 <ul class="simple">
 <li>path of the file to link to (applies only to &#8216;link&#8217; state)</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>location where the symlink will be created for &#8216;link&#8217; state, also an alias for &#8216;path&#8217;.</li>
 </ul>
 <p><em>seuser</em>:</p>
 <ul class="simple">
@@ -378,7 +374,7 @@ All parameters available to the file module are also available when running the 
 </ul>
 <p><em>context</em>:</p>
 <ul class="simple">
-<li>accepts only &#8216;default&#8217; as value.  This will restore a file&#8217;s selinux context to the default context in the policy.  Does nothing if no default is available.</li>
+<li>accepts only &#8216;default&#8217; as value.  This will restore a file&#8217;s selinux context to the default context in the policy.  Does nothing if no default is available. Only used on hosts with SELinux present.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
@@ -473,7 +469,7 @@ Call this once before using the <a class="reference internal" href="#template"><
 will execute this module automatically as the first step in each play
 using the variables section, so it is unnecessary to make explicit
 calls to setup within a playbook.</p>
-<p>Ansible provides may &#8216;facts&#8217; about the system, automatically.</p>
+<p>Ansible provides many &#8216;facts&#8217; about the system, automatically.</p>
 <p>Some of the variables that are supplied are listed below.  These in particular
 are from a VMWare Fusion 4 VM running CentOS 6.2:</p>
 <div class="highlight-python"><pre>"ansible_architecture": "x86_64",
@@ -543,15 +539,13 @@ are from a VMWare Fusion 4 VM running CentOS 6.2:</p>
 also be snapshotted into the JSON file for usage in templating. These
 variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and <tt class="docutils literal"><span class="pre">ohai_</span></tt> so it&#8217;s easy to
 tell their source.</p>
-<p>All variables are bubbled up to the caller.  Using the ansible facts and chosing
+<p>All variables are bubbled up to the caller.  Using the ansible facts and choosing
 to not install facter and ohai means you can avoid ruby-dependencies
 on your remote systems.</p>
-<p><em>anything</em>:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Any other parameters can be named basically anything, and set a <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
+<p><em>variablename</em>:</p>
+<ul class="simple">
+<li>Arbitrary variable names, which must be a mix of alphanumeric characters and underscores, can also be defined. Setting a variable creates a <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
 </ul>
-</div></blockquote>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>vars:
     ntpserver: 'ntp.example.com'
@@ -565,7 +559,7 @@ on your remote systems.</p>
 <span id="id11"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
-but runs the command through the shell rather than directly.</p>
+but runs the command through the user&#8217;s configured shell on the remote node.</p>
 <p>The given command will be executed on all selected nodes.</p>
 <p>If you want to execute a command securely and predicably, it may
 be better to use the &#8216;command&#8217; module instead.  Best practices
@@ -574,7 +568,7 @@ unless &#8216;shell&#8217; is explicitly required.  When running ad-hoc commands
 use your best judgement.</p>
 <p>This module does not support change hooks and returns the return code
 from the program as well as timing information about how long the
-command was running for.</p>
+command was running.</p>
 <p>Example action from a playbook:</p>
 <div class="highlight-python"><pre>shell somescript.sh &gt;&gt; somelog.txt</pre>
 </div>
@@ -583,8 +577,8 @@ command was running for.</p>
 <span id="id12"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
 prior to usage if you are not running from a playbook.   In addition to the options
-listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
-module.</p>
+listed below, the arguments available to the <cite>file</cite> and <cite>copy</cite> modules can also be passed
+to the template module.</p>
 <p><em>src</em>:</p>
 <ul class="simple">
 <li>Path of a Jinja2 formatted template on the local server.  This can
@@ -592,7 +586,7 @@ be a relative or absolute path.</li>
 </ul>
 <p><em>dest</em>:</p>
 <ul class="simple">
-<li>Location to render the template on the remote server.</li>
+<li>Location to render the template on the remote server</li>
 </ul>
 <p>This module also returns md5sum information about the resultant file.</p>
 <p>Example action from a playbook:</p>
@@ -616,19 +610,19 @@ be a relative or absolute path.</li>
 </ul>
 <p><em>group</em>:</p>
 <ul class="simple">
-<li>Optionally sets the user&#8217;s primary group, takes a group name.</li>
+<li>Optionally sets the user&#8217;s primary group, takes a group name</li>
 </ul>
 <p><em>groups</em>:</p>
 <ul class="simple">
-<li>Put the user in the specified groups, takes comma delimited group names.</li>
+<li>Put the user in the specified groups, takes comma delimited group names</li>
 </ul>
 <p><em>append</em>:</p>
 <ul class="simple">
-<li>If true, will only add additional groups to the user listed in &#8216;groups&#8217;, rather than making the user only be in those specified groups.</li>
+<li>If true, will only add additional groups to the user listed in &#8216;groups&#8217;, rather than making the user only be in those specified groups</li>
 </ul>
 <p><em>shell</em>:</p>
 <ul class="simple">
-<li>Optionally sets the user&#8217;s shell.</li>
+<li>Optionally sets the user&#8217;s shell</li>
 </ul>
 <p><em>createhome</em>:</p>
 <ul class="simple">
@@ -644,11 +638,11 @@ be a relative or absolute path.</li>
 </ul>
 <p><em>force</em>:</p>
 <ul class="simple">
-<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for &#8211;force is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
+<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for <tt class="docutils literal"><span class="pre">--force</span></tt> is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
 </ul>
 <p><em>remove</em>:</p>
 <ul class="simple">
-<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for &#8211;remove is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
+<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for <tt class="docutils literal"><span class="pre">--remove</span></tt> is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
