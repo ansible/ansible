@@ -49,7 +49,7 @@ if len(sys.argv) > 1:
 else:
     args = ""
 
-argspath = os.path.expanduser("/.ansible_test_module_arguments")
+argspath = os.path.expanduser("~/.ansible_test_module_arguments")
 argsfile = open(argspath, 'w')
 argsfile.write(args)
 argsfile.close()
