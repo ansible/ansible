@@ -362,19 +362,19 @@ All parameters available to the file module are also available when running the 
 </ul>
 <p><em>seuser</em>:</p>
 <ul class="simple">
-<li>&#8216;user&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+<li>&#8216;user&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;user&#8217; portion of default context from the policy if available.</li>
 </ul>
 <p><em>serole</em>:</p>
 <ul class="simple">
-<li>&#8216;role&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+<li>&#8216;role&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;role&#8217; portion of default context from the policy if available.</li>
 </ul>
 <p><em>setype</em>:</p>
 <ul class="simple">
-<li>&#8216;type&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.</li>
+<li>&#8216;type&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;type&#8217; portion of default context from the policy if available.</li>
 </ul>
 <p><em>selevel</em>:</p>
 <ul class="simple">
-<li>&#8216;level&#8217; part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to &#8216;s0&#8217;.  Only used only used on hosts with SELinux present.</li>
+<li>&#8216;level&#8217; part of SELinux file context.  This is the MLS and MCS attribute of the file context, also sometimes known as the &#8216;range&#8217;.  It defaults to &#8216;s0&#8217;.  Only used only used on hosts with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;level&#8217; portion of default context from the policy if available.</li>
 </ul>
 <p><em>context</em>:</p>
 <ul class="simple">
@@ -610,6 +610,10 @@ be a relative or absolute path.</li>
 <ul class="simple">
 <li>Optionally sets the description of the user</li>
 </ul>
+<p><em>uid</em>:</p>
+<ul class="simple">
+<li>optional uid to set for the user</li>
+</ul>
 <p><em>group</em>:</p>
 <ul class="simple">
 <li>Optionally sets the user&#8217;s primary group, takes a group name.</li>
@@ -750,7 +754,7 @@ yum pkg=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 28, 2012.<br/>
+      Last updated on May 02, 2012.<br/>
     </p>
   </div>
 </footer>

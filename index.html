@@ -201,6 +201,9 @@ more plays, each executed against a different batch of nodes.  Think about
 webservers, database servers, and backend servers in a multi-node web environment.  A play can address each set of machines in a cycle, ensuring the configurations of the machines were correct and also updating them to the specified
 version of software if required.</p>
 <p>Multi-machine software deployment is poorly solved by most systems management tools &#8211; often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.</p>
+<p>If you actually do need pull oriented mode, though, Ansible 0.4 and later can run playbooks in pull mode as well.
+This is useful in extreme scaling scenarios or when automatic system remediation is desired.  Since Ansible remains
+server and daemonless, scaling potential is unlimited, and no resources are wasted on running management daemons.</p>
 </div>
 <div class="section" id="deployment-and-configuration-unified">
 <h1>Deployment and Configuration, Unified<a class="headerlink" href="#deployment-and-configuration-unified" title="Permalink to this headline">¶</a></h1>
@@ -427,7 +430,7 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Apr 28, 2012.<br/>
+      Last updated on May 02, 2012.<br/>
     </p>
   </div>
 </footer>
