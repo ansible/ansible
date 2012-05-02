@@ -110,6 +110,8 @@ def user_add(user, **kwargs):
                     cmd.append('-m')
                 else:
                     cmd.append('-M')
+        elif key == 'system' and kwargs[key] == 'yes':
+            cmd.append('-r')
     cmd.append(user)
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
@@ -133,11 +135,12 @@ def user_mod(user, **kwargs):
                 cmd.append('-g')
                 cmd.append(kwargs[key])
         elif key == 'groups' and kwargs[key] is not None:
-            for g in kwargs[key].split(','):
+            defined_groups = kwargs[key].split(',')
+            for g in defined_groups:
                 if not group_exists(g):
                     fail_json(msg="Group %s does not exist" % (g))
-            groups = ",".join(user_group_membership(user))
-            if groups != kwargs[key]:
+            existing_groups = user_group_membership(user)
+            if sorted(defined_groups) != sorted(existing_groups):
                 cmd.append('-G')
                 cmd.append(kwargs[key])
         elif key == 'comment':
@@ -269,6 +272,7 @@ remove     = params.get('remove', False)
 # ===========================================
 # following options are specific to useradd
 createhome = params.get('createhome', 'yes')
+system     = params.get('system', 'no')
 
 # ===========================================
 # following options are specific to usermod
@@ -278,6 +282,8 @@ if state not in [ 'present', 'absent' ]:
     fail_json(msg='invalid state')
 if createhome not in [ 'yes', 'no' ]:
     fail_json(msg='invalid createhome')
+if system not in ['yes', 'no']:
+    fail_json(msg='invalid system')
 if append not in [ 'yes', 'no' ]:
     fail_json(msg='invalid append')
 if name is None:
@@ -293,7 +299,8 @@ elif state == 'present':
     if not user_exists(name):
         changed = user_add(name, uid=uid, group=group, groups=groups,
                            comment=comment, home=home, shell=shell,
-                           password=password, createhome=createhome)
+                           password=password, createhome=createhome,
+                           system=system)
     else:
         changed = user_mod(name, uid=uid, group=group, groups=groups,
                            comment=comment, home=home, shell=shell,
