@@ -24,6 +24,10 @@ version of software if required.
 
 Multi-machine software deployment is poorly solved by most systems management tools -- often due to architectural nature of being pull oriented and having complex ordering systems, they cover configuration  but fail at deployment when updating tiers of machines in well defined steps. This results in using two (or more) logically distinct tools and having complex overlap between them.  
 
+If you actually do need pull oriented mode, though, Ansible 0.4 and later can run playbooks in pull mode as well.  
+This is useful in extreme scaling scenarios or when automatic system remediation is desired.  Since Ansible remains
+server and daemonless, scaling potential is unlimited, and no resources are wasted on running management daemons.
+
 Deployment and Configuration, Unified
 `````````````````````````````````````
 
