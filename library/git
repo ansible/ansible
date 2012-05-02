@@ -33,34 +33,33 @@ import shlex
 import subprocess
 
 # ===========================================
+# Basic support methods
+
+def exit_json(rc=0, **kwargs):
+   print json.dumps(kwargs)
+   sys.exit(rc)
+
+def fail_json(**kwargs):
+   kwargs['failed'] = True
+   exit_json(rc=1, **kwargs)
+
+# ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
 # FIXME: make more idiomatic
 
 if len(sys.argv) == 1:
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
-    sys.exit(1)
+   fail_json(msg="the command module requires arguments (-a)")
 
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "Argument file not found"
-    })
-    sys.exit(1)
+   fail_json(msg="Argument file not found")
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
 
 if not len(items):
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "the command module requires arguments (-a)"
-    })
-    sys.exit(1)
+   fail_json(msg="the command module requires arguments (-a)")
 
 params = {}
 for x in items:
@@ -69,7 +68,7 @@ for x in items:
 
 dest = params['dest']
 repo = params['repo']
-version = params['version']
+version = params.get('version', 'HEAD')
 
 # ===========================================
 
@@ -129,24 +128,14 @@ else:
 # handle errors from clone or pull
 
 if out.find('error') != -1:
-   print json.dumps({
-       "failed" : True,
-       "out"    : out,
-       "err"    : err
-   })
-   sys.exit(1)
+   fail_json(out=out, err=err)
 
 # switch to version specified regardless of whether
 # we cloned or pulled
 
 (out, err) = switchver(version, dest)
 if err.find('error') != -1:
-   print json.dumps({
-       "failed" : True,
-       "out"    : out,
-       "err"    : err
-   })
-   sys.exit(1)
+   fail_json(out=out, err=err)
 
 # determine if we changed anything
 
@@ -156,9 +145,4 @@ changed = False
 if before != after:
    changed = True
 
-print json.dumps({
-   "changed" : changed,
-   "before"  : before,
-   "after"   : after
-})
-
+exit_json(changed=changed, before=before, after=after)
