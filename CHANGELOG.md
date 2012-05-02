@@ -23,6 +23,7 @@ Ansible Changes By Release
 * service module works better on Ubuntu
 * git module now does resets and such to work more smoothly on updates
 * fix to internals of hacking/test-module development script
+* ansible-pull script and example playbook (extreme scaling, remediation)
 
 0.3 "Baluchitherium" -- April 23, 2012
 

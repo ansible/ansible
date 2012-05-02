@@ -165,7 +165,7 @@ class PlayBook(object):
                 include_vars[k] = v
         inject_vars = play_vars.copy()
         inject_vars.update(include_vars)
-        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
+        included = utils.template_from_file(path, inject_vars, SETUP_CACHE, no_engine=True)
         included = utils.parse_yaml(included)
         for x in included:
             if len(include_vars):
