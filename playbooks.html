@@ -533,11 +533,7 @@ include files to do this.</p>
 <div class="highlight-python"><pre>- tasks:
    - include: tasks/foo.yml</pre>
 </div>
-<p>Variables passed in can be used in the include files too.  Assume a variable named &#8216;user&#8217;. Using
-<cite>jinja2</cite> syntax, anywhere in the included file, you can say:</p>
-<div class="highlight-python"><pre>{{ user }}</pre>
-</div>
-<p>I can also pass variables into includes directly.  We might call this a &#8216;parameterized include&#8217;.</p>
+<p>You can also pass variables into includes directly.  We might call this a &#8216;parameterized include&#8217;.</p>
 <p>For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so:</p>
 <div class="highlight-python"><pre>- tasks:
@@ -545,15 +541,20 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
   - include: wordpress.yml user=alice
   - include: wordpress.yml user=bob</pre>
 </div>
+<p>Variables passed in can be used in the included files.  Using
+<cite>jinja2</cite> syntax, in the included file, you can reference them like this:</p>
+<div class="highlight-python"><pre>{{ user }}</pre>
+</div>
+<p>or, more simply, using Ansible&#8217;s simplified variable syntax:</p>
+<div class="highlight-python"><pre>$user</pre>
+</div>
 <p>In addition to the explicitly passed in parameters, all variables from
-the vars section are also available for use here as well.  Variables that bubble
-up from tools like facter and ohai are not usable here though &#8211; but they ARE available for use
-inside &#8216;action&#8217; lines and in templates.</p>
+the vars section are also available for use here as well.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Include statements are only usable from the top level
 playbook file.  This means includes can not include other
-includes.</p>
+includes.  This may be implemented in a later release.</p>
 </div>
 <p>Includes can also be used in the &#8216;handlers&#8217; section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
