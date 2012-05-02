@@ -293,7 +293,7 @@ def rmtree_error(func, path, exc_info):
 # go...
 
 prev_state = 'absent'
-if os.path.exists(path):
+if os.path.lexists(path):
     if os.path.islink(path):
         prev_state = 'link'
     elif os.path.isfile(path):
