@@ -207,8 +207,7 @@ server and daemonless, scaling potential is unlimited, and no resources are wast
 </div>
 <div class="section" id="deployment-and-configuration-unified">
 <h1>Deployment and Configuration, Unified<a class="headerlink" href="#deployment-and-configuration-unified" title="Permalink to this headline">¶</a></h1>
-<p>Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks &#8211; having been designed with this problem in mind &#8211; are good at both deployment &amp; idempotent configuration, meaning you don&#8217;t have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc), and performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required &#8211; while avoiding the problem of fragile scripting that assumes certain starting
-or ending states.</p>
+<p>Other deployment (compared to config) oriented frameworks similarly cover deployment well but lack a strongly defined resource model and devolve into glorified remote scripts.  Ansible playbooks &#8211; having been designed with this problem in mind &#8211; are good at both deployment &amp; idempotent configuration, meaning you don&#8217;t have to spread your infrastructure management out between different tools (Puppet+Capistrano, Chef+Fabric, etc). Performing ordered steps between different classes of machines is no problem, yet our modules affect system state only when required &#8211; while avoiding the problem of fragile scripting that assumes certain starting or ending states.</p>
 <p>Ansible is also unique in other ways.  Extending ansible does not require programming in any particular language &#8211; you can write <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> as idempotent scripts or programs that return simple JSON.   Ansible is also pragmatic, so when you need to, it&#8217;s also trivially easy to just execute useful shell commands.</p>
 <p>Why use Ansible versus other configuration management tools?  (Puppet, Chef, etc?) Ansible will have far
 less code, it will be (by extension) more correct, and it will be the
@@ -345,7 +344,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#power-tricks">Power Tricks</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="playbooks.html#local-playbooks">Local Playbooks</a></li>
 <li class="toctree-l3"><a class="reference internal" href="playbooks.html#variables-from-other-hosts">Variables From Other Hosts</a></li>
-<li class="toctree-l3"><a class="reference internal" href="playbooks.html#external-variables-and-prompted-or-sensitive-data">External Variables And Prompted or Sensitive Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="playbooks.html#external-variables-and-prompted-or-sensitive-data">External Variables and Prompted or Sensitive Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="playbooks.html#conditional-execution">Conditional Execution</a></li>
 <li class="toctree-l3"><a class="reference internal" href="playbooks.html#conditional-imports">Conditional Imports</a></li>
 <li class="toctree-l3"><a class="reference internal" href="playbooks.html#include-files-and-reuse">Include Files And Reuse</a></li>
@@ -412,7 +411,7 @@ internet infrastructure, finance, chip design, and more.  Michael also
 helped co-author <a class="reference external" href="http://fedorahosted.org/func/">Func</a>, a precursor to Ansible, which is used to
 orchestrate systems in lots of diverse places.  He&#8217;s worked on systems
 software for IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group,
-Puppet Labs, and is now with <a class="reference external" href="http://rpath.com">rPath</a>  Reach Michael by email <a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">here</a>.</p>
+Puppet Labs, and is now with <a class="reference external" href="http://rpath.com">rPath</a>.  Reach Michael by email <a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">here</a>.</p>
 </div>
 
 

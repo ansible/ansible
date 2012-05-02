@@ -186,7 +186,7 @@ s.parentNode.insertBefore(ga, s);
 <p>Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the <cite>ansible</cite> or <cite>ansible-playbook</cite> programs.</p>
 <p>Modules can be written in any language and are found in the path specified
-by <cite>ANSIBLE_LIBRARY_PATH</cite> or the <cite>&#8211;module-path</cite> command line option.</p>
+by <cite>ANSIBLE_LIBRARY_PATH</cite> or the <tt class="docutils literal"><span class="pre">--module-path</span></tt> command line option.</p>
 <div class="section" id="tutorial">
 <h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s build a module to get and set the system time.  For starters, let&#8217;s build
@@ -226,7 +226,7 @@ chmod +x ansible/hacking/test-module</pre>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">u&#39;time&#39;</span><span class="p">:</span> <span class="s">u&#39;2012-03-14 22:13:48.539183&#39;</span><span class="p">}</span>
 </pre></div>
 </div>
-<p>If you did not, you might have a typo in your module, so recheck it and try again</p>
+<p>If you did not, you might have a typo in your module, so recheck it and try again.</p>
 </div>
 <div class="section" id="reading-input">
 <h2>Reading Input<a class="headerlink" href="#reading-input" title="Permalink to this headline">¶</a></h2>
@@ -240,7 +240,7 @@ Here we&#8217;ll do some basic parsing to treat the input as key=value.</p>
 </div>
 <p>If no time parameter is set, we&#8217;ll just leave the time as is and return the current time.</p>
 <p>Let&#8217;s look at the code.  Read the comments as we&#8217;ll explain as we go.  Note that this
-highly verbose because it&#8217;s intended as an educational example.  You can write modules
+is highly verbose because it&#8217;s intended as an educational example.  You can write modules
 a lot shorter than this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
 
@@ -349,10 +349,12 @@ json isn&#8217;t in the Python standard library until 2.5.:</p>
 </div>
 <p>Because the output is supposed to be valid JSON.  Except that&#8217;s not quite true,
 but we&#8217;ll get to that later.</p>
-<p>Further, modules must not output anything on stderr, even if the JSON returned
-out stdout is valid.  This is due to the internals of our SSH library, more or less.</p>
+<p>Modules must not output anything on standard error, because the system will merge
+standard out with standard error and prevent the JSON from parsing. Capturing standard
+error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
+how the command module is implemented.</p>
 <p>If a module returns stderr or otherwise fails to produce valid JSON, the actual output
-will still be shown in Ansible, however, but the command will not succeed.</p>
+will still be shown in Ansible, but the command will not succeed.</p>
 <p>Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.</p>
 </div>
@@ -361,7 +363,7 @@ you about these kind of things.</p>
 <p>As a reminder from the example code above, here are some basic conventions
 and guidelines:</p>
 <ul class="simple">
-<li>Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file</li>
+<li>Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file.</li>
 <li>Modules must be self contained in one file to be auto-transferred by ansible</li>
 <li>If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional.</li>
 <li>Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.</li>

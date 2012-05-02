@@ -196,7 +196,7 @@ Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
 <span class="n">three</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 </pre></div>
 </div>
-<p>The things in brackets are group names, you don&#8217;t have to have them,
+<p>The things in brackets are group names. You don&#8217;t have to have them,
 but they are useful.</p>
 <p>If you have hosts that run on non-standard SSH ports you can put the port number
 after the hostname with a colon.  This requires Ansible 0.3 (integration branch):</p>
@@ -285,7 +285,7 @@ style file with a YAML one.:</p>
   vars:
     - asdf: 1234</pre>
 </div>
-<p>Tip: Be sure to start your YAML file with the YAML record designator &#8220;&#8212;&#8221;.</p>
+<p>Tip: Be sure to start your YAML file with the YAML record designator <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
 <p>NOTE: variables specified in playbooks will override variables specified
 in the host file.  Further, if a host is in multiple groups, currently, the
 variables set by the last loaded group will win over variables set in other
