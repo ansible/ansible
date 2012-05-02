@@ -135,11 +135,12 @@ def user_mod(user, **kwargs):
                 cmd.append('-g')
                 cmd.append(kwargs[key])
         elif key == 'groups' and kwargs[key] is not None:
-            for g in kwargs[key].split(','):
+            defined_groups = kwargs[key].split(',')
+            for g in defined_groups:
                 if not group_exists(g):
                     fail_json(msg="Group %s does not exist" % (g))
-            groups = ",".join(user_group_membership(user))
-            if groups != kwargs[key]:
+            existing_groups = user_group_membership(user)
+            if sorted(defined_groups) != sorted(existing_groups):
                 cmd.append('-G')
                 cmd.append(kwargs[key])
         elif key == 'comment':
