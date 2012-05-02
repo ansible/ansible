@@ -431,7 +431,9 @@ on your remote systems.
 
 *variablename*:
 
- * Arbitrary names can be used as variables. 'variablename' can be basically anything, and sets a ``key=value`` pair in the JSON file for use in templating.
+* Arbitrary variable names, which must be a mix of alphanumeric characters and
+underscores, can also be defined. Setting a variable creates a
+``key=value`` pair in the JSON file for use in templating.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -451,7 +453,7 @@ shell
 
 The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
-but runs the command through the shell rather than directly.
+but runs the command through the user's configured shell on the remote node.
 
 The given command will be executed on all selected nodes.  
 

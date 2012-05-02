@@ -501,6 +501,12 @@ To save some typing, repeated tasks can be written in short-hand like so::
          - testuser1
          - testuser2
 
+The above would be the equivalent of::
+
+    - name: add user testuser1
+      action: user name=testuser1 state=present groups=wheel
+    - name: add user testuser2
+      action: user name=testuser2 state=present groups=wheel
 
 Asynchronous Actions and Polling
 ++++++++++++++++++++++++++++++++
