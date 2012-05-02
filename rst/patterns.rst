@@ -25,7 +25,7 @@ The format for /etc/ansible/hosts looks like this::
     two.example.com
     three.example.com
 
-The things in brackets are group names, you don't have to have them,
+The things in brackets are group names. You don't have to have them,
 but they are useful.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
@@ -127,7 +127,7 @@ style file with a YAML one.::
       vars:
         - asdf: 1234
 
-Tip: Be sure to start your YAML file with the YAML record designator "---".
+Tip: Be sure to start your YAML file with the YAML record designator ``---``.
 
 NOTE: variables specified in playbooks will override variables specified
 in the host file.  Further, if a host is in multiple groups, currently, the

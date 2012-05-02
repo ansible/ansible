@@ -25,7 +25,7 @@ If you want to run commands as a different user than root::
 
     ansible atlanta -a "/usr/bin/foo" -u yourname
 
-If you want to run commands through sudo:
+If you want to run commands through sudo::
     
     ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]
 
@@ -45,13 +45,13 @@ module looks like this::
     ansible raleigh -m shell -a 'echo $TERM'
 
 When running any command with the ansible "ad hoc" CLI (as opposed to playbooks), pay particular attention
-to shell quoting rules, so the shell doesn't eat a variable before it gets passed to Ansible.  For example, u
-using double vs single quotes would evaluate the variable on the box you were on.
+to shell quoting rules, so the shell doesn't eat a variable before it gets passed to Ansible.  For example,
+using double vs single quotes in the above example would evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most ansible modules usually do not work like 
 simple scripts. They make the remote system look like you state, and run the commands necessary to 
 get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.  
-However, we also recognize that running ad-hoc commands is equally imporant, so Ansible easily supports both.
+However, we also recognize that running ad-hoc commands is equally important, so Ansible easily supports both.
 
 
 File Transfer & Templating
@@ -62,7 +62,7 @@ Here's another use case for the `/usr/bin/ansible` command line.
 Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.
 
-To just transfer a file directly to many different servers::
+To transfer a file directly to many different servers::
 
     ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
@@ -70,7 +70,8 @@ To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
 template module to write the files using those templates. 
 
-Templates are written in Jinja2 format. Playbooks (covered elsewhere in the
+Templates are written in `Jinja2 <http://jinja.pocoo.org/docs/>`_ format.
+Playbooks (covered elsewhere in the
 documentation) will run the setup module for you, making this even
 simpler::
 
@@ -131,7 +132,7 @@ Ensure a package is not installed::
  
     ansible-webservers -m yum -a "pkg=acme state=removed"
 
-Currently Ansible only has a module for managing packages with yum.  You can install
+Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 

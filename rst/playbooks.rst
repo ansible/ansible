@@ -80,7 +80,7 @@ Support for running things from sudo is also available::
       user: yourname
       sudo: True
 
-If you need to specify a password to sudo, run `ansible-playbook` with `--ask-sudo-pass` (`-K`).
+If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).
 If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
 Just `Control-C` to kill it and run it again with `-K`.
 
@@ -138,13 +138,13 @@ playbook.  If things fail, simply correct the playbook file and rerun.
 The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
-Modules other than `command` are 'idempotent', meaning if you run them
+Modules other than `command` and `shell` are 'idempotent', meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.  
 
-Command will actually rerun the same command again, 
+The `command` and `shell` modules will actually rerun the same command again, 
 which is totally ok if the command is something like 
 'chmod' or 'setsebool', etc.
 
@@ -159,9 +159,9 @@ the service module takes key=value arguments::
      - name: make sure apache is running
        action: service name=httpd state=running
 
-The command module is the one module that just takes a list
-of arguments, and doesn't use the key=value form.  This makes
-it work just like you would expect. Simple::
+The `command` and `shell` modules are the one modules that just takes a list
+of arguments, and don't use the key=value form.  This makes
+them work just like you would expect. Simple::
 
    tasks:
      - name: disable selinux 
@@ -181,7 +181,7 @@ Running Operations On Change
 ````````````````````````````
 
 As we've mentioned, nearly all modules are written to be 'idempotent' and can relay  when
-they have affected a change on the remote system.   Playbooks recognize this and
+they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
 These 'notify' actions are triggered at the end of each 'play' in a playbook, and
@@ -255,7 +255,7 @@ within a template or even an action line::
 NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
 want to reference data from must be included in either the current play or any previous play.
 
-External Variables And Prompted or Sensitive Data
+External Variables and Prompted or Sensitive Data
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 It's a great idea to keep your playbooks under source control, but
@@ -355,6 +355,8 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
       - name: make sure apache is running
         action: service name=$apache state=running
 
+Note that a variable (`$facter_operatingsystem`) is being interpolated into the list of
+filenames being defined for vars_files.
 
 As a reminder, the various YAML files contain just keys and values::
 
@@ -434,7 +436,7 @@ the vars section are also available for use here as well.
 
 Includes can also be used in the 'handlers' section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
-of your playbooks.  You might make a notifiers.yaml that looked like::
+of your playbooks.  You might make a handlers.yml that looks like::
 
    ----
    # this might be in a file like handlers/handlers.yml
@@ -501,13 +503,19 @@ To save some typing, repeated tasks can be written in short-hand like so::
          - testuser1
          - testuser2
 
+The above would be the equivalent of::
+
+    - name: add user testuser1
+      action: user name=testuser1 state=present groups=wheel
+    - name: add user testuser2
+      action: user name=testuser2 state=present groups=wheel
 
 Asynchronous Actions and Polling
 ++++++++++++++++++++++++++++++++
 
 By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
-a small parallelism value (aka `--forks`), you may wish that long
+a small parallelism value (aka ``--forks``), you may wish that long
 running operations can go faster.  The easiest way to do this is
 to kick them off all at once and then poll until they are done.  
 
@@ -550,7 +558,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
    commands later in the playbook against those same resources.  
 
 .. note::
-   Using a higher value for `--forks` will result in kicking off asynchronous
+   Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
 Executing A Playbook
