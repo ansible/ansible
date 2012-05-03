@@ -511,6 +511,10 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 * Optionally sets the description of the user
 
+*uid*:
+
+* optional uid to set for the user
+
 *group*:
 
 * Optionally sets the user's primary group, takes a group name.
