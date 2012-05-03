@@ -215,6 +215,17 @@ class TestRunner(unittest.TestCase):
        result = self._run('yum', [ "list=repos" ])
        assert 'failed' not in result
 
+   def test_regex(self):
+       try:
+          import re
+       except:
+          assert False
+
+       if re.match('(^R)', 'Regex') != None:
+          assert True
+       else:
+          assert False
+
    def test_git(self):
        # TODO: tests for the git module
        pass
@@ -222,5 +233,4 @@ class TestRunner(unittest.TestCase):
    def test_service(self):
        # TODO: tests for the service module
        pass
-
 

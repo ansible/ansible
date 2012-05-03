@@ -29,6 +29,7 @@ import tempfile
 import time
 import base64
 import getpass
+import re
 
 import ansible.constants as C 
 import ansible.connection
