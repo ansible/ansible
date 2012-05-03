@@ -212,19 +212,19 @@ All parameters available to the file module are also available when running the 
 
 *seuser*:
 
-* 'user' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+* 'user' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'user' portion of default context from the policy if available.
 
 *serole*:
 
-* 'role' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+* 'role' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'role' portion of default context from the policy if available.
 
 *setype*:
 
-* 'type' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.
+* 'type' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'type' portion of default context from the policy if available.
 
 *selevel*:
 
-* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context.  It defaults to 's0'.  Only used only used on hosts with SELinux present.
+* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context, also sometimes known as the 'range'.  It defaults to 's0'.  Only used only used on hosts with SELinux present.  If you specify '_default', it will use the 'level' portion of default context from the policy if available.
 
 *context*:
 
