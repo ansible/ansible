@@ -127,19 +127,10 @@ class ParamikoConnection(object):
         return self
 
     def exec_command(self, cmd, tmp_path, sudoable=False):
-
         ''' run a command on the remote host '''
-
         bufsize = 4096
-        # reusing runner's TCP connect timeout as command progress timeout (correct?)
-        timeout_secs = self.runner.timeout 
         chan = self.ssh.get_transport().open_session()
-        chan.settimeout(timeout_secs)
-        stdin = chan.makefile('wb', bufsize) 
-        stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize) 
         chan.get_pty() 
-        chan.set_combine_stderr(False)    
 
         if not self.runner.sudo or not sudoable:
             quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
@@ -150,8 +141,9 @@ class ParamikoConnection(object):
             # tells sudo that this is the end of sudo options and the command
             # follows.  Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote() 
-            # and pass the quoted string to the user's shell.
-
+            # and pass the quoted string to the user's shell.  We loop reading
+            # output until we see the randomly-generated sudo prompt set with
+            # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k -p "%s" -- "$SHELL" -c %s' % (prompt, pipes.quote(cmd))
@@ -170,7 +162,7 @@ class ParamikoConnection(object):
 
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize)
+        stderr = chan.makefile_stderr('rb', bufsize)        # stderr goes to stdout when using a pty, so this will never output anything.
         return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path):
