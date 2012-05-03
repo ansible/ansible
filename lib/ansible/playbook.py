@@ -135,7 +135,7 @@ class PlayBook(object):
                 k, v = item.items()[0]
                 vars[k] = v
         else:
-            vars = play['vars']
+            vars.update(play['vars'])
 
         vars_prompt = play.get('vars_prompt', {})
         if type(vars_prompt) != dict:
