@@ -41,6 +41,8 @@ def fail_json(d):
 def _find_binaries():
     # list of possible paths for service/chkconfig binaries
     # with the most probable first
+    global CHKCONFIG
+    global SERVICE
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     binaries = [ 'service', 'chkconfig', 'update-rc.d' ]
     location = dict()
@@ -48,13 +50,11 @@ def _find_binaries():
     for binary in binaries:
         location[binary] = None
 
-    for path in paths:
-        for binary in binaries:
+    for binary in binaries:
+        for path in paths:
             if os.path.exists(path + '/' + binary):
                 location[binary] = path + '/' + binary
                 break
-    
-
 
     if location.get('chkconfig', None):
         CHKCONFIG = location['chkconfig']
@@ -62,11 +62,11 @@ def _find_binaries():
         CHKCONFIG = location['update-rc.d']
     else:
         fail_json(dict(failed=True, msg='unable to find chkconfig or update-rc.d binary'))
-
     if location.get('service', None):
         SERVICE = location['service']
     else:
         fail_json(dict(failed=True, msg='unable to find service binary'))
+
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
@@ -186,11 +186,11 @@ if state or enable:
                 rc_state = rc and rc1 and rc2
                 stdout = stdout1 + stdout2
                 stderr = stderr1 + stderr2
-            
+
             out += stdout
             err += stderr
             rc = rc and rc_state
-        
+
     if rc != 0:
 
         print json.dumps({
@@ -224,7 +224,7 @@ elif list_items is not None:
 
 else:
  
-    print json.dumps(dict(failed=True, msg="expected state or list parameters"))    
+    print json.dumps(dict(failed=True, msg="expected state or list parameters"))
 
 
 sys.exit(0)
