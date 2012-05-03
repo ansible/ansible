@@ -24,14 +24,49 @@ except ImportError:
 import sys
 import shlex
 import subprocess
+import os.path
 
 # TODO: switch to fail_json and other helper functions
 # like other modules are using
 
 # ===========================================
 
-SERVICE = '/sbin/service'
-CHKCONFIG = '/sbin/chkconfig'
+SERVICE = None
+CHKCONFIG = None
+
+def fail_json(d):
+    print json.dumps(d)
+    sys.exit(1)
+
+def _find_binaries():
+    # list of possible paths for service/chkconfig binaries
+    # with the most probable first
+    global CHKCONFIG
+    global SERVICE
+    paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
+    binaries = [ 'service', 'chkconfig', 'update-rc.d' ]
+    location = dict()
+
+    for binary in binaries:
+        location[binary] = None
+
+    for binary in binaries:
+        for path in paths:
+            if os.path.exists(path + '/' + binary):
+                location[binary] = path + '/' + binary
+                break
+
+    if location.get('chkconfig', None):
+        CHKCONFIG = location['chkconfig']
+    elif location.get('update-rc.d', None):
+        CHKCONFIG = location['update-rc.d']
+    else:
+        fail_json(dict(failed=True, msg='unable to find chkconfig or update-rc.d binary'))
+    if location.get('service', None):
+        SERVICE = location['service']
+    else:
+        fail_json(dict(failed=True, msg='unable to find service binary'))
+
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
@@ -41,10 +76,19 @@ def _run(cmd):
 
 
 def _do_enable(name, enable):
-    if enable.lower() in ['on', 'true', 'yes']:
-        rc, stdout, stderr = _run("%s %s on" % (CHKCONFIG, name))
-    elif enable.lower() in ['off', 'false', 'no']:
-        rc, stdout, stderr = _run("%s %s off" % (CHKCONFIG, name))
+    # we change argument depending on real binary used
+    # update-rc.d wants enable/disable while
+    # chkconfig wants on/off
+    valid_argument = dict({'on' : 'on', 'off' : 'off'})
+
+    if CHKCONFIG.endswith("update-rc.d"):
+        valid_argument['on'] = "enable"
+        valid_argument['off'] = "disable"
+
+    if enable.lower() in ['on', 'true', 'yes', 'enable']:
+        rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['on']))
+    elif enable.lower() in ['off', 'false', 'no', 'disable']:
+        rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['off']))
     
     return rc, stdout, stderr
     
@@ -53,37 +97,37 @@ args = open(argfile, 'r').read()
 items = shlex.split(args)
 
 if not len(items):
-    print json.dumps(dict(failed=True, msg='this module requires arguments (-a)'))
-    sys.exit(1)
+    fail_json(dict(failed=True, msg='this module requires arguments (-a)'))
 
 params = {}
 for arg in items:
     if "=" not in arg:
-        print json.dumps(dict(failed=True, msg='expected key=value format arguments'))
-        sys.exit(1)
+        fail_json(dict(failed=True, msg='expected key=value format arguments'))
+
     (name, value) = arg.split("=")
     params[name] = value
 
 name = params.get('name', None)
 
 if name is None:
-    print json.dumps(dict(failed=True, msg='missing name'))
-    sys.exit(1)
+    fail_json(dict(failed=True, msg='missing name'))
 
 state = params.get('state', None)
 list_items = params.get('list', None)
 enable = params.get('enable', None)
 
 # running and started are the same
-if state and state not in [ 'running', 'started', 'stopped', 'restarted' ]:
-    print json.dumps(dict(failed=True, msg='invalid value for state'))
-    sys.exit(1)
-if list_items and list_items not in [ 'status' ]:
-    print json.dumps(dict(failed=True, msg='invalid value for list'))
-    sys.exit(1)
-if enable and enable.lower() not in [ 'on', 'off', 'true', 'false', 'yes', 'no' ]:
-    print json.dumps(dict(failed=True, msg='invalid value for enable'))
-    sys.exit(1)
+if state and state.lower() not in [ 'running', 'started', 'stopped', 'restarted' ]:
+    fail_json(dict(failed=True, msg='invalid value for state'))
+if list_items and list_items.lower() not in [ 'status' ]:
+    fail_json(dict(failed=True, msg='invalid value for list'))
+if enable and enable.lower() not in [ 'on', 'off', 'true', 'false', 'yes', 'no', 'enable', 'disable' ]:
+    fail_json(dict(failed=True, msg='invalid value for enable'))
+    
+
+# ===========================================
+# find binaries locations on minion
+_find_binaries()
 
 
 # ===========================================
@@ -142,11 +186,11 @@ if state or enable:
                 rc_state = rc and rc1 and rc2
                 stdout = stdout1 + stdout2
                 stderr = stderr1 + stderr2
-            
+
             out += stdout
             err += stderr
             rc = rc and rc_state
-        
+
     if rc != 0:
 
         print json.dumps({
@@ -180,7 +224,7 @@ elif list_items is not None:
 
 else:
  
-    print json.dumps(dict(failed=True, msg="expected state or list parameters"))    
+    print json.dumps(dict(failed=True, msg="expected state or list parameters"))
 
 
 sys.exit(0)
