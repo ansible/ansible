@@ -145,6 +145,7 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
         self.sudo_pass   = sudo_pass
+        self.sudo_user   = sudo_user
         self.is_playbook = is_playbook
 
         euid = pwd.getpwuid(os.geteuid())[0]
