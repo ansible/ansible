@@ -15,6 +15,9 @@ Ansible Changes By Release
 * file module now correctly returns the mode in octal
 * modules can no longer include stderr output (paramiko limitation from sudo)
 * 'group_names' is now a variable made available to templates
+* add basic support for regular expressions for vars to be used as true false values,
+example added in conditional playbook example
+
 
 0.3 "Baluchitherium" -- April 23, 2012
 
@@ -46,7 +49,6 @@ in kickstarts
 * fetch module for pulling in files from remote hosts
 * command task supports creates=foo for idempotent semantics, won't
 run if file foo already exists 
-
 0.0.2 and 0.0.1
 
 * Initial stages of project

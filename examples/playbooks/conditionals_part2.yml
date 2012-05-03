@@ -26,6 +26,11 @@
      is_favcolor_blue: "'$favcolor' == 'blue'"
      is_centos: "'$facter_operatingsystem' == 'CentOS'"
 
+# You can also use regular expressions provided they are true/false eg
+
+     is_centos6: "re.match('(^6)', '$ansible_distribution_version') != None"
+
+
 # NOTE:
 #
 # facter and ohai variables can be used in only_if statements too
