@@ -11,3 +11,5 @@ ansible*.xml
 .buildinfo
 objects.inv
 .doctrees
+
+.project
