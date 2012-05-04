@@ -116,8 +116,9 @@ class Runner(object):
 
         self.generated_jid = str(random.randint(0, 999999999999))
 
+        self.sudo_user = sudo_user
         self.transport = transport
-        self.connector = ansible.connection.Connection(self, self.transport)
+        self.connector = ansible.connection.Connection(self, self.transport, self.sudo_user)
 
         if inventory is None:
             self.inventory = ansible.inventory.Inventory(host_list)
@@ -144,7 +145,6 @@ class Runner(object):
         self.basedir     = basedir
         self.sudo        = sudo
         self.sudo_pass   = sudo_pass
-        self.sudo_user   = sudo_user
         self.is_playbook = is_playbook
 
         euid = pwd.getpwuid(os.geteuid())[0]
@@ -625,8 +625,8 @@ class Runner(object):
 
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
-
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
+        sudo_user = self.sudo_user
+        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user,sudoable=sudoable)
         err=None
         out=None
         if type(stderr) != str:
