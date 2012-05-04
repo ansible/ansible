@@ -103,16 +103,20 @@ class PlayBook(object):
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.extra_vars       = extra_vars
-
-        self.basedir          = os.path.dirname(playbook)
-        self.playbook         = self._parse_playbook(playbook)
+        self.global_vars      = {}
 
         if override_hosts is not None:
             if type(override_hosts) != list:
                 raise errors.AnsibleError("override hosts must be a list")
+            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
             self.inventory = ansible.inventory.Inventory(override_hosts)
+
         else:
             self.inventory = ansible.inventory.Inventory(host_list)
+            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
+
+        self.basedir          = os.path.dirname(playbook)
+        self.playbook         = self._parse_playbook(playbook)
 
     # *****************************************************
 
@@ -123,7 +127,7 @@ class PlayBook(object):
             play['vars'] = {}
         if type(play['vars']) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
-        vars = {}
+        vars = self.global_vars
         
         # translate a list of vars into a dict
         if type(play['vars']) == list:
@@ -131,7 +135,7 @@ class PlayBook(object):
                 k, v = item.items()[0]
                 vars[k] = v
         else:
-            vars = play['vars']
+            vars.update(play['vars'])
 
         vars_prompt = play.get('vars_prompt', {})
         if type(vars_prompt) != dict:
@@ -151,9 +155,9 @@ class PlayBook(object):
         ''' load tasks included from external files. '''
 
         # include: some.yml a=2 b=3 c=4
-        include_tokens = task['include'].split()
-        path = utils.path_dwim(dirname, include_tokens[0])
         play_vars = self._get_vars(play, dirname)
+        include_tokens = utils.template(task['include'], play_vars, SETUP_CACHE).split()
+        path = utils.path_dwim(dirname, include_tokens[0])
         include_vars = {}
         for i,x in enumerate(include_tokens):
             if x.find("=") != -1:
@@ -161,7 +165,7 @@ class PlayBook(object):
                 include_vars[k] = v
         inject_vars = play_vars.copy()
         inject_vars.update(include_vars)
-        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
+        included = utils.template_from_file(path, inject_vars, SETUP_CACHE, no_engine=True)
         included = utils.parse_yaml(included)
         for x in included:
             if len(include_vars):
