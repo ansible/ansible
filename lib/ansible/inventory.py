@@ -32,11 +32,15 @@ class Inventory(object):
     systems, or a script that will be called with --list or --host.
     """
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST, global_host_vars={}):
 
         self._restriction = None
         self._variables = {}
-
+        self._global_host_vars = global_host_vars # lets us pass in a global var list
+                                                 # that each host gets
+                                                 # after we have set up the inventory
+                                                 # to get all group variables
+        
         if type(host_list) == list:
             self.host_list = host_list
             self.groups = dict(ungrouped=host_list)
@@ -81,7 +85,10 @@ class Inventory(object):
     def get_variables(self, host):
         """ Return the variables associated with this host. """
 
-        variables = {}
+        variables = {
+            'inventory_hostname': host,
+        }
+
         if host in self._variables:
             variables.update(self._variables[host].copy())
 
@@ -95,6 +102,9 @@ class Inventory(object):
 
         return variables
 
+    def get_global_vars(self):
+        return self._global_host_vars
+        
     # *****************************************************
 
     def _parse_from_file(self):
@@ -174,8 +184,23 @@ class Inventory(object):
 
         hosts = []
         groups = {}
-
         ungrouped = []
+
+        
+        # go through once and grab up the global_host_vars from the 'all' group
+        for item in data:
+            if type(item) == dict:
+                if "group" in item and 'all' == item["group"]:
+                    if "vars" in item:
+                        variables = item['vars']
+                        if type(variables) == list:
+                            for variable in variables:
+                                if len(variable) != 1:
+                                    raise errors.AnsibleError("Only one item expected in %s"%(variable))
+                                k, v = variable.items()[0]
+                                self._global_host_vars[k] = utils.template(v, self._global_host_vars, {})
+                        elif type(variables) == dict:
+                            self._global_host_vars.update(variables)
 
         for item in data:
             if type(item) == dict:
@@ -184,7 +209,7 @@ class Inventory(object):
 
                     group_vars = []
                     if "vars" in item:
-                        group_vars = item["vars"]
+                        group_vars.extend(item["vars"])
 
                     group_hosts = []
                     if "hosts" in item:

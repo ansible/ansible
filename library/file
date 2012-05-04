@@ -170,17 +170,14 @@ seuser    = params.get('seuser', None)
 serole    = params.get('serole', None)
 setype    = params.get('setype', None)
 selevel   = params.get('serange', 's0')
-context   = params.get('context', None)
 secontext = [seuser, serole, setype]
 if selinux_mls_enabled():
     secontext.append(selevel)
 
-if context is not None:
-    if context != 'default':
-        fail_json(msg='invalid context: %s' % context)
-    if seuser is not None or serole is not None or setype is not None:
-        fail_json(msg='cannot define context=default and seuser, serole or setype')
-    secontext = selinux_default_context(path)
+default_secontext = selinux_default_context(path)
+for i in range(len(default_secontext)):
+    if i is not None and secontext[i] == '_default':
+        secontext[i] = default_secontext[i]
 
 if state not in [ 'file', 'directory', 'link', 'absent']:
     fail_json(msg='invalid state: %s' % state)
@@ -293,7 +290,7 @@ def rmtree_error(func, path, exc_info):
 # go...
 
 prev_state = 'absent'
-if os.path.exists(path):
+if os.path.lexists(path):
     if os.path.islink(path):
         prev_state = 'link'
     elif os.path.isfile(path):

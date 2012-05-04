@@ -1,0 +1,51 @@
+# ansibple-pull setup 
+#
+# on remote hosts, set up ansible to run periodically using the latest code
+# from a particular checkout, in pull based fashion, inverting Ansible's
+# usual push-based operating mode.  
+#
+# This particular pull based mode is ideal for:
+#
+# (A) massive scale out
+# (B) continual system remediation
+#
+# DO NOT RUN THIS AGAINST YOUR HOSTS WITHOUT CHANGING THE repo_url
+# TO SOMETHING YOU HAVE PERSONALLY VERIFIED
+#
+# 
+---
+
+- hosts: pull_mode_hosts
+  user: root
+
+  vars:
+
+    # schdule is fed directly to cron
+    schedule: '*/15 * * * *'
+
+    # User to run ansible-pull as from cron
+    cron_user: root
+
+    # Directory to where repository will be cloned
+    workdir: /var/lib/ansible/local
+
+    # Repository to check out -- YOU MUST CHANGE THIS
+    # repo must contain a local.yml file at top level
+    #repo_url: git://github.com/sfromm/ansible-playbooks.git
+    repo_url: SUPPLY_YOUR_OWN_GIT_URL_HERE
+
+  tasks:
+
+    - name: Install ansible
+      action: yum pkg=ansible state=installed
+
+    - name: Create local directory to work from
+      action: file path=$workdir state=directory owner=root group=root mode=0751
+
+    - name: Copy ansible inventory file to client
+      action: copy src=/etc/ansible/hosts dest=/etc/ansible/hosts
+              owner=root group=root mode=0644
+
+    - name: Create crontab entry to clone/pull git repository
+      action: template src=templates/ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
+
