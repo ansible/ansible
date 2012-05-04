@@ -50,7 +50,7 @@ class AggregateStats(object):
             elif 'skipped' in value and bool(value['skipped']):
                 self._increment('skipped', host)
             elif 'changed' in value and bool(value['changed']):
-                if not setup:
+                if not setup and not poll:
                     self._increment('changed', host)
                 self._increment('ok', host)
             else:
@@ -98,6 +98,15 @@ class DefaultRunnerCallbacks(object):
     def on_no_hosts(self):
         pass
 
+    def on_async_poll(self, host, res, jid, clock):
+        pass
+
+    def on_async_ok(self, host, res, jid):
+        pass
+
+    def on_async_failed(self, host, res, jid):
+        pass
+
 ########################################################################
 
 class CliRunnerCallbacks(DefaultRunnerCallbacks):
@@ -106,12 +115,17 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def __init__(self):
         # set by /usr/bin/ansible later
         self.options = None 
+        self._async_notified = {}
 
     def on_failed(self, host, res):
-        self._on_any(host,res)
+        invocation = res.get('invocation','')
+        if not invocation.startswith('async_status'):
+            self._on_any(host,res)
 
     def on_ok(self, host, res):
-        self._on_any(host,res)
+        invocation = res.get('invocation','')
+        if not invocation.startswith('async_status'):
+            self._on_any(host,res)
  
     def on_unreachable(self, host, res):
         print "%s | FAILED => %s" % (host, res)
@@ -127,6 +141,19 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_no_hosts(self):
         print >>sys.stderr, "no hosts matched\n"
 
+    def on_async_poll(self, host, res, jid, clock):
+        if jid not in self._async_notified:
+            self._async_notified[jid] = clock + 1
+        if self._async_notified[jid] > clock:
+            self._async_notified[jid] = clock
+            print "<job %s> polling, %ss remaining"%(jid, clock)
+
+    def on_async_ok(self, host, res, jid):
+        print "<job %s> finished on %s => %s"%(jid, host, utils.bigjson(res))
+
+    def on_async_failed(self, host, res, jid):
+        print "<job %s> FAILED on %s => %s"%(jid, host, utils.bigjson(res))
+
     def _on_any(self, host, result):
         print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
@@ -139,6 +166,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def __init__(self, stats):
         self.stats = stats
+        self._async_notified = {}
 
     def on_unreachable(self, host, msg):
         print "fatal: [%s] => %s" % (host, msg)
@@ -167,6 +195,19 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_no_hosts(self):
         print "no hosts matched or remaining\n"
+
+    def on_async_poll(self, host, res, jid, clock):
+        if jid not in self._async_notified:
+            self._async_notified[jid] = clock + 1
+        if self._async_notified[jid] > clock:
+            self._async_notified[jid] = clock
+            print "<job %s> polling, %ss remaining"%(jid, clock)
+
+    def on_async_ok(self, host, res, jid):
+        print "<job %s> finished on %s"%(jid, host)
+
+    def on_async_failed(self, host, res, jid):
+        print "<job %s> FAILED on %s"%(jid, host)
 
 ########################################################################
 
@@ -205,10 +246,3 @@ class PlaybookCallbacks(object):
 
     def on_play_start(self, pattern):
         print "PLAY [%s] ****************************\n" % pattern
-
-    def on_async_confused(self, msg):
-        print msg
-
-    def on_async_poll(self, jid, host, clock, host_result):
-        print utils.async_poll_status(jid, host, clock, host_result)
-

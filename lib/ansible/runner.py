@@ -26,6 +26,7 @@ import Queue
 import random
 import traceback
 import tempfile
+import time
 import base64
 import getpass
 
@@ -759,4 +760,89 @@ class Runner(object):
             results = [ self._executor(h[1]) for h in hosts ]
         return self._partition_results(results)
 
+    def runAsync(self, time_limit):
+        ''' Run this module asynchronously and return a poller. '''
+        self.background = time_limit
+        results = self.run()
 
+        return results, AsyncPoller(results, self)
+
+class AsyncPoller(object):
+    """ Manage asynchronous jobs. """
+
+    def __init__(self, results, runner):
+        self.runner = runner
+
+        self.results = { 'contacted': {}, 'dark': {}}
+        self.hosts_to_poll = []
+        self.completed = False
+
+        # Get job id and which hosts to poll again in the future
+        jid = None
+        for (host, res) in results['contacted'].iteritems():
+            if res.get('started', False):
+                self.hosts_to_poll.append(host)
+                jid = res.get('ansible_job_id', None)
+            else:
+                self.results['contacted'][host] = res
+        for (host, res) in results['dark'].iteritems():
+            self.results['dark'][host] = res
+
+        if jid is None:
+            raise errors.AnsibleError("unexpected error: unable to determine jid")
+        if len(self.hosts_to_poll)==0:
+            raise errors.AnsibleErrot("unexpected error: no hosts to poll")
+        self.jid = jid
+
+    def poll(self):
+        """ Poll the job status.
+
+            Returns the changes in this iteration."""
+        self.runner.module_name = 'async_status'
+        self.runner.module_args = "jid=%s" % self.jid
+        self.runner.pattern = "*"
+        self.runner.background = 0
+
+        self.runner.inventory.restrict_to(self.hosts_to_poll)
+        results = self.runner.run()
+        self.runner.inventory.lift_restriction()
+
+        hosts = []
+        poll_results = { 'contacted': {}, 'dark': {}, 'polled': {}}
+        for (host, res) in results['contacted'].iteritems():
+            if res.get('started',False):
+                hosts.append(host)
+                poll_results['polled'][host] = res
+            else:
+                self.results['contacted'][host] = res
+                poll_results['contacted'][host] = res
+                if 'failed' in res:
+                    self.runner.callbacks.on_async_failed(host, res, self.jid)
+                else:
+                    self.runner.callbacks.on_async_ok(host, res, self.jid)
+        for (host, res) in results['dark'].iteritems():
+            self.results['dark'][host] = res
+            poll_results['dark'][host] = res
+            self.runner.callbacks.on_async_failed(host, res, self.jid)
+
+        self.hosts_to_poll = hosts
+        if len(hosts)==0:
+            self.completed = True
+
+        return poll_results
+
+    def wait(self, seconds, poll_interval):
+        """ Wait a certain time for job completion, check status every poll_interval. """
+        clock = seconds - poll_interval
+        while (clock >= 0 and not self.completed):
+            time.sleep(poll_interval)
+
+            poll_results = self.poll()
+
+            for (host, res) in poll_results['polled'].iteritems():
+                if res.get('started'):
+                    self.runner.callbacks.on_async_poll(host, res, self.jid, clock)
+
+            clock = clock - poll_interval
+
+        return self.results

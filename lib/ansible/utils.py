@@ -170,14 +170,6 @@ def path_dwim(basedir, given):
     else:
         return os.path.join(basedir, given)
 
-def async_poll_status(jid, host, clock, result):
-    if 'finished' in result:
-        return "<job %s> finished on %s" % (jid, host)
-    elif 'failed' in result:
-        return "<job %s> FAILED on %s" % (jid, host)
-    else:
-        return "<job %s> polling on %s, %s remaining" % (jid, host, clock)
-
 def json_loads(data):
     return json.loads(data)
 
