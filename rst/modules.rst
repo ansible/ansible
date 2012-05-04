@@ -184,7 +184,6 @@ All parameters available to the file module are also available when running the 
 
 *dest*:
 
-* absolute path to a file on the filesystem.
 * alias for 'path'. Sets an absolute path to a file on the filesystem when used with 'state=file'. When used with 'state=link', sets the destination to create a symbolic link defined by 'src' key.
 
 *state*:
@@ -206,10 +205,6 @@ All parameters available to the file module are also available when running the 
 *src*:
 
 * path of the file to link to (applies only to 'link' state)
-
-*dest*:
-
-* location where the symlink will be created for 'link' state, also an alias for 'path'.
 
 *seuser*:
 
