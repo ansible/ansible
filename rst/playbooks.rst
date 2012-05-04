@@ -171,7 +171,7 @@ Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
    tasks:
-     - name: make a directory
+     - name: create a virtual host file for $vhost
        action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost
 
 Those same variables are usable in templates, which we'll get to later.
