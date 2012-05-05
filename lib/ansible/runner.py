@@ -156,19 +156,6 @@ class Runner(object):
 
     # *****************************************************
 
-    @classmethod
-    def parse_hosts(cls, host_list, override_hosts=None):
-        ''' parse the host inventory file, returns (hosts, groups) '''
-
-        if override_hosts is None:
-            inventory = ansible.inventory.Inventory(host_list)
-        else:
-            inventory = ansible.inventory.Inventory(override_hosts)
-
-        return inventory.host_list, inventory.groups
-
-    # *****************************************************
-
     def _return_from_module(self, conn, host, result, err, executed=None):
         ''' helper function to handle JSON parsing of results '''
 
