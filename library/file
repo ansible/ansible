@@ -17,10 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import os
 import sys
 import shlex
@@ -35,21 +31,18 @@ try:
 except ImportError:
     HAVE_SELINUX=False
 
-def debug(msg):
-    # ansible ignores stderr, so it's safe to use for debug
-    # print >>sys.stderr, msg
-    pass
+def dump_kv(vars):
+    return " ".join("%s=%s" % (k,v) for (k,v) in vars.items())
 
-def exit_json(rc=0, **kwargs):
+def exit_kv(rc=0, **kwargs):
     if 'path' in kwargs:
-        debug("adding path info")
         add_path_info(kwargs)
-    print json.dumps(kwargs)
+    print dump_kv(kwargs)
     sys.exit(rc)
 
-def fail_json(**kwargs):
+def fail_kv(**kwargs):
     kwargs['failed'] = True
-    exit_json(rc=1, **kwargs)
+    exit_kv(rc=1, **kwargs)
 
 def add_path_info(kwargs):
     path = kwargs['path']
@@ -81,20 +74,16 @@ def selinux_mls_enabled():
     if not HAVE_SELINUX:
         return False
     if selinux.is_selinux_mls_enabled() == 1:
-        debug('selinux mls is enabled')
         return True
     else:
-        debug('selinux mls is disabled')
         return False
 
 def selinux_enabled():
     if not HAVE_SELINUX:
         return False
     if selinux.is_selinux_enabled() == 1:
-        debug('selinux is enabled')
         return True
     else:
-        debug('selinux is disabled')
         return False
 
 # Determine whether we need a placeholder for selevel/mls
@@ -112,13 +101,10 @@ def selinux_default_context(path, mode=0):
     try:
         ret = selinux.matchpathcon(path, mode)
     except OSError:
-        debug("no default context available")
         return context
     if ret[0] == -1:
-        debug("no default context available")
         return context
     context = ret[1].split(':')
-    debug("got default secontext=%s" % ret[1])
     return context
 
 def selinux_context(path):
@@ -128,11 +114,10 @@ def selinux_context(path):
     try:
         ret = selinux.lgetfilecon(path)
     except:
-        fail_json(path=path, msg='failed to retrieve selinux context')
+        fail_kv(path=path, msg='failed to retrieve selinux context')
     if ret[0] == -1:
         return context
     context = ret[1].split(':')
-    debug("got current secontext=%s" % ret[1])
     return context
 
 # ===========================================
@@ -142,7 +127,7 @@ args    = open(argfile, 'r').read()
 items   = shlex.split(args)
 
 if not len(items):
-    fail_json(msg='the module requires arguments -a')
+    fail_kv(msg='the module requires arguments -a')
     sys.exit(1)
 
 params = {}
@@ -180,12 +165,12 @@ for i in range(len(default_secontext)):
         secontext[i] = default_secontext[i]
 
 if state not in [ 'file', 'directory', 'link', 'absent']:
-    fail_json(msg='invalid state: %s' % state)
+    fail_kv(msg='invalid state: %s' % state)
 
 if state == 'link' and (src is None or dest is None):
-    fail_json(msg='src and dest are required for "link" state')
+    fail_kv(msg='src and dest are required for "link" state')
 elif path is None:
-    fail_json(msg='path is required')
+    fail_kv(msg='path is required')
 
 changed = False
 
@@ -201,7 +186,6 @@ def user_and_group(filename):
     gid = st.st_gid
     user = pwd.getpwuid(uid)[0]
     group = grp.getgrgid(gid)[0]
-    debug("got user=%s and group=%s" % (user, group))
     return (user, group)
 
 def set_context_if_different(path, context, changed):
@@ -209,59 +193,52 @@ def set_context_if_different(path, context, changed):
         return changed
     cur_context = selinux_context(path)
     new_context = list(cur_context)
-    debug("current secontext is %s" % ':'.join(cur_context))
     # Iterate over the current context instead of the
     # argument context, which may have selevel.
     for i in range(len(cur_context)):
         if context[i] is not None and context[i] != cur_context[i]:
             new_context[i] = context[i]
-    debug("new secontext is %s" % ':'.join(new_context))
     if cur_context != new_context:
         try:
             rc = selinux.lsetfilecon(path, ':'.join(new_context))
         except OSError:
-            fail_json(path=path, msg='invalid selinux context')
+            fail_kv(path=path, msg='invalid selinux context')
         if rc != 0:
-            fail_json(path=path, msg='set selinux context failed')
+            fail_kv(path=path, msg='set selinux context failed')
         changed = True
     return changed
     
 def set_owner_if_different(path, owner, changed):
    if owner is None:
-       debug('not tweaking owner')
        return changed
    user, group = user_and_group(path)
    if owner != user:
-       debug('setting owner')
        rc = os.system("/bin/chown -R %s %s" % (owner, path))
        if rc != 0:
-           fail_json(path=path, msg='chown failed')
+           fail_kv(path=path, msg='chown failed')
        return True
 
    return changed
     
 def set_group_if_different(path, group, changed):
    if group is None:
-       debug('not tweaking group')
        return changed
    old_user, old_group = user_and_group(path)
    if old_group != group:
-       debug('setting group')
        rc = os.system("/bin/chgrp -R %s %s" % (group, path))
        if rc != 0:
-           fail_json(path=path, msg='chgrp failed')
+           fail_kv(path=path, msg='chgrp failed')
        return True
    return changed
 
 def set_mode_if_different(path, mode, changed):
    if mode is None:
-       debug('not tweaking mode')
        return changed
    try:
        # FIXME: support English modes
        mode = int(mode, 8)
    except Exception, e:
-       fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
+       fail_kv(path=path, msg='mode needs to be something octalish', details=str(e))  
  
    st = os.stat(path)
    prev_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -270,10 +247,9 @@ def set_mode_if_different(path, mode, changed):
        # FIXME: comparison against string above will cause this to be executed
        # every time
        try:
-           debug('setting mode')
            os.chmod(path, mode)
        except Exception, e:
-           fail_json(path=path, msg='chmod failed', details=str(e))
+           fail_kv(path=path, msg='chmod failed', details=str(e))
 
        st = os.stat(path)
        new_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -284,7 +260,7 @@ def set_mode_if_different(path, mode, changed):
 
 
 def rmtree_error(func, path, exc_info):
-   fail_json(path=path, msg='failed to remove directory')
+   fail_kv(path=path, msg='failed to remove directory')
 
 # ===========================================
 # go...
@@ -299,7 +275,6 @@ if os.path.lexists(path):
         prev_state = 'directory'
 
 if prev_state != 'absent' and state == 'absent':
-    debug('requesting absent')
     try:
         if prev_state == 'directory':
             if os.path.islink(path):
@@ -309,21 +284,20 @@ if prev_state != 'absent' and state == 'absent':
         else:
             os.unlink(path)
     except Exception, e:
-        fail_json(path=path, msg=str(e))
-    exit_json(path=path, changed=True)
+        fail_kv(path=path, msg=str(e))
+    exit_kv(path=path, changed=True)
     sys.exit(0)
 
 if prev_state != 'absent' and prev_state != state:
-    fail_json(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
+    fail_kv(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
 
 if prev_state == 'absent' and state == 'absent':
-    exit_json(path=path, changed=False)
+    exit_kv(path=path, changed=False)
 
 if state == 'file':
 
-    debug('requesting file')
     if prev_state == 'absent':
-        fail_json(path=path, msg='file does not exist, use copy or template module to create')
+        fail_kv(path=path, msg='file does not exist, use copy or template module to create')
 
     # set modes owners and context as needed
     changed = set_context_if_different(path, secontext, changed)
@@ -331,11 +305,10 @@ if state == 'file':
     changed = set_group_if_different(path, group, changed)
     changed = set_mode_if_different(path, mode, changed)
 
-    exit_json(path=path, changed=changed)
+    exit_kv(path=path, changed=changed)
 
 elif state == 'directory':
 
-    debug('requesting directory')
     if prev_state == 'absent':
         os.makedirs(path)
         changed = True
@@ -346,7 +319,7 @@ elif state == 'directory':
     changed = set_group_if_different(path, group, changed)
     changed = set_mode_if_different(path, mode, changed)
 
-    exit_json(path=path, changed=changed)
+    exit_kv(path=path, changed=changed)
 
 elif state == 'link':
     
@@ -355,7 +328,7 @@ elif state == 'link':
     else:
         abs_src = os.path.join(os.path.dirname(dest), src)
     if not os.path.exists(abs_src):
-        fail_json(dest=dest, src=src, msg='src file does not exist')
+        fail_kv(dest=dest, src=src, msg='src file does not exist')
    
     if prev_state == 'absent':
         os.symlink(src, dest)
@@ -368,7 +341,7 @@ elif state == 'link':
             os.unlink(dest)
             os.symlink(src, dest)
     else:
-        fail_json(dest=dest, src=src, msg='unexpected position reached')
+        fail_kv(dest=dest, src=src, msg='unexpected position reached')
 
     # set modes owners and context as needed
     changed = set_context_if_different(dest, secontext, changed)
@@ -376,9 +349,9 @@ elif state == 'link':
     changed = set_group_if_different(dest, group, changed)
     changed = set_mode_if_different(dest, mode, changed)
 
-    exit_json(dest=dest, src=src, changed=changed)
+    exit_kv(dest=dest, src=src, changed=changed)
 
 
-fail_json(path=path, msg='unexpected position reached')
+fail_kv(path=path, msg='unexpected position reached')
 sys.exit(0)
 
