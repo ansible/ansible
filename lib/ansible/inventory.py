@@ -18,310 +18,103 @@
 #############################################
 
 import fnmatch
-import os
-import subprocess
 
 import constants as C
+from ansible.inventory_parser import InventoryParser
+from ansible.group import Group
+from ansible.host import Host
 from ansible import errors
 from ansible import utils
 
 class Inventory(object):
-    """ Host inventory for ansible.
-
-    The inventory is either a simple text file with systems and [groups] of 
-    systems, or a script that will be called with --list or --host.
+    """ 
+    Host inventory for ansible.
     """
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, global_host_vars={}):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
+        # FIXME: re-support YAML inventory format
+        # FIXME: re-support external inventory script (?)
+
+        self.groups = []
         self._restriction = None
-        self._variables = {}
-        self._global_host_vars = global_host_vars # lets us pass in a global var list
-                                                 # that each host gets
-                                                 # after we have set up the inventory
-                                                 # to get all group variables
-        
-        if type(host_list) == list:
-            self.host_list = host_list
-            self.groups = dict(ungrouped=host_list)
-            self._is_script = False
-            return
+        if host_list:
+            if type(host_list) == list:
+                self.groups = self._groups_from_override_hosts(host_list)
+            else:
+                self.parser = InventoryParser(filename=host_list)
+                self.groups = self.parser.groups.values()
+                
+    def _groups_from_override_hosts(self, list):
+        # support for playbook's --override-hosts only
+        all = Group(name='all') 
+        for h in list:
+            all.add_host(Host(name=h))
+        return dict(all=all) 
 
-        inventory_file = os.path.expanduser(host_list)
-        if not os.path.exists(inventory_file):
-            raise errors.AnsibleFileNotFound("inventory file not found: %s" % host_list)
+    def _match(self, str, pattern_str):
+        return fnmatch.fnmatch(str, pattern_str)
 
-        self.inventory_file = os.path.abspath(inventory_file)
+    def get_hosts(self, pattern="all"):
+        """ Get all host objects matching the pattern """
+        hosts = {}
+        patterns = pattern.replace(";",":").split(":")
 
-        if os.access(self.inventory_file, os.X_OK):
-            self.host_list, self.groups = self._parse_from_script()
-            self._is_script = True
-        else:
-            self.host_list, self.groups = self._parse_from_file()
-            self._is_script = False
+        for group in self.get_groups():
+             for host in group.get_hosts():
+                 for pat in patterns:
+                     if group.name == pat or pat == 'all' or self._match(host.name, pat):
+                         if not self._restriction:
+                             hosts[host.name] = host
+                         if self._restriction and host.name in self._restriction:
+                             hosts[host.name] = host
+        return sorted(hosts.values(), key=lambda x: x.name)
 
-    # *****************************************************
-    # Public API
+    def get_groups(self):
+        return self.groups
+
+    def get_host(self, hostname):
+        for group in self.groups:
+           for host in group.get_hosts():
+               if hostname == host.name:
+                    return host
+        return None
+
+    def get_group(self, groupname):
+        for group in self.groups:
+            if group.name == groupname:
+                return group
+        return None
+
+    def get_group_variables(self, groupname):
+        group = self.get_group(groupname)
+        if group is None:
+            raise Exception("group not found: %s" % groupname)
+        return group.get_variables()
+
+    def get_variables(self, hostname):
+        host = self.get_host(hostname)
+        if host is None:
+            raise Exception("host not found: %s" % hostname)
+        return host.get_variables()
+
+    def add_group(self, group):
+        self.groups.append(group)
 
     def list_hosts(self, pattern="all"):
-        """ Return a list of hosts [matching the pattern] """
-        if self._restriction is None:
-            host_list = self.host_list
-        else:
-            host_list = [ h for h in self.host_list if h in self._restriction ]
-        return [ h for h in host_list if self._matches(h, pattern) ]
+        """ DEPRECATED: Get all host names matching the pattern """
+        return [ h.name for h in self.get_hosts(pattern) ]
+
+    def list_groups(self):
+        return [ g.name for g in self.groups ] 
 
     def restrict_to(self, restriction):
         """ Restrict list operations to the hosts given in restriction """
-        if type(restriction)!=list:
+        if type(restriction) != list:
             restriction = [ restriction ]
-
         self._restriction = restriction
 
     def lift_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
 
-    def get_variables(self, host):
-        """ Return the variables associated with this host. """
-
-        variables = {
-            'inventory_hostname': host,
-        }
-
-        if host in self._variables:
-            variables.update(self._variables[host].copy())
-
-        if self._is_script:
-            variables.update(self._get_variables_from_script(host))
-
-        variables['group_names'] = []
-        for name,hosts in self.groups.iteritems():
-            if host in hosts:
-                variables['group_names'].append(name)
-
-        return variables
-
-    def get_global_vars(self):
-        return self._global_host_vars
-        
-    # *****************************************************
-
-    def _parse_from_file(self):
-        ''' parse a textual host file '''
-
-        results = []
-        groups = dict(ungrouped=[])
-        lines = file(self.inventory_file).read().split("\n")
-        if "---" in lines:
-            return self._parse_yaml()
-        group_name = 'ungrouped'
-        for item in lines:
-            item = item.lstrip().rstrip()
-            if item.startswith("#"):
-                # ignore commented out lines
-                pass
-            elif item.startswith("["):
-                # looks like a group
-                group_name = item.replace("[","").replace("]","").lstrip().rstrip()
-                groups[group_name] = []
-            elif item != "":
-                # looks like a regular host
-                if ":" in item:
-                    # a port was specified
-                    item, port = item.split(":")
-                    try:
-                        port = int(port)
-                    except ValueError:
-                        raise errors.AnsibleError("SSH port for %s in inventory (%s) should be numerical."%(item, port))
-                    self._set_variable(item, "ansible_ssh_port", port)
-                groups[group_name].append(item)
-                if not item in results:
-                    results.append(item)
-        return (results, groups)
-
-    # *****************************************************
-
-    def _parse_from_script(self):
-        ''' evaluate a script that returns list of hosts by groups '''
-
-        results = []
-        groups = dict(ungrouped=[])
-
-        cmd = [self.inventory_file, '--list']
-
-        try:
-            cmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-            out, err = cmd.communicate()
-        except Exception, e:
-            raise errors.AnsibleError("Failure executing %s to produce host list:\n %s" % (self.inventory_file, str(e)))
-
-        rc = cmd.returncode
-        if rc:
-            raise errors.AnsibleError("%s: %s" % self.inventory_file, err)
-
-        try:
-            groups = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("invalid JSON response from script: %s" % self.inventory_file)
-
-        for (groupname, hostlist) in groups.iteritems():
-            for host in hostlist:
-                if host not in results:
-                    results.append(host)
-        return (results, groups)
-
-    # *****************************************************
-
-    def _parse_yaml(self):
-        """ Load the inventory from a yaml file.
-
-        returns hosts and groups"""
-        data = utils.parse_yaml_from_file(self.inventory_file)
-
-        if type(data) != list:
-            raise errors.AnsibleError("YAML inventory should be a list.")
-
-        hosts = []
-        groups = {}
-        ungrouped = []
-
-        
-        # go through once and grab up the global_host_vars from the 'all' group
-        for item in data:
-            if type(item) == dict:
-                if "group" in item and 'all' == item["group"]:
-                    if "vars" in item:
-                        variables = item['vars']
-                        if type(variables) == list:
-                            for variable in variables:
-                                if len(variable) != 1:
-                                    raise errors.AnsibleError("Only one item expected in %s"%(variable))
-                                k, v = variable.items()[0]
-                                self._global_host_vars[k] = utils.template(v, self._global_host_vars, {})
-                        elif type(variables) == dict:
-                            self._global_host_vars.update(variables)
-
-        for item in data:
-            if type(item) == dict:
-                if "group" in item:
-                    group_name = item["group"]
-
-                    group_vars = []
-                    if "vars" in item:
-                        group_vars.extend(item["vars"])
-
-                    group_hosts = []
-                    if "hosts" in item:
-                        for host in item["hosts"]:
-                            host_name = self._parse_yaml_host(host, group_vars)
-                            group_hosts.append(host_name)
-
-                    groups[group_name] = group_hosts
-                    hosts.extend(group_hosts)
-
-                elif "host" in item:
-                    host_name = self._parse_yaml_host(item)
-                    hosts.append(host_name)
-                    ungrouped.append(host_name)
-            else:
-                host_name = self._parse_yaml_host(item)
-                hosts.append(host_name)
-                ungrouped.append(host_name)
-
-        # filter duplicate hosts
-        output_hosts = []
-        for host in hosts:
-            if host not in output_hosts:
-                output_hosts.append(host)
-
-        if len(ungrouped) > 0 :
-            # hosts can be defined top-level, but also in a group
-            really_ungrouped = []
-            for host in ungrouped:
-                already_grouped = False
-                for name, group_hosts in groups.items():
-                    if host in group_hosts:
-                        already_grouped = True
-                if not already_grouped:
-                    really_ungrouped.append(host)
-            groups["ungrouped"] = really_ungrouped
-
-        return output_hosts, groups
-
-    def _parse_yaml_host(self, item, variables=[]):
-        def set_variables(host, variables):
-            if type(variables) == list:
-                for variable in variables:
-                    if len(variable) != 1:
-                        raise errors.AnsibleError("Only one item expected in %s"%(variable))
-                    k, v = variable.items()[0]
-                    self._set_variable(host, k, v)
-            elif type(variables) == dict:
-                for k, v in variables.iteritems():
-                    self._set_variable(host, k, v)
-
-
-        if type(item) in [str, unicode]:
-            set_variables(item, variables)
-            return item
-        elif type(item) == dict:
-            if "host" in item:
-                host_name = item["host"]
-                set_variables(host_name, variables)
-
-                if "vars" in item:
-                    set_variables(host_name, item["vars"])
-
-                return host_name
-        else:
-            raise errors.AnsibleError("Unknown item in inventory: %s"%(item))
-
-
-    def _get_variables_from_script(self, host):
-        ''' support per system variabes from external variable scripts, see web docs '''
-
-        cmd = [self.inventory_file, '--host', host]
-
-        cmd = subprocess.Popen(cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=False
-        )
-        out, err = cmd.communicate()
-
-        variables = {}
-        try:
-            variables = utils.json_loads(out)
-        except:
-            raise errors.AnsibleError("%s returned invalid result when called with hostname %s" % (
-                self.inventory_file,
-                host
-            ))
-        return variables
-
-    def _set_variable(self, host, key, value):
-        if not host in self._variables:
-            self._variables[host] = {}
-        self._variables[host][key] = value
-
-    def _matches(self, host_name, pattern):
-        ''' returns if a hostname is matched by the pattern '''
-
-        # a pattern is in fnmatch format but more than one pattern
-        # can be strung together with semicolons. ex:
-        #   atlanta-web*.example.com;dc-web*.example.com
-
-        if host_name == '':
-            return False
-        pattern = pattern.replace(";",":")
-        subpatterns = pattern.split(":")
-        for subpattern in subpatterns:
-            if subpattern == 'all':
-                return True
-            if fnmatch.fnmatch(host_name, subpattern):
-                return True
-            elif subpattern in self.groups:
-                if host_name in self.groups[subpattern]:
-                    return True
-        return False

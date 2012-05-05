@@ -108,12 +108,12 @@ class PlayBook(object):
         if override_hosts is not None:
             if type(override_hosts) != list:
                 raise errors.AnsibleError("override hosts must be a list")
-            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
+            self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
             self.inventory = ansible.inventory.Inventory(override_hosts)
 
         else:
             self.inventory = ansible.inventory.Inventory(host_list)
-            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
+            self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
