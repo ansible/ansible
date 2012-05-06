@@ -77,8 +77,8 @@ class Runner(object):
         remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
         sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
         setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
-        callbacks=None, debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER
-        ,module_vars=None, is_playbook=False, inventory=None):
+        callbacks=None, debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
+        module_vars=None, is_playbook=False, inventory=None):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
@@ -626,7 +626,7 @@ class Runner(object):
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
         sudo_user = self.sudo_user
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user,sudoable=sudoable)
+        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
         err=None
         out=None
         if type(stderr) != str:
