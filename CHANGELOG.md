@@ -5,7 +5,6 @@ Ansible Changes By Release
 
 * custom facts provided by the setup module mean no dependency on Ruby, facter, or ohai
 * sudo improvements, now works much more smoothly
-* some support for reading some default settings from the ssh config file (key pairs, ports)
 * OS X support in progress for ansible on the host and clients (modules still TBA)
 * list of hosts in playbooks can be expressed as a YAML list in addition to ; delimited
 * tweaks to SELinux implementation for file module
@@ -15,6 +14,16 @@ Ansible Changes By Release
 * file module now correctly returns the mode in octal
 * modules can no longer include stderr output (paramiko limitation from sudo)
 * 'group_names' is now a variable made available to templates
+* variables in the 'all' section can be used to define other variables based on those values
+* fix for symlink handling in the file module
+* groups and users module takes an optional system=yes|no on creation (default no)
+* async handling improvements
+* service takes an enable=yes|no which works with chkconfig or updates-rc.d as appropriate
+* inventory_hostname variable available that contains the value of the host as ansible knows it
+* service module works better on Ubuntu
+* git module now does resets and such to work more smoothly on updates
+* fix to internals of hacking/test-module development script
+* ansible-pull script and example playbook (extreme scaling, remediation)
 
 0.3 "Baluchitherium" -- April 23, 2012
 

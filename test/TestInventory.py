@@ -3,6 +3,7 @@ import unittest
 
 from ansible.inventory import Inventory
 from ansible.runner import Runner
+# from nose.plugins.skip import SkipTest
 
 class TestInventory(unittest.TestCase):
 
@@ -18,6 +19,14 @@ class TestInventory(unittest.TestCase):
 
     def tearDown(self):
         os.chmod(self.inventory_script, 0644)
+
+    def compare(self, left, right):
+        left = sorted(left)
+        right = sorted(right)
+        print left
+        print right
+        assert left == right
+
 
     ### Simple inventory format tests
 
@@ -35,35 +44,35 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts()
 
         expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_all(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
 
         expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_norse(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("norse")
 
         expected_hosts=['thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_ungrouped(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
         expected_hosts=['jupiter', 'saturn']
-        assert hosts == expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_combined(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("norse:greek")
 
         expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_restrict(self):
         inventory = self.simple_inventory()
@@ -74,17 +83,22 @@ class TestInventory(unittest.TestCase):
         inventory.restrict_to(restricted_hosts)
         hosts = inventory.list_hosts("norse:greek")
 
-        assert hosts == restricted_hosts
+        print "Hosts=%s" % hosts
+        print "Restricted=%s" % restricted_hosts
+        assert sorted(hosts) == sorted(restricted_hosts)
 
         inventory.lift_restriction()
         hosts = inventory.list_hosts("norse:greek")
 
-        assert hosts == expected_hosts
+        print hosts
+        print expected_hosts
+        assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_vars(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
 
+        print vars
         assert vars == {'group_names': ['norse'],
                         'inventory_hostname': 'thor'}
 
@@ -92,9 +106,12 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('hera')
 
-        assert vars == {'ansible_ssh_port': 3000,
+        print vars
+        expected = {'ansible_ssh_port': 3000,
                         'group_names': ['greek'],
                         'inventory_hostname': 'hera'}
+        print expected
+        assert vars == expected
 
     ### Inventory API tests
 
@@ -149,6 +166,8 @@ class TestInventory(unittest.TestCase):
         inventory = self.script_inventory()
         vars = inventory.get_variables('thor')
 
+        print "VARS=%s" % vars
+
         assert vars == {'hammer':True,
                         'group_names': ['norse'],
                         'inventory_hostname': 'thor'}
@@ -160,35 +179,35 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts()
         print hosts
         expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        self.compare(hosts, expected_hosts)
 
     def test_yaml_all(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts('all')
 
         expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        self.compare(hosts, expected_hosts)
 
     def test_yaml_norse(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("norse")
 
         expected_hosts=['thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        self.compare(hosts, expected_hosts)
 
     def test_simple_ungrouped(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter']
-        assert hosts == expected_hosts
+        expected_hosts=['jupiter','zeus']
+        self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("norse:greek")
 
         expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
+        self.compare(hosts, expected_hosts)
 
     def test_yaml_restrict(self):
         inventory = self.yaml_inventory()
@@ -199,17 +218,16 @@ class TestInventory(unittest.TestCase):
         inventory.restrict_to(restricted_hosts)
         hosts = inventory.list_hosts("norse:greek")
 
-        assert hosts == restricted_hosts
+        self.compare(hosts, restricted_hosts)
 
         inventory.lift_restriction()
         hosts = inventory.list_hosts("norse:greek")
 
-        assert hosts == expected_hosts
+        self.compare(hosts, expected_hosts)
 
     def test_yaml_vars(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('thor')
-        print vars
         assert vars == {'group_names': ['norse'],
                         'hammer':True,
                         'inventory_hostname': 'thor'}
@@ -221,6 +239,7 @@ class TestInventory(unittest.TestCase):
         vars["hammer"] = False
 
         vars = inventory.get_variables('thor')
+        print vars
         assert vars == {'hammer':True,
                         'inventory_hostname': 'thor',
                         'group_names': ['norse']}
@@ -229,6 +248,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('saturn')
 
+        print vars
         assert vars == {'inventory_hostname': 'saturn',
                         'moon': 'titan',
                         'moon2': 'enceladus',
@@ -238,6 +258,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('hera')
 
+        print vars
         assert vars == {'ansible_ssh_port': 3000,
                         'inventory_hostname': 'hera',
                         'ntp_server': 'olympus.example.com',
@@ -250,25 +271,3 @@ class TestInventory(unittest.TestCase):
         assert 'group_names' in vars
         assert sorted(vars['group_names']) == [ 'norse', 'ruler' ]
 
-    ### Test Runner class method
-
-    def test_class_method(self):
-        hosts, groups = Runner.parse_hosts(self.inventory_file)
-
-        expected_hosts = ['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        assert hosts == expected_hosts
-
-        expected_groups= {
-            'ungrouped': ['jupiter', 'saturn'],
-            'greek': ['zeus', 'hera', 'poseidon'],
-            'norse': ['thor', 'odin', 'loki']
-        }
-        assert groups == expected_groups
-
-    def test_class_override(self):
-        override_hosts = ['thor', 'odin']
-        hosts, groups = Runner.parse_hosts(self.inventory_file, override_hosts)
-
-        assert hosts == override_hosts
-
-        assert groups == { 'ungrouped': override_hosts }
