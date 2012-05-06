@@ -108,7 +108,6 @@ class TestInventory(unittest.TestCase):
     ### Inventory API tests
 
     def test_script(self):
-        raise SkipTest
         inventory = self.script_inventory()
         hosts = inventory.list_hosts()
 
@@ -119,7 +118,6 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_all(self):
-        raise SkipTest
         inventory = self.script_inventory()
         hosts = inventory.list_hosts('all')
 
@@ -127,7 +125,6 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_norse(self):
-        raise SkipTest
         inventory = self.script_inventory()
         hosts = inventory.list_hosts("norse")
 
@@ -135,7 +132,6 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_combined(self):
-        raise SkipTest
         inventory = self.script_inventory()
         hosts = inventory.list_hosts("norse:greek")
 
@@ -143,7 +139,6 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_restrict(self):
-        raise SkipTest
         inventory = self.script_inventory()
 
         restricted_hosts = ['hera', 'poseidon', 'thor']
@@ -160,9 +155,10 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_vars(self):
-        raise SkipTest
         inventory = self.script_inventory()
         vars = inventory.get_variables('thor')
+
+        print "VARS=%s" % vars
 
         assert vars == {'hammer':True,
                         'group_names': ['norse'],

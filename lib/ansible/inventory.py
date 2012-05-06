@@ -18,9 +18,12 @@
 #############################################
 
 import fnmatch
+import os
 
 import constants as C
+import subprocess
 from ansible.inventory_parser import InventoryParser
+from ansible.inventory_script import InventoryScript
 from ansible.group import Group
 from ansible.host import Host
 from ansible import errors
@@ -36,11 +39,18 @@ class Inventory(object):
         # FIXME: re-support YAML inventory format
         # FIXME: re-support external inventory script (?)
 
+        self.host_list = host_list
         self.groups = []
         self._restriction = None
+        self._is_script = False
+
         if host_list:
             if type(host_list) == list:
                 self.groups = self._groups_from_override_hosts(host_list)
+            elif os.access(host_list, os.X_OK):
+                self._is_script = True
+                self.parser = InventoryScript(filename=host_list)
+                self.groups = self.parser.groups.values()
             else:
                 self.parser = InventoryParser(filename=host_list)
                 self.groups = self.parser.groups.values()
@@ -93,6 +103,22 @@ class Inventory(object):
         return group.get_variables()
 
     def get_variables(self, hostname):
+
+        if self._is_script:
+            # TODO: move this to inventory_script.py 
+            host = self.get_host(hostname)
+            cmd = subprocess.Popen(
+                [self.host_list,"--host",hostname], 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE
+            )
+            (out, err) = cmd.communicate()
+            results = utils.parse_json(out)
+            results['inventory_hostname'] = hostname
+            groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
+            results['group_names'] = groups
+            return results
+
         host = self.get_host(hostname)
         if host is None:
             raise Exception("host not found: %s" % hostname)
