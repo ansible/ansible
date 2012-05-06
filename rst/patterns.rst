@@ -9,10 +9,10 @@ Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. _inventoryformat:
 
-Basic Inventory File Format
-+++++++++++++++++++++++++++
+Hosts and Groups
+++++++++++++++++
 
-The format for /etc/ansible/hosts looks like this::
+The format for /etc/ansible/hosts is an INI format and looks like this::
 
     mail.example.com
 
@@ -29,7 +29,7 @@ The things in brackets are group names. You don't have to have them,
 but they are useful.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  This requires Ansible 0.3 (integration branch)::
+after the hostname with a colon.  
 
     four.example.com:5309
 
@@ -44,7 +44,7 @@ Such as::
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
-Within :doc:`playbooks`, these patterns can also be used, for even greater purposes.
+Within :doc:`playbooks`, these patterns can be used for even greater purposes.
 
 Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory file to talk to.
 This is done by designating particular host names or groups of hosts.
@@ -78,22 +78,65 @@ It's also ok to mix wildcard patterns and groups at the same time::
     one*.com:dbservers
 
 .. note::
-    It is not possible to target a host not in the inventory file.   This is a safety feature.
+    It is not possible to target a host not in the inventory file, unless using playbooks with --override-hosts.  More on that later.  This is a safety feature.
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
+
+Host Variables
+++++++++++++++
+
+Using the 0.4 branch of Ansible, it is easy to assign variables to hosts that will be used
+later in playbooks::
+ 
+   [atlanta]
+   host1 http_port=80 maxRequestsPerChild=808
+   host2 http_port=303 maxRequestsPerChild=909
+
+
+Group Variables
++++++++++++++++
+
+Using the 0.4 branch of Ansible, variables can also be applied to an entire group at once::
+
+   [atlanta]
+   host1
+   host2
+
+   [atlanta:vars]
+   ntp_server=ntp.atlanta.example.com
+   proxy=proxy.atlanta.example.com
+
+Groups of Groups
+++++++++++++++++
+
+Using the 0.4 branch of Ansible, it is possible to make groups of groups::
+
+   [atlanta]
+   host1
+   host2
+
+   [raleigh]
+   host2
+   host3
+
+   [southeast:children]
+   alpha
+   beta
+
+   [southeast:vars]
+   some_server=foo.southeast.example.com
+
+   [usa:children]
+   southeast
+   northeast
+   southwest
+   southeast
 
 YAML Inventory Format
 +++++++++++++++++++++
 
-(temporary message: This features requires the master branch of Ansible, 0.3, and is currently
-disabled on 0.4 (devel), pending some upgrades.  It will be back in 0.4 soon, along with the ability
-to assign variables more simply, even without the YAML inventory format, which will result in this
-section being rewritten and clarified)
-
-Once you read about playbooks you'll quickly see how useful it will be to assign particular variables
-to particular hosts and groups of hosts.  While the default INI-style host format doesn't allow this,
-switching to the YAML inventory format can add some compelling capabilities.  Just replace your INI
-style file with a YAML one.::
+For people using 0.3, or those that prefer to use it, the inventory file can also be expressed in
+YAML::
 
     ---
     
@@ -131,11 +174,6 @@ style file with a YAML one.::
         - asdf: 1234
 
 Tip: Be sure to start your YAML file with the YAML record designator ``---``.
-
-NOTE: variables specified in playbooks will override variables specified
-in the host file.  Further, if a host is in multiple groups, currently, the
-variables set by the last loaded group will win over variables set in other
-groups.  This behavior may be refined in future releases.
 
 .. seealso::
 
