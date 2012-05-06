@@ -77,8 +77,8 @@ class Runner(object):
         remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
         sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
         setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
-        callbacks=None, debug=False, sudo=False, module_vars=None, 
-        is_playbook=False, inventory=None):
+        callbacks=None, debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER
+        ,module_vars=None, is_playbook=False, inventory=None):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
@@ -91,6 +91,7 @@ class Runner(object):
         remote_user  : connect as this remote username
         remote_pass  : supply this password (if not using keys)
         remote_port  : use this default remote port (if not set by the inventory system)
+        sudo_user    : If you want to sudo to a user other than root.
         sudo_pass    : sudo password if using sudo and sudo requires a password
         background   : run asynchronously with a cap of this many # of seconds (if not 0)
         basedir      : paths used by modules if not absolute are relative to here
@@ -115,8 +116,9 @@ class Runner(object):
 
         self.generated_jid = str(random.randint(0, 999999999999))
 
+        self.sudo_user = sudo_user
         self.transport = transport
-        self.connector = ansible.connection.Connection(self, self.transport)
+        self.connector = ansible.connection.Connection(self, self.transport, self.sudo_user)
 
         if inventory is None:
             self.inventory = ansible.inventory.Inventory(host_list)
@@ -623,8 +625,8 @@ class Runner(object):
 
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
-
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
+        sudo_user = self.sudo_user
+        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user,sudoable=sudoable)
         err=None
         out=None
         if type(stderr) != str:

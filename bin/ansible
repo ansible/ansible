@@ -52,7 +52,8 @@ class Cli(object):
         parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME, 
             default=C.DEFAULT_MODULE_NAME)
-
+        parser.add_option('-U','--sudo_user', dest='sudo_user', help='desired sudo user',
+            default=C.DEFAULT_SUDO_USER)
         options, args = parser.parse_args()
         self.callbacks.options = options        
 
@@ -76,6 +77,7 @@ class Cli(object):
         
         sshpass = None
         sudopass = None
+        sudouser = options.sudo_user
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
         if options.ask_sudo_pass:
@@ -92,7 +94,7 @@ class Cli(object):
             forks=options.forks, 
             pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
-            sudo_pass=sudopass,
+            sudo_pass=sudopass,sudo_user=options.sudo_user,
             transport=options.connection, debug=options.debug
         )
 
