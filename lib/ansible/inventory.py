@@ -23,6 +23,7 @@ import os
 import constants as C
 import subprocess
 from ansible.inventory_parser import InventoryParser
+from ansible.inventory_parser_yaml import InventoryParserYaml
 from ansible.inventory_script import InventoryScript
 from ansible.group import Group
 from ansible.host import Host
@@ -35,9 +36,6 @@ class Inventory(object):
     """
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
-
-        # FIXME: re-support YAML inventory format
-        # FIXME: re-support external inventory script (?)
 
         self.host_list = host_list
         self.groups = []
@@ -52,9 +50,14 @@ class Inventory(object):
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
-                self.parser = InventoryParser(filename=host_list)
-                self.groups = self.parser.groups.values()
-                
+                data = file(host_list).read()
+                if not data.startswith("---"):
+                    self.parser = InventoryParser(filename=host_list)
+                    self.groups = self.parser.groups.values()
+                else:         
+                    self.parser = InventoryParserYaml(filename=host_list)
+                    self.groups = self.parser.groups.values()
+  
     def _groups_from_override_hosts(self, list):
         # support for playbook's --override-hosts only
         all = Group(name='all') 
