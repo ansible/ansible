@@ -138,9 +138,9 @@ status = status_stdout + status_stderr
 
 
 running = False
-if status_stdout.find("not running") != -1:
+if status_stdout.find("stopped") != -1 or rc == 3:
     running = False
-elif status_stdout.find("running") != -1:
+elif status_stdout.find("running") != -1 or rc == 0:
     running = True
 elif name == 'iptables' and status_stdout.find("ACCEPT") != -1:
     # iptables status command output is lame
@@ -165,7 +165,7 @@ if state or enable:
         # ===========================================
         # determine if we are going to change anything
 
-        if not running and state == "started":
+        if not running and state in ("started", "running"):
             changed = True
         elif running and state == "stopped":
             changed = True
@@ -183,13 +183,13 @@ if state or enable:
             elif state == 'restarted':
                 rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
                 rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
-                rc_state = rc and rc1 and rc2
+                rc_state = rc + rc1 + rc2
                 stdout = stdout1 + stdout2
                 stderr = stderr1 + stderr2
 
             out += stdout
             err += stderr
-            rc = rc and rc_state
+            rc = rc + rc_state
 
     if rc != 0:
 
