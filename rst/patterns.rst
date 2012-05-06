@@ -120,8 +120,8 @@ Using the 0.4 branch of Ansible, it is possible to make groups of groups::
    host3
 
    [southeast:children]
-   alpha
-   beta
+   atlanta
+   raleigh
 
    [southeast:vars]
    some_server=foo.southeast.example.com
