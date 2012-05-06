@@ -146,8 +146,11 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">The Inventory File, Patterns, and Groups</a><ul>
-<li><a class="reference internal" href="#basic-inventory-file-format">Basic Inventory File Format</a></li>
+<li><a class="reference internal" href="#hosts-and-groups">Hosts and Groups</a></li>
 <li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
+<li><a class="reference internal" href="#host-variables">Host Variables</a></li>
+<li><a class="reference internal" href="#group-variables">Group Variables</a></li>
+<li><a class="reference internal" href="#groups-of-groups">Groups of Groups</a></li>
 <li><a class="reference internal" href="#yaml-inventory-format">YAML Inventory Format</a></li>
 </ul>
 </li>
@@ -181,9 +184,9 @@ s.parentNode.insertBefore(ga, s);
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
-<div class="section" id="basic-inventory-file-format">
-<span id="inventoryformat"></span><h2>Basic Inventory File Format<a class="headerlink" href="#basic-inventory-file-format" title="Permalink to this headline">¶</a></h2>
-<p>The format for /etc/ansible/hosts looks like this:</p>
+<div class="section" id="hosts-and-groups">
+<span id="inventoryformat"></span><h2>Hosts and Groups<a class="headerlink" href="#hosts-and-groups" title="Permalink to this headline">¶</a></h2>
+<p>The format for /etc/ansible/hosts is an INI format and looks like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 
 <span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
@@ -199,9 +202,9 @@ Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
 <p>The things in brackets are group names. You don&#8217;t have to have them,
 but they are useful.</p>
 <p>If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  This requires Ansible 0.3 (integration branch):</p>
-<div class="highlight-python"><pre>four.example.com:5309</pre>
-</div>
+after the hostname with a colon.</p>
+<blockquote>
+<div>four.example.com:5309</div></blockquote>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
@@ -211,7 +214,7 @@ after the hostname with a colon.  This requires Ansible 0.3 (integration branch)
 <p>Such as:</p>
 <div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=restarted"</pre>
 </div>
-<p>Within <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>, these patterns can also be used, for even greater purposes.</p>
+<p>Within <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>, these patterns can be used for even greater purposes.</p>
 <p>Anyway, to use Ansible, you&#8217;ll first need to know how to tell Ansible which hosts in your inventory file to talk to.
 This is done by designating particular host names or groups of hosts.</p>
 <p>The following patterns target all hosts in the inventory file:</p>
@@ -239,20 +242,60 @@ wildcards:</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">It is not possible to target a host not in the inventory file.   This is a safety feature.</p>
+<p class="last">It is not possible to target a host not in the inventory file, unless using playbooks with &#8211;override-hosts.  More on that later.  This is a safety feature.</p>
 </div>
 <p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
 </div>
+<div class="section" id="host-variables">
+<h2>Host Variables<a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
+<p>Using the 0.4 branch of Ansible, it is easy to assign variables to hosts that will be used
+later in playbooks:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1 http_port=80 maxRequestsPerChild=808
+host2 http_port=303 maxRequestsPerChild=909</pre>
+</div>
+</div>
+<div class="section" id="group-variables">
+<h2>Group Variables<a class="headerlink" href="#group-variables" title="Permalink to this headline">¶</a></h2>
+<p>Using the 0.4 branch of Ansible, variables can also be applied to an entire group at once:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1
+host2
+
+[atlanta:vars]
+ntp_server=ntp.atlanta.example.com
+proxy=proxy.atlanta.example.com</pre>
+</div>
+</div>
+<div class="section" id="groups-of-groups">
+<h2>Groups of Groups<a class="headerlink" href="#groups-of-groups" title="Permalink to this headline">¶</a></h2>
+<p>Using the 0.4 branch of Ansible, it is possible to make groups of groups:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1
+host2
+
+[raleigh]
+host2
+host3
+
+[southeast:children]
+alpha
+beta
+
+[southeast:vars]
+some_server=foo.southeast.example.com
+
+[usa:children]
+southeast
+northeast
+southwest
+southeast</pre>
+</div>
+</div>
 <div class="section" id="yaml-inventory-format">
 <h2>YAML Inventory Format<a class="headerlink" href="#yaml-inventory-format" title="Permalink to this headline">¶</a></h2>
-<p>(temporary message: This features requires the master branch of Ansible, 0.3, and is currently
-disabled on 0.4 (devel), pending some upgrades.  It will be back in 0.4 soon, along with the ability
-to assign variables more simply, even without the YAML inventory format, which will result in this
-section being rewritten and clarified)</p>
-<p>Once you read about playbooks you&#8217;ll quickly see how useful it will be to assign particular variables
-to particular hosts and groups of hosts.  While the default INI-style host format doesn&#8217;t allow this,
-switching to the YAML inventory format can add some compelling capabilities.  Just replace your INI
-style file with a YAML one.:</p>
+<p>For people using 0.3, or those that prefer to use it, the inventory file can also be expressed in
+YAML:</p>
 <div class="highlight-python"><pre>---
 
 # some ungrouped hosts, either use the short string form or the "host: " prefix
@@ -289,10 +332,6 @@ style file with a YAML one.:</p>
     - asdf: 1234</pre>
 </div>
 <p>Tip: Be sure to start your YAML file with the YAML record designator <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
-<p>NOTE: variables specified in playbooks will override variables specified
-in the host file.  Further, if a host is in multiple groups, currently, the
-variables set by the last loaded group will win over variables set in other
-groups.  This behavior may be refined in future releases.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
