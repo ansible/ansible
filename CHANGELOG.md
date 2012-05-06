@@ -24,6 +24,9 @@ Ansible Changes By Release
 * git module now does resets and such to work more smoothly on updates
 * fix to internals of hacking/test-module development script
 * ansible-pull script and example playbook (extreme scaling, remediation)
+* service fixes to better detect status using return codes of the service script
+* ansible INI style format can do groups of groups [groupname:children] and group vars [groupname:vars]
+* sudo to a particular user with -U/--sudo-user, or using 'sudo_user: foo' in a playbook
 
 0.3 "Baluchitherium" -- April 23, 2012
 
