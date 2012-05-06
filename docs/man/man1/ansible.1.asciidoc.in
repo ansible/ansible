@@ -101,6 +101,10 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 Use this remote 'USERNAME' instead of root.
 
+*-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
+
+Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
+
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
 Connection type to use.  Possible options are 'paramiko' (SSH) and 'local'.
