@@ -82,10 +82,13 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 
-Advanced Inventory File Format
-++++++++++++++++++++++++++++++
+YAML Inventory Format
++++++++++++++++++++++
 
-(This features requires the integration branch of Ansible, soon to be release 0.3)
+(temporary message: This features requires the master branch of Ansible, 0.3, and is currently
+disabled on 0.4 (devel), pending some upgrades.  It will be back in 0.4 soon, along with the ability
+to assign variables more simply, even without the YAML inventory format, which will result in this
+section being rewritten and clarified)
 
 Once you read about playbooks you'll quickly see how useful it will be to assign particular variables
 to particular hosts and groups of hosts.  While the default INI-style host format doesn't allow this,
