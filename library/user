@@ -162,7 +162,10 @@ def user_mod(user, **kwargs):
         elif key == 'append':
             if kwargs[key] is not None and kwargs[key] == 'yes':
                 if 'groups' in kwargs and kwargs['groups'] is not None:
-                    cmd.append('-a')
+                    defined_groups = kwargs['groups'].split(',')
+                    existing_groups = user_group_membership(user)
+                    if sorted(defined_groups) != sorted(existing_groups):
+                        cmd.append('-a')
     # skip if no changes to be made
     if len(cmd) == 1:
         return False
