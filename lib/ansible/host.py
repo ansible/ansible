@@ -57,6 +57,6 @@ class Host(object):
         results.update(self.vars)
         results['inventory_hostname'] = self.name
         groups = self.get_groups()
-        results['group_names'] = [ g.name for g in groups if g.name != 'all']
+        results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
         return results
 

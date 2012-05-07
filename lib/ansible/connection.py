@@ -44,10 +44,10 @@ class Connection(object):
 
     _LOCALHOSTRE = re.compile(r"^(127.0.0.1|localhost|%s)$" % os.uname()[1])
 
-    def __init__(self, runner, transport):
+    def __init__(self, runner, transport,sudo_user):
         self.runner = runner
         self.transport = transport
-
+        self.sudo_user = sudo_user
     def connect(self, host, port=None):
         conn = None
         if self.transport == 'local' and self._LOCALHOSTRE.search(host):
@@ -126,7 +126,8 @@ class ParamikoConnection(object):
         self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudoable=False):
+    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
+
         ''' run a command on the remote host '''
         bufsize = 4096
         chan = self.ssh.get_transport().open_session()
@@ -146,7 +147,8 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k -p "%s" -- "$SHELL" -c %s' % (prompt, pipes.quote(cmd))
+            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
+                    sudo_user, pipes.quote(cmd))
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
