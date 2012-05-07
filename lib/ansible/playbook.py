@@ -62,7 +62,7 @@ class PlayBook(object):
         runner_callbacks = None,
         stats            = None,
         sudo             = False,
-        sudo_user        = 'root',
+        sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None):
 
         """
