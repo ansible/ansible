@@ -135,14 +135,28 @@ def user_mod(user, **kwargs):
                 cmd.append('-g')
                 cmd.append(kwargs[key])
         elif key == 'groups' and kwargs[key] is not None:
-            defined_groups = kwargs[key].split(',')
-            for g in defined_groups:
+            current_groups = user_group_membership(user)
+            groups = kwargs[key].split(',')
+            for g in groups:
                 if not group_exists(g):
                     fail_json(msg="Group %s does not exist" % (g))
-            existing_groups = user_group_membership(user)
-            if sorted(defined_groups) != sorted(existing_groups):
+            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+            groups_need_mod = False
+
+            if group_diff:
+                if kwargs['append'] is not None and kwargs['append'] == 'yes':
+                    for g in groups:
+                        if g in group_diff:
+                            cmd.append('-a')
+                            groups_need_mod = True
+                else:
+                   debug("groups differ, trigger usemod")
+                   groups_need_mod = True
+
+            if groups_need_mod:
                 cmd.append('-G')
-                cmd.append(kwargs[key])
+                cmd.append(','.join(groups))
+
         elif key == 'comment':
             if kwargs[key] is not None and info[4] != kwargs[key]:
                 cmd.append('-c')
