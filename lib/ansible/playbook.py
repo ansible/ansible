@@ -62,6 +62,7 @@ class PlayBook(object):
         runner_callbacks = None,
         stats            = None,
         sudo             = False,
+        sudo_user        = 'root',
         extra_vars       = None):
 
         """
@@ -102,18 +103,20 @@ class PlayBook(object):
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
+        self.sudo_user        = sudo_user
         self.extra_vars       = extra_vars
         self.global_vars      = {}
 
         if override_hosts is not None:
             if type(override_hosts) != list:
                 raise errors.AnsibleError("override hosts must be a list")
-            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
-            self.inventory = ansible.inventory.Inventory(override_hosts)
+            if not self.inventory._is_script:
+                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
 
         else:
             self.inventory = ansible.inventory.Inventory(host_list)
-            self.global_vars.update(ansible.inventory.Inventory(host_list).get_global_vars())
+            if not self.inventory._is_script:
+                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
@@ -274,7 +277,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_module(self, pattern, module, args, vars, remote_user, 
-        async_seconds, async_poll_interval, only_if, sudo, transport, port):
+        async_seconds, async_poll_interval, only_if, sudo, sudo_user, transport, port):
         ''' run a particular module step in a playbook '''
 
         hosts = [ h for h in self.inventory.list_hosts() if (h not in self.stats.failures) and (h not in self.stats.dark)]
@@ -291,7 +294,7 @@ class PlayBook(object):
             remote_port=port, module_vars=vars,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
-            debug=self.debug, sudo=sudo,
+            debug=self.debug, sudo=sudo, sudo_user=sudo_user,
             transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
@@ -311,7 +314,8 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_task(self, pattern=None, task=None, 
-        remote_user=None, handlers=None, conditional=False, sudo=False, transport=None, port=None):
+        remote_user=None, handlers=None, conditional=False, 
+        sudo=False, sudo_user=None, transport=None, port=None):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # load the module name and parameters from the task entry
@@ -347,7 +351,7 @@ class PlayBook(object):
         # run the task in parallel
         results = self._run_module(pattern, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
-            async_poll_interval, only_if, sudo, transport, port)
+            async_poll_interval, only_if, sudo, sudo_user, transport, port)
 
         # add facts to the global setup cache
         for host, result in results['contacted'].iteritems():
@@ -448,7 +452,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, port, sudo, transport, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, port, sudo, sudo_user, transport, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -473,8 +477,9 @@ class PlayBook(object):
             timeout=self.timeout, remote_user=user,
             remote_pass=self.remote_pass, remote_port=port,
             setup_cache=SETUP_CACHE,
-            callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
-            transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
+            callbacks=self.runner_callbacks, sudo=sudo, sudo_user=sudo_user, 
+            debug=self.debug, transport=transport, 
+            sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -511,16 +516,21 @@ class PlayBook(object):
         user       = pg.get('user', self.remote_user)
         port       = pg.get('port', self.remote_port)
         sudo       = pg.get('sudo', self.sudo)
+        sudo_user  = pg.get('sudo_user', self.sudo_user)
         transport  = pg.get('connection', self.transport)
+
+        # the default sudo user is root, so if you change it, sudo is implied 
+        if sudo_user != 'root':
+           sudo = True
 
         self.callbacks.on_play_start(name)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self._do_setup_step(pattern, vars, user, port, sudo, transport, None)
+        self._do_setup_step(pattern, vars, user, port, sudo, sudo_user, transport, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self._do_setup_step(pattern, vars, user, port, sudo, transport, vars_files)
+            self._do_setup_step(pattern, vars, user, port, sudo, sudo_user, transport, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -530,6 +540,7 @@ class PlayBook(object):
                 handlers=handlers,
                 remote_user=user,
                 sudo=sudo,
+                sudo_user=sudo_user,
                 transport=transport,
                 port=port
             )
@@ -551,6 +562,7 @@ class PlayBook(object):
                    conditional=True,
                    remote_user=user,
                    sudo=sudo,
+                   sudo_user=sudo_user,
                    transport=transport,
                    port=port
                 )
