@@ -88,8 +88,8 @@ class Inventory(object):
 
     def get_host(self, hostname):
         for group in self.groups:
-            for host in group.get_hosts():
-                if hostname == host.name:
+           for host in group.get_hosts():
+               if hostname == host.name:
                     return host
         return None
 
