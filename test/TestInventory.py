@@ -221,11 +221,11 @@ class TestInventory(unittest.TestCase):
         expected_hosts=['thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
-    def test_simple_ungrouped(self):
+    def test_yaml_ungrouped(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter','zeus']
+        expected_hosts=['jupiter']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):
@@ -257,6 +257,14 @@ class TestInventory(unittest.TestCase):
         assert vars == {'group_names': ['norse'],
                         'hammer':True,
                         'inventory_hostname': 'thor'}
+
+    def test_yaml_list_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('zeus')
+        assert vars == {'ansible_ssh_port': 3001,
+                        'group_names': ['greek', 'ruler'],
+                        'inventory_hostname': 'zeus',
+                        'ntp_server': 'olympus.example.com'}
 
     def test_yaml_change_vars(self):
         inventory = self.yaml_inventory()

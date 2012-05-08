@@ -54,12 +54,12 @@ class InventoryParser(object):
 
     def _parse_base_groups(self):
 
-        undefined = Group(name='undefined')
+        ungrouped = Group(name='ungrouped')
         all = Group(name='all')
-        all.add_child_group(undefined)
+        all.add_child_group(ungrouped)
 
-        self.groups = dict(all=all, undefined=undefined)
-        active_group_name = 'undefined'
+        self.groups = dict(all=all, ungrouped=ungrouped)
+        active_group_name = 'ungrouped'
 
         for line in self.lines:
             if line.startswith("["):
