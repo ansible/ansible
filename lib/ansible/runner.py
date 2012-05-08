@@ -433,7 +433,6 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
-        print source
         source = utils.template(source, inject, self.setup_cache)
 
         # files are saved in dest dir, with a subdir for each host, then the filename
@@ -513,7 +512,6 @@ class Runner(object):
 
         source = utils.template(source, inject, self.setup_cache)
 
-        print source
         (host, ok, data, err) = (None, None, None, None)
 
         if not self.is_playbook:
@@ -545,7 +543,6 @@ class Runner(object):
 
         # template the source data locally
         source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
-        print source_data
         resultant = ''            
         try:
             resultant = utils.template(source_data, inject, self.setup_cache)
