@@ -6,7 +6,9 @@
     moon: titan
     moon2: enceladus
 
-- zeus
+- host: zeus
+  vars:
+  - ansible_ssh_port: 3001
 
 - group: greek
   hosts:
