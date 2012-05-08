@@ -50,6 +50,10 @@ def main(args):
         sshpass = getpass.getpass(prompt="SSH password: ")
     if options.ask_sudo_pass:
         sudopass = getpass.getpass(prompt="sudo password: ")
+        options.sudo = True
+    if options.sudo_user:
+        options.sudo = True
+    options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     override_hosts = None
     if options.override_hosts:
         override_hosts = options.override_hosts.split(",")
@@ -77,6 +81,7 @@ def main(args):
             timeout=options.timeout, 
             transport=options.connection,
             sudo=options.sudo,
+            sudo_user=options.sudo_user,
             sudo_pass=sudopass,
             extra_vars=extra_vars
         )

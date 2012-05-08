@@ -11,9 +11,10 @@ class TestInventory(unittest.TestCase):
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
 
-        self.inventory_file = os.path.join(self.test_dir, 'simple_hosts')
-        self.inventory_script = os.path.join(self.test_dir, 'inventory_api.py')
-        self.inventory_yaml = os.path.join(self.test_dir, 'yaml_hosts')
+        self.inventory_file         = os.path.join(self.test_dir, 'simple_hosts')
+        self.complex_inventory_file = os.path.join(self.test_dir, 'complex_hosts')
+        self.inventory_script       = os.path.join(self.test_dir, 'inventory_api.py')
+        self.inventory_yaml         = os.path.join(self.test_dir, 'yaml_hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -28,16 +29,20 @@ class TestInventory(unittest.TestCase):
         assert left == right
 
 
-    ### Simple inventory format tests
-
     def simple_inventory(self):
-        return Inventory( self.inventory_file )
+        return Inventory(self.inventory_file)
 
     def script_inventory(self):
-        return Inventory( self.inventory_script )
+        return Inventory(self.inventory_script)
 
     def yaml_inventory(self):
-        return Inventory( self.inventory_yaml )
+        return Inventory(self.inventory_yaml)
+
+    def complex_inventory(self):
+        return Inventory(self.complex_inventory_file)
+
+    #####################################
+    ### Simple inventory format tests
 
     def test_simple(self):
         inventory = self.simple_inventory()
@@ -113,6 +118,27 @@ class TestInventory(unittest.TestCase):
         print expected
         assert vars == expected
 
+    ###################################################
+    ### INI file advanced tests
+
+    def test_complex_vars(self):
+        inventory = self.complex_inventory()
+
+        vars = inventory.get_variables('rtp_a')
+        print vars
+
+        expected = dict(
+            a='1', b='2', c='3', d='100002', 
+            inventory_hostname='rtp_a', 
+            group_names=[ 'eastcoast', 'nc', 'rtp', 'us' ]
+        )
+        print vars
+        print expected
+        assert vars == expected
+
+
+
+    ###################################################
     ### Inventory API tests
 
     def test_script(self):
@@ -195,11 +221,11 @@ class TestInventory(unittest.TestCase):
         expected_hosts=['thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
-    def test_simple_ungrouped(self):
+    def test_yaml_ungrouped(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter','zeus']
+        expected_hosts=['jupiter']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):
@@ -231,6 +257,14 @@ class TestInventory(unittest.TestCase):
         assert vars == {'group_names': ['norse'],
                         'hammer':True,
                         'inventory_hostname': 'thor'}
+
+    def test_yaml_list_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('zeus')
+        assert vars == {'ansible_ssh_port': 3001,
+                        'group_names': ['greek', 'ruler'],
+                        'inventory_hostname': 'zeus',
+                        'ntp_server': 'olympus.example.com'}
 
     def test_yaml_change_vars(self):
         inventory = self.yaml_inventory()
