@@ -22,4 +22,4 @@
 #    facter
 #    ruby-json
 
-/usr/bin/facter --json
+/usr/bin/facter --json 2>/dev/null
