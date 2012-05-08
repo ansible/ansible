@@ -71,12 +71,6 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
 
-*-O* 'OVERRIDE_HOSTS', *--override-hosts=*'OVERRIDE_HOSTS'::
-
-Ignore the inventory file and run the playbook against only these hosts.  "hosts:" line
-in playbook should be set to 'all' when using this option.
-
-
 *-s*, *--sudo*::
 
 Force all plays to use sudo, even if not marked as such.
