@@ -34,7 +34,7 @@
 
   # we could also have done something like:
   # - include: wordpress.yml user=timmy
-  # and had access to the template variable {{ user }} in the 
+  # and had access to the template variable $user in the 
   # included file, if we wanted to.  Variables from vars
   # and vars_files are also available inside include files
 

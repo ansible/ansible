@@ -13,13 +13,13 @@
     first_available_file:
 
        # first see if we have a file for this specific host
-       - /srv/whatever/{{ ansible_hostname }}.conf
+       - /srv/whatever/${ansible_hostname}.conf
 
        # next try to load something like CentOS6.2.conf
-       - /srv/whatever/{{ ansible_distribution }}{{ ansible_distribution_version }}.conf
+       - /srv/whatever/${ansible_distribution}${ansible_distribution_version}.conf
 
        # next see if there's a CentOS.conf
-       - /srv/whatever/{{ ansible_distribution }}.conf
+       - /srv/whatever/${ansible_distribution}.conf
 
        # finally give up and just use something generic
        - /srv/whatever/default
