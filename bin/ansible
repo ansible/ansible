@@ -52,8 +52,6 @@ class Cli(object):
         parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME, 
             default=C.DEFAULT_MODULE_NAME)
-        parser.add_option('-U','--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
-            default=C.DEFAULT_SUDO_USER)
         options, args = parser.parse_args()
         self.callbacks.options = options        
 
@@ -72,19 +70,19 @@ class Cli(object):
         inventory_manager = inventory.Inventory(options.inventory)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-             print >>sys.stderr, "No hosts matched"
-             sys.exit(1) 
+            print >>sys.stderr, "No hosts matched"
+            sys.exit(1)
         
         sshpass = None
         sudopass = None
-        sudouser = options.sudo_user
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
         if options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
+            options.sudo = True
         if options.sudo_user:
-            options.sudo=True
-
+            options.sudo = True
+        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
