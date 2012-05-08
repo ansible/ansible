@@ -25,9 +25,13 @@ import os
 import pwd
 import grp
 import shlex
-import spwd
 import subprocess
 import sys
+try:
+    import spwd
+    HAVE_SPWD=True
+except:
+    HAVE_SPWD=False
 
 USERADD = "/usr/sbin/useradd"
 USERMOD = "/usr/sbin/usermod"
@@ -119,6 +123,10 @@ def user_add(user, **kwargs):
     else:
         return False
 
+"""
+Without spwd, we would have to resort to reading /etc/shadow
+to get the encrypted string.  For now, punt on idempotent password changes.
+"""
 def user_mod(user, **kwargs):
     cmd = [USERMOD]
     info = user_info(user)
@@ -227,10 +235,12 @@ def user_info(user):
         return False
     try:
         info = get_pwd_info(user)
-        sinfo = spwd.getspnam(user)
+        if HAVE_SPWD:
+            sinfo = spwd.getspnam(user)
     except KeyError:
         return False
-    info[1] = sinfo[1]
+    if HAVE_SPWD:
+        info[1] = sinfo[1]
     return info
 
 # ===========================================
