@@ -27,6 +27,12 @@ Ansible Changes By Release
 * service fixes to better detect status using return codes of the service script
 * ansible INI style format can do groups of groups [groupname:children] and group vars [groupname:vars]
 * sudo to a particular user with -U/--sudo-user, or using 'sudo_user: foo' in a playbook
+* internal inventory API now more object oriented, parsers decoupled
+* --override-hosts removed (see following change...)
+* able to pass host specifier or group name in to "hosts:" with --extra-vars
+* git module supports branch=
+* unicode now ok in templates (assumes utf8)
+* modules all now log to syslog
 
 0.3 "Baluchitherium" -- April 23, 2012
 
