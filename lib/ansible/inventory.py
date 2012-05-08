@@ -37,9 +37,8 @@ class Inventory(object):
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
-        # the host file file or script path
-        if type(host_list) not in [ str, unicode ]:
-            raise Exception("host list must be a path")
+        # the host file file, or script path, or list of hosts
+        # if a list, inventory data will NOT be loaded
         self.host_list = host_list
 
         # the inventory object holds a list of groups
@@ -51,7 +50,16 @@ class Inventory(object):
         # whether the inventory file is a script
         self._is_script = False
 
-        if os.access(host_list, os.X_OK):
+        if type(host_list) == list:
+            all = Group('all')
+            self.groups = [ all ]
+            for x in host_list:
+                if x.find(":") != -1:
+                    tokens = x.split(":",1)
+                    all.add_host(Host(tokens[0], tokens[1]))
+                else:
+                    all.add_host(Host(x))
+        elif os.access(host_list, os.X_OK):
             self._is_script = True
             self.parser = InventoryScript(filename=host_list)
             self.groups = self.parser.groups.values()
