@@ -221,11 +221,11 @@ class TestInventory(unittest.TestCase):
         expected_hosts=['thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
-    def test_simple_ungrouped(self):
+    def test_yaml_ungrouped(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter','zeus']
+        expected_hosts=['jupiter']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):
