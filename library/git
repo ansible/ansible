@@ -155,7 +155,7 @@ def pull(repo, dest, branch):
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    return cmd.communicate()
 
-def switchver(version, dest, branch):
+def switchver(version, dest):
    ''' once pulled, switch to a particular SHA or tag '''
    os.chdir(dest)
    if version != 'HEAD':
@@ -163,7 +163,6 @@ def switchver(version, dest, branch):
    else:
       # is there a better way to do this?
       cmd = "git rebase origin"
-
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    (out, err) = cmd.communicate()
    return (out, err)
@@ -195,7 +194,7 @@ if out.find('error') != -1:
 # switch to version specified regardless of whether
 # we cloned or pulled
 
-(out, err) = switchver(version, dest, branch)
+(out, err) = switchver(version, dest)
 if err.find('error') != -1:
    fail_json(out=out, err=err)
 
