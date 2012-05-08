@@ -258,6 +258,14 @@ class TestInventory(unittest.TestCase):
                         'hammer':True,
                         'inventory_hostname': 'thor'}
 
+    def test_yaml_list_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('zeus')
+        assert vars == {'ansible_ssh_port': 3001,
+                        'group_names': ['greek', 'ruler'],
+                        'inventory_hostname': 'zeus',
+                        'ntp_server': 'olympus.example.com'}
+
     def test_yaml_change_vars(self):
         inventory = self.yaml_inventory()
         vars = inventory.get_variables('thor')
