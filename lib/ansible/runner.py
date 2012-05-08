@@ -430,9 +430,17 @@ class Runner(object):
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        print source
+        source = utils.template(source, inject, self.setup_cache)
+
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
+
+        # apply templating to dest argument
+        dest = utils.template(dest, inject, self.setup_cache)
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
