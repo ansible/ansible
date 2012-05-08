@@ -493,6 +493,7 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern = pg.get('hosts',None)
+        pattern = utils.template(pattern, self.extra_vars, {})
         name = pg.get('name', pattern)
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
