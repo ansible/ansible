@@ -63,7 +63,12 @@ class InventoryParserYaml(object):
 
             elif type(item) == dict and 'host' in item:
                 host = self._make_host(item['host'])
-                for (k,v) in item.get('vars',{}).items():
+                vars = item.get('vars', {})
+                if type(vars)==list:
+                    varlist, vars = vars, {}
+                    for subitem in varlist:
+                        vars.update(subitem)
+                for (k,v) in vars.items():
                    host.set_variable(k,v)
 
             elif type(item) == dict and 'group' in item:
