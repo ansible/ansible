@@ -44,7 +44,7 @@ class Inventory(object):
 
         if host_list:
             if type(host_list) == list:
-                self.groups = self._groups_from_override_hosts(host_list)
+                self.groups = self._groups_from_override_hosts(host_list).values()
             elif os.access(host_list, os.X_OK):
                 self._is_script = True
                 self.parser = InventoryScript(filename=host_list)
