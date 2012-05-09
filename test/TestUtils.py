@@ -140,7 +140,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template(template, vars, {})
+        res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == 'hello world'
 
@@ -150,6 +150,6 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template(template, vars, {})
+        res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == 'hello world\n'

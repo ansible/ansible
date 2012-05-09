@@ -243,7 +243,7 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=False):
+def template(text, vars, setup_cache, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     text = varReplace(str(text), vars)
