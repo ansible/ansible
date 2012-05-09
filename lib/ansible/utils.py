@@ -241,7 +241,10 @@ def template(text, vars, setup_cache, no_engine=False):
         return text
     else:
         template = jinja2.Template(text)
-        return template.render(vars)
+        res = template.render(vars)
+        if text.endswith('\n') and not res.endswith('\n'):
+            res = res + '\n'
+        return res
 
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
