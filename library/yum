@@ -27,6 +27,7 @@ import datetime
 import shlex
 import re
 import traceback
+import syslog
 
 
 try:
@@ -299,6 +300,8 @@ def main():
 
     args = open(argfile, 'r').read()
     items = shlex.split(args)
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
     if not len(items):
         msg = "the yum module requires arguments (-a)"

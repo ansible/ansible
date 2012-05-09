@@ -29,9 +29,12 @@ import datetime
 import traceback
 import shlex
 import os
+import syslog
 
 argfile = sys.argv[1]
 args = open(argfile, 'r').read()
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 shell = False
 
