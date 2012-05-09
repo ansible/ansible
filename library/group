@@ -26,6 +26,7 @@ import grp
 import shlex
 import subprocess
 import sys
+import syslog
 
 GROUPADD = "/usr/sbin/groupadd"
 GROUPDEL = "/usr/sbin/groupdel"
@@ -131,6 +132,8 @@ if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
 else:
     args = ' '.join(sys.argv[1:])
 items   = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
     fail_json(msg='the module requires arguments -a')
