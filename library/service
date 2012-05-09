@@ -25,6 +25,7 @@ import sys
 import shlex
 import subprocess
 import os.path
+import syslog
 
 # TODO: switch to fail_json and other helper functions
 # like other modules are using
@@ -95,6 +96,8 @@ def _do_enable(name, enable):
 argfile = sys.argv[1]
 args = open(argfile, 'r').read()
 items = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
     fail_json(dict(failed=True, msg='this module requires arguments (-a)'))

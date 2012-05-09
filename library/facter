@@ -22,4 +22,5 @@
 #    facter
 #    ruby-json
 
+/usr/bin/logger -t ansible-facter Invoked as-is
 /usr/bin/facter --json 2>/dev/null
