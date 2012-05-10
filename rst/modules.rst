@@ -285,7 +285,7 @@ Adds or removes groups.
 
 *system*:
 
-* (new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.
+* (new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.  Value is 'yes' or 'no', default is 'no'.
 
 
 To control members of the group, see the users resource.
@@ -576,7 +576,7 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 *system*:
 
-* (new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.
+* (new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.  Value is 'yes' or 'no', default is 'no'.
 
 *force*:
 
