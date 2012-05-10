@@ -246,13 +246,13 @@ class Runner(object):
                 if self.remote_user == 'root':
                     args = "%s metadata=/etc/ansible/setup" % args
                 else:
-                    args = "%s metadata=$HOME/.ansible/setup" % args
+                    args = "%s metadata=%s/.ansible/setup" % (args, C.DEFAULT_REMOTE_TMP)
         else:
             if not 'metadata' in args:
                 if self.remote_user == 'root':
                     args['metadata'] = '/etc/ansible/setup'
                 else:
-                    args['metadata'] = "$HOME/.ansible/setup"
+                    args['metadata'] = "%s/.ansible/setup" % C.DEFAULT_REMOTE_TMP
         return args   
  
     # *****************************************************
@@ -666,13 +666,9 @@ class Runner(object):
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        # The problem with this is that it's executed on the
-        # overlord, not on the target so we can't use tempdir and os.path
-        # Only support the *nix world for now by using the $HOME env var
-
-        basetmp = "/var/tmp"
-        if self.remote_user != 'root':
-            basetmp = "$HOME/.ansible/tmp"
+        basetmp = C.DEFAULT_REMOTE_TMP
+        if self.remote_user == 'root':
+            basetmp ="/var/tmp"
         cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
         if self.remote_user != 'root':
             cmd = "mkdir -p %s && %s" % (basetmp, cmd)
