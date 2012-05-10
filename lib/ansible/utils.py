@@ -199,6 +199,8 @@ def parse_json(data):
             return { "failed" : True, "parsed" : False, "msg" : data }
         return results
 
+_LISTRE = re.compile(r"(\w+)\[(\d+)\]")
+
 def varLookup(name, vars):
     ''' find the contents of a possibly complex variable in vars. '''
     path = name.split('.')
@@ -206,11 +208,19 @@ def varLookup(name, vars):
     for part in path:
         if part in space:
             space = space[part]
+        elif "[" in part:
+            m = _LISTRE.search(part)
+            if not m:
+                return
+            try:
+                space = space[m.group(1)][int(m.group(2))]
+            except (KeyError, IndexError):
+                return
         else:
             return
     return space
 
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.]+|\w+))(?(complex)\})")
+_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
 #                        if { -> complex     if complex, allow . and need trailing }
 
 def varReplace(raw, vars):
