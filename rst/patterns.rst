@@ -103,10 +103,12 @@ Using the 0.4 branch of Ansible, variables can also be applied to an entire grou
    ntp_server=ntp.atlanta.example.com
    proxy=proxy.atlanta.example.com
 
-Groups of Groups
-++++++++++++++++
+Groups of Groups, and Group Variables
++++++++++++++++++++++++++++++++++++++
 
-Using the 0.4 branch of Ansible, it is possible to make groups of groups::
+Using Ansible 0.4, it is possible to make groups of groups and assign
+variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
+/usr/bin/ansible.
 
    [atlanta]
    host1
@@ -122,6 +124,9 @@ Using the 0.4 branch of Ansible, it is possible to make groups of groups::
 
    [southeast:vars]
    some_server=foo.southeast.example.com
+   halon_system_timeout=30
+   self_destruct_countdown=60
+   escape_pods=2
 
    [usa:children]
    southeast
