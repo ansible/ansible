@@ -149,6 +149,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li><a class="reference internal" href="#testing-modules">Testing Modules</a></li>
 <li><a class="reference internal" href="#reading-input">Reading Input</a></li>
+<li><a class="reference internal" href="#module-provided-facts">Module Provided &#8216;Facts&#8217;</a></li>
 <li><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a></li>
 <li><a class="reference internal" href="#conventions">Conventions</a></li>
 <li><a class="reference internal" href="#shorthand-vs-json">Shorthand Vs JSON</a></li>
@@ -328,9 +329,31 @@ a lot shorter than this:</p>
 <div class="highlight-python"><pre>ansible/hacking/test-module ./time time=\"March 14 12:23\"</pre>
 </div>
 <p>This should return something like:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;changed&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span> <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;2012-03-14 12:23:00.000307&quot;</span><span class="p">}</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;changed&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;2012-03-14 12:23:00.000307&quot;</span><span class="p">}</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="module-provided-facts">
+<h2>Module Provided &#8216;Facts&#8217;<a class="headerlink" href="#module-provided-facts" title="Permalink to this headline">¶</a></h2>
+<p>The &#8216;setup&#8217; module that ships with Ansible provides many variables about a system that can be used in playbooks
+and templates.  However, it&#8217;s possible to also add your own facts without modifying the system module.  To do
+this, just have the module return a <cite>ansible_facts</cite> key, like so, along with other return data.  This requires
+Ansible 0.4 and later:</p>
+<div class="highlight-python"><pre>{
+    "changed" : True,
+    "rc" : 5,
+    "ansible_facts" : {
+        "leptons" : 5000
+        "colors" : {
+            "red"   : "FF0000",
+            "white" : "FFFFFF"
+        }
+    }
+}</pre>
+</div>
+<p>These &#8216;facts&#8217; will be available to all statements called after that module (but not before) in the playbook.
+A good idea might be make a module called &#8216;site_facts&#8217; and always call it at the top of each playbook, though
+we&#8217;re always open to improving the selection of core facts in Ansible as well.</p>
 </div>
 <div class="section" id="common-pitfalls">
 <h2>Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Permalink to this headline">¶</a></h2>
@@ -430,7 +453,7 @@ Stop by the mailing list to inquire about requirements.</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>

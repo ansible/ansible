@@ -44,8 +44,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *pkg*:
 
-* A package name or package specifier with version, like `foo`, or `foo=1.0` to
-install a specific version of the foo package.
+* A package name or package specifier with version, like `foo`, or `foo=1.0` to install a specific version of the foo package.
 
 *state*:
 

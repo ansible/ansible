@@ -388,7 +388,7 @@ things you can do with playbooks.</p>
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
 to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
 <p>To run an entire playbook locally, just set the &#8220;hosts:&#8221; line to &#8220;hosts:127.0.0.1&#8221; and then run the playbook like so:</p>
-<div class="highlight-python"><pre>playbook playbook.yml --connection=local</pre>
+<div class="highlight-python"><pre>ansible-playbook playbook.yml --connection=local</pre>
 </div>
 <p>Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
 use the default remote connection type:</p>
@@ -719,7 +719,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>
