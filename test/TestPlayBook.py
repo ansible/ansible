@@ -172,28 +172,3 @@ class TestPlaybook(unittest.TestCase):
        print data
        assert data.find("ears") != -1, "template success"
 
-   def test_includes(self):
-        pb = os.path.join(self.test_dir, 'playbook_includes.yml')
-        actual = self._run(pb)
-
-        for i, event in enumerate(EVENTS):
-            print "EVENT %s"%(i)
-            print event
-
-            if i == 6:
-                assert 'blue' in event[1][1]['cmd']
-
-            if i == 8:
-                assert 'quack' in event[1][1]['cmd']
-
-            if i == 10:
-                assert 'RAN' in event[1][1]['cmd']
-
-            if i == 12:
-                assert 'RAN' in event[1][1]['cmd']
-
-            if i == 14:
-                assert 'red' in event[1][1]['cmd']
-
-            if i == 18 or i == 20:
-                assert 'skipped' in event[0]
