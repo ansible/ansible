@@ -18,4 +18,5 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+/usr/bin/logger -t ansible-ohai Invoked as-is
 /usr/bin/ohai

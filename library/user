@@ -27,6 +27,7 @@ import grp
 import shlex
 import subprocess
 import sys
+import syslog
 try:
     import spwd
     HAVE_SPWD=True
@@ -264,6 +265,8 @@ if not os.path.exists(USERDEL):
 argfile = sys.argv[1]
 args    = open(argfile, 'r').read()
 items   = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
     fail_json(msg='the module requires arguments -a')

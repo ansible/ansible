@@ -22,4 +22,10 @@ try:
 except ImportError:
     import simplejson as json
 
+import os
+import syslog
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked as-is')
+
 print json.dumps({ "ping" : "pong" })

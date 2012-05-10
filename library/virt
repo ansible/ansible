@@ -27,6 +27,7 @@ except ImportError:
 import os
 import sys
 import subprocess
+import syslog
 try:
     import libvirt
 except ImportError:
@@ -366,6 +367,8 @@ def main():
 
     args = open(argfile, 'r').read()
     items = shlex.split(args)
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
     if not len(items):
         return VIRT_FAILED, msg

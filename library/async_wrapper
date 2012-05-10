@@ -30,6 +30,7 @@ import datetime
 import traceback
 import signal
 import time
+import syslog
 
 def daemonize_self():
     # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
@@ -75,6 +76,9 @@ time_limit = sys.argv[2]
 wrapped_module = sys.argv[3]
 argsfile = sys.argv[4]
 cmd = "%s %s" % (wrapped_module, argsfile)
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
 
 # setup logging directory
 logdir = os.path.expanduser("~/.ansible_async")

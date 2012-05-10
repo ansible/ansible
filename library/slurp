@@ -21,6 +21,7 @@ import sys
 import os
 import shlex
 import base64
+import syslog
 
 try:
    import json
@@ -36,7 +37,11 @@ if len(sys.argv) == 1:
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
     sys.exit(1)
-items = shlex.split(open(argfile, 'r').read())
+
+args = open(argfile, 'r').read()
+items = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 params = {}
 for x in items:
