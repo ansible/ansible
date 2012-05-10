@@ -34,15 +34,20 @@ These distributions don't have Python 2.6 by default, but it is easily installab
 Getting Ansible
 ```````````````
 
-As the project is still pretty new, you will probably want to clone
-the git checkout, so you can keep up with all of the latest features,
-and also easily contribute back to the project (if you want).  
+If you are interested in using all the latest features, you may wish to keep up to date
+with the development branch of the git checkout.  This also makes it easiest to contribute
+back to the project.  
 
 Instructions for installing from source are below.
+
+Ansible's release cycles are about one month long.  Due to this
+short release cycle, any bugs will generally be fixed in the next release versus maintaining 
+backports on the stable branch.
 
 You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
 you have a github account.  This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
+
 
 Running From Checkout
 +++++++++++++++++++++
@@ -51,6 +56,7 @@ Ansible is trivially easy to run from a checkout, root permissions are not requi
 to use it::
 
     $ git clone git://github.com/ansible/ansible.git
+    $ git checkout -t origin/devel
     $ cd ./ansible
     $ source ./hacking/env-setup
 
@@ -71,6 +77,7 @@ If you are not working from a distribution where Ansible is packaged yet, you ca
 using "make install".  This is done through `python-distutils`::
 
     $ git clone git://github.com/ansible/ansible.git
+    $ git checkout -t origin/devel
     $ cd ./ansible
     $ sudo make install
 
@@ -78,8 +85,13 @@ using "make install".  This is done through `python-distutils`::
 Via RPM
 +++++++
 
-In the near future, pre-built packages will be available through your
-distribution. Until that time, you can use the ``make rpm`` command to
+RPMs for the last Ansible release are available for `EPEL <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
+Fedora distributions.
+
+    # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
+    $ sudo yum install ansible
+
+You can also use the ``make rpm`` command to
 build an RPM you can distribute and install::
 
     $ git clone git://github.com/ansible/ansible.git
@@ -97,8 +109,9 @@ Debian, Gentoo, Arch, Others
 
 Gentoo eBuilds are available `here <https://github.com/uu/ubuilds>`_
 
-Debian package recipes are in progress -- see the source checkout, in the packaging/debian
-directory.
+Debian package recipes can be built from the source checkout, run::
+
+    make debian
 
 An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
 If you have python3 installed on Arch, you probably want to symlink python to python2.::
@@ -106,7 +119,7 @@ If you have python3 installed on Arch, you probably want to symlink python to py
     sudo ln -sf /usr/bin/python2 /usr/bin/python
 
 If you would like to package Ansible for Homebrew, BSD, or others,
-please stop by the mailing list and say hi.
+please stop by the mailing list and say hi!
 
 
 Tagged Releases
@@ -116,9 +129,6 @@ Tagged releases are available as tar.gz files from the Ansible github
 project page:
 
 * `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
-
-At this point in Ansible's development, running or building from checkout is preferred
-if you want access to all of the latest modules and improvements.
 
 
 Your first commands
