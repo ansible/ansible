@@ -71,7 +71,7 @@ for x in items:
 
 dest = params['dest']
 repo = params['repo']
-branch  = params.get('branch')
+branch  = params.get('branch', 'master')
 version = params.get('version', 'HEAD')
 
 # ===========================================
