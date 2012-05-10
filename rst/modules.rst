@@ -244,7 +244,7 @@ Deploys software (or files) from git checkouts.
 
 *repo*:
 
-* git or http protocol address of the repo to checkout.
+* git, ssh, or http protocol address of the git repo to checkout.
 
 *dest*:
 
@@ -254,6 +254,10 @@ Deploys software (or files) from git checkouts.
 
 * What version to check out -- either the git SHA, the literal string
   ``HEAD``, or a tag name.
+
+*branch*:
+
+* (new in 0.4) Which branch name to checkout.  Defaults to 'master'.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -324,6 +328,11 @@ Controls services on remote machines.
 * Values are ``started``, ``stopped``, or ``restarted``.
   Started/stopped are idempotent actions that will not run commands
   unless necessary.  ``restarted`` will always bounce the service.
+
+*enabled*:
+
+* (new in 0.4) Whether the service should start on boot.  Either 'yes' or 'no'.
+  Uses chkconfig or updates-rc.d as appropriate.
 
 *name*:
 
