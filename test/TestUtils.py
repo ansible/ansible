@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import unittest
 
@@ -131,6 +133,16 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello 2'
 
+    def test_varReplace_unicode(self):
+        template = 'hello $who'
+        vars = {
+            'who': u'wórld',
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == u'hello wórld'
+
     #####################################
     ### Template function tests
 
@@ -153,3 +165,13 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == 'hello world\n'
+
+    def test_template_unicode(self):
+        template = 'hello {{ who }}'
+        vars = {
+            'who': u'wórld',
+        }
+
+        res = ansible.utils.template(template, vars, {}, no_engine=False)
+
+        assert res == u'hello wórld'
