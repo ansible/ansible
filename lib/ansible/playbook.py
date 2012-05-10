@@ -374,6 +374,8 @@ class PlayBook(object):
         # we would only trigger restarting Apache on half of the nodes
 
         subtasks = task.get('notify', [])
+        if isinstance(subtasks, basestring):
+            subtasks = [subtasks]
         if len(subtasks) > 0:
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
