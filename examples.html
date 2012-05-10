@@ -194,21 +194,28 @@ set up SSH-agent so it can remember our credentials:</p>
 <div class="highlight-python"><pre>ssh-agent bash
 ssh-add ~/.ssh/id_rsa.pub</pre>
 </div>
-<p>Now to run the command on all servers in a group, in this case, &#8216;atlanta&#8217;:</p>
+<p>If you don&#8217;t want to use ssh-agent and want to instead SSH with a password instead of keys, you can with
+&#8211;ask-pass (-k), but it&#8217;s much better to just use ssh-agent.</p>
+<p>Now to run the command on all servers in a group, in this case, &#8216;atlanta&#8217;, in 10 parallel forks:</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/sbin/reboot" -f 10</pre>
 </div>
-<p>If you want to run commands as a different user than root:</p>
+<p>If you want to run commands as a different user than root, it looks like this:</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname</pre>
 </div>
 <p>If you want to run commands through sudo:</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]</pre>
 </div>
-<p>Use &#8211;ask-sudo-pass (-K) if you are not using passwordless sudo.</p>
+<p>Use &#8211;ask-sudo-pass (-K) if you are not using passwordless sudo.  This will interactively prompt
+you for the password to use.  Use of passwordless sudo makes things easier to automate, but it&#8217;s
+not required.</p>
+<p>It is also possible to sudo to a user other than root using &#8211;sudo-user (-U):</p>
+<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname -U otheruser [--ask-sudo-pass]</pre>
+</div>
 <p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
 <p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
 a <cite>-m</cite> for module name, but the default module name is &#8216;command&#8217;, so we didn&#8217;t need to specify that
-here.  We&#8217;ll use <cite>-m</cite> later to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
-<p>The command module requires absolute paths and does not support shell variables.  If we want to
+all of the time.  We&#8217;ll use <cite>-m</cite> in later examples to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
+<p>Note that the command module requires absolute paths and does not support shell variables.  If we want to
 execute a module using the shell, we can do those things, and also use pipe and redirection operators.
 Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
 module looks like this:</p>
@@ -373,7 +380,7 @@ a simplified syntax for this.</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>

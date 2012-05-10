@@ -156,7 +156,8 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#group">group</a></li>
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
-<li><a class="reference internal" href="#service">service</a></li>
+<li><a class="reference internal" href="#raw">raw</a></li>
+<li><a class="reference internal" href="#id9">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
@@ -225,11 +226,11 @@ noted, any given module does support change hooks.</p>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
-<li>A package name or package specifier with version, like foo=1.0</li>
+<li>A package name or package specifier with version, like <cite>foo</cite>, or <cite>foo=1.0</cite> to install a specific version of the foo package.</li>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.  The default is &#8216;installed&#8217;.</li>
+<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.  The default is &#8216;installed&#8217;.  (In 0.4 and later, the aliases &#8216;absent&#8217; and &#8216;present&#8217; can also be used.  They correspond with &#8216;removed&#8217; and &#8216;installed&#8217;)</li>
 </ul>
 <p><em>update-cache</em>:</p>
 <ul class="simple">
@@ -390,7 +391,7 @@ file path=/some/path state=directory context=default</pre>
 <p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
 <ul class="simple">
-<li>git or http protocol address of the repo to checkout.</li>
+<li>git, ssh, or http protocol address of the git repo to checkout.</li>
 </ul>
 <p><em>dest</em>:</p>
 <ul class="simple">
@@ -400,6 +401,10 @@ file path=/some/path state=directory context=default</pre>
 <ul class="simple">
 <li>What version to check out &#8211; either the git SHA, the literal string
 <tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
+</ul>
+<p><em>branch</em>:</p>
+<ul class="simple">
+<li>(new in 0.4) Which branch name to checkout.  Defaults to &#8216;master&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
@@ -419,6 +424,10 @@ file path=/some/path state=directory context=default</pre>
 <p><em>state</em>:</p>
 <ul class="simple">
 <li>either &#8216;absent&#8217;, or &#8216;present&#8217;.  &#8216;present&#8217; is the default.</li>
+</ul>
+<p><em>system</em>:</p>
+<ul class="simple">
+<li>(new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
 </ul>
 <p>To control members of the group, see the users resource.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
@@ -443,14 +452,39 @@ successful contact.</p>
 takes no parameters &amp; does not support change hooks, nor does it make
 any changes on the system.</p>
 </div>
-<div class="section" id="service">
-<span id="id9"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="raw">
+<span id="service"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<p>Executes a low-down and dirty SSH command, not going through the module subsystem.
+This module is new in Ansible 0.4.</p>
+<p>This is useful and should only be done in two cases.  The first case is installing
+python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
+to run modules, since nearly all core modules require it.  Another is speaking to any
+devices such as routers that do not have any Python installed.  In any other case,
+using the &#8216;shell&#8217; or &#8216;command&#8217; module is much more appropriate.</p>
+<p>Arguments given to &#8216;raw&#8217; are run directly through the configured remote shell and
+only output is returned.  There is no error detection or change handler support
+for this module.</p>
+<p>Example from <cite>/usr/bin/ansible</cite> to bootstrap a legacy python 2.4 host:</p>
+<blockquote>
+<div>ansible newhost.example.com raw -a &#8220;yum install python-simplejson&#8221;</div></blockquote>
+</div>
+<div class="section" id="id9">
+<h2>service<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <p><em>state</em>:</p>
 <ul class="simple">
 <li>Values are <tt class="docutils literal"><span class="pre">started</span></tt>, <tt class="docutils literal"><span class="pre">stopped</span></tt>, or <tt class="docutils literal"><span class="pre">restarted</span></tt>.
 Started/stopped are idempotent actions that will not run commands
 unless necessary.  <tt class="docutils literal"><span class="pre">restarted</span></tt> will always bounce the service.</li>
+</ul>
+<p><em>enabled</em>:</p>
+<ul class="simple">
+<li>(new in 0.4) Whether the service should start on boot.  Either &#8216;yes&#8217; or &#8216;no&#8217;.
+Uses chkconfig or updates-rc.d as appropriate.</li>
+</ul>
+<p><em>list</em>:</p>
+<ul class="simple">
+<li>(new in 0.4) When used with the value &#8216;status&#8217;, returns the status of the service along with other results.  This is primarily useful for /usr/bin/ansible, and not meaningful for playbooks.</li>
 </ul>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -636,6 +670,10 @@ be a relative or absolute path.</li>
 <ul class="simple">
 <li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.  Optionally additional removal behaviors can be set with the &#8216;force&#8217; or &#8216;remove&#8217; parameter values (see below).</li>
 </ul>
+<p><em>system</em>:</p>
+<ul class="simple">
+<li>(new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
+</ul>
 <p><em>force</em>:</p>
 <ul class="simple">
 <li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for <tt class="docutils literal"><span class="pre">--force</span></tt> is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
@@ -696,13 +734,14 @@ ansible host -m virt -a "command=virttype"</pre>
 </ul>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;latest&#8217;, or &#8216;removed&#8217;.  The default is &#8216;installed&#8217;.</li>
+<li>Can be either &#8216;installed&#8217;, &#8216;latest&#8217;, or &#8216;removed&#8217;.  The default is &#8216;installed&#8217;. (In 0.4 and later, the aliases &#8216;absent&#8217; and &#8216;present&#8217; can also be used.  They correspond with &#8216;removed&#8217; and &#8216;installed&#8217;)</li>
 </ul>
 <p><em>list</em>:</p>
 <ul class="simple">
 <li>When &#8216;list&#8217; is supplied instead of &#8216;state&#8217;, the yum module can list
 various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
-&#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.</li>
+&#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.  (This is more intended for
+use with /usr/bin/ansible or the API, not playbooks.)</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>yum pkg=httpd state=latest
@@ -748,7 +787,7 @@ yum pkg=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>

@@ -150,7 +150,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
 <li><a class="reference internal" href="#host-variables">Host Variables</a></li>
 <li><a class="reference internal" href="#group-variables">Group Variables</a></li>
-<li><a class="reference internal" href="#groups-of-groups">Groups of Groups</a></li>
+<li><a class="reference internal" href="#groups-of-groups-and-group-variables">Groups of Groups, and Group Variables</a></li>
 <li><a class="reference internal" href="#yaml-inventory-format">YAML Inventory Format</a></li>
 </ul>
 </li>
@@ -240,10 +240,6 @@ wildcards:</p>
 <p>It&#8217;s also ok to mix wildcard patterns and groups at the same time:</p>
 <div class="highlight-python"><pre>one*.com:dbservers</pre>
 </div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">It is not possible to target a host not in the inventory file, unless using playbooks with &#8211;override-hosts.  More on that later.  This is a safety feature.</p>
-</div>
 <p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
 </div>
 <div class="section" id="host-variables">
@@ -267,30 +263,32 @@ ntp_server=ntp.atlanta.example.com
 proxy=proxy.atlanta.example.com</pre>
 </div>
 </div>
-<div class="section" id="groups-of-groups">
-<h2>Groups of Groups<a class="headerlink" href="#groups-of-groups" title="Permalink to this headline">¶</a></h2>
-<p>Using the 0.4 branch of Ansible, it is possible to make groups of groups:</p>
-<div class="highlight-python"><pre>[atlanta]
+<div class="section" id="groups-of-groups-and-group-variables">
+<h2>Groups of Groups, and Group Variables<a class="headerlink" href="#groups-of-groups-and-group-variables" title="Permalink to this headline">¶</a></h2>
+<p>Using Ansible 0.4, it is possible to make groups of groups and assign
+variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
+/usr/bin/ansible.</p>
+<blockquote>
+<div><p>[atlanta]
 host1
+host2</p>
+<p>[raleigh]
 host2
-
-[raleigh]
-host2
-host3
-
-[southeast:children]
+host3</p>
+<p>[southeast:children]
 atlanta
-raleigh
-
-[southeast:vars]
+raleigh</p>
+<p>[southeast:vars]
 some_server=foo.southeast.example.com
-
-[usa:children]
+halon_system_timeout=30
+self_destruct_countdown=60
+escape_pods=2</p>
+<p>[usa:children]
 southeast
 northeast
 southwest
-southeast</pre>
-</div>
+southeast</p>
+</div></blockquote>
 </div>
 <div class="section" id="yaml-inventory-format">
 <h2>YAML Inventory Format<a class="headerlink" href="#yaml-inventory-format" title="Permalink to this headline">¶</a></h2>
@@ -363,7 +361,7 @@ YAML:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>

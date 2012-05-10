@@ -268,7 +268,7 @@ of these options via an external inventory system.</p>
 <p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>
-<p>When the external node script is called with no arguments, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so:</p>
+<p>When the external node script is called with the single argument &#8216;&#8211;list&#8217;, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
     <span class="s">&#39;databases&#39;</span>  <span class="p">:</span> <span class="p">[</span> <span class="s">&#39;host1.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host2.example.com&#39;</span> <span class="p">],</span>
     <span class="s">&#39;webservers&#39;</span> <span class="p">:</span> <span class="p">[</span> <span class="s">&#39;host2.example.com&#39;</span><span class="p">,</span> <span class="s">&#39;host3.example.com&#39;</span> <span class="p">],</span>
@@ -276,8 +276,8 @@ of these options via an external inventory system.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>When called with a single argument, the name of a host from above, the script must return either an empty JSON
-hash/dictionary, or a list of key/value variables to make available to templates.  Returning variables is optional,
+<p>When called with the arguments &#8216;&#8211;host &lt;hostname&gt;&#8217; (where &lt;hostname&gt; is a host from above), the script must return either an empty JSON
+hash/dictionary, or a list of key/value variables to make available to templates or playbooks.  Returning variables is optional,
 if the script does not wish to do this, returning an empty hash/dictionary is the way to go:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
     <span class="s">&#39;favcolor&#39;</span>   <span class="p">:</span> <span class="s">&#39;red&#39;</span><span class="p">,</span>
@@ -357,7 +357,7 @@ a conf.d file appropriately or something similar.  Who knows?</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 06, 2012.<br/>
+      Last updated on May 10, 2012.<br/>
     </p>
   </div>
 </footer>
