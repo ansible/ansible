@@ -143,6 +143,56 @@ class TestUtils(unittest.TestCase):
 
         assert res == u'hello wórld'
 
+    def test_varReplace_list(self):
+        template = 'hello ${data[1]}'
+        vars = {
+            'data': [ 'no-one', 'world' ]
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == 'hello world'
+
+    def test_varReplace_invalid_list(self):
+        template = 'hello ${data[1}'
+        vars = {
+            'data': [ 'no-one', 'world' ]
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == template
+
+    def test_varReplace_list_oob(self):
+        template = 'hello ${data[2]}'
+        vars = {
+            'data': [ 'no-one', 'world' ]
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == template
+
+    def test_varReplace_list_nolist(self):
+        template = 'hello ${data[1]}'
+        vars = {
+            'data': { 'no-one': 0, 'world': 1 }
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == template
+
+    def test_varReplace_nested_list(self):
+        template = 'hello ${data[1].msg[0]}'
+        vars = {
+            'data': [ 'no-one', {'msg': [ 'world'] } ]
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+
+        assert res == 'hello world'
+
     #####################################
     ### Template function tests
 
