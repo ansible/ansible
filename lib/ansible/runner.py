@@ -331,6 +331,17 @@ class Runner(object):
 
     # *****************************************************
 
+    def _execute_raw(self, conn, host, tmp):
+        ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
+        stdout, stderr = self._exec_command( conn, self.module_args, tmp, sudoable = True )
+        data = dict(stdout=stdout)
+        if stderr:
+            data['stderr'] = stderr
+        return (host, True, data, '')
+
+    # ***************************************************
+
+
     def _execute_normal_module(self, conn, host, tmp, module_name):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
@@ -604,6 +615,8 @@ class Runner(object):
             result = self._execute_fetch(conn, host, tmp)
         elif self.module_name == 'template':
             result = self._execute_template(conn, host, tmp)
+        elif self.module_name == 'raw':
+            result = self._execute_raw(conn, host, tmp)
         else:
             if self.background == 0:
                 result = self._execute_normal_module(conn, host, tmp, module_name)
