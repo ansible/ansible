@@ -117,7 +117,7 @@ if name is None:
 
 state = params.get('state', None)
 list_items = params.get('list', None)
-enable = params.get('enable', None)
+enable = params.get('enabled', params.get('enable', None))
 
 # running and started are the same
 if state and state.lower() not in [ 'running', 'started', 'stopped', 'restarted' ]:
