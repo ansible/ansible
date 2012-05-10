@@ -28,6 +28,7 @@ try:
 except ImportError:
     import simplejson as json
 import os
+import re
 import sys
 import shlex
 import subprocess
@@ -68,6 +69,7 @@ for x in items:
 
 dest = params['dest']
 repo = params['repo']
+branch  = params.get('branch')
 version = params.get('version', 'HEAD')
 
 # ===========================================
@@ -80,13 +82,22 @@ def get_version(dest):
    sha = sha[0].split()[1]
    return sha
 
-def clone(repo, dest):
+def clone(repo, dest, branch):
    ''' makes a new git repo if it does not already exist '''
    try:
        os.makedirs(dest)
    except:
        pass
    cmd = "git clone %s %s" % (repo, dest)
+   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   (out, err) = cmd.communicate()
+   rc = cmd.returncode
+   
+   if branch is None or rc != 0: 
+     return (out, err)
+
+   os.chdir(dest)
+   cmd = "git checkout -b %s origin/%s" % (branch, branch) 
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    return cmd.communicate()
 
@@ -103,10 +114,44 @@ def reset(dest):
    rc = cmd.returncode
    return (rc, out, err)
 
-def pull(repo, dest):
+def switchLocalBranch( branch ):
+   cmd = "git checkout %s" % branch
+   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   return cmd.communicate()
+
+def pull(repo, dest, branch):
    ''' updates repo from remote sources '''
    os.chdir(dest)
-   cmd = "git pull -u origin"
+   cmd = "git branch -a"
+   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   (gbranch_out, gbranch_err) = cmd.communicate()
+
+   try:
+      m = re.search( '^\* (\S+|\(no branch\))$', gbranch_out, flags=re.M )
+      cur_branch = m.group(1)
+      m = re.search( '\s+remotes/origin/HEAD -> origin/(\S+)', gbranch_out, flags=re.M )
+      default_branch = m.group(1)
+   except:
+      fail_json(msg="could not determine branch data - received: %s" % gbranch_out)
+
+   if branch is None:
+      if cur_branch != default_branch:
+         (out, err) = switchLocalBranch( default_branch )
+
+      cmd = "git pull -u origin"
+
+   elif branch == cur_branch:
+      cmd = "git pull -u origin"
+
+   else:
+      m = re.search( '^\s+%s$' % branch, gbranch_out, flags=re.M ) #see if we've already checked it out
+      if m is None:
+         cmd = "git checkout -b %s origin/%s" % (branch, branch)
+
+      else:
+         (out, err) = switchLocalBranch( branch )
+         cmd = "git pull -u origin"
+
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    return cmd.communicate()
 
@@ -132,14 +177,14 @@ out, err, status = (None, None, None)
 
 before = None
 if not os.path.exists(gitconfig):
-   (out, err) = clone(repo, dest)
+   (out, err) = clone(repo, dest, branch)
 else:
    # else do a pull   
    before = get_version(dest)
    (rc, out, err) = reset(dest)
    if rc != 0:
       fail_json(out=out, err=err)
-   (out, err) = pull(repo, dest)
+   (out, err) = pull(repo, dest, branch)
 
 # handle errors from clone or pull
 
