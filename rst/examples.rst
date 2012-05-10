@@ -17,11 +17,14 @@ set up SSH-agent so it can remember our credentials::
     ssh-agent bash
     ssh-add ~/.ssh/id_rsa.pub
 
-Now to run the command on all servers in a group, in this case, 'atlanta'::
+If you don't want to use ssh-agent and want to instead SSH with a password instead of keys, you can with
+--ask-pass (-k), but it's much better to just use ssh-agent.
+
+Now to run the command on all servers in a group, in this case, 'atlanta', in 10 parallel forks::
 
     ansible atlanta -a "/sbin/reboot" -f 10
 
-If you want to run commands as a different user than root::
+If you want to run commands as a different user than root, it looks like this::
 
     ansible atlanta -a "/usr/bin/foo" -u yourname
 
@@ -29,15 +32,21 @@ If you want to run commands through sudo::
     
     ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]
 
-Use --ask-sudo-pass (-K) if you are not using passwordless sudo.
+Use --ask-sudo-pass (-K) if you are not using passwordless sudo.  This will interactively prompt
+you for the password to use.  Use of passwordless sudo makes things easier to automate, but it's
+not required.
+
+It is also possible to sudo to a user other than root using --sudo-user (-U)::
+
+    ansible atlanta -a "/usr/bin/foo" -u yourname -U otheruser [--ask-sudo-pass]
 
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
 
 The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
 a `-m` for module name, but the default module name is 'command', so we didn't need to specify that
-here.  We'll use `-m` later to run some other :doc:`modules`.
+all of the time.  We'll use `-m` in later examples to run some other :doc:`modules`.
 
-The command module requires absolute paths and does not support shell variables.  If we want to 
+Note that the command module requires absolute paths and does not support shell variables.  If we want to 
 execute a module using the shell, we can do those things, and also use pipe and redirection operators.
 Read more about the differences on the :doc:`modules` page.  The shell
 module looks like this::
