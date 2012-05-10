@@ -56,7 +56,6 @@ class PlayBook(object):
         sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
-        override_hosts   = None,
         debug            = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -76,7 +75,6 @@ class PlayBook(object):
         sudo_pass:        if sudo==True, and a password is required, this is the sudo password
         remote_port:      default remote port to use if not specified with the host or play
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
-        override_hosts:   skip the inventory file, just talk to these hosts
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
@@ -99,7 +97,6 @@ class PlayBook(object):
         self.debug            = debug
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
-        self.override_hosts   = override_hosts
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
@@ -107,16 +104,11 @@ class PlayBook(object):
         self.extra_vars       = extra_vars
         self.global_vars      = {}
 
-        if override_hosts is not None:
-            if type(override_hosts) != list:
-                raise errors.AnsibleError("override hosts must be a list")
-            if not self.inventory._is_script:
-                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
+        self.inventory = ansible.inventory.Inventory(host_list)
+        
 
-        else:
-            self.inventory = ansible.inventory.Inventory(host_list)
-            if not self.inventory._is_script:
-                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
+        if not self.inventory._is_script:
+            self.global_vars.update(self.inventory.get_group_variables('all'))
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
@@ -501,11 +493,10 @@ class PlayBook(object):
 
         # get configuration information about the pattern
         pattern = pg.get('hosts',None)
+        pattern = utils.template(pattern, self.extra_vars, {})
         name = pg.get('name', pattern)
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        if self.override_hosts:
-            pattern = 'all'
         if pattern is None:
             raise errors.AnsibleError('hosts declaration is required')
 

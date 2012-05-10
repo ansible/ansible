@@ -28,13 +28,18 @@ import subprocess
 import sys
 import datetime
 import traceback
+import syslog
 
 # ===========================================
 
 # FIXME: better error handling
 
 argsfile = sys.argv[1]
-items = shlex.split(file(argsfile).read())
+args = open(argsfile, 'r').read()
+items = shlex.split(args)
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 params = {}
 for x in items:
