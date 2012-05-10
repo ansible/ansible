@@ -497,13 +497,13 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
-        pattern = pg.get('hosts',None)
-        pattern = utils.template(pattern, self.extra_vars, {})
-        name = pg.get('name', pattern)
-        if isinstance(pattern, list):
-            pattern = ';'.join(pattern)
+        pattern = pg.get('hosts')
         if pattern is None:
             raise errors.AnsibleError('hosts declaration is required')
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
+        pattern = utils.template(pattern, self.extra_vars, {})
+        name = pg.get('name', pattern)
 
         vars       = self._get_vars(pg, self.basedir)
         vars_files = pg.get('vars_files', {})
