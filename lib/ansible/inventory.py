@@ -50,6 +50,10 @@ class Inventory(object):
         # whether the inventory file is a script
         self._is_script = False
 
+        if type(host_list) in [ str, unicode ]:
+            if host_list.find(",") != -1:
+               host_list = host_list.split(",")
+
         if type(host_list) == list:
             all = Group('all')
             self.groups = [ all ]
