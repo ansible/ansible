@@ -29,6 +29,7 @@ import tempfile
 import time
 import base64
 import getpass
+import codecs
 
 import ansible.constants as C 
 import ansible.connection
@@ -202,7 +203,7 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data)
+        afo.write(data.encode("utf8"))
         afo.flush()
         afo.close()
 
@@ -432,7 +433,6 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
-        print source
         source = utils.template(source, inject, self.setup_cache)
 
         # files are saved in dest dir, with a subdir for each host, then the filename
@@ -542,7 +542,7 @@ class Runner(object):
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
-        source_data = file(utils.path_dwim(self.basedir, source)).read()
+        source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
         resultant = ''            
         try:
             resultant = utils.template(source_data, inject, self.setup_cache)

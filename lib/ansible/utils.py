@@ -21,6 +21,7 @@ import sys
 import os
 import shlex
 import re
+import codecs
 import jinja2
 import yaml
 import optparse
@@ -233,7 +234,7 @@ def varReplace(raw, vars):
 def template(text, vars, setup_cache, no_engine=False):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
-    text = varReplace(str(text), vars)
+    text = varReplace(unicode(text), vars)
     vars['hostvars'] = setup_cache
     if no_engine:
         # used when processing include: directives so that Jinja is evaluated
@@ -251,7 +252,7 @@ def double_template(text, vars, setup_cache):
 
 def template_from_file(path, vars, setup_cache, no_engine=False):
     ''' run a file through the templating engine '''
-    data = file(path).read()
+    data = codecs.open(path, encoding="utf8").read()
     return template(data, vars, setup_cache, no_engine=no_engine)
 
 def parse_yaml(data):
