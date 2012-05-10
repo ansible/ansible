@@ -33,6 +33,12 @@ Ansible Changes By Release
 * git module supports branch=
 * unicode now ok in templates (assumes utf8)
 * modules all now log to syslog
+* can use -i host1,host2,host3:port to specify hosts not in inventory (replaces --override-hosts)
+* fixes for variable parsing in only_if lines
+* variables can be replaced like ${foo.nested_hash_key.nested_subkey[array_index]}
+* jinja2 is only usable in templates
+* enabled=yes|no on a service can be used to toggle chkconfig & updates-rc.d states
+* variables with mixed case now legal
 
 0.3 "Baluchitherium" -- April 23, 2012
 
