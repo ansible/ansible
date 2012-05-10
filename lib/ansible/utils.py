@@ -199,7 +199,19 @@ def parse_json(data):
             return { "failed" : True, "parsed" : False, "msg" : data }
         return results
 
-_KEYCRE = re.compile(r"\$(\w+)")
+def varLookup(name, vars):
+    ''' find the contents of a possibly complex variable in vars. '''
+    path = name.split('.')
+    space = vars
+    for part in path:
+        if part in space:
+            space = space[part]
+        else:
+            return
+    return space
+
+_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.]+|\w+))(?(complex)\})")
+#                        if { -> complex     if complex, allow . and need trailing }
 
 def varReplace(raw, vars):
     '''Perform variable replacement of $vars
@@ -221,8 +233,9 @@ def varReplace(raw, vars):
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(1).lower()
-        replacement = str(vars.get(varname, m.group()))
+        varname = m.group(2).lower()
+
+        replacement = str(varLookup(varname, vars) or m.group())
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -231,7 +244,7 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=False):
+def template(text, vars, setup_cache, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     text = varReplace(unicode(text), vars)

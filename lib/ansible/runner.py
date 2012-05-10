@@ -545,7 +545,7 @@ class Runner(object):
         source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
         resultant = ''            
         try:
-            resultant = utils.template(source_data, inject, self.setup_cache)
+            resultant = utils.template(source_data, inject, self.setup_cache, no_engine=False)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
