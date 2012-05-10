@@ -399,19 +399,23 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_conditional_imports(self, vars_files):
+    def _do_conditional_imports(self, vars_files, pattern=None):
         ''' handle the vars_files section, which can contain variables '''
-        
+
         # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
         # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
         #        not super optimized yet either, because we wouldn't have hit them, ergo
         #        it will raise false errors if there is no defaults variable file without any $vars
         #        in it, which could happen on uncontacted hosts.
- 
+
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
-        for host in self.inventory.list_hosts():
-            cache_vars = SETUP_CACHE.get(host,{}) 
+
+        host_list = [ h for h in self.inventory.list_hosts(pattern)
+                        if not (h in self.stats.failures or h in self.stats.dark) ]
+
+        for host in host_list:
+            cache_vars = SETUP_CACHE.get(host,{})
             SETUP_CACHE[host] = cache_vars
             for filename in vars_files:
                 if type(filename) == list:
@@ -453,12 +457,13 @@ class PlayBook(object):
 
         if vars_files is not None:
             self.callbacks.on_setup_secondary()
-            self._do_conditional_imports(vars_files)
+            self._do_conditional_imports(vars_files, pattern)
         else:
             self.callbacks.on_setup_primary()
 
         host_list = [ h for h in self.inventory.list_hosts(pattern) 
                         if not (h in self.stats.failures or h in self.stats.dark) ]
+
         self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
