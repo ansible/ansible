@@ -77,9 +77,6 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
-.. note::
-    It is not possible to target a host not in the inventory file, unless using playbooks with --override-hosts.  More on that later.  This is a safety feature.
-
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 
 Host Variables
