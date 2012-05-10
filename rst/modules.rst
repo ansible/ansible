@@ -283,6 +283,11 @@ Adds or removes groups.
 
 * either 'absent', or 'present'.  'present' is the default.
 
+*system*:
+
+* (new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.
+
+
 To control members of the group, see the users resource.
 
 Example action from Ansible :doc:`playbooks`::
@@ -568,6 +573,10 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 *state*:
 
 * Defaults to 'present'.  When 'absent', the user account will be removed if present.  Optionally additional removal behaviors can be set with the 'force' or 'remove' parameter values (see below).
+
+*system*:
+
+* (new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.
 
 *force*:
 
