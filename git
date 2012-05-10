@@ -32,6 +32,7 @@ import re
 import sys
 import shlex
 import subprocess
+import syslog
 
 # ===========================================
 # Basic support methods
@@ -58,6 +59,8 @@ if not os.path.exists(argfile):
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
    fail_json(msg="the command module requires arguments (-a)")
