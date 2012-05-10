@@ -176,7 +176,6 @@ class Runner(object):
 
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
-
         if type(files) == str:
             files = [ files ]
         for filename in files:
@@ -189,9 +188,9 @@ class Runner(object):
     def _transfer_module(self, conn, tmp, module):
         ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
 
-        outpath = self._copy_module(conn, tmp, module)
-        self._exec_command(conn, "chmod +x %s" % outpath, tmp)
-        return outpath
+        return self._copy_module(conn, tmp, module)
+        #self._exec_command(conn, "chmod +x %s" % outpath, tmp)
+        #return outpath
 
     # *****************************************************
 
@@ -681,7 +680,7 @@ class Runner(object):
             raise errors.AnsibleFileNotFound("module not found: %s" % in_path)
 
         out_path = tmp + module
-        conn.put_file(in_path, out_path)
+        conn.put_file(in_path, out_path, mode='700')
         return out_path
 
     # *****************************************************
