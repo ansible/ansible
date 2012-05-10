@@ -44,7 +44,8 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *pkg*:
 
-* A package name or package specifier with version, like foo=1.0
+* A package name or package specifier with version, like `foo`, or `foo=1.0` to
+install a specific version of the foo package.
 
 *state*:
 
@@ -624,7 +625,8 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 
 * When 'list' is supplied instead of 'state', the yum module can list
   various configuration attributes.  Values include 'installed', 'updates',
-  'available', 'repos', or any package specifier.
+  'available', 'repos', or any package specifier.  (This is more intended for
+  use with /usr/bin/ansible or the API, not playbooks.)
 
 Example action from Ansible :doc:`playbooks`::
 
