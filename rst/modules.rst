@@ -49,7 +49,7 @@ install a specific version of the foo package.
 
 *state*:
 
-* Can be either 'installed', 'removed', or 'latest'.  The default is 'installed'.
+* Can be either 'installed', 'removed', or 'latest'.  The default is 'installed'.  (In 0.4 and later, the aliases 'absent' and 'present' can also be used.  They correspond with 'removed' and 'installed')
 
 *update-cache*:
 
@@ -360,6 +360,10 @@ Controls services on remote machines.
 * (new in 0.4) Whether the service should start on boot.  Either 'yes' or 'no'.
   Uses chkconfig or updates-rc.d as appropriate.
 
+*list*:
+
+* (new in 0.4) When used with the value 'status', returns the status of the service along with other results.  This is primarily useful for /usr/bin/ansible, and not meaningful for playbooks.
+
 *name*:
 
 * The name of the service.
@@ -369,7 +373,6 @@ Example action from Ansible :doc:`playbooks`::
     service name=httpd state=started
     service name=httpd state=stopped
     service name=httpd state=restarted
-
 
 .. _setup:
 
@@ -648,7 +651,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 
 *state*:
 
-* Can be either 'installed', 'latest', or 'removed'.  The default is 'installed'.
+* Can be either 'installed', 'latest', or 'removed'.  The default is 'installed'. (In 0.4 and later, the aliases 'absent' and 'present' can also be used.  They correspond with 'removed' and 'installed')
 
 *list*:
 
