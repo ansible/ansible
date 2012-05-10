@@ -235,7 +235,7 @@ def varReplace(raw, vars):
         # original)
         varname = m.group(2).lower()
 
-        replacement = str(varLookup(varname, vars) or m.group())
+        replacement = unicode(varLookup(varname, vars) or m.group())
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
