@@ -51,27 +51,7 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
-        credentials = {}
         user = self.runner.remote_user
-        keypair = None
-
-        # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
-        # This will *NOT* overrides the ansible username and hostname " , getting the port and keyfile only.
-	
-        try:
-            ssh_config = paramiko.SSHConfig()
-            config_file = ('~/.ssh/config')
-            if  os.path.exists(os.path.expanduser(config_file)):
-                ssh_config.parse(open(os.path.expanduser(config_file)))
-                credentials = ssh_config.lookup(self.host)
-
-        except IOError,e:
-                raise errors.AnsibleConnectionFailed(str(e))
-
-        if 'port' in credentials:
-            self.port = int(credentials['port'])
-        if 'identityfile' in credentials:
-            keypair = os.path.expanduser(credentials['identityfile'])
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -83,7 +63,7 @@ class ParamikoConnection(object):
                 allow_agent=True,
                 look_for_keys=True,
                 password=self.runner.remote_pass,
-                key_filename=keypair,
+                # key_filename=None, # TODO: allow this to be passed in
                 timeout=self.runner.timeout,
                 port=self.port
             )
