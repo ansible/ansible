@@ -144,6 +144,30 @@ class TestRunner(unittest.TestCase):
        ])
        assert result['changed'] == False
 
+   def test_assemble(self):
+       input = self._get_test_file('assemble.d')
+       metadata = self._get_test_file('metadata.json')
+       output = self._get_stage_file('sample.out')
+       result = self._run('assemble', [
+           "src=%s" % input,
+           "dest=%s" % output,
+           "metadata=%s" % metadata
+       ])
+       assert os.path.exists(output)
+       out = file(output).read()
+       assert out.find("first") != -1
+       assert out.find("second") != -1
+       assert out.find("third") != -1
+       assert result['changed'] == True
+       assert 'md5sum' in result
+       assert 'failed' not in result
+       result = self._run('assemble', [
+           "src=%s" % input,
+           "dest=%s" % output,
+           "metadata=%s" % metadata
+       ])
+       assert result['changed'] == False
+
    def test_command(self):
    
        # test command module, change trigger, etc
