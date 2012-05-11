@@ -139,7 +139,7 @@ class ParamikoConnection(object):
 
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize)        # stderr goes to stdout when using a pty, so this will never output anything.
+        stderr = ''  # stderr goes to stdout when using a pty, so this will never output anything.
         return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path, mode=None):
