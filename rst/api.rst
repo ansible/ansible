@@ -97,7 +97,7 @@ If you are familiar with Puppet terminology, this concept is basically the same 
 Script Conventions
 ``````````````````
 
-When the external node script is called with no arguments, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so::
+When the external node script is called with the single argument '--list', the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so::
 
     {
         'databases'  : [ 'host1.example.com', 'host2.example.com' ],
@@ -105,8 +105,8 @@ When the external node script is called with no arguments, the script must retur
         'atlanta'    : [ 'host1.example.com', 'host4.example.com', 'host5.example.com' ] 
     }
 
-When called with a single argument, the name of a host from above, the script must return either an empty JSON
-hash/dictionary, or a list of key/value variables to make available to templates.  Returning variables is optional,
+When called with the arguments '--host <hostname>' (where <hostname> is a host from above), the script must return either an empty JSON
+hash/dictionary, or a list of key/value variables to make available to templates or playbooks.  Returning variables is optional,
 if the script does not wish to do this, returning an empty hash/dictionary is the way to go::
 
     {
