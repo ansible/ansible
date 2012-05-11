@@ -45,6 +45,16 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_varReplace_caps(self):
+        template = 'hello $whoVar'
+        vars = {
+            'whoVar': 'world',
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+        print res
+        assert res == 'hello world'
+
     def test_varReplace_middle(self):
         template = 'hello $who!'
         vars = {
