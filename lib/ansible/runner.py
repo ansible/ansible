@@ -262,13 +262,14 @@ class Runner(object):
         async_jid=None, async_module=None, async_limit=None):
         ''' runs a module that has already been transferred '''
 
-        inject = self.setup_cache.get(conn.host,{})
+        inject = self.setup_cache.get(conn.host,{}).copy()
+        host_variables = self.inventory.get_variables(conn.host)
+        inject.update(host_variables)
+        inject.update(self.module_vars)
+
         conditional = utils.double_template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
-
-        host_variables = self.inventory.get_variables(conn.host)
-        inject.update(host_variables)
 
         if self.module_name == 'setup':
             args = self._add_setup_vars(inject, args)
