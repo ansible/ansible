@@ -40,32 +40,50 @@ class LibSSH2Connection(object):
         self.session = self._get_conn()
         return self
 
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
-
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
         ''' run a command on the remote host '''
         bufsize = 4096
         chan = self.session.open_session()
-        
-#        self.session.get_transport().open_session()
-        #chan.get_pty() 
 
         if not self.runner.sudo or not sudoable:
             quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
             rc = chan.execute(quoted_command)
         else:
-            raise errors.AnsibleError("sudo not yet implemented for libssh2 transport")
+            # Rather than detect if sudo wants a password this time, -k makes 
+            # sudo always ask for a password if one is required. The "--"
+            # tells sudo that this is the end of sudo options and the command
+            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # directly doesn't work, so we shellquote it with pipes.quote() 
+            # and pass the quoted string to the user's shell.  We loop reading
+            # output until we see the randomly-generated sudo prompt set with
+            # the -p option.
+            randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+            prompt = '[sudo via ansible, key=%s] password: ' % randbits
+            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s\n' % (prompt,
+                    sudo_user, pipes.quote(cmd))
+            sudo_output = ''
+            try:
+                chan.pty()
+                chan.execute(sudocmd)
+                if self.runner.sudo_pass:
+                    while not sudo_output.endswith(prompt):
+                        chunk = chan.read(bufsize)
+                        if not chunk:
+                            raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                        sudo_output += chunk
+                    chan.write(self.runner.sudo_pass + '\n\n')
+            except socket.timeout:
+                raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
+
+
         data = ""
         while True:
             d = chan.read(bufsize)
             if d == "" or d is None: break
             data+=d
 
-        stdin = "" #StringIO.StringIO()
-        stdout = "" #StringIO.StringIO()
-        stderr = "" #StringIO.StringIO()
-
         stdout = data
-        return stdin, stdout, stderr
+        return None, stdout, None
 
     def put_file(self, in_path, out_path, mode='644'):
         ''' transfer a file from local to remote '''
@@ -83,7 +101,7 @@ class LibSSH2Connection(object):
         channel.write(datas)
 
     def fetch_file(self, in_path, out_path):
-        f = file(out_path, "w")
+        f = file(out_path, "wb")
         channel = self.session.scp_recv(in_path)
         bufsize = 4096
         while True:
