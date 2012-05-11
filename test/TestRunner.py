@@ -25,6 +25,7 @@ def get_binary(name):
 
 class TestRunner(unittest.TestCase):
 
+<<<<<<< HEAD
     def setUp(self):
         self.user = getpass.getuser()
         self.runner = ansible.runner.Runner(
@@ -231,5 +232,28 @@ class TestRunner(unittest.TestCase):
     def test_service(self):
         # TODO: tests for the service module
         pass
+    def test_assemble(self):
+        input = self._get_test_file('assemble.d')
+        metadata = self._get_test_file('metadata.json')
+        output = self._get_stage_file('sample.out')
+        result = self._run('assemble', [
+            "src=%s" % input,
+            "dest=%s" % output,
+            "metadata=%s" % metadata
+        ])
+        assert os.path.exists(output)
+        out = file(output).read()
+        assert out.find("first") != -1
+        assert out.find("second") != -1
+        assert out.find("third") != -1
+        assert result['changed'] == True
+        assert 'md5sum' in result
+        assert 'failed' not in result
+        result = self._run('assemble', [
+            "src=%s" % input,
+            "dest=%s" % output,
+            "metadata=%s" % metadata
+        ])
+        assert result['changed'] == False
 
 
