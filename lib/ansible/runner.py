@@ -666,6 +666,9 @@ class Runner(object):
 
         result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
+        if self.remote_user != 'root':
+            cmd = 'chmod a+x %s' % cleaned
+            result, err = self._exec_command(conn, cmd, None, sudoable=False)
         return cleaned
 
 
