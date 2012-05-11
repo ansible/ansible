@@ -62,6 +62,7 @@ class PlayBook(object):
         stats            = None,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
+        basetmp          = C.DEFAULT_REMOTE_TEMPDIR,
         extra_vars       = None):
 
         """
@@ -101,6 +102,7 @@ class PlayBook(object):
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.sudo_user        = sudo_user
+        self.basetmp          = basetmp
         self.extra_vars       = extra_vars
         self.global_vars      = {}
 
@@ -287,7 +289,8 @@ class PlayBook(object):
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             debug=self.debug, sudo=sudo, sudo_user=sudo_user,
-            transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
+            transport=transport, sudo_pass=self.sudo_pass,
+            basetmp=self.basetmp, is_playbook=True
         )
 
         if async_seconds == 0:
