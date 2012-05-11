@@ -538,9 +538,6 @@ class Runner(object):
             content = base64.b64decode(result1['content'])
             inject = utils.json_loads(content)
 
-        # install the template module
-        copy_module = self._transfer_module(conn, tmp, 'copy')
-
         # template the source data locally
         source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
         resultant = ''            
@@ -548,19 +545,8 @@ class Runner(object):
             resultant = utils.template(source_data, inject, self.setup_cache, no_engine=False)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
-        xfered = self._transfer_str(conn, tmp, 'source', resultant)
-            
-        # run the COPY module
-        args = "src=%s dest=%s" % (xfered, dest)
-        (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
-        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
  
-        # modify file attribs if needed
-        if ok:
-            executed = executed.replace("copy","template",1)
-            return self._chain_file_module(conn, tmp, data, err, options, executed)
-        else:
-            return (host, ok, data, err)
+        return self._execute_post_template(conn, tmp, 'template', dest, resultant)
 
     # *****************************************************
 
@@ -581,11 +567,11 @@ class Runner(object):
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
 
-        return self._execute_post_template(conn, tmp, dest, resultant)
+        return self._execute_post_template(conn, tmp, 'assemble', dest, resultant)
 
     # *****************************************************
 
-    def _execute_post_template(self, conn, tmp, dest, data):
+    def _execute_post_template(self, conn, tmp, module, dest, data):
         ''' post actions for template and assemble '''
         options = utils.parse_kv(self.module_args)
         xfered  = self._transfer_str(conn, tmp, 'source', data)
@@ -601,7 +587,7 @@ class Runner(object):
 
         # Run through the file module if needed
         if ok:
-            executed = executed.replace("copy","assemble",1)
+            executed = executed.replace("copy",module,1)
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
             return (host, ok, data, err)
