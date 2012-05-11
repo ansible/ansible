@@ -9,7 +9,8 @@ Arguments
 =========
     user = username
     key = line to add to authorized_keys for user
-    ensure = absent|present (default: present)
+    state = absent|present (default: present)
+    debug = show traceback on failure
 
 Command Line Example 
 ====================
@@ -51,161 +52,141 @@ try:
 except ImportError:
     import simplejson as json
 
-import sys, os, shlex, pwd
+import sys, os, shlex, pwd, syslog
 from os.path import expanduser, exists, isfile, join
 
-class Module(object):
-    """Basic module behavior."""
-    def __init__(self):
-        if not hasattr(self, "argnames"): self.argnames = set()
-        self.debug=False
-        self.message=""
-        self.parseargs()
+params = {}
+msg=""
 
-    def parseargs(self):
-        """Get args from the conventional ansible args file."""
-        #import pdb; pdb.set_trace()
-        with file(sys.argv[1]) as f:            #read the args file
-            argsdata = f.read()
-        args = dict(                            # make a dictionary of...
-            [ arg.split("=", 1)                 # assignment pairs 
-              for arg in shlex.split(argsdata)  # using shell lexing
-              if "=" in arg                     # ignoring tokens without assignment
-            ])
+def exit_json(rc=0, **kwargs):
+    if 'name' in kwargs:
+        add_user_info(kwargs)
+    print json.dumps(kwargs)
+    sys.exit(rc)
 
-        # fail if there are unrecognized args
-        unrecognized_args = set(args.keys()) - self.argnames
-        if len(unrecognized_args) > 0:
-            self.message = "Unrecognized arguments %r." % (list(unrecognized_args))
-            self.fail( )
-        # otherwise store the args
-        self.args = args
+def fail_json(**kwargs):
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
 
-    def fail(self):
-        """Failure exit following ansible conventions."""
-        result = dict( failed=True, msg=self.message or "Unexplained failure.")
-        print json.dumps(result)
-        sys.exit(1) #recommended for future proofing
+def get_params():
+    """Startup tasks and read params.
 
-    def succeed(self):
-        """Success exit following ansible conventions.
-        
-        Because we usually don't want extra cruft in success returns, it's expected
-        you'll just stuff messages and other needed return values in args.
-        """
-        print json.dumps(self.args)
-        sys.exit(0) #recommended for future proofing.
+    :return: parameters as dictionary.
+    """
+    global msg
 
-    def prerequisites(self):
-        """Make sure things that have to be present to continue are here."""
-        return True
+    msg = "reading params"
+    with file(sys.argv[1]) as f:            #read the args file
+        args = f.read()
 
-    def verify(self):
-        """Check if we need to act. As a side effect, reads in data that install or remove may use.
-        Any overrides of run must guarantee that verify executes before install or remove.
+    msg = "writing syslog."
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
-        :return: True means already installed. False means effectively absent. None means ambiguous.
-        """
-        return True
+    msg = "parsing params"
+    params = dict(                            # make a dictionary of...
+        [ arg.split("=", 1)                 # assignment pairs 
+          for arg in shlex.split(args)  # using shell lexing
+          if "=" in arg                     # ignoring tokens without assignment
+        ])
 
-    def install(self):
-        """Ensure the resource is installed according to the args."""
-        #Exit if there's nothing to do
-        return True
+    return params
 
-    def remove(self):
-        """Ensure that the resource is not present."""
-        return True
+def keyfile(user, create=False):
+    """Calculate name of authorized keys file, optionally creating the 
+    directories and file, properly setting permissions.
 
-    def run(self):
-        """Execute the module according to the args passed in. Returns a structure ready for JSON.
-        Any overrides of run must guarantee that verify executes before install or remove.
-        """
-        action = self.args.get("ensure","present")
-        try:
-            if action=="absent":
-                if self.verify()==False: #exit if there's nothing to do
-                    self.args["changed"] = False
-                    self.succeed()
-                if self.remove() and (self.verify()==False):
-                    self.args["changed"] = True
-                    self.succeed()
-                else:
-                    self.fail()  #set message in remove
-            elif action=="present":
-                if self.verify()==True: #exit if there's nothing to do
-                    self.args["changed"] = False
-                    self.succeed()
-                if self.install() and (self.verify()==True):
-                    self.args["changed"] = True
-                    self.succeed()
-                else:
-                    self.fail()  #set message in install
-        except Exception, e:
-            if hasattr(e, "message"):
-                self.message = "Error while trying to alter authorized keys: %s." % e.message
-            else:
-                self.message = "Unexplained %s while trying to alter auth key." % type(e)
-            if self.debug: #production version should not have tracebacks
-                import traceback
-                self.message += "(%s)" % traceback.format_exc()
-            self.fail()
-            
-            
-class SshKey(Module):
-    """Install or remove ssh keys."""
+    :param str user: name of user in passwd file
+    :param bool create: make directories and authorized key file if True
+    :return: full path string to authorized_keys for user
+    """
+
+    global msg
+    msg = "Reading system user entry."
+    user_entry = pwd.getpwnam(user)
+    homedir = user_entry.pw_dir
+    sshdir = join(homedir, ".ssh")
+    keysfile = join(sshdir, "authorized_keys")
+    if not create: return keysfile
+
+    #create directories and files for authorized keys
+    msg = "Reading user and group info."
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+    msg = "Making ~/.ssh."
+    if not exists(sshdir): os.mkdir(sshdir, 0700)
+    os.chown(sshdir, uid, gid)
+    os.chmod(sshdir, 0700)
+    msg = "Touching authorized keys file."
+    if not exists( keysfile):
+        with file(keysfile, "w") as f: 
+            f.write("#Authorized Keys File created by Ansible.")
+    os.chown(keysfile, uid, gid)
+    os.chmod(keysfile, 0600)
+    return keysfile
+
+def readkeys( filename):
+    global msg
+    msg = "Reading authorized_keys."
+    if not isfile(filename): return []
+    with file(filename) as f:
+        keys = [line.rstrip() for line in f.readlines()]
+    return keys
+
+def writekeys( filename, keys):
+    global msg
+    msg = "Writing authorized_keys."
+    with file(filename,"w") as f:
+        f.writelines( (key + "\n" for key in keys) )
+
+def enforce_state( params):
+    """Add or remove key.
+
+    :return: True=changed, False=unchanged
+    """
+    global msg
+
+    #== scrub params
+    msg = "Invalid or missing param: user."
+    user = params["user"]
+    msg = "Invalid or missing param: key."
+    key = params["key"]
+    state = params.get("state", "present")
+
+    #== check current state
+    params["keyfile"] = keyfile(user)
+    keys = readkeys( params["keyfile"])
+    present = key in keys
+
+    #== handle idempotent state=present
+    if state=="present":
+        if present: return False #nothing to do
+        keys.append(key)
+    elif state=="absent":
+        if not present: return False #nothing to do
+        keys.remove(key)
+    else:
+        msg = "Invalid param: state."
+        raise StandardError(msg)
+    writekeys(keyfile(user,create=True), keys)
+    return True
+
+#===== MAIN SCRIPT ===================================================
+
+try:
+    params = get_params()
+    changed = enforce_state( params)
+    msg = ""
+except:
+    msg = "Error %s" % msg
+
+# Don't do sys.exit() within try...except 
+if msg:
+    if params.get("debug",False):
+        import traceback
+        fail_json(msg=msg, traceback=traceback.format_exc())
+    else:
+        fail_json(msg=msg)
+else:
+    exit_json( user=params["user"], changed=changed)
     
-    def __init__(self):
-        self.argnames=set(["user","key","ensure"])
-        super(SshKey,self).__init__()
-        self.debug = True
-        self.key = self.args["key"]
-        try:
-            user_entry = pwd.getpwnam(self.args["user"])
-            self.uid = user_entry.pw_uid
-            self.gid = user_entry.pw_gid
-            self.homedir = user_entry.pw_dir
-            self.sshdir = join(self.homedir, ".ssh")
-            self.keysfile = join(self.sshdir, "authorized_keys")
-        except KeyError:
-            self.message = "User doesn't exist: %s." % self.args["user"]
-            self.fail()
-     
-    def verify(self):
-        self.message = ""
-        self.keys = []
-        if not isfile(self.keysfile): 
-            self.message = "File doesn't exist: %s." % self.keysfile
-            return False
-        try:
-            with file(self.keysfile) as f:
-                self.keys = [line.rstrip() for line in f.readlines()] #rstrip to remove trailing \n
-            if self.key in self.keys: 
-                return True
-            self.message = "Key not found in file: %s" % self.keysfile
-        except:
-            raise
-            self.message = "Error reading file: %s" % self.keysfile
-        return False
-
-    def write_keys(self):
-        if not exists(self.sshdir): 
-            os.mkdir(self.sshdir, 0700)
-        with file(self.keysfile, "w") as f:
-            f.writelines( ( key + "\n" for key in self.keys) )
-        os.chown(self.sshdir, self.uid, self.gid)
-        os.chmod(self.sshdir, 0700)
-        os.chown(self.keysfile, self.uid, self.gid)
-        os.chmod(self.keysfile, 0600)
-
-    def remove(self):
-        self.keys.remove(self.key)
-        self.write_keys()
-        return True
-        
-    def install(self):
-        self.keys.append(self.key)
-        self.write_keys()
-        return True
-
-SshKey().run()
