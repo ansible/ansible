@@ -83,7 +83,7 @@ class LibSSH2Connection(object):
             data+=d
 
         stdout = data
-        return None, stdout, None
+        return "", stdout, ""
 
     def put_file(self, in_path, out_path, mode='644'):
         ''' transfer a file from local to remote '''
