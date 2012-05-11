@@ -20,10 +20,12 @@
 import utils
 import sys
 import getpass
+from ansible import errors
 try:
     import passlib.hash
+    PASSLIB_AVAILABLE = True
 except:
-    pass
+    PASSLIB_AVAILABLE = False
 
 #######################################################
 
@@ -241,11 +243,14 @@ class PlaybookCallbacks(object):
                 result = prompt(msg, private)
                 second = prompt("confirm " + msg, private)
                 if result == second: break
-                print "***** VALUES DO NOT MATCH ****"
+                print "***** VALUES ENTERED DO NOT MATCH ****"
         else:
             result = prompt(msg, private)
         if encrypt:
-            result = passlib.hash.md5_crypt.encrypt(result)
+            if PASSLIB_AVAILABLE:
+                result = passlib.hash.md5_crypt.encrypt(result)
+            else:
+                raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
         return result
         
     def on_setup_primary(self):
