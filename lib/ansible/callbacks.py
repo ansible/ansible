@@ -20,6 +20,10 @@
 import utils
 import sys
 import getpass
+try:
+    import passlib.hash
+except:
+    pass
 
 #######################################################
 
@@ -226,11 +230,23 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         print utils.task_start_msg(name, is_conditional)
 
-    def on_vars_prompt(self, varname, private=True):
-        msg = 'input for %s: ' % varname
-        if private:
-            return getpass.getpass(msg)
-        return raw_input(msg)
+    def on_vars_prompt(self, msg, private=True, encrypt=False, confirm=False):
+        msg = '%s: ' % msg
+        def prompt(prompt, private):
+            if private:
+                return getpass.getpass(prompt)
+            return raw_input(prompt)
+        if confirm:
+            while True:
+                result = prompt(msg, private)
+                second = prompt("confirm " + msg, private)
+                if result == second: break
+                print "***** VALUES DO NOT MATCH ****"
+        else:
+            result = prompt(msg, private)
+        if encrypt:
+            result = passlib.hash.md5_crypt.encrypt(result)
+        return result
         
     def on_setup_primary(self):
         print "SETUP PHASE ****************************\n"
