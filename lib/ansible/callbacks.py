@@ -232,7 +232,7 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         print utils.task_start_msg(name, is_conditional)
 
-    def on_vars_prompt(self, msg, private=True, encrypt=False, confirm=False):
+    def on_vars_prompt(self, msg, private=True, encryption=None, confirm=False, salt_size=None, salt=None):
         msg = '%s: ' % msg
         def prompt(prompt, private):
             if private:
@@ -246,9 +246,18 @@ class PlaybookCallbacks(object):
                 print "***** VALUES ENTERED DO NOT MATCH ****"
         else:
             result = prompt(msg, private)
-        if encrypt:
+        if encryption:
             if PASSLIB_AVAILABLE:
-                result = passlib.hash.md5_crypt.encrypt(result)
+                try:
+                    crypt = getattr(passlib.hash, encryption)
+                except:
+                    raise errors.AnsibleError("passlib does not support '%s' algorithm" % encryption) 
+                if salt_size:
+                    result = crypt.encrypt(result, salt_size=salt_size)
+                elif salt:
+                    result = crypt.encrypt(result, salt=salt)
+                else:
+                    result = crypt.encrypt(result)
             else:
                 raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
         return result
