@@ -242,6 +242,9 @@ def get_network_facts(facts):
                     facts[iface]['ipv4'] = {}
                 facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
                                          'netmask': data[-1].split(':')[1] }
+                ip = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['address']))[0]
+                mask = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['netmask']))[0]
+                facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
             if 'inet6 addr' in line:
                 (ip, prefix) = data[2].split('/')
                 scope = data[3].split(':')[1].lower()
