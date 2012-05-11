@@ -37,34 +37,41 @@ class Inventory(object):
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
+        # the host file file, or script path, or list of hosts
+        # if a list, inventory data will NOT be loaded
         self.host_list = host_list
+
+        # the inventory object holds a list of groups
         self.groups = []
+ 
+        # a list of host(names) to contain current inquiries to
         self._restriction = None
+
+        # whether the inventory file is a script
         self._is_script = False
 
-        if host_list:
-            if type(host_list) == list:
-                self.groups = self._groups_from_override_hosts(host_list)
-            elif os.access(host_list, os.X_OK):
-                self._is_script = True
-                self.parser = InventoryScript(filename=host_list)
+        if type(host_list) == list:
+            all = Group('all')
+            self.groups = [ all ]
+            for x in host_list:
+                if x.find(":") != -1:
+                    tokens = x.split(":",1)
+                    all.add_host(Host(tokens[0], tokens[1]))
+                else:
+                    all.add_host(Host(x))
+        elif os.access(host_list, os.X_OK):
+            self._is_script = True
+            self.parser = InventoryScript(filename=host_list)
+            self.groups = self.parser.groups.values()
+        else:
+            data = file(host_list).read()
+            if not data.startswith("---"):
+                self.parser = InventoryParser(filename=host_list)
                 self.groups = self.parser.groups.values()
-            else:
-                data = file(host_list).read()
-                if not data.startswith("---"):
-                    self.parser = InventoryParser(filename=host_list)
-                    self.groups = self.parser.groups.values()
-                else:         
-                    self.parser = InventoryParserYaml(filename=host_list)
-                    self.groups = self.parser.groups.values()
-  
-    def _groups_from_override_hosts(self, list):
-        # support for playbook's --override-hosts only
-        all = Group(name='all') 
-        for h in list:
-            all.add_host(Host(name=h))
-        return dict(all=all) 
-
+            else:         
+                self.parser = InventoryParserYaml(filename=host_list)
+                self.groups = self.parser.groups.values()
+      
     def _match(self, str, pattern_str):
         return fnmatch.fnmatch(str, pattern_str)
 
@@ -73,7 +80,8 @@ class Inventory(object):
         hosts = {}
         patterns = pattern.replace(";",":").split(":")
 
-        for group in self.get_groups():
+        groups = self.get_groups()
+        for group in groups:
              for host in group.get_hosts():
                  for pat in patterns:
                      if group.name == pat or pat == 'all' or self._match(host.name, pat):
@@ -131,19 +139,22 @@ class Inventory(object):
         self.groups.append(group)
 
     def list_hosts(self, pattern="all"):
-        """ DEPRECATED: Get all host names matching the pattern """
         return [ h.name for h in self.get_hosts(pattern) ]
 
     def list_groups(self):
         return [ g.name for g in self.groups ] 
 
-    def restrict_to(self, restriction):
+    def get_restriction(self):
+        return self._restriction
+
+    def restrict_to(self, restriction, append_missing=False):
         """ Restrict list operations to the hosts given in restriction """
-        if type(restriction) != list:
-            restriction = [ restriction ]
-        self._restriction = restriction
+   
+	if type(restriction) != list:
+	    restriction = [ restriction ]
+	self._restriction = restriction
 
     def lift_restriction(self):
         """ Do not restrict list operations """
-        self._restriction = None
 
+        self._restriction = None

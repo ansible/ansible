@@ -56,7 +56,6 @@ class PlayBook(object):
         sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
-        override_hosts   = None,
         debug            = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -76,7 +75,6 @@ class PlayBook(object):
         sudo_pass:        if sudo==True, and a password is required, this is the sudo password
         remote_port:      default remote port to use if not specified with the host or play
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
-        override_hosts:   skip the inventory file, just talk to these hosts
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
@@ -99,7 +97,6 @@ class PlayBook(object):
         self.debug            = debug
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
-        self.override_hosts   = override_hosts
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
@@ -107,16 +104,11 @@ class PlayBook(object):
         self.extra_vars       = extra_vars
         self.global_vars      = {}
 
-        if override_hosts is not None:
-            if type(override_hosts) != list:
-                raise errors.AnsibleError("override hosts must be a list")
-            if not self.inventory._is_script:
-                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
+        self.inventory = ansible.inventory.Inventory(host_list)
+        
 
-        else:
-            self.inventory = ansible.inventory.Inventory(host_list)
-            if not self.inventory._is_script:
-                self.global_vars.update(ansible.inventory.Inventory(host_list).get_group_variables('all'))
+        if not self.inventory._is_script:
+            self.global_vars.update(self.inventory.get_group_variables('all'))
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
@@ -372,6 +364,8 @@ class PlayBook(object):
         # we would only trigger restarting Apache on half of the nodes
 
         subtasks = task.get('notify', [])
+        if isinstance(subtasks, basestring):
+            subtasks = [subtasks]
         if len(subtasks) > 0:
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
@@ -407,19 +401,23 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_conditional_imports(self, vars_files):
+    def _do_conditional_imports(self, vars_files, pattern=None):
         ''' handle the vars_files section, which can contain variables '''
-        
+
         # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
         # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
         #        not super optimized yet either, because we wouldn't have hit them, ergo
         #        it will raise false errors if there is no defaults variable file without any $vars
         #        in it, which could happen on uncontacted hosts.
- 
+
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
-        for host in self.inventory.list_hosts():
-            cache_vars = SETUP_CACHE.get(host,{}) 
+
+        host_list = [ h for h in self.inventory.list_hosts(pattern)
+                        if not (h in self.stats.failures or h in self.stats.dark) ]
+
+        for host in host_list:
+            cache_vars = SETUP_CACHE.get(host,{})
             SETUP_CACHE[host] = cache_vars
             for filename in vars_files:
                 if type(filename) == list:
@@ -461,12 +459,13 @@ class PlayBook(object):
 
         if vars_files is not None:
             self.callbacks.on_setup_secondary()
-            self._do_conditional_imports(vars_files)
+            self._do_conditional_imports(vars_files, pattern)
         else:
             self.callbacks.on_setup_primary()
 
         host_list = [ h for h in self.inventory.list_hosts(pattern) 
                         if not (h in self.stats.failures or h in self.stats.dark) ]
+
         self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
@@ -500,14 +499,13 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
-        pattern = pg.get('hosts',None)
-        name = pg.get('name', pattern)
-        if isinstance(pattern, list):
-            pattern = ';'.join(pattern)
-        if self.override_hosts:
-            pattern = 'all'
+        pattern = pg.get('hosts')
         if pattern is None:
             raise errors.AnsibleError('hosts declaration is required')
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
+        pattern = utils.template(pattern, self.extra_vars, {})
+        name = pg.get('name', pattern)
 
         vars       = self._get_vars(pg, self.basedir)
         vars_files = pg.get('vars_files', {})

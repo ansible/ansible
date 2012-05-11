@@ -29,6 +29,7 @@ import tempfile
 import time
 import base64
 import getpass
+import codecs
 
 import ansible.constants as C 
 import ansible.connection
@@ -202,7 +203,7 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data)
+        afo.write(data.encode("utf8"))
         afo.flush()
         afo.close()
 
@@ -430,9 +431,16 @@ class Runner(object):
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject, self.setup_cache)
+
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
+
+        # apply templating to dest argument
+        dest = utils.template(dest, inject, self.setup_cache)
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -534,10 +542,10 @@ class Runner(object):
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
-        source_data = file(utils.path_dwim(self.basedir, source)).read()
+        source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
         resultant = ''            
         try:
-            resultant = utils.template(source_data, inject, self.setup_cache)
+            resultant = utils.template(source_data, inject, self.setup_cache, no_engine=False)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
