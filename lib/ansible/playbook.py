@@ -142,8 +142,10 @@ class PlayBook(object):
             elif type(var_settings) == dict:
                 prompt = var_settings.get("prompt", "input for %s" % vname)
                 confirm = var_settings.get("confirm", False)
-                encrypt = var_settings.get("encrypt", False)
-                vars[vname] = self.callbacks.on_vars_prompt(prompt, confirm=confirm, encrypt=encrypt)
+                encryption = var_settings.get("encryption", False)
+                salt_size = var_settings.get("salt_size", None)
+                salt = var_settings.get("salt", None)
+                vars[vname] = self.callbacks.on_vars_prompt(prompt, confirm=confirm, encryption=encryption, salt_size=salt_size, salt=salt)
             else:
                 raise errors.AnsibleError("'vars_prompt' values must be either a string or a dictionary")
             print vars[vname]
