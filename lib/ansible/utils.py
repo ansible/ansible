@@ -278,6 +278,17 @@ def template_from_file(path, vars, setup_cache, no_engine=False):
     data = codecs.open(path, encoding="utf8").read()
     return template(data, vars, setup_cache, no_engine=no_engine)
 
+def assemble_from_fragments(path):
+    ''' assemble a file from a directory of fragments '''
+    assembled = []
+    if not os.path.isdir(path):
+        raise errors.AnsibleError("path (%s) is not a directory" % path)
+    for f in sorted(os.listdir(path)):
+        fragment = "%s/%s" % (path, f)
+        if os.path.isfile(fragment):
+            assembled.append(file(fragment).read())
+    return "".join(assembled)
+
 def parse_yaml(data):
     return yaml.load(data)
   
