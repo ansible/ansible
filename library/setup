@@ -263,8 +263,40 @@ def get_public_ssh_host_keys(facts):
     else:
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
+def get_selinux_facts(facts):
+    if os.path.exists("/etc/sysconfig/selinux"):
+        facts['selinux'] = {}
+        cmd = subprocess.Popen("/usr/sbin/getenforce", shell=True, 
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        out = out.rstrip()
+        if err == "": 
+            facts['selinux']['mode'] = out
+        else:
+            facts['selinux']['mode'] = err
+        conf = []
+        for line in open("/etc/sysconfig/selinux").readlines():
+            data = line.split("\n", 1)
+            conf.append(data[0])
+            if 'SELINUX=disabled' in conf:
+                facts['selinux']['mode_configured'] = 'disabled'
+            elif 'SELINUX=enforcing':
+                facts['selinux']['mode_configured'] = 'enforcing'
+            elif 'SELINUX=permissive' in conf:
+                facts['selinux']['mode_configured'] = 'permissive'
+            elif 'SELINUXTYPE=targeted' in conf:
+                facts['selinux']['type'] = 'targeted'
+            elif 'SELINUXTYPE=strict':
+                facts['selinux']['type'] = 'strict'
+            elif 'SELINUXTYPE=mls':
+                facts['selinux']['type'] = 'mls'
+            facts['selinux']['policyvers'] = open("/selinux/policyvers").readlines().pop() # Assuming policyvers is only one line.
+    else:
+        facts['selinux'] = False
+
 def get_service_facts(facts):
     get_public_ssh_host_keys(facts)
+    get_selinux_facts(facts)
 
 def ansible_facts():
     facts = {}
