@@ -243,7 +243,7 @@ def varReplace(raw, vars):
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(2).lower()
+        varname = m.group(2)
 
         replacement = unicode(varLookup(varname, vars) or m.group())
 
