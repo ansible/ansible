@@ -564,6 +564,50 @@ class Runner(object):
 
     # *****************************************************
 
+    def _execute_assemble(self, conn, host, tmp):
+        ''' handler for assemble operations '''
+        # load options
+        options  = utils.parse_kv(self.module_args)
+        source   = options.get('src', None)
+        dest     = options.get('dest', None)
+        metadata = options.get('metadata', None)
+        if source is None or dest is None:
+            return (host, True, dict(failed=True, msg="src and dest are required"), '')
+
+        # Assemble the source fragments locally
+        resultant = ''
+        try:
+            resultant = utils.assemble_from_fragments(utils.path_dwim(self.basedir, source))
+        except Exception, e:
+            return (host, False, dict(failed=True, msg=str(e)), '')
+
+        return self._execute_post_template(conn, tmp, dest, resultant)
+
+    # *****************************************************
+
+    def _execute_post_template(self, conn, tmp, dest, data):
+        ''' post actions for template and assemble '''
+        options = utils.parse_kv(self.module_args)
+        xfered  = self._transfer_str(conn, tmp, 'source', data)
+
+        (host, ok, data, err) = (None, None, None, None)
+
+        # Install and run the copy module
+        copy_module = self._transfer_module(conn, tmp, 'copy')
+
+        args = "src=%s dest=%s" % (xfered, dest)
+        (result1, err, executed) = self._execute_module(conn, tmp, copy_module, args)
+        (host, ok, data, err) = self._return_from_module(conn, host, result1, err, executed)
+
+        # Run through the file module if needed
+        if ok:
+            executed = executed.replace("copy","assemble",1)
+            return self._chain_file_module(conn, tmp, data, err, options, executed)
+        else:
+            return (host, ok, data, err)
+
+    # *****************************************************
+
     def _executor(self, host):
         try:
             (host, ok, data, err) = self._executor_internal(host)
@@ -603,6 +647,8 @@ class Runner(object):
             result = self._execute_fetch(conn, host, tmp)
         elif self.module_name == 'template':
             result = self._execute_template(conn, host, tmp)
+        elif self.module_name == 'assemble':
+            result = self._execute_assemble(conn, host, tmp)
         else:
             if self.background == 0:
                 result = self._execute_normal_module(conn, host, tmp, module_name)
