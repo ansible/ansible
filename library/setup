@@ -281,8 +281,7 @@ def get_selinux_facts(facts):
             facts['selinux']['policyvers'] = policyvers.group()
             facts['selinux']['type'] = type.group()
         elif status.group() == "disabled":
-            facts['selinux']['status'] = status.group()
-            
+            facts['selinux']['status'] = status.group()            
     else:
         facts['selinux'] = False
 
