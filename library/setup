@@ -264,33 +264,23 @@ def get_public_ssh_host_keys(facts):
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
 def get_selinux_facts(facts):
-    if os.path.exists("/etc/sysconfig/selinux"):
-        facts['selinux'] = {}
-        cmd = subprocess.Popen("/usr/sbin/getenforce", shell=True, 
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        out = out.rstrip()
-        if err == "": 
-            facts['selinux']['mode'] = out
-        else:
-            facts['selinux']['mode'] = err
-        conf = []
-        for line in open("/etc/sysconfig/selinux").readlines():
-            data = line.split("\n", 1)
-            conf.append(data[0])
-            if 'SELINUX=disabled' in conf:
-                facts['selinux']['mode_configured'] = 'disabled'
-            elif 'SELINUX=enforcing':
-                facts['selinux']['mode_configured'] = 'enforcing'
-            elif 'SELINUX=permissive' in conf:
-                facts['selinux']['mode_configured'] = 'permissive'
-            elif 'SELINUXTYPE=targeted' in conf:
-                facts['selinux']['type'] = 'targeted'
-            elif 'SELINUXTYPE=strict':
-                facts['selinux']['type'] = 'strict'
-            elif 'SELINUXTYPE=mls':
-                facts['selinux']['type'] = 'mls'
-            facts['selinux']['policyvers'] = open("/selinux/policyvers").readlines().pop() # Assuming policyvers is only one line.
+    cmd = subprocess.Popen("/usr/sbin/sestatus", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = cmd.communicate()
+    if err == '':
+        list = out.split("\n")
+        status = re.search("enabled", list[0])
+        if status.group() == "enabled":
+            facts['selinux'] = {}
+            mode = re.search("(enforcing|disabled|permissive)", list[2])
+            config_mode = re.search("(enforcing|disabled|permissive)", list[3])
+            policyvers = re.search("\d+", list[4])
+            type = re.search("(targeted|strict|mls)", list[5])
+            for item in ['mode', 'config_mode', 'policyvers', 'type']:
+                facts['selinux'][item] = item.group()
+#            facts['selinux']['mode'] = mode.group()
+#            facts['selinux']['config_mode'] = config_mode.group()
+#            facts['selinux']['policyvers'] = policyvers.group()
+#            facts['selinux']['type'] = type.group()
     else:
         facts['selinux'] = False
 
