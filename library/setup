@@ -275,12 +275,10 @@ def get_selinux_facts(facts):
             config_mode = re.search("(enforcing|disabled|permissive)", list[3])
             policyvers = re.search("\d+", list[4])
             type = re.search("(targeted|strict|mls)", list[5])
-            for item in ['mode', 'config_mode', 'policyvers', 'type']:
-                facts['selinux'][item] = item.group()
-#            facts['selinux']['mode'] = mode.group()
-#            facts['selinux']['config_mode'] = config_mode.group()
-#            facts['selinux']['policyvers'] = policyvers.group()
-#            facts['selinux']['type'] = type.group()
+            facts['selinux']['mode'] = mode.group()
+            facts['selinux']['config_mode'] = config_mode.group()
+            facts['selinux']['policyvers'] = policyvers.group()
+            facts['selinux']['type'] = type.group()
     else:
         facts['selinux'] = False
 
