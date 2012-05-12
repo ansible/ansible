@@ -1,0 +1,211 @@
+#!/usr/bin/env python
+"""Ansible module to add authorized_keys for ssh logins.
+
+(c) 2012, Brad Olson <brado@movedbylight.com>
+
+Results: Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
+
+Arguments
+=========
+    user = username
+    key = line to add to authorized_keys for user
+    ensure = absent|present (default: present)
+
+Command Line Example 
+====================
+
+ansible somehost -m sshkey -a user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+
+Playbook Example 
+================
+
+---
+# include like this:
+# - include: tasks/logins.yaml users=charlie,sue
+- name: create user charlie
+  action: user name=charlie shell=/bin/bash createhome=yes groups=www-data 
+  only_if: "'charlie' in '$users'"
+- name: add public key for charlie
+  action: sshkey user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+  only_if: "'charlie' in '$users'"
+
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+import sys, os, shlex, pwd
+from os.path import expanduser, exists, isfile, join
+
+class Module(object):
+    """Basic module behavior."""
+    def __init__(self):
+        if not hasattr(self, "argnames"): self.argnames = set()
+        self.debug=False
+        self.message=""
+        self.parseargs()
+
+    def parseargs(self):
+        """Get args from the conventional ansible args file."""
+        #import pdb; pdb.set_trace()
+        with file(sys.argv[1]) as f:            #read the args file
+            argsdata = f.read()
+        args = dict(                            # make a dictionary of...
+            [ arg.split("=", 1)                 # assignment pairs 
+              for arg in shlex.split(argsdata)  # using shell lexing
+              if "=" in arg                     # ignoring tokens without assignment
+            ])
+
+        # fail if there are unrecognized args
+        unrecognized_args = set(args.keys()) - self.argnames
+        if len(unrecognized_args) > 0:
+            self.message = "Unrecognized arguments %r." % (list(unrecognized_args))
+            self.fail( )
+        # otherwise store the args
+        self.args = args
+
+    def fail(self):
+        """Failure exit following ansible conventions."""
+        result = dict( failed=True, msg=self.message or "Unexplained failure.")
+        print json.dumps(result)
+        sys.exit(1) #recommended for future proofing
+
+    def succeed(self):
+        """Success exit following ansible conventions.
+        
+        Because we usually don't want extra cruft in success returns, it's expected
+        you'll just stuff messages and other needed return values in args.
+        """
+        print json.dumps(self.args)
+        sys.exit(0) #recommended for future proofing.
+
+    def prerequisites(self):
+        """Make sure things that have to be present to continue are here."""
+        return True
+
+    def verify(self):
+        """Check if we need to act. As a side effect, reads in data that install or remove may use.
+        Any overrides of run must guarantee that verify executes before install or remove.
+
+        :return: True means already installed. False means effectively absent. None means ambiguous.
+        """
+        return True
+
+    def install(self):
+        """Ensure the resource is installed according to the args."""
+        #Exit if there's nothing to do
+        return True
+
+    def remove(self):
+        """Ensure that the resource is not present."""
+        return True
+
+    def run(self):
+        """Execute the module according to the args passed in. Returns a structure ready for JSON.
+        Any overrides of run must guarantee that verify executes before install or remove.
+        """
+        action = self.args.get("ensure","present")
+        try:
+            if action=="absent":
+                if self.verify()==False: #exit if there's nothing to do
+                    self.args["changed"] = False
+                    self.succeed()
+                if self.remove() and (self.verify()==False):
+                    self.args["changed"] = True
+                    self.succeed()
+                else:
+                    self.fail()  #set message in remove
+            elif action=="present":
+                if self.verify()==True: #exit if there's nothing to do
+                    self.args["changed"] = False
+                    self.succeed()
+                if self.install() and (self.verify()==True):
+                    self.args["changed"] = True
+                    self.succeed()
+                else:
+                    self.fail()  #set message in install
+        except Exception, e:
+            if hasattr(e, "message"):
+                self.message = "Error while trying to alter authorized keys: %s." % e.message
+            else:
+                self.message = "Unexplained %s while trying to alter auth key." % type(e)
+            if self.debug: #production version should not have tracebacks
+                import traceback
+                self.message += "(%s)" % traceback.format_exc()
+            self.fail()
+            
+            
+class SshKey(Module):
+    """Install or remove ssh keys."""
+    
+    def __init__(self):
+        self.argnames=set(["user","key","ensure"])
+        super(SshKey,self).__init__()
+        self.debug = True
+        self.key = self.args["key"]
+        try:
+            user_entry = pwd.getpwnam(self.args["user"])
+            self.uid = user_entry.pw_uid
+            self.gid = user_entry.pw_gid
+            self.homedir = user_entry.pw_dir
+            self.sshdir = join(self.homedir, ".ssh")
+            self.keysfile = join(self.sshdir, "authorized_keys")
+        except KeyError:
+            self.message = "User doesn't exist: %s." % self.args["user"]
+            self.fail()
+     
+    def verify(self):
+        self.message = ""
+        self.keys = []
+        if not isfile(self.keysfile): 
+            self.message = "File doesn't exist: %s." % self.keysfile
+            return False
+        try:
+            with file(self.keysfile) as f:
+                self.keys = [line.rstrip() for line in f.readlines()] #rstrip to remove trailing \n
+            if self.key in self.keys: 
+                return True
+            self.message = "Key not found in file: %s" % self.keysfile
+        except:
+            raise
+            self.message = "Error reading file: %s" % self.keysfile
+        return False
+
+    def write_keys(self):
+        if not exists(self.sshdir): 
+            os.mkdir(self.sshdir, 0700)
+        with file(self.keysfile, "w") as f:
+            f.writelines( ( key + "\n" for key in self.keys) )
+        os.chown(self.sshdir, self.uid, self.gid)
+        os.chmod(self.sshdir, 0700)
+        os.chown(self.keysfile, self.uid, self.gid)
+        os.chmod(self.keysfile, 0600)
+
+    def remove(self):
+        self.keys.remove(self.key)
+        self.write_keys()
+        return True
+        
+    def install(self):
+        self.keys.append(self.key)
+        self.write_keys()
+        return True
+
+SshKey().run()
