@@ -135,8 +135,6 @@ ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
-ANSIBLE_REMOTE_TMP -- Override the default ansible remote tmpdir
-
 
 AUTHOR
 ------

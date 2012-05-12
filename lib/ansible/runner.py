@@ -79,7 +79,7 @@ class Runner(object):
         sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
         setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
         callbacks=None, debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
-        module_vars=None, is_playbook=False, inventory=None,basetmp=C.DEFAULT_REMOTE_TEMPDIR):
+        module_vars=None, is_playbook=False, inventory=None):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
@@ -96,7 +96,7 @@ class Runner(object):
         sudo_pass    : sudo password if using sudo and sudo requires a password
         background   : run asynchronously with a cap of this many # of seconds (if not 0)
         basedir      : paths used by modules if not absolute are relative to here
-        basetmp      : TMPDIR used on remote host
+        basetmp      : TMPDIR used on remote host. Set with ENVAR ANSIBLE_REMOTE_TMP
         setup_cache  : this is a internalism that is going away
         transport    : transport mode (paramiko, local)
         conditional  : only execute if this string, evaluated, is True
@@ -120,7 +120,6 @@ class Runner(object):
 
         self.sudo_user = sudo_user
         self.transport = transport
-        self.basetmp   = basetmp
         self.connector = ansible.connection.Connection(self, self.transport, self.sudo_user)
 
         if inventory is None:
@@ -238,7 +237,7 @@ class Runner(object):
 
     def _add_setup_metadata(self, args):
         ''' automatically determine where to store variables for the setup module '''
-        basetmp = self.basetmp
+        basetmp = os.environ.get('ANSIBLE_REMOTE_TMP','/$HOME/.ansible/tmp')
         is_dict = False
         if type(args) == dict:
             is_dict = True
@@ -659,7 +658,7 @@ class Runner(object):
         # The problem with this is that it's executed on the
         # overlord, not on the target so we can't use tempdir and os.path
         # Only support the *nix world for now by using the $HOME env var
-        basetmp = self.basetmp
+        basetmp = os.environ.get('ANSIBLE_REMOTE_TMP','/$HOME/.ansible/tmp')
         if self.remote_user == 'root':
             basetmp ="/var/tmp"
         cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
