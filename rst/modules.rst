@@ -73,10 +73,6 @@ Example action from Ansible :doc:`playbooks`::
     apt pkg=foo=1.00 state=installed
     apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
 
-
-NOTE: the apt module cannot currently request installation of a specific software version, as the yum
-module can.  This should be available in a future release.
-
 .. _command:
 
 command
