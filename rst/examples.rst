@@ -1,5 +1,5 @@
-Command Line Examples
-=====================
+Command Line
+============
 
 The following examples show how to use `/usr/bin/ansible` for running ad-hoc tasks.
 Start here. 

@@ -1,5 +1,5 @@
-Frequently Asked Questions
-==========================
+FAQ
+===
 
 What inspired Ansible?
 ----------------------
@@ -155,30 +155,37 @@ How does Ansible scale?
 +++++++++++++++++++++++
 
 Whether in single-execution mode or using ansible playbooks, ansible can
-run multiple commands in seperate forks, thanks to the magic behind
+run multiple commands in seperate parallel forks, thanks to the magic behind
 Python's multiprocessing module.  
 
-If you need to address 500 machines you can decide if you want to try 
-to contact 5 at a time, or 50 at a time.
-It's up to you and how much power you can throw at it, but its heritage
-is about handling those kinds of use cases.   
+You can decide if you want to try to manage 5 hosts at a time, or 50 at a time.
+It's up to you and how much power you can throw at it and how fast you want
+to go.
 
 There are no daemons so it's entirely up to you.  When you are aren't using
-Ansible, it is not consuming any resources.
+Ansible, it is not consuming any resources, and you don't have to contend
+with a herd of machines all knocking at the door of your management server
+all at once.
 
 If you have 10,000 systems, running a single ansible playbook against all of
-them probably isn't always appropriate, but most users shouldn't have any problems.
-If you want to kick off an async task/module, it's probably fine.  We also
-support a local connection mode (--connection=local) that will enable pull
-based usage for those that want that.  Look for future features in this area.
+them probably isn't appropriate, which is why ansible-pull exists.
 
-If you'd like to discuss scaling, please hop on the mailing list.
+This tool is designed for running out of git and cron, and can scale to any
+number of hosts.  Ansible-pull uses local connections versus SSH, but can be
+easily bootstrapped or reconfigured just using SSH.  There is more information
+available about this in the ref:`playbooks2` section.  The self-bootstrapping
+and ease of use are ansible are still retained, even when switching to the pull
+model.
+
+If you'd like to discuss scaling strategies further, please hop on the mailing list.
 
 Are transports other than SSH supported?
 ++++++++++++++++++++++++++++++++++++++++
 
-Currently SSH is the only remote transport, though the interface is pluggable so a 
+Currently SSH and local connections are supported.  In 0.5, we'll also be including
+a faster SSH transport.  The interface is actually pluggable so a 
 small patch could bring transport over message bus or XMPP as an option.
+
 Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
 are all abstracted away from the core implementation so it is very easy to extend.
 

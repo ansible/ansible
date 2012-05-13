@@ -126,6 +126,7 @@ Contents
    modules
    YAMLSyntax
    playbooks
+   playbooks2
    api
    moduledev
    faq
