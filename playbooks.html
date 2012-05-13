@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
-    <link rel="next" title="API &amp; Integrations" href="api.html" />
+    <link rel="next" title="Advanced Playbooks" href="playbooks2.html" />
     <link rel="prev" title="YAML Syntax" href="YAMLSyntax.html" />
 <script type="text/javascript">
 (function () {
@@ -129,14 +129,15 @@ s.parentNode.insertBefore(ga, s);
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 </span>
@@ -155,15 +156,7 @@ s.parentNode.insertBefore(ga, s);
 </li>
 <li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
 <li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
-<li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
-<li><a class="reference internal" href="#variables-from-other-hosts">Variables From Other Hosts</a></li>
-<li><a class="reference internal" href="#external-variables-and-prompted-or-sensitive-data">External Variables and Prompted or Sensitive Data</a></li>
-<li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
-<li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
-<li><a class="reference internal" href="#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
-<li><a class="reference internal" href="#loop-shorthand">Loop Shorthand</a></li>
-<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
@@ -249,7 +242,7 @@ server group, then more commands back on the webservers group, etc.</p>
 <p>For each play in a playbook, you get to choose which machines in your infrastructure
 to target and what remote user to complete the steps (called tasks) as.</p>
 <p>The <cite>hosts</cite> line is a list of one or more groups or host patterns,
-separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>The Inventory File, Patterns, and Groups</em></a>
+separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>Inventory &amp; Patterns</em></a>
 documentation.  The <cite>user</cite> is just the name of the user account:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
@@ -276,14 +269,16 @@ Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p
      van_halen_port: 5150
      other: 'magic'</pre>
 </div>
-<p>These variables can be used later in the playbook, or on the managed system (in templates), just like this:</p>
-<div class="highlight-python"><pre>{{ varname }}</pre>
-</div>
-<p>Within playbooks themselves, but not within templates on the remote machines, it&#8217;s also legal
-to use nicer shorthand like this:</p>
+<p>These variables can be used later in the playbook like this:</p>
 <div class="highlight-python"><pre>$varname</pre>
 </div>
-<p>Further, if there are discovered variables about the system (ansible provides some of these,
+<p>In templates, the full power of the Jinja2 templating language is also available, which looks like this:</p>
+<blockquote>
+<div>{{ varname }}</div></blockquote>
+<p>The Jinja2 documentation provides information about how to construct loops and conditionals for those
+who which to use more advanced templating.  This is optional and the $varname format still works in template
+files.</p>
+<p>If there are discovered variables about the system (ansible provides some of these,
 plus we include ones taken from facter or ohai if installed) these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set
 variables.</p>
@@ -382,143 +377,6 @@ won&#8217;t need them for much else.</p>
 <h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
 <p>Now that you have the basics down, let&#8217;s learn some more advanced
 things you can do with playbooks.</p>
-<div class="section" id="local-playbooks">
-<h3>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h3>
-<p>It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
-to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
-<p>To run an entire playbook locally, just set the &#8220;hosts:&#8221; line to &#8220;hosts:127.0.0.1&#8221; and then run the playbook like so:</p>
-<div class="highlight-python"><pre>ansible-playbook playbook.yml --connection=local</pre>
-</div>
-<p>Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
-use the default remote connection type:</p>
-<div class="highlight-python"><pre>hosts: 127.0.0.1
-connection: local</pre>
-</div>
-</div>
-<div class="section" id="variables-from-other-hosts">
-<h3>Variables From Other Hosts<a class="headerlink" href="#variables-from-other-hosts" title="Permalink to this headline">¶</a></h3>
-<p>If your database server wants to check the value of a &#8216;fact&#8217; from another node, it&#8217;s easy to do so
-within a template or even an action line:</p>
-<div class="highlight-python"><pre>{{ hostvars.get('name_of_host').get('name_of_fact') }}</pre>
-</div>
-<p>NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
-want to reference data from must be included in either the current play or any previous play.</p>
-</div>
-<div class="section" id="external-variables-and-prompted-or-sensitive-data">
-<h3>External Variables and Prompted or Sensitive Data<a class="headerlink" href="#external-variables-and-prompted-or-sensitive-data" title="Permalink to this headline">¶</a></h3>
-<p>It&#8217;s a great idea to keep your playbooks under source control, but
-you may wish to make the playbook source public while keeping certain
-important variables private.  Similarly, sometimes you may just
-want to keep certain information in different files, away from
-the main playbook.</p>
-<p>You can do this by using an external variables file, or files, just like this:</p>
-<div class="highlight-python"><pre>---
-- hosts: all
-  user: root
-  vars:
-    favcolor: blue
-  vars_files:
-    - /vars/external_vars.yml
-  tasks:
-  - name: this is just a placeholder
-    action: command /bin/echo foo</pre>
-</div>
-<p>This removes the risk of sharing sensitive data with others when
-sharing your playbook source with them.</p>
-<p>The contents of each variables file is a simple YAML dictionary, like this:</p>
-<div class="highlight-python"><pre>---
-# in the above example, this would be vars/external_vars.yml
-somevar: somevalue
-password: magic</pre>
-</div>
-<p>Alternatively, you may wish to prompt the user for certain input, and can
-do so with the similarly named &#8216;vars_prompt&#8217; section.  This has uses
-beyond security, for instance, you may use the same playbook for all
-software releases and would prompt for a particular release version
-in a push-script:</p>
-<div class="highlight-python"><pre>---
-- hosts: all
-  user: root
-  vars:
-    from: "camelot"
-  vars_prompt:
-    name: "what is your name?"
-    quest: "what is your quest?"
-    favcolor: "what is your favorite color?"</pre>
-</div>
-<p>There are full examples of both of these items in the github examples/playbooks directory.</p>
-</div>
-<div class="section" id="conditional-execution">
-<h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h3>
-<p>Sometimes you will want to skip a particular step on a particular host.  This could be something
-as simple as not installing a certain package if the operating system is a particular version,
-or it could be something like performing some cleanup steps if a filesystem is getting full.</p>
-<p>This is easy to do in Ansible, with the <cite>only_if</cite> clause.  This clause can be applied to any task,
-and allows usage of variables from anywhere in ansible, either denoted with <cite>$dollar_sign_syntax</cite> or
-<cite>{{ braces_syntax }}</cite> and then evaluates them with a Python expression.   Don&#8217;t panic &#8211; it&#8217;s actually
-pretty simple:</p>
-<div class="highlight-python"><pre>vars:
-  favcolor: blue
-  is_favcolor_blue: "'$favcolor' == 'blue'"
-  is_centos: "'$facter_operatingsystem' == 'CentOS'"
-tasks:
-  - name: "shutdown if my favorite color is blue"
-    action: command /sbin/shutdown -t now
-    only_if: '$is_favcolor_blue'</pre>
-</div>
-<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed, or you can
-use variables that bubble up from ansible (0.3 and later).   As a reminder,
-these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  Ansible&#8217;s
-built in variables are prefixed with <cite>ansible_</cite>. The only_if
-expression is actually a tiny small bit of Python, so be sure to quote variables and make something
-that evaluates to <cite>True</cite> or <cite>False</cite>.  It is a good idea to use &#8216;vars_files&#8217; instead of &#8216;vars&#8217; to define
-all of your conditional expressions in a way that makes them very easy to reuse between plays
-and playbooks.</p>
-</div>
-<div class="section" id="conditional-imports">
-<h3>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h3>
-<p>Sometimes you will want to do certain things differently in a playbook based on certain criteria.
-Having one playbook that works on multiple platforms and OS versions is a good example.</p>
-<p>As an example, the name of the Apache package may be different between CentOS and Debian,
-but it is easily handled with a minimum of syntax in an Ansible Playbook:</p>
-<div class="highlight-python"><pre>---
-- hosts: all
-  user: root
-  vars_files:
-    - "vars/common.yml"
-    - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ]
-  tasks:
-  - name: make sure apache is running
-    action: service name=$apache state=running</pre>
-</div>
-<p>Note that a variable (<cite>$facter_operatingsystem</cite>) is being interpolated into the list of
-filenames being defined for vars_files.</p>
-<p>As a reminder, the various YAML files contain just keys and values:</p>
-<div class="highlight-python"><pre>---
-# for vars/CentOS.yml
-apache: httpd
-somethingelse: 42</pre>
-</div>
-<p>How does this work?  If the operating system was &#8216;CentOS&#8217;, the first file Ansible would try to import
-would be &#8216;vars/CentOS.yml&#8217;, followed up by &#8216;/vars/os_defaults.yml&#8217; if that file
-did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards &#8216;vars/Debian.yml&#8217; instead of &#8216;vars/CentOS.yml&#8217;, before
-falling back on &#8216;vars/os_defaults.yml&#8217;. Pretty simple.</p>
-<p>To use this conditional import feature, you&#8217;ll need facter or ohai installed prior to running the playbook, but
-you can of course push this out with Ansible if you like:</p>
-<div class="highlight-python"><pre># for facter
-ansible -m yum -a "pkg=facter ensure=installed"
-ansible -m yum -a "pkg=ruby-json ensure=installed"
-
-# for ohai
-ansible -m yum -a "pkg=ohai ensure=installed"</pre>
-</div>
-<p>Ansible&#8217;s approach to configuration &#8211; seperating variables from tasks, keeps your playbooks
-from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined &amp; auditable configuration rules &#8211; especially because there are a
-minimum of decision points to track.</p>
-</div>
 <div class="section" id="include-files-and-reuse">
 <h3>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h3>
 <p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
@@ -543,11 +401,7 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
   - include: wordpress.yml user=alice
   - include: wordpress.yml user=bob</pre>
 </div>
-<p>Variables passed in can be used in the included files.  Using
-<cite>jinja2</cite> syntax, in the included file, you can reference them like this:</p>
-<div class="highlight-python"><pre>{{ user }}</pre>
-</div>
-<p>or, more simply, using Ansible&#8217;s simplified variable syntax:</p>
+<p>Variables passed in can be used in the included files.  You can reference them like this:</p>
 <div class="highlight-python"><pre>$user</pre>
 </div>
 <p>In addition to the explicitly passed in parameters, all variables from
@@ -576,107 +430,6 @@ of a play:</p>
 with &#8216;vars_files&#8217;.  If you find yourself needing to do this, consider how you can
 restructure your playbook to be more class/role oriented.</p>
 </div>
-<div class="section" id="using-includes-to-assign-classes-of-systems">
-<h3>Using Includes To Assign Classes of Systems<a class="headerlink" href="#using-includes-to-assign-classes-of-systems" title="Permalink to this headline">¶</a></h3>
-<p>Include files are really powerful when used to reuse logic between playbooks.  You
-could imagine a playbook describing your entire infrastructure like
-this, in a list of just a few plays:</p>
-<div class="highlight-python"><pre>---
-- hosts: atlanta-webservers
-  vars:
-    datacenter: atlanta
-  tasks:
-  - include: tasks/base.yml
-  - include: tasks/webservers.yml database=db.atlanta.com
-  handlers:
-    - include: handlers/common.yml
-- hosts: atlanta-dbservers
-  vars:
-    datacenter: atlanta
-  tasks:
-  - include: tasks/base.yml
-  - include: tasks/dbservers.yml
-  handlers:
-    - include: handlers/common.yml</pre>
-</div>
-<p>There is one (or more) play defined for each group of systems, and
-each play maps each group to several includes.  These includes represent
-&#8216;class definitions&#8217;, telling the systems what they are supposed to do or be.
-In the above example, all hosts get the base configuration first and further
-customize it depending on what class or nature of machines they are.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Playbooks do not always have to be declarative; you can do something
-similar to model a push process for a multi-tier web application.  This is
-actually one of the things playbooks were invented to do.</p>
-</div>
-</div>
-<div class="section" id="loop-shorthand">
-<h3>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h3>
-<p>To save some typing, repeated tasks can be written in short-hand like so:</p>
-<div class="highlight-python"><pre>- name: add user $item
-  action: user name=$item state=present groups=wheel
-  with_items:
-     - testuser1
-     - testuser2</pre>
-</div>
-<p>The above would be the equivalent of:</p>
-<div class="highlight-python"><pre>- name: add user testuser1
-  action: user name=testuser1 state=present groups=wheel
-- name: add user testuser2
-  action: user name=testuser2 state=present groups=wheel</pre>
-</div>
-</div>
-<div class="section" id="asynchronous-actions-and-polling">
-<h3>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h3>
-<p>By default tasks in playbooks block, meaning the connections stay open
-until the task is done on each node.  If executing playbooks with
-a small parallelism value (aka <tt class="docutils literal"><span class="pre">--forks</span></tt>), you may wish that long
-running operations can go faster.  The easiest way to do this is
-to kick them off all at once and then poll until they are done.</p>
-<p>You will also want to use asynchronous mode on very long running
-operations that might be subject to timeout.</p>
-<p>To launch a task asynchronously, specify its maximum runtime
-and how frequently you would like to poll for status.  The default
-poll value is 10 seconds if you do not specify a value for <cite>poll</cite>:</p>
-<div class="highlight-python"><pre>---
-- hosts: all
-  user: root
-  tasks:
-  - name: simulate long running op (15 sec), wait for up to 45, poll every 5
-    action: command /bin/sleep 15
-    async: 45
-    poll: 5</pre>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">There is no default for the async time limit.  If you leave off the
-&#8216;async&#8217; keyword, the task runs synchronously, which is Ansible&#8217;s
-default.</p>
-</div>
-<p>Alternatively, if you do not need to wait on the task to complete, you may
-&#8220;fire and forget&#8221; by specifying a poll value of 0:</p>
-<div class="highlight-python"><pre>---
-- hosts: all
-  user: root
-  tasks:
-  - name: simulate long running op, allow to run for 45, fire and forget
-    action: command /bin/sleep 15
-    async: 45
-    poll: 0</pre>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">You shouldn&#8217;t &#8220;fire and forget&#8221; with operations that require
-exclusive locks, such as yum transactions, if you expect to run other
-commands later in the playbook against those same resources.</p>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Using a higher value for <tt class="docutils literal"><span class="pre">--forks</span></tt> will result in kicking off asynchronous
-tasks even faster.  This also increases the efficiency of polling.</p>
-</div>
-</div>
 </div>
 <div class="section" id="executing-a-playbook">
 <h2>Executing A Playbook<a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
@@ -689,11 +442,13 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <dl class="last docutils">
 <dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
 <dd>Learn about YAML syntax</dd>
+<dt><a class="reference internal" href="playbooks2.html"><em>Advanced Playbooks</em></a></dt>
+<dd>Learn about Advanced Playbook Features</dd>
 <dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
 <dd>Learn about available modules</dd>
-<dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development</em></a></dt>
 <dd>Learn how to extend Ansible by writing your own modules</dd>
-<dt><a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a></dt>
+<dt><a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a></dt>
 <dd>Learn about how to select hosts</dd>
 <dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
 <dd>Complete playbook files from the github project source</dd>

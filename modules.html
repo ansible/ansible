@@ -28,7 +28,7 @@
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
     <link rel="next" title="YAML Syntax" href="YAMLSyntax.html" />
-    <link rel="prev" title="Command Line Examples" href="examples.html" />
+    <link rel="prev" title="Command Line" href="examples.html" />
 <script type="text/javascript">
 (function () {
   /**
@@ -129,14 +129,15 @@ s.parentNode.insertBefore(ga, s);
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 </span>
@@ -254,8 +255,6 @@ apt pkg=foo state=installed
 apt pkg=foo=1.00 state=installed
 apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes</pre>
 </div>
-<p>NOTE: the apt module cannot currently request installation of a specific software version, as the yum
-module can.  This should be available in a future release.</p>
 </div>
 <div class="section" id="command">
 <span id="id2"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
@@ -751,15 +750,15 @@ yum pkg=httpd state=installed</pre>
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
-<p>See <a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a>.</p>
+<p>See <a class="reference internal" href="moduledev.html"><em>Module Development</em></a>.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
+<dt><a class="reference internal" href="examples.html"><em>Command Line</em></a></dt>
 <dd>Examples of using modules in /usr/bin/ansible</dd>
 <dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
 <dd>Examples of using modules with /usr/bin/ansible-playbook</dd>
-<dt><a class="reference internal" href="moduledev.html"><em>Module Development Guide</em></a></dt>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development</em></a></dt>
 <dd>How to write your own modules</dd>
 <dt><a class="reference internal" href="api.html"><em>API &amp; Integrations</em></a></dt>
 <dd>Examples of using modules with the Python API</dd>

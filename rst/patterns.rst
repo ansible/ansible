@@ -1,7 +1,7 @@
 .. _patterns:
 
-The Inventory File, Patterns, and Groups
-========================================
+Inventory & Patterns
+====================
 
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in

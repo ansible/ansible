@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command Line Examples &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Command Line &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -28,7 +28,7 @@
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
     <link rel="next" title="Ansible Modules" href="modules.html" />
-    <link rel="prev" title="The Inventory File, Patterns, and Groups" href="patterns.html" />
+    <link rel="prev" title="Inventory &amp; Patterns" href="patterns.html" />
 <script type="text/javascript">
 (function () {
   /**
@@ -129,14 +129,15 @@ s.parentNode.insertBefore(ga, s);
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Command Line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 </span>
@@ -145,7 +146,7 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Command Line Examples</a><ul>
+<li><a class="reference internal" href="#">Command Line</a><ul>
 <li><a class="reference internal" href="#parallelism-and-shell-commands">Parallelism and Shell Commands</a></li>
 <li><a class="reference internal" href="#file-transfer-templating">File Transfer &amp; Templating</a></li>
 <li><a class="reference internal" href="#managing-packages">Managing Packages</a></li>
@@ -180,8 +181,8 @@ s.parentNode.insertBefore(ga, s);
    <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
 <br/>
    
-  <div class="section" id="command-line-examples">
-<h1>Command Line Examples<a class="headerlink" href="#command-line-examples" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="command-line">
+<h1>Command Line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h1>
 <p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running ad-hoc tasks.
 Start here.</p>
 <p>For configuration management and deployments, you&#8217;ll want to pick up on
@@ -211,7 +212,7 @@ not required.</p>
 <p>It is also possible to sudo to a user other than root using &#8211;sudo-user (-U):</p>
 <div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname -U otheruser [--ask-sudo-pass]</pre>
 </div>
-<p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>The Inventory File, Patterns, and Groups</em></a>.</p>
+<p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.</p>
 <p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
 a <cite>-m</cite> for module name, but the default module name is &#8216;command&#8217;, so we didn&#8217;t need to specify that
 all of the time.  We&#8217;ll use <cite>-m</cite> in later examples to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>

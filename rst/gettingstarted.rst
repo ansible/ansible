@@ -1,5 +1,5 @@
-Downloads & Getting Started
-===========================
+Getting Started
+===============
 
 Requirements
 ````````````

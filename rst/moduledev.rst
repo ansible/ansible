@@ -1,5 +1,5 @@
-Module Development Guide
-========================
+Module Development
+==================
 
 Ansible modules are reusable units of magic that can be used by the Ansible API, 
 or by the `ansible` or `ansible-playbook` programs.

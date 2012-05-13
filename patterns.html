@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The Inventory File, Patterns, and Groups &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Inventory &amp; Patterns &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -27,8 +27,8 @@
     <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
-    <link rel="next" title="Command Line Examples" href="examples.html" />
-    <link rel="prev" title="Downloads &amp; Getting Started" href="gettingstarted.html" />
+    <link rel="next" title="Command Line" href="examples.html" />
+    <link rel="prev" title="Getting Started" href="gettingstarted.html" />
 <script type="text/javascript">
 (function () {
   /**
@@ -129,14 +129,15 @@ s.parentNode.insertBefore(ga, s);
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">The Inventory File, Patterns, and Groups</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 </span>
@@ -145,7 +146,7 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">The Inventory File, Patterns, and Groups</a><ul>
+<li><a class="reference internal" href="#">Inventory &amp; Patterns</a><ul>
 <li><a class="reference internal" href="#hosts-and-groups">Hosts and Groups</a></li>
 <li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
 <li><a class="reference internal" href="#host-variables">Host Variables</a></li>
@@ -179,8 +180,8 @@ s.parentNode.insertBefore(ga, s);
    <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
 <br/>
    
-  <div class="section" id="the-inventory-file-patterns-and-groups">
-<span id="patterns"></span><h1>The Inventory File, Patterns, and Groups<a class="headerlink" href="#the-inventory-file-patterns-and-groups" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="inventory-patterns">
+<span id="patterns"></span><h1>Inventory &amp; Patterns<a class="headerlink" href="#inventory-patterns" title="Permalink to this headline">¶</a></h1>
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
@@ -208,7 +209,7 @@ after the hostname with a colon.</p>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
-<p>We&#8217;ll go over how to use the command line in <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> section, however, basically it looks like this:</p>
+<p>We&#8217;ll go over how to use the command line in <a class="reference internal" href="examples.html"><em>Command Line</em></a> section, however, basically it looks like this:</p>
 <div class="highlight-python"><pre>ansible &lt;pattern_goes_here&gt; -m &lt;module_name&gt; -a &lt;arguments&gt;</pre>
 </div>
 <p>Such as:</p>
@@ -240,7 +241,7 @@ wildcards:</p>
 <p>It&#8217;s also ok to mix wildcard patterns and groups at the same time:</p>
 <div class="highlight-python"><pre>one*.com:dbservers</pre>
 </div>
-<p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
+<p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
 </div>
 <div class="section" id="host-variables">
 <h2>Host Variables<a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
@@ -333,7 +334,7 @@ YAML:</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="examples.html"><em>Command Line Examples</em></a></dt>
+<dt><a class="reference internal" href="examples.html"><em>Command Line</em></a></dt>
 <dd>Examples of basic commands</dd>
 <dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
 <dd>Learning ansible&#8217;s configuration management language</dd>

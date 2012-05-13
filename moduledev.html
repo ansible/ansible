@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Module Development Guide &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Module Development &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -129,14 +129,15 @@ s.parentNode.insertBefore(ga, s);
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Downloads &amp; Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">The Inventory File, Patterns, and Groups</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Module Development Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 </span>
@@ -145,7 +146,7 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Module Development Guide</a><ul>
+<li><a class="reference internal" href="#">Module Development</a><ul>
 <li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li><a class="reference internal" href="#testing-modules">Testing Modules</a></li>
 <li><a class="reference internal" href="#reading-input">Reading Input</a></li>
@@ -182,8 +183,8 @@ s.parentNode.insertBefore(ga, s);
    <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
 <br/>
    
-  <div class="section" id="module-development-guide">
-<h1>Module Development Guide<a class="headerlink" href="#module-development-guide" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-development">
+<h1>Module Development<a class="headerlink" href="#module-development" title="Permalink to this headline">¶</a></h1>
 <p>Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the <cite>ansible</cite> or <cite>ansible-playbook</cite> programs.</p>
 <p>Modules can be written in any language and are found in the path specified
