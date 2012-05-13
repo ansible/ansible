@@ -127,6 +127,7 @@ Contents
    YAMLSyntax
    playbooks
    playbooks2
+   bestpractices
    api
    moduledev
    faq

@@ -2,39 +2,12 @@ Advanced Playbooks
 ==================
 
 Here are some advanced features of the playbooks language.  Using all of these features
-are not neccessary, but many of them will prove useful.
+are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
+relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
+be 90% or more of what they use in Ansible.
 
-Local Playbooks
-+++++++++++++++
-
-It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
-to run a playbook inside a OS installer, such as an Anaconda kickstart.
-
-To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
-
-    ansible-playbook playbook.yml --connection=local
-
-Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
-use the default remote connection type::
-
-    hosts: 127.0.0.1
-    connection: local
-
-Pull-Mode Playbooks
-+++++++++++++++++++
-
-The use of playbooks in local mode (above) is made extremely powerful with the addition of `ansible-pull` in the
-0.4 release.   A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
-checkout.
-
-The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
-cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
-architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
-the cron frequency, logging locations, and parameters to ansible-pull.
-
-Accessing Hash and Array Variable Data
-++++++++++++++++++++++++++++++++++++++
+Accessing Complex Variable Data
++++++++++++++++++++++++++++++++
 
 Some provided facts, like networking information, are made available as nested datastructures.  To access
 them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address using
@@ -44,12 +17,17 @@ Ansible 0.4 and later::
 
 It is also possible to access variables whose elements are arrays::
 
-    ${somelist[1]}
+    ${somelist[0]}
 
 And the array and hash reference syntaxes can be mixed.
 
-Accessing Variables From Other Hosts
-++++++++++++++++++++++++++++++++++++
+In templates, the simple access form still holds, but they can also be accessed from Jinja2 in more Python-native ways if
+that is preferred::
+
+    {{ ansible_eth0["ipv4"]["address"] }}
+
+Accessing Information About Other Hosts
++++++++++++++++++++++++++++++++++++++++
 
 If your database server wants to check the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line (note: this uses syntax available in 0.4 and later)::
@@ -59,8 +37,24 @@ assigned to another node, it's easy to do so within a template or even an action
 NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
 want to reference data from must be included in either the current play or any previous play.
 
-External Variables and Prompted or Sensitive Data
-+++++++++++++++++++++++++++++++++++++++++++++++++
+Magic Variables
++++++++++++++++
+
+Some variables made available to hosts don't come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won't need.
+
+`groups` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
+syntax to make template source files that vary based on the group membership (or role) of the host::
+
+   {% if 'webserver' in groups %}
+      # some part of a configuration file that only applies to webservers
+   {% endif %}
+
+`inventory_hostname` is the name of the hostname as configured in Ansible's inventory host file.  This can
+be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
+reasons.  Don't worry about it unless you think you need it.
+
+Variable File Seperation
+++++++++++++++++++++++++
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
@@ -200,48 +194,6 @@ from turning into arbitrary code with ugly nested ifs, conditionals, and so on -
 in more streamlined & auditable configuration rules -- especially because there are a 
 minimum of decision points to track.
 
-
-Using Includes To Assign Classes of Systems
-+++++++++++++++++++++++++++++++++++++++++++
-
-Include files are really powerful when used to reuse logic between playbooks.  You
-could imagine a playbook describing your entire infrastructure like
-this, in a list of just a few plays::
-
-    ---
-
-    - hosts: atlanta-webservers
-
-      vars:
-        datacenter: atlanta
-        database: db.atlanta.com
-
-      tasks:
-      - include: tasks/base.yml
-      - include: tasks/webservers.yml 
-
-      handlers:
-        - include: handlers/common.yml
-
-    - hosts: atlanta-dbservers
-
-      vars:
-        datacenter: atlanta
-
-      tasks:
-      - include: tasks/base.yml
-      - include: tasks/dbservers.yml
-
-      handlers:
-        - include: handlers/common.yml
-
-There is one (or more) play defined for each group of systems, and
-each play maps each group to several includes.  These includes represent
-'class definitions', telling the systems what they are supposed to do or be.
-In the above example, all hosts get the base configuration first and further
-customize it depending on what class or nature of machines they are.
-
-
 Loop Shorthand
 ++++++++++++++
 
@@ -272,13 +224,13 @@ The following construct (new in 0.4) selects the first available file appropriat
 which is often much cleaner than putting a lot of if conditionals in a template.
 
 The following example shows how to template out a configuration file that was very different between, say,
-CentOS and Debian.
+CentOS and Debian::
 
     - name: template a file
       action: template src=$item dest=/etc/myapp/foo.conf
       first_available_file:
-          - /srv/templates/myapp/${ansible_distribution}.conf
-          - /srv/templates/myapp/default.conf
+        - /srv/templates/myapp/${ansible_distribution}.conf
+        - /srv/templates/myapp/default.conf
 
 
 Asynchronous Actions and Polling
@@ -332,12 +284,47 @@ Alternatively, if you do not need to wait on the task to complete, you may
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
+Local Playbooks
++++++++++++++++
+
+It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
+for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+to run a playbook inside a OS installer, such as an Anaconda kickstart.
+
+To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
+
+    ansible-playbook playbook.yml --connection=local
+
+Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
+use the default remote connection type::
+
+    hosts: 127.0.0.1
+    connection: local
+
+Pull-Mode Playbooks
++++++++++++++++++++
+
+The use of playbooks in local mode (above) is made extremely powerful with the addition of `ansible-pull` in the
+0.4 release.   A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
+checkout.
+
+The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
+cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
+architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
+the cron frequency, logging locations, and parameters to ansible-pull.
+
+This is useful both for extreme scale-out as well as periodic remediation.  Usage of the 'fetch' module to retrieve
+logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.
+
+
 .. seealso::
 
    :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`playbooks`
        Review the basic playbook features
+   :doc:`bestpractices` 
+       Various tips about playbooks in the real world
    :doc:`modules`
        Learn about available modules
    :doc:`moduledev`
