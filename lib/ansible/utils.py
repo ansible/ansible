@@ -273,7 +273,7 @@ def template(text, vars, setup_cache, no_engine=True):
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars, setup_cache, no_engine=False):
+def template_from_file(path, vars, setup_cache, no_engine=True):
     ''' run a file through the templating engine '''
     data = codecs.open(path, encoding="utf8").read()
     return template(data, vars, setup_cache, no_engine=no_engine)
