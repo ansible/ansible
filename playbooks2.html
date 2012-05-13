@@ -1,0 +1,509 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Advanced Playbooks &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
+    <link rel="next" title="Best Practices" href="bestpractices.html" />
+    <link rel="prev" title="Playbooks" href="playbooks.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <!-- <a class="brand" href="index.html">Ansible</a> -->
+        <ul class="nav">
+          
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Advanced Playbooks</a><ul>
+<li><a class="reference internal" href="#accessing-complex-variable-data">Accessing Complex Variable Data</a></li>
+<li><a class="reference internal" href="#accessing-information-about-other-hosts">Accessing Information About Other Hosts</a></li>
+<li><a class="reference internal" href="#magic-variables">Magic Variables</a></li>
+<li><a class="reference internal" href="#variable-file-seperation">Variable File Seperation</a></li>
+<li><a class="reference internal" href="#prompting-for-sensitive-data">Prompting For Sensitive Data</a></li>
+<li><a class="reference internal" href="#passing-variables-on-the-command-line">Passing Variables On The Command Line</a></li>
+<li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
+<li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
+<li><a class="reference internal" href="#loop-shorthand">Loop Shorthand</a></li>
+<li><a class="reference internal" href="#selecting-files-and-templates-based-on-variables">Selecting Files And Templates Based On Variables</a></li>
+<li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+<li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
+<li><a class="reference internal" href="#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+<a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
+
+
+<div class="container">
+   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
+<br/>
+   
+  <div class="section" id="advanced-playbooks">
+<h1>Advanced Playbooks<a class="headerlink" href="#advanced-playbooks" title="Permalink to this headline">¶</a></h1>
+<p>Here are some advanced features of the playbooks language.  Using all of these features
+are not neccessary, but many of them will prove useful.  If a feature doesn&#8217;t seem immediately
+relevant, feel free to skip it.  For many people, the features documented in <cite>playbooks</cite> will
+be 90% or more of what they use in Ansible.</p>
+<div class="section" id="accessing-complex-variable-data">
+<h2>Accessing Complex Variable Data<a class="headerlink" href="#accessing-complex-variable-data" title="Permalink to this headline">¶</a></h2>
+<p>Some provided facts, like networking information, are made available as nested datastructures.  To access
+them a simple &#8216;$foo&#8217; is not sufficient, but it is still easy to do.   Here&#8217;s how we get an IP address using
+Ansible 0.4 and later:</p>
+<div class="highlight-python"><pre>${ansible_eth0.ipv4.address}</pre>
+</div>
+<p>It is also possible to access variables whose elements are arrays:</p>
+<div class="highlight-python"><pre>${somelist[0]}</pre>
+</div>
+<p>And the array and hash reference syntaxes can be mixed.</p>
+<p>In templates, the simple access form still holds, but they can also be accessed from Jinja2 in more Python-native ways if
+that is preferred:</p>
+<div class="highlight-python"><pre>{{ ansible_eth0["ipv4"]["address"] }}</pre>
+</div>
+</div>
+<div class="section" id="accessing-information-about-other-hosts">
+<h2>Accessing Information About Other Hosts<a class="headerlink" href="#accessing-information-about-other-hosts" title="Permalink to this headline">¶</a></h2>
+<p>If your database server wants to check the value of a &#8216;fact&#8217; from another node, or an inventory variable
+assigned to another node, it&#8217;s easy to do so within a template or even an action line (note: this uses syntax available in 0.4 and later):</p>
+<div class="highlight-python"><pre>${hostvars.hostname.factname}</pre>
+</div>
+<p>NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
+want to reference data from must be included in either the current play or any previous play.</p>
+</div>
+<div class="section" id="magic-variables">
+<h2>Magic Variables<a class="headerlink" href="#magic-variables" title="Permalink to this headline">¶</a></h2>
+<p>Some variables made available to hosts don&#8217;t come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won&#8217;t need.</p>
+<p><cite>groups</cite> is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
+syntax to make template source files that vary based on the group membership (or role) of the host:</p>
+<div class="highlight-python"><pre>{% if 'webserver' in groups %}
+   # some part of a configuration file that only applies to webservers
+{% endif %}</pre>
+</div>
+<p><cite>inventory_hostname</cite> is the name of the hostname as configured in Ansible&#8217;s inventory host file.  This can
+be useful for when you don&#8217;t want to rely on the discovered hostname <cite>ansible_hostname</cite> or for other mysterious
+reasons.  Don&#8217;t worry about it unless you think you need it.</p>
+</div>
+<div class="section" id="variable-file-seperation">
+<h2>Variable File Seperation<a class="headerlink" href="#variable-file-seperation" title="Permalink to this headline">¶</a></h2>
+<p>It&#8217;s a great idea to keep your playbooks under source control, but
+you may wish to make the playbook source public while keeping certain
+important variables private.  Similarly, sometimes you may just
+want to keep certain information in different files, away from
+the main playbook.</p>
+<p>You can do this by using an external variables file, or files, just like this:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars:
+    favcolor: blue
+  vars_files:
+    - /vars/external_vars.yml
+  tasks:
+  - name: this is just a placeholder
+    action: command /bin/echo foo</pre>
+</div>
+<p>This removes the risk of sharing sensitive data with others when
+sharing your playbook source with them.</p>
+<p>The contents of each variables file is a simple YAML dictionary, like this:</p>
+<div class="highlight-python"><pre>---
+# in the above example, this would be vars/external_vars.yml
+somevar: somevalue
+password: magic</pre>
+</div>
+</div>
+<div class="section" id="prompting-for-sensitive-data">
+<h2>Prompting For Sensitive Data<a class="headerlink" href="#prompting-for-sensitive-data" title="Permalink to this headline">¶</a></h2>
+<p>You may wish to prompt the user for certain input, and can
+do so with the similarly named &#8216;vars_prompt&#8217; section.  This has uses
+beyond security, for instance, you may use the same playbook for all
+software releases and would prompt for a particular release version
+in a push-script:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars:
+    from: "camelot"
+  vars_prompt:
+    name: "what is your name?"
+    quest: "what is your quest?"
+    favcolor: "what is your favorite color?"</pre>
+</div>
+<p>There are full examples of both of these items in the github examples/playbooks directory.</p>
+</div>
+<div class="section" id="passing-variables-on-the-command-line">
+<h2>Passing Variables On The Command Line<a class="headerlink" href="#passing-variables-on-the-command-line" title="Permalink to this headline">¶</a></h2>
+<p>In addition to <cite>vars_prompt</cite> and <cite>vars_files</cite>, it is possible to send variables over
+the ansible command line.  This is particularly useful when writing a generic release playbook
+where you may want to pass in the version of the application to deploy:</p>
+<div class="highlight-python"><pre>ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre>
+</div>
+</div>
+<div class="section" id="conditional-execution">
+<h2>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you will want to skip a particular step on a particular host.  This could be something
+as simple as not installing a certain package if the operating system is a particular version,
+or it could be something like performing some cleanup steps if a filesystem is getting full.</p>
+<p>This is easy to do in Ansible, with the <cite>only_if</cite> clause, which actually is a Python expression.
+Don&#8217;t panic &#8211; it&#8217;s actually pretty simple:</p>
+<div class="highlight-python"><pre>vars:
+  favcolor: blue
+  is_favcolor_blue: "'$favcolor' == 'blue'"
+  is_centos: "'$facter_operatingsystem' == 'CentOS'"
+tasks:
+  - name: "shutdown if my favorite color is blue"
+    action: command /sbin/shutdown -t now
+    only_if: '$is_favcolor_blue'</pre>
+</div>
+<p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed, or you can
+use variables that bubble up from ansible (0.3 and later).   As a reminder,
+these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  Ansible&#8217;s
+built in variables are prefixed with <cite>ansible_</cite>. The only_if
+expression is actually a tiny small bit of Python, so be sure to quote variables and make something
+that evaluates to <cite>True</cite> or <cite>False</cite>.  It is a good idea to use &#8216;vars_files&#8217; instead of &#8216;vars&#8217; to define
+all of your conditional expressions in a way that makes them very easy to reuse between plays
+and playbooks.</p>
+</div>
+<div class="section" id="conditional-imports">
+<h2>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you will want to do certain things differently in a playbook based on certain criteria.
+Having one playbook that works on multiple platforms and OS versions is a good example.</p>
+<p>As an example, the name of the Apache package may be different between CentOS and Debian,
+but it is easily handled with a minimum of syntax in an Ansible Playbook:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  vars_files:
+    - "vars/common.yml"
+    - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ]
+  tasks:
+  - name: make sure apache is running
+    action: service name=$apache state=running</pre>
+</div>
+<p>Note that a variable (<cite>$facter_operatingsystem</cite>) is being interpolated into the list of
+filenames being defined for vars_files.</p>
+<p>As a reminder, the various YAML files contain just keys and values:</p>
+<div class="highlight-python"><pre>---
+# for vars/CentOS.yml
+apache: httpd
+somethingelse: 42</pre>
+</div>
+<p>How does this work?  If the operating system was &#8216;CentOS&#8217;, the first file Ansible would try to import
+would be &#8216;vars/CentOS.yml&#8217;, followed up by &#8216;/vars/os_defaults.yml&#8217; if that file
+did not exist.   If no files in the list were found, an error would be raised.
+On Debian, it would instead first look towards &#8216;vars/Debian.yml&#8217; instead of &#8216;vars/CentOS.yml&#8217;, before
+falling back on &#8216;vars/os_defaults.yml&#8217;. Pretty simple.</p>
+<p>To use this conditional import feature, you&#8217;ll need facter or ohai installed prior to running the playbook, but
+you can of course push this out with Ansible if you like:</p>
+<div class="highlight-python"><pre># for facter
+ansible -m yum -a "pkg=facter ensure=installed"
+ansible -m yum -a "pkg=ruby-json ensure=installed"
+
+# for ohai
+ansible -m yum -a "pkg=ohai ensure=installed"</pre>
+</div>
+<p>Ansible&#8217;s approach to configuration &#8211; seperating variables from tasks, keeps your playbooks
+from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
+in more streamlined &amp; auditable configuration rules &#8211; especially because there are a
+minimum of decision points to track.</p>
+</div>
+<div class="section" id="loop-shorthand">
+<h2>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h2>
+<p>To save some typing, repeated tasks can be written in short-hand like so:</p>
+<div class="highlight-python"><pre>- name: add user $item
+  action: user name=$item state=present groups=wheel
+  with_items:
+     - testuser1
+     - testuser2</pre>
+</div>
+<p>The above would be the equivalent of:</p>
+<div class="highlight-python"><pre>- name: add user testuser1
+  action: user name=testuser1 state=present groups=wheel
+- name: add user testuser2
+  action: user name=testuser2 state=present groups=wheel</pre>
+</div>
+<p>In a future release, the yum and apt modules will use with_items to execute fewer package
+manager transactions.</p>
+</div>
+<div class="section" id="selecting-files-and-templates-based-on-variables">
+<h2>Selecting Files And Templates Based On Variables<a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
+The following construct (new in 0.4) selects the first available file appropriate for the variables of a given host,
+which is often much cleaner than putting a lot of if conditionals in a template.</p>
+<p>The following example shows how to template out a configuration file that was very different between, say,
+CentOS and Debian:</p>
+<div class="highlight-python"><pre>- name: template a file
+  action: template src=$item dest=/etc/myapp/foo.conf
+  first_available_file:
+    - /srv/templates/myapp/${ansible_distribution}.conf
+    - /srv/templates/myapp/default.conf</pre>
+</div>
+</div>
+<div class="section" id="asynchronous-actions-and-polling">
+<h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
+<p>By default tasks in playbooks block, meaning the connections stay open
+until the task is done on each node.  If executing playbooks with
+a small parallelism value (aka <tt class="docutils literal"><span class="pre">--forks</span></tt>), you may wish that long
+running operations can go faster.  The easiest way to do this is
+to kick them off all at once and then poll until they are done.</p>
+<p>You will also want to use asynchronous mode on very long running
+operations that might be subject to timeout.</p>
+<p>To launch a task asynchronously, specify its maximum runtime
+and how frequently you would like to poll for status.  The default
+poll value is 10 seconds if you do not specify a value for <cite>poll</cite>:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  tasks:
+  - name: simulate long running op (15 sec), wait for up to 45, poll every 5
+    action: command /bin/sleep 15
+    async: 45
+    poll: 5</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">There is no default for the async time limit.  If you leave off the
+&#8216;async&#8217; keyword, the task runs synchronously, which is Ansible&#8217;s
+default.</p>
+</div>
+<p>Alternatively, if you do not need to wait on the task to complete, you may
+&#8220;fire and forget&#8221; by specifying a poll value of 0:</p>
+<div class="highlight-python"><pre>---
+- hosts: all
+  user: root
+  tasks:
+  - name: simulate long running op, allow to run for 45, fire and forget
+    action: command /bin/sleep 15
+    async: 45
+    poll: 0</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You shouldn&#8217;t &#8220;fire and forget&#8221; with operations that require
+exclusive locks, such as yum transactions, if you expect to run other
+commands later in the playbook against those same resources.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Using a higher value for <tt class="docutils literal"><span class="pre">--forks</span></tt> will result in kicking off asynchronous
+tasks even faster.  This also increases the efficiency of polling.</p>
+</div>
+</div>
+<div class="section" id="local-playbooks">
+<h2>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h2>
+<p>It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
+for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
+<p>To run an entire playbook locally, just set the &#8220;hosts:&#8221; line to &#8220;hosts:127.0.0.1&#8221; and then run the playbook like so:</p>
+<div class="highlight-python"><pre>ansible-playbook playbook.yml --connection=local</pre>
+</div>
+<p>Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
+use the default remote connection type:</p>
+<div class="highlight-python"><pre>hosts: 127.0.0.1
+connection: local</pre>
+</div>
+</div>
+<div class="section" id="pull-mode-playbooks">
+<h2>Pull-Mode Playbooks<a class="headerlink" href="#pull-mode-playbooks" title="Permalink to this headline">¶</a></h2>
+<p>The use of playbooks in local mode (above) is made extremely powerful with the addition of <cite>ansible-pull</cite> in the
+0.4 release.   A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
+checkout.</p>
+<p>The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
+cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
+architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
+the cron frequency, logging locations, and parameters to ansible-pull.</p>
+<p>This is useful both for extreme scale-out as well as periodic remediation.  Usage of the &#8216;fetch&#8217; module to retrieve
+logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
+<dd>Learn about YAML syntax</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Review the basic playbook features</dd>
+<dt><a class="reference internal" href="bestpractices.html"><em>Best Practices</em></a></dt>
+<dd>Various tips about playbooks in the real world</dd>
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>Learn about available modules</dd>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development</em></a></dt>
+<dd>Learn how to extend Ansible by writing your own modules</dd>
+<dt><a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a></dt>
+<dd>Learn about how to select hosts</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/master/examples/playbooks">Github examples directory</a></dt>
+<dd>Complete playbook files from the github project source</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+
+  <div class="container">
+  <div id="fb-root"></div>
+<p>
+<a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+<g:plusone annotation="inline"></g:plusone>
+<div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
+</p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on May 13, 2012.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
