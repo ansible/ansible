@@ -267,7 +267,7 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
 
-        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
+        conditional = utils.double_template(self.conditional, inject)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
@@ -277,7 +277,7 @@ class Runner(object):
 
         if type(args) == dict:
             args = utils.bigjson(args)
-        args = utils.template(args, inject, self.setup_cache)
+        args = utils.simple_template(args, inject)
 
         module_name_tail = remote_module_path.split("/")[-1]
 
@@ -403,7 +403,7 @@ class Runner(object):
         if 'first_available_file' in self.module_vars:
             found = False
             for fn in self.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject, self.setup_cache)
+                fn = utils.simple_template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -411,7 +411,7 @@ class Runner(object):
             if not found:
                 return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
         
-        source = utils.template(source, inject, self.setup_cache)
+        source = utils.simple_template(source, inject)
 
         # transfer the file to a remote tmp location
         tmp_src = tmp + source.split('/')[-1]
@@ -445,14 +445,14 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
-        source = utils.template(source, inject, self.setup_cache)
+        source = utils.simple_template(source, inject)
 
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
 
         # apply templating to dest argument
-        dest = utils.template(dest, inject, self.setup_cache)
+        dest = utils.simple_template(dest, inject)
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -514,7 +514,7 @@ class Runner(object):
         if 'first_available_file' in self.module_vars:
             found = False
             for fn in self.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject, self.setup_cache)
+                fn = utils.simple_template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -522,7 +522,7 @@ class Runner(object):
             if not found:
                 return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
 
-        source = utils.template(source, inject, self.setup_cache)
+        source = utils.simple_template(source, inject)
 
         (host, ok, data, err) = (None, None, None, None)
 
@@ -554,10 +554,12 @@ class Runner(object):
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
-        source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
         resultant = ''            
         try:
-            resultant = utils.template(source_data, inject, self.setup_cache, no_engine=False)
+            vars = inject.copy()
+            vars['hostvars'] = self.setup_cache
+            resultant = utils.template_from_file(utils.path_dwim(self.basedir, source),
+                                                 vars, engine='jinja2')
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
@@ -604,7 +606,7 @@ class Runner(object):
             return [ host, False, "FAILED: %s" % str(e), None ]
 
         cache = self.setup_cache.get(host, {})
-        module_name = utils.template(self.module_name, cache, self.setup_cache)
+        module_name = utils.simple_template(self.module_name, cache)
 
         tmp = self._get_tmp_path(conn)
         result = None
