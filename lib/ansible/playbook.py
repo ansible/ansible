@@ -151,7 +151,7 @@ class PlayBook(object):
 
         # include: some.yml a=2 b=3 c=4
         play_vars = self._get_vars(play, dirname)
-        include_tokens = utils.template(task['include'], play_vars, SETUP_CACHE).split()
+        include_tokens = utils.simple_template(task['include'], play_vars).split()
         path = utils.path_dwim(dirname, include_tokens[0])
         include_vars = {}
         for i,x in enumerate(include_tokens):
@@ -173,7 +173,7 @@ class PlayBook(object):
 
         path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
-        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
+        included = utils.template_from_file(path, inject_vars)
         included = utils.parse_yaml(included)
         for x in included:
             new_handlers.append(x)
@@ -212,10 +212,10 @@ class PlayBook(object):
                         if action is None:
                             raise errors.AnsibleError('action is required')
                         produced_task = task.copy()
-                        produced_task['action'] = utils.template(action, dict(item=item), SETUP_CACHE)
-                        produced_task['name'] = utils.template(name, dict(item=item), SETUP_CACHE)
+                        produced_task['action'] = utils.simple_template(action, dict(item=item))
+                        produced_task['name'] = utils.simple_template(name, dict(item=item))
                         if only_if:
-                            produced_task['only_if'] = utils.template(only_if, dict(item=item), SETUP_CACHE)
+                            produced_task['only_if'] = utils.simple_template(only_if, dict(item=item))
                         new_tasks2.append(produced_task)
                 else:
                     new_tasks2.append(task)
@@ -424,7 +424,7 @@ class PlayBook(object):
                     found = False
                     sequence = []
                     for real_filename in filename:
-                        filename2 = utils.path_dwim(self.basedir, utils.template(real_filename, cache_vars, SETUP_CACHE))
+                        filename2 = utils.path_dwim(self.basedir, utils.simple_template(real_filename, cache_vars))
                         sequence.append(filename2)
                         if os.path.exists(filename2):
                             found = True
@@ -440,7 +440,7 @@ class PlayBook(object):
                         )
 
                 else:
-                    filename2 = utils.path_dwim(self.basedir, utils.template(filename, cache_vars, SETUP_CACHE))
+                    filename2 = utils.path_dwim(self.basedir, utils.simple_template(filename, cache_vars))
                     if not os.path.exists(filename2):
                         raise errors.AnsibleError("no file matched for vars_file import: %s" % filename2)
                     data = utils.parse_yaml_from_file(filename2)
@@ -503,7 +503,7 @@ class PlayBook(object):
             raise errors.AnsibleError('hosts declaration is required')
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        pattern = utils.template(pattern, self.extra_vars, {})
+        pattern = utils.simple_template(pattern, self.extra_vars)
         name = pg.get('name', pattern)
 
         vars       = self._get_vars(pg, self.basedir)

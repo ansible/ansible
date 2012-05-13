@@ -254,29 +254,28 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=True):
-    ''' run a text buffer through the templating engine '''
-    vars = vars.copy()
-    text = varReplace(unicode(text), vars)
-    vars['hostvars'] = setup_cache
-    if no_engine:
-        # used when processing include: directives so that Jinja is evaluated
-        # in a later context when more variables are available
-        return text
-    else:
-        template = jinja2.Template(text)
-        res = template.render(vars)
-        if text.endswith('\n') and not res.endswith('\n'):
-            res = res + '\n'
-        return res
+def simple_template(text, vars):
+    return varReplace(unicode(text), vars)
 
-def double_template(text, vars, setup_cache):
-    return template(template(text, vars, setup_cache), vars, setup_cache)
+def jinja2_template(text, vars):
+    template = jinja2.Template(text)
+    res = template.render(vars)
+    if text.endswith('\n') and not res.endswith('\n'):
+        res = res + '\n'
+    return res
+    
+def double_template(text, vars):
+    return simple_template(simple_template(text, vars), vars)
 
-def template_from_file(path, vars, setup_cache, no_engine=False):
+def template_from_file(path, vars, engine='simple'):
     ''' run a file through the templating engine '''
     data = codecs.open(path, encoding="utf8").read()
-    return template(data, vars, setup_cache, no_engine=no_engine)
+    if engine == 'simple':
+        return simple_template(data, vars)
+    elif engine == 'jinja2':
+        return jinja2_template(data, vars)
+    else:
+        raise errors.AnsibleError('invalid templating engine: %s' % (engine,))
 
 def parse_yaml(data):
     return yaml.load(data)
