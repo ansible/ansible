@@ -224,14 +224,8 @@ won't need them for much else.
    Notify handlers are always run in the order written.
 
 
-Power Tricks
-````````````
-
-Now that you have the basics down, let's learn some more advanced
-things you can do with playbooks.
-
 Include Files And Reuse
-+++++++++++++++++++++++
+```````````````````````
 
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.
@@ -306,8 +300,12 @@ Let's run a playbook using a parallelism level of 10::
 
    :doc:`YAMLSyntax`
        Learn about YAML syntax
+   :doc:`playbooks`
+       Review the basic Playbook language features
    :doc:`playbooks2`
        Learn about Advanced Playbook Features
+   :doc:`bestpractices`
+       Various tips about managing playbooks in the real world
    :doc:`modules`
        Learn about available modules
    :doc:`moduledev`

@@ -136,9 +136,10 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </span>
 </li>
@@ -155,10 +156,7 @@ s.parentNode.insertBefore(ga, s);
 </ul>
 </li>
 <li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
-<li><a class="reference internal" href="#power-tricks">Power Tricks</a><ul>
 <li><a class="reference internal" href="#include-files-and-reuse">Include Files And Reuse</a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
 </ul>
 </li>
@@ -373,12 +371,8 @@ won&#8217;t need them for much else.</p>
 <p class="last">Notify handlers are always run in the order written.</p>
 </div>
 </div>
-<div class="section" id="power-tricks">
-<h2>Power Tricks<a class="headerlink" href="#power-tricks" title="Permalink to this headline">¶</a></h2>
-<p>Now that you have the basics down, let&#8217;s learn some more advanced
-things you can do with playbooks.</p>
 <div class="section" id="include-files-and-reuse">
-<h3>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h3>
+<h2>Include Files And Reuse<a class="headerlink" href="#include-files-and-reuse" title="Permalink to this headline">¶</a></h2>
 <p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.</p>
 <p>An include file simply contains a flat list of tasks, like so:</p>
@@ -430,7 +424,6 @@ of a play:</p>
 with &#8216;vars_files&#8217;.  If you find yourself needing to do this, consider how you can
 restructure your playbook to be more class/role oriented.</p>
 </div>
-</div>
 <div class="section" id="executing-a-playbook">
 <h2>Executing A Playbook<a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
 <p>Now that you&#8217;ve learned playbook syntax, how do you run a playbook?  It&#8217;s simple.
@@ -442,8 +435,12 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <dl class="last docutils">
 <dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
 <dd>Learn about YAML syntax</dd>
+<dt><a class="reference internal" href=""><em>Playbooks</em></a></dt>
+<dd>Review the basic Playbook language features</dd>
 <dt><a class="reference internal" href="playbooks2.html"><em>Advanced Playbooks</em></a></dt>
 <dd>Learn about Advanced Playbook Features</dd>
+<dt><a class="reference internal" href="bestpractices.html"><em>Best Practices</em></a></dt>
+<dd>Various tips about managing playbooks in the real world</dd>
 <dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
 <dd>Learn about available modules</dd>
 <dt><a class="reference internal" href="moduledev.html"><em>Module Development</em></a></dt>
@@ -474,7 +471,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 10, 2012.<br/>
+      Last updated on May 13, 2012.<br/>
     </p>
   </div>
 </footer>

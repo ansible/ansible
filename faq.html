@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Frequently Asked Questions &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>FAQ &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
@@ -135,9 +135,10 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Frequently Asked Questions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">FAQ</a></li>
 </ul>
 </span>
 </li>
@@ -145,7 +146,7 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#">FAQ</a><ul>
 <li><a class="reference internal" href="#what-inspired-ansible">What inspired Ansible?</a></li>
 <li><a class="reference internal" href="#comparisons">Comparisons</a><ul>
 <li><a class="reference internal" href="#vs-func">vs Func?</a></li>
@@ -188,8 +189,8 @@ s.parentNode.insertBefore(ga, s);
    <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
 <br/>
    
-  <div class="section" id="frequently-asked-questions">
-<h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="faq">
+<h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="what-inspired-ansible">
 <h2>What inspired Ansible?<a class="headerlink" href="#what-inspired-ansible" title="Permalink to this headline">¶</a></h2>
 <p>Back when I worked for Red Hat and working on <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>, several of us identified a gap between
@@ -314,26 +315,31 @@ computing investments.</p>
 <div class="section" id="how-does-ansible-scale">
 <h3>How does Ansible scale?<a class="headerlink" href="#how-does-ansible-scale" title="Permalink to this headline">¶</a></h3>
 <p>Whether in single-execution mode or using ansible playbooks, ansible can
-run multiple commands in seperate forks, thanks to the magic behind
+run multiple commands in seperate parallel forks, thanks to the magic behind
 Python&#8217;s multiprocessing module.</p>
-<p>If you need to address 500 machines you can decide if you want to try
-to contact 5 at a time, or 50 at a time.
-It&#8217;s up to you and how much power you can throw at it, but its heritage
-is about handling those kinds of use cases.</p>
+<p>You can decide if you want to try to manage 5 hosts at a time, or 50 at a time.
+It&#8217;s up to you and how much power you can throw at it and how fast you want
+to go.</p>
 <p>There are no daemons so it&#8217;s entirely up to you.  When you are aren&#8217;t using
-Ansible, it is not consuming any resources.</p>
+Ansible, it is not consuming any resources, and you don&#8217;t have to contend
+with a herd of machines all knocking at the door of your management server
+all at once.</p>
 <p>If you have 10,000 systems, running a single ansible playbook against all of
-them probably isn&#8217;t always appropriate, but most users shouldn&#8217;t have any problems.
-If you want to kick off an async task/module, it&#8217;s probably fine.  We also
-support a local connection mode (&#8211;connection=local) that will enable pull
-based usage for those that want that.  Look for future features in this area.</p>
-<p>If you&#8217;d like to discuss scaling, please hop on the mailing list.</p>
+them probably isn&#8217;t appropriate, which is why ansible-pull exists.</p>
+<p>This tool is designed for running out of git and cron, and can scale to any
+number of hosts.  Ansible-pull uses local connections versus SSH, but can be
+easily bootstrapped or reconfigured just using SSH.  There is more information
+available about this in the ref:<cite>playbooks2</cite> section.  The self-bootstrapping
+and ease of use are ansible are still retained, even when switching to the pull
+model.</p>
+<p>If you&#8217;d like to discuss scaling strategies further, please hop on the mailing list.</p>
 </div>
 <div class="section" id="are-transports-other-than-ssh-supported">
 <h3>Are transports other than SSH supported?<a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
-<p>Currently SSH is the only remote transport, though the interface is pluggable so a
-small patch could bring transport over message bus or XMPP as an option.
-Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
+<p>Currently SSH and local connections are supported.  In 0.5, we&#8217;ll also be including
+a faster SSH transport.  The interface is actually pluggable so a
+small patch could bring transport over message bus or XMPP as an option.</p>
+<p>Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
 are all abstracted away from the core implementation so it is very easy to extend.</p>
 </div>
 <div class="section" id="what-are-some-ideal-uses-for-ansible">
@@ -380,7 +386,7 @@ tasks &#8211; whether for a QA sytem, build system, or anything you can think of
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 10, 2012.<br/>
+      Last updated on May 13, 2012.<br/>
     </p>
   </div>
 </footer>

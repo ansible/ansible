@@ -135,9 +135,10 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </span>
 </li>
@@ -346,23 +347,30 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#running-operations-on-change">Running Operations On Change</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks.html#power-tricks">Power Tricks</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="playbooks.html#include-files-and-reuse">Include Files And Reuse</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#include-files-and-reuse">Include Files And Reuse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#executing-a-playbook">Executing A Playbook</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#local-playbooks">Local Playbooks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#variables-from-other-hosts">Variables From Other Hosts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#external-variables-and-prompted-or-sensitive-data">External Variables and Prompted or Sensitive Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#accessing-complex-variable-data">Accessing Complex Variable Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#accessing-information-about-other-hosts">Accessing Information About Other Hosts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#magic-variables">Magic Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#variable-file-seperation">Variable File Seperation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#prompting-for-sensitive-data">Prompting For Sensitive Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#passing-variables-on-the-command-line">Passing Variables On The Command Line</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks2.html#conditional-execution">Conditional Execution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks2.html#conditional-imports">Conditional Imports</a></li>
-<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#using-includes-to-assign-classes-of-systems">Using Includes To Assign Classes of Systems</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks2.html#loop-shorthand">Loop Shorthand</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#selecting-files-and-templates-based-on-variables">Selecting Files And Templates Based On Variables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks2.html#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#local-playbooks">Local Playbooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks2.html#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bestpractices.html#group-by-roles">Group By Roles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bestpractices.html#directory-organization">Directory Organization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bestpractices.html#miscellaneous-tips">Miscellaneous Tips</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a><ul>
@@ -389,7 +397,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l2"><a class="reference internal" href="moduledev.html#getting-your-module-into-core">Getting Your Module Into Core</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#what-inspired-ansible">What inspired Ansible?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#comparisons">Comparisons</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="faq.html#vs-func">vs Func?</a></li>
@@ -439,7 +447,7 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 10, 2012.<br/>
+      Last updated on May 13, 2012.<br/>
     </p>
   </div>
 </footer>
