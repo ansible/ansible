@@ -257,8 +257,8 @@ def varReplace(raw, vars):
 def template(text, vars, setup_cache, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
-    text = varReplace(unicode(text), vars)
     vars['hostvars'] = setup_cache
+    text = varReplace(unicode(text), vars)
     if no_engine:
         # used when processing include: directives so that Jinja is evaluated
         # in a later context when more variables are available
