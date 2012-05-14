@@ -318,6 +318,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
+    parser.add_option('--private-key', default=None, dest='private_key_file',
+        help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
