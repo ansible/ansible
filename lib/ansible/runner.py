@@ -554,10 +554,9 @@ class Runner(object):
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
-        source_data = codecs.open(utils.path_dwim(self.basedir, source), encoding="utf8").read()
-        resultant = ''            
         try:
-            resultant = utils.template(source_data, inject, self.setup_cache, no_engine=False)
+            resultant = utils.template_from_file(utils.path_dwim(self.basedir, source),
+                                                 inject, self.setup_cache, no_engine=False)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
