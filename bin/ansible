@@ -91,6 +91,7 @@ class Cli(object):
             module_args=options.module_args,
             remote_user=options.remote_user, remote_pass=sshpass,
             inventory=inventory_manager, timeout=options.timeout, 
+            private_key_file=options.private_key_file,
             forks=options.forks, 
             pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
