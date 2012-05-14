@@ -56,6 +56,7 @@ class PlayBook(object):
         sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
+        private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
         debug            = False,
         callbacks        = None,
         runner_callbacks = None,
@@ -103,6 +104,7 @@ class PlayBook(object):
         self.sudo_user        = sudo_user
         self.extra_vars       = extra_vars
         self.global_vars      = {}
+        self.private_key_file = private_key_file
 
         self.inventory = ansible.inventory.Inventory(host_list)
         
@@ -283,6 +285,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user, 
             remote_port=port, module_vars=vars,
+            private_key_file=self.private_key_file,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
             debug=self.debug, sudo=sudo, sudo_user=sudo_user,
@@ -474,6 +477,7 @@ class PlayBook(object):
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
             remote_pass=self.remote_pass, remote_port=port,
+            private_key_file=self.private_key_file,
             setup_cache=SETUP_CACHE,
             callbacks=self.runner_callbacks, sudo=sudo, sudo_user=sudo_user, 
             debug=self.debug, transport=transport, 
