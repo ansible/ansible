@@ -62,8 +62,8 @@ class ParamikoConnection(object):
                 username=user,
                 allow_agent=True,
                 look_for_keys=True,
+                key_filename=self.runner.private_key_file,
                 password=self.runner.remote_pass,
-                # key_filename=None, # TODO: allow this to be passed in
                 timeout=self.runner.timeout,
                 port=self.port
             )
