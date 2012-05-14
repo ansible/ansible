@@ -101,7 +101,7 @@ These variables can be used later in the playbook like this::
 
     $varname
 
-In templates, the full power of the Jinja2 templating language is also available, which looks like this:
+In templates, the full power of the Jinja2 templating language is also available, which looks like this::
 
     {{ varname }}
 

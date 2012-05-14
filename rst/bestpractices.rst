@@ -6,7 +6,7 @@ Here are some tips for making the most of Ansible.
 Group By Roles
 ++++++++++++++
 
-A system can be in multiple groups.  See ref:`patterns`.   Having groups named after things like
+A system can be in multiple groups.  See :doc:`patterns`.   Having groups named after things like
 'webservers' and 'dbservers' is repeated in the examples because it's a very powerful concept.
 
 This allows playbooks to target machines based on role, as well as to assign role specific variables
@@ -60,21 +60,21 @@ The acme/setup.yml playbook would be as simple as::
 
 The tasks are individually broken out in 'acme/tasks/setup.yml', and handlers, which are common to all task files,
 are contained in 'acme/handlers/main.yml'.  As a reminder, handlers are mostly just used to notify services to restart
-when things change, and these are described in ref:`playbooks`.  
+when things change, and these are described in :doc:`playbooks`.
 
 Including more than one setup file or more than one handlers file is of course legal.
 
 Having playbooks be able to include other playbooks is coming in release 0.5.
 
 Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
-You don't have to do this though, it's fine to select sections of your infrastructure to manage at a single time.
+You don't have to do this though. It's fine to select sections of your infrastructure to manage at a single time.
 You may wish to construct simple shell scripts to wrap calls to ansible-playbook.
 
 Miscellaneous Tips
 ++++++++++++++++++
 
 When you can do something simply, do something simply.  Do not reach to use every feature of Ansible together, all
-at once.  Use what works for you.  For example, you should probably not need 'vars', 'vars_files', 'vars_prompt' and '--extra-vars' all at once, while also using an external inventory file.
+at once.  Use what works for you.  For example, you should probably not need ``vars``, ``vars_files``, ``vars_prompt`` and ``--extra-vars`` all at once, while also using an external inventory file.
 
 Optimize for readability.  Whitespace between sections of YAML documents and in between tasks is strongly encouraged,
 as is usage of YAML comments, which start with "#".  It is also useful to comment at the top of each file the purpose of the individual file and the author, including email address.

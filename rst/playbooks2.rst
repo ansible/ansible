@@ -9,7 +9,7 @@ be 90% or more of what they use in Ansible.
 Accessing Complex Variable Data
 +++++++++++++++++++++++++++++++
 
-Some provided facts, like networking information, are made available as nested datastructures.  To access
+Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address using
 Ansible 0.4 and later::
 
