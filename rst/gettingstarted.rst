@@ -60,7 +60,7 @@ to use it::
     $ cd ./ansible
     $ source ./hacking/env-setup
 
-You can optionally specify an inventory file (see doc:`patterns`) other than /etc/ansible/hosts::
+You can optionally specify an inventory file (see :doc:`patterns`) other than /etc/ansible/hosts::
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_HOSTS=~/ansible_hosts
@@ -114,7 +114,7 @@ Debian package recipes can be built from the source checkout, run::
     make debian
 
 An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
-If you have python3 installed on Arch, you probably want to symlink python to python2.::
+If you have python3 installed on Arch, you probably want to symlink python to python2::
 
     sudo ln -sf /usr/bin/python2 /usr/bin/python
 
