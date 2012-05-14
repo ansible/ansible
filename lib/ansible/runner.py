@@ -76,9 +76,10 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
         pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
         remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
-        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
-        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
-        callbacks=None, debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, sudo_pass=C.DEFAULT_SUDO_PASS, 
+        background=0, basedir=None, setup_cache=None, 
+        transport=C.DEFAULT_TRANSPORT, conditional='True', callbacks=None, 
+        debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
         module_vars=None, is_playbook=False, inventory=None):
 
         """
@@ -92,6 +93,7 @@ class Runner(object):
         remote_user  : connect as this remote username
         remote_pass  : supply this password (if not using keys)
         remote_port  : use this default remote port (if not set by the inventory system)
+        private_key_file  : use this private key as your auth key
         sudo_user    : If you want to sudo to a user other than root.
         sudo_pass    : sudo password if using sudo and sudo requires a password
         background   : run asynchronously with a cap of this many # of seconds (if not 0)
@@ -142,6 +144,7 @@ class Runner(object):
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.remote_port = remote_port
+        self.private_key_file = private_key_file
         self.background  = background
         self.basedir     = basedir
         self.sudo        = sudo
