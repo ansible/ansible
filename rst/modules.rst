@@ -335,7 +335,7 @@ Arguments given to 'raw' are run directly through the configured remote shell an
 only output is returned.  There is no error detection or change handler support 
 for this module.
 
-Example from `/usr/bin/ansible` to bootstrap a legacy python 2.4 host:
+Example from `/usr/bin/ansible` to bootstrap a legacy python 2.4 host::
 
     ansible newhost.example.com raw -a "yum install python-simplejson"
 
