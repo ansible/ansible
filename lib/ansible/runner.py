@@ -274,6 +274,8 @@ class Runner(object):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
         if self.module_name == 'setup':
+            if not args:
+                args = {}
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
 
