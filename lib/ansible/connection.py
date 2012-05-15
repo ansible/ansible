@@ -106,7 +106,7 @@ class ParamikoConnection(object):
         self.ssh = self._get_conn()
         return self
 
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
+    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False,sudo_ok=False):
 
         ''' run a command on the remote host '''
         bufsize = 4096
@@ -127,9 +127,14 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
+            test_sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
+                    sudo_user, pipes.quote("echo %s OK" % randbits))
+            real_sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
                     sudo_user, pipes.quote(cmd))
+
+            sudocmd = sudo_ok and real_sudocmd or test_sudocmd
             sudo_output = ''
+
             try:
                 chan.exec_command(sudocmd)
                 if self.runner.sudo_pass:
@@ -139,6 +144,19 @@ class ParamikoConnection(object):
                             raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
                         sudo_output += chunk
                     chan.sendall(self.runner.sudo_pass + '\n')
+
+                    if not sudo_ok:
+                        sudo_output = ''
+                        while not (randbits + " OK") in sudo_output:
+                            if len(sudo_output) > len(randbits):
+                                raise errors.AnsibleError('sudo failed, unexpected output %s' % sudo_output.replace('\n', '\n>>> '),)
+
+                            chunk = chan.recv(bufsize)
+                            if not chunk:
+                                raise errors.AnsibleError('ssh connection closed waiting for sudo ok response')
+                            sudo_output += chunk
+
+                        return self.exec_command(cmd,tmp_path,sudo_user,sudoable,True)
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
