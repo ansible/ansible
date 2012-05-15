@@ -164,8 +164,13 @@ class TestRunner(unittest.TestCase):
         assert result['rc'] == 0
 
     def test_large_output(self):
+        large_path = "/usr/share/dict/words"
+        if not os.path.exists(large_path):
+            large_path = "/usr/share/dict/cracklib-small"
+            if not os.path.exists(large_path):
+                raise SkipTest
         # Ensure reading a large amount of output from a command doesn't hang.
-        result = self._run('command', [ "/bin/cat", "/usr/share/dict/words" ])
+        result = self._run('command', [ "/bin/cat", large_path ])
         assert "failed" not in result
         assert "msg" not in result
         assert result['rc'] == 0
