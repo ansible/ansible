@@ -34,7 +34,7 @@ class InventoryScript(object):
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         cmd = [ filename, "--list" ]
-        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (stdout, stderr) = sp.communicate()
         self.data = stdout
         self.groups = self._parse()
