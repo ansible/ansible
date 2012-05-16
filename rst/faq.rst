@@ -173,7 +173,7 @@ them probably isn't appropriate, which is why ansible-pull exists.
 This tool is designed for running out of git and cron, and can scale to any
 number of hosts.  Ansible-pull uses local connections versus SSH, but can be
 easily bootstrapped or reconfigured just using SSH.  There is more information
-available about this in the ref:`playbooks2` section.  The self-bootstrapping
+available about this in the :doc:`playbooks2` section.  The self-bootstrapping
 and ease of use are ansible are still retained, even when switching to the pull
 model.
 
