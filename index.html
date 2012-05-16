@@ -220,7 +220,7 @@ of control.  Further, it was designed for deploying multi-node applications from
 </div>
 <div class="section" id="simple-secure-by-default">
 <h1>Simple &amp; Secure By Default<a class="headerlink" href="#simple-secure-by-default" title="Permalink to this headline">¶</a></h1>
-<p>Compared with most configuration managememnt tools, Ansible is also much more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with its own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as neccesssary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
+<p>Compared with most configuration managememnt tools, Ansible is also much more secure.  While most configuration management tools use a daemon, running as root with full access to the system, with its own in-house developed PKI infrastructure, Ansible just uses SSH (and supports sudo as necessary).  There is no additional attack surface and OpenSSH is one of the most peer reviewed security components out there.
 If a central server containing your playbooks are comprimised, your nodes are not &#8211; which is NOT the case
 of these other tools, which can, more or less, turn into a botnet.  Our security approach is to avoid writing custom
 crypto code altogether, and rely on the most secure part of the Linux/Unix subsystem that your machines are already using.  There is no PKI subsystem to maintain, which can be a frequent source of problems, particularly when reinstalling or migrating
