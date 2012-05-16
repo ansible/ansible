@@ -42,7 +42,7 @@ Playbooks should be organized like this::
                stop.yml 
 
 Any directories or files not needed can be omitted.  Not all modules may require `vars` or `files` sections, though most
-will require `handlers`, `tasks`, and `templates`.  To review what each of these sections do, see ref:`playbooks` and ref:`playbooks2`.
+will require `handlers`, `tasks`, and `templates`.  To review what each of these sections do, see :doc:`playbooks` and :doc:`playbooks2`.
 
 The acme/setup.yml playbook would be as simple as::
 
