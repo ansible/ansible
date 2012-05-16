@@ -648,7 +648,10 @@ class Runner(object):
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
         sudo_user = self.sudo_user
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
+        if self.transport == 'local' :
+          stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
+        else :
+          stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
         err=None
         out=None
         if type(stderr) != str:
