@@ -148,7 +148,6 @@ class PlayBook(object):
                 vars[vname] = self.callbacks.on_vars_prompt(prompt, confirm=confirm, encrypt=encrypt, salt_size=salt_size, salt=salt)
             else:
                 raise errors.AnsibleError("'vars_prompt' values must be either a string or a dictionary")
-            print vars[vname]
 
         results = self.extra_vars.copy()
         results.update(vars)
