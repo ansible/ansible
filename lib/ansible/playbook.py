@@ -138,9 +138,18 @@ class PlayBook(object):
         if type(vars_prompt) != dict:
             raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
         for vname in vars_prompt:
-            # TODO: make this prompt one line and consider double entry
-            print vars_prompt[vname]
-            vars[vname] = self.callbacks.on_vars_prompt(vname)
+            var_settings = vars_prompt[vname]
+            if type(var_settings) == str:
+                vars[vname] = self.callbacks.on_vars_prompt(var_settings)
+            elif type(var_settings) == dict:
+                prompt = var_settings.get("prompt", "input for %s" % vname)
+                confirm = var_settings.get("confirm", False)
+                encrypt = var_settings.get("encrypt", False)
+                salt_size = var_settings.get("salt_size", None)
+                salt = var_settings.get("salt", None)
+                vars[vname] = self.callbacks.on_vars_prompt(prompt, confirm=confirm, encrypt=encrypt, salt_size=salt_size, salt=salt)
+            else:
+                raise errors.AnsibleError("'vars_prompt' values must be either a string or a dictionary")
 
         results = self.extra_vars.copy()
         results.update(vars)

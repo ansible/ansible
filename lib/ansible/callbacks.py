@@ -20,6 +20,12 @@
 import utils
 import sys
 import getpass
+from ansible import errors
+try:
+    import passlib.hash
+    PASSLIB_AVAILABLE = True
+except:
+    PASSLIB_AVAILABLE = False
 
 #######################################################
 
@@ -226,11 +232,35 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         print utils.task_start_msg(name, is_conditional)
 
-    def on_vars_prompt(self, varname, private=True):
-        msg = 'input for %s: ' % varname
-        if private:
-            return getpass.getpass(msg)
-        return raw_input(msg)
+    def on_vars_prompt(self, msg, private=True, encrypt=None, confirm=False, salt_size=None, salt=None):
+        msg = '%s: ' % msg
+        def prompt(prompt, private):
+            if private:
+                return getpass.getpass(prompt)
+            return raw_input(prompt)
+        if confirm:
+            while True:
+                result = prompt(msg, private)
+                second = prompt("confirm " + msg, private)
+                if result == second: break
+                print "***** VALUES ENTERED DO NOT MATCH ****"
+        else:
+            result = prompt(msg, private)
+        if encrypt:
+            if PASSLIB_AVAILABLE:
+                try:
+                    crypt = getattr(passlib.hash, encrypt)
+                except:
+                    raise errors.AnsibleError("passlib does not support '%s' algorithm" % encrypt) 
+                if salt_size:
+                    result = crypt.encrypt(result, salt_size=salt_size)
+                elif salt:
+                    result = crypt.encrypt(result, salt=salt)
+                else:
+                    result = crypt.encrypt(result)
+            else:
+                raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
+        return result
         
     def on_setup_primary(self):
         print "SETUP PHASE ****************************\n"
