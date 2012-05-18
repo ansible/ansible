@@ -25,7 +25,6 @@ def get_binary(name):
 
 class TestRunner(unittest.TestCase):
 
-<<<<<<< HEAD
     def setUp(self):
         self.user = getpass.getuser()
         self.runner = ansible.runner.Runner(
