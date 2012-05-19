@@ -465,17 +465,18 @@ using the &#8216;shell&#8217; or &#8216;command&#8217; module is much more appro
 only output is returned.  There is no error detection or change handler support
 for this module.</p>
 <p>Example from <cite>/usr/bin/ansible</cite> to bootstrap a legacy python 2.4 host:</p>
-<blockquote>
-<div>ansible newhost.example.com raw -a &#8220;yum install python-simplejson&#8221;</div></blockquote>
+<div class="highlight-python"><pre>ansible newhost.example.com raw -a "yum install python-simplejson"</pre>
+</div>
 </div>
 <div class="section" id="id9">
 <h2>service<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <p><em>state</em>:</p>
 <ul class="simple">
-<li>Values are <tt class="docutils literal"><span class="pre">started</span></tt>, <tt class="docutils literal"><span class="pre">stopped</span></tt>, or <tt class="docutils literal"><span class="pre">restarted</span></tt>.
+<li>Values are <tt class="docutils literal"><span class="pre">started</span></tt>, <tt class="docutils literal"><span class="pre">stopped</span></tt>, <tt class="docutils literal"><span class="pre">reloaded</span></tt>, or <tt class="docutils literal"><span class="pre">restarted</span></tt>.
 Started/stopped are idempotent actions that will not run commands
-unless necessary.  <tt class="docutils literal"><span class="pre">restarted</span></tt> will always bounce the service.</li>
+unless necessary.  <tt class="docutils literal"><span class="pre">restarted</span></tt> will always bounce the service, <tt class="docutils literal"><span class="pre">reloaded</span></tt>
+will always issue a reload.</li>
 </ul>
 <p><em>enabled</em>:</p>
 <ul class="simple">
@@ -493,7 +494,8 @@ Uses chkconfig or updates-rc.d as appropriate.</li>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>service name=httpd state=started
 service name=httpd state=stopped
-service name=httpd state=restarted</pre>
+service name=httpd state=restarted
+service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
@@ -787,7 +789,7 @@ yum pkg=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 13, 2012.<br/>
+      Last updated on May 19, 2012.<br/>
     </p>
   </div>
 </footer>
