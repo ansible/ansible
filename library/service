@@ -120,7 +120,7 @@ list_items = params.get('list', None)
 enable = params.get('enabled', params.get('enable', None))
 
 # running and started are the same
-if state and state.lower() not in [ 'running', 'started', 'stopped', 'restarted' ]:
+if state and state.lower() not in [ 'running', 'started', 'stopped', 'restarted','reloaded' ]:
     fail_json(dict(failed=True, msg='invalid value for state'))
 if list_items and list_items.lower() not in [ 'status' ]:
     fail_json(dict(failed=True, msg='invalid value for list'))
@@ -170,7 +170,7 @@ if state or enable:
 
         if not running and state in ("started", "running"):
             changed = True
-        elif running and state == "stopped":
+        elif running and state in ("stopped","reloaded"):
             changed = True
         elif state == "restarted":
             changed = True
@@ -183,6 +183,8 @@ if state or enable:
                 rc_state, stdout, stderr = _run("%s %s start" % (SERVICE, name))
             elif state == 'stopped':
                 rc_state, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
+            elif state == 'reloaded':
+                rc_state, stdout, stderr = _run("%s %s reload" % (SERVICE, name))
             elif state == 'restarted':
                 rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
                 rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
