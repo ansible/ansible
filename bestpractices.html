@@ -183,7 +183,7 @@ s.parentNode.insertBefore(ga, s);
 <p>Here are some tips for making the most of Ansible.</p>
 <div class="section" id="group-by-roles">
 <h2>Group By Roles<a class="headerlink" href="#group-by-roles" title="Permalink to this headline">¶</a></h2>
-<p>A system can be in multiple groups.  See ref:<cite>patterns</cite>.   Having groups named after things like
+<p>A system can be in multiple groups.  See <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.   Having groups named after things like
 &#8216;webservers&#8217; and &#8216;dbservers&#8217; is repeated in the examples because it&#8217;s a very powerful concept.</p>
 <p>This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.</p>
@@ -232,17 +232,17 @@ will require <cite>handlers</cite>, <cite>tasks</cite>, and <cite>templates</cit
 </div>
 <p>The tasks are individually broken out in &#8216;acme/tasks/setup.yml&#8217;, and handlers, which are common to all task files,
 are contained in &#8216;acme/handlers/main.yml&#8217;.  As a reminder, handlers are mostly just used to notify services to restart
-when things change, and these are described in ref:<cite>playbooks</cite>.</p>
+when things change, and these are described in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
 <p>Including more than one setup file or more than one handlers file is of course legal.</p>
 <p>Having playbooks be able to include other playbooks is coming in release 0.5.</p>
 <p>Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
-You don&#8217;t have to do this though, it&#8217;s fine to select sections of your infrastructure to manage at a single time.
+You don&#8217;t have to do this though. It&#8217;s fine to select sections of your infrastructure to manage at a single time.
 You may wish to construct simple shell scripts to wrap calls to ansible-playbook.</p>
 </div>
 <div class="section" id="miscellaneous-tips">
 <h2>Miscellaneous Tips<a class="headerlink" href="#miscellaneous-tips" title="Permalink to this headline">¶</a></h2>
 <p>When you can do something simply, do something simply.  Do not reach to use every feature of Ansible together, all
-at once.  Use what works for you.  For example, you should probably not need &#8216;vars&#8217;, &#8216;vars_files&#8217;, &#8216;vars_prompt&#8217; and &#8216;&#8211;extra-vars&#8217; all at once, while also using an external inventory file.</p>
+at once.  Use what works for you.  For example, you should probably not need <tt class="docutils literal"><span class="pre">vars</span></tt>, <tt class="docutils literal"><span class="pre">vars_files</span></tt>, <tt class="docutils literal"><span class="pre">vars_prompt</span></tt> and <tt class="docutils literal"><span class="pre">--extra-vars</span></tt> all at once, while also using an external inventory file.</p>
 <p>Optimize for readability.  Whitespace between sections of YAML documents and in between tasks is strongly encouraged,
 as is usage of YAML comments, which start with &#8220;#&#8221;.  It is also useful to comment at the top of each file the purpose of the individual file and the author, including email address.</p>
 <p>It is possible to leave off the &#8220;name&#8221; for a given task, though it is recommended to provide
@@ -289,7 +289,7 @@ This way you have an audit trail describing when and why you changed the rules a
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 13, 2012.<br/>
+      Last updated on May 19, 2012.<br/>
     </p>
   </div>
 </footer>
