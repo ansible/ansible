@@ -128,9 +128,9 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='100002', 
+            a='1', b='2', c='3', d='100002', rga='1', rgb='2', rgc='3', 
             inventory_hostname='rtp_a', 
-            group_names=[ 'eastcoast', 'nc', 'rtp', 'us' ]
+            group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
         print vars
         print expected

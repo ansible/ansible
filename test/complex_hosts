@@ -12,6 +12,24 @@ florida
 [us:children]
 eastcoast
 
+[redundantgroup]
+rtp_a
+
+[redundantgroup2]
+rtp_a
+
+[redundantgroup3:children]
+rtp
+
+[redundantgroup:vars]
+rga=1
+
+[redundantgroup2:vars]
+rgb=2
+
+[redundantgroup3:vars]
+rgc=3
+
 [nc:vars]
 b=10000
 c=10001
