@@ -346,9 +346,10 @@ Controls services on remote machines.
 
 *state*:
 
-* Values are ``started``, ``stopped``, or ``restarted``.
+* Values are ``started``, ``stopped``, ``reloaded``, or ``restarted``.
   Started/stopped are idempotent actions that will not run commands
-  unless necessary.  ``restarted`` will always bounce the service.
+  unless necessary.  ``restarted`` will always bounce the service, ``reloaded``
+  will always issue a reload.
 
 *enabled*:
 
@@ -368,6 +369,7 @@ Example action from Ansible :doc:`playbooks`::
     service name=httpd state=started
     service name=httpd state=stopped
     service name=httpd state=restarted
+    service name=httpd state=reloaded
 
 .. _setup:
 
