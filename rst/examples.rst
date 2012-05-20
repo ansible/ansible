@@ -131,7 +131,7 @@ Ensure a package is installed, but don't update it::
 
 Ensure a package is installed to a specific version::
 
-    ansible-webservers -m yum -a "pkg=acme-1.5 state=installed"
+    ansible webservers -m yum -a "pkg=acme-1.5 state=installed"
 
 Ensure a package is at the latest version::
 
@@ -139,7 +139,7 @@ Ensure a package is at the latest version::
 
 Ensure a package is not installed::
  
-    ansible-webservers -m yum -a "pkg=acme state=removed"
+    ansible webservers -m yum -a "pkg=acme state=removed"
 
 Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module
