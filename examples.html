@@ -283,13 +283,13 @@ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=
 <div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=installed"</pre>
 </div>
 <p>Ensure a package is installed to a specific version:</p>
-<div class="highlight-python"><pre>ansible-webservers -m yum -a "pkg=acme-1.5 state=installed"</pre>
+<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme-1.5 state=installed"</pre>
 </div>
 <p>Ensure a package is at the latest version:</p>
 <div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=latest"</pre>
 </div>
 <p>Ensure a package is not installed:</p>
-<div class="highlight-python"><pre>ansible-webservers -m yum -a "pkg=acme state=removed"</pre>
+<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=removed"</pre>
 </div>
 <p>Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module
