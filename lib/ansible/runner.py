@@ -452,12 +452,12 @@ class Runner(object):
         inject = self.setup_cache.get(conn.host,{})
         source = utils.template(source, inject, self.setup_cache)
 
+        # apply templating to dest argument
+        dest = utils.template(dest, inject, self.setup_cache)
+       
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
-
-        # apply templating to dest argument
-        dest = utils.template(dest, inject, self.setup_cache)
 
         # compare old and new md5 for support of change hooks
         local_md5 = None
@@ -468,6 +468,7 @@ class Runner(object):
         if remote_md5 != local_md5:
             # create the containing directories, if needed
             os.makedirs(os.path.dirname(dest))
+
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
