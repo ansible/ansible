@@ -295,7 +295,7 @@ def parse_kv(args):
         vargs = shlex.split(args, posix=True)
         for x in vargs:
             if x.find("=") != -1:
-                k, v = x.split("=")
+                k, v = x.split("=", 1)
                 options[k]=v
     return options
 
