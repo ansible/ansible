@@ -172,9 +172,9 @@ class PlayBook(object):
 
     def _include_handlers(self, play, handler, dirname, new_handlers):
         ''' load handlers from external files '''
-
-        path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
+        path = utils.template(handler['include'], inject_vars, SETUP_CACHE) 
+        path = utils.path_dwim(dirname, path)
         included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
         included = utils.parse_yaml(included)
         for x in included:
