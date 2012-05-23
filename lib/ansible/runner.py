@@ -509,6 +509,7 @@ class Runner(object):
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
+        var_pattern = options.pop('var_pattern', None)
         if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
@@ -562,7 +563,8 @@ class Runner(object):
         # template the source data locally
         try:
             resultant = utils.template_from_file(utils.path_dwim(self.basedir, source),
-                                                 inject, self.setup_cache, no_engine=False)
+                                                 inject, self.setup_cache, no_engine=False,
+                                                 var_pattern=var_pattern)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)

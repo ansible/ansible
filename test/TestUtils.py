@@ -235,3 +235,9 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == u'hello wórld'
+
+    def test_template_var_pattern(self):
+        template ='{{"[=msg=]"}, []}'
+        vars = {'msg': 'hello'}
+        expected ='{{"hello"}, []}'
+        assert ansible.utils.template(template, vars, {}, no_engine=False, var_pattern='[= =]') == expected
