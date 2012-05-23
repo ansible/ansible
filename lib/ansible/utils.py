@@ -254,7 +254,7 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=True):
+def template(text, vars, setup_cache, no_engine=True, var_pattern=None):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
@@ -264,7 +264,9 @@ def template(text, vars, setup_cache, no_engine=True):
         # in a later context when more variables are available
         return text
     else:
-        template = jinja2.Template(text)
+        var_pattern = (var_pattern or "{{ }}").split()
+        template = jinja2.Template(text, variable_start_string=var_pattern[0],
+                                   variable_end_string=var_pattern[1])
         res = template.render(vars)
         if text.endswith('\n') and not res.endswith('\n'):
             res = res + '\n'
@@ -273,10 +275,10 @@ def template(text, vars, setup_cache, no_engine=True):
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars, setup_cache, no_engine=True):
+def template_from_file(path, vars, setup_cache, no_engine=True, var_pattern=None):
     ''' run a file through the templating engine '''
     data = codecs.open(path, encoding="utf8").read()
-    return template(data, vars, setup_cache, no_engine=no_engine)
+    return template(data, vars, setup_cache, no_engine=no_engine, var_pattern=var_pattern)
 
 def parse_yaml(data):
     return yaml.load(data)
