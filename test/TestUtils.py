@@ -235,3 +235,10 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == u'hello wórld'
+
+    #####################################
+    ### key-value parsing
+
+    def test_parse_kv_basic(self):
+        assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
+                {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
