@@ -26,19 +26,14 @@ import grp
 import shlex
 import subprocess
 import sys
+import syslog
 
 GROUPADD = "/usr/sbin/groupadd"
 GROUPDEL = "/usr/sbin/groupdel"
 GROUPMOD = "/usr/sbin/groupmod"
 
-def debug(msg):
-    # ansible ignores stderr, so it's safe to use for debug
-    print >>sys.stderr, msg
-    #pass
-
 def exit_json(rc=0, **kwargs):
     if 'name' in kwargs:
-        debug("add group info to exit_json")
         add_group_info(kwargs)
     print json.dumps(kwargs)
     sys.exit(rc)
@@ -59,7 +54,6 @@ def add_group_info(kwargs):
 
 def group_del(group):
     cmd = [GROUPDEL, group]
-    debug("Arguments to groupdel: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -72,8 +66,9 @@ def group_add(group, **kwargs):
         if key == 'gid' and kwargs[key] is not None:
             cmd.append('-g')
             cmd.append(kwargs[key])
+        elif key == 'system' and kwargs[key] == 'yes':
+            cmd.append('-r')
     cmd.append(group)
-    debug("Arguments to groupadd: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -91,7 +86,6 @@ def group_mod(group, **kwargs):
     if len(cmd) == 1:
         return False
     cmd.append(group)
-    debug("Arguments to groupmod: %s" % (" ".join(cmd)))
     rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if rc == 0:
         return True
@@ -138,6 +132,8 @@ if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
 else:
     args = ' '.join(sys.argv[1:])
 items   = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
     fail_json(msg='the module requires arguments -a')
@@ -151,9 +147,12 @@ for x in items:
 state       = params.get('state','present')
 name        = params.get('name', None)
 gid         = params.get('gid', None)
+system      = params.get('system', 'no')
 
 if state not in [ 'present', 'absent' ]:
     fail_json(msg='invalid state')
+if system not in ['yes', 'no']:
+    fail_json(msg='invalid system')
 if name is None:
     fail_json(msg='name is required')
 
@@ -165,7 +164,7 @@ if state == 'absent':
     exit_json(name=name, changed=changed)
 elif state == 'present':
     if not group_exists(name):
-        changed = group_add(name, gid=gid)
+        changed = group_add(name, gid=gid, system=system)
     else:
         changed = group_mod(name, gid=gid)
 

@@ -21,6 +21,7 @@
 import sys
 import os
 import shlex
+import syslog
 
 # ===========================================
 # convert arguments of form a=b c=d
@@ -32,7 +33,11 @@ if len(sys.argv) == 1:
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
     sys.exit(1)
-items = shlex.split(open(argfile, 'r').read())
+
+args = open(argfile, 'r').read()
+items = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 
 params = {}
@@ -43,9 +48,9 @@ for x in items:
 src  = params['src']
 dest = params['dest']
 if src:
-   src = os.path.expanduser(src)
+    src = os.path.expanduser(src)
 if dest:
-   dest = os.path.expanduser(dest)
+    dest = os.path.expanduser(dest)
  
 # raise an error if there is no src file
 if not os.path.exists(src):

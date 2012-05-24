@@ -26,8 +26,10 @@ import Queue
 import random
 import traceback
 import tempfile
+import time
 import base64
 import getpass
+import codecs
 
 import ansible.constants as C 
 import ansible.connection
@@ -74,10 +76,11 @@ class Runner(object):
         forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
         pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
         remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
-        sudo_pass=C.DEFAULT_SUDO_PASS, background=0, basedir=None, 
-        setup_cache=None, transport=C.DEFAULT_TRANSPORT, conditional='True', 
-        callbacks=None, debug=False, sudo=False, module_vars=None, 
-        is_playbook=False, inventory=None):
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, sudo_pass=C.DEFAULT_SUDO_PASS, 
+        background=0, basedir=None, setup_cache=None, 
+        transport=C.DEFAULT_TRANSPORT, conditional='True', callbacks=None, 
+        debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
+        module_vars=None, is_playbook=False, inventory=None):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
@@ -90,6 +93,8 @@ class Runner(object):
         remote_user  : connect as this remote username
         remote_pass  : supply this password (if not using keys)
         remote_port  : use this default remote port (if not set by the inventory system)
+        private_key_file  : use this private key as your auth key
+        sudo_user    : If you want to sudo to a user other than root.
         sudo_pass    : sudo password if using sudo and sudo requires a password
         background   : run asynchronously with a cap of this many # of seconds (if not 0)
         basedir      : paths used by modules if not absolute are relative to here
@@ -114,13 +119,17 @@ class Runner(object):
 
         self.generated_jid = str(random.randint(0, 999999999999))
 
+        self.sudo_user = sudo_user
         self.transport = transport
-        self.connector = ansible.connection.Connection(self, self.transport)
+        self.connector = ansible.connection.Connection(self, self.transport, self.sudo_user)
 
         if inventory is None:
             self.inventory = ansible.inventory.Inventory(host_list)
         else:
             self.inventory = inventory
+
+        if module_vars is None:
+            module_vars = {}
 
         self.setup_cache = setup_cache
         self.conditional = conditional
@@ -135,6 +144,7 @@ class Runner(object):
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.remote_port = remote_port
+        self.private_key_file = private_key_file
         self.background  = background
         self.basedir     = basedir
         self.sudo        = sudo
@@ -149,19 +159,6 @@ class Runner(object):
 
         self._tmp_paths  = {}
         random.seed()
-
-    # *****************************************************
-
-    @classmethod
-    def parse_hosts(cls, host_list, override_hosts=None):
-        ''' parse the host inventory file, returns (hosts, groups) '''
-
-        if override_hosts is None:
-            inventory = ansible.inventory.Inventory(host_list)
-        else:
-            inventory = ansible.inventory.Inventory(override_hosts)
-
-        return inventory.host_list, inventory.groups
 
     # *****************************************************
 
@@ -209,7 +206,7 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data)
+        afo.write(data.encode("utf8"))
         afo.flush()
         afo.close()
 
@@ -253,13 +250,13 @@ class Runner(object):
                 if self.remote_user == 'root':
                     args = "%s metadata=/etc/ansible/setup" % args
                 else:
-                    args = "%s metadata=/home/%s/.ansible/setup" % (args, self.remote_user)
+                    args = "%s metadata=%s/.ansible/setup" % (args, C.DEFAULT_REMOTE_TMP)
         else:
             if not 'metadata' in args:
                 if self.remote_user == 'root':
                     args['metadata'] = '/etc/ansible/setup'
                 else:
-                    args['metadata'] = "/home/%s/.ansible/setup" % (self.remote_user)
+                    args['metadata'] = "%s/.ansible/setup" % C.DEFAULT_REMOTE_TMP
         return args   
  
     # *****************************************************
@@ -268,15 +265,18 @@ class Runner(object):
         async_jid=None, async_module=None, async_limit=None):
         ''' runs a module that has already been transferred '''
 
-        inject = self.setup_cache.get(conn.host,{})
+        inject = self.setup_cache.get(conn.host,{}).copy()
+        host_variables = self.inventory.get_variables(conn.host)
+        inject.update(host_variables)
+        inject.update(self.module_vars)
+
         conditional = utils.double_template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             return [ utils.smjson(dict(skipped=True)), None, 'skipped' ]
 
-        host_variables = self.inventory.get_variables(conn.host)
-        inject.update(host_variables)
-
         if self.module_name == 'setup':
+            if not args:
+                args = {}
             args = self._add_setup_vars(inject, args)
             args = self._add_setup_metadata(args)
 
@@ -320,9 +320,9 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        try:
-            var_result = utils.parse_json(result)
-        except:
+        if 'ansible_facts' in result:
+            var_result = result['ansible_facts']
+        else:
             var_result = {}
 
         # note: do not allow variables from playbook to be stomped on
@@ -336,6 +336,17 @@ class Runner(object):
 
     # *****************************************************
 
+    def _execute_raw(self, conn, host, tmp):
+        ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
+        stdout, stderr = self._exec_command( conn, self.module_args, tmp, sudoable = True )
+        data = dict(stdout=stdout)
+        if stderr:
+            data['stderr'] = stderr
+        return (host, True, data, '')
+
+    # ***************************************************
+
+
     def _execute_normal_module(self, conn, host, tmp, module_name):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
@@ -347,12 +358,12 @@ class Runner(object):
         module = self._transfer_module(conn, tmp, module_name)
         (result, err, executed) = self._execute_module(conn, tmp, module, self.module_args)
 
-        if module_name == 'setup':
-            self._add_result_to_setup_cache(conn, result)
-            if self.is_playbook:
-                self._save_setup_result_to_disk(conn, result)
+        (host, ok, data, err) = self._return_from_module(conn, host, result, err, executed)
 
-        return self._return_from_module(conn, host, result, err, executed)
+        if ok:
+            self._add_result_to_setup_cache(conn, data)
+
+        return (host, ok, data, err)
 
     # *****************************************************
 
@@ -385,11 +396,26 @@ class Runner(object):
         options = utils.parse_kv(self.module_args)
         source = options.get('src', None)
         dest   = options.get('dest', None)
-        if source is None or dest is None:
+        if (source is None and not 'first_available_file' in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
+        
+        # FIXME: break duplicate code up into subfunction
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
+        
         source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
@@ -422,6 +448,13 @@ class Runner(object):
         if source is None or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
+        # apply templating to source argument
+        inject = self.setup_cache.get(conn.host,{})
+        source = utils.template(source, inject, self.setup_cache)
+
+        # apply templating to dest argument
+        dest = utils.template(dest, inject, self.setup_cache)
+       
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), host, source)
         dest   = dest.replace("//","/")
@@ -435,6 +468,7 @@ class Runner(object):
         if remote_md5 != local_md5:
             # create the containing directories, if needed
             os.makedirs(os.path.dirname(dest))
+
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
             new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
@@ -456,8 +490,11 @@ class Runner(object):
         (result2, err2, executed2) = self._execute_module(conn, tmp, module, args)
         results2 = self._return_from_module(conn, conn.host, result2, err2, executed)
         (host, ok, data2, err2) = results2
-        new_changed = data2.get('changed', False)
-        data.update(data2)
+        if ok:
+            new_changed = data2.get('changed', False)
+            data.update(data2)
+        else:
+            new_changed = False
         if old_changed or new_changed:
             data['changed'] = True
         return (host, ok, data, "%s%s"%(err,err2))
@@ -472,11 +509,25 @@ class Runner(object):
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         metadata = options.get('metadata', None)
-        if source is None or dest is None:
+        if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
             return (host, True, dict(failed=True, msg="src and dest are required"), '')
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
+
+        # if we have first_available_file in our vars
+        # look up the files and use the first one we find as src
+        if 'first_available_file' in self.module_vars:
+            found = False
+            for fn in self.module_vars.get('first_available_file'):
+                fn = utils.template(fn, inject, self.setup_cache)
+                if os.path.exists(fn):
+                    source = fn
+                    found = True
+                    break
+            if not found:
+                return (host, True, dict(failed=True, msg="could not find src in first_available_file list"), '')
+
         source = utils.template(source, inject, self.setup_cache)
 
         (host, ok, data, err) = (None, None, None, None)
@@ -509,10 +560,9 @@ class Runner(object):
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
-        source_data = file(utils.path_dwim(self.basedir, source)).read()
-        resultant = ''            
         try:
-            resultant = utils.template(source_data, inject, self.setup_cache)
+            resultant = utils.template_from_file(utils.path_dwim(self.basedir, source),
+                                                 inject, self.setup_cache, no_engine=False)
         except Exception, e:
             return (host, False, dict(failed=True, msg=str(e)), '')
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
@@ -524,6 +574,7 @@ class Runner(object):
  
         # modify file attribs if needed
         if ok:
+            executed = executed.replace("copy","template",1)
             return self._chain_file_module(conn, tmp, data, err, options, executed)
         else:
             return (host, ok, data, err)
@@ -569,6 +620,8 @@ class Runner(object):
             result = self._execute_fetch(conn, host, tmp)
         elif self.module_name == 'template':
             result = self._execute_template(conn, host, tmp)
+        elif self.module_name == 'raw':
+            result = self._execute_raw(conn, host, tmp)
         else:
             if self.background == 0:
                 result = self._execute_normal_module(conn, host, tmp, module_name)
@@ -599,33 +652,38 @@ class Runner(object):
 
     def _exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
-
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudoable=sudoable)
-
+        sudo_user = self.sudo_user
+        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
+        err=None
+        out=None
         if type(stderr) != str:
             err="\n".join(stderr.readlines())
         else:
             err=stderr
-
         if type(stdout) != str:
-            return "\n".join(stdout.readlines()), err
+            out="\n".join(stdout.readlines())
         else:
-            return stdout, err
+            out=stdout
+        return (out,err) 
+
 
     # *****************************************************
 
     def _get_tmp_path(self, conn):
         ''' gets a temporary path on a remote box '''
 
-        basetmp = "/var/tmp"
-        if self.remote_user != 'root':
-            basetmp = "/home/%s/.ansible/tmp" % self.remote_user
-        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp 
+        basetmp = C.DEFAULT_REMOTE_TMP
+        if self.remote_user == 'root':
+            basetmp ="/var/tmp"
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
         if self.remote_user != 'root':
             cmd = "mkdir -p %s && %s" % (basetmp, cmd)
 
         result, err = self._exec_command(conn, cmd, None, sudoable=False)
         cleaned = result.split("\n")[0].strip() + '/'
+        if self.remote_user != 'root':
+            cmd = 'chmod a+x %s' % cleaned
+            result, err = self._exec_command(conn, cmd, None, sudoable=False)
         return cleaned
 
 
@@ -717,4 +775,89 @@ class Runner(object):
             results = [ self._executor(h[1]) for h in hosts ]
         return self._partition_results(results)
 
+    def runAsync(self, time_limit):
+        ''' Run this module asynchronously and return a poller. '''
+        self.background = time_limit
+        results = self.run()
 
+        return results, AsyncPoller(results, self)
+
+class AsyncPoller(object):
+    """ Manage asynchronous jobs. """
+
+    def __init__(self, results, runner):
+        self.runner = runner
+
+        self.results = { 'contacted': {}, 'dark': {}}
+        self.hosts_to_poll = []
+        self.completed = False
+
+        # Get job id and which hosts to poll again in the future
+        jid = None
+        for (host, res) in results['contacted'].iteritems():
+            if res.get('started', False):
+                self.hosts_to_poll.append(host)
+                jid = res.get('ansible_job_id', None)
+            else:
+                self.results['contacted'][host] = res
+        for (host, res) in results['dark'].iteritems():
+            self.results['dark'][host] = res
+
+        if jid is None:
+            raise errors.AnsibleError("unexpected error: unable to determine jid")
+        if len(self.hosts_to_poll)==0:
+            raise errors.AnsibleErrot("unexpected error: no hosts to poll")
+        self.jid = jid
+
+    def poll(self):
+        """ Poll the job status.
+
+            Returns the changes in this iteration."""
+        self.runner.module_name = 'async_status'
+        self.runner.module_args = "jid=%s" % self.jid
+        self.runner.pattern = "*"
+        self.runner.background = 0
+
+        self.runner.inventory.restrict_to(self.hosts_to_poll)
+        results = self.runner.run()
+        self.runner.inventory.lift_restriction()
+
+        hosts = []
+        poll_results = { 'contacted': {}, 'dark': {}, 'polled': {}}
+        for (host, res) in results['contacted'].iteritems():
+            if res.get('started',False):
+                hosts.append(host)
+                poll_results['polled'][host] = res
+            else:
+                self.results['contacted'][host] = res
+                poll_results['contacted'][host] = res
+                if 'failed' in res:
+                    self.runner.callbacks.on_async_failed(host, res, self.jid)
+                else:
+                    self.runner.callbacks.on_async_ok(host, res, self.jid)
+        for (host, res) in results['dark'].iteritems():
+            self.results['dark'][host] = res
+            poll_results['dark'][host] = res
+            self.runner.callbacks.on_async_failed(host, res, self.jid)
+
+        self.hosts_to_poll = hosts
+        if len(hosts)==0:
+            self.completed = True
+
+        return poll_results
+
+    def wait(self, seconds, poll_interval):
+        """ Wait a certain time for job completion, check status every poll_interval. """
+        clock = seconds - poll_interval
+        while (clock >= 0 and not self.completed):
+            time.sleep(poll_interval)
+
+            poll_results = self.poll()
+
+            for (host, res) in poll_results['polled'].iteritems():
+                if res.get('started'):
+                    self.runner.callbacks.on_async_poll(host, res, self.jid, clock)
+
+            clock = clock - poll_interval
+
+        return self.results

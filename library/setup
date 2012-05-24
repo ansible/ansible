@@ -31,6 +31,7 @@ import socket
 import struct
 import subprocess
 import traceback
+import syslog
 
 try:
     import json
@@ -224,7 +225,7 @@ def get_iface_hwaddr(iface):
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 def get_network_facts(facts):
-    facts['fqdn'] = socket.gethostname()
+    facts['fqdn'] = socket.getfqdn()
     facts['hostname'] = facts['fqdn'].split('.')[0]
     facts['interfaces'] = get_interfaces()
     for iface in facts['interfaces']:
@@ -241,6 +242,9 @@ def get_network_facts(facts):
                     facts[iface]['ipv4'] = {}
                 facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
                                          'netmask': data[-1].split(':')[1] }
+                ip = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['address']))[0]
+                mask = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['netmask']))[0]
+                facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
             if 'inet6 addr' in line:
                 (ip, prefix) = data[2].split('/')
                 scope = data[3].split(':')[1].lower()
@@ -263,8 +267,32 @@ def get_public_ssh_host_keys(facts):
     else:
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
+def get_selinux_facts(facts):
+    if os.path.exists("/usr/sbin/sestatus"):
+        cmd = subprocess.Popen("/usr/sbin/sestatus", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        if err == '':
+            facts['selinux'] = {}
+            list = out.split("\n")
+            status = re.search("(enabled|disabled)", list[0])
+            if status.group() == "enabled":
+                mode = re.search("(enforcing|disabled|permissive)", list[2])
+                config_mode = re.search("(enforcing|disabled|permissive)", list[3])
+                policyvers = re.search("\d+", list[4])
+                type = re.search("(targeted|strict|mls)", list[5])
+                facts['selinux']['status'] = status.group()
+                facts['selinux']['mode'] = mode.group()
+                facts['selinux']['config_mode'] = config_mode.group()
+                facts['selinux']['policyvers'] = policyvers.group()
+                facts['selinux']['type'] = type.group()
+            elif status.group() == "disabled":
+                facts['selinux']['status'] = status.group()            
+    else:
+        facts['selinux'] = False
+
 def get_service_facts(facts):
     get_public_ssh_host_keys(facts)
+    get_selinux_facts(facts)
 
 def ansible_facts():
     facts = {}
@@ -295,7 +323,10 @@ except:
        (k,v) = opt.split("=")
        setup_options[k]=v   
 
-ansible_file = setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % setup_options)
+
+ansible_file = os.path.expandvars(setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP))
 ansible_dir = os.path.dirname(ansible_file)
 
 # create the config dir if it doesn't exist
@@ -362,9 +393,11 @@ md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
 if md5sum != md5sum2:
    changed = True
 
-setup_options['written'] = ansible_file
-setup_options['changed'] = changed
-setup_options['md5sum']  = md5sum2 
+setup_result = {}
+setup_result['written'] = ansible_file
+setup_result['changed'] = changed
+setup_result['md5sum']  = md5sum2 
+setup_result['ansible_facts'] = setup_options
 
-print json.dumps(setup_options)
+print json.dumps(setup_result)
 

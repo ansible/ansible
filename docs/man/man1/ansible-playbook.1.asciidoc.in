@@ -36,8 +36,7 @@ OPTIONS
 
 *-D*, *--debug*::
 
-Print any messages the remote module sends to standard error to the console
-
+Debug mode
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
@@ -48,6 +47,9 @@ The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
 
+*-e* 'VARS', *--extra-vars=*'VARS'::
+
+Extra variables to inject into a playbook, in key=value key=value format.
 
 *-f* 'NUM', *--forks=*'NUM'::
 
@@ -67,12 +69,6 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 *-T* 'SECONDS', *--timeout=*'SECONDS'::
 
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
-
-
-*-O* 'OVERRIDE_HOSTS', *--override-hosts=*'OVERRIDE_HOSTS'::
-
-Ignore the inventory file and run the playbook against only these hosts.  "hosts:" line
-in playbook should be set to 'all' when using this option.
 
 
 *-s*, *--sudo*::

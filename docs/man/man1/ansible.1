@@ -1,22 +1,13 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 05/01/2012
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 05/23/2012
 .\"    Manual: System administration commands
-.\"    Source: Ansible 0.3.1
+.\"    Source: Ansible 0.4
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "05/01/2012" "Ansible 0\&.3\&.1" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE" "1" "05/23/2012" "Ansible 0\&.4" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,7 +25,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -72,7 +63,7 @@ to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
+\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
 .RS 4
 The
 \fIARGUMENTS\fR
@@ -81,7 +72,7 @@ to pass to the module\&.
 .PP
 \fB\-D\fR, \fB\-\-debug\fR
 .RS 4
-Print any messages the remote module sends to standard error to the console
+Debug mode
 .RE
 .PP
 \fB\-k\fR, \fB\-\-ask\-pass\fR
@@ -136,6 +127,13 @@ seconds\&. Requires
 Use this remote
 \fIUSERNAME\fR
 instead of root\&.
+.RE
+.PP
+\fB\-U\fR \fISUDO_USERNAME\fR, \fB\-\-sudo\-user=\fR\fISUDO_USERNAME\fR
+.RS 4
+Sudo to
+\fISUDO_USERNAME\fR
+instead of root\&. Implies \-\-sudo\&.
 .RE
 .PP
 \fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR

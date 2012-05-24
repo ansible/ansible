@@ -23,7 +23,6 @@ import ansible.constants as C
 from ansible import utils
 from ansible import errors
 import os
-import time
 
 # used to transfer variables to Runner
 SETUP_CACHE={ }
@@ -57,12 +56,14 @@ class PlayBook(object):
         sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
-        override_hosts   = None,
+        private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
         debug            = False,
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
-        sudo             = False):
+        sudo             = False,
+        sudo_user        = C.DEFAULT_SUDO_USER,
+        extra_vars       = None):
 
         """
         playbook:         path to a playbook file
@@ -75,7 +76,6 @@ class PlayBook(object):
         sudo_pass:        if sudo==True, and a password is required, this is the sudo password
         remote_port:      default remote port to use if not specified with the host or play
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
-        override_hosts:   skip the inventory file, just talk to these hosts
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
@@ -85,6 +85,9 @@ class PlayBook(object):
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
+        if extra_vars is None:
+            extra_vars = {}
+       
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -95,48 +98,53 @@ class PlayBook(object):
         self.debug            = debug
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
-        self.override_hosts   = override_hosts
         self.stats            = stats
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
+        self.sudo_user        = sudo_user
+        self.extra_vars       = extra_vars
+        self.global_vars      = {}
+        self.private_key_file = private_key_file
+
+        self.inventory = ansible.inventory.Inventory(host_list)
+        
+
+        if not self.inventory._is_script:
+            self.global_vars.update(self.inventory.get_group_variables('all'))
 
         self.basedir          = os.path.dirname(playbook)
         self.playbook         = self._parse_playbook(playbook)
-
-        if override_hosts is not None:
-            if type(override_hosts) != list:
-                raise errors.AnsibleError("override hosts must be a list")
-            self.inventory = ansible.inventory.Inventory(override_hosts)
-        else:
-            self.inventory = ansible.inventory.Inventory(host_list)
 
     # *****************************************************
 
     def _get_vars(self, play, dirname):
         ''' load the vars section from a play '''
+
         if play.get('vars') is None:
             play['vars'] = {}
-        vars = play['vars']
-        if type(vars) not in [dict, list]:
+        if type(play['vars']) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
-
+        vars = self.global_vars
+        
         # translate a list of vars into a dict
-        if type(vars) == list:
-            varlist = vars
-            vars = {}
-            for item in varlist:
+        if type(play['vars']) == list:
+            for item in play['vars']:
                 k, v = item.items()[0]
                 vars[k] = v
-            play['vars'] = vars
+        else:
+            vars.update(play['vars'])
 
         vars_prompt = play.get('vars_prompt', {})
         if type(vars_prompt) != dict:
             raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
         for vname in vars_prompt:
+            # TODO: make this prompt one line and consider double entry
             print vars_prompt[vname]
-            # FIXME - need some way to know that this prompt should be getpass or raw_input
             vars[vname] = self.callbacks.on_vars_prompt(vname)
-        return vars
+
+        results = self.extra_vars.copy()
+        results.update(vars)
+        return results
 
     # *****************************************************
 
@@ -144,9 +152,9 @@ class PlayBook(object):
         ''' load tasks included from external files. '''
 
         # include: some.yml a=2 b=3 c=4
-        include_tokens = task['include'].split()
-        path = utils.path_dwim(dirname, include_tokens[0])
         play_vars = self._get_vars(play, dirname)
+        include_tokens = utils.template(task['include'], play_vars, SETUP_CACHE).split()
+        path = utils.path_dwim(dirname, include_tokens[0])
         include_vars = {}
         for i,x in enumerate(include_tokens):
             if x.find("=") != -1:
@@ -154,8 +162,7 @@ class PlayBook(object):
                 include_vars[k] = v
         inject_vars = play_vars.copy()
         inject_vars.update(include_vars)
-        included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
-        included = utils.parse_yaml(included)
+        included = utils.parse_yaml_from_file(path)
         for x in included:
             if len(include_vars):
                 x["vars"] = include_vars
@@ -165,9 +172,9 @@ class PlayBook(object):
 
     def _include_handlers(self, play, handler, dirname, new_handlers):
         ''' load handlers from external files '''
-
-        path = utils.path_dwim(dirname, handler['include'])
         inject_vars = self._get_vars(play, dirname)
+        path = utils.template(handler['include'], inject_vars, SETUP_CACHE) 
+        path = utils.path_dwim(dirname, path)
         included = utils.template_from_file(path, inject_vars, SETUP_CACHE)
         included = utils.parse_yaml(included)
         for x in included:
@@ -246,90 +253,24 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def hosts_to_poll(self, results):
-        ''' which hosts need more polling? '''
-
-        hosts = []
-        for (host, res) in results['contacted'].iteritems():
-            if (host in self.stats.failures) or (host in self.stats.dark):
-                continue
-            if not 'finished' in res and not 'skipped' in res and 'started' in res:
-                hosts.append(host)
-        return hosts
-
-    # *****************************************************
-
-    def _async_poll(self, runner, hosts, async_seconds, async_poll_interval, only_if):
+    def _async_poll(self, poller, async_seconds, async_poll_interval):
         ''' launch an async job, if poll_interval is set, wait for completion '''
 
-        runner.background = async_seconds
-        results = runner.run()
-        self.stats.compute(results, poll=True)
-
-        if async_poll_interval <= 0:
-            # if not polling, playbook requested fire and forget
-            # trust the user wanted that and return immediately
-            return results
-        
-        poll_hosts = results['contacted'].keys()
-        if len(poll_hosts) == 0:
-            # no hosts launched ok, return that.
-            return results
-        ahost = poll_hosts[0]
-
-        jid = results['contacted'][ahost].get('ansible_job_id', None)
-
-        if jid is None:
-            # note: this really shouldn't happen, ever
-            self.callbacks.on_async_confused("unexpected error: unable to determine jid")
-            return results
-
-        clock = async_seconds
-        host_list = self.hosts_to_poll(results)
-
-        poll_results = results
-        while (clock >= 0):
-
-            # poll/loop until polling duration complete
-            runner.module_args = "jid=%s" % jid
-            runner.module_name = 'async_status'
-            runner.background  = 0  
-            runner.pattern     = '*'
-            self.inventory.restrict_to(host_list)
-            poll_results       = runner.run()
-            self.stats.compute(poll_results, poll=True)
-            host_list          = self.hosts_to_poll(poll_results)
-            self.inventory.lift_restriction()
-
-            if len(host_list) == 0:
-                break
-            if poll_results is None:
-                break
-
-            # mention which hosts we're going to poll again...
-            for (host, host_result) in poll_results['contacted'].iteritems():
-                results['contacted'][host] = host_result
-                if not host in self.stats.dark and not host in self.stats.failures:
-                    self.callbacks.on_async_poll(jid, host, clock, host_result)
-
-            # run down the clock
-            clock = clock - async_poll_interval
-            time.sleep(async_poll_interval)
+        results = poller.wait(async_seconds, async_poll_interval)
 
         # mark any hosts that are still listed as started as failed
         # since these likely got killed by async_wrapper
-        for (host, host_result) in poll_results['contacted'].iteritems():
-            if 'started' in host_result:
-                reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-                self.runner_callbacks.on_failed(host, reason)
-                results['contacted'][host] = reason
+        for host in poller.hosts_to_poll:
+            reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+            self.runner_callbacks.on_failed(host, reason)
+            results['contacted'][host] = reason
 
         return results
 
     # *****************************************************
 
     def _run_module(self, pattern, module, args, vars, remote_user, 
-        async_seconds, async_poll_interval, only_if, sudo, transport, port):
+        async_seconds, async_poll_interval, only_if, sudo, sudo_user, transport, port):
         ''' run a particular module step in a playbook '''
 
         hosts = [ h for h in self.inventory.list_hosts() if (h not in self.stats.failures) and (h not in self.stats.dark)]
@@ -344,16 +285,22 @@ class PlayBook(object):
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=remote_user, 
             remote_port=port, module_vars=vars,
+            private_key_file=self.private_key_file,
             setup_cache=SETUP_CACHE, basedir=self.basedir,
             conditional=only_if, callbacks=self.runner_callbacks, 
-            debug=self.debug, sudo=sudo,
+            debug=self.debug, sudo=sudo, sudo_user=sudo_user,
             transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
         if async_seconds == 0:
             results = runner.run()
         else:
-            results = self._async_poll(runner, hosts, async_seconds, async_poll_interval, only_if)
+            results, poller = runner.runAsync(async_seconds)
+            self.stats.compute(results)
+            if async_poll_interval > 0:
+                # if not polling, playbook requested fire and forget
+                # trust the user wanted that and return immediately
+                results = self._async_poll(poller, async_seconds, async_poll_interval)
 
         self.inventory.lift_restriction()
         return results
@@ -361,7 +308,8 @@ class PlayBook(object):
     # *****************************************************
 
     def _run_task(self, pattern=None, task=None, 
-        remote_user=None, handlers=None, conditional=False, sudo=False, transport=None, port=None):
+        remote_user=None, handlers=None, conditional=False, 
+        sudo=False, sudo_user=None, transport=None, port=None):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         # load the module name and parameters from the task entry
@@ -382,8 +330,10 @@ class PlayBook(object):
             module_args = tokens[1]
 
         # include task specific vars
-        module_vars = task.get('vars')
-
+        module_vars = task.get('vars', {})
+        if 'first_available_file' in task:
+            module_vars['first_available_file'] = task.get('first_available_file')
+        
         # tasks can be direct (run on all nodes matching
         # the pattern) or conditional, where they ran
         # as the result of a change handler on a subset
@@ -395,7 +345,13 @@ class PlayBook(object):
         # run the task in parallel
         results = self._run_module(pattern, module_name, 
             module_args, module_vars, remote_user, async_seconds, 
-            async_poll_interval, only_if, sudo, transport, port)
+            async_poll_interval, only_if, sudo, sudo_user, transport, port)
+
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            if "ansible_facts" in result:
+                for k,v in result['ansible_facts'].iteritems():
+                    SETUP_CACHE[host][k]=v
 
         self.stats.compute(results)
 
@@ -410,6 +366,8 @@ class PlayBook(object):
         # we would only trigger restarting Apache on half of the nodes
 
         subtasks = task.get('notify', [])
+        if isinstance(subtasks, basestring):
+            subtasks = [subtasks]
         if len(subtasks) > 0:
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
@@ -445,19 +403,23 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_conditional_imports(self, vars_files):
+    def _do_conditional_imports(self, vars_files, pattern=None):
         ''' handle the vars_files section, which can contain variables '''
-        
+
         # FIXME: save parsed variable results in memory to avoid excessive re-reading/parsing
         # FIXME: currently parses imports for hosts not in the pattern, that is not wrong, but it's 
         #        not super optimized yet either, because we wouldn't have hit them, ergo
         #        it will raise false errors if there is no defaults variable file without any $vars
         #        in it, which could happen on uncontacted hosts.
- 
+
         if type(vars_files) != list:
             raise errors.AnsibleError("vars_files must be a list")
-        for host in self.inventory.list_hosts():
-            cache_vars = SETUP_CACHE.get(host,{}) 
+
+        host_list = [ h for h in self.inventory.list_hosts(pattern)
+                        if not (h in self.stats.failures or h in self.stats.dark) ]
+
+        for host in host_list:
+            cache_vars = SETUP_CACHE.get(host,{})
             SETUP_CACHE[host] = cache_vars
             for filename in vars_files:
                 if type(filename) == list:
@@ -490,7 +452,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, pattern, vars, user, port, sudo, transport, vars_files=None):
+    def _do_setup_step(self, pattern, vars, user, port, sudo, sudo_user, transport, vars_files=None):
         ''' push variables down to the systems and get variables+facts back up '''
 
         # this enables conditional includes like $facter_os.yml and is only done
@@ -499,12 +461,13 @@ class PlayBook(object):
 
         if vars_files is not None:
             self.callbacks.on_setup_secondary()
-            self._do_conditional_imports(vars_files)
+            self._do_conditional_imports(vars_files, pattern)
         else:
             self.callbacks.on_setup_primary()
 
         host_list = [ h for h in self.inventory.list_hosts(pattern) 
                         if not (h in self.stats.failures or h in self.stats.dark) ]
+
         self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
@@ -514,9 +477,11 @@ class PlayBook(object):
             forks=self.forks, module_path=self.module_path,
             timeout=self.timeout, remote_user=user,
             remote_pass=self.remote_pass, remote_port=port,
+            private_key_file=self.private_key_file,
             setup_cache=SETUP_CACHE,
-            callbacks=self.runner_callbacks, sudo=sudo, debug=self.debug,
-            transport=transport, sudo_pass=self.sudo_pass, is_playbook=True
+            callbacks=self.runner_callbacks, sudo=sudo, sudo_user=sudo_user, 
+            debug=self.debug, transport=transport, 
+            sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -528,7 +493,8 @@ class PlayBook(object):
         if vars_files is None:
             # first pass only or we'll erase good work
             for (host, result) in setup_ok.iteritems():
-                SETUP_CACHE[host] = result
+                if 'ansible_facts' in result:
+                    SETUP_CACHE[host] = result['ansible_facts']
 
     # *****************************************************
 
@@ -536,11 +502,13 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         # get configuration information about the pattern
-        pattern  = pg.get('hosts',None)
-        if self.override_hosts:
-            pattern = 'all'
+        pattern = pg.get('hosts')
         if pattern is None:
             raise errors.AnsibleError('hosts declaration is required')
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
+        pattern = utils.template(pattern, self.extra_vars, {})
+        name = pg.get('name', pattern)
 
         vars       = self._get_vars(pg, self.basedir)
         vars_files = pg.get('vars_files', {})
@@ -549,16 +517,21 @@ class PlayBook(object):
         user       = pg.get('user', self.remote_user)
         port       = pg.get('port', self.remote_port)
         sudo       = pg.get('sudo', self.sudo)
+        sudo_user  = pg.get('sudo_user', self.sudo_user)
         transport  = pg.get('connection', self.transport)
 
-        self.callbacks.on_play_start(pattern)
+        # the default sudo user is root, so if you change it, sudo is implied 
+        if sudo_user != 'root':
+           sudo = True
+
+        self.callbacks.on_play_start(name)
 
         # push any variables down to the system # and get facts/ohai/other data back up
-        self._do_setup_step(pattern, vars, user, port, sudo, transport, None)
+        self._do_setup_step(pattern, vars, user, port, sudo, sudo_user, transport, None)
          
         # now with that data, handle contentional variable file imports!
         if len(vars_files) > 0:
-            self._do_setup_step(pattern, vars, user, port, sudo, transport, vars_files)
+            self._do_setup_step(pattern, vars, user, port, sudo, sudo_user, transport, vars_files)
 
         # run all the top level tasks, these get run on every node
         for task in tasks:
@@ -568,6 +541,7 @@ class PlayBook(object):
                 handlers=handlers,
                 remote_user=user,
                 sudo=sudo,
+                sudo_user=sudo_user,
                 transport=transport,
                 port=port
             )
@@ -589,6 +563,7 @@ class PlayBook(object):
                    conditional=True,
                    remote_user=user,
                    sudo=sudo,
+                   sudo_user=sudo_user,
                    transport=transport,
                    port=port
                 )

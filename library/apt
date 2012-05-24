@@ -25,14 +25,12 @@ import os
 import sys
 import shlex
 import subprocess
+import syslog
 import traceback
 
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
-def debug(msg):
-    print >>sys.stderr, msg
-    
 def exit_json(rc=0, **kwargs):
     print json.dumps(kwargs)
     sys.exit(rc)
@@ -84,7 +82,7 @@ def install(pkgspec, cache, upgrade=False, default_release=None):
     name, version = package_split(pkgspec)
     installed, upgradable = package_status(name, version, cache)
     if not installed or (upgrade and upgradable):
-        cmd = "%s -q -y install '%s'" % (APT, pkgspec)
+        cmd = "%s --option Dpkg::Options::=--force-confold -q -y install '%s'" % (APT, pkgspec)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
         rc, out, err = run_apt(cmd)
@@ -116,6 +114,8 @@ if not os.path.exists(APT_PATH):
 argfile = sys.argv[1]
 args    = open(argfile, 'r').read()
 items   = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
     fail_json(msg='the module requires arguments -a')

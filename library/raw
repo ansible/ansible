@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/python
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
@@ -16,11 +16,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-# things that must be installed to use this
-#    facter
-#    ruby-json
+# hey the Ansible raw module isn't really a remote transferred
+# module.  All the magic happens in Runner.py, see the web docs
+# for more details.
 
-/usr/bin/logger -t ansible-facter Invoked as-is
-/usr/bin/facter --json 2>/dev/null

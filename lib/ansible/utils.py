@@ -21,6 +21,7 @@ import sys
 import os
 import shlex
 import re
+import codecs
 import jinja2
 import yaml
 import optparse
@@ -170,14 +171,6 @@ def path_dwim(basedir, given):
     else:
         return os.path.join(basedir, given)
 
-def async_poll_status(jid, host, clock, result):
-    if 'finished' in result:
-        return "<job %s> finished on %s" % (jid, host)
-    elif 'failed' in result:
-        return "<job %s> FAILED on %s" % (jid, host)
-    else:
-        return "<job %s> polling on %s, %s remaining" % (jid, host, clock)
-
 def json_loads(data):
     return json.loads(data)
 
@@ -206,7 +199,29 @@ def parse_json(data):
             return { "failed" : True, "parsed" : False, "msg" : data }
         return results
 
-_KEYCRE = re.compile(r"\$(\w+)")
+_LISTRE = re.compile(r"(\w+)\[(\d+)\]")
+
+def varLookup(name, vars):
+    ''' find the contents of a possibly complex variable in vars. '''
+    path = name.split('.')
+    space = vars
+    for part in path:
+        if part in space:
+            space = space[part]
+        elif "[" in part:
+            m = _LISTRE.search(part)
+            if not m:
+                return
+            try:
+                space = space[m.group(1)][int(m.group(2))]
+            except (KeyError, IndexError):
+                return
+        else:
+            return
+    return space
+
+_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
+#                        if { -> complex     if complex, allow . and need trailing }
 
 def varReplace(raw, vars):
     '''Perform variable replacement of $vars
@@ -228,8 +243,9 @@ def varReplace(raw, vars):
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(1).lower()
-        replacement = str(vars.get(varname, m.group()))
+        varname = m.group(2)
+
+        replacement = unicode(varLookup(varname, vars) or m.group())
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -238,21 +254,29 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache):
+def template(text, vars, setup_cache, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
-    text = varReplace(str(text), vars)
     vars['hostvars'] = setup_cache
-    template = jinja2.Template(text)
-    return template.render(vars)
+    text = varReplace(unicode(text), vars)
+    if no_engine:
+        # used when processing include: directives so that Jinja is evaluated
+        # in a later context when more variables are available
+        return text
+    else:
+        template = jinja2.Template(text)
+        res = template.render(vars)
+        if text.endswith('\n') and not res.endswith('\n'):
+            res = res + '\n'
+        return res
 
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars, setup_cache):
+def template_from_file(path, vars, setup_cache, no_engine=True):
     ''' run a file through the templating engine '''
-    data = file(path).read()
-    return template(data, vars, setup_cache)
+    data = codecs.open(path, encoding="utf8").read()
+    return template(data, vars, setup_cache, no_engine=no_engine)
 
 def parse_yaml(data):
     return yaml.load(data)
@@ -267,11 +291,12 @@ def parse_yaml_from_file(path):
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
-    vargs = shlex.split(args, posix=True) 
-    for x in vargs:
-        if x.find("=") != -1:
-            k, v = x.split("=")
-            options[k]=v
+    if args is not None:
+        vargs = shlex.split(args, posix=True)
+        for x in vargs:
+            if x.find("=") != -1:
+                k, v = x.split("=", 1)
+                options[k]=v
     return options
 
 class SortedOptParser(optparse.OptionParser):
@@ -285,7 +310,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     parser = SortedOptParser(usage)
     parser.add_option('-D','--debug', default=False, action="store_true",
-        help='debug standard error output of remote modules')
+        help='debug mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
@@ -293,6 +318,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
+    parser.add_option('--private-key', default=None, dest='private_key_file',
+        help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -311,6 +338,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     if runas_opts:
         parser.add_option("-s", "--sudo", default=False, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
+        parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
+            default=None)   # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
             dest='remote_user', 
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)

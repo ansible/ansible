@@ -74,11 +74,14 @@ class TestCallbacks(object):
     def on_play_start(self, pattern):
         EVENTS.append([ 'play start', [ pattern ]])
 
-    def on_async_confused(self, msg):
-        EVENTS.append([ 'async confused', [ msg ]])
+    def on_async_ok(self, host, res, jid):
+        EVENTS.append([ 'async ok', [ host ]])
 
-    def on_async_poll(self, jid, host, clock, host_result):
+    def on_async_poll(self, host, res, jid, clock):
         EVENTS.append([ 'async poll', [ host ]])
+
+    def on_async_failed(self, host, res, jid):
+        EVENTS.append([ 'async failed', [ host ]])
 
     def on_unreachable(self, host, msg):
         EVENTS.append([ 'failed/dark', [ host, msg ]])
@@ -141,7 +144,7 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks = self.test_callbacks
        )
        result = self.playbook.run()
-       print utils.bigjson(dict(events=EVENTS))
+       # print utils.bigjson(dict(events=EVENTS))
        return result
 
    def test_one(self):
@@ -166,5 +169,6 @@ class TestPlaybook(unittest.TestCase):
 
        # make sure the template module took options from the vars section
        data = file('/tmp/ansible_test_data_template.out').read()
+       print data
        assert data.find("ears") != -1, "template success"
 

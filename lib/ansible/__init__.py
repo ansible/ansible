@@ -14,5 +14,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__version__ = '0.3.1'
-__author__ = 'Michael DeHaan'
+__version__ = '0.4'

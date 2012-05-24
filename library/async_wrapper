@@ -30,6 +30,7 @@ import datetime
 import traceback
 import signal
 import time
+import syslog
 
 def daemonize_self():
     # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
@@ -75,6 +76,9 @@ time_limit = sys.argv[2]
 wrapped_module = sys.argv[3]
 argsfile = sys.argv[4]
 cmd = "%s %s" % (wrapped_module, argsfile)
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
 
 # setup logging directory
 logdir = os.path.expanduser("~/.ansible_async")
@@ -128,52 +132,68 @@ def _run_command(wrapped_cmd, jid, log_path):
 # immediately exit this process, leaving an orphaned process
 # running which immediately forks a supervisory timing process
 
-pid = os.fork()
-if pid != 0:
-   # the parent indicates the job has started
-   # print "RETURNING SUCCESS IN PARENT"
-   print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
-   sys.stdout.flush()
-   # we need to not return immmediately such that the launched command has an attempt
-   # to initialize PRIOR to ansible trying to clean up the launch directory (and argsfile)
-   # this probably could be done with some IPC later.  Modules should always read
-   # the argsfile at the very first start of their execution anyway
-   time.sleep(1)
-   sys.exit(0)
-else:
-   # the kid manages the job
-   # WARNING: the following call may be total overkill
-   daemonize_self()
+#import logging
+#import logging.handlers
 
-   # we are now daemonized in this other fork but still
-   # want to create a supervisory process
+#logger = logging.getLogger("ansible_async")
+#logger.setLevel(logging.WARNING)
+#logger.addHandler( logging.handlers.SysLogHandler("/dev/log") )
+def debug(msg):
+    #logger.warning(msg)
+    pass
 
-   #print "DAEMONIZED KID MAKING MORE KIDS"
-   sub_pid = os.fork()
-   if sub_pid == 0:
-       #print "RUNNING IN KID A"
-       _run_command(cmd, jid, log_path)
-       #print "KID A COMPLETE"
-       sys.stdout.flush()
-       sys.exit(0)
-   else:
-       #print "WATCHING IN KID B"
-       remaining = int(time_limit)
-       if os.path.exists("/proc/%s" % sub_pid):
-           #print "STILL RUNNING"
-           time.sleep(1)
-           remaining = remaining - 1
-       else:
-           #print "DONE IN KID B"
-           sys.stdout.flush()
-           sys.exit(0)
-       if remaining == 0:
-           #print "SLAYING IN KID B"
-           os.kill(sub_pid, signals.SIGKILL)
-           sys.stdout.flush()
-           sys.exit(1)
+try:
+    pid = os.fork()
+    if pid:
+        # Notify the overlord that the async process started
 
-   sys.stdout.flush()
-   sys.exit(0)
+        # we need to not return immmediately such that the launched command has an attempt
+        # to initialize PRIOR to ansible trying to clean up the launch directory (and argsfile)
+        # this probably could be done with some IPC later.  Modules should always read
+        # the argsfile at the very first start of their execution anyway
+        time.sleep(1)
+        debug("Return async_wrapper task started.")
+        print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
+        sys.stdout.flush()
+        sys.exit(0)
+    else:
+        # The actual wrapper process
 
+        # Daemonize, so we keep on running
+        daemonize_self()
 
+        # we are now daemonized, create a supervisory process
+        debug("Starting module and watcher")
+
+        sub_pid = os.fork()
+        if sub_pid:
+            # the parent stops the process after the time limit
+            remaining = int(time_limit)
+
+            # set the child process group id to kill all children
+            os.setpgid(sub_pid, sub_pid)
+
+            debug("Start watching %s (%s)"%(sub_pid, remaining))
+            time.sleep(5)
+            while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
+                debug("%s still running (%s)"%(sub_pid, remaining))
+                time.sleep(5)
+                remaining = remaining - 5
+                if remaining == 0:
+                    debug("Now killing %s"%(sub_pid))
+                    os.killpg(sub_pid, signal.SIGKILL)
+                    debug("Sent kill to group %s"%sub_pid)
+                    time.sleep(1)
+                    sys.exit(0)
+            debug("Done in kid B.")
+            os._exit(0)
+        else:
+            # the child process runs the actual module
+            debug("Start module (%s)"%os.getpid())
+            _run_command(cmd, jid, log_path)
+            debug("Module complete (%s)"%os.getpid())
+            sys.exit(0)
+
+except Exception, err:
+    debug("error: %s"%(err))
+    raise err

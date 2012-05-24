@@ -23,6 +23,8 @@ DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS',
     '/etc/ansible/hosts')
 DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY',
     '/usr/share/ansible')
+DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP', 
+    '/$HOME/.ansible/tmp')
 
 DEFAULT_MODULE_NAME    = 'command'
 DEFAULT_PATTERN        = '*'
@@ -32,7 +34,9 @@ DEFAULT_TIMEOUT        = 10
 DEFAULT_POLL_INTERVAL  = 15
 DEFAULT_REMOTE_USER    = 'root'
 DEFAULT_REMOTE_PASS    = None
+DEFAULT_PRIVATE_KEY_FILE    = None
 DEFAULT_SUDO_PASS      = None
+DEFAULT_SUDO_USER      = 'root'
 DEFAULT_REMOTE_PORT    = 22
 DEFAULT_TRANSPORT      = 'paramiko'
 DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko']

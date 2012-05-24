@@ -33,8 +33,8 @@ def main(args):
     # create parser for CLI options
     usage = "%prog playbook.yml"
     parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True)
-    parser.add_option('-O', '--override-hosts', dest="override_hosts", default=None,
-        help="run playbook against these hosts regardless of inventory settings")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
+        help="set additional key=value variables from the CLI")
 
     options, args = parser.parse_args(args)
 
@@ -48,9 +48,11 @@ def main(args):
         sshpass = getpass.getpass(prompt="SSH password: ")
     if options.ask_sudo_pass:
         sudopass = getpass.getpass(prompt="sudo password: ")
-    override_hosts = None
-    if options.override_hosts:
-        override_hosts = options.override_hosts.split(",")
+        options.sudo = True
+    if options.sudo_user:
+        options.sudo = True
+    options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+    extra_vars = utils.parse_kv(options.extra_vars)
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -63,7 +65,6 @@ def main(args):
             playbook=playbook,
             module_path=options.module_path,
             host_list=options.inventory, 
-            override_hosts=override_hosts,
             forks=options.forks, 
             debug=options.debug, 
             remote_user=options.remote_user,
@@ -74,7 +75,10 @@ def main(args):
             timeout=options.timeout, 
             transport=options.connection,
             sudo=options.sudo,
-            sudo_pass=sudopass
+            sudo_user=options.sudo_user,
+            sudo_pass=sudopass,
+            extra_vars=extra_vars,
+            private_key_file=options.private_key_file            
         )
         try:
 

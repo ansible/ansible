@@ -49,7 +49,7 @@ if len(sys.argv) > 1:
 else:
     args = ""
 
-argspath = os.path.expanduser("/.ansible_test_module_arguments")
+argspath = os.path.expanduser("~/.ansible_test_module_arguments")
 argsfile = open(argspath, 'w')
 argsfile.write(args)
 argsfile.close()
@@ -63,8 +63,9 @@ cmd = subprocess.Popen("%s %s" % (modfile, argspath),
 
 if err and err != '':
     print "***********************************"
-    print "RECIEVED DATA ON STDOUT, WILL IGNORE THIS:"
+    print "RECIEVED DATA ON STDERR, THIS WILL CRASH YOUR MODULE"
     print err
+    sys.exit(1)
 
 try:
     print "***********************************"
@@ -85,5 +86,6 @@ print "PARSED OUTPUT"
 print utils.bigjson(results)
 
 sys.exit(0)
+
 
 
