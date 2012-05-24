@@ -58,7 +58,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Apr 23 2012 Michael DeHaan <mdehaan@redhat.com> - 0.3-1
+* Wed May 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.4-0
+- Release of 0.4
+
+* Mon Apr 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.3-1
 - Release of 0.3
 
 * Tue Apr  3 2012 John Eckersberg <jeckersb@redhat.com> - 0.0.2-1
