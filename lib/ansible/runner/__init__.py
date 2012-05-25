@@ -32,11 +32,11 @@ import getpass
 import codecs
 
 import ansible.constants as C 
-import ansible.connection
+import connection 
 import ansible.inventory
 from ansible import utils
 from ansible import errors
-from ansible import poller
+from ansible.runner import poller
 from ansible import callbacks as ans_callbacks
     
 HAS_ATFORK=True
@@ -153,7 +153,7 @@ class Runner(object):
 
         self.sudo_user = sudo_user
         self.transport = transport
-        self.connector = ansible.connection.Connection(self, self.transport, self.sudo_user)
+        self.connector = connection.Connection(self, self.transport, self.sudo_user)
 
         if inventory is None:
             self.inventory = ansible.inventory.Inventory(host_list)
