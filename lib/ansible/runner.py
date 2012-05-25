@@ -36,6 +36,7 @@ import ansible.connection
 import ansible.inventory
 from ansible import utils
 from ansible import errors
+from ansible import poller
 from ansible import callbacks as ans_callbacks
     
 HAS_ATFORK=True
@@ -682,11 +683,8 @@ class Runner(object):
         else:
             out=stdout
 
-         
-
         # sudo mode paramiko doesn't capture stderr, so not relaying here either...
         return out 
-
 
     # *****************************************************
 
@@ -798,12 +796,12 @@ class Runner(object):
             results = [ self._executor(h[1]) for h in hosts ]
         return self._partition_results(results)
 
-    def runAsync(self, time_limit):
+    def run_async(self, time_limit):
         ''' Run this module asynchronously and return a poller. '''
         self.background = time_limit
         results = self.run()
 
-        return results, AsyncPoller(results, self)
+        return results, poller.AsyncPoller(results, self)
 
 class AsyncPoller(object):
     """ Manage asynchronous jobs. """

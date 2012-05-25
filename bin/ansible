@@ -101,7 +101,7 @@ class Cli(object):
 
         if options.seconds:
             print "background launch...\n\n"
-            results, poller = runner.runAsync(options.seconds)
+            results, poller = runner.run_async(options.seconds)
             results = self.poll_while_needed(poller, options)
         else:
             results = runner.run()

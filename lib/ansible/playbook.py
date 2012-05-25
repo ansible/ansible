@@ -295,7 +295,7 @@ class PlayBook(object):
         if async_seconds == 0:
             results = runner.run()
         else:
-            results, poller = runner.runAsync(async_seconds)
+            results, poller = runner.run_async(async_seconds)
             self.stats.compute(results)
             if async_poll_interval > 0:
                 # if not polling, playbook requested fire and forget
