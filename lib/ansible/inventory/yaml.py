@@ -17,9 +17,9 @@
 
 #############################################
 
-import constants as C
-from ansible.host import Host
-from ansible.group import Group
+import ansible.constants as C
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
 from ansible import errors
 from ansible import utils
 
