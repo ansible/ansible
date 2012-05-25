@@ -6,7 +6,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Name: ansible
 Release: 1%{?dist}
 Summary: Minimal SSH command and control
-Version: 0.4
+Version: 0.5
 
 Group: Development/Libraries
 License: GPLv3
@@ -58,6 +58,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* TBD - 0.5.0 <michael.dehaan@gmail.com> - 0.5-0
+- Not released yet
+
 * Wed May 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.4-0
 - Release of 0.4
 
