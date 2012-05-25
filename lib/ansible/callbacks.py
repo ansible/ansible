@@ -128,6 +128,8 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._on_any(host,res)
  
     def on_unreachable(self, host, res):
+        if type(res) == dict:
+            res = res.get('msg','')
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.bigjson(dict(failed=True, msg=res)))
