@@ -20,6 +20,8 @@
 import utils
 import sys
 import getpass
+import os
+import subprocess
 
 #######################################################
 
@@ -73,6 +75,18 @@ class AggregateStats(object):
         )
 
 ########################################################################
+
+def banner(msg):
+    res = ""
+    if os.path.exists("/usr/bin/cowsay"):
+        cmd = subprocess.Popen("/usr/bin/cowsay -W 60 \"%s\"" % msg, 
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        (out, err) = cmd.communicate()
+        res = "%s\n" % out 
+    else:
+        res = "%s ********************* \n" % msg
+    return res
+  
 
 class DefaultRunnerCallbacks(object):
     ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
@@ -226,7 +240,7 @@ class PlaybookCallbacks(object):
         pass
 
     def on_task_start(self, name, is_conditional):
-        print utils.task_start_msg(name, is_conditional)
+        print banner(utils.task_start_msg(name, is_conditional))
 
     def on_vars_prompt(self, varname, private=True):
         msg = 'input for %s: ' % varname
@@ -235,10 +249,10 @@ class PlaybookCallbacks(object):
         return raw_input(msg)
         
     def on_setup_primary(self):
-        print "SETUP PHASE ****************************\n"
+        print banner("SETUP PHASE")
     
     def on_setup_secondary(self):
-        print "\nVARIABLE IMPORT PHASE ******************\n"
+        print banner("VARIABLE IMPORT PHASE")
 
     def on_import_for_host(self, host, imported_file):
         print "%s: importing %s" % (host, imported_file)
@@ -247,4 +261,4 @@ class PlaybookCallbacks(object):
         print "%s: not importing file: %s" % (host, missing_file)
 
     def on_play_start(self, pattern):
-        print "PLAY [%s] ****************************\n" % pattern
+        print banner("PLAY [%s]" % pattern)
