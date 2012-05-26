@@ -80,13 +80,23 @@ class Play(object):
                 include_file = tokens[0]
                 data = utils.parse_yaml_from_file(utils.path_dwim(self.playbook.basedir, include_file))
                 for y in data:
-                    t = Task(self,y)
-                    # TODO: rename this to just 'vars'
-                    t.module_vars = self.vars.copy()
-                    t.module_vars.update(task_vars)
-                    results.append(t)
+                    items = y.get('with_items',None)
+                    if items is None:
+                        items = [ '' ]
+                    for item in items:
+                        t = Task(self,y)
+                        mv = self.vars.copy()
+                        mv.update(task_vars)
+                        mv['item'] = item
+                        results.append(Task(self,y,module_vars=mv))
             elif type(x) == dict:
-                results.append(Task(self, x))
+                items = x.get('with_items', None)
+                if items is None:
+                    items = [ '' ]
+                for item in items:
+                    mv = self.vars.copy()
+                    mv['item'] = item
+                    results.append(Task(self,x,module_vars=mv))
             else:
                 raise Exception("unexpected task type")
         return results
