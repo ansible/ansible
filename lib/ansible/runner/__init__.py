@@ -549,6 +549,9 @@ class Runner(object):
                 return ReturnData(host=conn.host, comm_ok=False, result=result)
 
 
+        if self.module_vars is not None:
+            inject.update(self.module_vars)
+
         source = utils.template(source, inject, self.setup_cache)
 
         #(host, ok, data, err) = (None, None, None, None)
