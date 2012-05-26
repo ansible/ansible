@@ -18,6 +18,7 @@
 #############################################
 
 from ansible import errors
+from ansible import utils
 
 class Task(object):
 
@@ -26,10 +27,13 @@ class Task(object):
         'notify', 'module_name', 'module_args', 'module_vars', 'play', 'notified_by',
     ]
 
-    def __init__(self, play, ds):
+    def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
 
         # TODO: more error handling
+        # include task specific vars
+
+        self.module_vars = module_vars
 
         self.play        = play
         self.name        = ds.get('name', None)
@@ -55,8 +59,10 @@ class Task(object):
         if len(tokens) > 1:
             self.module_args = tokens[1]
 
-        # include task specific vars
-        self.module_vars = ds.get('vars', {})
+
+        self.name = utils.template(self.name, self.module_vars)
+        self.action = utils.template(self.name, self.module_vars)
+
 
         if 'first_available_file' in ds:
             self.module_vars['first_available_file'] = ds.get('first_available_file')
