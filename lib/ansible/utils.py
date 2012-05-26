@@ -254,7 +254,7 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=True):
+def template(text, vars, setup_cache=None, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
