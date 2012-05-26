@@ -33,6 +33,9 @@ class Play(object):
     # *************************************************
 
     def __init__(self, playbook, ds):
+        ''' constructor loads from a play datastructure '''
+
+        # TODO: more error handling
 
         self._ds         = ds
         self.playbook    = playbook
@@ -90,16 +93,20 @@ class Play(object):
 
     # *************************************************
 
-    def handlers(self):
-        return self._handlers
-
     def tasks(self):
+        ''' return task objects for this play '''
         return self._tasks      
+
+    def handlers(self):
+        ''' return handler objects for this play '''
+        return self._handlers
 
     # *************************************************
 
     def _get_vars(self, dirname):
-        ''' load the vars section from a play '''
+        ''' load the vars section from a play, accounting for all sorts of variable features
+        including loading from yaml files, prompting, and conditional includes of the first
+        file found in a list. '''
 
         if self.vars is None:
             self.vars = {}
@@ -120,8 +127,7 @@ class Play(object):
         if type(self.vars_prompt) != dict:
             raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
         for vname in self.vars_prompt:
-            # TODO: make this prompt one line and consider double entry
-            vars[vname] = self.callbacks.on_vars_prompt(vname)
+            vars[vname] = self.playbook.callbacks.on_vars_prompt(vname)
 
         results = self.playbook.extra_vars.copy()
         results.update(vars)
@@ -132,18 +138,17 @@ class Play(object):
     def update_vars_files(self, hosts):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
         for h in hosts:
-            self.update_vars_files_for_host(h)
+            self._update_vars_files_for_host(h)
 
     # *************************************************
 
-    def update_vars_files_for_host(self, host):
+    def _update_vars_files_for_host(self, host):
 
         if not host in self.playbook.SETUP_CACHE:
             # no need to process failed hosts or hosts not in this play
             return
 
         for filename in self.vars_files:
-            # TODO: maybe have to template the path here...
 
             if type(filename) == list:
 

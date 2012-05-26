@@ -42,15 +42,13 @@ with warnings.catch_warnings():
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
 
-    _LOCALHOSTRE = re.compile(r"^(127.0.0.1|localhost|%s)$" % os.uname()[1])
-
     def __init__(self, runner, transport,sudo_user):
         self.runner = runner
         self.transport = transport
         self.sudo_user = sudo_user
     def connect(self, host, port=None):
         conn = None
-        if self.transport == 'local' and self._LOCALHOSTRE.search(host):
+        if self.transport == 'local':
             conn = LocalConnection(self.runner, host)
         elif self.transport == 'paramiko':
             conn = ParamikoConnection(self.runner, host, port)

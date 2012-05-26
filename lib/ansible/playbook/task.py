@@ -17,11 +17,7 @@
 
 #############################################
 
-#import ansible.inventory
-#import ansible.runner
-#import ansible.constants as C
-#from ansible import utils
-#from ansible import errors
+from ansible import errors
 
 class Task(object):
 
@@ -31,14 +27,13 @@ class Task(object):
     ]
 
     def __init__(self, play, ds):
+        ''' constructor loads from a task or handler datastructure '''
 
-        self.play       = play
+        # TODO: more error handling
 
-        # FIXME: error handling on invalid fields
-        # action...
-
-        self.name   = ds.get('name', None)
-        self.action = ds.get('action', '')
+        self.play        = play
+        self.name        = ds.get('name', None)
+        self.action      = ds.get('action', '')
         self.notified_by = []
 
         if self.name is None:
@@ -53,8 +48,7 @@ class Task(object):
 
         tokens = self.action.split(None, 1)
         if len(tokens) < 1:
-            # FIXME: better error handling
-            raise Exception("invalid action in task: %s" % ds)
+            raise errors.AnsibleError("invalid/missing action in task")
 
         self.module_name = tokens[0]
         self.module_args = ''
@@ -63,6 +57,7 @@ class Task(object):
 
         # include task specific vars
         self.module_vars = ds.get('vars', {})
+
         if 'first_available_file' in ds:
             self.module_vars['first_available_file'] = ds.get('first_available_file')
 
