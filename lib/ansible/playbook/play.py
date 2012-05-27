@@ -84,7 +84,6 @@ class Play(object):
                     if items is None:
                         items = [ '' ]
                     for item in items:
-                        t = Task(self,y)
                         mv = self.vars.copy()
                         mv.update(task_vars)
                         mv['item'] = item
