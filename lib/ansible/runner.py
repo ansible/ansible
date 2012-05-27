@@ -514,6 +514,7 @@ class Runner(object):
 
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
+        inject.update(self.module_vars)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
