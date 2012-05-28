@@ -159,7 +159,6 @@ def user_mod(user, **kwargs):
                             cmd.append('-a')
                             groups_need_mod = True
                 else:
-                   debug("groups differ, trigger usemod")
                    groups_need_mod = True
 
             if groups_need_mod:

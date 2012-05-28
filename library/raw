@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
@@ -14,5 +16,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__version__ = '0.5'
-__author__ = 'Michael DeHaan'
+
+# hey the Ansible raw module isn't really a remote transferred
+# module.  All the magic happens in Runner.py, see the web docs
+# for more details.
+

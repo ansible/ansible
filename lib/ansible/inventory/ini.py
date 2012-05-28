@@ -21,9 +21,9 @@ import fnmatch
 import os
 import subprocess
 
-import constants as C
-from ansible.host import Host
-from ansible.group import Group
+import ansible.constants as C
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
 from ansible import errors
 from ansible import utils
 
@@ -37,6 +37,7 @@ class InventoryParser(object):
         fh = open(filename)
         self.lines = fh.readlines()
         self.groups = {}
+        self.hosts = {}
         self._parse()
  
     def _parse(self):
@@ -81,7 +82,12 @@ class InventoryParser(object):
                    tokens2  = hostname.split(":")
                    hostname = tokens2[0]
                    port     = tokens2[1]
-                host = Host(name=hostname, port=port)
+                host = None
+                if hostname in self.hosts:
+                    host = self.hosts[hostname]
+                else:
+                    host = Host(name=hostname, port=port)
+                    self.hosts[hostname] = host
                 if len(tokens) > 1:
                    for t in tokens[1:]:
                       (k,v) = t.split("=")

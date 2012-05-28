@@ -77,7 +77,8 @@ def main(args):
             sudo=options.sudo,
             sudo_user=options.sudo_user,
             sudo_pass=sudopass,
-            extra_vars=extra_vars
+            extra_vars=extra_vars,
+            private_key_file=options.private_key_file            
         )
         try:
 

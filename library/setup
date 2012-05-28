@@ -242,6 +242,9 @@ def get_network_facts(facts):
                     facts[iface]['ipv4'] = {}
                 facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
                                          'netmask': data[-1].split(':')[1] }
+                ip = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['address']))[0]
+                mask = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['netmask']))[0]
+                facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
             if 'inet6 addr' in line:
                 (ip, prefix) = data[2].split('/')
                 scope = data[3].split(':')[1].lower()
@@ -264,8 +267,32 @@ def get_public_ssh_host_keys(facts):
     else:
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
+def get_selinux_facts(facts):
+    if os.path.exists("/usr/sbin/sestatus"):
+        cmd = subprocess.Popen("/usr/sbin/sestatus", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        if err == '':
+            facts['selinux'] = {}
+            list = out.split("\n")
+            status = re.search("(enabled|disabled)", list[0])
+            if status.group() == "enabled":
+                mode = re.search("(enforcing|disabled|permissive)", list[2])
+                config_mode = re.search("(enforcing|disabled|permissive)", list[3])
+                policyvers = re.search("\d+", list[4])
+                type = re.search("(targeted|strict|mls)", list[5])
+                facts['selinux']['status'] = status.group()
+                facts['selinux']['mode'] = mode.group()
+                facts['selinux']['config_mode'] = config_mode.group()
+                facts['selinux']['policyvers'] = policyvers.group()
+                facts['selinux']['type'] = type.group()
+            elif status.group() == "disabled":
+                facts['selinux']['status'] = status.group()            
+    else:
+        facts['selinux'] = False
+
 def get_service_facts(facts):
     get_public_ssh_host_keys(facts)
+    get_selinux_facts(facts)
 
 def ansible_facts():
     facts = {}

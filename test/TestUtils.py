@@ -45,6 +45,16 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_varReplace_caps(self):
+        template = 'hello $whoVar'
+        vars = {
+            'whoVar': 'world',
+        }
+
+        res = ansible.utils.varReplace(template, vars)
+        print res
+        assert res == 'hello world'
+
     def test_varReplace_middle(self):
         template = 'hello $who!'
         vars = {
@@ -225,3 +235,10 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template(template, vars, {}, no_engine=False)
 
         assert res == u'hello wórld'
+
+    #####################################
+    ### key-value parsing
+
+    def test_parse_kv_basic(self):
+        assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
+                {'a': 'simple', 'b': 'with space', 'c': 'this=that'})

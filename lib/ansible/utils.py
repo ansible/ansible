@@ -243,7 +243,7 @@ def varReplace(raw, vars):
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(2).lower()
+        varname = m.group(2)
 
         replacement = unicode(varLookup(varname, vars) or m.group())
 
@@ -254,11 +254,11 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=True):
+def template(text, vars, setup_cache=None, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
-    text = varReplace(unicode(text), vars)
     vars['hostvars'] = setup_cache
+    text = varReplace(unicode(text), vars)
     if no_engine:
         # used when processing include: directives so that Jinja is evaluated
         # in a later context when more variables are available
@@ -273,7 +273,7 @@ def template(text, vars, setup_cache, no_engine=True):
 def double_template(text, vars, setup_cache):
     return template(template(text, vars, setup_cache), vars, setup_cache)
 
-def template_from_file(path, vars, setup_cache, no_engine=False):
+def template_from_file(path, vars, setup_cache, no_engine=True):
     ''' run a file through the templating engine '''
     data = codecs.open(path, encoding="utf8").read()
     return template(data, vars, setup_cache, no_engine=no_engine)
@@ -295,7 +295,7 @@ def parse_kv(args):
         vargs = shlex.split(args, posix=True)
         for x in vargs:
             if x.find("=") != -1:
-                k, v = x.split("=")
+                k, v = x.split("=", 1)
                 options[k]=v
     return options
 
@@ -318,6 +318,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
+    parser.add_option('--private-key', default=None, dest='private_key_file',
+        help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',

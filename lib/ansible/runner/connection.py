@@ -42,15 +42,13 @@ with warnings.catch_warnings():
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
 
-    _LOCALHOSTRE = re.compile(r"^(127.0.0.1|localhost|%s)$" % os.uname()[1])
-
     def __init__(self, runner, transport,sudo_user):
         self.runner = runner
         self.transport = transport
         self.sudo_user = sudo_user
     def connect(self, host, port=None):
         conn = None
-        if self.transport == 'local' and self._LOCALHOSTRE.search(host):
+        if self.transport == 'local':
             conn = LocalConnection(self.runner, host)
         elif self.transport == 'paramiko':
             conn = ParamikoConnection(self.runner, host, port)
@@ -76,27 +74,7 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
-        credentials = {}
         user = self.runner.remote_user
-        keypair = None
-
-        # Read file ~/.ssh/config, get data hostname, keyfile, port, etc
-        # This will *NOT* overrides the ansible username and hostname " , getting the port and keyfile only.
-	
-        try:
-            ssh_config = paramiko.SSHConfig()
-            config_file = ('~/.ssh/config')
-            if  os.path.exists(os.path.expanduser(config_file)):
-                ssh_config.parse(open(os.path.expanduser(config_file)))
-                credentials = ssh_config.lookup(self.host)
-
-        except IOError,e:
-                raise errors.AnsibleConnectionFailed(str(e))
-
-        if 'port' in credentials:
-            self.port = int(credentials['port'])
-        if 'identityfile' in credentials:
-            keypair = os.path.expanduser(credentials['identityfile'])
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -107,8 +85,8 @@ class ParamikoConnection(object):
                 username=user,
                 allow_agent=True,
                 look_for_keys=True,
+                key_filename=self.runner.private_key_file,
                 password=self.runner.remote_pass,
-                key_filename=keypair,
                 timeout=self.runner.timeout,
                 port=self.port
             )
@@ -164,7 +142,7 @@ class ParamikoConnection(object):
 
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize)        # stderr goes to stdout when using a pty, so this will never output anything.
+        stderr = ''  # stderr goes to stdout when using a pty, so this will never output anything.
         return stdin, stdout, stderr
 
     def put_file(self, in_path, out_path):
@@ -208,7 +186,7 @@ class LocalConnection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudoable=False):
+    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
         ''' run a command on the local host '''
         if self.runner.sudo and sudoable:
             cmd = "sudo -s %s" % cmd

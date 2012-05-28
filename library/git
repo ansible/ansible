@@ -18,10 +18,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # I wanted to keep this simple at first, so for now this checks out
-# from the MASTER branch of a repo at a particular SHA or
+# from the given branch of a repo at a particular SHA or
 # tag.  Latest is not supported, you should not be doing
-# that.  Branch checkouts are not supported.  Contribs
-# welcome! -- MPD
+# that. Contribs welcome! -- MPD
 
 try:
     import json
@@ -72,7 +71,7 @@ for x in items:
 
 dest = params['dest']
 repo = params['repo']
-branch  = params.get('branch')
+branch  = params.get('branch', 'master')
 version = params.get('version', 'HEAD')
 
 # ===========================================

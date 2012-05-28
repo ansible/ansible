@@ -20,13 +20,13 @@
 import fnmatch
 import os
 
-import constants as C
 import subprocess
-from ansible.inventory_parser import InventoryParser
-from ansible.inventory_parser_yaml import InventoryParserYaml
-from ansible.inventory_script import InventoryScript
-from ansible.group import Group
-from ansible.host import Host
+import ansible.constants as C
+from ansible.inventory.ini import InventoryParser
+from ansible.inventory.yaml import InventoryParserYaml
+from ansible.inventory.script import InventoryScript
+from ansible.inventory.group import Group
+from ansible.inventory.host import Host
 from ansible import errors
 from ansible import utils
 
@@ -49,6 +49,10 @@ class Inventory(object):
 
         # whether the inventory file is a script
         self._is_script = False
+
+        if type(host_list) in [ str, unicode ]:
+            if host_list.find(",") != -1:
+               host_list = host_list.split(",")
 
         if type(host_list) == list:
             all = Group('all')
