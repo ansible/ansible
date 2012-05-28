@@ -22,6 +22,9 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.inventory',
+         'ansible.playbook',
+         'ansible.runner',
       ],
       scripts=[
          'bin/ansible',
