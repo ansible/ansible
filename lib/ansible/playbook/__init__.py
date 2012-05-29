@@ -280,8 +280,9 @@ class PlayBook(object):
         rc = self._do_setup_step(play) # pattern, vars, user, port, sudo, sudo_user, transport, None)
 
         # now with that data, handle contentional variable file imports!
-        if len(play.vars_files) > 0:
+        if play.vars_files and len(play.vars_files) > 0:
             rc = self._do_setup_step(play, play.vars_files)
+        #else: warn "You have a vars_files section but didn't state any vars files??
 
         # run all the top level tasks, these get run on every node
         for task in play.tasks():
