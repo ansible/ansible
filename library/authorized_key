@@ -1,0 +1,188 @@
+#!/usr/bin/env python
+"""Ansible module to add authorized_keys for ssh logins.
+
+(c) 2012, Brad Olson <brado@movedbylight.com>
+
+Results: Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
+
+Arguments
+=========
+    user = username
+    key = line to add to authorized_keys for user
+    state = absent|present (default: present)
+
+Command Line Example 
+====================
+
+ansible somehost -m authorized_key -a user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+
+Playbook Example 
+================
+
+---
+# include like this:
+# - include: tasks/logins.yaml users=charlie,sue
+- name: create user charlie
+  action: user name=charlie shell=/bin/bash createhome=yes groups=www-data 
+  only_if: "'charlie' in '$users'"
+- name: add public key for charlie
+  action: authorized_key user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+  only_if: "'charlie' in '$users'"
+
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+import sys, os, shlex, pwd, syslog
+from os.path import expanduser, exists, isfile, join
+
+params = {}
+msg=""
+
+def exit_json(rc=0, **kwargs):
+    if 'name' in kwargs:
+        add_user_info(kwargs)
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
+
+def get_params():
+    """Startup tasks and read params.
+
+    :return: parameters as dictionary.
+    """
+    global msg
+
+    msg = "reading params"
+    with file(sys.argv[1]) as f:            #read the args file
+        args = f.read()
+
+    msg = "writing syslog."
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+
+    msg = "parsing params"
+    params = dict(                            # make a dictionary of...
+        [ arg.split("=", 1)                 # assignment pairs 
+          for arg in shlex.split(args)  # using shell lexing
+          if "=" in arg                     # ignoring tokens without assignment
+        ])
+
+    return params
+
+def keyfile(user, create=False):
+    """Calculate name of authorized keys file, optionally creating the 
+    directories and file, properly setting permissions.
+
+    :param str user: name of user in passwd file
+    :param bool create: make directories and authorized key file if True
+    :return: full path string to authorized_keys for user
+    """
+
+    global msg
+    msg = "Reading system user entry."
+    user_entry = pwd.getpwnam(user)
+    homedir = user_entry.pw_dir
+    sshdir = join(homedir, ".ssh")
+    keysfile = join(sshdir, "authorized_keys")
+    if not create: return keysfile
+
+    #create directories and files for authorized keys
+    msg = "Reading user and group info."
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+    msg = "Making ~/.ssh."
+    if not exists(sshdir): os.mkdir(sshdir, 0700)
+    os.chown(sshdir, uid, gid)
+    os.chmod(sshdir, 0700)
+    msg = "Touching authorized keys file."
+    if not exists( keysfile):
+        with file(keysfile, "w") as f: 
+            f.write("#Authorized Keys File created by Ansible.")
+    os.chown(keysfile, uid, gid)
+    os.chmod(keysfile, 0600)
+    return keysfile
+
+def readkeys( filename):
+    global msg
+    msg = "Reading authorized_keys."
+    if not isfile(filename): return []
+    with file(filename) as f:
+        keys = [line.rstrip() for line in f.readlines()]
+    return keys
+
+def writekeys( filename, keys):
+    global msg
+    msg = "Writing authorized_keys."
+    with file(filename,"w") as f:
+        f.writelines( (key + "\n" for key in keys) )
+
+def enforce_state( params):
+    """Add or remove key.
+
+    :return: True=changed, False=unchanged
+    """
+    global msg
+
+    #== scrub params
+    msg = "Invalid or missing param: user."
+    user = params["user"]
+    msg = "Invalid or missing param: key."
+    key = params["key"]
+    state = params.get("state", "present")
+
+    #== check current state
+    params["keyfile"] = keyfile(user)
+    keys = readkeys( params["keyfile"])
+    present = key in keys
+
+    #== handle idempotent state=present
+    if state=="present":
+        if present: return False #nothing to do
+        keys.append(key)
+        writekeys(keyfile(user,create=True), keys)
+    elif state=="absent":
+        if not present: return False #nothing to do
+        keys.remove(key)
+        writekeys(keyfile(user,create=True), keys)
+    else:
+        msg = "Invalid param: state."
+        raise StandardError(msg)
+    return True
+
+#===== MAIN SCRIPT ===================================================
+
+try:
+    params = get_params()
+    changed = enforce_state( params)
+    msg = ""
+except:
+    msg = "Error %s" % msg
+
+# Don't do sys.exit() within try...except 
+if msg:
+    fail_json(msg=msg)
+else:
+    exit_json( user=params["user"], changed=changed)
+    
