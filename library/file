@@ -58,6 +58,8 @@ def add_path_info(kwargs):
             kwargs['state'] = 'link'
         elif os.path.isfile(path):
             kwargs['state'] = 'file'
+        elif stat.S_ISFIFO(os.stat(path).st_mode):
+            kwargs['state'] = 'fifo'
         else:
             kwargs['state'] = 'directory'
         if HAVE_SELINUX and selinux_enabled():
@@ -167,7 +169,7 @@ for i in range(len(default_secontext)):
     if i is not None and secontext[i] == '_default':
         secontext[i] = default_secontext[i]
 
-if state not in [ 'file', 'directory', 'link', 'absent']:
+if state not in [ 'file', 'directory', 'link', 'absent', 'fifo']:
     fail_kv(msg='invalid state: %s' % state)
 
 if state == 'link' and (src is None or dest is None):
@@ -274,6 +276,8 @@ if os.path.lexists(path):
         prev_state = 'link'
     elif os.path.isfile(path):
         prev_state = 'file'
+    elif stat.S_ISFIFO(os.stat(path).st_mode):
+        prev_state = 'fifo'
     else:
         prev_state = 'directory'
 
@@ -353,6 +357,24 @@ elif state == 'link':
     changed = set_mode_if_different(dest, mode, changed)
 
     exit_kv(dest=dest, src=src, changed=changed)
+
+elif state == 'fifo':
+
+    if prev_state == 'absent':
+        fifo_dirname = os.path.dirname(path)
+        if not os.path.isdir(fifo_dirname):
+            os.makedirs(fifo_dirname)
+        os.mkfifo(path)
+        changed = True
+
+    # set modes owners and context as needed
+    changed = set_context_if_different(path, secontext, changed)
+    changed = set_owner_if_different(path, owner, changed)
+    changed = set_group_if_different(path, group, changed)
+    changed = set_mode_if_different(path, mode, changed)
+
+    exit_kv(path=path, changed=changed)
+
 
 
 fail_kv(path=path, msg='unexpected position reached')
