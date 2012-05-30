@@ -116,7 +116,8 @@ class ParamikoConnection(object):
             chan.exec_command(quoted_command)
         else:
             # Rather than detect if sudo wants a password this time, -k makes 
-            # sudo always ask for a password if one is required. The "--"
+            # sudo always ask for a password if one is required; it is run 
+            # first as a separate command, to support older versions. The "--"
             # tells sudo that this is the end of sudo options and the command
             # follows.  Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote() 
@@ -125,7 +126,7 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
                     sudo_user, pipes.quote(cmd))
             sudo_output = ''
             try:
