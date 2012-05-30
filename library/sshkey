@@ -10,12 +10,11 @@ Arguments
     user = username
     key = line to add to authorized_keys for user
     state = absent|present (default: present)
-    debug = show traceback on failure
 
 Command Line Example 
 ====================
 
-ansible somehost -m sshkey -a user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+ansible somehost -m authorized_key -a user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
 
 Playbook Example 
 ================
@@ -27,7 +26,7 @@ Playbook Example
   action: user name=charlie shell=/bin/bash createhome=yes groups=www-data 
   only_if: "'charlie' in '$users'"
 - name: add public key for charlie
-  action: sshkey user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
+  action: authorized_key user=charlie key="ssh-dss AAAABUfOL+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@somemail.org 2011-01-17"
   only_if: "'charlie' in '$users'"
 
 
@@ -162,13 +161,14 @@ def enforce_state( params):
     if state=="present":
         if present: return False #nothing to do
         keys.append(key)
+        writekeys(keyfile(user,create=True), keys)
     elif state=="absent":
         if not present: return False #nothing to do
         keys.remove(key)
+        writekeys(keyfile(user,create=True), keys)
     else:
         msg = "Invalid param: state."
         raise StandardError(msg)
-    writekeys(keyfile(user,create=True), keys)
     return True
 
 #===== MAIN SCRIPT ===================================================
@@ -182,11 +182,7 @@ except:
 
 # Don't do sys.exit() within try...except 
 if msg:
-    if params.get("debug",False):
-        import traceback
-        fail_json(msg=msg, traceback=traceback.format_exc())
-    else:
-        fail_json(msg=msg)
+    fail_json(msg=msg)
 else:
     exit_json( user=params["user"], changed=changed)
     
