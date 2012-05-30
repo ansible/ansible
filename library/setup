@@ -34,6 +34,12 @@ import traceback
 import syslog
 
 try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
+
+try:
     import json
 except ImportError:
     import simplejson as json
@@ -62,6 +68,7 @@ FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
 # This is the fallback to handle unknowns or exceptions
 OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
                 '/etc/vmware-release': 'VMwareESX' }
+SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
 def get_file_content(path):
     if os.path.exists(path) and os.access(path, os.R_OK):
@@ -268,27 +275,24 @@ def get_public_ssh_host_keys(facts):
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
 def get_selinux_facts(facts):
-    if os.path.exists("/usr/sbin/sestatus"):
-        cmd = subprocess.Popen("/usr/sbin/sestatus", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        if err == '':
-            facts['selinux'] = {}
-            list = out.split("\n")
-            status = re.search("(enabled|disabled)", list[0])
-            if status.group() == "enabled":
-                mode = re.search("(enforcing|disabled|permissive)", list[2])
-                config_mode = re.search("(enforcing|disabled|permissive)", list[3])
-                policyvers = re.search("\d+", list[4])
-                type = re.search("(targeted|strict|mls)", list[5])
-                facts['selinux']['status'] = status.group()
-                facts['selinux']['mode'] = mode.group()
-                facts['selinux']['config_mode'] = config_mode.group()
-                facts['selinux']['policyvers'] = policyvers.group()
-                facts['selinux']['type'] = type.group()
-            elif status.group() == "disabled":
-                facts['selinux']['status'] = status.group()            
-    else:
+    if not HAVE_SELINUX:
         facts['selinux'] = False
+        return
+    facts['selinux'] = {}
+    if not selinux.is_selinux_enabled():
+        facts['selinux']['status'] = 'disabled'
+    else:
+        facts['selinux']['status'] = 'enabled'
+        facts['selinux']['policyvers'] = selinux.security_policyvers()
+        (rc, configmode) = selinux.selinux_getenforcemode()
+        if rc == 0 and SELINUX_MODE_DICT.has_key(configmode):
+            facts['selinux']['config_mode'] = SELINUX_MODE_DICT[configmode]
+        mode = selinux.security_getenforce()
+        if SELINUX_MODE_DICT.has_key(mode):
+            facts['selinux']['mode'] = SELINUX_MODE_DICT[mode]
+        (rc, policytype) = selinux.selinux_getpolicytype()
+        if rc == 0:
+            facts['selinux']['type'] = policytype
 
 def get_service_facts(facts):
     get_public_ssh_host_keys(facts)
