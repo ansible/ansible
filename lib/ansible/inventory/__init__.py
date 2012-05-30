@@ -89,9 +89,10 @@ class Inventory(object):
              for host in group.get_hosts():
                  for pat in patterns:
                      if group.name == pat or pat == 'all' or self._match(host.name, pat):
-                         if not self._restriction:
+                         #must test explicitly for None because [] means no hosts allowed
+                         if self._restriction==None: 
                              hosts[host.name] = host
-                         if self._restriction and host.name in self._restriction:
+                         elif host.name in self._restriction:
                              hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
