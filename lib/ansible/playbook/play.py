@@ -37,10 +37,16 @@ class Play(object):
 
         # TODO: more error handling
 
+        hosts = ds.get('hosts')
+        if hosts is None:
+            raise errors.AnsibleError('hosts declaration is required')
+        elif isinstance(hosts, list):
+            hosts = ';'.join(hosts)
+        hosts = utils.template(hosts, playbook.extra_vars, {})
+
         self._ds         = ds
         self.playbook    = playbook
-        self.hosts       = ds.get('hosts', None)
-        self.hosts       = utils.template(self.hosts, self.playbook.extra_vars, {})
+        self.hosts       = hosts 
         self.name        = ds.get('name', self.hosts)
         self.vars        = ds.get('vars', {})
         self.vars_files  = ds.get('vars_files', [])
@@ -56,10 +62,6 @@ class Play(object):
         self._tasks      = self._load_tasks(self._ds, 'tasks')
         self._handlers   = self._load_tasks(self._ds, 'handlers')
 
-        if self.hosts is None:
-            raise errors.AnsibleError('hosts declaration is required')
-        if isinstance(self.hosts, list):
-            self.hosts = ';'.join(self.hosts)
         if self.sudo_user != 'root':
             self.sudo = True
 
