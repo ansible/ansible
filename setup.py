@@ -25,6 +25,7 @@ setup(name='ansible',
          'ansible.inventory',
          'ansible.playbook',
          'ansible.runner',
+         'ansible.runner.connection',
       ],
       scripts=[
          'bin/ansible',
