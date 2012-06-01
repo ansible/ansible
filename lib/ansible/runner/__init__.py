@@ -32,11 +32,11 @@ import getpass
 import codecs
 
 import ansible.constants as C 
-import connection 
 import ansible.inventory
 from ansible import utils
 from ansible import errors
-from ansible.runner import poller
+import poller
+import connection
 from ansible import callbacks as ans_callbacks
     
 HAS_ATFORK=True
