@@ -54,7 +54,9 @@ DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
              'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
              'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
              'product_version': '/sys/devices/virtual/dmi/id/product_version',
-             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor' }
+             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
+             'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+             'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
 # From smolt and DMI spec
 FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
                 "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
@@ -193,7 +195,7 @@ def get_linux_virtual_facts(facts):
         facts['virtualization_type'] = 'VMware'
         facts['virtualization_role'] = 'host'
     # You can spawn a dmidecode process and parse that or infer from devices
-    for dev_model in glob.glob('/proc/ide/hd*/model'):
+    for dev_model in glob.glob('/sys/block/?da/device/vendor'):
         info = open(dev_model).read()
         if 'VMware' in info:
             facts['virtualization_type'] = 'VMware'
