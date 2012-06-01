@@ -639,7 +639,7 @@ class Runner(object):
         cache = self.setup_cache.get(host, {})
         module_name = utils.template(self.module_name, cache, self.setup_cache)
 
-        tmp = self._make_tmp_path(conn)
+        tmp = self._get_tmp_path(conn)
         result = None
 
         if self.module_name == 'copy':
@@ -691,20 +691,22 @@ class Runner(object):
 
     # *****************************************************
 
-    def _make_tmp_path(self, conn):
-        ''' make and return a temporary path on a remote box '''
+    def _get_tmp_path(self, conn):
+        ''' gets a temporary path on a remote box '''
 
         basetmp = C.DEFAULT_REMOTE_TMP
         if self.remote_user == 'root':
-            basetmp = "/var/tmp"
-        basetmp = os.path.join(basetmp, 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48)))
-
-        cmd = "mkdir -p %s" % basetmp
+            basetmp ="/var/tmp"
+        cmd = "mktemp -d %s/ansible.XXXXXX" % basetmp
         if self.remote_user != 'root':
-            cmd += " && chmod a+x %s" % basetmp
+            cmd = "mkdir -p %s && %s" % (basetmp, cmd)
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        return basetmp
+        cleaned = result.split("\n")[0].strip() + '/'
+        if self.remote_user != 'root':
+            cmd = 'chmod a+x %s' % cleaned
+            self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        return cleaned
 
 
     # *****************************************************
@@ -718,7 +720,7 @@ class Runner(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("module not found: %s" % in_path)
 
-        out_path = os.path.join(tmp, module)
+        out_path = tmp + module
         conn.put_file(in_path, out_path)
         return out_path
 
