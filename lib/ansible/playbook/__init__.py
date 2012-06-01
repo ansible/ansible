@@ -81,7 +81,7 @@ class PlayBook(object):
         """
 
         self.SETUP_CACHE = {}
- 
+
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
@@ -122,6 +122,7 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for play_ds in self.playbook:
+            self.SETUP_CACHE = {}
             self._run_play(Play(self,play_ds))
 
         # summarize the results
