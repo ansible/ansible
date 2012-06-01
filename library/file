@@ -216,7 +216,7 @@ def set_owner_if_different(path, owner, changed):
        return changed
    user, group = user_and_group(path)
    if owner != user:
-       rc = os.system("/bin/chown -R %s %s" % (owner, path))
+       rc = os.system("/bin/chown -R %s %s 2>/dev/null" % (owner, path))
        if rc != 0:
            fail_kv(path=path, msg='chown failed')
        return True
