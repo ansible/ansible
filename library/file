@@ -33,7 +33,7 @@ except ImportError:
     HAVE_SELINUX=False
 
 def dump_kv(vars):
-    return " ".join("%s=%s" % (k,v) for (k,v) in vars.items())
+    return " ".join("%s='%s'" % (k,v) for (k,v) in vars.items())
 
 def exit_kv(rc=0, **kwargs):
     if 'path' in kwargs:
