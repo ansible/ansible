@@ -29,8 +29,8 @@ import pipes
 import socket
 import random
 
-from ansible.runner.connection import local
-from ansible.runner.connection import paramiko_ssh
+import local
+import paramiko_ssh
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''

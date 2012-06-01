@@ -99,8 +99,8 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
-                    sudo_user, pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+                prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
