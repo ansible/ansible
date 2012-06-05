@@ -481,7 +481,8 @@ class Runner(object):
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
-            os.makedirs(os.path.dirname(dest))
+            if not os.path.isdir(os.path.dirname(dest)):
+                os.makedirs(os.path.dirname(dest))
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
