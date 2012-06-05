@@ -477,7 +477,7 @@ class Runner(object):
         local_md5 = None
         if os.path.exists(dest):
             local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-        remote_md5 = self._low_level_exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
+        remote_md5 = self._low_level_exec_command(conn, "md5sum %s" % source, tmp, True).split()[0]
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
