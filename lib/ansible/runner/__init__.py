@@ -460,7 +460,7 @@ class Runner(object):
         dest = options.get('dest', None)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
-            return ReturnData(host=conn.host, error=True, results=results)
+            return ReturnData(host=conn.host, result=results)
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
