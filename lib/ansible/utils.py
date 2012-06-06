@@ -323,7 +323,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
-        help="specify path to module library (default=%s)" % constants.DEFAULT_MODULE_PATH, 
+        help="specify paths to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout', 
