@@ -722,9 +722,14 @@ class Runner(object):
 
         if module.startswith("/"):
             raise errors.AnsibleFileNotFound("%s is not a module" % module)
-        in_path = os.path.expanduser(os.path.join(self.module_path, module))
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("module not found: %s" % in_path)
+
+        # Search module path(s) for named module.
+        for module_path in self.module_path.split(os.pathsep):
+            in_path = os.path.expanduser(os.path.join(module_path, module))
+            if os.path.exists(in_path):
+                break
+        else:
+            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module, self.module_path))
 
         out_path = tmp + module
 
