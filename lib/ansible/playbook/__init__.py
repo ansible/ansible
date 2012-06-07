@@ -207,7 +207,7 @@ class PlayBook(object):
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
-                        self._flag_handler(play.handlers(), handler_name, host)
+                        self._flag_handler(play.handlers(), utils.template(handler_name, task.module_vars), host)
 
     # *****************************************************
 
