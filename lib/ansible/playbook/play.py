@@ -186,9 +186,10 @@ class Play(object):
 
             else:
 
-                fpath = utils.path_dwim(self.playbook.basedir, utils.template(filename, self.vars))
+                filename2 = utils.template(filename, self.playbook.SETUP_CACHE[host])
+                filename2 = utils.template(filename2, self.vars)
+                fpath = utils.path_dwim(self.playbook.basedir, filename2)
                 new_vars = utils.parse_yaml_from_file(fpath)
                 if new_vars:
                     self.playbook.SETUP_CACHE[host].update(new_vars)
                 #else: could warn if vars file contains no vars. 
-
