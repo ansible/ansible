@@ -430,6 +430,9 @@ class Runner(object):
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, is_error=True, results=results)
         
+        if self.module_vars is not None:
+            inject.update(self.module_vars)
+
         source = utils.template(source, inject, self.setup_cache)
 
         # transfer the file to a remote tmp location
@@ -464,6 +467,8 @@ class Runner(object):
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
+        if self.module_vars is not None:
+            inject.update(self.module_vars)
         source = utils.template(source, inject, self.setup_cache)
 
         # apply templating to dest argument
