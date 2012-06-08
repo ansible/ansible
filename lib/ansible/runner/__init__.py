@@ -726,7 +726,19 @@ class Runner(object):
             raise errors.AnsibleFileNotFound("module not found: %s" % in_path)
 
         out_path = tmp + module
-        conn.put_file(in_path, out_path)
+
+        # use the correct python interpreter for the host
+        host_variables = self.inventory.get_variables(conn.host)
+        if 'ansible_python_interpreter' in host_variables:
+            interpreter = host_variables['ansible_python_interpreter']
+            with open(in_path) as f:
+                module_lines = f.readlines()
+            if '#!' and 'python' in module_lines[0]:
+                module_lines[0] = "#!%s" % interpreter
+            self._transfer_str(conn, tmp, module, '\n'.join(module_lines))
+        else:
+            conn.put_file(in_path, out_path)
+
         return out_path
 
     # *****************************************************
