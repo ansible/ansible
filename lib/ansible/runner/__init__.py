@@ -463,7 +463,7 @@ class Runner(object):
         dest = options.get('dest', None)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
-            return ReturnData(host=conn.host, error=True, results=results)
+            return ReturnData(host=conn.host, result=results)
 
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
@@ -482,11 +482,12 @@ class Runner(object):
         local_md5 = None
         if os.path.exists(dest):
             local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-        remote_md5 = self._low_level_exec_command(conn, "md5sum %s" % source, tmp, True)[0].split()[0]
+        remote_md5 = self._low_level_exec_command(conn, "md5sum %s" % source, tmp, True).split()[0]
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
-            os.makedirs(os.path.dirname(dest))
+            if not os.path.isdir(os.path.dirname(dest)):
+                os.makedirs(os.path.dirname(dest))
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
