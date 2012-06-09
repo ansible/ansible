@@ -89,6 +89,8 @@ class Play(object):
                 items = y.get('with_items',None)
                 if items is None:
                     items = [ '' ]
+                elif isinstance(items, basestring):
+                    items = utils.varLookup(items, task_vars)
                 for item in items:
                     mv = task_vars.copy()
                     mv['item'] = item
