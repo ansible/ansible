@@ -70,36 +70,29 @@ class Play(object):
     def _load_tasks(self, ds, keyname):
         ''' handle task and handler include statements '''
 
-        items = ds.get(keyname, [])
+        tasks = ds.get(keyname, [])
         results = []
-        for x in items:
+        for x in tasks:
+            task_vars = self.vars.copy()
             if 'include' in x:
-                task_vars = self.vars.copy() 
                 tokens = shlex.split(x['include'])
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
                     task_vars[k]=v
                 include_file = tokens[0]
                 data = utils.parse_yaml_from_file(utils.path_dwim(self.playbook.basedir, include_file))
-                for y in data:
-                    items = y.get('with_items',None)
-                    if items is None:
-                        items = [ '' ]
-                    for item in items:
-                        mv = self.vars.copy()
-                        mv.update(task_vars)
-                        mv['item'] = item
-                        results.append(Task(self,y,module_vars=mv))
             elif type(x) == dict:
-                items = x.get('with_items', None)
+                data = [x]
+            else:
+                raise Exception("unexpected task type")
+            for y in data:
+                items = y.get('with_items',None)
                 if items is None:
                     items = [ '' ]
                 for item in items:
-                    mv = self.vars.copy()
+                    mv = task_vars.copy()
                     mv['item'] = item
-                    results.append(Task(self,x,module_vars=mv))
-            else:
-                raise Exception("unexpected task type")
+                    results.append(Task(self,y,module_vars=mv))
         return results
 
     # *************************************************
