@@ -28,16 +28,16 @@ DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP',
 
 DEFAULT_MODULE_NAME    = 'command'
 DEFAULT_PATTERN        = '*'
-DEFAULT_FORKS          = 5
-DEFAULT_MODULE_ARGS    = ''
-DEFAULT_TIMEOUT        = 10
-DEFAULT_POLL_INTERVAL  = 15
-DEFAULT_REMOTE_USER    = 'root'
+DEFAULT_FORKS          = os.environ.get('ANSIBLE_FORKS',5)
+DEFAULT_MODULE_ARGS    = os.environ.get('ANSIBLE_MODULE_ARGS','')
+DEFAULT_TIMEOUT        = os.environ.get('ANSIBLE_TIMEOUT',10)
+DEFAULT_POLL_INTERVAL  = os.environ.get('ANSIBLE_POLL_INTERVAL',15)
+DEFAULT_REMOTE_USER    = os.environ.get('ANSIBLE_REMOTE_USER','root')
 DEFAULT_REMOTE_PASS    = None
-DEFAULT_PRIVATE_KEY_FILE    = None
+DEFAULT_PRIVATE_KEY_FILE    = os.environ.get('ANSIBLE_REMOTE_USER',None)
 DEFAULT_SUDO_PASS      = None
-DEFAULT_SUDO_USER      = 'root'
+DEFAULT_SUDO_USER      = os.environ.get('ANSIBLE_SUDO_USER','root')
 DEFAULT_REMOTE_PORT    = 22
-DEFAULT_TRANSPORT      = 'paramiko'
+DEFAULT_TRANSPORT      = os.environ.get('ANSIBLE_TRANSPORT','paramiko')
 DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko']
 
