@@ -671,7 +671,7 @@ class Runner(object):
 
         if not result.comm_ok:
             # connection or parsing errors...
-            self.callbacks.on_unreachable(host, data)
+            self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
             if 'skipped' in data:
