@@ -1,0 +1,111 @@
+#!/usr/bin/python
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import os
+import os.path
+import md5
+import sys
+import shlex
+import shutil
+import syslog
+import tempfile
+
+# Since hashlib is only available in 2.5 and onwards, this module
+# uses md5 which is available in 2.4.
+
+# ===========================================
+# Support methods
+
+def exit_json(rc=0, **kwargs):
+   print json.dumps(kwargs)
+   sys.exit(rc)
+
+def fail_json(**kwargs):
+   kwargs['failed'] = True
+   exit_json(rc=1, **kwargs)
+
+def assemble_from_fragments(path):
+    ''' assemble a file from a directory of fragments '''
+    assembled = []
+    for f in sorted(os.listdir(path)):
+        fragment = "%s/%s" % (path, f)
+        if os.path.isfile(fragment):
+            assembled.append(file(fragment).read())
+    return "".join(assembled)
+
+def write_temp_file(data):
+    fd, path = tempfile.mkstemp()
+    os.write(fd, data)
+    os.close(fd)
+    return path
+
+# ===========================================
+
+if len(sys.argv) == 1:
+   fail_json(msg="the assemble module requires arguments (-a)")
+
+argfile = sys.argv[1]
+if not os.path.exists(argfile):
+   fail_json(msg="Argument file not found")
+
+args = open(argfile, 'r').read()
+items = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+
+if not len(items):
+   fail_json(msg="the assemble module requires arguments (-a)")
+
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+changed = False
+pathmd5 = None
+destmd5 = None
+src  = params.get('src', None)
+dest = params.get('dest', None)
+
+if src:
+    src = os.path.expanduser(src)
+if dest:
+    dest = os.path.expanduser(dest)
+
+if not os.path.exists(src):
+    fail_json(msg="Source (%s) does not exist" % src)
+
+if not os.path.isdir(src):
+    fail_json(msg="Source (%s) is not a directory" % src)
+
+path = write_temp_file(assemble_from_fragments(src))
+pathmd5 = md5.new(file(path).read()).hexdigest()
+
+if os.path.exists(dest):
+    destmd5 = md5.new(file(dest).read()).hexdigest()
+
+if pathmd5 != destmd5:
+    shutil.copy(path, dest)
+    changed = True
+
+exit_json(md5sum=pathmd5, changed=changed)
