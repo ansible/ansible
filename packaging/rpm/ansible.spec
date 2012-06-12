@@ -1,7 +1,7 @@
 Name: ansible
 Release: 1%{?dist}
 Summary: Minimal SSH command and control
-Version: 0.4
+Version: 0.4.1
 
 Group: Development/Libraries
 License: GPLv3+
@@ -46,13 +46,14 @@ cp -v library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 %doc %{_mandir}/man1/ansible*
 
 %changelog
-<<<<<<< HEAD
-* Tue May  1 2012 Tim Bielawa <tbielawa@redhat.com> - 0.3.1-1
-- Release of 0.3.1. Mostly packaging related changes.
-=======
+* Tue Jun 12 2012 Tim Bielawa <tbielawa@redhat.com> - 0.4.1-1
+- Release of 0.4.1 (bugfixes)
+
 * Wed May 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.4-0
 - Release of 0.4
->>>>>>> devel
+
+* Tue May  1 2012 Tim Bielawa <tbielawa@redhat.com> - 0.3.1-1
+- Release of 0.3.1. Mostly packaging related changes.
 
 * Mon Apr 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.3-1
 - Release of 0.3
