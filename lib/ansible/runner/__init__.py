@@ -612,6 +612,20 @@ class Runner(object):
 
     # *****************************************************
 
+    def _execute_assemble(self, conn, tmp):
+        ''' handler for assemble operations '''
+        module_name = 'assemble'
+        options = utils.parse_kv(self.module_args)
+        module = self._transfer_module(conn, tmp, module_name)
+        exec_rc = self._execute_module(conn, tmp, module, self.module_args)
+
+        if exec_rc.is_successful():
+            return self._chain_file_module(conn, tmp, exec_rc, options)
+        else:
+            return exec_rc
+
+    # *****************************************************
+
     def _executor(self, host):
         try:
             exec_rc = self._executor_internal(host)
@@ -656,6 +670,8 @@ class Runner(object):
             result = self._execute_template(conn, tmp)
         elif self.module_name == 'raw':
             result = self._execute_raw(conn, tmp)
+        elif self.module_name == 'assemble':
+            result = self._execute_assemble(conn, tmp)
         else:
             if self.background == 0:
                 result = self._execute_normal_module(conn, tmp, module_name)
