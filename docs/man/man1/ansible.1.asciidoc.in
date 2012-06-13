@@ -139,8 +139,8 @@ ANSIBLE_LIBRARY -- Override the default ansible module library path
 AUTHOR
 ------
 
-Ansible was originally written by Michael DeHaan. See the AUTHORS file
-for a complete list of contributors.
+Ansible was originally written by Michael DeHaan. See the GitHub
+project for a complete list of contributors.
 
 
 COPYRIGHT
