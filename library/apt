@@ -74,9 +74,17 @@ def package_status(pkgname, version, cache):
     except KeyError:
         fail_json(msg="No package matching '%s' is available" % pkgname)
     if version:
-        return pkg.is_installed and pkg.installed.version == version, False
+        try :
+            return pkg.is_installed and pkg.installed.version == version, False
+        except AttributeError: 
+            #assume older version of python-apt is installed
+            return pkg.isInstalled and pkg.installedVersion == version, False
     else:
-        return pkg.is_installed, pkg.is_upgradable
+        try :
+            return pkg.is_installed, pkg.is_upgradable
+        except AttributeError: 
+            #assume older version of python-apt is installed
+            return pkg.isInstalled, pkg.isUpgradable
 
 def install(pkgspec, cache, upgrade=False, default_release=None):
     name, version = package_split(pkgspec)
