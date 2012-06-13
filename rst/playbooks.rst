@@ -99,7 +99,9 @@ The `vars` section contains a list of variables and values that can be used in t
 
 These variables can be used later in the playbook like this::
 
-    $varname
+    $varname or ${varname}
+
+The later is useful in the event you need to do something like ${other}_concatenated_value.
 
 In templates, the full power of the Jinja2 templating language is also available, which looks like this::
 
