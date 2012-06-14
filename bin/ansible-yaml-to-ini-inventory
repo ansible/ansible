@@ -1,0 +1,104 @@
+#!/usr/bin/env python
+
+# (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+########################################################
+
+import sys
+from ansible import utils
+from ansible import errors
+
+########################################################
+
+def convert_yaml_to_ini(yaml_data):
+    inventory = utils.parse_yaml(yaml_data)
+
+    if not isinstance(inventory, list):
+        raise errors.AnsibleError("Invalid inventory, not a top-level list!")
+
+    unclassified = []
+    groups = {}
+    for item in inventory:
+        if isinstance(item, basestring):
+            unclassified.append(item)
+        elif isinstance(item, dict):
+            if 'host' in item:
+                unclassified.append(item)
+            elif 'group' in item:
+                groups[item['group']] = item
+            else:
+                raise errors.AnsibleError("Invalid inventory, item not host or group? %r" % item)
+        else:
+            raise errors.AnsibleError("Invalid inventory, item of type %s" % type(item))
+
+    ret = []
+
+    def print_vars(vars, separator=' '):
+        if isinstance(vars, list):
+            for var in vars:
+                for key, value in var.iteritems():
+                    ret.append("%s%s=%s" % (separator, key, value))
+        elif isinstance(vars, dict):
+            for key, value in vars.iteritems():
+                ret.append("%s%s=%s" % (separator, key, value))
+        else:
+            raise errors.AnsibleError("Invalid inventory, vars of type %s" % type(vars))
+
+    gkeys = groups.keys()
+    groups[None] = {'hosts': unclassified}
+    for group in [None] + gkeys:
+        if group is not None:
+            ret.append("\n[%s]\n" % group)
+        for node in groups[group]['hosts']:
+            if isinstance(node, basestring):
+                ret.append("%s\n" % node)
+            elif isinstance(node, dict):
+                ret.append("%s" % node['host'])
+                if 'vars' in node:
+                    print_vars(node['vars'])
+                ret.append("\n")
+            else:
+                raise errors.AnsibleError("Invalid inventory, host of type %s" % type(node))
+        if 'vars' in groups[group]:
+            ret.append("\n[%s:vars]" % group)
+            print_vars(groups[group]['vars'], '\n')
+            ret.append("\n")
+
+    return ''.join(ret)
+
+########################################################
+
+if __name__ == '__main__':
+    from ansible import constants
+    parser = utils.SortedOptParser("")
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST, 
+        default=constants.DEFAULT_HOST_LIST)
+    parser.add_option('-o', '--output', dest='output',
+        help="specify output file")
+
+    (options, args) = parser.parse_args()
+
+    with open(options.inventory, 'r') as inf:
+        yaml_data = inf.read()
+    ini_data = convert_yaml_to_ini(yaml_data)
+    if options.output:
+        with open(options.output, 'w') as outf:
+            outf.write(ini_data)
+    else:
+        print ini_data

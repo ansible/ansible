@@ -29,6 +29,7 @@ setup(name='ansible',
       ],
       scripts=[
          'bin/ansible',
-         'bin/ansible-playbook'
+         'bin/ansible-playbook',
+         'bin/ansible-yaml-to-ini-inventory',
       ]
 )
