@@ -288,11 +288,6 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
 
-        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
-        if not eval(conditional):
-            result = utils.smjson(dict(skipped=True))
-            return ReturnData(host=conn.host, result=result)
-
         if self.module_name == 'setup':
             if not args:
                 args = {}
@@ -649,6 +644,16 @@ class Runner(object):
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
 
+        inject = self.setup_cache.get(host,{}).copy()
+        inject.update(host_variables)
+        inject.update(self.module_vars)
+
+        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
+        if not eval(conditional):
+            result = utils.smjson(dict(skipped=True))
+            self.callbacks.on_skipped(host)
+            return ReturnData(host=host, result=result)
+
         conn = None
         try:
             conn = self.connector.connect(host, port)
@@ -656,8 +661,7 @@ class Runner(object):
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        cache = self.setup_cache.get(host, {})
-        module_name = utils.template(self.module_name, cache, self.setup_cache)
+        module_name = utils.template(self.module_name, inject, self.setup_cache)
 
         tmp = self._get_tmp_path(conn)
         result = None
@@ -683,7 +687,7 @@ class Runner(object):
 
         if not result.comm_ok:
             # connection or parsing errors...
-            self.callbacks.on_unreachable(host, data)
+            self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
             if 'skipped' in data:
