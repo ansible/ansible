@@ -17,7 +17,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        res = ansible.utils.varLookup('data.who', vars)
+        res = ansible.utils._varLookup('data.who', vars)
 
         assert sorted(res) == sorted(vars['data']['who'])
 
