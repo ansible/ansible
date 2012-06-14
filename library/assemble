@@ -23,12 +23,17 @@ except ImportError:
     import simplejson as json
 import os
 import os.path
-import md5
 import sys
 import shlex
 import shutil
 import syslog
 import tempfile
+try:
+    import hashlib
+    HAVE_HASHLIB=True
+except ImportError:
+    import md5
+    HAVE_HASHLIB=False
 
 # Since hashlib is only available in 2.5 and onwards, this module
 # uses md5 which is available in 2.4.
@@ -58,6 +63,13 @@ def write_temp_file(data):
     os.write(fd, data)
     os.close(fd)
     return path
+
+def file_digest(path):
+    if HAVE_HASHLIB:
+        digest = hashlib.md5(file(path).read()).hexdigest()
+    else:
+        digest = md5.new(file(path).read()).hexdigest()
+    return digest
 
 # ===========================================
 
@@ -99,10 +111,10 @@ if not os.path.isdir(src):
     fail_json(msg="Source (%s) is not a directory" % src)
 
 path = write_temp_file(assemble_from_fragments(src))
-pathmd5 = md5.new(file(path).read()).hexdigest()
+pathmd5 = file_digest(path)
 
 if os.path.exists(dest):
-    destmd5 = md5.new(file(dest).read()).hexdigest()
+    destmd5 = file_digest(dest)
 
 if pathmd5 != destmd5:
     shutil.copy(path, dest)
