@@ -182,7 +182,12 @@ def parse_json(data):
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
         results = {}
-        tokens = shlex.split(data)
+        try :
+            tokens = shlex.split(data)
+        except: 
+            print "failed to parse json: "+ data
+            raise; 
+            
         for t in tokens:
             if t.find("=") == -1:
                 raise errors.AnsibleError("failed to parse: %s" % data)
