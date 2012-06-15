@@ -60,9 +60,9 @@ if not os.path.exists(src):
 md5sum = None
 changed = False
 if os.path.exists(dest):
-    md5sum = os.popen("md5sum %s" % dest).read().split()[0]
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
 
-md5sum2 = os.popen("md5sum %s" % src).read().split()[0]
+md5sum2 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": src}).read().split()[0]
 
 if md5sum != md5sum2:
     os.system("cp %s %s" % (src, dest))

@@ -476,8 +476,8 @@ class Runner(object):
         # compare old and new md5 for support of change hooks
         local_md5 = None
         if os.path.exists(dest):
-            local_md5 = os.popen("md5sum %s" % dest).read().split()[0]
-        remote_md5 = self._low_level_exec_command(conn, "md5sum %s" % source, tmp, True).split()[0]
+            local_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
+        remote_md5 = self._low_level_exec_command(conn, "/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": source}, tmp, True).split()[0]
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
@@ -486,7 +486,7 @@ class Runner(object):
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
-            new_md5 = os.popen("md5sum %s" % dest).read().split()[0]
+            new_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
             if new_md5 != remote_md5:
                 result = dict(failed=True, msg="md5 mismatch", md5sum=new_md5)
                 return ReturnData(host=conn.host, result=result)
