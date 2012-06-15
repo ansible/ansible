@@ -52,7 +52,7 @@ The acme/setup.yml playbook would be as simple as::
       user: root
 
       vars_files
-        - include: vars/main.yml
+        - vars/main.yml
       tasks:
         - include: tasks/setup.yml
       handlers:
