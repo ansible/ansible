@@ -357,7 +357,7 @@ class Runner(object):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
         stdout = self._low_level_exec_command( conn, self.module_args, tmp, sudoable = True )
         data = dict(stdout=stdout)
-        return ReturnData(host=conn.host, results=data)
+        return ReturnData(host=conn.host, result=data)
 
     # ***************************************************
 
