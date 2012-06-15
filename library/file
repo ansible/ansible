@@ -180,9 +180,6 @@ changed = False
 # ===========================================
 # support functions
 
-def md5sum(filename):
-    return os.popen("/usr/bin/md5sum %s" % f).read()
-
 def user_and_group(filename):
     st = os.stat(filename)
     uid = st.st_uid
