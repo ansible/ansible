@@ -56,7 +56,6 @@ Ansible is trivially easy to run from a checkout, root permissions are not requi
 to use it::
 
     $ git clone git://github.com/ansible/ansible.git
-    $ git checkout -t origin/devel
     $ cd ./ansible
     $ source ./hacking/env-setup
 
@@ -77,7 +76,6 @@ If you are not working from a distribution where Ansible is packaged yet, you ca
 using "make install".  This is done through `python-distutils`::
 
     $ git clone git://github.com/ansible/ansible.git
-    $ git checkout -t origin/devel
     $ cd ./ansible
     $ sudo make install
 
