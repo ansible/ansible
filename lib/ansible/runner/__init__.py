@@ -648,7 +648,7 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
 
-        conditional = utils.double_template(self.conditional, inject, self.setup_cache)
+        conditional = utils.template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
             result = utils.smjson(dict(skipped=True))
             self.callbacks.on_skipped(host)
