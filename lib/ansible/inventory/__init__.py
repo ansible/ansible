@@ -85,15 +85,22 @@ class Inventory(object):
         patterns = pattern.replace(";",":").split(":")
 
         groups = self.get_groups()
-        for group in groups:
-             for host in group.get_hosts():
-                 for pat in patterns:
-                     if group.name == pat or pat == 'all' or self._match(host.name, pat):
-                         #must test explicitly for None because [] means no hosts allowed
-                         if self._restriction==None: 
-                             hosts[host.name] = host
-                         elif host.name in self._restriction:
-                             hosts[host.name] = host
+        for pat in patterns:
+            if pat.startswith("!"):
+                pat = pat[1:]
+                inverted = True
+            else:
+                inverted = False
+            for group in groups:
+                for host in group.get_hosts():
+                    if group.name == pat or pat == 'all' or self._match(host.name, pat):
+                        #must test explicitly for None because [] means no hosts allowed
+                        if self._restriction==None or host.name in self._restriction: 
+                            if inverted:
+                                if host.name in hosts:
+                                    del hosts[host.name]
+                            else:
+                                hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
     def get_groups(self):
