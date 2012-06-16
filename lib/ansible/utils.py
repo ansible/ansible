@@ -265,7 +265,7 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache=None, no_engine=True):
+def _template(text, vars, setup_cache=None, no_engine=True):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
@@ -281,8 +281,14 @@ def template(text, vars, setup_cache=None, no_engine=True):
             res = res + '\n'
         return res
 
-def double_template(text, vars, setup_cache):
-    return template(template(text, vars, setup_cache), vars, setup_cache)
+def template(text, vars, setup_cache=None, no_engine=True):
+    ''' run a text buffer through the templating engine 
+        until it no longer changes '''
+    prev_text = ''
+    while prev_text != text:
+        prev_text = text
+        text = _template(text, vars, setup_cache, no_engine)
+    return text
 
 def template_from_file(path, vars, setup_cache, no_engine=True):
     ''' run a file through the templating engine '''

@@ -236,6 +236,17 @@ class TestUtils(unittest.TestCase):
 
         assert res == u'hello wórld'
 
+    def test_template_varReplace_iterated(self):
+        template = 'hello $who'
+        vars = {
+            'who': 'oh great $person',
+            'person': 'one',
+        }
+
+        res = ansible.utils.template(template, vars)
+
+        assert res == u'hello oh great one'
+
     #####################################
     ### key-value parsing
 
