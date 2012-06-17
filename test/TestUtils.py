@@ -203,39 +203,6 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
-    #####################################
-    ### Template function tests
-
-    def test_template_basic(self):
-        template = 'hello {{ who }}'
-        vars = {
-            'who': 'world',
-        }
-
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
-
-        assert res == 'hello world'
-
-    def test_template_whitespace(self):
-        template = 'hello {{ who }}\n'
-        vars = {
-            'who': 'world',
-        }
-
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
-
-        assert res == 'hello world\n'
-
-    def test_template_unicode(self):
-        template = 'hello {{ who }}'
-        vars = {
-            'who': u'wórld',
-        }
-
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
-
-        assert res == u'hello wórld'
-
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
@@ -246,6 +213,36 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template(template, vars)
 
         assert res == u'hello oh great one'
+
+    #####################################
+    ### Template function tests
+
+    def test_template_basic(self):
+        vars = {
+            'who': 'world',
+        }
+
+        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
+
+        assert res == 'hello world'
+
+    def test_template_whitespace(self):
+        vars = {
+            'who': 'world',
+        }
+
+        res = ansible.utils.template_from_file("test", "template-whitespace", vars, {})
+
+        assert res == 'hello world\n'
+
+    def test_template_unicode(self):
+        vars = {
+            'who': u'wórld',
+        }
+
+        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
+
+        assert res == u'hello wórld'
 
     #####################################
     ### key-value parsing
