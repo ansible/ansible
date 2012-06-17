@@ -39,5 +39,5 @@ DEFAULT_SUDO_PASS      = None
 DEFAULT_SUDO_USER      = os.environ.get('ANSIBLE_SUDO_USER','root')
 DEFAULT_REMOTE_PORT    = 22
 DEFAULT_TRANSPORT      = os.environ.get('ANSIBLE_TRANSPORT','paramiko')
-DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko']
+DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko', 'ssh']
 
