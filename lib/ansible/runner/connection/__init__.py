@@ -31,6 +31,7 @@ import random
 
 import local
 import paramiko_ssh
+import ssh
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
@@ -45,6 +46,8 @@ class Connection(object):
             conn = local.LocalConnection(self.runner, host)
         elif self.transport == 'paramiko':
             conn = paramiko_ssh.ParamikoConnection(self.runner, host, port)
+        elif self.transport == 'ssh':
+            conn = ssh.SSHConnection(self.runner, host, port)
         if conn is None:
             raise Exception("unsupported connection type")
         return conn.connect()
