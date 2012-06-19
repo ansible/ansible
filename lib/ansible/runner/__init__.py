@@ -588,8 +588,7 @@ class Runner(object):
 
         # template the source data locally
         try:
-            resultant = utils.template_from_file(utils.path_dwim(self.basedir, source),
-                                                 inject, self.setup_cache, no_engine=False)
+            resultant = utils.template_from_file(self.basedir, source, inject, self.setup_cache)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(host=conn.host, comm_ok=False, result=result)
