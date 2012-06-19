@@ -265,35 +265,33 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def _template(text, vars, setup_cache=None, no_engine=True):
+def _template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
     text = varReplace(unicode(text), vars)
-    if no_engine:
-        # used when processing include: directives so that Jinja is evaluated
-        # in a later context when more variables are available
-        return text
-    else:
-        template = jinja2.Template(text)
-        res = template.render(vars)
-        if text.endswith('\n') and not res.endswith('\n'):
-            res = res + '\n'
-        return res
+    return text
 
-def template(text, vars, setup_cache=None, no_engine=True):
+def template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine 
         until it no longer changes '''
     prev_text = ''
     while prev_text != text:
         prev_text = text
-        text = _template(text, vars, setup_cache, no_engine)
+        text = _template(text, vars, setup_cache)
     return text
 
-def template_from_file(path, vars, setup_cache, no_engine=True):
+def template_from_file(basedir, path, vars, setup_cache):
     ''' run a file through the templating engine '''
-    data = codecs.open(path, encoding="utf8").read()
-    return template(data, vars, setup_cache, no_engine=no_engine)
+    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
+    data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
+    template = environment.from_string(data)
+    vars = vars.copy()
+    vars['hostvars'] = setup_cache
+    res = template.render(vars)
+    if data.endswith('\n') and not res.endswith('\n'):
+        res = res + '\n'
+    return res
 
 def parse_yaml(data):
     return yaml.load(data)
