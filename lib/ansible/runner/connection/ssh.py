@@ -48,6 +48,10 @@ class SSHConnection(object):
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
+        else:
+            self.common_args += ["-o", "ControlMaster=auto",
+                                 "-o", "ControlPersist=60s",
+                                 "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
         self.userhost = "%s@%s" % (self.runner.remote_user, self.host)
 
         return self
