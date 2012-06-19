@@ -72,13 +72,13 @@ class SSHConnection(object):
             sudo_output = ''
             ssh_cmd.append(sudocmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if self.runner.sudo_pass:
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                             fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
                 while not sudo_output.endswith(prompt):
-                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
-                                                  [p.stdout, p.stderr], self.runner.timeout)
+                    rfd, wfd, efd = select.select([p.stdout], [],
+                                                  [p.stdout], self.runner.timeout)
                     if p.stdout in rfd:
                         chunk = p.stdout.read()
                         if not chunk:
@@ -93,7 +93,7 @@ class SSHConnection(object):
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return (p.stdin, p.stdout, p.stderr)
+        return (p.stdin, p.stdout, '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
