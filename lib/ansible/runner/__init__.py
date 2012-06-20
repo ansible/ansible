@@ -309,7 +309,6 @@ class Runner(object):
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
 
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        result1 = utils.parse_json(res)
 
         executed_str = "%s %s" % (module_name_tail, args.strip())
 
