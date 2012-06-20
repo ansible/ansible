@@ -44,8 +44,9 @@ def _find_binaries():
     # with the most probable first
     global CHKCONFIG
     global SERVICE
+    global INITCTL
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = [ 'service', 'chkconfig', 'update-rc.d' ]
+    binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl']
     location = dict()
 
     for binary in binaries:
@@ -67,7 +68,55 @@ def _find_binaries():
         SERVICE = location['service']
     else:
         fail_json(dict(failed=True, msg='unable to find service binary'))
+    if location.get('initctl', None):
+        INITCTL = location['initctl']
+    else:
+        INITCTL = None
 
+def _get_service_status(name):
+    rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
+    status = status_stdout + status_stderr
+
+    # set the running state to None because we don't know it yet
+    running = None
+
+    # Check if we got upstart on the system and then the job state
+    if INITCTL != None:
+        # check the job status by upstart response
+        initctl_rc, initctl_status_stdout, initctl_status_stderr = _run("%s status %s" % (INITCTL, name))
+        if initctl_status_stdout.find("stop/waiting") != -1:
+            running = False
+        elif initctl_status_stdout.find("start/running") != -1:
+            running = True
+
+    # if the job status is still not known check it by response code
+    if running == None:
+        if rc == 3:
+            running = False
+        elif rc == 0:
+            running = True
+
+    # if the job status is still not known check it by status output keywords
+    if running == None:
+        # first tranform the status output that could irritate keyword matching
+        cleaned_status_stdout = status_stdout.lower().replace(name.lower(),'')
+        if cleaned_status_stdout.find("stop") != -1:
+            running = False
+        elif cleaned_status_stdout.find("run") != -1 and cleaned_status_stdout.find("not") != -1:
+            running = False
+        elif cleaned_status_stdout.find("run") != -1 and cleaned_status_stdout.find("not") == -1:
+            running = True
+        elif cleaned_status_stdout.find("start") != -1 and cleaned_status_stdout.find("not") == -1:
+            running = True
+
+    # if the job status is still not known check it by special conditions
+    if running == None:
+        if name == 'iptables' and status_stdout.find("ACCEPT") != -1:
+            # iptables status command output is lame
+            # TODO: lookup if we can use a return code for this instead?
+            running = True
+    
+    return running
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
@@ -135,20 +184,8 @@ _find_binaries()
 
 # ===========================================
 # get service status
+running = _get_service_status(name)
 
-rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
-status = status_stdout + status_stderr
-
-
-running = False
-if status_stdout.find("stopped") != -1 or rc == 3:
-    running = False
-elif status_stdout.find("running") != -1 or rc == 0:
-    running = True
-elif name == 'iptables' and status_stdout.find("ACCEPT") != -1:
-    # iptables status command output is lame
-    # TODO: lookup if we can use a return code for this instead?
-    running = True
 
 if state or enable:
     rc = 0
@@ -162,7 +199,13 @@ if state or enable:
         out += out_enable
         err += err_enable
 
-    if state:
+    if state and running == None:
+        print json.dumps({
+            "failed" : True,
+            "msg"    : "failed determining the current service state => state stays unchanged",
+        })
+        print >> sys.stderr, out + err
+    elif state:
         # a state change command has been requested
 
         # ===========================================
