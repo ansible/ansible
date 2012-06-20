@@ -28,11 +28,21 @@ import syslog
 # to a dictionary
 # FIXME: make more idiomatic
 
+def dump_kv(vars):
+    return " ".join("%s='%s'" % (k,v) for (k,v) in vars.items())
+
+def exit_kv(rc=0, **kwargs):
+    if 'path' in kwargs:
+        add_path_info(kwargs)
+    print dump_kv(kwargs)
+    sys.exit(rc)
+
 if len(sys.argv) == 1:
-    sys.exit(1)
+	exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
+
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
-    sys.exit(1)
+	exit_kv(rc=1, failed=1, msg="file %s does not exist" % (argfile))
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -54,8 +64,7 @@ if dest:
  
 # raise an error if there is no src file
 if not os.path.exists(src):
-    print "failed=1 msg='Source %s failed to transfer'" % src
-    sys.exit(1)
+	exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
 
 md5sum = None
 changed = False
@@ -69,6 +78,7 @@ if md5sum != md5sum2:
     changed = True
 
 # mission accomplished
-print "md5sum=%s changed=%s" % (md5sum2, changed)
+#print "md5sum=%s changed=%s" % (md5sum2, changed)
+exit_kv(dest=dest, src=src, changed="md5sum=%s changed=%s" % (md5sum2, changed))
 
 
