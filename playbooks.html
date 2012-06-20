@@ -268,8 +268,9 @@ Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p
      other: 'magic'</pre>
 </div>
 <p>These variables can be used later in the playbook like this:</p>
-<div class="highlight-python"><pre>$varname</pre>
+<div class="highlight-python"><pre>$varname or ${varname}</pre>
 </div>
+<p>The later is useful in the event you need to do something like ${other}_concatenated_value.</p>
 <p>In templates, the full power of the Jinja2 templating language is also available, which looks like this:</p>
 <div class="highlight-python"><pre>{{ varname }}</pre>
 </div>
@@ -471,7 +472,7 @@ Let&#8217;s run a playbook using a parallelism level of 10:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 19, 2012.<br/>
+      Last updated on Jun 19, 2012.<br/>
     </p>
   </div>
 </footer>
