@@ -411,5 +411,8 @@ setup_result['changed'] = changed
 setup_result['md5sum']  = md5sum2 
 setup_result['ansible_facts'] = setup_options
 
+# hack to keep --verbose from showing all the setup module results
+setup_result['verbose_override'] = True
+
 print json.dumps(setup_result)
 

@@ -49,18 +49,12 @@ def exit(msg, rc=1):
 
 def bigjson(result):
     ''' format JSON output (uncompressed) '''
-    # hide some internals magic from command line userland
     result2 = result.copy()
-    if 'invocation' in result2:
-        del result2['invocation']
     return json.dumps(result2, sort_keys=True, indent=4)
 
 def smjson(result):
     ''' format JSON output (compressed) '''
-    # hide some internals magic from command line userland
     result2 = result.copy()
-    if 'invocation' in result2:
-        del result2['invocation']
     return json.dumps(result2, sort_keys=True)
 
 def task_start_msg(name, conditional):
@@ -324,8 +318,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage)
-    parser.add_option('-D','--debug', default=False, action="store_true",
-        help='debug mode')
+    parser.add_option('-v','--verbose', default=False, action="store_true",
+        help='verbose mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
