@@ -48,10 +48,10 @@ class SSHConnection(object):
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
-        else:
-            self.common_args += ["-o", "ControlMaster=auto",
-                                 "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
+        #else:
+        #    self.common_args += ["-o", "ControlMaster=auto",
+        #                         "-o", "ControlPersist=60s",
+        #                         "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
         self.userhost = "%s@%s" % (self.runner.remote_user, self.host)
 
         return self
@@ -59,7 +59,7 @@ class SSHConnection(object):
     def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
-        ssh_cmd = ["ssh", "-tt"] + self.common_args + [self.userhost]
+        ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.userhost]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes 
             # sudo always ask for a password if one is required. The "--"
@@ -76,13 +76,12 @@ class SSHConnection(object):
             sudo_output = ''
             ssh_cmd.append(sudocmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if self.runner.sudo_pass:
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                             fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
                 while not sudo_output.endswith(prompt):
-                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
-                                                  [p.stdout, p.stderr], self.runner.timeout)
+                    rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], self.runner.timeout)
                     if p.stdout in rfd:
                         chunk = p.stdout.read()
                         if not chunk:
@@ -97,7 +96,7 @@ class SSHConnection(object):
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return (p.stdin, p.stdout, p.stderr)
+        return (p.stdin, p.stdout, '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
