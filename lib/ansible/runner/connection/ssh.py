@@ -59,7 +59,7 @@ class SSHConnection(object):
     def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
-        ssh_cmd = ["ssh", "-tt"] + self.common_args + [self.userhost]
+        ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.userhost]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes 
             # sudo always ask for a password if one is required. The "--"
@@ -97,6 +97,10 @@ class SSHConnection(object):
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 
+        if p.returncode != 0 and p.stderr and p.stderr.read().find('Bad configuration option: ControlPersist') != -1:
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
+            
         return (p.stdin, p.stdout, '')
 
     def put_file(self, in_path, out_path):
