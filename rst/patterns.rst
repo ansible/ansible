@@ -108,7 +108,7 @@ Groups of Groups, and Group Variables
 
 Using Ansible 0.4, it is possible to make groups of groups and assign
 variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
-/usr/bin/ansible.
+/usr/bin/ansible::
 
    [atlanta]
    host1
