@@ -111,7 +111,7 @@ class Runner(object):
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, sudo_pass=C.DEFAULT_SUDO_PASS, 
         background=0, basedir=None, setup_cache=None, 
         transport=C.DEFAULT_TRANSPORT, conditional='True', callbacks=None, 
-        debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
+        verbose=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
         module_vars=None, is_playbook=False, inventory=None):
 
         """
@@ -172,7 +172,7 @@ class Runner(object):
         self.module_args = module_args
         self.module_vars = module_vars
         self.timeout     = timeout
-        self.debug       = debug
+        self.verbose     = verbose
         self.remote_user = remote_user
         self.remote_pass = remote_pass
         self.remote_port = remote_port

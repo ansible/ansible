@@ -58,15 +58,15 @@ def main(args):
     for playbook in args:
 
         stats = callbacks.AggregateStats()
-        playbook_cb = callbacks.PlaybookCallbacks()
-        runner_cb = callbacks.PlaybookRunnerCallbacks(stats)
+        playbook_cb = callbacks.PlaybookCallbacks(verbose=options.verbose)
+        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=options.verbose)
 
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             module_path=options.module_path,
             host_list=options.inventory, 
             forks=options.forks, 
-            debug=options.debug, 
+            verbose=options.verbose, 
             remote_user=options.remote_user,
             remote_pass=sshpass, 
             callbacks=playbook_cb, 

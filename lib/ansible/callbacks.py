@@ -132,14 +132,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_failed(self, host, res):
-        invocation = res.get('invocation','')
-        if not invocation.startswith('async_status'):
-            self._on_any(host,res)
+        self._on_any(host,res)
 
     def on_ok(self, host, res):
-        invocation = res.get('invocation','')
-        if not invocation.startswith('async_status'):
-            self._on_any(host,res)
+        self._on_any(host,res)
  
     def on_unreachable(self, host, res):
         if type(res) == dict:
@@ -180,28 +176,23 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats):
+    def __init__(self, stats, verbose=False):
         self.stats = stats
         self._async_notified = {}
+        self.verbose = verbose
 
     def on_unreachable(self, host, msg):
         print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        invocation = results.get('invocation',None)
-        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
-            print "failed: [%s] => %s\n" % (host, utils.smjson(results))
-        else: 
-            print "failed: [%s] => %s => %s\n" % (host, invocation, utils.smjson(results))
+        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
 
     def on_ok(self, host, host_result):
-        invocation = host_result.get('invocation','')
-        if invocation.startswith('async_status'):
-            pass
-        elif not invocation or invocation.startswith('setup '):
+        # show verbose output for non-setup module results if --verbose is used
+        if not self.verbose or host_result.get("verbose_override",None) is not None:
             print "ok: [%s]\n" % (host)
         else:
-            print "ok: [%s] => %s\n" % (host, invocation)
+            print "ok: [%s] => %s" % (host, utils.smjson(host_result))
 
     def on_error(self, host, err):
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
@@ -230,8 +221,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookCallbacks(object):
     ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
   
-    def __init__(self):
-        pass
+    def __init__(self, verbose=False):
+        self.verbose = verbose
 
     def on_start(self):
         print "\n"

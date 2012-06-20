@@ -63,7 +63,7 @@ class TestCallbacks(object):
     def on_ok(self, host, result):
         # delete certain info from host_result to make test comparisons easier
         host_result = result.copy()
-        for k in [ 'ansible_job_id', 'results_file', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
+        for k in [ 'ansible_job_id', 'results_file', 'md5sum', 'delta', 'start', 'end' ]:
             if k in host_result:
                 del host_result[k]
         for k in host_result.keys():

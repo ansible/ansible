@@ -60,10 +60,6 @@ The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
 
 The 'ARGUMENTS' to pass to the module.
 
-*-D*, *--debug*::
-
-Debug mode
-
 *-k*, *--ask-pass*::
 
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
