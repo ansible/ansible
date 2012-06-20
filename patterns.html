@@ -269,28 +269,31 @@ proxy=proxy.atlanta.example.com</pre>
 <h2>Groups of Groups, and Group Variables<a class="headerlink" href="#groups-of-groups-and-group-variables" title="Permalink to this headline">¶</a></h2>
 <p>Using Ansible 0.4, it is possible to make groups of groups and assign
 variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
-/usr/bin/ansible.</p>
-<blockquote>
-<div><p>[atlanta]
+/usr/bin/ansible:</p>
+<div class="highlight-python"><pre>[atlanta]
 host1
-host2</p>
-<p>[raleigh]
 host2
-host3</p>
-<p>[southeast:children]
+
+[raleigh]
+host2
+host3
+
+[southeast:children]
 atlanta
-raleigh</p>
-<p>[southeast:vars]
+raleigh
+
+[southeast:vars]
 some_server=foo.southeast.example.com
 halon_system_timeout=30
 self_destruct_countdown=60
-escape_pods=2</p>
-<p>[usa:children]
+escape_pods=2
+
+[usa:children]
 southeast
 northeast
 southwest
-southeast</p>
-</div></blockquote>
+southeast</pre>
+</div>
 </div>
 <div class="section" id="yaml-inventory-format">
 <h2>YAML Inventory Format<a class="headerlink" href="#yaml-inventory-format" title="Permalink to this headline">¶</a></h2>
@@ -363,7 +366,7 @@ YAML:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on May 19, 2012.<br/>
+      Last updated on Jun 19, 2012.<br/>
     </p>
   </div>
 </footer>
