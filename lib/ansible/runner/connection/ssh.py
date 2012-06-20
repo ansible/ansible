@@ -97,11 +97,19 @@ class SSHConnection(object):
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                                 
-        if p.returncode != 0 and p.stderr and p.stderr.read().find('Bad configuration option: ControlPersist') != -1:
+
+        # We can't use p.communicate here because the ControlMaster may have stdout open as well
+        p.stdin.close()
+        stdout = ''
+        while p.poll() is None:
+            rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
+            if p.stdout in rfd:
+                stdout += os.read(p.stdout.fileno(), 1024)
+
+        if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
             
-        return (p.stdin, p.stdout, '')
+        return ('', stdout, '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
