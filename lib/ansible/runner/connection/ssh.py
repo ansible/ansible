@@ -96,7 +96,7 @@ class SSHConnection(object):
         else:
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         p.stdin.close()
