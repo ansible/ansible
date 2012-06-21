@@ -19,6 +19,7 @@
 ################################################
 
 import os
+import re
 import time
 import subprocess
 import shlex
@@ -76,7 +77,7 @@ class SSHConnection(object):
             sudo_output = ''
             ssh_cmd.append(sudocmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if self.runner.sudo_pass:
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                             fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -89,14 +90,16 @@ class SSHConnection(object):
                             raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
                         sudo_output += chunk
                     else:
-                        (stdout, stderr) = p.communicate()
+                        stdout = p.communicate()
+                        # older versions of ssh generate this error which we ignore
+                        stdout = re.sub("tcgetattr: Invalid argument\n", "", stdout)
                         raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
                 p.stdin.write(self.runner.sudo_pass + '\n')
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         else:
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         p.stdin.close()
@@ -105,6 +108,8 @@ class SSHConnection(object):
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
                 stdout += os.read(p.stdout.fileno(), 1024)
+                # older versions of ssh generate this error which we ignore
+                stdout = re.sub("tcgetattr: Invalid argument\n", "", stdout)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
