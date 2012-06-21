@@ -76,7 +76,7 @@ class SSHConnection(object):
             sudo_output = ''
             ssh_cmd.append(sudocmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if self.runner.sudo_pass:
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                             fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -96,7 +96,7 @@ class SSHConnection(object):
         else:
             ssh_cmd.append(cmd)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         p.stdin.close()
