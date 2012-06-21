@@ -28,7 +28,7 @@ Branch Info
 ===========
 
    * The master branch corresponds to release 0.4 "Unchained".
-   * Bug fixes WILL be periodically made to the master branch.
+   * Major bug fixes will be periodically made to the master branch.
    * The devel branch corresponds to release 0.5 "Amsterdam".
    * See CHANGELOG.md for release notes to track each release.
 
