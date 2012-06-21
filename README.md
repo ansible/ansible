@@ -30,7 +30,6 @@ Branch Info
    * The master branch corresponds to release 0.4 "Unchained".
    * Bug fixes WILL be periodically made to the master branch.
    * The devel branch corresponds to release 0.5 "Amsterdam".
-   * Note: sudo support works much better in 0.5/devel, consider trying it.
    * See CHANGELOG.md for release notes to track each release.
 
 Patch Instructions
