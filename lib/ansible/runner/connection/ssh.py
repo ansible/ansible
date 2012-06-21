@@ -19,7 +19,6 @@
 ################################################
 
 import os
-import re
 import time
 import subprocess
 import shlex
@@ -92,7 +91,7 @@ class SSHConnection(object):
                     else:
                         stdout = p.communicate()
                         # older versions of ssh generate this error which we ignore
-                        stdout = re.sub("tcgetattr: Invalid argument\n", "", stdout)
+                        stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
                         raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
                 p.stdin.write(self.runner.sudo_pass + '\n')
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
@@ -108,8 +107,8 @@ class SSHConnection(object):
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
                 stdout += os.read(p.stdout.fileno(), 1024)
-                # older versions of ssh generate this error which we ignore
-                stdout = re.sub("tcgetattr: Invalid argument\n", "", stdout)
+        # older versions of ssh generate this error which we ignore
+        stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
