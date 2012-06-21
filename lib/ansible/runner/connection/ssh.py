@@ -90,8 +90,6 @@ class SSHConnection(object):
                         sudo_output += chunk
                     else:
                         stdout = p.communicate()
-                        # older versions of ssh generate this error which we ignore
-                        stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
                         raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
                 p.stdin.write(self.runner.sudo_pass + '\n')
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
