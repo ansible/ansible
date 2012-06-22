@@ -120,8 +120,8 @@ if len(sys.argv) == 2:
     results = {}
     for t in tokens:
         if t.find("=") != -1:
-           (k,v) = t.split("=",1)
-           results[k]=v
+            (k,v) = t.split("=",1)
+            results[k]=v
     print json.dumps(results)
     sys.exit(0)
 

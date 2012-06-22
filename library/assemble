@@ -42,12 +42,12 @@ except ImportError:
 # Support methods
 
 def exit_json(rc=0, **kwargs):
-   print json.dumps(kwargs)
-   sys.exit(rc)
+    print json.dumps(kwargs)
+    sys.exit(rc)
 
 def fail_json(**kwargs):
-   kwargs['failed'] = True
-   exit_json(rc=1, **kwargs)
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
 
 def assemble_from_fragments(path):
     ''' assemble a file from a directory of fragments '''
@@ -74,11 +74,11 @@ def file_digest(path):
 # ===========================================
 
 if len(sys.argv) == 1:
-   fail_json(msg="the assemble module requires arguments (-a)")
+    fail_json(msg="the assemble module requires arguments (-a)")
 
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
-   fail_json(msg="Argument file not found")
+    fail_json(msg="Argument file not found")
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -86,7 +86,7 @@ syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
-   fail_json(msg="the assemble module requires arguments (-a)")
+    fail_json(msg="the assemble module requires arguments (-a)")
 
 params = {}
 for x in items:

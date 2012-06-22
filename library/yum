@@ -122,9 +122,9 @@ def run_yum(command):
         out = ''
 
         if out is None:
-           out = ''
+            out = ''
         if err is None:
-           err = ''
+            err = ''
     else:
         rc = cmd.returncode
         

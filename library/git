@@ -37,12 +37,12 @@ import syslog
 # Basic support methods
 
 def exit_json(rc=0, **kwargs):
-   print json.dumps(kwargs)
-   sys.exit(rc)
+    print json.dumps(kwargs)
+    sys.exit(rc)
 
 def fail_json(**kwargs):
-   kwargs['failed'] = True
-   exit_json(rc=1, **kwargs)
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
 
 # ===========================================
 # convert arguments of form a=b c=d
@@ -50,11 +50,11 @@ def fail_json(**kwargs):
 # FIXME: make more idiomatic
 
 if len(sys.argv) == 1:
-   fail_json(msg="the command module requires arguments (-a)")
+    fail_json(msg="the command module requires arguments (-a)")
 
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
-   fail_json(msg="Argument file not found")
+    fail_json(msg="Argument file not found")
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -62,7 +62,7 @@ syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
 if not len(items):
-   fail_json(msg="the command module requires arguments (-a)")
+    fail_json(msg="the command module requires arguments (-a)")
 
 params = {}
 for x in items:
@@ -77,97 +77,97 @@ version = params.get('version', 'HEAD')
 # ===========================================
 
 def get_version(dest):
-   ''' samples the version of the git repo '''
-   os.chdir(dest)
-   cmd = "git show --abbrev-commit"
-   sha = os.popen(cmd).read().split("\n")
-   sha = sha[0].split()[1]
-   return sha
+    ''' samples the version of the git repo '''
+    os.chdir(dest)
+    cmd = "git show --abbrev-commit"
+    sha = os.popen(cmd).read().split("\n")
+    sha = sha[0].split()[1]
+    return sha
 
 def clone(repo, dest, branch):
-   ''' makes a new git repo if it does not already exist '''
-   try:
-       os.makedirs(dest)
-   except:
-       pass
-   cmd = "git clone %s %s" % (repo, dest)
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   (out, err) = cmd.communicate()
-   rc = cmd.returncode
+    ''' makes a new git repo if it does not already exist '''
+    try:
+        os.makedirs(dest)
+    except:
+        pass
+    cmd = "git clone %s %s" % (repo, dest)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
    
-   if branch is None or rc != 0: 
-     return (out, err)
+    if branch is None or rc != 0: 
+        return (out, err)
 
-   os.chdir(dest)
-   cmd = "git checkout -b %s origin/%s" % (branch, branch) 
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   return cmd.communicate()
+    os.chdir(dest)
+    cmd = "git checkout -b %s origin/%s" % (branch, branch) 
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return cmd.communicate()
 
 def reset(dest):
-   '''
-   Resets the index and working tree to HEAD.
-   Discards any changes to tracked files in working
-   tree since that commit.
-   '''
-   os.chdir(dest)
-   cmd = "git reset --hard HEAD"
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   (out, err) = cmd.communicate()
-   rc = cmd.returncode
-   return (rc, out, err)
+    '''
+    Resets the index and working tree to HEAD.
+    Discards any changes to tracked files in working
+    tree since that commit.
+    '''
+    os.chdir(dest)
+    cmd = "git reset --hard HEAD"
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
 
 def switchLocalBranch( branch ):
-   cmd = "git checkout %s" % branch
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   return cmd.communicate()
+    cmd = "git checkout %s" % branch
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return cmd.communicate()
 
 def pull(repo, dest, branch):
-   ''' updates repo from remote sources '''
-   os.chdir(dest)
-   cmd = "git branch -a"
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   (gbranch_out, gbranch_err) = cmd.communicate()
+    ''' updates repo from remote sources '''
+    os.chdir(dest)
+    cmd = "git branch -a"
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (gbranch_out, gbranch_err) = cmd.communicate()
 
-   try:
-      m = re.search( '^\* (\S+|\(no branch\))$', gbranch_out, flags=re.M )
-      cur_branch = m.group(1)
-      m = re.search( '\s+remotes/origin/HEAD -> origin/(\S+)', gbranch_out, flags=re.M )
-      default_branch = m.group(1)
-   except:
-      fail_json(msg="could not determine branch data - received: %s" % gbranch_out)
+    try:
+        m = re.search( '^\* (\S+|\(no branch\))$', gbranch_out, flags=re.M )
+        cur_branch = m.group(1)
+        m = re.search( '\s+remotes/origin/HEAD -> origin/(\S+)', gbranch_out, flags=re.M )
+        default_branch = m.group(1)
+    except:
+        fail_json(msg="could not determine branch data - received: %s" % gbranch_out)
 
-   if branch is None:
-      if cur_branch != default_branch:
-         (out, err) = switchLocalBranch( default_branch )
+    if branch is None:
+        if cur_branch != default_branch:
+            (out, err) = switchLocalBranch( default_branch )
 
-      cmd = "git pull -u origin"
+        cmd = "git pull -u origin"
 
-   elif branch == cur_branch:
-      cmd = "git pull -u origin"
+    elif branch == cur_branch:
+        cmd = "git pull -u origin"
 
-   else:
-      m = re.search( '^\s+%s$' % branch, gbranch_out, flags=re.M ) #see if we've already checked it out
-      if m is None:
-         cmd = "git checkout -b %s origin/%s" % (branch, branch)
+    else:
+        m = re.search( '^\s+%s$' % branch, gbranch_out, flags=re.M ) #see if we've already checked it out
+        if m is None:
+            cmd = "git checkout -b %s origin/%s" % (branch, branch)
 
-      else:
-         (out, err) = switchLocalBranch( branch )
-         cmd = "git pull -u origin"
+        else:
+            (out, err) = switchLocalBranch( branch )
+            cmd = "git pull -u origin"
 
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   return cmd.communicate()
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return cmd.communicate()
 
 def switchver(version, dest):
-   ''' once pulled, switch to a particular SHA or tag '''
-   os.chdir(dest)
-   if version != 'HEAD':
-      cmd = "git checkout %s --force" % version
-   else:
-      # is there a better way to do this?
-      cmd = "git rebase origin"
-   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   (out, err) = cmd.communicate()
-   return (out, err)
+    ''' once pulled, switch to a particular SHA or tag '''
+    os.chdir(dest)
+    if version != 'HEAD':
+        cmd = "git checkout %s --force" % version
+    else:
+        # is there a better way to do this?
+        cmd = "git rebase origin"
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    return (out, err)
  
 
 gitconfig = os.path.join(dest, '.git', 'config')
@@ -179,26 +179,26 @@ out, err, status = (None, None, None)
 
 before = None
 if not os.path.exists(gitconfig):
-   (out, err) = clone(repo, dest, branch)
+    (out, err) = clone(repo, dest, branch)
 else:
-   # else do a pull   
-   before = get_version(dest)
-   (rc, out, err) = reset(dest)
-   if rc != 0:
-      fail_json(out=out, err=err)
-   (out, err) = pull(repo, dest, branch)
+    # else do a pull   
+    before = get_version(dest)
+    (rc, out, err) = reset(dest)
+    if rc != 0:
+        fail_json(out=out, err=err)
+    (out, err) = pull(repo, dest, branch)
 
 # handle errors from clone or pull
 
 if out.find('error') != -1:
-   fail_json(out=out, err=err)
+    fail_json(out=out, err=err)
 
 # switch to version specified regardless of whether
 # we cloned or pulled
 
 (out, err) = switchver(version, dest)
 if err.find('error') != -1:
-   fail_json(out=out, err=err)
+    fail_json(out=out, err=err)
 
 # determine if we changed anything
 
@@ -206,6 +206,6 @@ after = get_version(dest)
 changed = False
 
 if before != after:
-   changed = True
+    changed = True
 
 exit_json(changed=changed, before=before, after=after)
