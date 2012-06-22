@@ -162,9 +162,9 @@ class Inventory(object):
     def restrict_to(self, restriction, append_missing=False):
         """ Restrict list operations to the hosts given in restriction """
    
-    if type(restriction) != list:
-        restriction = [ restriction ]
-    self._restriction = restriction
+        if type(restriction) != list:
+            restriction = [ restriction ]
+        self._restriction = restriction
 
     def lift_restriction(self):
         """ Do not restrict list operations """
