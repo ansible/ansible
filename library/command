@@ -39,27 +39,27 @@ syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 shell = False
 
 if args.find("#USE_SHELL") != -1:
-   args = args.replace("#USE_SHELL", "")
-   shell = True
+    args = args.replace("#USE_SHELL", "")
+    shell = True
 
 check_args = shlex.split(args)
 for x in check_args:
-   if x.startswith("creates="):
-       # do not run the command if the line contains creates=filename
-       # and the filename already exists.  This allows idempotence 
-       # of command executions.
-       (k,v) = x.split("=",1)
-       if os.path.exists(v):
-           print json.dumps({
-               "cmd"     : args,
-               "stdout"  : "skipped, since %s exists" % v,
-               "skipped" : True,
-               "changed" : False,
-               "stderr"  : "",
-               "rc"      : 0,
-           })
-           sys.exit(0)
-       args = args.replace(x,'')
+    if x.startswith("creates="):
+        # do not run the command if the line contains creates=filename
+        # and the filename already exists.  This allows idempotence 
+        # of command executions.
+        (k,v) = x.split("=",1)
+        if os.path.exists(v):
+            print json.dumps({
+                "cmd"     : args,
+                "stdout"  : "skipped, since %s exists" % v,
+                "skipped" : True,
+                "changed" : False,
+                "stderr"  : "",
+                "rc"      : 0,
+            })
+            sys.exit(0)
+        args = args.replace(x,'')
        
 
 if not shell:
@@ -89,9 +89,9 @@ endd = datetime.datetime.now()
 delta = endd - startd
 
 if out is None:
-   out = ''
+    out = ''
 if err is None:
-   err = ''
+    err = ''
 
 result = {
    "cmd"     : args,

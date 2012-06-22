@@ -69,7 +69,7 @@ class InventoryParserYaml(object):
                     for subitem in varlist:
                         vars.update(subitem)
                 for (k,v) in vars.items():
-                   host.set_variable(k,v)
+                    host.set_variable(k,v)
 
             elif type(item) == dict and 'group' in item:
                 group = Group(item['group'])
@@ -84,8 +84,8 @@ class InventoryParserYaml(object):
                         vars = subresult.get('vars',{})
                         if type(vars) == list:
                             for subitem in vars:
-                               for (k,v) in subitem.items():
-                                   host.set_variable(k,v) 
+                                for (k,v) in subitem.items():
+                                    host.set_variable(k,v) 
                         elif type(vars) == dict:
                             for (k,v) in subresult.get('vars',{}).items():
                                 host.set_variable(k,v)

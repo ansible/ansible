@@ -85,26 +85,26 @@ if mode == 'cleanup':
 
 data = file(log_path).read()
 try:
-   data = json.loads(data)
+    data = json.loads(data)
 except Exception, e:
-   if data == '':
-       # file not written yet?  That means it is running
-       print json.dumps({
-           "results_file" : log_path,
-           "ansible_job_id" : jid,
-           "started" : 1,
-       })
-   else:
-       print json.dumps({
-           "failed" : True,
-           "ansible_job_id" : jid,
-           "results_file" : log_path,
-           "msg" : "Could not parse job output: %s" % data,
-       })
-   sys.exit(0)
+    if data == '':
+        # file not written yet?  That means it is running
+        print json.dumps({
+            "results_file" : log_path,
+            "ansible_job_id" : jid,
+            "started" : 1,
+        })
+    else:
+        print json.dumps({
+            "failed" : True,
+            "ansible_job_id" : jid,
+            "results_file" : log_path,
+            "msg" : "Could not parse job output: %s" % data,
+        })
+    sys.exit(0)
 
 if not data.has_key("started"):
-   data['finished'] = 1
+    data['finished'] = 1
 data['ansible_job_id'] = jid
 
 print json.dumps(data)

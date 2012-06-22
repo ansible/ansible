@@ -321,13 +321,13 @@ if not os.path.exists(argfile):
 
 setup_options = open(argfile).read().strip()
 try:
-   setup_options = json.loads(setup_options)
+    setup_options = json.loads(setup_options)
 except:
-   list_options = shlex.split(setup_options)
-   setup_options = {}
-   for opt in list_options:
-       (k,v) = opt.split("=")
-       setup_options[k]=v   
+    list_options = shlex.split(setup_options)
+    setup_options = {}
+    for opt in list_options:
+        (k,v) = opt.split("=")
+        setup_options[k]=v   
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % setup_options)
@@ -355,36 +355,36 @@ for (k, v) in ansible_facts().items():
 # ruby-json is ALSO installed, include facter data in the JSON
 
 if os.path.exists("/usr/bin/facter"):
-   cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
+    cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   out, err = cmd.communicate()
-   facter = True
-   try:
-       facter_ds = json.loads(out)
-   except:
-       facter = False
-   if facter:
-       for (k,v) in facter_ds.items():
-           setup_options["facter_%s" % k] = v
+    out, err = cmd.communicate()
+    facter = True
+    try:
+        facter_ds = json.loads(out)
+    except:
+        facter = False
+    if facter:
+        for (k,v) in facter_ds.items():
+            setup_options["facter_%s" % k] = v
 
 # ditto for ohai, but just top level string keys
 # because it contains a lot of nested stuff we can't use for
 # templating w/o making a nicer key for it (TODO)
 
 if os.path.exists("/usr/bin/ohai"):
-   cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+    cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   out, err = cmd.communicate()
-   ohai = True
-   try:
-       ohai_ds = json.loads(out)
-   except:
-       ohai = False
-   if ohai:
-       for (k,v) in ohai_ds.items():
-           if type(v) == str or type(v) == unicode:
-               k2 = "ohai_%s" % k
-               setup_options[k2] = v
+    out, err = cmd.communicate()
+    ohai = True
+    try:
+        ohai_ds = json.loads(out)
+    except:
+        ohai = False
+    if ohai:
+        for (k,v) in ohai_ds.items():
+            if type(v) == str or type(v) == unicode:
+                k2 = "ohai_%s" % k
+                setup_options[k2] = v
 
 # write the template/settings file using
 # instructions from server
@@ -397,7 +397,7 @@ f.close()
 md5sum2 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": ansible_file}).read().split()[0]
 
 if md5sum != md5sum2:
-   changed = True
+    changed = True
 
 setup_result = {}
 setup_result['written'] = ansible_file

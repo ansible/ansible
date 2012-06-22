@@ -117,7 +117,7 @@ def remove(pkgspec, cache, purge=False):
 # ===========================================
 
 if not os.path.exists(APT_PATH):
-   fail_json(msg="Cannot find apt-get")
+    fail_json(msg="Cannot find apt-get")
 
 argfile = sys.argv[1]
 args    = open(argfile, 'r').read()
