@@ -41,3 +41,6 @@ DEFAULT_REMOTE_PORT    = 22
 DEFAULT_TRANSPORT      = os.environ.get('ANSIBLE_TRANSPORT','paramiko')
 DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko', 'ssh']
 
+DEFAULT_SSH_ARGS         = os.environ.get('ANSIBLE_SSH_ARGS',
+                           "-o StrictHostKeyChecking=no -o ControlMaster=auto -o ControlPersist=60 -o ControlPath=/tmp/ansible-ssh-%h-%p-%r")
+
