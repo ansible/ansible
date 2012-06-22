@@ -112,7 +112,7 @@ class Runner(object):
         background=0, basedir=None, setup_cache=None, 
         transport=C.DEFAULT_TRANSPORT, conditional='True', callbacks=None, 
         debug=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
-        module_vars=None, is_playbook=False, inventory=None):
+        module_vars=None, is_playbook=False, inventory=None, ssh_args=C.DEFAULT_SSH_ARGS):
 
         """
         host_list    : path to a host list file, like /etc/ansible/hosts
@@ -138,6 +138,7 @@ class Runner(object):
         module_vars  : provides additional variables to a template.  FIXME: factor this out
         is_playbook  : indicates Runner is being used by a playbook.  affects behavior in various ways.
         inventory    : inventory object, if host_list is not provided
+        ssh_args     : arguments used by ssh transport module
         """
 
         if setup_cache is None:
@@ -182,6 +183,7 @@ class Runner(object):
         self.sudo        = sudo
         self.sudo_pass   = sudo_pass
         self.is_playbook = is_playbook
+        self.ssh_args    = ssh_args
 
         euid = pwd.getpwuid(os.geteuid())[0]
         if self.transport == 'local' and self.remote_user != euid:
