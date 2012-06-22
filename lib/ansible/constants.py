@@ -24,7 +24,7 @@ DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS',
 DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY',
     '/usr/share/ansible')
 DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP', 
-    '/$HOME/.ansible/tmp')
+    '$HOME/.ansible/tmp')
 
 DEFAULT_MODULE_NAME    = 'command'
 DEFAULT_PATTERN        = '*'
