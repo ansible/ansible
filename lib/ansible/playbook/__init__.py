@@ -114,6 +114,8 @@ class PlayBook(object):
         self.basedir    = os.path.dirname(playbook)
         self.playbook  = utils.parse_yaml_from_file(playbook)
 
+        self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
+
     # *****************************************************
         
     def run(self):
