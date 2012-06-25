@@ -60,3 +60,6 @@ class Host(object):
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
         return results
 
+    def remove_group(self, group):
+        if group in self.groups:
+            self.groups.remove(group)

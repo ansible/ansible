@@ -70,6 +70,7 @@ class InventoryParserYaml(object):
                         vars.update(subitem)
                 for (k,v) in vars.items():
                    host.set_variable(k,v)
+                ungrouped.add_host(host)
 
             elif type(item) == dict and 'group' in item:
                 group = Group(item['group'])
@@ -106,3 +107,9 @@ class InventoryParserYaml(object):
 
                 self.groups[group.name] = group
                 all.add_child_group(group)
+
+        for host in ungrouped.get_hosts():
+            for name in self.groups:
+                if name not in ['ungrouped', 'all'] and host in self.groups[name].get_hosts():
+                    print "remove %s"%host.name
+                    ungrouped.remove_host(host)

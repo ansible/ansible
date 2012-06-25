@@ -71,6 +71,11 @@ class Group(object):
     def get_ancestors(self):
         return self._get_ancestors().values()
 
-
-
+    def remove_host(self, host):
+        if host in self.hosts:
+            self.hosts.remove(host)
+            host.remove_group(self)
+        for kid in self.child_groups:
+            if host in kid.get_hosts():
+                kid.remove_host(host)
 
