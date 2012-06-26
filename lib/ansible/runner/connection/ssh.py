@@ -39,12 +39,7 @@ class SSHConnection(object):
 
     def connect(self):
         ''' connect to the remote host '''
-
-        self.common_args = ["-o", "StrictHostKeyChecking=no"]
-        if self.port is not None:
-            self.common_args += ["-o", "Port=%d" % (self.port)]
-        if self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
+        self.common_args = []
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
@@ -52,14 +47,19 @@ class SSHConnection(object):
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
                                  "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
-        self.userhost = "%s@%s" % (self.runner.remote_user, self.host)
+        self.common_args += ["-o", "StrictHostKeyChecking=no"]
+        if self.port is not None:
+            self.common_args += ["-o", "Port=%d" % (self.port)]
+        if self.runner.private_key_file is not None:
+            self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
+        self.common_args += ["-o", "User="+self.runner.remote_user]
 
         return self
 
     def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
-        ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.userhost]
+        ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes 
             # sudo always ask for a password if one is required. The "--"
@@ -117,7 +117,7 @@ class SSHConnection(object):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        sftp_cmd = ["sftp"] + self.common_args + [self.userhost]
+        sftp_cmd = ["sftp"] + self.common_args + [self.host]
         p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate("put %s %s\n" % (in_path, out_path))
@@ -128,7 +128,7 @@ class SSHConnection(object):
         ''' fetch a file from remote to local '''
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        sftp_cmd = ["sftp"] + self.common_args + [self.userhost]
+        sftp_cmd = ["sftp"] + self.common_args + [self.host]
         p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate("get %s %s\n" % (in_path, out_path))
