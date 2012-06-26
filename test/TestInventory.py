@@ -222,14 +222,14 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts()
         print hosts
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_all(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts('all')
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_norse(self):
@@ -243,7 +243,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter']
+        expected_hosts=['jupiter', 'mars']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):
