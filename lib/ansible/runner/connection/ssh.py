@@ -41,18 +41,19 @@ class SSHConnection(object):
         ''' connect to the remote host '''
 
         self.common_args = ["-o", "StrictHostKeyChecking=no"]
-        if self.port is not None:
-            self.common_args += ["-o", "Port=%d" % (self.port)]
-        if self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
+        self.common_args += ["-o", "ControlMaster=auto",
+                             "-o", "ControlPersist=60s",
+                             "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
+            self.userhost = self.host
         else:
-            self.common_args += ["-o", "ControlMaster=auto",
-                                 "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
-        self.userhost = "%s@%s" % (self.runner.remote_user, self.host)
+            if self.port is not None:
+                self.common_args += ["-o", "Port=%d" % (self.port)]
+            if self.runner.private_key_file is not None:
+                self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
+            self.userhost = "%s@%s" % (self.runner.remote_user, self.host)
 
         return self
 
