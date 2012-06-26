@@ -211,7 +211,9 @@ def get_virtual_facts(facts):
         facts = get_linux_virtual_facts(facts)
 
 # get list of interfaces that are up
-def get_interfaces():
+def get_interfaces(facts):
+    if facts['system'] == 'SunOS':
+        return []
     length = 4096
     offset = 32
     step = 32
@@ -236,7 +238,7 @@ def get_iface_hwaddr(iface):
 def get_network_facts(facts):
     facts['fqdn'] = socket.getfqdn()
     facts['hostname'] = facts['fqdn'].split('.')[0]
-    facts['interfaces'] = get_interfaces()
+    facts['interfaces'] = get_interfaces(facts)
     for iface in facts['interfaces']:
         facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
         # This is lame, but there doesn't appear to be a good way
@@ -309,6 +311,10 @@ def ansible_facts():
     get_service_facts(facts)
     return facts
 
+def md5_sum(f):
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s 2> /dev/null || /usr/bin/digest -a md5 -v %(file)s" % {"file": f}).read().split()[0]
+    return md5sum
+
 # load config & template variables
 
 if len(sys.argv) == 1:
@@ -345,7 +351,7 @@ md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": ansible_file}).read().split()[0]
+    md5sum = md5_sum(ansible_file)
 
 # Get some basic facts in case facter or ohai are not installed
 for (k, v) in ansible_facts().items():
@@ -394,7 +400,7 @@ reformat = json.dumps(setup_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
-md5sum2 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": ansible_file}).read().split()[0]
+md5sum2 = md5_sum(ansible_file)
 
 if md5sum != md5sum2:
    changed = True
