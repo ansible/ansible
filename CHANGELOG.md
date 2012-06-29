@@ -25,6 +25,7 @@ Ansible Changes By Release
 * SELinux facts now sourced from the python selinux library
 * removed module debug option -D
 * added --verbose, which shows output from successful playbook operations
+* print the output of the raw command inside /usr/bin/ansible as with command/shell
 
 0.4 "Unchained" ------- May 23, 2012
 

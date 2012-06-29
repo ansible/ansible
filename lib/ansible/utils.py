@@ -132,7 +132,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name in [ 'command', 'shell' ] and 'ansible_job_id' not in result:
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:
