@@ -23,6 +23,8 @@ Ansible Changes By Release
 * cowsay is used by ansible-playbook if installed to improve output legibility (try installing it)
 * authorized_key module
 * SELinux facts now sourced from the python selinux library
+* removed module debug option -D
+* added --verbose, which shows output from successful playbook operations
 
 0.4 "Unchained" ------- May 23, 2012
 
