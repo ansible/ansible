@@ -26,6 +26,8 @@ Ansible Changes By Release
 * removed module debug option -D
 * added --verbose, which shows output from successful playbook operations
 * print the output of the raw command inside /usr/bin/ansible as with command/shell
+* basic setup module support for Solaris
+* ./library relative to the playbook is always in path so modules can be included in tarballs with playbooks
 
 0.4 "Unchained" ------- May 23, 2012
 
