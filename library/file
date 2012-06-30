@@ -184,8 +184,16 @@ def user_and_group(filename):
     st = os.stat(filename)
     uid = st.st_uid
     gid = st.st_gid
-    user = pwd.getpwuid(uid)[0]
-    group = grp.getgrgid(gid)[0]
+    try:
+        user = pwd.getpwuid(uid)[0]
+    except KeyError:
+        #print('unknown user')
+        user = 'UID' + str(uid)
+    try:
+        group = grp.getgrgid(gid)[0]
+    except KeyError:
+        #print('unknown group')
+        group = 'GID' + str(gid)
     return (user, group)
 
 def set_context_if_different(path, context, changed):
