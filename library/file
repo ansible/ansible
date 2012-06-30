@@ -187,12 +187,10 @@ def user_and_group(filename):
     try:
         user = pwd.getpwuid(uid)[0]
     except KeyError:
-        #print('unknown user')
         user = 'UID' + str(uid)
     try:
         group = grp.getgrgid(gid)[0]
     except KeyError:
-        #print('unknown group')
         group = 'GID' + str(gid)
     return (user, group)
 
