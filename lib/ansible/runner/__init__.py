@@ -290,6 +290,12 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
 
+        group_hosts = {}
+        for g in self.inventory.groups:
+            group_hosts[g.name] = map((lambda x: x.get_variables()),g.hosts)
+
+        inject['groups'] = group_hosts
+
         if self.module_name == 'setup':
             if not args:
                 args = {}
