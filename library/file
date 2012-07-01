@@ -187,11 +187,11 @@ def user_and_group(filename):
     try:
         user = pwd.getpwuid(uid)[0]
     except KeyError:
-        user = 'UID' + str(uid)
+        user = str(uid)
     try:
         group = grp.getgrgid(gid)[0]
     except KeyError:
-        group = 'GID' + str(gid)
+        group = str(gid)
     return (user, group)
 
 def set_context_if_different(path, context, changed):
