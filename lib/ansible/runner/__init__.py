@@ -567,7 +567,7 @@ class Runner(object):
                     metadata = '/etc/ansible/setup'
                 else:
                     # path is expanded on remote side
-                    metadata = "~/.ansible/setup"
+                    metadata = "~/.ansible/tmp/.ansible/setup" 
             
             # install the template module
             slurp_module = self._transfer_module(conn, tmp, 'slurp')
