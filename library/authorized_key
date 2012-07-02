@@ -95,22 +95,23 @@ def get_params():
 
     return params
 
-def keyfile(user, create=False):
+def keyfile(user, write=False):
     """Calculate name of authorized keys file, optionally creating the 
     directories and file, properly setting permissions.
 
     :param str user: name of user in passwd file
-    :param bool create: make directories and authorized key file if True
+    :param bool write: if True, write changes to authorized_keys file (creating directories if needed)
     :return: full path string to authorized_keys for user
     """
 
     global msg
     msg = "Reading system user entry."
     user_entry = pwd.getpwnam(user)
+    msg = "Calculating special directories"
     homedir = user_entry.pw_dir
     sshdir = join(homedir, ".ssh")
     keysfile = join(sshdir, "authorized_keys")
-    if not create: return keysfile
+    if not write: return keysfile
 
     #create directories and files for authorized keys
     msg = "Reading user and group info."
@@ -123,8 +124,7 @@ def keyfile(user, create=False):
     msg = "Touching authorized keys file."
     if not exists( keysfile):
         try:
-            f = open(keysfile, "w")
-            f.write("#Authorized Keys File created by Ansible.\n")
+            f = open(keysfile, "w") #touches file so we can set ownership and perms
         finally:
             f.close()
     os.chown(keysfile, uid, gid)
@@ -166,7 +166,7 @@ def enforce_state( params):
     state = params.get("state", "present")
 
     #== check current state
-    params["keyfile"] = keyfile(user,create=True)
+    params["keyfile"] = keyfile(user, write=False) #just get the filename, don't create file
     keys = readkeys( params["keyfile"])
     present = key in keys
 
@@ -174,11 +174,11 @@ def enforce_state( params):
     if state=="present":
         if present: return False #nothing to do
         keys.append(key)
-        writekeys(keyfile(user,create=True), keys)
+        writekeys(keyfile(user,write=True), keys)
     elif state=="absent":
         if not present: return False #nothing to do
         keys.remove(key)
-        writekeys(keyfile(user,create=True), keys)
+        writekeys(keyfile(user,write=True), keys)
     else:
         msg = "Invalid param: state."
         raise StandardError(msg)
