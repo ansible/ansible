@@ -202,7 +202,7 @@ class Runner(object):
         if type(files) == str:
             files = [ files ]
         for filename in files:
-            if filename.find('/tmp/') == -1:
+            if filename.find('/tmp/') != 0:
                 raise Exception("not going to happen")
             self._low_level_exec_command(conn, "rm -rf %s" % filename, None)
 
