@@ -269,13 +269,13 @@ class Runner(object):
                 if self.remote_user == 'root':
                     args = "%s metadata=/etc/ansible/setup" % args
                 else:
-                    args = "%s metadata=%s/.ansible/setup" % (args, C.DEFAULT_REMOTE_TMP)
+                    args = "%s metadata=%s/setup" % (args, C.DEFAULT_REMOTE_TMP)
         else:
             if not 'metadata' in args:
                 if self.remote_user == 'root':
                     args['metadata'] = '/etc/ansible/setup'
                 else:
-                    args['metadata'] = "%s/.ansible/setup" % C.DEFAULT_REMOTE_TMP
+                    args['metadata'] = "%s/setup" % C.DEFAULT_REMOTE_TMP
         return args   
  
     # *****************************************************
@@ -567,7 +567,7 @@ class Runner(object):
                     metadata = '/etc/ansible/setup'
                 else:
                     # path is expanded on remote side
-                    metadata = "~/.ansible/setup"
+                    metadata = "~/.ansible/tmp/setup" 
             
             # install the template module
             slurp_module = self._transfer_module(conn, tmp, 'slurp')
