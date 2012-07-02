@@ -42,14 +42,25 @@ Magic Variables
 
 Some variables made available to hosts don't come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won't need.
 
-`groups` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
+*group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
 syntax to make template source files that vary based on the group membership (or role) of the host::
 
-   {% if 'webserver' in groups %}
+   {% if 'webserver' in group_names %}
       # some part of a configuration file that only applies to webservers
    {% endif %}
 
-`inventory_hostname` is the name of the hostname as configured in Ansible's inventory host file.  This can
+
+*groups* is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group. 
+For example::
+
+   {% for host in groups['app_servers'] %}
+      # something that applies to all app servers.
+   {% endfor %}
+
+
+Use cases include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+
+*inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
 reasons.  Don't worry about it unless you think you need it.
 
