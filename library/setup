@@ -312,7 +312,7 @@ def ansible_facts():
     return facts
 
 def md5_sum(f):
-    md5sum = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s 2> /dev/null || /usr/bin/digest -a md5 -v %(file)s" % {"file": f}).read().split()[0]
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
     return md5sum
 
 # load config & template variables
