@@ -84,7 +84,11 @@ md5sum_src = None
 md5sum_src = md5_sum(src)
 
 md5sum_dest = None
-md5sum_dest = md5_sum(dest)
+try:
+    md5sum_dest = md5_sum(dest)
+except IndexError:
+    # File doesn't exist yet, so clear to continue
+    pass
 
 if md5sum_src != md5sum_dest:
     os.system("cp %s %s" % (src, dest))
