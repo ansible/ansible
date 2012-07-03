@@ -37,6 +37,10 @@ def exit_kv(rc=0, **kwargs):
     print dump_kv(kwargs)
     sys.exit(rc)
 
+def md5_sum(f):
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
+    return md5sum
+
 if len(sys.argv) == 1:
 	exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
 
@@ -61,34 +65,34 @@ if src:
     src = os.path.expanduser(src)
 if dest:
     dest = os.path.expanduser(dest)
- 
+
 # raise an error if there is no src file
 if not os.path.exists(src):
-	exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
+        exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
 
-if os.path.exists(dest):
-    # raise an error if copy has no permission on dest
-    if not os.access(dest, os.W_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
-    elif not os.access(dest, os.R_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
-else:
-    if not os.access(os.path.dirname(dest), os.W_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
+# raise an error if there is no dest file
+if not os.path.exists(dest):
+    exit_kv(rc=1, failed=1, msg="Destination %s does not exist" % (dest))
 
-md5sum = None
-changed = False
-if os.path.exists(dest):
-    md5sum = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
+# raise an error if copy has no permission on dest
+if not os.access(dest, os.W_OK):
+    exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
+elif not os.access(dest, os.R_OK):
+    exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
 
-md5sum2 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": src}).read().split()[0]
+md5sum_src = None
+md5sum_src = md5_sum(src)
 
-if md5sum != md5sum2:
+md5sum_dest = None
+md5sum_dest = md5_sum(dest)
+
+if md5sum_src != md5sum_dest:
     os.system("cp %s %s" % (src, dest))
     changed = True
+else:
+    changed = False
 
 # mission accomplished
-#print "md5sum=%s changed=%s" % (md5sum2, changed)
-exit_kv(dest=dest, src=src, changed="md5sum=%s changed=%s" % (md5sum2, changed))
-
+#print "md5sum=%s changed=%s" % (md5sum_dest, changed)
+exit_kv(dest=dest, src=src, changed="md5sum=%s changed=%s" % (md5sum_dest, changed))
 
