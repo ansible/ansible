@@ -70,25 +70,20 @@ if dest:
 if not os.path.exists(src):
     exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
 
-# raise an error if there is no dest file
-if not os.path.exists(dest):
-    exit_kv(rc=1, failed=1, msg="Destination %s does not exist" % (dest))
-
-# raise an error if copy has no permission on dest
-if not os.access(dest, os.W_OK):
-    exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
-elif not os.access(dest, os.R_OK):
-    exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
-
 md5sum_src = None
 md5sum_src = md5_sum(src)
 
 md5sum_dest = None
-try:
+
+# raise an error if there is no dest file
+if os.path.exists(dest):
+    # raise an error if copy has no permission on dest
+    if not os.access(dest, os.W_OK):
+        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
+    elif not os.access(dest, os.R_OK):
+        exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
+
     md5sum_dest = md5_sum(dest)
-except IndexError:
-    # File doesn't exist yet, so clear to continue
-    pass
 
 if md5sum_src != md5sum_dest:
     os.system("cp %s %s" % (src, dest))
@@ -98,5 +93,5 @@ else:
 
 # mission accomplished
 #print "md5sum=%s changed=%s" % (md5sum_dest, changed)
-exit_kv(dest=dest, src=src, changed=changed, md5sum=md5sum_dest)
+exit_kv(dest=dest, src=src, changed=changed, md5sum=md5sum_src)
 
