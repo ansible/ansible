@@ -21,6 +21,7 @@
 import sys
 import os
 import shlex
+import shutil
 import syslog
 
 # ===========================================
@@ -42,11 +43,11 @@ def md5_sum(f):
     return md5sum
 
 if len(sys.argv) == 1:
-	exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
+    exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
 
 argfile = sys.argv[1]
 if not os.path.exists(argfile):
-	exit_kv(rc=1, failed=1, msg="file %s does not exist" % (argfile))
+    exit_kv(rc=1, failed=1, msg="file %s does not exist" % (argfile))
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -69,7 +70,7 @@ if dest:
 md5sum_src = None
 # raise an error if there is no src file
 if not os.path.exists(src):
-        exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
+    exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
 if not os.access(src, os.R_OK):
     exit_kv(rc=1, failed=1, msg="Source %s not readable" % (src))
 md5sum_src = md5_sum(src)
@@ -85,10 +86,16 @@ if os.path.exists(dest):
     md5sum_dest = md5_sum(dest)
 else:
     if not os.access(os.path.dirname(dest), os.W_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
+        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (os.path.dirname(dest)))
 
 if md5sum_src != md5sum_dest:
-    os.system("cp %s %s" % (src, dest))
+    # was os.system("cp %s %s" % (src, dest))
+    try:
+        shutil.copyfile(src, dest)
+    except shutil.Error:
+        exit_kv(rc=1, failed=1, msg="failed to copy: %s and %s are the same" % (src, dest)) 
+    except IOError:
+        exit_kv(rc=1, failed=1, msg="failed to copy: %s to %s" % (src, dest)) 
     changed = True
 else:
     changed = False
