@@ -1,8 +1,8 @@
 ansible (0.5) debian; urgency=low
 
-  * Release pending
+  * 0.5 update
 
- -- Michael DeHaan <michael.dehaan@gmail.com> Fri, 25 May 2012 16:40:00 -0400
+ -- Michael DeHaan <michael.dehaan@gmail.com> Wed, 04 Jul 2012 13:40:00 -0400
 
 ansible (0.4) debian; urgency=low
   

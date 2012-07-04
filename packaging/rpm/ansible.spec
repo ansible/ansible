@@ -58,7 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri Jun 1 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.5-0
+* Wed Jul 4 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.5-0
 - Not released yet
 
 * Wed May 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.4-0
