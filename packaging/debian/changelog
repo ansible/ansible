@@ -1,3 +1,9 @@
+ansible (0.6) debian; urgency=low
+  
+  * 0.6 not released yet
+ 
+-- Michael DeHaan <michael.dehaan@gmail.com> Wed, 04 Jul 2012 13:40:01 -0400
+
 ansible (0.5) debian; urgency=low
 
   * 0.5 update
