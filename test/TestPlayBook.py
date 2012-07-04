@@ -63,7 +63,7 @@ class TestCallbacks(object):
     def on_ok(self, host, result):
         # delete certain info from host_result to make test comparisons easier
         host_result = result.copy()
-        for k in [ 'ansible_job_id', 'results_file', 'invocation', 'md5sum', 'delta', 'start', 'end' ]:
+        for k in [ 'ansible_job_id', 'results_file', 'md5sum', 'delta', 'start', 'end' ]:
             if k in host_result:
                 del host_result[k]
         for k in host_result.keys():
@@ -172,3 +172,16 @@ class TestPlaybook(unittest.TestCase):
        print data
        assert data.find("ears") != -1, "template success"
 
+   def test_yaml_hosts_list(self):
+       # Make sure playbooks support hosts: [host1, host2]
+       # TODO: Actually run the play on more than one host
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'hosts_list.yml'),
+           host_list='test/ansible_hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       play = ansible.playbook.Play(playbook, playbook.playbook[0])
+       assert play.hosts == ';'.join(('host1', 'host2', 'host3'))

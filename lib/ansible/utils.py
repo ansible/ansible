@@ -49,25 +49,19 @@ def exit(msg, rc=1):
 
 def bigjson(result):
     ''' format JSON output (uncompressed) '''
-    # hide some internals magic from command line userland
     result2 = result.copy()
-    if 'invocation' in result2:
-        del result2['invocation']
     return json.dumps(result2, sort_keys=True, indent=4)
 
 def smjson(result):
     ''' format JSON output (compressed) '''
-    # hide some internals magic from command line userland
     result2 = result.copy()
-    if 'invocation' in result2:
-        del result2['invocation']
     return json.dumps(result2, sort_keys=True)
 
 def task_start_msg(name, conditional):
     if conditional:
-        return "\nNOTIFIED: [%s] **********\n" % name
+        return "NOTIFIED: [%s]" % name
     else:
-        return "\nTASK: [%s] *********\n" % name
+        return "TASK: [%s]" % name
 
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''
@@ -138,7 +132,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
     buf = ''
     failed = is_failed(result)
-    if module_name in [ 'command', 'shell' ] and 'ansible_job_id' not in result:
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
         if not failed:
             buf = command_success_msg(hostname, result, oneline)
         else:
@@ -182,7 +176,12 @@ def parse_json(data):
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
         results = {}
-        tokens = shlex.split(data)
+        try :
+            tokens = shlex.split(data)
+        except: 
+            print "failed to parse json: "+ data
+            raise; 
+            
         for t in tokens:
             if t.find("=") == -1:
                 raise errors.AnsibleError("failed to parse: %s" % data)
@@ -201,7 +200,7 @@ def parse_json(data):
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
-def varLookup(name, vars):
+def _varLookup(name, vars):
     ''' find the contents of a possibly complex variable in vars. '''
     path = name.split('.')
     space = vars
@@ -222,6 +221,12 @@ def varLookup(name, vars):
 
 _KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
 #                        if { -> complex     if complex, allow . and need trailing }
+
+def varLookup(varname, vars):
+    m = _KEYCRE.search(varname)
+    if not m:
+        return None
+    return _varLookup(m.group(2), vars)
 
 def varReplace(raw, vars):
     '''Perform variable replacement of $vars
@@ -245,7 +250,7 @@ def varReplace(raw, vars):
         # original)
         varname = m.group(2)
 
-        replacement = unicode(varLookup(varname, vars) or m.group())
+        replacement = unicode(_varLookup(varname, vars) or m.group())
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -254,29 +259,33 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars, setup_cache, no_engine=True):
+def _template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
     text = varReplace(unicode(text), vars)
-    if no_engine:
-        # used when processing include: directives so that Jinja is evaluated
-        # in a later context when more variables are available
-        return text
-    else:
-        template = jinja2.Template(text)
-        res = template.render(vars)
-        if text.endswith('\n') and not res.endswith('\n'):
-            res = res + '\n'
-        return res
+    return text
 
-def double_template(text, vars, setup_cache):
-    return template(template(text, vars, setup_cache), vars, setup_cache)
+def template(text, vars, setup_cache=None):
+    ''' run a text buffer through the templating engine 
+        until it no longer changes '''
+    prev_text = ''
+    while prev_text != text:
+        prev_text = text
+        text = _template(text, vars, setup_cache)
+    return text
 
-def template_from_file(path, vars, setup_cache, no_engine=True):
+def template_from_file(basedir, path, vars, setup_cache):
     ''' run a file through the templating engine '''
-    data = codecs.open(path, encoding="utf8").read()
-    return template(data, vars, setup_cache, no_engine=no_engine)
+    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
+    data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
+    t = environment.from_string(data)
+    vars = vars.copy()
+    vars['hostvars'] = setup_cache
+    res = t.render(vars)
+    if data.endswith('\n') and not res.endswith('\n'):
+        res = res + '\n'
+    return template(res, vars, setup_cache)
 
 def parse_yaml(data):
     return yaml.load(data)
@@ -309,8 +318,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage)
-    parser.add_option('-D','--debug', default=False, action="store_true",
-        help='debug mode')
+    parser.add_option('-v','--verbose', default=False, action="store_true",
+        help='verbose mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
@@ -323,7 +332,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
-        help="specify path to module library (default=%s)" % constants.DEFAULT_MODULE_PATH, 
+        help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout', 

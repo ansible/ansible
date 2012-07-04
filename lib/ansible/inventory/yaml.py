@@ -17,9 +17,9 @@
 
 #############################################
 
-import constants as C
-from ansible.host import Host
-from ansible.group import Group
+import ansible.constants as C
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
 from ansible import errors
 from ansible import utils
 
@@ -53,25 +53,13 @@ class InventoryParserYaml(object):
         all.add_child_group(ungrouped)
 
         self.groups = dict(all=all, ungrouped=ungrouped)
+        grouped_hosts = []
 
         yaml = utils.parse_yaml(data)
+
+        # first add all groups
         for item in yaml:
-
-            if type(item) in [ str, unicode ]:
-                host = self._make_host(item)
-                ungrouped.add_host(host)
-
-            elif type(item) == dict and 'host' in item:
-                host = self._make_host(item['host'])
-                vars = item.get('vars', {})
-                if type(vars)==list:
-                    varlist, vars = vars, {}
-                    for subitem in varlist:
-                        vars.update(subitem)
-                for (k,v) in vars.items():
-                   host.set_variable(k,v)
-
-            elif type(item) == dict and 'group' in item:
+            if type(item) == dict and 'group' in item:
                 group = Group(item['group'])
 
                 for subresult in item.get('hosts',[]):
@@ -79,6 +67,7 @@ class InventoryParserYaml(object):
                     if type(subresult) in [ str, unicode ]:
                         host = self._make_host(subresult)
                         group.add_host(host)
+                        grouped_hosts.append(host)
                     elif type(subresult) == dict:
                         host = self._make_host(subresult['host'])
                         vars = subresult.get('vars',{})
@@ -92,6 +81,7 @@ class InventoryParserYaml(object):
                         else:
                             raise errors.AnsibleError("unexpected type for variable")
                         group.add_host(host)
+                        grouped_hosts.append(host)
 
                 vars = item.get('vars',{})
                 if type(vars) == dict:
@@ -106,3 +96,22 @@ class InventoryParserYaml(object):
 
                 self.groups[group.name] = group
                 all.add_child_group(group)
+
+        # add host definitions
+        for item in yaml:
+            if type(item) in [ str, unicode ]:
+                host = self._make_host(item)
+                if host not in grouped_hosts:
+                    ungrouped.add_host(host)
+
+            elif type(item) == dict and 'host' in item:
+                host = self._make_host(item['host'])
+                vars = item.get('vars', {})
+                if type(vars)==list:
+                    varlist, vars = vars, {}
+                    for subitem in varlist:
+                        vars.update(subitem)
+                for (k,v) in vars.items():
+                   host.set_variable(k,v)
+                if host not in grouped_hosts:
+                    ungrouped.add_host(host)

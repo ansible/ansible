@@ -17,7 +17,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        res = ansible.utils.varLookup('data.who', vars)
+        res = ansible.utils._varLookup('data.who', vars)
 
         assert sorted(res) == sorted(vars['data']['who'])
 
@@ -203,36 +203,44 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_template_varReplace_iterated(self):
+        template = 'hello $who'
+        vars = {
+            'who': 'oh great $person',
+            'person': 'one',
+        }
+
+        res = ansible.utils.template(template, vars)
+
+        assert res == u'hello oh great one'
+
     #####################################
     ### Template function tests
 
     def test_template_basic(self):
-        template = 'hello {{ who }}'
         vars = {
             'who': 'world',
         }
 
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
+        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
 
         assert res == 'hello world'
 
     def test_template_whitespace(self):
-        template = 'hello {{ who }}\n'
         vars = {
             'who': 'world',
         }
 
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
+        res = ansible.utils.template_from_file("test", "template-whitespace", vars, {})
 
         assert res == 'hello world\n'
 
     def test_template_unicode(self):
-        template = 'hello {{ who }}'
         vars = {
             'who': u'wórld',
         }
 
-        res = ansible.utils.template(template, vars, {}, no_engine=False)
+        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
 
         assert res == u'hello wórld'
 

@@ -4,7 +4,7 @@
 # because of the comments it's less concise than it normally is.  But feel
 # free to comment your playbooks if you like.
 
-- hosts: dbservers
+- hosts: all
 
   # we can define variables the normal way...
 

@@ -1,6 +1,34 @@
 Ansible Changes By Release
 ==========================
 
+0.5 "Amsterdam" ------- July XX, 2012
+
+* Service module gets more accurate service states when running with upstart
+* Jinja2 usage in playbooks (not templates), reinstated, supports %include directive
+* support for --connection ssh (supports Kerberos, bastion hosts, etc), requires ControlMaster
+* misc tracebacks replaced with error messages
+* various API/internals refactoring
+* vars can be built from other variables
+* support for exclusion of hosts/groups with "!groupname"
+* various changes to support md5 tool differences for FreeBSD nodes & OS X clients
+* "unparseable" command output shows in command output for easier debugging
+* mktemp is no longer required on remotes (not available on BSD)
+* support for older versions of python-apt in the apt module
+* a new "assemble" module, for constructing files from pieces of files (inspired by Puppet "fragments" idiom)
+* ability to override most default values with ANSIBLE_FOO environment variables
+* --module-path parameter can support multiple directories seperated with the OS path seperator
+* with_items can take a variable of type list
+* ansible_python_interpreter variable available for systems with more than one Python
+* BIOS and VMware "fact" upgrades
+* cowsay is used by ansible-playbook if installed to improve output legibility (try installing it)
+* authorized_key module
+* SELinux facts now sourced from the python selinux library
+* removed module debug option -D
+* added --verbose, which shows output from successful playbook operations
+* print the output of the raw command inside /usr/bin/ansible as with command/shell
+* basic setup module support for Solaris
+* ./library relative to the playbook is always in path so modules can be included in tarballs with playbooks
+
 0.4 "Unchained" ------- May 23, 2012
 
 Internals/Core

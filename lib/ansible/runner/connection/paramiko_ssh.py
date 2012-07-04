@@ -36,34 +36,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import paramiko
 
-
-################################################
-
-class Connection(object):
-    ''' Handles abstract connections to remote hosts '''
-
-    _LOCALHOSTRE = re.compile(r"^(127.0.0.1|localhost|%s)$" % os.uname()[1])
-
-    def __init__(self, runner, transport,sudo_user):
-        self.runner = runner
-        self.transport = transport
-        self.sudo_user = sudo_user
-    def connect(self, host, port=None):
-        conn = None
-        if self.transport == 'local' and self._LOCALHOSTRE.search(host):
-            conn = LocalConnection(self.runner, host)
-        elif self.transport == 'paramiko':
-            conn = ParamikoConnection(self.runner, host, port)
-        if conn is None:
-            raise Exception("unsupported connection type")
-        return conn.connect()
-
-################################################
-# want to implement another connection type?
-# follow duck-typing of ParamikoConnection
-# you may wish to read config files in __init__
-# if you have any.  Paramiko does not need any.
-
 class ParamikoConnection(object):
     ''' SSH based connections with Paramiko '''
 
@@ -93,10 +65,15 @@ class ParamikoConnection(object):
                 port=self.port
             )
         except Exception, e:
-            if str(e).find("PID check failed") != -1:
+            msg = str(e)
+            if "PID check failed" in msg:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+            elif "Private key file is encrypted" in msg:
+                msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
+                    user, self.host, self.port, msg)
+                raise errors.AnsibleConnectionFailed(msg)
             else:
-                raise errors.AnsibleConnectionFailed(str(e))
+                raise errors.AnsibleConnectionFailed(msg)
 
         return ssh
 
@@ -127,8 +104,8 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k -p "%s" -u %s -- "$SHELL" -c %s' % (prompt,
-                    sudo_user, pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+                prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
@@ -173,54 +150,3 @@ class ParamikoConnection(object):
 
         self.ssh.close()
 
-############################################
-# add other connection types here
-
-class LocalConnection(object):
-    ''' Local based connections '''
-
-    def __init__(self, runner, host):
-        self.runner = runner
-        self.host = host
-
-    def connect(self, port=None):
-        ''' connect to the local host; nothing to do here '''
-
-        return self
-
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
-        ''' run a command on the local host '''
-        if self.runner.sudo and sudoable:
-            cmd = "sudo -s %s" % cmd
-        if self.runner.sudo_pass:
-            # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
-            # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
-            # so this doesn't seem to be a huge priority
-            raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
-
-        p = subprocess.Popen(cmd, shell=True, stdin=None,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        return ("", stdout, stderr)
-
-    def put_file(self, in_path, out_path):
-        ''' transfer a file from local to local '''
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        try:
-            shutil.copyfile(in_path, out_path)
-        except shutil.Error:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
-        except IOError:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-
-    def fetch_file(self, in_path, out_path):
-        ''' fetch a file from local to local -- for copatibility '''
-        self.put_file(in_path, out_path)
-
-    def close(self):
-        ''' terminate the connection; nothing to do here '''
-
-        pass

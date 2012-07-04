@@ -1,8 +1,14 @@
+ansible (0.5) debian; urgency=low
+
+  * 0.5 update
+
+ -- Michael DeHaan <michael.dehaan@gmail.com> Wed, 04 Jul 2012 13:40:00 -0400
+
 ansible (0.4) debian; urgency=low
   
   * 0.4 update
  
--- Michael DeHaan <michael.dehaan@gmail.com> Mon, 23 May 2012 19:40:00 -0400
+ -- Michael DeHaan <michael.dehaan@gmail.com> Wed, 23 May 2012 19:40:00 -0400
 
 ansible (0.3) debian; urgency=low
 

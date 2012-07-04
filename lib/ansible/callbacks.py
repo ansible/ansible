@@ -20,6 +20,8 @@
 import utils
 import sys
 import getpass
+import os
+import subprocess
 
 #######################################################
 
@@ -74,6 +76,18 @@ class AggregateStats(object):
 
 ########################################################################
 
+def banner(msg):
+    res = ""
+    if os.path.exists("/usr/bin/cowsay"):
+        cmd = subprocess.Popen("/usr/bin/cowsay -W 60 \"%s\"" % msg, 
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        (out, err) = cmd.communicate()
+        res = "%s\n" % out 
+    else:
+        res = "%s ********************* \n" % msg
+    return res
+  
+
 class DefaultRunnerCallbacks(object):
     ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
 
@@ -118,16 +132,14 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_failed(self, host, res):
-        invocation = res.get('invocation','')
-        if not invocation.startswith('async_status'):
-            self._on_any(host,res)
+        self._on_any(host,res)
 
     def on_ok(self, host, res):
-        invocation = res.get('invocation','')
-        if not invocation.startswith('async_status'):
-            self._on_any(host,res)
+        self._on_any(host,res)
  
     def on_unreachable(self, host, res):
+        if type(res) == dict:
+            res = res.get('msg','')
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.bigjson(dict(failed=True, msg=res)))
@@ -164,28 +176,23 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats):
+    def __init__(self, stats, verbose=False):
         self.stats = stats
         self._async_notified = {}
+        self.verbose = verbose
 
     def on_unreachable(self, host, msg):
         print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        invocation = results.get('invocation',None)
-        if not invocation or invocation.startswith('setup ') or invocation.startswith('async_status '):
-            print "failed: [%s] => %s\n" % (host, utils.smjson(results))
-        else: 
-            print "failed: [%s] => %s => %s\n" % (host, invocation, utils.smjson(results))
+        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
 
     def on_ok(self, host, host_result):
-        invocation = host_result.get('invocation','')
-        if invocation.startswith('async_status'):
-            pass
-        elif not invocation or invocation.startswith('setup '):
+        # show verbose output for non-setup module results if --verbose is used
+        if not self.verbose or host_result.get("verbose_override",None) is not None:
             print "ok: [%s]\n" % (host)
         else:
-            print "ok: [%s] => %s\n" % (host, invocation)
+            print "ok: [%s] => %s" % (host, utils.smjson(host_result))
 
     def on_error(self, host, err):
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
@@ -214,8 +221,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookCallbacks(object):
     ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
   
-    def __init__(self):
-        pass
+    def __init__(self, verbose=False):
+        self.verbose = verbose
 
     def on_start(self):
         print "\n"
@@ -224,7 +231,7 @@ class PlaybookCallbacks(object):
         pass
 
     def on_task_start(self, name, is_conditional):
-        print utils.task_start_msg(name, is_conditional)
+        print banner(utils.task_start_msg(name, is_conditional))
 
     def on_vars_prompt(self, varname, private=True):
         msg = 'input for %s: ' % varname
@@ -233,10 +240,10 @@ class PlaybookCallbacks(object):
         return raw_input(msg)
         
     def on_setup_primary(self):
-        print "SETUP PHASE ****************************\n"
+        print banner("SETUP PHASE")
     
     def on_setup_secondary(self):
-        print "\nVARIABLE IMPORT PHASE ******************\n"
+        print banner("VARIABLE IMPORT PHASE")
 
     def on_import_for_host(self, host, imported_file):
         print "%s: importing %s" % (host, imported_file)
@@ -245,4 +252,4 @@ class PlaybookCallbacks(object):
         print "%s: not importing file: %s" % (host, missing_file)
 
     def on_play_start(self, pattern):
-        print "PLAY [%s] ****************************\n" % pattern
+        print banner("PLAY [%s]" % pattern)

@@ -34,6 +34,12 @@ import traceback
 import syslog
 
 try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
+
+try:
     import json
 except ImportError:
     import simplejson as json
@@ -48,7 +54,9 @@ DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
              'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
              'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
              'product_version': '/sys/devices/virtual/dmi/id/product_version',
-             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor' }
+             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
+             'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+             'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
 # From smolt and DMI spec
 FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
                 "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
@@ -62,6 +70,7 @@ FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
 # This is the fallback to handle unknowns or exceptions
 OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
                 '/etc/vmware-release': 'VMwareESX' }
+SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
 def get_file_content(path):
     if os.path.exists(path) and os.access(path, os.R_OK):
@@ -186,7 +195,7 @@ def get_linux_virtual_facts(facts):
         facts['virtualization_type'] = 'VMware'
         facts['virtualization_role'] = 'host'
     # You can spawn a dmidecode process and parse that or infer from devices
-    for dev_model in glob.glob('/proc/ide/hd*/model'):
+    for dev_model in glob.glob('/sys/block/?da/device/vendor'):
         info = open(dev_model).read()
         if 'VMware' in info:
             facts['virtualization_type'] = 'VMware'
@@ -202,7 +211,9 @@ def get_virtual_facts(facts):
         facts = get_linux_virtual_facts(facts)
 
 # get list of interfaces that are up
-def get_interfaces():
+def get_interfaces(facts):
+    if facts['system'] == 'SunOS':
+        return []
     length = 4096
     offset = 32
     step = 32
@@ -227,7 +238,7 @@ def get_iface_hwaddr(iface):
 def get_network_facts(facts):
     facts['fqdn'] = socket.getfqdn()
     facts['hostname'] = facts['fqdn'].split('.')[0]
-    facts['interfaces'] = get_interfaces()
+    facts['interfaces'] = get_interfaces(facts)
     for iface in facts['interfaces']:
         facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
         # This is lame, but there doesn't appear to be a good way
@@ -268,27 +279,24 @@ def get_public_ssh_host_keys(facts):
         facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
 def get_selinux_facts(facts):
-    if os.path.exists("/usr/sbin/sestatus"):
-        cmd = subprocess.Popen("/usr/sbin/sestatus", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        if err == '':
-            facts['selinux'] = {}
-            list = out.split("\n")
-            status = re.search("(enabled|disabled)", list[0])
-            if status.group() == "enabled":
-                mode = re.search("(enforcing|disabled|permissive)", list[2])
-                config_mode = re.search("(enforcing|disabled|permissive)", list[3])
-                policyvers = re.search("\d+", list[4])
-                type = re.search("(targeted|strict|mls)", list[5])
-                facts['selinux']['status'] = status.group()
-                facts['selinux']['mode'] = mode.group()
-                facts['selinux']['config_mode'] = config_mode.group()
-                facts['selinux']['policyvers'] = policyvers.group()
-                facts['selinux']['type'] = type.group()
-            elif status.group() == "disabled":
-                facts['selinux']['status'] = status.group()            
-    else:
+    if not HAVE_SELINUX:
         facts['selinux'] = False
+        return
+    facts['selinux'] = {}
+    if not selinux.is_selinux_enabled():
+        facts['selinux']['status'] = 'disabled'
+    else:
+        facts['selinux']['status'] = 'enabled'
+        facts['selinux']['policyvers'] = selinux.security_policyvers()
+        (rc, configmode) = selinux.selinux_getenforcemode()
+        if rc == 0 and SELINUX_MODE_DICT.has_key(configmode):
+            facts['selinux']['config_mode'] = SELINUX_MODE_DICT[configmode]
+        mode = selinux.security_getenforce()
+        if SELINUX_MODE_DICT.has_key(mode):
+            facts['selinux']['mode'] = SELINUX_MODE_DICT[mode]
+        (rc, policytype) = selinux.selinux_getpolicytype()
+        if rc == 0:
+            facts['selinux']['type'] = policytype
 
 def get_service_facts(facts):
     get_public_ssh_host_keys(facts)
@@ -302,6 +310,10 @@ def ansible_facts():
     get_network_facts(facts)
     get_service_facts(facts)
     return facts
+
+def md5_sum(f):
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
+    return md5sum
 
 # load config & template variables
 
@@ -339,7 +351,7 @@ md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = os.popen("md5sum %s" % ansible_file).read().split()[0]
+    md5sum = md5_sum(ansible_file)
 
 # Get some basic facts in case facter or ohai are not installed
 for (k, v) in ansible_facts().items():
@@ -388,7 +400,7 @@ reformat = json.dumps(setup_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
-md5sum2 = os.popen("md5sum %s" % ansible_file).read().split()[0]
+md5sum2 = md5_sum(ansible_file)
 
 if md5sum != md5sum2:
    changed = True
@@ -398,6 +410,9 @@ setup_result['written'] = ansible_file
 setup_result['changed'] = changed
 setup_result['md5sum']  = md5sum2 
 setup_result['ansible_facts'] = setup_options
+
+# hack to keep --verbose from showing all the setup module results
+setup_result['verbose_override'] = True
 
 print json.dumps(setup_result)
 

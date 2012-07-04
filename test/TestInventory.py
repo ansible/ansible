@@ -99,6 +99,17 @@ class TestInventory(unittest.TestCase):
         print expected_hosts
         assert sorted(hosts) == sorted(expected_hosts)
 
+    def test_simple_exclude(self):
+        inventory = self.simple_inventory()
+
+        hosts = inventory.list_hosts("all:!greek")
+        expected_hosts=['jupiter', 'saturn', 'thor', 'odin', 'loki']
+        assert sorted(hosts) == sorted(expected_hosts)
+
+        hosts = inventory.list_hosts("all:!norse:!greek")
+        expected_hosts=['jupiter', 'saturn']
+        assert sorted(hosts) == sorted(expected_hosts)
+
     def test_simple_vars(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
@@ -135,6 +146,13 @@ class TestInventory(unittest.TestCase):
         print vars
         print expected
         assert vars == expected
+
+    def test_complex_exclude(self):
+        inventory = self.complex_inventory()
+
+        hosts = inventory.list_hosts("nc:!triangle:florida:!orlando")
+        expected_hosts=['rtp_a', 'rtp_b', 'rtb_c', 'miami']
+        assert sorted(hosts) == sorted(expected_hosts)
 
 
 
@@ -204,14 +222,14 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts()
         print hosts
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_all(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts('all')
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_norse(self):
@@ -225,7 +243,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter']
+        expected_hosts=['jupiter', 'mars']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_combined(self):

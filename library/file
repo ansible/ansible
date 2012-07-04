@@ -33,7 +33,7 @@ except ImportError:
     HAVE_SELINUX=False
 
 def dump_kv(vars):
-    return " ".join("%s=%s" % (k,v) for (k,v) in vars.items())
+    return " ".join("%s='%s'" % (k,v) for (k,v) in vars.items())
 
 def exit_kv(rc=0, **kwargs):
     if 'path' in kwargs:
@@ -180,15 +180,18 @@ changed = False
 # ===========================================
 # support functions
 
-def md5sum(filename):
-    return os.popen("/usr/bin/md5sum %s" % f).read()
-
 def user_and_group(filename):
     st = os.stat(filename)
     uid = st.st_uid
     gid = st.st_gid
-    user = pwd.getpwuid(uid)[0]
-    group = grp.getgrgid(gid)[0]
+    try:
+        user = pwd.getpwuid(uid)[0]
+    except KeyError:
+        user = str(uid)
+    try:
+        group = grp.getgrgid(gid)[0]
+    except KeyError:
+        group = str(gid)
     return (user, group)
 
 def set_context_if_different(path, context, changed):
@@ -216,7 +219,7 @@ def set_owner_if_different(path, owner, changed):
        return changed
    user, group = user_and_group(path)
    if owner != user:
-       rc = os.system("/bin/chown -R %s %s" % (owner, path))
+       rc = os.system("/bin/chown -R %s %s 2>/dev/null" % (owner, path))
        if rc != 0:
            fail_kv(path=path, msg='chown failed')
        return True

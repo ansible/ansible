@@ -96,12 +96,12 @@ class Cli(object):
             pattern=pattern, 
             callbacks=self.callbacks, sudo=options.sudo, 
             sudo_pass=sudopass,sudo_user=options.sudo_user,
-            transport=options.connection, debug=options.debug
+            transport=options.connection, verbose=options.verbose
         )
 
         if options.seconds:
             print "background launch...\n\n"
-            results, poller = runner.runAsync(options.seconds)
+            results, poller = runner.run_async(options.seconds)
             results = self.poll_while_needed(poller, options)
         else:
             results = runner.run()
