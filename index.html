@@ -190,7 +190,7 @@ and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
 For comparison, Puppet and Chef have about 60k lines of code.
-Ansible&#8217;s core is a little over 1000 lines.</p>
+Ansible&#8217;s core is a little over 2000 lines..</p>
 <p>Ansible isn&#8217;t just for idempotent configuration &#8211; it&#8217;s also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See <a class="reference internal" href="examples.html"><em>Command Line</em></a>.</p>
 </div>
@@ -237,6 +237,7 @@ hosts.</p>
 <li>Dead simple setup</li>
 <li>Super fast &amp; parallel by default</li>
 <li>No server or client daemons; use existing SSHd out of the box</li>
+<li>Supports Kerberized SSH, jump hosts, forwarding, etc</li>
 <li>No additional software required on client boxes</li>
 <li>Can be easily run from a checkout, no installation required</li>
 <li>Modules are idempotent, but you can also easily use shell commands</li>
@@ -290,6 +291,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l3"><a class="reference internal" href="gettingstarted.html#tagged-releases">Tagged Releases</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#choosing-between-paramiko-and-native-ssh">Choosing Between Paramiko and Native SSH</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#your-first-commands">Your first commands</a></li>
 </ul>
 </li>
@@ -314,6 +316,8 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#apt">apt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#assemble">assemble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#authorized-key">authorized_key</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#command">command</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#copy">copy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#facter">facter</a></li>
@@ -324,7 +328,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l2"><a class="reference internal" href="modules.html#ohai">ohai</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#ping">ping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#raw">raw</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#id9">service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#id11">service</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#setup">setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#shell">shell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#template">template</a></li>
@@ -349,6 +353,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#running-operations-on-change">Running Operations On Change</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#include-files-and-reuse">Include Files And Reuse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="playbooks.html#executing-a-playbook">Executing A Playbook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="playbooks.html#tips-and-tricks">Tips and Tricks</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a><ul>
@@ -370,6 +375,7 @@ Email: <input type=text name=email>&nbsp;&nbsp;<input type=submit name="sub" val
 <li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bestpractices.html#group-by-roles">Group By Roles</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bestpractices.html#directory-organization">Directory Organization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bestpractices.html#bundling-ansible-modules-with-playbooks">Bundling Ansible Modules With Playbooks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bestpractices.html#miscellaneous-tips">Miscellaneous Tips</a></li>
 </ul>
 </li>
@@ -447,7 +453,7 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>

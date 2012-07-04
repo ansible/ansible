@@ -73,7 +73,7 @@ Example action from Ansible :doc:`playbooks`::
     apt pkg=foo=1.00 state=installed
     apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
 
-. _assemble:
+.. _assemble:
 
 assemble
 ````````
@@ -97,7 +97,7 @@ Example action from Ansible :doc:`playbooks`::
     assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
 
 
-_authorized_key:
+.. _authorized_key:
 
 authorized_key
 ``````````````

@@ -230,8 +230,7 @@ best&#8217;, and distills all of the ideas behind all of these other tools to th
 <p>Ansible uses SSH by default instead of SSL and custom daemons, and requires
 no extra software to run on managed machines.  You can also write modules
 in any language as long as they return JSON.  Ansible&#8217;s API, of course, is
-heavily inspired by Func.   Some features, like delegation hierarchies, are
-not supported, but Ansible does have an async mode.  Ansible also adds
+heavily inspired by Func.   Ansible also adds
 a configuration management and multinode orchestration layer (<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>)
 that Func didn&#8217;t have.</p>
 </div>
@@ -247,7 +246,7 @@ notification events (like Puppet).  This is kind of a &#8216;best of both worlds
 also designed with multi-node deployment in mind from day-one &#8211; something that is difficult
 for Puppet because of the pull architecture.  Ansible is push based,
 so you can do things in an ordered fashion, addressing batches of servers
-at one time, and you do not have to contend with the DAG.  It&#8217;s also extensible in any language
+at one time, and you do not have to contend with the dependency graph.  It&#8217;s also extensible in any language
 and the source is designed so that you don&#8217;t have to be an expert programmer to submit a patch.</p>
 <p>Ansible&#8217;s resources are heavily inspired by Puppet, with the &#8220;state&#8221; keyword being a more or less
 direct port of &#8220;ensure&#8221; from Puppet.  Unlike Puppet, Ansible can be extended in any language,
@@ -324,9 +323,12 @@ to go.</p>
 Ansible, it is not consuming any resources, and you don&#8217;t have to contend
 with a herd of machines all knocking at the door of your management server
 all at once.</p>
+<p>The SSH connection type (paramiko is the default, binary openssh is an option)
+can also make use of &#8220;ControlMaster&#8221; features in SSH, which reuses network
+connections.</p>
 <p>If you have 10,000 systems, running a single ansible playbook against all of
-them probably isn&#8217;t appropriate, which is why ansible-pull exists.</p>
-<p>This tool is designed for running out of git and cron, and can scale to any
+them probably isn&#8217;t appropriate, which is why ansible-pull exists.  This tool
+is designed for running out of git and cron, and can scale to any
 number of hosts.  Ansible-pull uses local connections versus SSH, but can be
 easily bootstrapped or reconfigured just using SSH.  There is more information
 available about this in the <a class="reference internal" href="playbooks2.html"><em>Advanced Playbooks</em></a> section.  The self-bootstrapping
@@ -336,8 +338,8 @@ model.</p>
 </div>
 <div class="section" id="are-transports-other-than-ssh-supported">
 <h3>Are transports other than SSH supported?<a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
-<p>Currently SSH and local connections are supported.  In 0.5, we&#8217;ll also be including
-a faster SSH transport.  The interface is actually pluggable so a
+<p>Currently SSH (you can choose between paramiko or the openssh binaries)
+and local connections are supported.  The interface is actually pluggable so a
 small patch could bring transport over message bus or XMPP as an option.</p>
 <p>Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible
 are all abstracted away from the core implementation so it is very easy to extend.</p>
@@ -386,7 +388,7 @@ tasks &#8211; whether for a QA sytem, build system, or anything you can think of
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>

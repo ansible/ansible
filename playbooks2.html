@@ -222,13 +222,20 @@ want to reference data from must be included in either the current play or any p
 <div class="section" id="magic-variables">
 <h2>Magic Variables<a class="headerlink" href="#magic-variables" title="Permalink to this headline">¶</a></h2>
 <p>Some variables made available to hosts don&#8217;t come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won&#8217;t need.</p>
-<p><cite>groups</cite> is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
+<p><em>group_names</em> is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
 syntax to make template source files that vary based on the group membership (or role) of the host:</p>
-<div class="highlight-python"><pre>{% if 'webserver' in groups %}
+<div class="highlight-python"><pre>{% if 'webserver' in group_names %}
    # some part of a configuration file that only applies to webservers
 {% endif %}</pre>
 </div>
-<p><cite>inventory_hostname</cite> is the name of the hostname as configured in Ansible&#8217;s inventory host file.  This can
+<p><em>groups</em> is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
+For example:</p>
+<div class="highlight-python"><pre>{% for host in groups['app_servers'] %}
+   # something that applies to all app servers.
+{% endfor %}</pre>
+</div>
+<p>Use cases include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.</p>
+<p><em>inventory_hostname</em> is the name of the hostname as configured in Ansible&#8217;s inventory host file.  This can
 be useful for when you don&#8217;t want to rely on the discovered hostname <cite>ansible_hostname</cite> or for other mysterious
 reasons.  Don&#8217;t worry about it unless you think you need it.</p>
 </div>
@@ -501,7 +508,7 @@ logs from ansible-pull runs would be an excellent way to gather and analyze remo
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>
