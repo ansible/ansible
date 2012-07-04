@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-0.5 "Amsterdam" ------- July XX, 2012
+0.6 "Cabo" ------------ pending
+
+* ...
+
+0.5 "Amsterdam" ------- July 04, 2012
 
 * Service module gets more accurate service states when running with upstart
 * Jinja2 usage in playbooks (not templates), reinstated, supports %include directive
