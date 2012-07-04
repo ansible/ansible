@@ -50,8 +50,7 @@ vs Func?
 Ansible uses SSH by default instead of SSL and custom daemons, and requires
 no extra software to run on managed machines.  You can also write modules
 in any language as long as they return JSON.  Ansible's API, of course, is
-heavily inspired by Func.   Some features, like delegation hierarchies, are
-not supported, but Ansible does have an async mode.  Ansible also adds
+heavily inspired by Func.   Ansible also adds
 a configuration management and multinode orchestration layer (:doc:`playbooks`) 
 that Func didn't have.
 
@@ -70,7 +69,7 @@ There is no central server subject to thundering herd problems, and Ansible is
 also designed with multi-node deployment in mind from day-one -- something that is difficult
 for Puppet because of the pull architecture.  Ansible is push based,
 so you can do things in an ordered fashion, addressing batches of servers
-at one time, and you do not have to contend with the DAG.  It's also extensible in any language
+at one time, and you do not have to contend with the dependency graph.  It's also extensible in any language
 and the source is designed so that you don't have to be an expert programmer to submit a patch.
 
 Ansible's resources are heavily inspired by Puppet, with the "state" keyword being a more or less
@@ -167,10 +166,13 @@ Ansible, it is not consuming any resources, and you don't have to contend
 with a herd of machines all knocking at the door of your management server
 all at once.
 
-If you have 10,000 systems, running a single ansible playbook against all of
-them probably isn't appropriate, which is why ansible-pull exists.
+The SSH connection type (paramiko is the default, binary openssh is an option) 
+can also make use of "ControlMaster" features in SSH, which reuses network
+connections.
 
-This tool is designed for running out of git and cron, and can scale to any
+If you have 10,000 systems, running a single ansible playbook against all of
+them probably isn't appropriate, which is why ansible-pull exists.  This tool 
+is designed for running out of git and cron, and can scale to any
 number of hosts.  Ansible-pull uses local connections versus SSH, but can be
 easily bootstrapped or reconfigured just using SSH.  There is more information
 available about this in the :doc:`playbooks2` section.  The self-bootstrapping
@@ -182,8 +184,8 @@ If you'd like to discuss scaling strategies further, please hop on the mailing l
 Are transports other than SSH supported?
 ++++++++++++++++++++++++++++++++++++++++
 
-Currently SSH and local connections are supported.  In 0.5, we'll also be including
-a faster SSH transport.  The interface is actually pluggable so a 
+Currently SSH (you can choose between paramiko or the openssh binaries)
+and local connections are supported.  The interface is actually pluggable so a 
 small patch could bring transport over message bus or XMPP as an option.
 
 Stop by the mailing list if you have ideas.  The connection-specific parts of Ansible

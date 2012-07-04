@@ -67,6 +67,10 @@ with the aforementioned bracket headers in the inventory file::
     webservers
     webservers:dbservers
 
+In 0.5 and later, you can exclude groups as well, for instance, all webservers not in Phoenix::
+
+    webservers:!phoenix
+
 Individual host names (or IPs), but not groups, can also be referenced using
 wildcards::
 
@@ -77,13 +81,13 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
+
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 
 Host Variables
 ++++++++++++++
 
-Using the 0.4 branch of Ansible, it is easy to assign variables to hosts that will be used
-later in playbooks::
+It is easy to assign variables to hosts that will be used later in playbooks::
  
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
@@ -93,7 +97,7 @@ later in playbooks::
 Group Variables
 +++++++++++++++
 
-Using the 0.4 branch of Ansible, variables can also be applied to an entire group at once::
+Variables can also be applied to an entire group at once::
 
    [atlanta]
    host1
@@ -137,7 +141,7 @@ variables to groups.  These variables can be used by /usr/bin/ansible-playbook, 
 YAML Inventory Format
 +++++++++++++++++++++
 
-For people using 0.3, or those that prefer to use it, the inventory file can also be expressed in
+For that prefer to use it, the inventory file can also be expressed in
 YAML::
 
     ---
@@ -174,6 +178,9 @@ YAML::
       - loki
       vars:
         - asdf: 1234
+
+Tip: If you ever have two python interpreters on a system, set a variable called 'ansible_python_interpreter' to
+the Python interpreter path you would like to use.  (This is available in version 0.5 and later)
 
 Tip: Be sure to start your YAML file with the YAML record designator ``---``.
 

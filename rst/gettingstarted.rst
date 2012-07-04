@@ -21,7 +21,7 @@ also need:
 
 * ``python-simplejson`` 
 
-NOTE: Ansible 0.4 will have ways to remote bootstrap this, using Ansible itself.  Stay tuned.
+(Note that even that's not quite true.  Ansible's "raw" module (for executing commands in a quick and dirty way) and the copy module -- some of the most basic features in ansible don't even need that.  So technically, you can use Ansible to install python-simplejson using the raw module, which then allows you to use everything else.  That's jumping ahead though.)
 
 Python 2.6 EPEL instructions for RHEL and CentOS 5
 ``````````````````````````````````````````````````
@@ -128,6 +128,24 @@ project page:
 
 * `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
 
+Choosing Between Paramiko and Native SSH
+````````````````````````````````````````
+
+By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko is fast, works
+very transparently, requires no configuration, and is a good choice for most users.
+However, it does not support some advanced SSH features that folks will want to use.
+
+Starting in version 0.5, if you want to leverage more advanced SSH features (such as Kerberized SSH or jump hosts), 
+pass the flag "--connection=ssh" to any ansible command, or set the
+ANSIBLE_TRANSPORT environment variable to 'ssh'. This will cause Ansible to use openssh
+tools instead.  
+
+If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
+by default.  You are free to override this environment variable, but should still pass ControlMaster
+options to ensure performance of this transport.  With ControlMaster in use, both transports
+are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.
+
+If none of this makes sense to you, the default paramiko option is probably fine.
 
 Your first commands
 ```````````````````
@@ -146,9 +164,23 @@ Set up SSH agent to avoid retyping passwords::
     ssh-agent bash
     ssh-add ~/.ssh/id_rsa
 
+(Depending on your setup, you may wish to ansible's --private-key-file option to specify a pem file instead)
+
 Now ping all your nodes::
 
     ansible all -m ping
+
+If you want to access machines remotely as a different user than root, you will want to 
+specify the '-u' option to ansible.  If you would like to access sudo mode, there are also flags to do that::
+
+    # as bruce
+    ansible all -m ping -u bruce
+
+    # as bruce, sudoing to root
+    ansible all -m ping -u bruce --sudo 
+  
+    # as bruce, sudoing to batman
+    ansible all -m ping -u bruce --sudo --sudo-user batman
 
 Now run a live command on all of your nodes::
   

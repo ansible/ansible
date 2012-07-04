@@ -103,7 +103,7 @@ These variables can be used later in the playbook like this::
 
 The later is useful in the event you need to do something like ${other}_concatenated_value.
 
-In templates, the full power of the Jinja2 templating language is also available, which looks like this::
+The full power of the Jinja2 templating language is also available (note: in 0.4, this is only true inside of templates), which looks like this::
 
     {{ varname }}
 
@@ -297,6 +297,19 @@ Now that you've learned playbook syntax, how do you run a playbook?  It's simple
 Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
+
+Tips and Tricks
+```````````````
+
+Look at the bottom of the playbook execution for a summary of the nodes that were executed
+and how they performed.   General failures and fatal "unreachable" communication attempts are 
+kept seperate in the counts.
+
+If you ever want to see detailed output from successful modules as well as unsuccessful ones,
+use the '--verbose' flag.  This is available in Ansible 0.5 and later.
+
+Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay 
+package is installed.  Try it!
 
 .. seealso::
 
