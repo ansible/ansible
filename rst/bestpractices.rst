@@ -19,6 +19,7 @@ Playbooks should be organized like this::
  
     (root of source control repository)
 
+        global_vars.yml # variables for all playbooks
         acme/           # each playbook has a directory
 
             setup.yml   # playbook to manage the service
@@ -32,7 +33,7 @@ Playbooks should be organized like this::
                etc_other_conf_other.conf
 
             vars/
-               main.yml
+               main.yml  # variables specific to this playbook
 
             handlers/
                main.yml
@@ -52,6 +53,7 @@ The acme/setup.yml playbook would be as simple as::
       user: root
 
       vars_files
+        - ../global_vars.yml
         - vars/main.yml
       tasks:
         - include: tasks/setup.yml
