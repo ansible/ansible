@@ -149,6 +149,8 @@ s.parentNode.insertBefore(ga, s);
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
 <li><a class="reference internal" href="#apt">apt</a></li>
+<li><a class="reference internal" href="#assemble">assemble</a></li>
+<li><a class="reference internal" href="#authorized-key">authorized_key</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
@@ -159,7 +161,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
 <li><a class="reference internal" href="#raw">raw</a></li>
-<li><a class="reference internal" href="#id9">service</a></li>
+<li><a class="reference internal" href="#id11">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
@@ -257,8 +259,46 @@ apt pkg=foo=1.00 state=installed
 apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes</pre>
 </div>
 </div>
+<div class="section" id="assemble">
+<span id="id2"></span><h2>assemble<a class="headerlink" href="#assemble" title="Permalink to this headline">¶</a></h2>
+<p>(new in 0.5) Assembles a configuration file from fragments.   Often a particular program will take a single configuration file
+and does not support a conf.d style structure where it is easy to build up the configuration from multiple sources.
+Assmeble will take a directory of files that have already been transferred to the system, and concatenate them
+together to produce a destination file.  Files are assembled in string sorting order.   Puppet calls this idea
+&#8220;fragments&#8221;.</p>
+<p><em>src</em>:</p>
+<ul class="simple">
+<li>An already existing directory full of source files.</li>
+</ul>
+<p><em>dest</em>:</p>
+<ul class="simple">
+<li>A file to create using the concatenation of all of the source files.</li>
+</ul>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf</pre>
+</div>
+</div>
+<div class="section" id="authorized-key">
+<span id="id3"></span><h2>authorized_key<a class="headerlink" href="#authorized-key" title="Permalink to this headline">¶</a></h2>
+<p>(new in 0.5).  Adds or removes an authorized key for a user from a remote host.</p>
+<p><em>user</em>:</p>
+<ul class="simple">
+<li>Name of the user who access is being granted or remoted to.</li>
+</ul>
+<p><em>state</em>:</p>
+<ul class="simple">
+<li>Either &#8216;absent&#8217; or &#8216;present&#8217;, this is whether the given key should be in the authorized keys file or not.</li>
+</ul>
+<p><em>key</em>:</p>
+<ul class="simple">
+<li>The actual key, as a string.</li>
+</ul>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>authorized_key user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"</pre>
+</div>
+</div>
 <div class="section" id="command">
-<span id="id2"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
 arguments, space delimited.</p>
 <p>If you want to run a command through the shell (say you are using
@@ -281,7 +321,7 @@ following:</p>
 <p>The <cite>creates=</cite> option will not be passed to the executable.</p>
 </div>
 <div class="section" id="copy">
-<span id="id3"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
 <p>The copy module moves a file on the local box to remote locations.  In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
 module.</p>
@@ -300,7 +340,7 @@ absolute or relative path.</li>
 </div>
 </div>
 <div class="section" id="facter">
-<span id="id4"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
 <p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
@@ -387,7 +427,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="git">
-<span id="id5"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <p><em>repo</em>:</p>
 <ul class="simple">
@@ -411,7 +451,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="group">
-<span id="id6"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -435,7 +475,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="ohai">
-<span id="id7"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -445,7 +485,7 @@ support change hooks, nor does it make any changes on the system.</p>
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
-<span id="id8"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
 <p>This module does not support change hooks and is informative only - it
@@ -468,8 +508,8 @@ for this module.</p>
 <div class="highlight-python"><pre>ansible newhost.example.com raw -a "yum install python-simplejson"</pre>
 </div>
 </div>
-<div class="section" id="id9">
-<h2>service<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id11">
+<h2>service<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <p><em>state</em>:</p>
 <ul class="simple">
@@ -499,7 +539,7 @@ service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id10"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>Writes a JSON file containing key/value data, for use in templating.
 Call this once before using the <a class="reference internal" href="#template"><em>template</em></a> module.  Playbooks
 will execute this module automatically as the first step in each play
@@ -592,7 +632,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id11"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -610,7 +650,7 @@ command was running.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id12"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
 prior to usage if you are not running from a playbook.   In addition to the options
 listed below, the arguments available to the <cite>file</cite> and <cite>copy</cite> modules can also be passed
@@ -630,7 +670,7 @@ be a relative or absolute path.</li>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id13"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <p><em>name</em>:</p>
 <ul class="simple">
@@ -664,6 +704,10 @@ be a relative or absolute path.</li>
 <ul class="simple">
 <li>Whether to create the user&#8217;s home directory.  Takes &#8216;yes&#8217;, or &#8216;no&#8217;.  The default is &#8216;yes&#8217;.</li>
 </ul>
+<p><em>home=</em>:</p>
+<ul class="simple">
+<li>Specifies where the user&#8217;s home directory should be, if not in /home/$username.</li>
+</ul>
 <p><em>password</em>:</p>
 <ul class="simple">
 <li>Sets the user&#8217;s password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.</li>
@@ -691,7 +735,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id14"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <p><em>guest</em>:</p>
@@ -728,7 +772,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id15"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <p><em>pkg</em>:</p>
 <ul class="simple">
@@ -789,7 +833,7 @@ yum pkg=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>

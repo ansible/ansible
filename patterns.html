@@ -234,6 +234,9 @@ with the aforementioned bracket headers in the inventory file:</p>
 <div class="highlight-python"><pre>webservers
 webservers:dbservers</pre>
 </div>
+<p>In 0.5 and later, you can exclude groups as well, for instance, all webservers not in Phoenix:</p>
+<div class="highlight-python"><pre>webservers:!phoenix</pre>
+</div>
 <p>Individual host names (or IPs), but not groups, can also be referenced using
 wildcards:</p>
 <div class="highlight-python"><pre>*.example.com
@@ -246,8 +249,7 @@ wildcards:</p>
 </div>
 <div class="section" id="host-variables">
 <h2>Host Variables<a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
-<p>Using the 0.4 branch of Ansible, it is easy to assign variables to hosts that will be used
-later in playbooks:</p>
+<p>It is easy to assign variables to hosts that will be used later in playbooks:</p>
 <div class="highlight-python"><pre>[atlanta]
 host1 http_port=80 maxRequestsPerChild=808
 host2 http_port=303 maxRequestsPerChild=909</pre>
@@ -255,7 +257,7 @@ host2 http_port=303 maxRequestsPerChild=909</pre>
 </div>
 <div class="section" id="group-variables">
 <h2>Group Variables<a class="headerlink" href="#group-variables" title="Permalink to this headline">¶</a></h2>
-<p>Using the 0.4 branch of Ansible, variables can also be applied to an entire group at once:</p>
+<p>Variables can also be applied to an entire group at once:</p>
 <div class="highlight-python"><pre>[atlanta]
 host1
 host2
@@ -297,7 +299,7 @@ southeast</pre>
 </div>
 <div class="section" id="yaml-inventory-format">
 <h2>YAML Inventory Format<a class="headerlink" href="#yaml-inventory-format" title="Permalink to this headline">¶</a></h2>
-<p>For people using 0.3, or those that prefer to use it, the inventory file can also be expressed in
+<p>For that prefer to use it, the inventory file can also be expressed in
 YAML:</p>
 <div class="highlight-python"><pre>---
 
@@ -334,6 +336,8 @@ YAML:</p>
   vars:
     - asdf: 1234</pre>
 </div>
+<p>Tip: If you ever have two python interpreters on a system, set a variable called &#8216;ansible_python_interpreter&#8217; to
+the Python interpreter path you would like to use.  (This is available in version 0.5 and later)</p>
 <p>Tip: Be sure to start your YAML file with the YAML record designator <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -366,7 +370,7 @@ YAML:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>

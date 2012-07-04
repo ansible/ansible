@@ -150,6 +150,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#">Best Practices</a><ul>
 <li><a class="reference internal" href="#group-by-roles">Group By Roles</a></li>
 <li><a class="reference internal" href="#directory-organization">Directory Organization</a></li>
+<li><a class="reference internal" href="#bundling-ansible-modules-with-playbooks">Bundling Ansible Modules With Playbooks</a></li>
 <li><a class="reference internal" href="#miscellaneous-tips">Miscellaneous Tips</a></li>
 </ul>
 </li>
@@ -193,6 +194,7 @@ using the group variable system.</p>
 <p>Playbooks should be organized like this:</p>
 <div class="highlight-python"><pre>(root of source control repository)
 
+    global_vars.yml # variables for all playbooks
     acme/           # each playbook has a directory
 
         setup.yml   # playbook to manage the service
@@ -206,7 +208,7 @@ using the group variable system.</p>
            etc_other_conf_other.conf
 
         vars/
-           main.yml
+           main.yml  # variables specific to this playbook
 
         handlers/
            main.yml
@@ -224,6 +226,7 @@ will require <cite>handlers</cite>, <cite>tasks</cite>, and <cite>templates</cit
   user: root
 
   vars_files
+    - ../global_vars.yml
     - vars/main.yml
   tasks:
     - include: tasks/setup.yml
@@ -238,6 +241,11 @@ when things change, and these are described in <a class="reference internal" hre
 <p>Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
 You don&#8217;t have to do this though. It&#8217;s fine to select sections of your infrastructure to manage at a single time.
 You may wish to construct simple shell scripts to wrap calls to ansible-playbook.</p>
+</div>
+<div class="section" id="bundling-ansible-modules-with-playbooks">
+<h2>Bundling Ansible Modules With Playbooks<a class="headerlink" href="#bundling-ansible-modules-with-playbooks" title="Permalink to this headline">¶</a></h2>
+<p>In version 0.5 and later, if a playbook has a &#8221;./library&#8221; directory relative to it&#8217;s YAML file, this directory can be used to add ansible modules that will automatically be in the ansible module path.  This is a great way to keep modules that
+go with a playbook together.</p>
 </div>
 <div class="section" id="miscellaneous-tips">
 <h2>Miscellaneous Tips<a class="headerlink" href="#miscellaneous-tips" title="Permalink to this headline">¶</a></h2>
@@ -289,7 +297,7 @@ This way you have an audit trail describing when and why you changed the rules a
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>

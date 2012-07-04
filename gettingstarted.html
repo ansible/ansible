@@ -158,6 +158,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#tagged-releases">Tagged Releases</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#choosing-between-paramiko-and-native-ssh">Choosing Between Paramiko and Native SSH</a></li>
 <li><a class="reference internal" href="#your-first-commands">Your first commands</a></li>
 </ul>
 </li>
@@ -205,7 +206,7 @@ also need:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">python-simplejson</span></tt></li>
 </ul>
-<p>NOTE: Ansible 0.4 will have ways to remote bootstrap this, using Ansible itself.  Stay tuned.</p>
+<p>(Note that even that&#8217;s not quite true.  Ansible&#8217;s &#8220;raw&#8221; module (for executing commands in a quick and dirty way) and the copy module &#8211; some of the most basic features in ansible don&#8217;t even need that.  So technically, you can use Ansible to install python-simplejson using the raw module, which then allows you to use everything else.  That&#8217;s jumping ahead though.)</p>
 </div>
 <div class="section" id="python-2-6-epel-instructions-for-rhel-and-centos-5">
 <h2>Python 2.6 EPEL instructions for RHEL and CentOS 5<a class="headerlink" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" title="Permalink to this headline">¶</a></h2>
@@ -293,6 +294,21 @@ project page:</p>
 </ul>
 </div>
 </div>
+<div class="section" id="choosing-between-paramiko-and-native-ssh">
+<h2>Choosing Between Paramiko and Native SSH<a class="headerlink" href="#choosing-between-paramiko-and-native-ssh" title="Permalink to this headline">¶</a></h2>
+<p>By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko is fast, works
+very transparently, requires no configuration, and is a good choice for most users.
+However, it does not support some advanced SSH features that folks will want to use.</p>
+<p>Starting in version 0.5, if you want to leverage more advanced SSH features (such as Kerberized SSH or jump hosts),
+pass the flag &#8220;&#8211;connection=ssh&#8221; to any ansible command, or set the
+ANSIBLE_TRANSPORT environment variable to &#8216;ssh&#8217;. This will cause Ansible to use openssh
+tools instead.</p>
+<p>If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
+by default.  You are free to override this environment variable, but should still pass ControlMaster
+options to ensure performance of this transport.  With ControlMaster in use, both transports
+are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.</p>
+<p>If none of this makes sense to you, the default paramiko option is probably fine.</p>
+</div>
 <div class="section" id="your-first-commands">
 <h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
 <p>Now that you&#8217;ve installed Ansible, it&#8217;s time to test it.</p>
@@ -306,8 +322,20 @@ bserver.example.org</pre>
 <div class="highlight-python"><pre>ssh-agent bash
 ssh-add ~/.ssh/id_rsa</pre>
 </div>
+<p>(Depending on your setup, you may wish to ansible&#8217;s &#8211;private-key-file option to specify a pem file instead)</p>
 <p>Now ping all your nodes:</p>
 <div class="highlight-python"><pre>ansible all -m ping</pre>
+</div>
+<p>If you want to access machines remotely as a different user than root, you will want to
+specify the &#8216;-u&#8217; option to ansible.  If you would like to access sudo mode, there are also flags to do that:</p>
+<div class="highlight-python"><pre># as bruce
+ansible all -m ping -u bruce
+
+# as bruce, sudoing to root
+ansible all -m ping -u bruce --sudo
+
+# as bruce, sudoing to batman
+ansible all -m ping -u bruce --sudo --sudo-user batman</pre>
 </div>
 <p>Now run a live command on all of your nodes:</p>
 <div class="highlight-python"><pre>ansible all -a "/bin/echo hello"</pre>
@@ -349,7 +377,7 @@ explore, but you already have a fully working infrastructure!</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jun 19, 2012.<br/>
+      Last updated on Jul 04, 2012.<br/>
     </p>
   </div>
 </footer>
