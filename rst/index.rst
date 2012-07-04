@@ -6,8 +6,8 @@ Ansible is a radically simple model-driven configuration management, deployment,
 and command execution framework. Other tools in this space have been too
 complicated for too long, require too much bootstrapping, and have too
 much learning curve.  Ansible is dead simple and painless to extend.
-For comparison, Puppet and Chef have about 60k lines of code.
-Ansible's core is a little over 1000 lines.
+For comparison, Puppet and Chef have about 60k lines of code. 
+Ansible's core is a little over 2000 lines..
 
 Ansible isn't just for idempotent configuration -- it's also great for ad-hoc
 tasks, quickly firing off commands against nodes.  See :doc:`examples`.
@@ -68,6 +68,7 @@ Features
 * Dead simple setup
 * Super fast & parallel by default
 * No server or client daemons; use existing SSHd out of the box
+* Supports Kerberized SSH, jump hosts, forwarding, etc
 * No additional software required on client boxes
 * Can be easily run from a checkout, no installation required
 * Modules are idempotent, but you can also easily use shell commands

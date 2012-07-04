@@ -73,7 +73,55 @@ Example action from Ansible :doc:`playbooks`::
     apt pkg=foo=1.00 state=installed
     apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
 
+. _assemble:
+
+assemble
+````````
+
+(new in 0.5) Assembles a configuration file from fragments.   Often a particular program will take a single configuration file
+and does not support a conf.d style structure where it is easy to build up the configuration from multiple sources.
+Assmeble will take a directory of files that have already been transferred to the system, and concatenate them
+together to produce a destination file.  Files are assembled in string sorting order.   Puppet calls this idea
+"fragments".
+
+*src*:
+
+* An already existing directory full of source files.
+
+*dest*:
+
+* A file to create using the concatenation of all of the source files.
+
+Example action from Ansible :doc:`playbooks`::
+
+    assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+
+
+_authorized_key:
+
+authorized_key
+``````````````
+
+(new in 0.5).  Adds or removes an authorized key for a user from a remote host.
+
+*user*:
+
+* Name of the user who access is being granted or remoted to.
+
+*state*:
+
+* Either 'absent' or 'present', this is whether the given key should be in the authorized keys file or not.
+
+*key*:
+
+* The actual key, as a string.  
+
+Example action from Ansible :doc:`playbooks`::
+
+    authorized_key user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"
+
 .. _command:
+
 
 command
 ```````
@@ -565,7 +613,11 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 *createhome*:
 
 * Whether to create the user's home directory.  Takes 'yes', or 'no'.  The default is 'yes'.
-    
+   
+*home=*:
+
+* Specifies where the user's home directory should be, if not in /home/$username.
+ 
 *password*:
 
 * Sets the user's password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.
