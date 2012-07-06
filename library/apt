@@ -90,10 +90,12 @@ def install(pkgspec, cache, upgrade=False, default_release=None, install_recomme
     name, version = package_split(pkgspec)
     installed, upgradable = package_status(name, version, cache)
     if not installed or (upgrade and upgradable):
+        
         if force:
             force_yes = '--force-yes'
-        else:
+        else 
             force_yes = ''
+
         cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install '%s'" % (APT, force_yes, pkgspec)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -175,6 +177,11 @@ if update_cache == 'yes':
     if package == None:
         exit_json(changed=False)
 
+if force == 'yes':
+    force_yes = True
+else:
+    force_yes = False
+
 if package.count('=') > 1:
     fail_json(msg='invalid package spec')
 
@@ -183,10 +190,11 @@ if state == 'latest':
         fail_json(msg='version number inconsistent with state=latest')
     changed = install(package, cache, upgrade=True,
                       default_release=default_release,
-                      install_recommends=install_recommends)
+                      install_recommends=install_recommends,
+                      force=force_yes)
 elif state == 'installed':
     changed = install(package, cache, default_release=default_release,
-                      install_recommends=install_recommends)
+                      install_recommends=install_recommends,force=force_yes)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
