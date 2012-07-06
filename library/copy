@@ -24,6 +24,13 @@ import shlex
 import shutil
 import syslog
 
+try:
+    import hashlib 
+    HAVE_HASHLIB=True
+except ImportError: 
+    import md5
+    HAVE_HASHLIB=False
+
 # ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
@@ -39,7 +46,16 @@ def exit_kv(rc=0, **kwargs):
     sys.exit(rc)
 
 def md5_sum(f):
-    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
+    # md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
+    md5sum=None
+    if os.path.exists(f):
+        if HAVE_HASHLIB:
+            md5sum=hashlib.md5(file(f).read()).hexdigest()
+        else:
+            md5sum=md5.new(file(f).read()).hexdigest()
+    else:
+        exit_kv(rc=1, failed=1, msg="file %s does not exist" % (f))
+
     return md5sum
 
 if len(sys.argv) == 1:
@@ -102,5 +118,5 @@ else:
 
 # mission accomplished
 #print "md5sum=%s changed=%s" % (md5sum_src, changed)
-exit_kv(dest=dest, src=src, changed="md5sum=%s changed=%s" % (md5sum_src, changed))
+exit_kv(dest=dest, src=src, md5sum=md5sum_src, changed=changed)
 
