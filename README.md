@@ -27,9 +27,11 @@ Get Involved
 Branch Info
 ===========
 
-   * The master branch corresponds to release 0.4 "Unchained".
-   * Major bug fixes will be periodically made to the master branch.
-   * The devel branch corresponds to release 0.5 "Amsterdam".
+   * Releases are named after Van Halen songs.
+   * The master branch corresponds to release 0.5 "Amsterdam".
+   * The devel branch corresponds to release 0.6 "Cabo".
+   * All feature work happens on the development branch. 
+   * Major bug fixes will be made to the master branch, but not minor ones.
    * See CHANGELOG.md for release notes to track each release.
 
 Patch Instructions
@@ -43,6 +45,7 @@ Contributions to the core and modules are greatly welcome.
        * Make sure "make tests" passes before submitting any requests.
    * Bonus points:
        * Joining the mailing list
+       * Fixing bugs instead of sending bug reports.
        * Using squash merges
        * Updating the "rst/*" files in the docs project and "docs/" manpage content
        * Adding more unit tests 
@@ -50,6 +53,7 @@ Contributions to the core and modules are greatly welcome.
        * Sending patches to the mailing list directly.
        * Sending feature pull requests to the 'master' branch instead of the devel branch
        * Sending pull requests to mpdehaan's personal ansible fork.
+
 
 Author
 ======
