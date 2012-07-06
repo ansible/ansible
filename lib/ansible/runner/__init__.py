@@ -483,8 +483,17 @@ class Runner(object):
         # compare old and new md5 for support of change hooks
         local_md5 = None
         if os.path.exists(dest):
-            local_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
-        remote_md5 = self._low_level_exec_command(conn, "/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": source}, tmp, True).split()[0]
+            local_md5 = os.popen("([[ -r %(file)s ]] && /usr/bin/md5sum %(file)s 2>/dev/null) || ([[ -r %(file)s ]] && /sbin/md5 -q %(file)s 2>/dev/null)" % {"file": dest}).read().split()[0]
+            local_file_exists=True
+        else:
+            local_file_exists=False
+
+        remote_md5 = None
+        remote_md5 = self._low_level_exec_command(conn, "([[ -r %(file)s ]] && /usr/bin/md5sum %(file)s 2>/dev/null) || ([[ -r %(file)s ]] && /sbin/md5 -q %(file)s 2>/dev/null) || (echo \"0 %(file)s\")" % {"file": source}, tmp, True).split()[0]
+
+        if remote_md5 == '0':
+            result = dict(msg="no remote file", changed=False)
+            return ReturnData(host=conn.host, result=result)
 
         if remote_md5 != local_md5:
             # create the containing directories, if needed
@@ -493,10 +502,14 @@ class Runner(object):
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
-            new_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
-            if new_md5 != remote_md5:
+
+            new_md5 = None
+            new_md5 = os.popen("([[ -r %(file)s ]] && /usr/bin/md5sum %(file)s 2>/dev/null) || ([[ -r %(file)s ]] && /sbin/md5 -q %(file)s 2>/dev/null) || (echo \"0 %(file)s\")" % {"file": dest}).read().split()[0]
+
+            if new_md5 != remote_md5 and not local_file_exists:
                 result = dict(failed=True, msg="md5 mismatch", md5sum=new_md5)
                 return ReturnData(host=conn.host, result=result)
+
             result = dict(changed=True, md5sum=new_md5)
             return ReturnData(host=conn.host, result=result)
         else:
