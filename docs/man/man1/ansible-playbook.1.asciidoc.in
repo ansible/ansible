@@ -34,13 +34,14 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
-*-v*, *--verbose*          
+*-v*, *--verbose*
 
-Verbose mode, more output from successful actions will be shown
+Verbose mode, more output from successful actions will be shown.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
-The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
+The 'PATH' to the inventory hosts file, which defaults to
+'/etc/ansible/hosts'.
 
 
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
@@ -58,13 +59,18 @@ Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
 *-k*, *--ask-pass*::
 
-Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
+Prompt for the SSH password instead of assuming key-based
+authentication with ssh-agent.
 
 
 *-K*, *--ask-sudo-pass*::
 
-Prompt for the password to use for playbook plays that request sudo access, if any
+Prompt for the password to use for playbook plays that request sudo
+access, if any.
 
+*-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
+
+Desired sudo user (default=root).
 
 *-T* 'SECONDS', *--timeout=*'SECONDS'::
 
@@ -78,7 +84,14 @@ Force all plays to use sudo, even if not marked as such.
 
 *-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
-Use this remote user name on playbook steps that do not indicate a user name to run as.
+Use this remote user name on playbook steps that do not indicate a
+user name to run as.
+
+*-c* 'CONNECTION', *--connection=*'CONNECTION'::
+
+Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
+and 'local'.  'local' is mostly useful for crontab or kickstarts.
+
 
 
 ENVIRONMENT
@@ -113,6 +126,3 @@ SEE ALSO
 
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>
-
-
-
