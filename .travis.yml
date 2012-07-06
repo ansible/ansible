@@ -1,0 +1,11 @@
+language: python
+
+python:
+  - 2.6
+  - 2.7
+
+before_install: pip install --use-mirrors PyCrypto nose Jinja2 PyYAML paramiko
+
+install: python setup.py install
+
+script: nosetests -v -e TestRunner -e TestPlayBook
