@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 06/19/2012
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 07/05/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.5
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "06/19/2012" "Ansible 0\&.5" "System administration commands"
+.TH "ANSIBLE" "1" "07/05/2012" "Ansible 0\&.5" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -25,7 +34,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -49,6 +58,11 @@ Level of parallelism\&.
 is specified as an integer, the default is 5\&.
 .RE
 .PP
+\fB\-\-private\-key=\fR\fIPRIVATE_KEY_FILE\fR
+.RS 4
+Use this file to authenticate the connection\&.
+.RE
+.PP
 \fB\-m\fR \fINAME\fR, \fB\-\-module\-name=\fR\fINAME\fR
 .RS 4
 Execute the module called
@@ -63,7 +77,7 @@ to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
+\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
 .RS 4
 The
 \fIARGUMENTS\fR
@@ -131,12 +145,20 @@ Sudo to
 instead of root\&. Implies \-\-sudo\&.
 .RE
 .PP
+\fB\-\-private\-key=\fR\fIPRIVATE_KEY_FILE\fR
+.RS 4
+Use this file to authenticate the connection\&.
+.RE
+.PP
 \fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
 .RS 4
 Connection type to use\&. Possible options are
 \fIparamiko\fR
-(SSH) and
-\fIlocal\fR\&. Local is mostly useful for crontab or kickstarts\&.
+(SSH),
+\fIssh\fR, and
+\fIlocal\fR\&.
+\fIlocal\fR
+is mostly useful for crontab or kickstarts\&.
 .RE
 .SH "INVENTORY"
 .sp
