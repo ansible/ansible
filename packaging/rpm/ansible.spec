@@ -58,8 +58,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Wed Jul 4 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.5-0
-- Not released yet
+* Fri Jul  6 2012 Tim Bielawa <tim@redhat.com> - 0.5-1
+- Release of 0.5 - Now with 100% more COWSAY!
 
 * Wed May 23 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.4-0
 - Release of 0.4
