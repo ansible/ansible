@@ -66,7 +66,7 @@ when things change, and these are described in :doc:`playbooks`.
 
 Including more than one setup file or more than one handlers file is of course legal.
 
-Having playbooks be able to include other playbooks is coming in release 0.5.
+Having playbooks be able to include other playbooks is coming in a future release. See Issue 538.
 
 Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
 You don't have to do this though. It's fine to select sections of your infrastructure to manage at a single time.
