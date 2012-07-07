@@ -141,8 +141,8 @@ class ParamikoConnection(object):
         try:
             sftp.get(in_path, out_path)
         except IOError:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+            pass
+
         sftp.close()
 
     def close(self):
