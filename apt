@@ -157,6 +157,7 @@ if package is None and update_cache != 'yes':
 
 if install_recommends not in ['yes', 'no']:
     fail_json(msg='invalid value for install-recommends (requires yes or no -- default is yes)')
+install_recommends = (install_recommends == 'yes')
 
 cache = apt.Cache()
 if default_release:
@@ -178,10 +179,10 @@ if state == 'latest':
         fail_json(msg='version number inconsistent with state=latest')
     changed = install(package, cache, upgrade=True,
                       default_release=default_release,
-                      install_recommends = install_recommends == 'yes')
+                      install_recommends=install_recommends)
 elif state == 'installed':
     changed = install(package, cache, default_release=default_release,
-                      install_recommends = install_recommends == 'yes')
+                      install_recommends=install_recommends)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
