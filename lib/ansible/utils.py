@@ -312,6 +312,22 @@ def parse_kv(args):
                 options[k]=v
     return options
 
+def local_md5(file):
+     ''' compute local md5sum, return None if file is not present '''
+     cmd = "/usr/bin/md5sum %s 2> /dev/null || /sbin/md5 -q %s" % (file,file)
+     if not os.path.exists(file):
+         return None
+     else:
+         c = os.popen(cmd)
+         return c.read().split()[0]
+
+
+####################################################################
+# option handling code for /usr/bin/ansible and ansible-playbook 
+# below this line
+
+# FIXME: move to seperate file
+
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
     def format_help(self, formatter=None):
