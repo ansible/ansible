@@ -481,19 +481,20 @@ class Runner(object):
         dest   = dest.replace("//","/")
 
         # compare old and new md5 for support of change hooks
-        local_md5 = None
-        if os.path.exists(dest):
-            local_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
-        remote_md5 = self._low_level_exec_command(conn, "/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": source}, tmp, True).split()[0]
+        local_md5 = utils.local_md5(dest)
+        remote_md5 = self._remote_md5(conn, tmp, source)
 
-        if remote_md5 != local_md5:
+        if remote_md5 == '0':
+            result = dict(msg="missing remote file", changed=False)
+            return ReturnData(host=conn.host, result=result)
+        elif remote_md5 != local_md5:
             # create the containing directories, if needed
             if not os.path.isdir(os.path.dirname(dest)):
                 os.makedirs(os.path.dirname(dest))
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
-            new_md5 = os.popen("/usr/bin/md5sum %(file)s 2> /dev/null || /sbin/md5 -q %(file)s" % {"file": dest}).read().split()[0]
+            new_md5 = utils.local_md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, msg="md5 mismatch", md5sum=new_md5)
                 return ReturnData(host=conn.host, result=result)
@@ -720,6 +721,23 @@ class Runner(object):
 
         # sudo mode paramiko doesn't capture stderr, so not relaying here either...
         return out 
+
+    # *****************************************************
+
+    def _remote_md5(self, conn, tmp, path):
+        ''' 
+        takes a remote md5sum without requiring python, and returns 0 if the
+        file does not exist
+        '''
+        test = "[[ -r %s ]]" % path
+        md5s = [
+            "(%s && /usr/bin/md5sum %s 2>/dev/null)" % (test,path),
+            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path)
+        ]
+        cmd = " || ".join(md5s)
+        cmd = "%s || (echo \"0 %s\")" % (cmd, path)
+        remote_md5 = self._low_level_exec_command(conn, cmd, tmp, True).split()[0]
+        return remote_md5
 
     # *****************************************************
 
