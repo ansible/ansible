@@ -3,8 +3,9 @@ Ansible Changes By Release
 
 0.6 "Cabo" ------------ pending
 
-* ...
-
+* groups variable available a hash to return the hosts in each group name
+* fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
+  
 0.5 "Amsterdam" ------- July 04, 2012
 
 * Service module gets more accurate service states when running with upstart
