@@ -28,7 +28,6 @@ import shlex
 import shutil
 import syslog
 import tempfile
-
 try:
     import hashlib
     HAVE_HASHLIB=True
@@ -65,18 +64,12 @@ def write_temp_file(data):
     os.close(fd)
     return path
 
-def local_md5(filename):
-     ''' compute local md5sum, return None if file is not present '''
-     if os.path.exists(filename):
-         md5val=None
-         if os.path.exists(filename):
-             if HAVE_HASHLIB:
-                 md5val=hashlib.md5(file(filename).read()).hexdigest()
-             else:
-                 md5val=md5.new(file(filename).read()).hexdigest()
-         return md5val
-     else:
-         return None
+def file_digest(path):
+    if HAVE_HASHLIB:
+        digest = hashlib.md5(file(path).read()).hexdigest()
+    else:
+        digest = md5.new(file(path).read()).hexdigest()
+    return digest
 
 # ===========================================
 
@@ -118,10 +111,10 @@ if not os.path.isdir(src):
     fail_json(msg="Source (%s) is not a directory" % src)
 
 path = write_temp_file(assemble_from_fragments(src))
-pathmd5 = local_md5(path)
+pathmd5 = file_digest(path)
 
 if os.path.exists(dest):
-    destmd5 = local_md5(dest)
+    destmd5 = file_digest(dest)
 
 if pathmd5 != destmd5:
     shutil.copy(path, dest)

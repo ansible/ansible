@@ -34,13 +34,6 @@ import traceback
 import syslog
 
 try:
-    import hashlib
-    HAVE_HASHLIB=True
-except ImportError:
-    import md5
-    HAVE_HASHLIB=False
-
-try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
@@ -318,20 +311,9 @@ def ansible_facts():
     get_service_facts(facts)
     return facts
 
-def local_md5(filename):
-     ''' compute local md5sum, return None if file is not present '''
-     if os.path.exists(filename):
-         md5val=None
-         if os.path.exists(filename):
-             if HAVE_HASHLIB:
-                 md5val=hashlib.md5(file(filename).read()).hexdigest()
-             else:
-                 md5val=md5.new(file(filename).read()).hexdigest()
-         return md5val
-     else:
-         return None
-
-# ===========================================
+def md5_sum(f):
+    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
+    return md5sum
 
 # load config & template variables
 
@@ -369,7 +351,7 @@ md5sum = None
 if not os.path.exists(ansible_file):
     changed = True
 else:
-    md5sum = local_md5(ansible_file)
+    md5sum = md5_sum(ansible_file)
 
 # Get some basic facts in case facter or ohai are not installed
 for (k, v) in ansible_facts().items():
@@ -418,7 +400,7 @@ reformat = json.dumps(setup_options, sort_keys=True, indent=4)
 f.write(reformat)
 f.close()
 
-md5sum2 = local_md5(ansible_file)
+md5sum2 = md5_sum(ansible_file)
 
 if md5sum != md5sum2:
    changed = True
