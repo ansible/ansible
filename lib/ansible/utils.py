@@ -58,6 +58,7 @@ def smjson(result):
     return json.dumps(result2, sort_keys=True)
 
 def task_start_msg(name, conditional):
+    # FIXME: move to callbacks code
     if conditional:
         return "NOTIFIED: [%s]" % name
     else:
@@ -166,6 +167,7 @@ def path_dwim(basedir, given):
         return os.path.join(basedir, given)
 
 def json_loads(data):
+    ''' parse a JSON string and return a data structure '''
     return json.loads(data)
 
 def parse_json(data):
@@ -220,9 +222,9 @@ def _varLookup(name, vars):
     return space
 
 _KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
-#                        if { -> complex     if complex, allow . and need trailing }
 
 def varLookup(varname, vars):
+    ''' helper function used by varReplace '''
     m = _KEYCRE.search(varname)
     if not m:
         return None
@@ -288,9 +290,11 @@ def template_from_file(basedir, path, vars, setup_cache):
     return template(res, vars, setup_cache)
 
 def parse_yaml(data):
+    ''' convert a yaml string to a data structure '''
     return yaml.load(data)
   
 def parse_yaml_from_file(path):
+    ''' convert a yaml file to a data structure '''
     try:
         data = file(path).read()
     except IOError:
