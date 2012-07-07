@@ -24,6 +24,13 @@ import shlex
 import shutil
 import syslog
 
+try:
+    import hashlib
+    HAVE_HASHLIB=True
+except ImportError:
+    import md5
+    HAVE_HASHLIB=False
+
 # ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
@@ -38,9 +45,16 @@ def exit_kv(rc=0, **kwargs):
     print dump_kv(kwargs)
     sys.exit(rc)
 
-def md5_sum(f):
-    md5sum = os.popen("/usr/bin/md5sum %(file)s 2>/dev/null || /sbin/md5 -q %(file)s 2>/dev/null || /usr/bin/digest -a md5 -v %(file)s 2>/dev/null" % {"file": f}).read().split()[0]
-    return md5sum
+def md5(filename):
+     ''' compute md5sum, return None if file is not present '''
+     if not os.path.exists(filename):
+         return None
+     if HAVE_HASHLIB:
+         return hashlib.md5(file(filename).read()).hexdigest()
+     else:
+         return md5.new(file(filename).read()).hexdigest()
+
+# ===========================================
 
 if len(sys.argv) == 1:
     exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
@@ -73,7 +87,7 @@ if not os.path.exists(src):
     exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
 if not os.access(src, os.R_OK):
     exit_kv(rc=1, failed=1, msg="Source %s not readable" % (src))
-md5sum_src = md5_sum(src)
+md5sum_src = md5(src)
 
 md5sum_dest = None
 # check if there is no dest file
@@ -83,7 +97,7 @@ if os.path.exists(dest):
         exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
     if not os.access(dest, os.R_OK):
         exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
-    md5sum_dest = md5_sum(dest)
+    md5sum_dest = md5(dest)
 else:
     if not os.access(os.path.dirname(dest), os.W_OK):
         exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (os.path.dirname(dest)))
