@@ -7,6 +7,7 @@ Ansible Changes By Release
 * fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
 * apt module now takes an optional install-recommends=yes|no (default yes)
 * fixes to the return codes of the copy module
+* copy module takes a remote md5sum to avoid large file transfer
 
 0.5 "Amsterdam" ------- July 04, 2012
 
