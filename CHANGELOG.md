@@ -8,6 +8,7 @@ Ansible Changes By Release
 * apt module now takes an optional install-recommends=yes|no (default yes)
 * fixes to the return codes of the copy module
 * copy module takes a remote md5sum to avoid large file transfer
+* when sudoing to root, still use /etc/ansible/setup as the metadata path, as if root
 
 0.5 "Amsterdam" ------- July 04, 2012
 
