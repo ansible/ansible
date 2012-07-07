@@ -263,16 +263,16 @@ class Runner(object):
         if type(args) == dict:
             is_dict = True
 
-        # TODO: keep this as a dict through the whole path to simplify this code
+        # TODO: make a _metadata_path function
         if not is_dict:
             if args.find("metadata=") == -1:
-                if self.remote_user == 'root':
+                if self.remote_user == 'root' or (self.sudo and self.sudo_user == 'root'):
                     args = "%s metadata=/etc/ansible/setup" % args
                 else:
                     args = "%s metadata=%s/setup" % (args, C.DEFAULT_REMOTE_TMP)
         else:
             if not 'metadata' in args:
-                if self.remote_user == 'root':
+                if self.remote_user == 'root' or (self.sudo and self.sudo_user == 'root'):
                     args['metadata'] = '/etc/ansible/setup'
                 else:
                     args['metadata'] = "%s/setup" % C.DEFAULT_REMOTE_TMP
