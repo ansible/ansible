@@ -97,6 +97,9 @@ before_info = get_svn_info()
 if before_info:
     before_rev = before_info['Revision']
     before_url = before_info['URL']
+else:
+    before_rev = None
+    before_url = None
 
 # Can't just check for existence of dir, it could have been created 
 # outside of the scope of this module.
@@ -118,16 +121,15 @@ if rc != 0:
     fail_json(out = out, err = err)
     
     
-def format_state_str(info):
-    return '{}@{}'.format(info['URL'], info['Revision'])
-    
 after_info = get_svn_info()
-after_str = format_state_str(after_info)
 
-if before_info:
-    before_str = format_state_str(before_info)
-else:
-    before_str = None
-    
-exit_json(changed = before_str != after_str, 
-          before = before_str, after = after_str)
+exit_kws = {
+    'before_rev': before_rev,
+    'before_url': before_url,
+    'after_rev': after_info['Revision'],
+    'after_url': after_info['URL'],
+}
+exit_kws['changed'] = (exit_kws['before_rev'] != exit_kws['after_rev'] or
+                       exit_kws['before_url'] != exit_kws['after_url'])
+
+exit_json(**exit_kws)
