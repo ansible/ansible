@@ -86,13 +86,15 @@ def package_status(pkgname, version, cache):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
-def install(pkgspec, cache, upgrade=False, default_release=None):
+def install(pkgspec, cache, upgrade=False, default_release=None, install_recommends=True):
     name, version = package_split(pkgspec)
     installed, upgradable = package_status(name, version, cache)
     if not installed or (upgrade and upgradable):
         cmd = "%s --option Dpkg::Options::=--force-confold -q -y install '%s'" % (APT, pkgspec)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
+        if not install_recommends:
+            cmd += " --no-install-recommends"
         rc, out, err = run_apt(cmd)
         if rc:
             fail_json(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
@@ -117,7 +119,7 @@ def remove(pkgspec, cache, purge=False):
 # ===========================================
 
 if not os.path.exists(APT_PATH):
-   fail_json(msg="Cannot find apt-get")
+    fail_json(msg="Cannot find apt-get")
 
 argfile = sys.argv[1]
 args    = open(argfile, 'r').read()
@@ -134,11 +136,12 @@ for x in items:
     (k, v) = x.split("=", 1)
     params[k] = v
 
-state            = params.get('state', 'installed')
-package          = params.get('pkg', params.get('package', params.get('name', None)))
-update_cache     = params.get('update-cache', 'no')
-purge            = params.get('purge', 'no')
-default_release  = params.get('default-release', None)
+state              = params.get('state', 'installed')
+package            = params.get('pkg', params.get('package', params.get('name', None)))
+update_cache       = params.get('update-cache', 'no')
+purge              = params.get('purge', 'no')
+default_release    = params.get('default-release', None)
+install_recommends = params.get('install-recommends', 'yes')
 
 if state not in ['installed', 'latest', 'removed']:
     fail_json(msg='invalid state')
@@ -151,6 +154,10 @@ if purge not in ['yes', 'no']:
 
 if package is None and update_cache != 'yes':
     fail_json(msg='pkg=name and/or update-cache=yes is required')
+
+if install_recommends not in ['yes', 'no']:
+    fail_json(msg='invalid value for install-recommends (requires yes or no -- default is yes)')
+install_recommends = (install_recommends == 'yes')
 
 cache = apt.Cache()
 if default_release:
@@ -171,9 +178,11 @@ if state == 'latest':
     if '=' in package:
         fail_json(msg='version number inconsistent with state=latest')
     changed = install(package, cache, upgrade=True,
-                      default_release=default_release)
+                      default_release=default_release,
+                      install_recommends=install_recommends)
 elif state == 'installed':
-    changed = install(package, cache, default_release=default_release)
+    changed = install(package, cache, default_release=default_release,
+                      install_recommends=install_recommends)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
