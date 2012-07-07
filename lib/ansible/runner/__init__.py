@@ -430,24 +430,38 @@ class Runner(object):
                     break
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
-                return ReturnData(host=conn.host, is_error=True, results=results)
+                return ReturnData(host=conn.host, results=results)
         
         if self.module_vars is not None:
             inject.update(self.module_vars)
 
         source = utils.template(source, inject, self.setup_cache)
+        source = utils.path_dwim(self.basedir, source)
 
-        # transfer the file to a remote tmp location
-        tmp_src = tmp + source.split('/')[-1]
-        conn.put_file(utils.path_dwim(self.basedir, source), tmp_src)
+        local_md5 = utils.local_md5(source)
+        if local_md5 is None:
+            result=dict(failed=True, msg="could not find src=%s" % source)
+            return ReturnData(host=conn.host, result=result)
+            
+        remote_md5 = self._remote_md5(conn, tmp, dest) 
 
-        # install the copy  module
-        self.module_name = 'copy'
-        module = self._transfer_module(conn, tmp, 'copy')
+        exec_rc = None 
+        if local_md5 != remote_md5:
+            # transfer the file to a remote tmp location
+            tmp_src = tmp + source.split('/')[-1]
+            conn.put_file(source, tmp_src)
 
-        # run the copy module
-        args = "src=%s dest=%s" % (tmp_src, dest)
-        exec_rc = self._execute_module(conn, tmp, module, args)
+            # install the copy  module
+            self.module_name = 'copy'
+            module = self._transfer_module(conn, tmp, 'copy')
+
+            # run the copy module
+            args = "src=%s dest=%s" % (tmp_src, dest)
+            exec_rc = self._execute_module(conn, tmp, module, args)
+        else:
+            # no need to transfer the file, already correct md5
+            result = dict(changed=False, md5sum=remote_md5, transferred=False)
+            exec_rc = ReturnData(host=conn.host, result=result)
 
         if exec_rc.is_successful():
             return self._chain_file_module(conn, tmp, exec_rc, options)
