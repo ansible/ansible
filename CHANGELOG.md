@@ -5,7 +5,9 @@ Ansible Changes By Release
 
 * groups variable available a hash to return the hosts in each group name
 * fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
-  
+* apt module now takes an optional install-recommends=yes|no (default yes)
+* fixes to the return codes of the copy module
+
 0.5 "Amsterdam" ------- July 04, 2012
 
 * Service module gets more accurate service states when running with upstart
