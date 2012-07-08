@@ -418,6 +418,9 @@ class Runner(object):
         # apply templating to source argument
         inject = self.setup_cache.get(conn.host,{})
         
+        if self.module_vars is not None:
+            inject.update(self.module_vars)
+
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         if 'first_available_file' in self.module_vars:
@@ -432,9 +435,6 @@ class Runner(object):
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, results=results)
         
-        if self.module_vars is not None:
-            inject.update(self.module_vars)
-
         source = utils.template(source, inject, self.setup_cache)
         source = utils.path_dwim(self.basedir, source)
 
@@ -557,6 +557,9 @@ class Runner(object):
         # apply templating to source argument so vars can be used in the path
         inject = self.setup_cache.get(conn.host,{})
 
+        if self.module_vars is not None:
+            inject.update(self.module_vars)
+
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         if 'first_available_file' in self.module_vars:
@@ -570,10 +573,6 @@ class Runner(object):
             if not found:
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, comm_ok=False, result=result)
-
-
-        if self.module_vars is not None:
-            inject.update(self.module_vars)
 
         source = utils.template(source, inject, self.setup_cache)
 
