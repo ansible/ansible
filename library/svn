@@ -1,0 +1,135 @@
+#!/usr/bin/python
+
+# (c) 2012, Robert Tirrell <r.tirrell@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+import os
+import shlex
+import subprocess
+import sys
+
+
+def exit_json(rc = 0, **kws):
+    print json.dumps(kws)
+    sys.exit(rc)
+
+def fail_json(**kws):
+    exit_json(rc = -1, **kws)
+    
+    
+args = open(sys.argv[1], 'r').read()
+items = shlex.split(args)
+
+params = {}
+for i in items:
+    key, val = i.split('=')
+    params[key] = val
+
+repo = params['repo']
+dest = params['dest']
+rev = params.get('rev', 'HEAD')
+user = params.get('user')
+password = params.get('password')
+
+# TODO: should we call these user or svn_user (to be clear this has nothing
+# to do with permissions on the host)?
+# Assemble a string of opts we unconditionally use.
+opts_str = '--non-interactive'
+if user:
+    opts_str = '{} --username {}'.format(opts_str, user)
+if password:
+    opts_str = '{} --password {}'.format(opts_str, password)
+
+def run(cmd_str):
+    '''Wrap around verbose subprocess.Popen.'''
+    
+    cmd = subprocess.Popen(cmd_str, shell = True, 
+                           stdout = subprocess.PIPE, 
+                           stderr = subprocess.PIPE)
+    out, err = cmd.communicate()
+    return (cmd.returncode, out, err)
+
+def get_svn_info():
+    '''Return a dict of the output of 'svn info'.
+    
+    If there is no working copy at that path, returns None.
+    '''
+    
+    rc, out, _ = run('svn {} info'.format(opts_str))
+    # Not WC.
+    if rc == 1:
+        return None
+    
+    info = {}
+    for line in out.split('\n'):
+        if line:
+            key, val = line.split(':', 1)
+            # Extra space left on val.
+            info[key] = val.strip()
+            
+    return info
+        
+        
+if not os.path.exists(dest):
+    os.makedirs(dest)
+    
+os.chdir(dest)
+before_info = get_svn_info()
+if before_info:
+    before_rev = before_info['Revision']
+    before_url = before_info['URL']
+else:
+    before_rev = None
+    before_url = None
+
+# Can't just check for existence of dir, it could have been created 
+# outside of the scope of this module.
+if before_info is None:
+    rc, out, err = run('svn {} -r {} co {}'.format(opts_str, rev, repo))
+    
+# If we were asked to up to the rev we currently have, take no action. 
+# We may still not change anything if the requested rev is HEAD and the
+# the WC is still at that rev.
+elif rev != before_rev:
+    if before_url != repo:
+        # WTF is pegrev?
+        rc, out, err = run('svn {} -r {} sw {}'.
+                           format(opts_str, rev, repo))
+        
+    rc, out, err = run('svn {} -r {} up'.format(opts_str, rev))
+        
+if rc != 0:
+    fail_json(out = out, err = err)
+    
+    
+after_info = get_svn_info()
+
+exit_kws = {
+    'before_rev': before_rev,
+    'before_url': before_url,
+    'after_rev': after_info['Revision'],
+    'after_url': after_info['URL'],
+}
+exit_kws['changed'] = (exit_kws['before_rev'] != exit_kws['after_rev'] or
+                       exit_kws['before_url'] != exit_kws['after_url'])
+
+exit_json(**exit_kws)
