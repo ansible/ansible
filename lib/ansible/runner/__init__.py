@@ -746,7 +746,8 @@ class Runner(object):
         test = "[[ -r %s ]]" % path
         md5s = [
             "(%s && /usr/bin/md5sum %s 2>/dev/null)" % (test,path),
-            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path)
+            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path),
+            "(%s && /usr/bin/digest -a md5 -v %s 2>/dev/null)" % (test,path)
         ]
         cmd = " || ".join(md5s)
         cmd = "%s || (echo \"0 %s\")" % (cmd, path)

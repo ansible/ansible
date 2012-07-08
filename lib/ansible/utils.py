@@ -314,7 +314,14 @@ def parse_kv(args):
 
 def local_md5(file):
      ''' compute local md5sum, return None if file is not present '''
-     cmd = "/usr/bin/md5sum %s 2> /dev/null || /sbin/md5 -q %s" % (file,file)
+     #was >>> cmd = "/usr/bin/md5sum %s 2> /dev/null || /sbin/md5 -q %s" % (file,file)
+     md5s = [
+         "(/usr/bin/md5sum %s 2>/dev/null)" % (file),
+         "(/sbin/md5sum -q %s 2>/dev/null)" % (file),
+         "(/usr/bin/digest -a md5 -v %s 2>/dev/null)" % (file)
+     ]
+     cmd = " || ".join(md5s)
+
      if not os.path.exists(file):
          return None
      else:
