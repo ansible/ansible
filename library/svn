@@ -59,6 +59,7 @@ if user:
 if password:
     opts_str = '{} --password {}'.format(opts_str, password)
 
+
 def run(cmd_str):
     '''Wrap around verbose subprocess.Popen.'''
     
@@ -75,6 +76,7 @@ def get_svn_info():
     '''
     
     rc, out, _ = run('svn {} info'.format(opts_str))
+
     # Not WC.
     if rc == 1:
         return None
@@ -104,7 +106,7 @@ else:
 # Can't just check for existence of dir, it could have been created 
 # outside of the scope of this module.
 if before_info is None:
-    rc, out, err = run('svn {} -r {} co {}'.format(opts_str, rev, repo))
+    rc, out, err = run('svn {} -r {} co {} {}'.format(opts_str, rev, repo, dest))
     
 # If we were asked to up to the rev we currently have, take no action. 
 # We may still not change anything if the requested rev is HEAD and the
