@@ -33,11 +33,9 @@ except ImportError:
     import simplejson as json
 
 try:
-    import hashlib 
-    HAVE_HASHLIB=True
+    from hashlib import md5 as _md5
 except ImportError: 
-    import md5
-    HAVE_HASHLIB=False
+    from md5 import md5 as _md5
 
 from ansible import errors
 import ansible.constants as C
@@ -321,13 +319,19 @@ def parse_kv(args):
     return options
 
 def md5(filename):
-     ''' compute md5sum, return None if file is not present '''
-     if not os.path.exists(filename):
-         return None
-     if HAVE_HASHLIB:
-         return hashlib.md5(file(filename).read()).hexdigest()
-     else:
-         return md5.new(file(filename).read()).hexdigest()
+    ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    if not os.path.exists(filename):
+        return None
+    digest = _md5()
+    blocksize = 64 * 1024
+    infile = open(filename, 'rb')
+    block = infile.read(blocksize)
+    while block:
+        digest.update(block)
+        block = infile.read(blocksize)
+    infile.close()
+    return digest.hexdigest()
+
 
 
 ####################################################################
