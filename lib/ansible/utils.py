@@ -26,10 +26,18 @@ import jinja2
 import yaml
 import optparse
 from operator import methodcaller
+
 try:
     import json
 except ImportError:
     import simplejson as json
+
+try:
+    import hashlib 
+    HAVE_HASHLIB=True
+except ImportError: 
+    import md5
+    HAVE_HASHLIB=False
 
 from ansible import errors
 import ansible.constants as C
@@ -312,14 +320,14 @@ def parse_kv(args):
                 options[k]=v
     return options
 
-def local_md5(file):
-     ''' compute local md5sum, return None if file is not present '''
-     cmd = "/usr/bin/md5sum %s 2> /dev/null || /sbin/md5 -q %s" % (file,file)
-     if not os.path.exists(file):
+def md5(filename):
+     ''' compute md5sum, return None if file is not present '''
+     if not os.path.exists(filename):
          return None
+     if HAVE_HASHLIB:
+         return hashlib.md5(file(filename).read()).hexdigest()
      else:
-         c = os.popen(cmd)
-         return c.read().split()[0]
+         return md5.new(file(filename).read()).hexdigest()
 
 
 ####################################################################

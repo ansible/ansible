@@ -438,7 +438,7 @@ class Runner(object):
         source = utils.template(source, inject, self.setup_cache)
         source = utils.path_dwim(self.basedir, source)
 
-        local_md5 = utils.local_md5(source)
+        local_md5 = utils.md5(source)
         if local_md5 is None:
             result=dict(failed=True, msg="could not find src=%s" % source)
             return ReturnData(host=conn.host, result=result)
@@ -495,7 +495,7 @@ class Runner(object):
         dest   = dest.replace("//","/")
 
         # compare old and new md5 for support of change hooks
-        local_md5 = utils.local_md5(dest)
+        local_md5 = utils.md5(dest)
         remote_md5 = self._remote_md5(conn, tmp, source)
 
         if remote_md5 == '0':
@@ -508,7 +508,7 @@ class Runner(object):
 
             # fetch the file and check for changes
             conn.fetch_file(source, dest)
-            new_md5 = utils.local_md5(dest)
+            new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, msg="md5 mismatch", md5sum=new_md5)
                 return ReturnData(host=conn.host, result=result)
@@ -746,7 +746,8 @@ class Runner(object):
         test = "[[ -r %s ]]" % path
         md5s = [
             "(%s && /usr/bin/md5sum %s 2>/dev/null)" % (test,path),
-            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path)
+            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path),
+            "(%s && /usr/bin/digest -a md5 -v %s 2>/dev/null)" % (test,path)
         ]
         cmd = " || ".join(md5s)
         cmd = "%s || (echo \"0 %s\")" % (cmd, path)
