@@ -28,6 +28,10 @@ import subprocess
 import syslog
 import traceback
 
+# added to stave off future warnings about apt api
+import warnings; 
+warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
+
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
