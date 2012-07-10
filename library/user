@@ -310,20 +310,16 @@ if append not in [ 'yes', 'no' ]:
 if name is None:
     fail_json(msg='name is required')
 
-result = {}
-rc = 0
+rc = None
 out = ''
 err = ''
+result = {}
 result['name'] = name
 if state == 'absent':
-    if not user_exists(name):
-        result['changed'] = False
-    else:
+    if user_exists(name):
         (rc, out, err) = user_del(name, force=force, remove=remove)
         if rc != 0:
             fail_json(name=name, msg=err)
-        else:
-            result['changed'] = True
         result['force'] = force
         result['remove'] = remove
 elif state == 'present':
@@ -338,13 +334,13 @@ elif state == 'present':
                                   password=password, append=append)
     if rc is not None and rc != 0:
         fail_json(name=name, msg=err)
-    if rc is None:
-        result['changed'] = False
-    else:
-        result['changed'] = True
     if password is not None:
         result['password'] = 'NOTLOGGINGPASSWORD'
 
+if rc is None:
+    result['changed'] = False
+else:
+    result['changed'] = True
 if out:
     result['stdout'] = out
 if err:
