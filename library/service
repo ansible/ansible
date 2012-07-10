@@ -108,6 +108,8 @@ def _get_service_status(name):
             running = True
         elif cleaned_status_stdout.find("start") != -1 and cleaned_status_stdout.find("not") == -1:
             running = True
+        elif 'could not access pid file' in cleaned_status_stdout:
+            running = False
 
     # if the job status is still not known check it by special conditions
     if running == None:
