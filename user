@@ -22,6 +22,7 @@ try:
 except ImportError:
     import simplejson as json
 import os
+import re
 import pwd
 import grp
 import shlex
@@ -265,7 +266,8 @@ argfile = sys.argv[1]
 args    = open(argfile, 'r').read()
 items   = shlex.split(args)
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", args)
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
 if not len(items):
     fail_json(msg='the module requires arguments -a')
