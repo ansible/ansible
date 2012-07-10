@@ -92,7 +92,7 @@ def install(pkgspec, cache, upgrade=False, default_release=None, install_recomme
     if not installed or (upgrade and upgradable):
         if force:
             force_yes = '--force-yes'
-        else 
+        else:
             force_yes = ''
 
         cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install '%s'" % (APT, force_yes, pkgspec)
@@ -198,7 +198,6 @@ if state == 'latest':
 elif state == 'installed':
     changed = install(package, cache, default_release=default_release,
                       install_recommends=install_recommends,force=force_yes)
-                      default_release=default_release, force=force == 'yes')
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
