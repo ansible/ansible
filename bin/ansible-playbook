@@ -35,6 +35,8 @@ def main(args):
     parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True)
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
+    parser.add_option('-t', '--tags', dest='tags', default='all',
+        help="only run plays and tasks tagged with these values")
 
     options, args = parser.parse_args(args)
 
@@ -53,6 +55,7 @@ def main(args):
         options.sudo = True
     options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
+    only_tags = options.tags.split(",")
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -78,7 +81,8 @@ def main(args):
             sudo_user=options.sudo_user,
             sudo_pass=sudopass,
             extra_vars=extra_vars,
-            private_key_file=options.private_key_file            
+            private_key_file=options.private_key_file,
+            only_tags=only_tags,
         )
         try:
 

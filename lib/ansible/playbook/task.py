@@ -24,7 +24,8 @@ class Task(object):
 
     __slots__ = [ 
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 'play', 'notified_by',
+        'notify', 'module_name', 'module_args', 'module_vars', 
+        'play', 'notified_by', 'tags'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -38,6 +39,8 @@ class Task(object):
         self.play        = play
         self.name        = ds.get('name', None)
         self.action      = ds.get('action', '')
+        self.tags        = [ 'all' ]
+
         self.notified_by = []
 
         if self.name is None:
@@ -66,5 +69,16 @@ class Task(object):
 
         if 'first_available_file' in ds:
             self.module_vars['first_available_file'] = ds.get('first_available_file')
+
+        # tags allow certain parts of a playbook to be run without
+        # running the whole playbook
+        apply_tags = ds.get('tags', None)
+        if apply_tags is not None:
+            if type(apply_tags) in [ str, unicode ]:
+                self.tags.append(apply_tags)
+            elif type(apply_tags) == list:
+                self.tags.extend(apply_tags)
+
+                
 
 

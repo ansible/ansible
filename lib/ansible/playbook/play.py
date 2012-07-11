@@ -26,8 +26,10 @@ import os
 class Play(object):
 
     __slots__ = [ 
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook', '_ds', '_handlers', '_tasks' 
+       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
+       'handlers', 'remote_user', 'remote_port',
+       'sudo', 'sudo_user', 'transport', 'playbook', 
+       '_ds', '_handlers', '_tasks'
     ]
 
     # *************************************************
@@ -36,6 +38,7 @@ class Play(object):
         ''' constructor loads from a play datastructure '''
 
         # TODO: more error handling
+
 
         hosts = ds.get('hosts')
         if hosts is None:

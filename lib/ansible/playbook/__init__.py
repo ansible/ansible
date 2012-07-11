@@ -61,7 +61,8 @@ class PlayBook(object):
         stats            = None,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
-        extra_vars       = None):
+        extra_vars       = None,
+        only_tags        = None):
 
         """
         playbook:         path to a playbook file
@@ -87,7 +88,10 @@ class PlayBook(object):
 
         if extra_vars is None:
             extra_vars = {}
-       
+      
+        if only_tags is None:
+            only_tags = [ 'all' ]
+ 
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -105,6 +109,7 @@ class PlayBook(object):
         self.extra_vars       = extra_vars
         self.global_vars      = {}
         self.private_key_file = private_key_file
+        self.only_tags        = only_tags
 
         self.inventory = ansible.inventory.Inventory(host_list)
         
@@ -286,9 +291,17 @@ class PlayBook(object):
         if play.vars_files and len(play.vars_files) > 0:
             rc = self._do_setup_step(play, play.vars_files)
 
-        # run all the top level tasks, these get run on every node
         for task in play.tasks():
-            self._run_task(play, task, False)
+            
+            # only run the task if the requested tags match
+            should_run = False
+            for x in self.only_tags:
+                for y in task.tags:
+                    if (x==y):
+                        should_run = True
+                        break
+            if should_run:
+                self._run_task(play, task, False)
 
         # run notify actions
         for handler in play.handlers():

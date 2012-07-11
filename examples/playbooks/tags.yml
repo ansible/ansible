@@ -1,0 +1,29 @@
+---
+# tags allow us to run all of a playbook or part of it.
+#
+# assume: ansible-playbook tags.yml --tags foo
+#
+# only tags with the given tags will be run when --tags is specified
+#
+# (an include statement will also be able to set tags on all included
+# tasks at some point in the future)
+
+
+- name: example play
+  hosts: all
+  user: root
+  tasks:
+  - name: hi
+    tags: foo
+    action: shell echo "first play ran"
+
+- name: example play
+  hosts: all
+  user: root
+  tasks:
+  - name: hi
+    tags: bar
+    action: shell echo "second play ran"
+
+
+
