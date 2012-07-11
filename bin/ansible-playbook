@@ -87,7 +87,7 @@ def main(args):
             print callbacks.banner("PLAY RECAP")
             for h in hosts:
                 t = pb.stats.summarize(h)
-                print "%-30s : ok=%4s changed=%4s unreachable=%4s failed=%4s " % (h, 
+                print "%-30s : ok=%-4s changed=%-4s unreachable=%-4s failed=%-4s " % (h, 
                    t['ok'], t['changed'], t['unreachable'], t['failures']
                 )
             print "\n"
