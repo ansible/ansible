@@ -95,5 +95,5 @@ else:
 
 # mission accomplished
 #print "md5sum=%s changed=%s" % (md5sum_src, changed)
-exit_kv(dest=dest, src=src, changed="md5sum=%s changed=%s" % (md5sum_src, changed))
+exit_kv(dest=dest, src=src, md5sum=md5sum_src, changed=changed)
 
