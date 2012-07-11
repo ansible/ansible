@@ -1,0 +1,291 @@
+#!/usr/bin/python
+
+# (c) 2012, Red Hat, inc
+# Written by Seth Vidal
+# based on the mount modules from salt and puppet
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import os
+import os.path
+import shlex
+import subprocess
+import sys
+import syslog
+
+
+#mount module - mount fs and define in fstab
+#usage:
+# mount name=mountpoint, src=device_to_be_mounted fstype=fstype opts=mount_opts, dump=0 passno=0 state=[present|absent|mounted|unmounted] 
+# absent == remove from fstab and unmounted
+# present == add to fstab, do not change mount state
+# mounted == add to fstab if not there and make sure it is mounted
+# unmounted == do not change fstab state, but unmount
+
+def exit_json(rc=0, **kwargs):
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs['failed'] = True
+    exit_json(rc=1, **kwargs)
+
+def write_fstab(lines, dest):
+
+    fs_w = open(dest, 'w')
+    for l in lines:
+        fs_w.write(l)
+
+    fs_w.flush()
+    fs_w.close()
+
+def set_mount(kwargs):
+    "set/change a mount point location in fstab"
+    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    args = { 'opts':'defaults',
+             'dump':'0',
+             'passno':'0',
+             'fstab':'/etc/fstab' }
+    args.update(kwargs)
+
+    new_line = '%{src}s %{name}s %{fstype}s %{opts}s %{dump}s %{passno}s\n' 
+
+    to_write = []
+    exists = False
+    changed = False
+    for line in open(args['fstab'], 'r').readlines():
+        if not line.strip():
+             to_write.append(line)
+             continue
+        if line.strip().startswith('#'):
+            to_write.append(line)
+            continue
+        if len(line.split()) != 6:
+            # not sure what this is or why it is here
+            # but it is not our fault so leave it be
+            to_write.append(line)
+            continue
+        
+        ld = {}
+        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+
+        if ld['name'] != args['name']:
+            to_write.append(line)
+            continue
+
+        # it exists - now see if what we have is different
+        exists = True
+        for t in ('src', 'fstype','opts', 'dump', 'passno'):
+            if ld[t] != args[t]:
+                changed = True
+                ld[t] == args[t]
+
+        if changed:
+             to_write.append(new_line % ld)
+        else:
+             to_write.append(line)
+         
+    
+    if not exists:
+        to_write.append(new_line % args)
+        changed = True
+    
+    if changed:
+        write_fstab(to_write, args['fstab'])
+
+    return (args['name'], changed)
+            
+
+def unset_mount(kwargs):
+    "remount a mount point in fstab"
+    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    args = { 'opts':'default',
+             'dump':'0',
+             'passno':'0',
+             'fstab':'/etc/fstab' }
+    args.update(kwargs)
+
+    to_write = []
+    changed = False
+    for line in open(args['fstab'], 'r').readlines():
+        if not line.strip():
+             to_write.append(line)
+             continue
+        if line.strip().startswith('#'):
+            to_write.append(line)
+            continue
+        if len(line.split()) != 6:
+            # not sure what this is or why it is here
+            # but it is not our fault so leave it be
+            to_write.append(line)
+            continue
+        
+        ld = {}
+        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+
+        if ld['name'] != args['name']:
+            to_write.append(line)
+            continue
+
+        # if we got here we found a match - continue and mark changed
+        changed = True
+
+    if changed:
+        write_fstab(to_write, args['fstab'])
+
+    return (args['name'], changed)
+
+     
+def mount(kwargs):
+    "mount up a path or remount if needed"
+    name = kwargs['name']
+    if os.path.ismount(name):
+        cmd = ['/bin/mount', '-o', 'remount', name]
+    else:
+        cmd = ['/bin/mount', name ]
+
+    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = call.communicate()
+    if call.rc == 0:
+        return 0, ''
+    else:
+        return call.rc, out+err
+
+def umount(kwargs):
+    "unmount a path"
+    cmd = ['/bin/umount', name]
+
+    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = call.communicate()
+    if call.rc == 0:
+        return 0, ''
+    else:
+        return call.rc, out+err
+
+argfile = sys.argv[1]
+args    = open(argfile, 'r').read()
+items   = shlex.split(args)
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+
+if not len(items):
+    fail_json(msg='the module requires arguments -a')
+    sys.exit(1)
+
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+state      = params.get('state',None)
+name       = params.get('name', None)
+opts       = params.get('uid', None)
+passno     = params.get('group', None)
+dump       = params.get('groups', None)
+src        = params.get('comment', None)
+fstype     = params.get('home', None)
+
+
+
+if state not in [ 'present', 'absent', 'mounted', 'unmounted' ]:
+    fail_json(msg='invalid state')
+
+if not name:
+    fail_json(msg='no name option given')
+
+if not src:
+    fail_json(msg='no src option given')
+
+if not fstype:
+    fail_json(msg='no fstype option given')
+
+
+changed = False
+rc = 0
+args = {'name':name,
+        'src':src,
+        'fstype':fstype }
+if passno is not None:
+    args['passno'] = passno
+if opts is not None:
+    args['opts'] = opts
+if dump is not None:
+    args['dump'] = dump
+
+
+# absent == remove from fstab and unmounted
+# unmounted == do not change fstab state, but unmount
+# present == add to fstab, do not change mount state
+# mounted == add to fstab if not there and make sure it is mounted, if it has changed in fstab then remount it
+
+
+if state == 'absent':
+    name, changed = unset_mount(**args)
+    if changed:
+        if os.path.ismount(name):
+            res,msg  = umount(name)
+            if res:
+                fail_json(msg="Error unmounting %s: %s" % (name, msg))
+
+        if os.path.exists(name):
+            try:
+                os.rmdir(name)
+            except (OSError, IOError), e:
+                fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+
+    exit_json(changed=changed, **args)
+
+
+if state == 'unmounted':
+    if os.path.ismount(name):
+        res,msg  = umount(name)
+        if res:
+            fail_json(msg="Error unmounting %s: %s" % (name, msg))
+        changed = True
+
+    exit_json(changed=changed, **args)
+
+    
+
+if state in ['mounted', 'present']:
+    name, changed = set_mount(**args)
+    if state == 'mounted':
+        if not os.path.exists(name):
+            try:
+                os.makedirs(name)
+            except (OSError, IOError), e:
+                fail_json(msg="Error making dir %s: %s" % (name, str(e)))
+
+        res = 0
+        if os.path.ismount(name):
+                if changed:
+                    res,msg = mount(name)
+        else:
+            changed = True
+            res,msg = mount(name)
+
+        if res:
+            fail_json(msg="Error mounting %s: %s" % (name, msg))
+
+
+    exit_json(changed=changed, **args)
+
+fail_json(msg='Unexpected position reached')
+sys.exit(0)
