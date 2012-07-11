@@ -28,6 +28,10 @@ import subprocess
 import syslog
 import traceback
 
+# added to stave off future warnings about apt api
+import warnings; 
+warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
+
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
@@ -172,11 +176,11 @@ cache = apt.Cache()
 if default_release:
     apt_pkg.config['APT::Default-Release'] = default_release
     # reopen cache w/ modified config
-    cache.open()
+    cache.open(progress=None)
 
 if update_cache == 'yes':
     cache.update()
-    cache.open()
+    cache.open(progress=None)
     if package == None:
         exit_json(changed=False)
 
