@@ -80,6 +80,8 @@ def user_exists(user, host):
     return count[0] > 0
 
 def user_add(user, host, passwd, new_priv):
+    if passwd is None:
+        fail_json(msg="passwd parameter required")
     cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,passwd))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
@@ -89,41 +91,43 @@ def user_add(user, host, passwd, new_priv):
 def user_mod(user, host, passwd, new_priv):
     changed = False
 
-    # Handle a potential password change.
-    cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
-    current_pass_hash = cursor.fetchone()
-    cursor.execute("SELECT PASSWORD(%s)", (passwd,))
-    new_pass_hash = cursor.fetchone()
-    if current_pass_hash[0] != new_pass_hash[0]:
-        cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,passwd))
-        changed = True
-
-    # Handle privilege change.
-    curr_priv = privileges_get(user,host)
-
-    # If the user has privileges on a db.table that doesn't appear at all in
-    # the new specification, then revoke all privileges on it.
-    for db_table, priv in curr_priv.iteritems():
-        if db_table not in new_priv:
-            privileges_revoke(user,host,db_table)
+    # Handle passwords.
+    if passwd is not None:
+        cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+        current_pass_hash = cursor.fetchone()
+        cursor.execute("SELECT PASSWORD(%s)", (passwd,))
+        new_pass_hash = cursor.fetchone()
+        if current_pass_hash[0] != new_pass_hash[0]:
+            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,passwd))
             changed = True
 
-    # If the user doesn't currently have any privileges on a db.table, then
-    # we can perform a straight grant operation.
-    for db_table, priv in new_priv.iteritems():
-        if db_table not in curr_priv:
-            privileges_grant(user,host,db_table,priv)
-            changed = True
+    # Handle privileges.
+    if new_priv is not None:
+        curr_priv = privileges_get(user,host)
 
-    # If the db.table specification exists in both the user's current privileges
-    # and in the new privileges, then we need to see if there's a difference.
-    db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
-    for db_table in db_table_intersect:
-        priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
-        if (len(priv_diff) > 0):
-            privileges_revoke(user,host,db_table)
-            privileges_grant(user,host,db_table,new_priv[db_table])
-            changed = True
+        # If the user has privileges on a db.table that doesn't appear at all in
+        # the new specification, then revoke all privileges on it.
+        for db_table, priv in curr_priv.iteritems():
+            if db_table not in new_priv:
+                privileges_revoke(user,host,db_table)
+                changed = True
+
+        # If the user doesn't currently have any privileges on a db.table, then
+        # we can perform a straight grant operation.
+        for db_table, priv in new_priv.iteritems():
+            if db_table not in curr_priv:
+                privileges_grant(user,host,db_table,priv)
+                changed = True
+
+        # If the db.table specification exists in both the user's current privileges
+        # and in the new privileges, then we need to see if there's a difference.
+        db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
+        for db_table in db_table_intersect:
+            priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+            if (len(priv_diff) > 0):
+                privileges_revoke(user,host,db_table)
+                privileges_grant(user,host,db_table,new_priv[db_table])
+                changed = True
 
     return changed
 
