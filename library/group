@@ -54,11 +54,10 @@ def add_group_info(kwargs):
 
 def group_del(group):
     cmd = [GROUPDEL, group]
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 def group_add(group, **kwargs):
     cmd = [GROUPADD]
@@ -69,11 +68,10 @@ def group_add(group, **kwargs):
         elif key == 'system' and kwargs[key] == 'yes':
             cmd.append('-r')
     cmd.append(group)
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 def group_mod(group, **kwargs):
     cmd = [GROUPMOD]
@@ -84,13 +82,12 @@ def group_mod(group, **kwargs):
                 cmd.append('-g')
                 cmd.append(kwargs[key])
     if len(cmd) == 1:
-        return False
+        return (None, '', '')
     cmd.append(group)
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 def group_exists(group):
     try:
@@ -156,18 +153,32 @@ if system not in ['yes', 'no']:
 if name is None:
     fail_json(msg='name is required')
 
-changed = False
-rc = 0
+rc = None
+out = ''
+err = ''
+result = {}
+result['name'] = name
 if state == 'absent':
     if group_exists(name):
-        changed = group_del(name)
-    exit_json(name=name, changed=changed)
+        (rc, out, err) = group_del(name)
+        if rc != 0:
+            fail_json(name=name, msg=err)
 elif state == 'present':
     if not group_exists(name):
-        changed = group_add(name, gid=gid, system=system)
+        (rc, out, err) = group_add(name, gid=gid, system=system)
     else:
-        changed = group_mod(name, gid=gid)
+        (rc, out, err) = group_mod(name, gid=gid)
 
-    exit_json(name=name, changed=changed)
+    if rc is not None and rc != 0:
+        fail_json(name=name, msg=err)
 
+if rc is None:
+    result['changed'] = False
+else:
+    result['changed'] = True
+if out:
+    result['stdout'] = out
+if err:
+    result['stderr'] = err
+exit_json(**result)
 fail_json(name=name, msg='Unexpected position reached')
