@@ -119,29 +119,54 @@ class Ec2Inventory(object):
         self.read_settings()
         self.parse_cli_args()
         
-        # Force cache refresh?
+        # Cache
         if self.args.refresh_cache:
-            json_inventory = self.do_api_calls_update_cache()
-            
-        # 
+            self.do_api_calls_update_cache()  
+        elif not self.is_cache_valid():
+            self.do_api_calls_update_cache()
+        
+        # Data to print
         if self.args.host:
-            print self.args.host
+            if len(self.index) == 0:
+                # Need to load from cache
+                self.load_index_from_cache()
             
-        elif os.path.isfile(self.cache_path_cache):
+            (region, instance_id) = self.index[self.args.host]
+            instance = self.get_instance(region, instance_id)
+            instance_vars = {}
+            for key in vars(instance):
+                print key
+                value = getattr(instance, key)
+                print type(value)
+                if any(type(value) in [str, unicode]):
+                    instance_vars[key] = value
+                
+            data_to_print = self.json_format_dict(instance_vars, True)
+        
+        elif self.args.list:
+            # Display list of instances for inventory
+            if len(self.inventory) == 0:
+                # Need to load from cache
+                data_to_print = self.get_inventory_from_cache()
+            else:
+                data_to_print = self.json_format_dict(self.inventory, True)
+            
+            
+        print data_to_print
+
+        
+        
+    def is_cache_valid(self):
+        ''' Determines if the cache files have expired, or if it is still valid '''
+
+        if os.path.isfile(self.cache_path_cache):
             mod_time = os.path.getmtime(self.cache_path_cache)
             current_time = time()
             if (mod_time + self.cache_max_age) > current_time:
-                # Use cache
-                json_inventory = self.get_inventory_from_cache()
-            else:
-                json_inventory = self.do_api_calls_update_cache()
-                
-        else:
-            json_inventory = self.do_api_calls_update_cache()
-            
-        
-        print json_inventory
-        print self.json_format_dict(self.index, True)
+                if os.path.isfile(self.cache_path_index):
+
+                    return True
+        return False
         
         
     def read_settings(self):
@@ -149,13 +174,26 @@ class Ec2Inventory(object):
         
         config = ConfigParser.SafeConfigParser()
         config.read('ec2.ini')
+        
+        # Regions
+        self.regions = []
+        configRegions = config.get('ec2', 'regions')
+        if (configRegions == 'all'):
+            for regionInfo in ec2.regions():
+                self.regions.append(regionInfo.name)
+        else:
+            self.regions = configRegions.split(",")
+        
+        # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+
+        # Cache related
         cache_path = config.get('ec2', 'cache_path')
-        self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
         self.cache_path_cache = cache_path + "/ansible-ec2.cache"
         self.cache_path_index = cache_path + "/ansible-ec2.index"
+        self.cache_max_age = config.getint('ec2', 'cache_max_age')
+        
         
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -169,97 +207,122 @@ class Ec2Inventory(object):
                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
         self.args = parser.parse_args()
         
+        
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
         
-        for regionInfo in ec2.regions():
-            region = regionInfo.name
+        for region in self.regions:
             self.get_instances_by_region(region)
         
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
+
 
     def get_instances_by_region(self, region):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
         
         conn = ec2.connect_to_region(region)
-        
-        self.inventory[region] = []
-        
         reservations = conn.get_all_instances()
         for reservation in reservations:
             for instance in reservation.instances:
-                if instance.state == 'terminated':
-                    continue
-                
-                # Select the best destination address
-                if instance.subnet_id:
-                    dest = getattr(instance, self.vpc_destination_variable)
-                else:
-                    dest =  getattr(instance, self.destination_variable)
+                self.add_instance(instance, region)
+
+
+    def get_instance(self, region, instance_id):
+        ''' Gets details about a specific instance '''
+        conn = ec2.connect_to_region(region)
+        reservations = conn.get_all_instances([instance_id])
+        for reservation in reservations:
+            for instance in reservation.instances:
+                return instance
+            
         
-                if dest == None:
-                    # Skip instances we cannot address (e.g. VPC private subnet)
-                    continue
+    def add_instance(self, instance, region):
+        ''' Adds an instance to the inventory and index, as long as it is addressable '''
         
-                # Add to index
-                self.index[dest] = [region, instance.id]
+        # Only want running instances
+        if instance.state == 'terminated':
+            return
         
-                # Group by instance ID (always a group of 1)
-                self.inventory[instance.id] = [dest]
-                
-                # Group by region
-                self.inventory[region].append(dest);
-                                
-                # Group by availability zone
-                if instance.placement in self.inventory:
-                    self.inventory[instance.placement].append(dest);
-                else:
-                    self.inventory[instance.placement] = [dest]
-                
-                # Group by security group
-                for group in instance.groups:
-                    key = self.to_safe("security-group_" + group.name)
-                    if key in self.inventory:
-                        self.inventory[key].append(dest);
-                    else:
-                        self.inventory[key] = [dest]
+        # Select the best destination address
+        if instance.subnet_id:
+            dest = getattr(instance, self.vpc_destination_variable)
+        else:
+            dest =  getattr(instance, self.destination_variable)
+
+        if dest == None:
+            # Skip instances we cannot address (e.g. private VPC subnet)
+            return
+
+        # Add to index
+        self.index[dest] = [region, instance.id]
+
+        # Inventory: Group by instance ID (always a group of 1)
+        self.inventory[instance.id] = [dest]
+        
+        # Inventory: Group by region
+        self.push(self.inventory, region, dest)
                         
-                # Group by tag keys
-                for k, v in instance.tags.iteritems():
-                    key = self.to_safe("tag_" + k + "=" + v)
-                    if key in self.inventory:
-                        self.inventory[key].append(dest);
-                    else:
-                        self.inventory[key] = [dest]     
-                       
-        return self.json_format_dict(self.inventory, True)
+        # Inventory: Group by availability zone
+        self.push(self.inventory, instance.placement, dest)
+        
+        # Inventory: Group by security group
+        for group in instance.groups:
+            key = self.to_safe("security-group_" + group.name)
+            self.push(self.inventory, key, dest)
+                
+        # Inventory: Group by tag keys
+        for k, v in instance.tags.iteritems():
+            key = self.to_safe("tag_" + k + "=" + v)
+            self.push(self.inventory, key, dest)        
+    
+    
+    def push(self, my_dict, key, element):
+        ''' Pushed an element onto an array that may not have been defined in the dict '''
+        
+        if key in my_dict:
+            my_dict[key].append(element);
+        else:
+            my_dict[key] = [element]        
+    
     
     def get_inventory_from_cache(self):
+        ''' Reads the inventory from the cache file and returns it as a JSON object '''
+
         cache = open(self.cache_path_cache, 'r')
         json_inventory = cache.read()
         return json_inventory
 
-    def get_index_from_cache(self):
+
+    def load_index_from_cache(self):
+        ''' Reads the index from the cache file sets self.index '''
+
         cache = open(self.cache_path_index, 'r')
         json_index = cache.read()
-        return json_index
+        self.index = json.loads(json_index)
     
-    def write_to_cache(self, data, file):
+    
+    def write_to_cache(self, data, filename):
+        ''' Writes data in JSON format to a file '''
+        
         json_data = self.json_format_dict(data, True)
-        cache = open(file, 'w')
+        cache = open(filename, 'w')
         cache.write(json_data)
         cache.close()
         
+        
     def to_safe(self, word):
-        '''Converts 'bad' characters in a string to underscores so they can be
-        used as Ansible groups'''
+        ''' Converts 'bad' characters in a string to underscores so they can be
+        used as Ansible groups '''
+        
         return re.sub("[^A-Za-z0-9\-]", "_", word)
         
+        
     def json_format_dict(self, data, pretty=False):
-        '''Converts a dict to a JSON object and dumps it as a formatted
-        string'''
+        ''' Converts a dict to a JSON object and dumps it as a formatted
+        string '''
+        
         if pretty:
             return json.dumps(data, sort_keys=True, indent=2)
         else:
@@ -268,3 +331,4 @@ class Ec2Inventory(object):
     
 # Run the script
 Ec2Inventory()
+
