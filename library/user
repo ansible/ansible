@@ -70,9 +70,9 @@ def add_user_info(kwargs):
 def user_del(user, **kwargs):
     cmd = [USERDEL]
     for key in kwargs:
-        if key == 'force' and kwargs[key]:
+        if key == 'force' and kwargs[key] == 'yes':
             cmd.append('-f')
-        elif key == 'remove' and kwargs[key]:
+        elif key == 'remove' and kwargs[key] == 'yes':
             cmd.append('-r')
     cmd.append(user)
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -287,8 +287,8 @@ password   = params.get('password', None)
 
 # ===========================================
 # following options are specific to userdel
-force      = params.get('force', False)
-remove     = params.get('remove', False)
+force      = params.get('force', 'no')
+remove     = params.get('remove', 'no')
 
 # ===========================================
 # following options are specific to useradd
@@ -307,6 +307,10 @@ if system not in ['yes', 'no']:
     fail_json(msg='invalid system')
 if append not in [ 'yes', 'no' ]:
     fail_json(msg='invalid append')
+if force not in ['yes', 'no']:
+    fail_json(msg="invalid option for force, requires yes or no (defaults to no)")
+if remove not in ['yes', 'no']:
+    fail_json(msg="invalid option for remove, requires yes or no (defaults to no)")
 if name is None:
     fail_json(msg='name is required')
 
