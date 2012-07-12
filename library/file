@@ -150,9 +150,6 @@ mode      = params.get('mode', None)
 owner     = params.get('owner', None)
 group     = params.get('group', None)
 
-# presently unused, we always use -R (FIXME?)
-recurse   = params.get('recurse', 'false')
-
 # selinux related options
 seuser    = params.get('seuser', None)
 serole    = params.get('serole', None)
