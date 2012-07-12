@@ -18,6 +18,7 @@ Ansible Changes By Release
 * paramiko is now only imported if needed when running from source checkout
 * fetch module fixes for SSH connection type
 * modules now consistently all take yes/no for boolean parameters (some accepted true/false)
+* in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
 
 0.5 "Amsterdam" ------- July 04, 2012
 
