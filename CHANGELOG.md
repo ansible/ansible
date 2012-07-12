@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 0.6 "Cabo" ------------ pending
 
-* groups variable available a hash to return the hosts in each group name
+* groups variable available as a hash to return the hosts in each group name
 * fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
 * apt module now takes an optional install-recommends=yes|no (default yes)
 * fixes to the return codes of the copy module
@@ -13,6 +13,11 @@ Ansible Changes By Release
 * various user and group module fixes (error handling, etc)
 * apt module now takes an optional force parameter
 * slightly better psychic service status handling for the service module
+* cowsay support on Ubuntu
+* playbooks can now include other playbooks (example/playbooks/nested_playbooks.yml)
+* paramiko is now only imported if needed when running from source checkout
+* fetch module fixes for SSH connection type
+* modules now consistently all take yes/no for boolean parameters (some accepted true/false)
 
 0.5 "Amsterdam" ------- July 04, 2012
 
