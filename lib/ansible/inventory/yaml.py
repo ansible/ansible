@@ -133,4 +133,4 @@ class InventoryParserYaml(object):
                     ungrouped.add_host(host)
 
         # make sure ungrouped_hosts is the complement of grouped_hosts
-        ungrouped_hosts = [host if host not in grouped_hosts for host in ungrouped_hosts]
+        ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]

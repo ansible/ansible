@@ -15,6 +15,7 @@ class TestInventory(unittest.TestCase):
         self.complex_inventory_file = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script       = os.path.join(self.test_dir, 'inventory_api.py')
         self.inventory_yaml         = os.path.join(self.test_dir, 'yaml_hosts')
+        self.inventory_yaml2        = os.path.join(self.test_dir, 'yaml2_hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -37,6 +38,9 @@ class TestInventory(unittest.TestCase):
 
     def yaml_inventory(self):
         return Inventory(self.inventory_yaml)
+
+    def yaml2_inventory(self):
+        return Inventory(self.inventory_yaml2)
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
@@ -318,6 +322,113 @@ class TestInventory(unittest.TestCase):
 
     def test_yaml_multiple_groups(self):
         inventory = self.yaml_inventory()
+        vars = inventory.get_variables('odin')
+
+        assert 'group_names' in vars
+        assert sorted(vars['group_names']) == [ 'norse', 'ruler' ]
+
+    ### Tests for yaml2 inventory file
+
+    def test_yaml2(self):
+        inventory = self.yaml2_inventory()
+        hosts = inventory.list_hosts()
+        print hosts
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_all(self):
+        inventory = self.yaml2_inventory()
+        hosts = inventory.list_hosts('all')
+
+        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_norse(self):
+        inventory = self.yaml2_inventory()
+        hosts = inventory.list_hosts("norse")
+
+        expected_hosts=['thor', 'odin', 'loki']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_ungrouped(self):
+        inventory = self.yaml2_inventory()
+        hosts = inventory.list_hosts("ungrouped")
+
+        expected_hosts=['jupiter', 'mars']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_combined(self):
+        inventory = self.yaml2_inventory()
+        hosts = inventory.list_hosts("norse:greek")
+
+        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_restrict(self):
+        inventory = self.yaml2_inventory()
+
+        restricted_hosts = ['hera', 'poseidon', 'thor']
+        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+
+        inventory.restrict_to(restricted_hosts)
+        hosts = inventory.list_hosts("norse:greek")
+
+        self.compare(hosts, restricted_hosts)
+
+        inventory.lift_restriction()
+        hosts = inventory.list_hosts("norse:greek")
+
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml2_vars(self):
+        inventory = self.yaml2_inventory()
+        vars = inventory.get_variables('thor')
+        assert vars == {'group_names': ['norse'],
+                        'hammer':True,
+                        'inventory_hostname': 'thor'}
+
+    def test_yaml2_list_vars(self):
+        inventory = self.yaml2_inventory()
+        vars = inventory.get_variables('zeus')
+        assert vars == {'ansible_ssh_port': 3001,
+                        'group_names': ['greek', 'ruler'],
+                        'inventory_hostname': 'zeus',
+                        'ntp_server': 'olympus.example.com'}
+
+    def test_yaml2_change_vars(self):
+        inventory = self.yaml2_inventory()
+        vars = inventory.get_variables('thor')
+
+        vars["hammer"] = False
+
+        vars = inventory.get_variables('thor')
+        print vars
+        assert vars == {'hammer':True,
+                        'inventory_hostname': 'thor',
+                        'group_names': ['norse']}
+
+    def test_yaml2_host_vars(self):
+        inventory = self.yaml2_inventory()
+        vars = inventory.get_variables('saturn')
+
+        print vars
+        assert vars == {'inventory_hostname': 'saturn',
+                        'moon': 'titan',
+                        'moon2': 'enceladus',
+                        'group_names': ['multiple']}
+
+    def test_yaml2_port(self):
+        inventory = self.yaml2_inventory()
+        vars = inventory.get_variables('hera')
+
+        print vars
+        assert vars == {'ansible_ssh_port': 3000,
+                        'inventory_hostname': 'hera',
+                        'ntp_server': 'olympus.example.com',
+                        'group_names': ['greek']}
+
+    def test_yaml2_multiple_groups(self):
+        inventory = self.yaml2_inventory()
         vars = inventory.get_variables('odin')
 
         assert 'group_names' in vars

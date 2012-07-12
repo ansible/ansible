@@ -1,0 +1,40 @@
+---
+
+- jupiter
+
+- host: saturn
+  groups: [ multiple ]
+  vars:
+    moon: titan
+    moon2: enceladus
+
+- host: hera
+  groups: [ greek ]
+
+- host: poseidon
+  groups: greek
+
+- host: mars
+
+- host: zeus
+  groups: [ greek, ruler ]
+  vars:
+  - ansible_ssh_port: 3001
+
+- host: odin
+  groups:
+  - norse
+  - ruler
+
+- host: loki
+  groups: [ norse ]
+
+- host: thor
+  groups: [ norse ]
+  vars:
+  - hammer: True
+
+- group: greek
+  vars:
+  - ansible_ssh_port: 3000
+  - ntp_server: olympus.example.com
