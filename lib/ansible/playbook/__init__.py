@@ -116,10 +116,44 @@ class PlayBook(object):
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
-        self.basedir    = os.path.dirname(playbook)
-        self.playbook  = utils.parse_yaml_from_file(playbook)
+        self.basedir   = os.path.dirname(playbook)
+        self.playbook  = self._load_playbook_from_file(playbook)
 
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
+
+    # *****************************************************
+
+    def _load_playbook_from_file(self, path):
+        '''
+        do some top level error checking on playbooks and allow them to include other
+        playbooks.
+        '''
+
+        playbook_data  = utils.parse_yaml_from_file(path)
+        accumulated_plays = []
+
+        if type(playbook_data) != list:
+           raise errors.AnsibleError(
+               "parse error: playbooks must be formatted as a YAML list"
+           )
+
+        for play in playbook_data:
+           if type(play) != dict:
+               raise errors.AnsibleError(
+                   "parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play
+               )
+           if 'include' in play:
+               if len(play.keys()) == 1:
+                   included_path = utils.path_dwim(self.basedir, play['include'])
+                   accumulated_plays.extend(self._load_playbook_from_file(included_path))
+               else:
+                   raise errors.AnsibleError(
+                       "parse error: top level includes cannot be used with other directives: %s" % play
+                   )
+           else:
+               accumulated_plays.append(play)
+
+        return accumulated_plays
 
     # *****************************************************
         

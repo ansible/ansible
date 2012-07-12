@@ -154,6 +154,10 @@ class Play(object):
 
     def should_run(self, tags):
         ''' does the play match any of the tags? '''
+
+        if len(self._tasks) == 0:
+            return False
+
         for task in self._tasks:
             for task_tag in task.tags:
                 if task_tag in tags:
