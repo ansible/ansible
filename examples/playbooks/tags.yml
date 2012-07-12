@@ -3,27 +3,27 @@
 #
 # assume: ansible-playbook tags.yml --tags foo
 #
-# only tags with the given tags will be run when --tags is specified
+# try this with:
+#    --tags foo
+#    --tags bar
 #
-# (an include statement will also be able to set tags on all included
-# tasks at some point in the future)
+# note the include syntax to tag all tasks included below
+# it is a short hand over adding "tag:" to each task entry
 
-
-- name: example play
+- name: example play one
   hosts: all
   user: root
   tasks:
   - name: hi
     tags: foo
-    action: shell echo "first play ran"
+    action: shell echo "first task ran"
 
-- name: example play
+- name: example play two
   hosts: all
   user: root
   tasks:
   - name: hi
     tags: bar
-    action: shell echo "second play ran"
-
-
+    action: shell echo "second task ran"
+  - include: tasks/base.yml tags=base
 

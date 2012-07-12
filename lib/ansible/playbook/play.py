@@ -79,6 +79,7 @@ class Play(object):
             task_vars = self.vars.copy()
             if 'include' in x:
                 tokens = shlex.split(x['include'])
+
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
                     task_vars[k]=v
@@ -148,6 +149,16 @@ class Play(object):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
         for h in hosts:
             self._update_vars_files_for_host(h)
+
+    # *************************************************
+
+    def should_run(self, tags):
+        ''' does the play match any of the tags? '''
+        for task in self._tasks:
+            for task_tag in task.tags:
+                if task_tag in tags:
+                    return True
+        return False                    
 
     # *************************************************
 
