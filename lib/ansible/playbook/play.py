@@ -29,7 +29,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook', 
-       '_ds', '_handlers', '_tasks'
+       'tags', '_ds', '_handlers', '_tasks'
     ]
 
     # *************************************************
@@ -62,8 +62,16 @@ class Play(object):
         self.sudo        = ds.get('sudo', self.playbook.sudo)
         self.sudo_user   = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport   = ds.get('connection', self.playbook.transport)
+        self.tags        = ds.get('tags', None)
         self._tasks      = self._load_tasks(self._ds, 'tasks')
         self._handlers   = self._load_tasks(self._ds, 'handlers')
+
+        if self.tags is None:
+            self.tags = []
+        elif type(self.tags) in [ str, unicode ]:
+            self.tags = [ self.tags ]
+        elif type(self.tags) != list:
+            self.tags = []
 
         if self.sudo_user != 'root':
             self.sudo = True
@@ -99,6 +107,11 @@ class Play(object):
                     mv = task_vars.copy()
                     mv['item'] = item
                     results.append(Task(self,y,module_vars=mv))
+
+        for x in results:
+            if self.tags is not None:
+                x.tags.extend(self.tags)
+
         return results
 
     # *************************************************
