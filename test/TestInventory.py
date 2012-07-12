@@ -38,9 +38,6 @@ class TestInventory(unittest.TestCase):
     def yaml_inventory(self):
         return Inventory(self.inventory_yaml)
 
-    def yaml2_inventory(self):
-        return Inventory(self.inventory_yaml2)
-
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
 
@@ -325,3 +322,4 @@ class TestInventory(unittest.TestCase):
 
         assert 'group_names' in vars
         assert sorted(vars['group_names']) == [ 'norse', 'ruler' ]
+
