@@ -61,11 +61,14 @@
 - group: cat
   vars:
   - ears: pointy
+  - nose: black
 
 - group: dog
   vars:
   - ears: flappy
+  - nose: black
 
 - group: mouse
   vars:
   - ears: round
+  - nose: black
