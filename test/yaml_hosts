@@ -2,6 +2,7 @@
 
 - jupiter
 - host: saturn
+  groups: [ multiple ]
   vars:
     moon: titan
     moon2: enceladus
@@ -9,12 +10,12 @@
 - host: mars
 
 - host: zeus
+  groups: [ greek, ruler ]
   vars:
   - ansible_ssh_port: 3001
 
 - group: greek
   hosts:
-  - zeus
   - hera
   - poseidon
   vars:
@@ -31,9 +32,4 @@
 
 - group: ruler
   hosts:
-  - zeus
   - odin
-
-- group: multiple
-  hosts:
-  - saturn
