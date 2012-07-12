@@ -196,11 +196,11 @@ for x in items:
 
 state      = params.get('state',None)
 name       = params.get('name', None)
-opts       = params.get('uid', None)
-passno     = params.get('group', None)
-dump       = params.get('groups', None)
-src        = params.get('comment', None)
-fstype     = params.get('home', None)
+opts       = params.get('opts', None)
+passno     = params.get('passno', None)
+dump       = params.get('dump', None)
+src        = params.get('src', None)
+fstype     = params.get('fstype', None)
 
 
 
@@ -275,8 +275,8 @@ if state in ['mounted', 'present']:
 
         res = 0
         if os.path.ismount(name):
-                if changed:
-                    res,msg = mount(name)
+            if changed:
+                res,msg = mount(name)
         else:
             changed = True
             res,msg = mount(name)
