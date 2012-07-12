@@ -2,7 +2,6 @@
 
 - jupiter
 - host: saturn
-  groups: [ multiple ]
   vars:
     moon: titan
     moon2: enceladus
@@ -10,12 +9,12 @@
 - host: mars
 
 - host: zeus
-  groups: [ greek, ruler ]
   vars:
   - ansible_ssh_port: 3001
 
 - group: greek
   hosts:
+  - zeus
   - hera
   - poseidon
   vars:
@@ -32,4 +31,41 @@
 
 - group: ruler
   hosts:
+  - zeus
   - odin
+
+- group: multiple
+  hosts:
+  - saturn
+
+- host: garfield
+  groups: [ comic, cat, orange ]
+  vars:
+  - nose: pink
+
+- host: odie
+  groups: [ comic, dog, yellow ]
+
+- host: mickey
+  groups: [ cartoon, mouse, red ]
+
+- host: goofy
+  groups: [ cartoon, dog, orange ]
+
+- host: tom
+  groups: [ cartoon, cat, gray ]
+
+- host: jerry
+  groups: [ cartoon, mouse, brown ]
+
+- group: cat
+  vars:
+  - ears: pointy
+
+- group: dog
+  vars:
+  - ears: flappy
+
+- group: mouse
+  vars:
+  - ears: round
