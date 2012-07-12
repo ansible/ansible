@@ -78,8 +78,16 @@ class AggregateStats(object):
 
 def banner(msg):
     res = ""
+    global COWSAY
     if os.path.exists("/usr/bin/cowsay"):
-        cmd = subprocess.Popen("/usr/bin/cowsay -W 60 \"%s\"" % msg, 
+        COWSAY = "/usr/bin/cowsay"
+    elif os.path.exists("/usr/games/cowsay"):
+        COWSAY = "/usr/games/cowsay"
+    else:
+        COWSAY = None
+
+    if COWSAY != None:
+        cmd = subprocess.Popen("%s -W 60 \"%s\"" % (COWSAY, msg), 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (out, err) = cmd.communicate()
         res = "%s\n" % out 
