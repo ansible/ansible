@@ -84,7 +84,7 @@ def banner(msg):
         (out, err) = cmd.communicate()
         res = "%s\n" % out 
     else:
-        res = "%s ********************* \n" % msg
+        res = "\n%s ********************* " % msg
     return res
   
 
@@ -190,7 +190,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     def on_ok(self, host, host_result):
         # show verbose output for non-setup module results if --verbose is used
         if not self.verbose or host_result.get("verbose_override",None) is not None:
-            print "ok: [%s]\n" % (host)
+            print "ok: [%s]" % (host)
         else:
             print "ok: [%s] => %s" % (host, utils.smjson(host_result))
 
@@ -225,7 +225,7 @@ class PlaybookCallbacks(object):
         self.verbose = verbose
 
     def on_start(self):
-        print "\n"
+        pass
 
     def on_notify(self, host, handler):
         pass
