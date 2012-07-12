@@ -132,5 +132,5 @@ class InventoryParserYaml(object):
                 if host not in grouped_hosts:
                     ungrouped.add_host(host)
 
-        # make sure ungrouped_hosts is the complement of grouped_hosts
+        # make sure ungrouped.hosts is the complement of grouped_hosts
         ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]
