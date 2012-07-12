@@ -6,14 +6,27 @@
 # try this with:
 #    --tags foo
 #    --tags bar
+#    --tags extra
 #
-# note the include syntax to tag all tasks included below
-# it is a short hand over adding "tag:" to each task entry
+# the value of a 'tags:' element can be a string or list
+# of tag names.  Variables are not usable in tag names.
 
 - name: example play one
   hosts: all
   user: root
+
+  # any tags applied to the play are shorthand to applying
+  # the tag to all tasks in it.  Here, each task is given
+  # the tag extra
+
+  tags: 
+     - extra
+
   tasks:
+
+  # this task will run if you don't specify any tags,
+  # if you specify 'foo' or if you specify 'extra'
+
   - name: hi
     tags: foo
     action: shell echo "first task ran"
@@ -23,7 +36,9 @@
   user: root
   tasks:
   - name: hi
-    tags: bar
+    tags: 
+       - bar
     action: shell echo "second task ran"
   - include: tasks/base.yml tags=base
+
 
