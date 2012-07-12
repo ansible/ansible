@@ -62,6 +62,9 @@ class Task(object):
         if len(tokens) > 1:
             self.module_args = tokens[1]
 
+        import_tags = []
+        if 'tags' in self.module_vars:
+            import_tags = self.module_vars['tags'].split(",")
 
         self.name = utils.template(self.name, self.module_vars)
         self.action = utils.template(self.name, self.module_vars)
@@ -78,7 +81,7 @@ class Task(object):
                 self.tags.append(apply_tags)
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
-
+        self.tags.extend(import_tags)
                 
 
 

@@ -282,6 +282,9 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
+        if not play.should_run(self.only_tags):
+            return
+
         self.callbacks.on_play_start(play.name)
 
         # push any variables down to the system # and get facts/ohai/other data back up
