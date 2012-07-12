@@ -1,5 +1,7 @@
 ---
 
+# Below is the original way of defining hosts and groups.
+
 - jupiter
 - host: saturn
   vars:
@@ -37,6 +39,12 @@
 - group: multiple
   hosts:
   - saturn
+
+# Here we demonstrate that groups can be defined on a per-host basis.
+# When managing a large set of systems this format makes it easier to
+# ensure each of the systems is defined in a set of groups, compared
+# to the standard group definitions, where a host may need to be added
+# to multiple disconnected groups.
 
 - host: garfield
   groups: [ comic, cat, orange ]
