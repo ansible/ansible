@@ -106,6 +106,7 @@ class InventoryParserYaml(object):
 
             elif type(item) == dict and 'host' in item:
                 host = self._make_host(item['host'])
+
                 vars = item.get('vars', {})
                 if type(vars)==list:
                     varlist, vars = vars, {}
@@ -113,5 +114,23 @@ class InventoryParserYaml(object):
                         vars.update(subitem)
                 for (k,v) in vars.items():
                    host.set_variable(k,v)
+
+                groups = item.get('groups', {})
+                if type(groups) in [ str, unicode ]:
+                    groups = [ groups ]
+                if type(groups)==list:
+                    for subitem in groups:
+                        if subitem in self.groups:
+                            group = self.groups[subitem]
+                        else:
+                            group = Group(subitem)
+                            self.groups[group.name] = group
+                            all.add_child_group(group)
+                        group.add_host(host)
+                        grouped_hosts.append(host)
+
                 if host not in grouped_hosts:
                     ungrouped.add_host(host)
+
+        # make sure ungrouped_hosts is the complement of grouped_hosts
+        ungrouped_hosts = [host if host not in grouped_hosts for host in ungrouped_hosts]
