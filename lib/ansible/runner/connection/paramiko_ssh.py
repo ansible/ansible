@@ -32,9 +32,14 @@ import random
 from ansible import errors
 # prevent paramiko warning noise
 # see http://stackoverflow.com/questions/3920502/
+HAVE_PARAMIKO=False
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import paramiko
+    try:
+        import paramiko
+        HAVE_PARAMIKO=True
+    except ImportError:
+        pass
 
 class ParamikoConnection(object):
     ''' SSH based connections with Paramiko '''
@@ -48,6 +53,10 @@ class ParamikoConnection(object):
             self.port = self.runner.remote_port
 
     def _get_conn(self):
+
+        if not HAVE_PARAMIKO:
+            raise errors.AnsibleError("paramiko is not installed")
+
         user = self.runner.remote_user
 
         ssh = paramiko.SSHClient()
