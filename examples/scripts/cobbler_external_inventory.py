@@ -69,7 +69,7 @@ conn = xmlrpclib.Server("http://127.0.0.1/cobbler_api", allow_none=True)
 # executed with no parameters, return the list of
 # all groups and hosts
 
-if len(sys.argv) == 1:
+if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 
     systems = conn.get_item_names('system')
     groups = { 'ungrouped' : [] }
@@ -103,10 +103,10 @@ if len(sys.argv) == 1:
 # executed with a hostname as a parameter, return the
 # variables for that host
 
-if len(sys.argv) == 2:
+elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
 
     # look up the system record for the given DNS name
-    result = conn.find_system_by_dns_name(sys.argv[1])
+    result = conn.find_system_by_dns_name(sys.argv[2])
     system = result.get('name', None)
     data = {}
     if system is None:
@@ -125,3 +125,7 @@ if len(sys.argv) == 2:
     print json.dumps(results)
     sys.exit(0)
 
+else:
+
+    print "usage: --list  ..OR.. --host <hostname>"
+    sys.exit(1)
