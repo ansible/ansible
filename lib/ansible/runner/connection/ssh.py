@@ -126,8 +126,6 @@ class SSHConnection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         sftp_cmd = ["sftp"] + self.common_args + [self.host]
         p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
