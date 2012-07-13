@@ -135,12 +135,28 @@ class Ec2Inventory(object):
             instance = self.get_instance(region, instance_id)
             instance_vars = {}
             for key in vars(instance):
-                print key
+                key = self.to_safe(key)
                 value = getattr(instance, key)
-                print type(value)
-                if any(type(value) in [str, unicode]):
-                    instance_vars[key] = value
                 
+                # Handle multiple types
+                if type(value) in [int, bool]:
+                    instance_vars[key] = value
+                elif type(value) in [str, unicode]:
+                    instance_vars[key] = value.strip()
+                elif type(value) == type(None):
+                    instance_vars[key] = ''
+                elif key == 'region':
+                    instance_vars[key] = value.name
+                elif key == 'tags':
+                    for k, v in instance.tags.iteritems():
+                        key = self.to_safe('tag_' + k)
+                        instance_vars[key] = v
+                else:
+                    print key
+                    print type(value)
+                    print value
+                    print "---"
+                               
             data_to_print = self.json_format_dict(instance_vars, True)
         
         elif self.args.list:
