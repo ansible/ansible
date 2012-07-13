@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Sponsored by Four Kitchens http://fourkitchens.com.
 #
 # This file is part of Ansible
 #
@@ -80,8 +81,6 @@ def user_exists(user, host):
     return count[0] > 0
 
 def user_add(user, host, passwd, new_priv):
-    if passwd is None:
-        fail_json(msg="passwd parameter required")
     cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,passwd))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
@@ -138,7 +137,12 @@ def user_delete(user, host):
 def privileges_get(user,host):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
+    Here's an example of the string that is returned from MySQL:
+
+     GRANT USAGE ON *.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
+
     This function makes the query and returns a dictionary containing the results.
+    The dictionary format is the same as that returned by privileges_unpack() below.
     """
     output = {}
     cursor.execute("SHOW GRANTS FOR %s@%s", (user,host))
@@ -155,12 +159,12 @@ def privileges_get(user,host):
 
 def privileges_unpack(priv):
     """ Take a privileges string, typically passed as a parameter, and unserialize
-    it into a dictionary, the same format as privileges_get above.
+    it into a dictionary, the same format as privileges_get above. Example of a
+    privileges string:
 
-    EG: mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
+     mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
 
-    We have this custom format to avoid using YAML strings inside YAML, or using
-    JSON inside YAML.
+    We have this custom format to avoid using YAML/JSON strings inside YAML playbooks.
     """
     output = {}
     for item in priv.split('/'):
@@ -188,10 +192,10 @@ loginhost = params.get("loginhost", "localhost")
 user      = params.get("user", None)
 passwd    = params.get("passwd", None)
 host      = params.get("host", "localhost")
-state     = params.get("state", None)
+state     = params.get("state", "present")
 priv      = params.get("priv", None)
 
-if state not in ["present", "absent", None]:
+if state not in ["present", "absent"]:
     fail_json(msg="invalid state, must be 'present' or 'absent'")
 
 if priv is not None:
@@ -200,11 +204,7 @@ if priv is not None:
     except:
         fail_json(msg="invalid privileges string")
 
-# Handle a user operation.
 if user is not None:
-    if state is None:
-        fail_json(msg="state cannot be empty, provide either 'present' or 'absent'")
-
     db_connection = MySQLdb.connect(host=loginhost, user=loginuser, passwd=loginpass, db="mysql")
     cursor = db_connection.cursor()
 
@@ -212,6 +212,8 @@ if user is not None:
         if user_exists(user, host):
             changed = user_mod(user, host, passwd, priv)
         else:
+            if passwd is None:
+                fail_json(msg="passwd parameter required when adding a user")
             changed = user_add(user, host, passwd, priv)
     elif state == "absent":
         if user_exists(user, host):
@@ -220,4 +222,4 @@ if user is not None:
             changed = False
     exit_json(changed=changed, user=user)
 
-fail_json(msg="invalid parameters passed, db or user required")
+fail_json(msg="invalid parameters passed, user parameter required")
