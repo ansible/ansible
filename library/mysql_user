@@ -159,7 +159,7 @@ def privileges_get(user,host):
 
 def privileges_unpack(priv):
     """ Take a privileges string, typically passed as a parameter, and unserialize
-    it into a dictionary, the same format as privileges_get above. Example of a
+    it into a dictionary, the same format as privileges_get() above. Example of a
     privileges string:
 
      mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
