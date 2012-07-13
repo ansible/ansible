@@ -4,91 +4,15 @@
 EC2 external inventory script
 =================================
 
+Generates inventory that Ansible can understand by making API request to
+AWS EC2. 
+
 NOTE: This script assumes Ansible is being executed where the environment
-variables needed for Boto have been set:
-    export AWS_ACCESS_KEY_ID=''
-    export AWS_SECRET_ACCESS_KEY=''
+variables needed for Boto have already been set:
+    export AWS_ACCESS_KEY_ID='AK123'
+    export AWS_SECRET_ACCESS_KEY='abc123'
+    
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
-
-
-
-
-mdehaan
-1:14 I'd break the get_instances_by_region function up so it calls a few smaller functions
-
-1:18 each function having a comment is a good thing
-
-1:19 parser script needs to support taking a hostname to get the variables, right?
-1:22 pas256: read the source to the cobbler inventory script
-1:22 it has two modes... list all my groups
-1:22 and another is for this given host, what variables do I use
-mdehaan
-1:23 if you are not actually generating the file, and are using it as a param to -i, it will need to do both
-mdehaan
-1:23 API is not as friendly as YAML or JSON, but it is ok
-1:23 I will not do YAML config files again if I can help it
-pas256
-1:26 Ooo I missed that functionality so `script --list hostname` returns just a JSON object with whatever variables that host has
-1:26 very cool
-1:26 I can add that
-mdehaan
-1:26 no
-1:26 script --list is one way it is executed
-1:26 script --host <hostname>, is the other, I believe
-pas256
-1:26 o ok
-mdehaan
-1:27 looks like the cobbler one needs fixing up
-1:27 pilt [~pilt@h-60-43.a163.priv.bahnhof.se] entered the room.
-mdehaan
-1:27 sorry about that, clear no one is using it
-pas256
-1:27 the cobbler script doesn't care what the first arg is, only the count
-1:27 lol yeah
-mdehaan
-1:27 I really kinda like the idea of just generating the inventory file
-1:27 maybe it should just do that
-1:27 faster, no need to cache
-1:27 plus it's a nice record of exactly what it will use
-pas256
-1:27 but with EC2, it is always changing
-1:28 at least for us it is
-mdehaan
-1:28 https://github.com/ansible/ansible/issues/560
-mdehaan
-1:29 pas256: yeah, true
-mdehaan
-1:29 either way
-1:29 pilt left the room (quit: Client Quit).
-mdehaan
-1:29 you could still run it if you wanted to look
-pas256
-1:30 yep
-mdehaan
-1:31 so assuming there is a metadata way to get variables out of EC2 you could store them with the host
-1:31 and let ansible see all of them or some of them
-pas256
-1:32 yeah the instance object has a lot of data in it, I am only grouping by what makes sense to group by
-mdehaan
-1:33 can you define your own namespaces for variables?   Maybe there could be an ansible one...
-1:33 though there shouldn't be a lot of host specific variables really
-1:33 group specific variables are nice to support though
-1:33 I can see use in that
-pas256
-1:33 ec2_ everything?
-mdehaan
-1:33 webservers get fooserver=xyz.example.com
-1:33 you need some way of doing stuff like that
-1:34 I don't know EC2's API at all
-1:34 or EC2, really
-pas256
-1:34 AWS in general is pretty sweet there is a lot to it
-mdehaan
-1:35 yeah, seems like you could spend a long time learning all their various services
-1:35 it's kind of a specialization in itself
-pas256
-1:35 agreed
-
 '''
 
 import os
@@ -127,49 +51,16 @@ class Ec2Inventory(object):
         
         # Data to print
         if self.args.host:
-            if len(self.index) == 0:
-                # Need to load from cache
-                self.load_index_from_cache()
-            
-            (region, instance_id) = self.index[self.args.host]
-            instance = self.get_instance(region, instance_id)
-            instance_vars = {}
-            for key in vars(instance):
-                key = self.to_safe(key)
-                value = getattr(instance, key)
-                
-                # Handle multiple types
-                if type(value) in [int, bool]:
-                    instance_vars[key] = value
-                elif type(value) in [str, unicode]:
-                    instance_vars[key] = value.strip()
-                elif type(value) == type(None):
-                    instance_vars[key] = ''
-                elif key == 'region':
-                    instance_vars[key] = value.name
-                elif key == 'tags':
-                    for k, v in instance.tags.iteritems():
-                        key = self.to_safe('tag_' + k)
-                        instance_vars[key] = v
-                else:
-                    print key
-                    print type(value)
-                    print value
-                    print "---"
-                               
-            data_to_print = self.json_format_dict(instance_vars, True)
+            data_to_print = self.get_host_info()
         
         elif self.args.list:
             # Display list of instances for inventory
             if len(self.inventory) == 0:
-                # Need to load from cache
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
-            
-            
+              
         print data_to_print
-
         
         
     def is_cache_valid(self):
@@ -180,8 +71,8 @@ class Ec2Inventory(object):
             current_time = time()
             if (mod_time + self.cache_max_age) > current_time:
                 if os.path.isfile(self.cache_path_index):
-
                     return True
+                
         return False
         
         
@@ -255,7 +146,8 @@ class Ec2Inventory(object):
             
         
     def add_instance(self, instance, region):
-        ''' Adds an instance to the inventory and index, as long as it is addressable '''
+        ''' Adds an instance to the inventory and index, as long as it is
+        addressable '''
         
         # Only want running instances
         if instance.state == 'terminated':
@@ -294,8 +186,54 @@ class Ec2Inventory(object):
             self.push(self.inventory, key, dest)        
     
     
+    def get_host_info(self):
+        ''' Get variables about a specific host '''
+        
+        if len(self.index) == 0:
+            # Need to load index from cache
+            self.load_index_from_cache()
+        
+        (region, instance_id) = self.index[self.args.host]
+        instance = self.get_instance(region, instance_id)
+        instance_vars = {}
+        for key in vars(instance):
+            value = getattr(instance, key)
+            key = self.to_safe('ec2_' + key)
+            
+            # Handle complex types
+            if type(value) in [int, bool]:
+                instance_vars[key] = value
+            elif type(value) in [str, unicode]:
+                instance_vars[key] = value.strip()
+            elif type(value) == type(None):
+                instance_vars[key] = ''
+            elif key == 'ec2_region':
+                instance_vars[key] = value.name
+            elif key == 'ec2_tags':
+                for k, v in value.iteritems():
+                    key = self.to_safe('ec2_tag_' + k)
+                    instance_vars[key] = v
+            elif key == 'ec2_groups':
+                group_ids = []
+                group_names = []
+                for group in value:
+                    group_ids.append(group.id)
+                    group_names.append(group.name)
+                instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
+                instance_vars["ec2_security_group_names"] = ','.join(group_names)
+            else:
+                pass
+                # TODO Product codes if someone finds them useful
+                #print key
+                #print type(value)
+                #print value
+                           
+        return self.json_format_dict(instance_vars, True)        
+    
+    
     def push(self, my_dict, key, element):
-        ''' Pushed an element onto an array that may not have been defined in the dict '''
+        ''' Pushed an element onto an array that may not have been defined in
+        the dict '''
         
         if key in my_dict:
             my_dict[key].append(element);
@@ -304,7 +242,8 @@ class Ec2Inventory(object):
     
     
     def get_inventory_from_cache(self):
-        ''' Reads the inventory from the cache file and returns it as a JSON object '''
+        ''' Reads the inventory from the cache file and returns it as a JSON
+        object '''
 
         cache = open(self.cache_path_cache, 'r')
         json_inventory = cache.read()
