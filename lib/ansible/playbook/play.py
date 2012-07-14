@@ -217,5 +217,7 @@ class Play(object):
                 fpath = utils.path_dwim(self.playbook.basedir, filename2)
                 new_vars = utils.parse_yaml_from_file(fpath)
                 if new_vars:
+                    if type(new_vars) != dict:
+                        raise errors.AnsibleError("files specified in vars_files must be a YAML dictionary: %s" % fpath)
                     self.playbook.SETUP_CACHE[host].update(new_vars)
-                #else: could warn if vars file contains no vars. 
+
