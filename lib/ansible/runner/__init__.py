@@ -545,6 +545,9 @@ class Runner(object):
     def _execute_template(self, conn, tmp):
         ''' handler for template operations '''
 
+        if not self.is_playbook:
+            raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
+
         # load up options
         options  = utils.parse_kv(self.module_args)
         source   = options.get('src', None)
@@ -571,37 +574,10 @@ class Runner(object):
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, comm_ok=False, result=result)
 
-
         if self.module_vars is not None:
             inject.update(self.module_vars)
 
         source = utils.template(source, inject, self.setup_cache)
-
-        #(host, ok, data, err) = (None, None, None, None)
-
-        if not self.is_playbook:
-
-            # not running from a playbook so we have to fetch the remote
-            # setup file contents before proceeding...
-            if metadata is None:
-                if self.remote_user == 'root':
-                    metadata = '/etc/ansible/setup'
-                else:
-                    # path is expanded on remote side
-                    metadata = "~/.ansible/tmp/setup" 
-            
-            # install the template module
-            slurp_module = self._transfer_module(conn, tmp, 'slurp')
-
-            # run the slurp module to get the metadata file
-            args = "src=%s" % metadata
-            result1  = self._execute_module(conn, tmp, slurp_module, args)
-            if not 'content' in result1.result or result1.result.get('encoding','base64') != 'base64':
-                result1.result['failed'] = True
-                return result1
-            content = base64.b64decode(result1.result['content'])
-            inject = utils.json_loads(content)
-
 
         # install the template module
         copy_module = self._transfer_module(conn, tmp, 'copy')

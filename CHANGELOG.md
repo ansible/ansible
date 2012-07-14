@@ -19,6 +19,7 @@ Ansible Changes By Release
 * fetch module fixes for SSH connection type
 * modules now consistently all take yes/no for boolean parameters (some accepted true/false)
 * in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
+* setup module no longer saves to disk, template module now only used in playbooks
 
 0.5 "Amsterdam" ------- July 04, 2012
 
