@@ -21,6 +21,8 @@ Ansible Changes By Release
 * in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
 * setup module no longer saves to disk, template module now only used in playbooks
 * setup module no longer needs to run twice per playbook
+* vars_files now usable with with_items, provided file paths don't contain host specific facts
+* error reporting if with_items value is unbound
 
 0.5 "Amsterdam" ------- July 04, 2012
 
