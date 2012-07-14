@@ -71,13 +71,12 @@ def _executor_hook(job_queue, result_queue):
 
 class ReturnData(object):
 
-    __slots__ = [ 'result', 'comm_ok', 'executed_str', 'host' ]
+    __slots__ = [ 'result', 'comm_ok', 'host' ]
 
-    def __init__(self, host=None, result=None, comm_ok=True, executed_str=''):
+    def __init__(self, host=None, result=None, comm_ok=True):
         self.host = host
         self.result = result
         self.comm_ok = comm_ok
-        self.executed_str = executed_str
 
         if type(self.result) in [ str, unicode ]:
             self.result = utils.parse_json(self.result)
@@ -135,7 +134,7 @@ class Runner(object):
         conditional  : only execute if this string, evaluated, is True
         callbacks    : output callback class
         sudo         : log in as remote user and immediately sudo to root
-        module_vars  : provides additional variables to a template.  FIXME: factor this out
+        module_vars  : provides additional variables to a template.
         is_playbook  : indicates Runner is being used by a playbook.  affects behavior in various ways.
         inventory    : inventory object, if host_list is not provided
         """
@@ -279,8 +278,57 @@ class Runner(object):
         return args   
  
     # *****************************************************
-
+    
     def _execute_module(self, conn, tmp, remote_module_path, args, 
+        async_jid=None, async_module=None, async_limit=None):
+
+        items = self.module_vars.get('items', None)
+        if items is None or len(items) == 0:
+            # executing a single item
+            return self._execute_module_internal(
+                conn, tmp, remote_module_path, args, 
+                async_jid=async_jid, async_module=async_module, async_limit=async_limit
+            )
+        else:
+            # executing using with_items, so make multiple calls
+            # TODO: refactor
+            aggregrate = {}
+            all_comm_ok = True
+            all_changed = False
+            all_failed = False
+            results = []
+            for x in items:
+                self.module_vars['item'] = x
+                result = self._execute_module_internal(
+                        conn, tmp, remote_module_path, args, 
+                        async_jid=async_jid, async_module=async_module, async_limit=async_limit
+                )
+                results.append(result.result)
+                if result.comm_ok == False:
+                    all_comm_ok = False
+                    break
+                for x in results:
+                    if x.get('changed') == True: 
+                        all_changed = True
+                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
+                        all_failed = True   
+                        break
+            msg = 'All items succeeded'
+            if all_failed:
+                 msg = "One or more items failed."
+            rd_result = dict(
+                failed = all_failed,
+                changed = all_changed,
+                results = results,
+                msg = msg               
+            )
+            if not all_failed:
+                del rd_result['failed']
+            return ReturnData(host=conn.host, comm_ok=all_comm_ok, result=rd_result)
+ 
+    # *****************************************************
+
+    def _execute_module_internal(self, conn, tmp, remote_module_path, args, 
         async_jid=None, async_module=None, async_limit=None):
 
         ''' runs a module that has already been transferred '''
@@ -304,6 +352,7 @@ class Runner(object):
 
         if type(args) == dict:
             args = utils.bigjson(args)
+
         args = utils.template(args, inject, self.setup_cache)
 
         module_name_tail = remote_module_path.split("/")[-1]
@@ -316,9 +365,7 @@ class Runner(object):
 
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
 
-        executed_str = "%s %s" % (module_name_tail, args.strip())
-
-        return ReturnData(host=conn.host, result=res, executed_str=executed_str)
+        return ReturnData(host=conn.host, result=res)
 
     # *****************************************************
 
@@ -597,7 +644,6 @@ class Runner(object):
  
         # modify file attribs if needed
         if exec_rc.comm_ok:
-            exec_rc.executed_str = exec_rc.executed_str.replace("copy","template",1)
             return self._chain_file_module(conn, tmp, exec_rc, options)
         else:
             return exec_rc

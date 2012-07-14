@@ -104,17 +104,15 @@ class Play(object):
             for y in data:
                 items = y.get('with_items',None)
                 if items is None:
-                    items = [ '' ]
+                    items = [ ]
                 elif isinstance(items, basestring):
-                    items = utils.varLookup(items, task_vars)
-                for item in items:
-                    item = utils.template(item, task_vars)
-                    if self._has_vars_in(item):
-                        raise errors.AnsibleError("parse error: unbound variable in with_items: %s" % item)
-
-                    mv = task_vars.copy()
-                    mv['item'] = item
-                    results.append(Task(self,y,module_vars=mv))
+                    #items = utils.varLookup(items, task_vars)
+                    if type(items) != list:
+                        raise errors.AnsibleError("with_items must be a list, got: %s" % items)
+                # items = [ utils.template(item, task_vars) for item in items]
+                mv = task_vars.copy()
+                mv['items'] = items
+                results.append(Task(self,y,module_vars=mv))
 
         for x in results:
             if self.tags is not None:
@@ -245,6 +243,8 @@ class Play(object):
                 if host is not None:
                     filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
                 filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                if self._has_vars_in(filename4):
+                    return
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
