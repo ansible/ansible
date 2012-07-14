@@ -52,7 +52,7 @@ The acme/setup.yml playbook would be as simple as::
     - hosts: webservers
       user: root
 
-      vars_files
+      vars_files:
         - ../global_vars.yml
         - vars/main.yml
       tasks:
