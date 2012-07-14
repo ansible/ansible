@@ -54,6 +54,13 @@ def add_user_info(kwargs):
     if user_exists(name):
         kwargs['state'] = 'present'
         info = user_info(name)
+        if info == False:
+            if 'failed' in kwargs:
+                kwargs['notice'] = "failed to look up user name: %s" % name
+            else:
+                kwargs['msg'] = "failed to look up user name: %s" % name
+            kwargs['failed'] = True
+            return kwargs
         kwargs['uid'] = info[2]
         kwargs['group'] = info[3]
         kwargs['comment'] = info[4]
