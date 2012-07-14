@@ -23,6 +23,8 @@ Ansible Changes By Release
 * setup module no longer needs to run twice per playbook
 * vars_files now usable with with_items, provided file paths don't contain host specific facts
 * error reporting if with_items value is unbound
+* with_items no longer creates lots of tasks, creates one task that makes multiple calls
+* can use host_specific facts inside with_items (see above)
 
 0.5 "Amsterdam" ------- July 04, 2012
 
