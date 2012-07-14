@@ -273,13 +273,16 @@ class PlayBook(object):
     def _do_setup_step(self, play):
 
         ''' get facts from the remote system '''
+        
+        host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
+            if not (h in self.stats.failures or h in self.stats.dark) ]
+
+        if not play.gather_facts:
+            return {}
 
         setup_args = {}
 
         self.callbacks.on_setup()
-
-        host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
-            if not (h in self.stats.failures or h in self.stats.dark) ]
 
         self.inventory.restrict_to(host_list)
 
