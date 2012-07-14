@@ -63,6 +63,9 @@ class Play(object):
         self.sudo_user   = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport   = ds.get('connection', self.playbook.transport)
         self.tags        = ds.get('tags', None)
+
+        self._update_vars_files_for_host(None)
+
         self._tasks      = self._load_tasks(self._ds, 'tasks')
         self._handlers   = self._load_tasks(self._ds, 'handlers')
 
@@ -75,6 +78,7 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
+        
 
     # *************************************************
 
@@ -104,6 +108,10 @@ class Play(object):
                 elif isinstance(items, basestring):
                     items = utils.varLookup(items, task_vars)
                 for item in items:
+                    item = utils.template(item, task_vars)
+                    if self._has_vars_in(item):
+                        raise errors.AnsibleError("parse error: unbound variable in with_items: %s" % item)
+
                     mv = task_vars.copy()
                     mv['item'] = item
                     results.append(Task(self,y,module_vars=mv))
@@ -161,10 +169,6 @@ class Play(object):
     def update_vars_files(self, hosts):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
          
-        # first process things that are not really host specific
-        # and we can just keep one reference to them
-        self._update_vars_files_for_host(None)
-
         # now loop through all the hosts...
         for h in hosts:
             self._update_vars_files_for_host(h)
