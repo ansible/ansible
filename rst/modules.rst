@@ -65,6 +65,10 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 * Corresponds to the -t option for apt, and sets pin priorities
 
+*install-recommends*: (devel branch now, part of ansible 0.6 later)
+
+* Corresponds to the --no-install-recommends option for apt. Defaults to 'yes', which means install the recommended packages the same way APT does by default. Set this to 'no' to add the option not to install recommended packages.
+
 Example action from Ansible :doc:`playbooks`::
 
     apt pkg=foo update-cache=yes
@@ -72,6 +76,7 @@ Example action from Ansible :doc:`playbooks`::
     apt pkg=foo state=installed
     apt pkg=foo=1.00 state=installed
     apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
+    apt pkg=openjdk-6-jdk state=latest install-recommends=no
 
 .. _assemble:
 
