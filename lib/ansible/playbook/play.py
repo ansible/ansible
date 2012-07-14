@@ -160,6 +160,12 @@ class Play(object):
 
     def update_vars_files(self, hosts):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
+         
+        # first process things that are not really host specific
+        # and we can just keep one reference to them
+        self._update_vars_files_for_host(None)
+
+        # now loop through all the hosts...
         for h in hosts:
             self._update_vars_files_for_host(h)
 
@@ -179,11 +185,19 @@ class Play(object):
 
     # *************************************************
 
+    def _has_vars_in(self, msg):
+        return ((msg.find("$") != -1) or (msg.find("{{") != -1))
+
+    # *************************************************
+
     def _update_vars_files_for_host(self, host):
 
-        if not host in self.playbook.SETUP_CACHE:
+        if (host is not None) and (not host in self.playbook.SETUP_CACHE):
             # no need to process failed hosts or hosts not in this play
             return
+
+        if type(self.vars_files) != list:
+            self.vars_files = [ self.vars_files ]
 
         for filename in self.vars_files:
 
@@ -193,31 +207,49 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = utils.template(real_filename, self.playbook.SETUP_CACHE[host])
-                    filename2 = utils.template(filename2, self.vars)
-                    filename2 = utils.path_dwim(self.playbook.basedir, filename2)
-                    sequence.append(filename2)
-                    if os.path.exists(filename2):
+                    filename2 = utils.template(real_filename, self.vars)
+                    filename3 = filename2
+                    if host is not None:
+                        filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                    filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                    sequence.append(filename4)
+                    if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename2)
-                        self.playbook.SETUP_CACHE[host].update(data)
-                        self.playbook.callbacks.on_import_for_host(host, filename2)
-                        break
-                    else:
-                        self.playbook.callbacks.on_not_import_for_host(host, filename2)
+                        data = utils.parse_yaml_from_file(filename4)
+                        if host is not None:
+                            if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                                # this filename has variables in it that were fact specific
+                                # so it needs to be loaded into the per host SETUP_CACHE
+                                self.playbook.SETUP_CACHE[host].update(data)
+                                self.playbook.callbacks.on_import_for_host(host, filename4)
+                        elif not self._has_vars_in(filename4):
+                            # found a non-host specific variable, load into vars and NOT
+                            # the setup cache
+                            self.vars.update(data)
+                    elif host is not None:
+                        self.playbook.callbacks.on_not_import_for_host(host, filename4)
                 if not found:
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
 
             else:
+                # just one filename supplied, load it!
 
-                filename2 = utils.template(filename, self.playbook.SETUP_CACHE[host])
-                filename2 = utils.template(filename2, self.vars)
-                fpath = utils.path_dwim(self.playbook.basedir, filename2)
-                new_vars = utils.parse_yaml_from_file(fpath)
+                filename2 = utils.template(filename, self.vars)
+                filename3 = filename2
+                if host is not None:
+                    filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
-                        raise errors.AnsibleError("files specified in vars_files must be a YAML dictionary: %s" % fpath)
-                    self.playbook.SETUP_CACHE[host].update(new_vars)
-
+                        raise errors.AnsibleError("files specified in vars_files must be a YAML dictionary: %s" % filename4)
+                        
+                    if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                        # running a host specific pass and has host specific variables
+                        # load into setup cache 
+                        self.playbook.SETUP_CACHE[host].update(new_vars)
+                    elif host is None:
+                        # running a non-host specific pass and we can update the global vars instead    
+                        self.vars.update(new_vars)
