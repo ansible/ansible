@@ -1,0 +1,122 @@
+#!/usr/bin/python
+
+# (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Sponsored by Four Kitchens http://fourkitchens.com.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import sys
+import os
+import os.path
+import shlex
+import syslog
+import re
+
+# ===========================================
+# Standard Ansible support methods.
+#
+
+def exit_json(rc=0, **kwargs):
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs["failed"] = True
+    exit_json(rc=1, **kwargs)
+
+# ===========================================
+# Standard Ansible argument parsing code.
+#
+
+if len(sys.argv) == 1:
+    fail_json(msg="the mysql module requires arguments (-a)")
+
+argfile = sys.argv[1]
+if not os.path.exists(argfile):
+    fail_json(msg="argument file not found")
+
+args = open(argfile, "r").read()
+items = shlex.split(args)
+syslog.openlog("ansible-%s" % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, "Invoked with %s" % args)
+
+if not len(items):
+    fail_json(msg="the mysql module requires arguments (-a)")
+
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+# ===========================================
+# MySQL module specific support methods.
+#
+
+# Import MySQLdb here instead of at the top, so we can use the fail_json function.
+try:
+    import MySQLdb
+except ImportError:
+    fail_json(msg="The Python MySQL package is missing")
+
+def db_exists(db):
+    res = cursor.execute("SHOW DATABASES LIKE %s", (db,))
+    return bool(res)
+
+def db_delete(db):
+    query = "DROP DATABASE %s" % db
+    cursor.execute(query)
+    return True
+
+def db_create(db,):
+    query = "CREATE DATABASE %s" % db
+    res = cursor.execute(query)
+    return True
+
+# ===========================================
+# Module execution.
+#
+
+# Gather arguments into local variables.
+loginuser = params.get("loginuser", "root")
+loginpass = params.get("loginpass", "")
+loginhost = params.get("loginhost", "localhost")
+db        = params.get("db", None)
+state     = params.get("state", "present")
+
+if state not in ["present", "absent"]:
+    fail_json(msg="invalid state, must be 'present' or 'absent'")
+
+if db is not None:
+    changed = False
+    try:
+        db_connection = MySQLdb.connect(host=loginhost, user=loginuser, passwd=loginpass, db="mysql")
+        cursor = db_connection.cursor()
+    except Exception as e:
+        fail_json(msg="unable to connect to database")
+
+    if db_exists(db):
+        if state == "absent":
+            changed = db_delete(db)
+    else:
+        if state == "present":
+            changed = db_create(db)
+    exit_json(changed=changed, db=db)
+
+fail_json(msg="invalid parameters passed, db parameter required")

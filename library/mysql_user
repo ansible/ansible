@@ -1,0 +1,234 @@
+#!/usr/bin/python
+
+# (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Sponsored by Four Kitchens http://fourkitchens.com.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import sys
+import os
+import os.path
+import shlex
+import syslog
+import re
+
+# ===========================================
+# Standard Ansible support methods.
+#
+
+def exit_json(rc=0, **kwargs):
+    print json.dumps(kwargs)
+    sys.exit(rc)
+
+def fail_json(**kwargs):
+    kwargs["failed"] = True
+    exit_json(rc=1, **kwargs)
+
+# ===========================================
+# Standard Ansible argument parsing code.
+#
+
+if len(sys.argv) == 1:
+    fail_json(msg="the mysql module requires arguments (-a)")
+
+argfile = sys.argv[1]
+if not os.path.exists(argfile):
+    fail_json(msg="argument file not found")
+
+args = open(argfile, "r").read()
+items = shlex.split(args)
+syslog.openlog("ansible-%s" % os.path.basename(__file__))
+syslog.syslog(syslog.LOG_NOTICE, "Invoked with %s" % args)
+
+if not len(items):
+    fail_json(msg="the mysql module requires arguments (-a)")
+
+params = {}
+for x in items:
+    (k, v) = x.split("=")
+    params[k] = v
+
+# ===========================================
+# MySQL module specific support methods.
+#
+
+# Import MySQLdb here instead of at the top, so we can use the fail_json function.
+try:
+    import MySQLdb
+except ImportError:
+    fail_json(msg="The Python MySQL package is missing")
+
+def user_exists(user, host):
+    cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
+    count = cursor.fetchone()
+    return count[0] > 0
+
+def user_add(user, host, passwd, new_priv):
+    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,passwd))
+    if new_priv is not None:
+        for db_table, priv in new_priv.iteritems():
+            privileges_grant(user,host,db_table,priv)
+    return True
+
+def user_mod(user, host, passwd, new_priv):
+    changed = False
+
+    # Handle passwords.
+    if passwd is not None:
+        cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+        current_pass_hash = cursor.fetchone()
+        cursor.execute("SELECT PASSWORD(%s)", (passwd,))
+        new_pass_hash = cursor.fetchone()
+        if current_pass_hash[0] != new_pass_hash[0]:
+            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,passwd))
+            changed = True
+
+    # Handle privileges.
+    if new_priv is not None:
+        curr_priv = privileges_get(user,host)
+
+        # If the user has privileges on a db.table that doesn't appear at all in
+        # the new specification, then revoke all privileges on it.
+        for db_table, priv in curr_priv.iteritems():
+            if db_table not in new_priv:
+                privileges_revoke(user,host,db_table)
+                changed = True
+
+        # If the user doesn't currently have any privileges on a db.table, then
+        # we can perform a straight grant operation.
+        for db_table, priv in new_priv.iteritems():
+            if db_table not in curr_priv:
+                privileges_grant(user,host,db_table,priv)
+                changed = True
+
+        # If the db.table specification exists in both the user's current privileges
+        # and in the new privileges, then we need to see if there's a difference.
+        db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
+        for db_table in db_table_intersect:
+            priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+            if (len(priv_diff) > 0):
+                privileges_revoke(user,host,db_table)
+                privileges_grant(user,host,db_table,new_priv[db_table])
+                changed = True
+
+    return changed
+
+def user_delete(user, host):
+    cursor.execute("DROP USER %s@%s", (user,host))
+    return True
+
+def privileges_get(user,host):
+    """ MySQL doesn't have a better method of getting privileges aside from the
+    SHOW GRANTS query syntax, which requires us to then parse the returned string.
+    Here's an example of the string that is returned from MySQL:
+
+     GRANT USAGE ON *.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
+
+    This function makes the query and returns a dictionary containing the results.
+    The dictionary format is the same as that returned by privileges_unpack() below.
+    """
+    output = {}
+    cursor.execute("SHOW GRANTS FOR %s@%s", (user,host))
+    grants = cursor.fetchall()
+    for grant in grants:
+        res = re.match("GRANT\ (.+)\ ON\ (.+)\ TO", grant[0])
+        if res is None:
+            fail_json(msg="unable to parse the MySQL grant string")
+        privileges = res.group(1).split(", ")
+        privileges = ['ALL' if x=='ALL PRIVILEGES' else x for x in privileges]
+        db = res.group(2).replace('`', '')
+        output[db] = privileges
+    return output
+
+def privileges_unpack(priv):
+    """ Take a privileges string, typically passed as a parameter, and unserialize
+    it into a dictionary, the same format as privileges_get() above. We have this
+    custom format to avoid using YAML/JSON strings inside YAML playbooks. Example
+    of a privileges string:
+
+     mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
+
+    The privilege USAGE stands for no privileges, so we add that in on *.* if it's
+    not specified in the string, as MySQL will always provide this by default.
+    """
+    output = {}
+    for item in priv.split('/'):
+        pieces = item.split(':')
+        output[pieces[0]] = pieces[1].upper().split(',')
+
+    if '*.*' not in output:
+        output['*.*'] = ['USAGE']
+
+    return output
+
+def privileges_revoke(user,host,db_table):
+    query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
+    cursor.execute(query)
+
+def privileges_grant(user,host,db_table,priv):
+    priv_string = ",".join(priv)
+    query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
+    cursor.execute(query)
+
+# ===========================================
+# Module execution.
+#
+
+# Gather arguments into local variables.
+loginuser = params.get("loginuser", "root")
+loginpass = params.get("loginpass", "")
+loginhost = params.get("loginhost", "localhost")
+user      = params.get("user", None)
+passwd    = params.get("passwd", None)
+host      = params.get("host", "localhost")
+state     = params.get("state", "present")
+priv      = params.get("priv", None)
+
+if state not in ["present", "absent"]:
+    fail_json(msg="invalid state, must be 'present' or 'absent'")
+
+if priv is not None:
+    try:
+        priv = privileges_unpack(priv)
+    except:
+        fail_json(msg="invalid privileges string")
+
+if user is not None:
+    try:
+        db_connection = MySQLdb.connect(host=loginhost, user=loginuser, passwd=loginpass, db="mysql")
+        cursor = db_connection.cursor()
+    except Exception as e:
+        fail_json(msg="unable to connect to database")
+
+    if state == "present":
+        if user_exists(user, host):
+            changed = user_mod(user, host, passwd, priv)
+        else:
+            if passwd is None:
+                fail_json(msg="passwd parameter required when adding a user")
+            changed = user_add(user, host, passwd, priv)
+    elif state == "absent":
+        if user_exists(user, host):
+            changed = user_delete(user, host)
+        else:
+            changed = False
+    exit_json(changed=changed, user=user)
+
+fail_json(msg="invalid parameters passed, user parameter required")
