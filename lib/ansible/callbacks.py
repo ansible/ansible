@@ -247,12 +247,9 @@ class PlaybookCallbacks(object):
             return getpass.getpass(msg)
         return raw_input(msg)
         
-    def on_setup_primary(self):
-        print banner("SETUP PHASE")
+    def on_setup(self):
+        print banner("GATHERING FACTS")
     
-    def on_setup_secondary(self):
-        print banner("VARIABLE IMPORT PHASE")
-
     def on_import_for_host(self, host, imported_file):
         print "%s: importing %s" % (host, imported_file)
 

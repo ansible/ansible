@@ -194,14 +194,13 @@ class TestRunner(unittest.TestCase):
     def test_service(self):
         # TODO: tests for the service module
         pass
+
     def test_assemble(self):
         input = self._get_test_file('assemble.d')
-        metadata = self._get_test_file('metadata.json')
         output = self._get_stage_file('sample.out')
         result = self._run('assemble', [
             "src=%s" % input,
             "dest=%s" % output,
-            "metadata=%s" % metadata
         ])
         assert os.path.exists(output)
         out = file(output).read()
@@ -214,7 +213,6 @@ class TestRunner(unittest.TestCase):
         result = self._run('assemble', [
             "src=%s" % input,
             "dest=%s" % output,
-            "metadata=%s" % metadata
         ])
         assert result['changed'] == False
 

@@ -270,19 +270,13 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, play, vars_files=None):
+    def _do_setup_step(self, play):
 
-        ''' push variables down to the systems and get variables+facts back up '''
+        ''' get facts from the remote system '''
 
-        # this enables conditional includes like $facter_os.yml and is only done
-        # after the original pass when we have that data.
-        #
+        setup_args = {}
 
-        if vars_files is not None:
-            self.callbacks.on_setup_secondary()
-            play.update_vars_files(self.inventory.list_hosts(play.hosts))
-        else:
-            self.callbacks.on_setup_primary()
+        self.callbacks.on_setup()
 
         host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
             if not (h in self.stats.failures or h in self.stats.dark) ]
@@ -291,7 +285,7 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=play.hosts, module_name='setup', module_args=play.vars, inventory=self.inventory,
+            pattern=play.hosts, module_name='setup', module_args=setup_args, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user, 
@@ -304,11 +298,9 @@ class PlayBook(object):
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
-        if vars_files is None:
-            # first pass only or we'll erase good work
-            for (host, result) in setup_ok.iteritems():
-                if 'ansible_facts' in result:
-                    self.SETUP_CACHE[host] = result['ansible_facts']
+        for (host, result) in setup_ok.iteritems():
+            if 'ansible_facts' in result:
+                self.SETUP_CACHE[host] = result['ansible_facts']
         return setup_results
 
     # *****************************************************
@@ -321,12 +313,12 @@ class PlayBook(object):
 
         self.callbacks.on_play_start(play.name)
 
-        # push any variables down to the system # and get facts/ohai/other data back up
-        rc = self._do_setup_step(play) # pattern, vars, user, port, sudo, sudo_user, transport, None)
+        # get facts from system
+        rc = self._do_setup_step(play) 
 
         # now with that data, handle contentional variable file imports!
         if play.vars_files and len(play.vars_files) > 0:
-            rc = self._do_setup_step(play, play.vars_files)
+            play.update_vars_files(self.inventory.list_hosts(play.hosts))
 
         for task in play.tasks():
             
