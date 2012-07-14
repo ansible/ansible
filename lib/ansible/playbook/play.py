@@ -29,7 +29,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook', 
-       'tags', '_ds', '_handlers', '_tasks'
+       'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
     ]
 
     # *************************************************
@@ -47,22 +47,24 @@ class Play(object):
             hosts = ';'.join(hosts)
         hosts = utils.template(hosts, playbook.extra_vars, {})
 
-        self._ds         = ds
-        self.playbook    = playbook
-        self.hosts       = hosts 
-        self.name        = ds.get('name', self.hosts)
-        self.vars        = ds.get('vars', {})
-        self.vars_files  = ds.get('vars_files', [])
-        self.vars_prompt = ds.get('vars_prompt', {})
-        self.vars        = self._get_vars(self.playbook.basedir)
-        self._tasks      = ds.get('tasks', [])
-        self._handlers   = ds.get('handlers', [])
-        self.remote_user = ds.get('user', self.playbook.remote_user)
-        self.remote_port = ds.get('port', self.playbook.remote_port)
-        self.sudo        = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user   = ds.get('sudo_user', self.playbook.sudo_user)
-        self.transport   = ds.get('connection', self.playbook.transport)
-        self.tags        = ds.get('tags', None)
+        self._ds          = ds
+        self.playbook     = playbook
+        self.hosts        = hosts 
+        self.name         = ds.get('name', self.hosts)
+        self.vars         = ds.get('vars', {})
+        self.vars_files   = ds.get('vars_files', [])
+        self.vars_prompt  = ds.get('vars_prompt', {})
+        self.vars         = self._get_vars(self.playbook.basedir)
+        self._tasks       = ds.get('tasks', [])
+        self._handlers    = ds.get('handlers', [])
+        self.remote_user  = ds.get('user', self.playbook.remote_user)
+        self.remote_port  = ds.get('port', self.playbook.remote_port)
+        self.sudo         = ds.get('sudo', self.playbook.sudo)
+        self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
+        self.transport    = ds.get('connection', self.playbook.transport)
+        self.tags         = ds.get('tags', None)
+        self.gather_facts = ds.get('gather_facts', True)
+        print "self.gather_facts: %s" % self.gather_facts
 
         self._update_vars_files_for_host(None)
 
