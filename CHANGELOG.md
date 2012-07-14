@@ -20,6 +20,7 @@ Ansible Changes By Release
 * modules now consistently all take yes/no for boolean parameters (some accepted true/false)
 * in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
 * setup module no longer saves to disk, template module now only used in playbooks
+* setup module no longer needs to run twice per playbook
 
 0.5 "Amsterdam" ------- July 04, 2012
 

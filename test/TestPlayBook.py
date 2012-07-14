@@ -30,12 +30,9 @@ class TestCallbacks(object):
     def on_start(self):
         EVENTS.append('start')
 
-    def on_setup_primary(self):
+    def on_setup(self):
         EVENTS.append([ 'primary_setup' ])
  
-    def on_setup_secondary(self):
-        EVENTS.append([ 'secondary_setup' ])
-
     def on_skipped(self, host):
         EVENTS.append([ 'skipped', [ host ]])
 
@@ -86,12 +83,9 @@ class TestCallbacks(object):
     def on_unreachable(self, host, msg):
         EVENTS.append([ 'failed/dark', [ host, msg ]])
 
-    def on_setup_primary(self):
+    def on_setup(self):
         pass
     
-    def on_setup_secondary(self):
-        pass
-
     def on_no_hosts(self):
         pass
 
@@ -158,7 +152,7 @@ class TestPlaybook(unittest.TestCase):
             "127.0.0.2": {
                 "changed": 9, 
                 "failures": 0, 
-                "ok": 12, 
+                "ok": 11, 
                 "skipped": 1, 
                 "unreachable": 0
             }
