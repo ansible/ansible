@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DEFAULT_ANSIBLE_SETUP     = "/etc/ansible/setup"
-
 import array
 import fcntl
 import glob
@@ -32,11 +30,6 @@ import struct
 import subprocess
 import traceback
 import syslog
-
-try:
-    from hashlib import md5 as _md5
-except ImportError: 
-    from md5 import md5 as _md5
 
 try:
     import selinux
@@ -316,20 +309,6 @@ def ansible_facts():
     get_service_facts(facts)
     return facts
 
-def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
-    if not os.path.exists(filename):
-        return None
-    digest = _md5()
-    blocksize = 64 * 1024
-    infile = open(filename, 'rb')
-    block = infile.read(blocksize)
-    while block:
-        digest.update(block)
-        block = infile.read(blocksize)
-    infile.close()
-    return digest.hexdigest()
-
 # ===========================================
 
 # load config & template variables
@@ -354,21 +333,6 @@ except:
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % setup_options)
-
-ansible_file = os.path.expandvars(setup_options.get('metadata', DEFAULT_ANSIBLE_SETUP))
-ansible_dir = os.path.dirname(ansible_file)
-
-# create the config dir if it doesn't exist
-
-if not os.path.exists(ansible_dir):
-    os.makedirs(ansible_dir)
-
-changed = False
-md5sum = None
-if not os.path.exists(ansible_file):
-    changed = True
-else:
-    md5sum = md5(ansible_file)
 
 # Get some basic facts in case facter or ohai are not installed
 for (k, v) in ansible_facts().items():
@@ -409,23 +373,7 @@ if os.path.exists("/usr/bin/ohai"):
                k2 = "ohai_%s" % k
                setup_options[k2] = v
 
-# write the template/settings file using
-# instructions from server
-
-f = open(ansible_file, "w+")
-reformat = json.dumps(setup_options, sort_keys=True, indent=4)
-f.write(reformat)
-f.close()
-
-md5sum2 = md5(ansible_file)
-
-if md5sum != md5sum2:
-   changed = True
-
 setup_result = {}
-setup_result['written'] = ansible_file
-setup_result['changed'] = changed
-setup_result['md5sum']  = md5sum2 
 setup_result['ansible_facts'] = setup_options
 
 # hack to keep --verbose from showing all the setup module results
