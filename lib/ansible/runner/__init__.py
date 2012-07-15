@@ -254,30 +254,6 @@ class Runner(object):
         return args   
  
     # *****************************************************
-
-    def _add_setup_metadata(self, args):
-        ''' automatically determine where to store variables for the setup module '''
-        
-        is_dict = False
-        if type(args) == dict:
-            is_dict = True
-
-        # TODO: make a _metadata_path function
-        if not is_dict:
-            if args.find("metadata=") == -1:
-                if self.remote_user == 'root' or (self.sudo and self.sudo_user == 'root'):
-                    args = "%s metadata=/etc/ansible/setup" % args
-                else:
-                    args = "%s metadata=%s/setup" % (args, C.DEFAULT_REMOTE_TMP)
-        else:
-            if not 'metadata' in args:
-                if self.remote_user == 'root' or (self.sudo and self.sudo_user == 'root'):
-                    args['metadata'] = '/etc/ansible/setup'
-                else:
-                    args['metadata'] = "%s/setup" % C.DEFAULT_REMOTE_TMP
-        return args   
- 
-    # *****************************************************
     
     def _execute_module(self, conn, tmp, remote_module_path, args, 
         async_jid=None, async_module=None, async_limit=None):
@@ -348,7 +324,6 @@ class Runner(object):
             if not args:
                 args = {}
             args = self._add_setup_vars(inject, args)
-            args = self._add_setup_metadata(args)
 
         if type(args) == dict:
             args = utils.bigjson(args)
