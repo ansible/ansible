@@ -71,14 +71,7 @@ def write_tree_file(tree, hostname, buf):
 
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
-    failed = False
-    rc = 0
-    if type(result) == dict:
-        failed = result.get('failed', 0)
-        rc     = result.get('rc', 0)
-    if rc != 0:
-        return True    
-    return failed
+    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
@@ -200,8 +193,7 @@ def _template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine '''
     vars = vars.copy()
     vars['hostvars'] = setup_cache
-    text = varReplace(unicode(text), vars)
-    return text
+    return varReplace(unicode(text), vars)
 
 def template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine 
@@ -265,13 +257,9 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
-
-
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook 
 # below this line
-
-# FIXME: move to seperate file
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
