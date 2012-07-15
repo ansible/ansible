@@ -94,7 +94,7 @@ class Inventory(object):
             for group in groups:
                 for host in group.get_hosts():
                     if group.name == pat or pat == 'all' or self._match(host.name, pat):
-                        #must test explicitly for None because [] means no hosts allowed
+                        # must test explicitly for None because [] means no hosts allowed
                         if self._restriction==None or host.name in self._restriction: 
                             if inverted:
                                 if host.name in hosts:
@@ -128,7 +128,6 @@ class Inventory(object):
     def get_variables(self, hostname):
 
         if self._is_script:
-            # TODO: move this to inventory_script.py 
             host = self.get_host(hostname)
             cmd = subprocess.Popen(
                 [self.host_list,"--host",hostname], 
