@@ -134,10 +134,16 @@ class Runner(object):
         inventory        : inventory object, if host_list is not provided
         """
 
+        # -- handle various parameters that need checking/mangling
+
         if setup_cache is None:
             setup_cache = collections.defaultdict(dict)
+        if type(module_args) not in [str, unicode, dict]:
+            raise errors.AnsibleError("module_args must be a string or dict: %s" % self.module_args)
+
         if basedir is None: 
             basedir = os.getcwd()
+        self.basedir     = basedir
 
         if callbacks is None:
             callbacks = ans_callbacks.DefaultRunnerCallbacks()
@@ -145,9 +151,12 @@ class Runner(object):
 
         self.generated_jid = str(random.randint(0, 999999999999))
 
-        self.sudo_user = sudo_user
         self.transport = transport
-        self.connector = connection.Connection(self, self.transport, self.sudo_user)
+
+        if self.transport == 'ssh' and remote_pass:
+            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
+        if self.transport == 'local':
+            self.remote_user = pwd.getpwuid(os.geteuid())[0]
 
         if inventory is None:
             self.inventory = ansible.inventory.Inventory(host_list)
@@ -156,35 +165,31 @@ class Runner(object):
 
         if module_vars is None:
             module_vars = {}
-
-        self.setup_cache = setup_cache
-        self.conditional = conditional
-        self.module_path = module_path
-        self.module_name = module_name
-        self.forks       = int(forks)
-        self.pattern     = pattern
-        self.module_args = module_args
-        self.module_vars = module_vars
-        self.timeout     = timeout
-        self.verbose     = verbose
-        self.remote_user = remote_user
-        self.remote_pass = remote_pass
-        self.remote_port = remote_port
+ 
+        # -- save constructor parameters for later use
+        
+        self.sudo_user        = sudo_user
+        self.connector        = connection.Connection(self)
+        self.setup_cache      = setup_cache
+        self.conditional      = conditional
+        self.module_path      = module_path
+        self.module_name      = module_name
+        self.forks            = int(forks)
+        self.pattern          = pattern
+        self.module_args      = module_args
+        self.module_vars      = module_vars
+        self.timeout          = timeout
+        self.verbose          = verbose
+        self.remote_user      = remote_user
+        self.remote_pass      = remote_pass
+        self.remote_port      = remote_port
         self.private_key_file = private_key_file
-        self.background  = background
-        self.basedir     = basedir
-        self.sudo        = sudo
-        self.sudo_pass   = sudo_pass
-        self.is_playbook = is_playbook
+        self.background       = background
+        self.sudo             = sudo
+        self.sudo_pass        = sudo_pass
+        self.is_playbook      = is_playbook
 
-        if self.transport == 'local':
-            self.remote_user = pwd.getpwuid(os.geteuid())[0]
-
-        if type(self.module_args) not in [str, unicode, dict]:
-            raise errors.AnsibleError("module_args must be a string or dict: %s" % self.module_args)
-        if self.transport == 'ssh' and self.remote_pass:
-            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
-
+        # ensure we're using unique tmp paths
         random.seed()
 
     # *****************************************************
