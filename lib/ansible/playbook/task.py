@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 from ansible import errors
 from ansible import utils
 
@@ -93,9 +91,7 @@ class Task(object):
                 raise errors.AnsibleError("with_items must be a list, got: %s" % self.with_items)
         self.module_vars['items'] = self.with_items
 
-
-        # tags allow certain parts of a playbook to be run without
-        # running the whole playbook
+        # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)
         if apply_tags is not None:
             if type(apply_tags) in [ str, unicode ]:
@@ -104,5 +100,3 @@ class Task(object):
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
                 
-
-

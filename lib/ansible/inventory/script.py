@@ -26,9 +26,7 @@ from ansible import errors
 from ansible import utils
 
 class InventoryScript(object):
-    """ 
-    Host inventory parser for ansible using external inventory scripts.
-    """
+    ''' Host inventory parser for ansible using external inventory scripts. '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
@@ -39,6 +37,7 @@ class InventoryScript(object):
         self.groups = self._parse()
 
     def _parse(self):
+
         groups = {}
         self.raw = utils.parse_json(self.data)
         all=Group('all')
@@ -55,4 +54,3 @@ class InventoryScript(object):
             all.add_child_group(group)
         return groups  
         
-  
