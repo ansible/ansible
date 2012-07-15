@@ -45,7 +45,7 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        hosts = utils.template(hosts, playbook.extra_vars, {})
+        hosts = utils.template(hosts, playbook.extra_vars)
 
         self._ds          = ds
         self.playbook     = playbook
