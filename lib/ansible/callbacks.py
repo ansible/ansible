@@ -239,7 +239,10 @@ class PlaybookCallbacks(object):
         pass
 
     def on_task_start(self, name, is_conditional):
-        print banner(utils.task_start_msg(name, is_conditional))
+        msg = "TASK: [%s]" % name
+        if is_conditional:
+           msg = "NOTIFIED: [%s]" % name
+        print banner(msg)
 
     def on_vars_prompt(self, varname, private=True):
         msg = 'input for %s: ' % varname
