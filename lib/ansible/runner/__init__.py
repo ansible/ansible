@@ -235,26 +235,6 @@ class Runner(object):
         return remote
 
     # *****************************************************
-
-    def _add_setup_vars(self, inject, args):
-        ''' setup module variables need special handling '''
-
-        is_dict = False
-        if type(args) == dict:
-            is_dict = True
-
-        # TODO: keep this as a dict through the whole path to simplify this code
-        for (k,v) in inject.iteritems():
-            if not k.startswith('facter_') and not k.startswith('ohai_') and not k.startswith('ansible_'):
-                if not is_dict:
-                    if str(v).find(" ") != -1:
-                        v = "\"%s\"" % v
-                    args += " %s=%s" % (k, str(v).replace(" ","~~~"))
-                else:
-                    args[k]=v
-        return args   
- 
-    # *****************************************************
     
     def _execute_module(self, conn, tmp, remote_module_path, args, 
         async_jid=None, async_module=None, async_limit=None):
@@ -320,11 +300,6 @@ class Runner(object):
             group_hosts[g.name] = map((lambda x: x.get_variables()),g.hosts)
 
         inject['groups'] = group_hosts
-
-        if self.module_name == 'setup':
-            if not args:
-                args = {}
-            args = self._add_setup_vars(inject, args)
 
         if type(args) == dict:
             args = utils.jsonify(args,format=True)
