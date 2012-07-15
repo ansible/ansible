@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 import ansible.inventory
 import ansible.runner
 import ansible.constants as C
@@ -25,8 +23,6 @@ from ansible import errors
 import os
 import collections
 from play import Play
-
-#############################################
 
 class PlayBook(object):
     '''

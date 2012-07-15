@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -24,9 +22,7 @@ from ansible import errors
 from ansible import utils
 
 class InventoryParserYaml(object):
-    """ 
-    Host inventory for ansible.
-    """
+    ''' Host inventory parser for ansible '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
@@ -37,6 +33,7 @@ class InventoryParserYaml(object):
         self._parse(data)
 
     def _make_host(self, hostname):
+
         if hostname in self._hosts:
             return self._hosts[hostname]
         else:
@@ -47,6 +44,7 @@ class InventoryParserYaml(object):
     # see file 'test/yaml_hosts' for syntax
 
     def _parse(self, data):
+        # FIXME: refactor into subfunctions
 
         all = Group('all')
         ungrouped = Group('ungrouped')
@@ -134,3 +132,5 @@ class InventoryParserYaml(object):
 
         # make sure ungrouped.hosts is the complement of grouped_hosts
         ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]
+
+
