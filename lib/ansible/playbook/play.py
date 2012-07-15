@@ -64,7 +64,6 @@ class Play(object):
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', True)
-        print "self.gather_facts: %s" % self.gather_facts
 
         self._update_vars_files_for_host(None)
 
