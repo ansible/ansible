@@ -25,7 +25,9 @@ import codecs
 import jinja2
 import yaml
 import optparse
-from operator import methodcaller
+import operator
+from ansible import errors
+import ansible.constants as C
 
 try:
     import json
@@ -37,8 +39,6 @@ try:
 except ImportError: 
     from md5 import md5 as _md5
 
-from ansible import errors
-import ansible.constants as C
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -278,7 +278,11 @@ def template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine 
         until it no longer changes '''
     prev_text = ''
+    depth = 0
     while prev_text != text:
+        depth = depth + 1
+        if (depth > 20):
+            raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
         text = _template(text, vars, setup_cache)
     return text
@@ -343,7 +347,7 @@ def md5(filename):
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
     def format_help(self, formatter=None):
-        self.option_list.sort(key=methodcaller('get_opt_string'))
+        self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
