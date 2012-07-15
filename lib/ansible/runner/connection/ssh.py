@@ -56,7 +56,7 @@ class SSHConnection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
