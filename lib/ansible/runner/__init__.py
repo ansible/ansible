@@ -30,6 +30,7 @@ import time
 import base64
 import getpass
 import codecs
+import collections
 
 import ansible.constants as C 
 import ansible.inventory
@@ -51,8 +52,7 @@ def _executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
-    # does not occur for everyone, some claim still occurs on newer paramiko
-    # this function not present in CentOS 6
+    # this function also not present in CentOS 6
     if HAS_ATFORK:
         atfork()
 
@@ -91,14 +91,7 @@ class ReturnData(object):
         return self.comm_ok
 
     def is_successful(self):
-        if not self.comm_ok:
-            return False
-        else:
-            if 'failed' in self.result:
-                return False
-            if self.result.get('rc',0) != 0:
-                return False
-            return True
+        return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
 
 class Runner(object):
     ''' core API interface to ansible '''
@@ -142,7 +135,7 @@ class Runner(object):
         """
 
         if setup_cache is None:
-            setup_cache = {}
+            setup_cache = collections.defaultdict(dict)
         if basedir is None: 
             basedir = os.getcwd()
 
@@ -273,12 +266,7 @@ class Runner(object):
             msg = 'All items succeeded'
             if all_failed:
                 msg = "One or more items failed."
-            rd_result = dict(
-                failed = all_failed,
-                changed = all_changed,
-                results = results,
-                msg = msg               
-            )
+            rd_result = dict(failed=all_failed, changed=all_changed, results=results, msg=msg)
             if not all_failed:
                 del rd_result['failed']
             return ReturnData(host=conn.host, comm_ok=all_comm_ok, result=rd_result)
@@ -290,7 +278,7 @@ class Runner(object):
 
         ''' runs a module that has already been transferred '''
 
-        inject = self.setup_cache.get(conn.host,{}).copy()
+        inject = self.setup_cache[conn.host].copy()
         host_variables = self.inventory.get_variables(conn.host)
         inject.update(host_variables)
         inject.update(self.module_vars)
@@ -306,8 +294,6 @@ class Runner(object):
 
         args = utils.template(args, inject, self.setup_cache)
 
-        module_name_tail = remote_module_path.split("/")[-1]
-
         argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
             cmd = "%s %s" % (remote_module_path, argsfile)
@@ -315,7 +301,6 @@ class Runner(object):
             cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
 
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-
         return ReturnData(host=conn.host, result=res)
 
     # *****************************************************
@@ -324,16 +309,11 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        if 'ansible_facts' in result:
-            var_result = result['ansible_facts']
-        else:
-            var_result = {}
+        var_result = result.get('ansible_facts',{})
 
         # note: do not allow variables from playbook to be stomped on
         # by variables coming up from facter/ohai/etc.  They
         # should be prefixed anyway
-        if not host in self.setup_cache:
-            self.setup_cache[host] = {}
         for (k, v) in var_result.iteritems():
             if not k in self.setup_cache[host]:
                 self.setup_cache[host][k] = v
@@ -342,9 +322,9 @@ class Runner(object):
 
     def _execute_raw(self, conn, tmp):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
-        stdout = self._low_level_exec_command( conn, self.module_args, tmp, sudoable = True )
-        data = dict(stdout=stdout)
-        return ReturnData(host=conn.host, result=data)
+        return ReturnData(host=conn.host, result=dict(
+            stdout=self._low_level_exec_command(conn, self.module_args, tmp, sudoable = True)
+        ))
 
     # ***************************************************
 
@@ -389,14 +369,14 @@ class Runner(object):
 
         # load up options
         options = utils.parse_kv(self.module_args)
-        source = options.get('src', None)
-        dest   = options.get('dest', None)
+        source  = options.get('src', None)
+        dest    = options.get('dest', None)
         if (source is None and not 'first_available_file' in self.module_vars) or dest is None:
             result=dict(failed=True, msg="src and dest are required")
             return ReturnData(host=conn.host, result=result)
 
         # apply templating to source argument
-        inject = self.setup_cache.get(conn.host,{})
+        inject = self.setup_cache[conn.host]
         
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -462,7 +442,7 @@ class Runner(object):
             return ReturnData(host=conn.host, result=results)
 
         # apply templating to source argument
-        inject = self.setup_cache.get(conn.host,{})
+        inject = self.setup_cache[conn.host]
         if self.module_vars is not None:
             inject.update(self.module_vars)
         source = utils.template(source, inject, self.setup_cache)
@@ -538,7 +518,7 @@ class Runner(object):
             return ReturnData(host=conn.host, comm_ok=False, result=result)
 
         # apply templating to source argument so vars can be used in the path
-        inject = self.setup_cache.get(conn.host,{})
+        inject = self.setup_cache[conn.host]
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -598,6 +578,8 @@ class Runner(object):
     # *****************************************************
 
     def _executor(self, host):
+        ''' handler for multiprocessing library '''
+
         try:
             exec_rc = self._executor_internal(host)
             if type(exec_rc) != ReturnData:
@@ -622,7 +604,7 @@ class Runner(object):
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
 
-        inject = self.setup_cache.get(host,{}).copy()
+        inject = self.setup_cache[host].copy()
         inject.update(host_variables)
         inject.update(self.module_vars)
 
@@ -644,16 +626,9 @@ class Runner(object):
         tmp = self._make_tmp_path(conn)
         result = None
 
-        if self.module_name == 'copy':
-            result = self._execute_copy(conn, tmp)
-        elif self.module_name == 'fetch':
-            result = self._execute_fetch(conn, tmp)
-        elif self.module_name == 'template':
-            result = self._execute_template(conn, tmp)
-        elif self.module_name == 'raw':
-            result = self._execute_raw(conn, tmp)
-        elif self.module_name == 'assemble':
-            result = self._execute_assemble(conn, tmp)
+        handler = getattr(self, "_execute_%s" % self.module_name, None)
+        if handler:
+            result = handler(conn, tmp)
         else:
             if self.background == 0:
                 result = self._execute_normal_module(conn, tmp, module_name)
@@ -681,25 +656,22 @@ class Runner(object):
 
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False):
         ''' execute a command string over SSH, return the output '''
+
         sudo_user = self.sudo_user
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
-        out=None
 
         if type(stdout) != str:
-            out="\n".join(stdout.readlines())
+            return "\n".join(stdout.readlines())
         else:
-            out=stdout
-
-        # sudo mode paramiko doesn't capture stderr, so not relaying here either...
-        return out 
+            return stdout
 
     # *****************************************************
 
     def _remote_md5(self, conn, tmp, path):
         ''' 
-        takes a remote md5sum without requiring python, and returns 0 if the
-        file does not exist
+        takes a remote md5sum without requiring python, and returns 0 if no file
         '''
+
         test = "[[ -r %s ]]" % path
         md5s = [
             "(%s && /usr/bin/md5sum %s 2>/dev/null)" % (test,path),
@@ -708,8 +680,7 @@ class Runner(object):
         ]
         cmd = " || ".join(md5s)
         cmd = "%s || (echo \"0 %s\")" % (cmd, path)
-        remote_md5 = self._low_level_exec_command(conn, cmd, tmp, True).split()[0]
-        return remote_md5
+        return self._low_level_exec_command(conn, cmd, tmp, True).split()[0]
 
     # *****************************************************
 
@@ -727,9 +698,7 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        cleaned = result.split("\n")[0].strip() + '/'
-        return cleaned
-
+        return result.split("\n")[0].strip() + '/'
 
     # *****************************************************
 
@@ -770,7 +739,6 @@ class Runner(object):
 
         job_queue = multiprocessing.Manager().Queue()
         [job_queue.put(i) for i in hosts]
-
         result_queue = multiprocessing.Manager().Queue()
 
         workers = []
@@ -798,10 +766,9 @@ class Runner(object):
     def _partition_results(self, results):
         ''' seperate results by ones we contacted & ones we didn't '''
 
-        results2 = dict(contacted={}, dark={})
-
         if results is None:
             return None
+        results2 = dict(contacted={}, dark={})
 
         for result in results:
             host = result.host
@@ -816,7 +783,6 @@ class Runner(object):
         for host in self.inventory.list_hosts(self.pattern):
             if not (host in results2['dark'] or host in results2['contacted']):
                 results2["dark"][host] = {}
-
         return results2
 
     # *****************************************************
@@ -842,8 +808,8 @@ class Runner(object):
 
     def run_async(self, time_limit):
         ''' Run this module asynchronously and return a poller. '''
+
         self.background = time_limit
         results = self.run()
-
         return results, poller.AsyncPoller(results, self)
 
