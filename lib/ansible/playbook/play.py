@@ -103,16 +103,7 @@ class Play(object):
             else:
                 raise Exception("unexpected task type")
             for y in data:
-                items = y.get('with_items',None)
-                if items is None:
-                    items = [ ]
-                elif isinstance(items, basestring):
-                    #items = utils.varLookup(items, task_vars)
-                    if type(items) != list:
-                        raise errors.AnsibleError("with_items must be a list, got: %s" % items)
-                # items = [ utils.template(item, task_vars) for item in items]
                 mv = task_vars.copy()
-                mv['items'] = items
                 results.append(Task(self,y,module_vars=mv))
 
         for x in results:
