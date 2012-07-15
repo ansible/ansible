@@ -40,6 +40,7 @@ class Connection(object):
         self.runner = runner
         self.transport = transport
         self.sudo_user = sudo_user
+
     def connect(self, host, port=None):
         conn = None
         if self.transport == 'local':
