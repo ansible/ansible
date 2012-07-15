@@ -39,7 +39,7 @@ class Host(object):
         self.groups.append(group)
 
     def set_variable(self, key, value):
-        self.vars[key]=value;
+        self.vars[key]=value
 
     def get_groups(self):
         groups = {}

@@ -177,11 +177,11 @@ def parse_json(data):
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
         results = {}
-        try :
+        try:
             tokens = shlex.split(data)
         except: 
             print "failed to parse json: "+ data
-            raise; 
+            raise 
             
         for t in tokens:
             if t.find("=") == -1:

@@ -31,7 +31,7 @@ class Group(object):
         self.child_groups = []
         self.parent_groups = []
         if self.name is None:
-           raise Exception("group name is required")
+            raise Exception("group name is required")
 
     def add_child_group(self, group):
         if self == group:
@@ -57,7 +57,7 @@ class Group(object):
         vars = {}
         # FIXME: verify this variable override order is what we want
         for ancestor in self.get_ancestors():
-           vars.update(ancestor.get_variables())
+            vars.update(ancestor.get_variables())
         vars.update(self.vars)
         return vars
 

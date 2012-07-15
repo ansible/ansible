@@ -241,7 +241,7 @@ class PlaybookCallbacks(object):
     def on_task_start(self, name, is_conditional):
         msg = "TASK: [%s]" % name
         if is_conditional:
-           msg = "NOTIFIED: [%s]" % name
+            msg = "NOTIFIED: [%s]" % name
         print banner(msg)
 
     def on_vars_prompt(self, varname, private=True):
