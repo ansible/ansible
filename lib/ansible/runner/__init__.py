@@ -70,6 +70,7 @@ def _executor_hook(job_queue, result_queue):
 ################################################
 
 class ReturnData(object):
+    ''' internal return class for execute methods, not part of API signature '''
 
     __slots__ = [ 'result', 'comm_ok', 'host' ]
 
@@ -100,6 +101,7 @@ class ReturnData(object):
             return True
 
 class Runner(object):
+    ''' core API interface to ansible '''
 
     def __init__(self, 
         host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
@@ -114,29 +116,29 @@ class Runner(object):
         module_vars=None, is_playbook=False, inventory=None):
 
         """
-        host_list    : path to a host list file, like /etc/ansible/hosts
-        module_path  : path to modules, like /usr/share/ansible
-        module_name  : which module to run (string)
-        module_args  : args to pass to the module (string)
-        forks        : desired level of paralellism (hosts to run on at a time)
-        timeout      : connection timeout, such as a SSH timeout, in seconds
-        pattern      : pattern or groups to select from in inventory
-        remote_user  : connect as this remote username
-        remote_pass  : supply this password (if not using keys)
-        remote_port  : use this default remote port (if not set by the inventory system)
-        private_key_file  : use this private key as your auth key
-        sudo_user    : If you want to sudo to a user other than root.
-        sudo_pass    : sudo password if using sudo and sudo requires a password
-        background   : run asynchronously with a cap of this many # of seconds (if not 0)
-        basedir      : paths used by modules if not absolute are relative to here
-        setup_cache  : this is a internalism that is going away
-        transport    : transport mode (paramiko, local)
-        conditional  : only execute if this string, evaluated, is True
-        callbacks    : output callback class
-        sudo         : log in as remote user and immediately sudo to root
-        module_vars  : provides additional variables to a template.
-        is_playbook  : indicates Runner is being used by a playbook.  affects behavior in various ways.
-        inventory    : inventory object, if host_list is not provided
+        host_list        : path to a host list file, like /etc/ansible/hosts
+        module_path      : path to modules, like /usr/share/ansible
+        module_name      : which module to run (string)
+        module_args      : args to pass to the module (string)
+        forks            : desired level of paralellism (hosts to run on at a time)
+        timeout          : connection timeout, such as a SSH timeout, in seconds
+        pattern          : pattern or groups to select from in inventory
+        remote_user      : connect as this remote username
+        remote_pass      : supply this password (if not using keys)
+        remote_port      : use this default remote port (if not set by the inventory system)
+        private_key_file : use this private key as your auth key
+        sudo_user        : If you want to sudo to a user other than root.
+        sudo_pass        : sudo password if using sudo and sudo requires a password
+        background       : run asynchronously with a cap of this many # of seconds (if not 0)
+        basedir          : paths used by modules if not absolute are relative to here
+        setup_cache      : this is a internalism that is going away
+        transport        : transport mode (paramiko, local)
+        conditional      : only execute if this string, evaluated, is True
+        callbacks        : output callback class
+        sudo             : log in as remote user and immediately sudo to root
+        module_vars      : provides additional variables to a template.
+        is_playbook      : indicates Runner is being used by a playbook.  affects behavior in various ways.
+        inventory        : inventory object, if host_list is not provided
         """
 
         if setup_cache is None:
@@ -182,15 +184,14 @@ class Runner(object):
         self.sudo_pass   = sudo_pass
         self.is_playbook = is_playbook
 
-        euid = pwd.getpwuid(os.geteuid())[0]
-        if self.transport == 'local' and self.remote_user != euid:
-            raise errors.AnsibleError("User mismatch: expected %s, but is %s" % (self.remote_user, euid))
+        if self.transport == 'local':
+            self.remote_user = pwd.getpwuid(os.geteuid())[0]
+
         if type(self.module_args) not in [str, unicode, dict]:
             raise errors.AnsibleError("module_args must be a string or dict: %s" % self.module_args)
         if self.transport == 'ssh' and self.remote_pass:
-            raise errors.AnsibleError("SSH transport does not support remote passwords, only keys or agents")
+            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
 
-        self._tmp_paths  = {}
         random.seed()
 
     # *****************************************************
@@ -638,6 +639,8 @@ class Runner(object):
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
+    # *****************************************************
+
     def _executor_internal(self, host):
         ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
 
@@ -859,6 +862,8 @@ class Runner(object):
         else:
             results = [ self._executor(h[1]) for h in hosts ]
         return self._partition_results(results)
+
+    # *****************************************************
 
     def run_async(self, time_limit):
         ''' Run this module asynchronously and return a poller. '''
