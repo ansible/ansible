@@ -192,14 +192,17 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def _template(text, vars, setup_cache=None):
+def _template(text, vars):
     ''' run a text buffer through the templating engine '''
 
+    if vars is None:
+        raise Exception('vars is none')
     vars = vars.copy()
-    vars['hostvars'] = setup_cache
+    # FIXME: do this in runner code
+    vars['hostvars'] = vars.get('setup_cache', {})
     return varReplace(unicode(text), vars)
 
-def template(text, vars, setup_cache=None):
+def template(text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -209,21 +212,22 @@ def template(text, vars, setup_cache=None):
         if (depth > 20):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
-        text = _template(text, vars, setup_cache)
+        text = _template(text, vars)
     return text
 
-def template_from_file(basedir, path, vars, setup_cache):
+def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
+    # FIXME: possibly a bit inefficient here, do this in runner code
     vars = vars.copy()
-    vars['hostvars'] = setup_cache
+    vars['hostvars'] = vars.get('setup_cache',{})
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
-    return template(res, vars, setup_cache)
+    return template(res, vars)
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
