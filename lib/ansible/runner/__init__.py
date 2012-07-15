@@ -220,7 +220,7 @@ class Runner(object):
         ''' transfer string to remote file '''
 
         if type(data) == dict:
-            data = utils.smjson(data)
+            data = utils.jsonify(data)
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
@@ -326,7 +326,7 @@ class Runner(object):
             args = self._add_setup_vars(inject, args)
 
         if type(args) == dict:
-            args = utils.bigjson(args)
+            args = utils.jsonify(args,format=True)
 
         args = utils.template(args, inject, self.setup_cache)
 
@@ -650,7 +650,7 @@ class Runner(object):
 
         conditional = utils.template(self.conditional, inject, self.setup_cache)
         if not eval(conditional):
-            result = utils.smjson(dict(skipped=True))
+            result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host)
             return ReturnData(host=host, result=result)
 
