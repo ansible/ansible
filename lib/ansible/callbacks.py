@@ -76,6 +76,14 @@ class AggregateStats(object):
 
 ########################################################################
 
+def regular_generic_msg(hostname, result, oneline, caption):
+    ''' output on the result of a module run that is not command '''
+    if not oneline:
+        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result,format=True))
+    else:
+        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
+
+
 def banner(msg):
     res = ""
     global COWSAY
@@ -94,7 +102,45 @@ def banner(msg):
     else:
         res = "\n%s ********************* " % msg
     return res
-  
+
+def command_generic_msg(hostname, result, oneline, caption):
+    ''' output the result of a command run '''
+    rc     = result.get('rc', '0')
+    stdout = result.get('stdout','')
+    stderr = result.get('stderr', '')
+    msg    = result.get('msg', '')
+    if not oneline:
+        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
+        if stdout:
+            buf += stdout
+        if stderr:
+            buf += stderr
+        if msg:
+            buf += msg
+        buf += "\n"
+        return buf
+    else:
+        if stderr:
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s\n" % (hostname, caption, rc, stdout, stderr)
+        else:
+            return "%s | %s | rc=%s | (stdout) %s\n" % (hostname, caption, rc, stdout)
+
+def host_report_msg(hostname, module_name, result, oneline):
+    ''' summarize the JSON results for a particular host '''
+    failed = utils.is_failed(result)
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
+        if not failed:
+            return command_generic_msg(hostname, result, oneline, 'success')
+        else:
+            return command_generic_msg(hostname, result, oneline, 'FAILED')
+    else:
+        if not failed:
+            return regular_generic_msg(hostname, result, oneline, 'success')
+        else:
+            return regular_generic_msg(hostname, result, oneline, 'FAILED')
+
+
+###############################################
 
 class DefaultRunnerCallbacks(object):
     ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
@@ -150,7 +196,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             res = res.get('msg','')
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.bigjson(dict(failed=True, msg=res)))
+            utils.write_tree_file(
+                self.options.tree, host, 
+                utils.jsonify(dict(failed=True, msg=res),format=True)
+            )
  
     def on_skipped(self, host):
         pass
@@ -169,15 +218,15 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             print "<job %s> polling, %ss remaining"%(jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        print "<job %s> finished on %s => %s"%(jid, host, utils.bigjson(res))
+        print "<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True))
 
     def on_async_failed(self, host, res, jid):
-        print "<job %s> FAILED on %s => %s"%(jid, host, utils.bigjson(res))
+        print "<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True))
 
     def _on_any(self, host, result):
-        print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
+        print host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.bigjson(result))
+            utils.write_tree_file(self.options.tree, host, utils.json(result,format=True))
 
 ########################################################################
 
@@ -193,14 +242,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
+        print "failed: [%s] => %s\n" % (host, utils.jsonify(results))
 
     def on_ok(self, host, host_result):
         # show verbose output for non-setup module results if --verbose is used
         if not self.verbose or host_result.get("verbose_override",None) is not None:
             print "ok: [%s]" % (host)
         else:
-            print "ok: [%s] => %s" % (host, utils.smjson(host_result))
+            print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
 
     def on_error(self, host, err):
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
