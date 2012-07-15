@@ -237,25 +237,14 @@ class Runner(object):
     # *****************************************************
 
     def _execute_module(self, conn, tmp, remote_module_path, args, 
-        async_jid=None, async_module=None, async_limit=None):
+        async_jid=None, async_module=None, async_limit=None, inject=None):
 
         ''' runs a module that has already been transferred '''
-
-        inject = self.setup_cache[conn.host].copy()
-        host_variables = self.inventory.get_variables(conn.host)
-        inject.update(host_variables)
-        inject.update(self.module_vars)
-
-        group_hosts = {}
-        for g in self.inventory.groups:
-            group_hosts[g.name] = map((lambda x: x.get_variables()),g.hosts)
-
-        inject['groups'] = group_hosts
 
         if type(args) == dict:
             args = utils.jsonify(args,format=True)
 
-        args = utils.template(args, inject, self.setup_cache)
+        args = utils.template(args, inject)
 
         argsfile = self._transfer_str(conn, tmp, 'arguments', args)
         if async_jid is None:
@@ -283,7 +272,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_raw(self, conn, tmp):
+    def _execute_raw(self, conn, tmp, inject=None):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
         return ReturnData(host=conn.host, result=dict(
             stdout=self._low_level_exec_command(conn, self.module_args, tmp, sudoable = True)
@@ -291,7 +280,7 @@ class Runner(object):
 
     # ***************************************************
 
-    def _execute_normal_module(self, conn, tmp, module_name):
+    def _execute_normal_module(self, conn, tmp, module_name, inject=None):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
         # shell and command are the same module
@@ -300,14 +289,14 @@ class Runner(object):
             self.module_args += " #USE_SHELL"
 
         module = self._transfer_module(conn, tmp, module_name)
-        exec_rc = self._execute_module(conn, tmp, module, self.module_args)
+        exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
         if exec_rc.is_successful():
             self._add_result_to_setup_cache(conn, exec_rc.result)
         return exec_rc
 
     # *****************************************************
 
-    def _execute_async_module(self, conn, tmp, module_name):
+    def _execute_async_module(self, conn, tmp, module_name, inject=None):
         ''' transfer the given module name, plus the async module, then run it '''
 
         # shell and command module are the same
@@ -322,12 +311,13 @@ class Runner(object):
         return self._execute_module(conn, tmp, async, module_args,
            async_module=module, 
            async_jid=self.generated_jid, 
-           async_limit=self.background
+           async_limit=self.background,
+           inject=inject
         )
 
     # *****************************************************
 
-    def _execute_copy(self, conn, tmp):
+    def _execute_copy(self, conn, tmp, inject=None):
         ''' handler for file transfer operations '''
 
         # load up options
@@ -338,9 +328,6 @@ class Runner(object):
             result=dict(failed=True, msg="src and dest are required")
             return ReturnData(host=conn.host, result=result)
 
-        # apply templating to source argument
-        inject = self.setup_cache[conn.host]
-        
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         if 'first_available_file' in self.module_vars:
@@ -380,20 +367,20 @@ class Runner(object):
 
             # run the copy module
             args = "src=%s dest=%s" % (tmp_src, dest)
-            exec_rc = self._execute_module(conn, tmp, module, args)
+            exec_rc = self._execute_module(conn, tmp, module, args, inject=inject)
         else:
             # no need to transfer the file, already correct md5
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
             exec_rc = ReturnData(host=conn.host, result=result)
 
         if exec_rc.is_successful():
-            return self._chain_file_module(conn, tmp, exec_rc, options)
+            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
         else:
             return exec_rc
 
     # *****************************************************
 
-    def _execute_fetch(self, conn, tmp):
+    def _execute_fetch(self, conn, tmp, inject=None):
         ''' handler for fetch operations '''
 
         # load up options
@@ -405,13 +392,9 @@ class Runner(object):
             return ReturnData(host=conn.host, result=results)
 
         # apply templating to source argument
-        inject = self.setup_cache[conn.host]
-        if self.module_vars is not None:
-            inject.update(self.module_vars)
-        source = utils.template(source, inject, self.setup_cache)
-
+        source = utils.template(source, inject)
         # apply templating to dest argument
-        dest = utils.template(dest, inject, self.setup_cache)
+        dest = utils.template(dest, inject)
        
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), conn.host, source)
@@ -444,14 +427,14 @@ class Runner(object):
         
     # *****************************************************
 
-    def _chain_file_module(self, conn, tmp, exec_rc, options):
+    def _chain_file_module(self, conn, tmp, exec_rc, options, inject=None):
 
         ''' handles changing file attribs after copy/template operations '''
 
         old_changed = exec_rc.result.get('changed', False)
         module = self._transfer_module(conn, tmp, 'file')
         args = ' '.join([ "%s=%s" % (k,v) for (k,v) in options.items() ])
-        exec_rc2 = self._execute_module(conn, tmp, module, args)
+        exec_rc2 = self._execute_module(conn, tmp, module, args, inject=inject)
 
         new_changed = False
         if exec_rc2.is_successful():
@@ -465,7 +448,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_template(self, conn, tmp):
+    def _execute_template(self, conn, tmp, inject=None):
         ''' handler for template operations '''
 
         if not self.is_playbook:
@@ -479,9 +462,6 @@ class Runner(object):
         if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(host=conn.host, comm_ok=False, result=result)
-
-        # apply templating to source argument so vars can be used in the path
-        inject = self.setup_cache[conn.host]
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -500,14 +480,14 @@ class Runner(object):
         if self.module_vars is not None:
             inject.update(self.module_vars)
 
-        source = utils.template(source, inject, self.setup_cache)
+        source = utils.template(source, inject)
 
         # install the template module
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
         try:
-            resultant = utils.template_from_file(self.basedir, source, inject, self.setup_cache)
+            resultant = utils.template_from_file(self.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(host=conn.host, comm_ok=False, result=result)
@@ -516,25 +496,25 @@ class Runner(object):
             
         # run the COPY module
         args = "src=%s dest=%s" % (xfered, dest)
-        exec_rc = self._execute_module(conn, tmp, copy_module, args)
+        exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=inject)
  
         # modify file attribs if needed
         if exec_rc.comm_ok:
-            return self._chain_file_module(conn, tmp, exec_rc, options)
+            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
         else:
             return exec_rc
 
     # *****************************************************
 
-    def _execute_assemble(self, conn, tmp):
+    def _execute_assemble(self, conn, tmp, inject=None):
         ''' handler for assemble operations '''
         module_name = 'assemble'
         options = utils.parse_kv(self.module_args)
         module = self._transfer_module(conn, tmp, module_name)
-        exec_rc = self._execute_module(conn, tmp, module, self.module_args)
+        exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
 
         if exec_rc.is_successful():
-            return self._chain_file_module(conn, tmp, exec_rc, options)
+            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
         else:
             return exec_rc
 
@@ -608,7 +588,17 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
 
-        conditional = utils.template(self.conditional, inject, self.setup_cache)
+        # special non-user/non-fact variables:
+        # 'groups' variable is a list of host name in each group
+        # 'hostvars' variable contains variables for each host name
+        #  ... and is set elsewhere
+        # 'inventory_hostname' is also set elsewhere
+        group_hosts = {}
+        for g in self.inventory.groups:
+            group_hosts[g.name] = [ h.name for h in g.hosts ]
+        inject['groups'] = group_hosts
+
+        conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host)
@@ -621,19 +611,19 @@ class Runner(object):
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        module_name = utils.template(self.module_name, inject, self.setup_cache)
+        module_name = utils.template(self.module_name, inject)
 
         tmp = self._make_tmp_path(conn)
         result = None
 
         handler = getattr(self, "_execute_%s" % self.module_name, None)
         if handler:
-            result = handler(conn, tmp)
+            result = handler(conn, tmp, inject=inject)
         else:
             if self.background == 0:
-                result = self._execute_normal_module(conn, tmp, module_name)
+                result = self._execute_normal_module(conn, tmp, module_name, inject=inject)
             else:
-                result = self._execute_async_module(conn, tmp, module_name)
+                result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
         self._delete_remote_files(conn, tmp)
         conn.close()
