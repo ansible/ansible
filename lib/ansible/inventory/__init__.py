@@ -52,7 +52,7 @@ class Inventory(object):
 
         if type(host_list) in [ str, unicode ]:
             if host_list.find(",") != -1:
-               host_list = host_list.split(",")
+                host_list = host_list.split(",")
 
         if type(host_list) == list:
             all = Group('all')
@@ -108,8 +108,8 @@ class Inventory(object):
 
     def get_host(self, hostname):
         for group in self.groups:
-           for host in group.get_hosts():
-               if hostname == host.name:
+            for host in group.get_hosts():
+                if hostname == host.name:
                     return host
         return None
 
@@ -161,10 +161,9 @@ class Inventory(object):
 
     def restrict_to(self, restriction, append_missing=False):
         """ Restrict list operations to the hosts given in restriction """
-   
-	if type(restriction) != list:
-	    restriction = [ restriction ]
-	self._restriction = restriction
+        if type(restriction) != list:
+            restriction = [ restriction ]
+        self._restriction = restriction
 
     def lift_restriction(self):
         """ Do not restrict list operations """

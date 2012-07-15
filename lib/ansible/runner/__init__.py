@@ -291,7 +291,7 @@ class Runner(object):
                         break
             msg = 'All items succeeded'
             if all_failed:
-                 msg = "One or more items failed."
+                msg = "One or more items failed."
             rd_result = dict(
                 failed = all_failed,
                 changed = all_changed,
@@ -345,20 +345,20 @@ class Runner(object):
     # *****************************************************
 
     def _save_setup_result_to_disk(self, conn, result):
-       ''' cache results of calling setup '''
+        ''' cache results of calling setup '''
 
-       dest = os.path.expanduser("~/.ansible_setup_data")
-       user = getpass.getuser()
-       if user == 'root':
-           dest = "/var/lib/ansible/setup_data"
-       if not os.path.exists(dest):
-           os.makedirs(dest)
+        dest = os.path.expanduser("~/.ansible_setup_data")
+        user = getpass.getuser()
+        if user == 'root':
+            dest = "/var/lib/ansible/setup_data"
+        if not os.path.exists(dest):
+            os.makedirs(dest)
 
-       fh = open(os.path.join(dest, conn.host), "w")
-       fh.write(result)
-       fh.close()
+        fh = open(os.path.join(dest, conn.host), "w")
+        fh.write(result)
+        fh.close()
 
-       return result
+        return result
 
     # *****************************************************
 
