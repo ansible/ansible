@@ -228,8 +228,10 @@ class Runner(object):
         afo.close()
 
         remote = os.path.join(tmp, name)
-        conn.put_file(afile, remote)
-        os.unlink(afile)
+        try:
+            conn.put_file(afile, remote)
+        finally:
+            os.unlink(afile)
         return remote
 
     # *****************************************************
@@ -632,6 +634,7 @@ class Runner(object):
         result = None
 
         handler = getattr(self, "_execute_%s" % self.module_name, None)
+
         if handler:
             result = handler(conn, tmp)
         else:

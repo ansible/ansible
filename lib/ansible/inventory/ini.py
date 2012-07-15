@@ -54,6 +54,7 @@ class InventoryParser(object):
     # delta asdf=jkl favcolor=red 
 
     def _parse_base_groups(self):
+        # FIXME: refactor
 
         ungrouped = Group(name='ungrouped')
         all = Group(name='all')

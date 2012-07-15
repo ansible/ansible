@@ -16,17 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-################################################
-
 import os
-import time
 import subprocess
 import shlex
 import pipes
 import random
 import select
 import fcntl
-
 from ansible import errors
 
 class SSHConnection(object):
@@ -39,6 +35,7 @@ class SSHConnection(object):
 
     def connect(self):
         ''' connect to the remote host '''
+
         self.common_args = []
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
@@ -134,5 +131,6 @@ class SSHConnection(object):
             raise errors.AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
 
     def close(self):
-        ''' terminate the connection '''
+        ''' not applicable since we're executing openssh binaries '''
         pass
+

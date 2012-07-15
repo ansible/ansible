@@ -14,17 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 import os
 
-
-DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS',
-    '/etc/ansible/hosts')
-DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY',
-    '/usr/share/ansible')
-DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP', 
-    '$HOME/.ansible/tmp')
+DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS', '/etc/ansible/hosts')
+DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY', '/usr/share/ansible')
+DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP', '$HOME/.ansible/tmp')
 
 DEFAULT_MODULE_NAME    = 'command'
 DEFAULT_PATTERN        = '*'

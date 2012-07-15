@@ -15,17 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 from ansible import errors
 import ansible.constants as C
 
 class Host(object):
-    """ 
-    Group of ansible hosts
-    """
+    ''' a single ansible host '''
 
     def __init__(self, name=None, port=None):
+
         self.name = name
         self.vars = {}
         self.groups = []
@@ -36,12 +33,15 @@ class Host(object):
             raise Exception("host name is required")
 
     def add_group(self, group):
+
         self.groups.append(group)
 
     def set_variable(self, key, value):
+
         self.vars[key]=value
 
     def get_groups(self):
+
         groups = {}
         for g in self.groups:
             groups[g.name] = g
@@ -51,6 +51,7 @@ class Host(object):
         return groups.values()
 
     def get_variables(self):
+
         results = {}
         for group in self.groups:
             results.update(group.get_variables())

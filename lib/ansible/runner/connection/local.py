@@ -14,21 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-################################################
-
-import warnings
 import traceback
 import os
-import time
-import re
 import shutil
 import subprocess
-import pipes
-import socket
-import random
-
 from ansible import errors
 
 class LocalConnection(object):
@@ -45,6 +35,7 @@ class LocalConnection(object):
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
         ''' run a command on the local host '''
+
         if self.runner.sudo and sudoable:
             cmd = "sudo -s %s" % cmd
         if self.runner.sudo_pass:
@@ -60,6 +51,7 @@ class LocalConnection(object):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
+
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
@@ -77,5 +69,4 @@ class LocalConnection(object):
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-
         pass
