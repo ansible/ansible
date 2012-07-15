@@ -29,17 +29,14 @@ from play import Play
 #############################################
 
 class PlayBook(object):
-
     '''
-    runs an ansible playbook, given as a datastructure
-    or YAML filename.  a playbook is a deployment, config
-    management, or automation based set of commands to
-    run in series.
+    runs an ansible playbook, given as a datastructure or YAML filename.  
+    A playbook is a deployment, config management, or automation based 
+    set of commands to run in series.
 
-    multiple plays/tasks do not execute simultaneously,
-    but tasks in each pattern do execute in parallel
-    (according to the number of forks requested) among
-    the hosts they address
+    multiple plays/tasks do not execute simultaneously, but tasks in each 
+    pattern do execute in parallel (according to the number of forks 
+    requested) among the hosts they address
     '''
 
     # *****************************************************
@@ -89,7 +86,6 @@ class PlayBook(object):
 
         if extra_vars is None:
             extra_vars = {}
-      
         if only_tags is None:
             only_tags = [ 'all' ]
  
@@ -112,22 +108,20 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
-        self.inventory = ansible.inventory.Inventory(host_list)
+        self.inventory   = ansible.inventory.Inventory(host_list)
         
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
-        self.basedir   = os.path.dirname(playbook)
-        self.playbook  = self._load_playbook_from_file(playbook)
-
+        self.basedir     = os.path.dirname(playbook)
+        self.playbook    = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
 
     # *****************************************************
 
     def _load_playbook_from_file(self, path):
         '''
-        do some top level error checking on playbooks and allow them to include other
-        playbooks.
+        run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
         playbook_data  = utils.parse_yaml_from_file(path)
@@ -225,18 +219,16 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
-
-        # add facts to the global setup cache
-        for host, result in results['contacted'].iteritems():
-            if "ansible_facts" in result:
-                for k,v in result['ansible_facts'].iteritems():
-                    self.SETUP_CACHE[host][k]=v
-
-        self.stats.compute(results)
-
         # if no hosts are matched, carry on
         if results is None:
             results = {}
+
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            facts = results.get('ansible_facts', {})
+            self.SETUP_CACHE[host].update(facts)
+
+        self.stats.compute(results)
  
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
@@ -266,7 +258,6 @@ class PlayBook(object):
     # *****************************************************
 
     def _do_setup_step(self, play):
-
         ''' get facts from the remote system '''
         
         host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
@@ -275,15 +266,12 @@ class PlayBook(object):
         if not play.gather_facts:
             return {}
 
-        setup_args = {}
-
         self.callbacks.on_setup()
-
         self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=play.hosts, module_name='setup', module_args=setup_args, inventory=self.inventory,
+            pattern=play.hosts, module_name='setup', module_args={}, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user, 
@@ -297,8 +285,7 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            if 'ansible_facts' in result:
-                self.SETUP_CACHE[host] = result['ansible_facts']
+            self.SETUP_CACHE[host] = result.get('ansible_facts', {})
         return setup_results
 
     # *****************************************************
