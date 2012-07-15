@@ -39,7 +39,6 @@ try:
 except ImportError: 
     from md5 import md5 as _md5
 
-
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -53,60 +52,13 @@ def exit(msg, rc=1):
     err(msg)
     sys.exit(rc)
 
-def bigjson(result):
-    ''' format JSON output (uncompressed) '''
+def jsonify(result, format=False):
+    ''' format JSON output (uncompressed or uncompressed) '''
     result2 = result.copy()
-    return json.dumps(result2, sort_keys=True, indent=4)
-
-def smjson(result):
-    ''' format JSON output (compressed) '''
-    result2 = result.copy()
-    return json.dumps(result2, sort_keys=True)
-
-def regular_generic_msg(hostname, result, oneline, caption):
-    ''' output on the result of a module run that is not command '''
-    if not oneline:
-        return "%s | %s >> %s\n" % (hostname, caption, bigjson(result))
+    if format:
+        return json.dumps(result2, sort_keys=True, indent=4)
     else:
-        return "%s | %s >> %s\n" % (hostname, caption, smjson(result))
-
-def regular_success_msg(hostname, result, oneline):
-    ''' output the result of a successful module run '''
-    return regular_generic_msg(hostname, result, oneline, 'success')
-
-def regular_failure_msg(hostname, result, oneline):
-    ''' output the result of a failed module run '''
-    return regular_generic_msg(hostname, result, oneline, 'FAILED')
-
-def command_generic_msg(hostname, result, oneline, caption):
-    ''' output the result of a command run '''
-    rc     = result.get('rc', '0')
-    stdout = result.get('stdout','')
-    stderr = result.get('stderr', '')
-    msg    = result.get('msg', '')
-    if not oneline:
-        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
-        if stdout:
-            buf += stdout
-        if stderr:
-            buf += stderr
-        if msg:
-            buf += msg
-        buf += "\n"
-        return buf
-    else:
-        if stderr:
-            return "%s | %s | rc=%s | (stdout) %s (stderr) %s\n" % (hostname, caption, rc, stdout, stderr)
-        else:
-            return "%s | %s | rc=%s | (stdout) %s\n" % (hostname, caption, rc, stdout)
-
-def command_success_msg(hostname, result, oneline):
-    ''' output from a successful command run '''
-    return command_generic_msg(hostname, result, oneline, 'success')
-
-def command_failure_msg(hostname, result, oneline):
-    ''' output from a failed command run '''
-    return command_generic_msg(hostname, result, oneline, 'FAILED')
+        return json.dumps(result2, sort_keys=True)
 
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
@@ -127,22 +79,6 @@ def is_failed(result):
     if rc != 0:
         return True    
     return failed
-
-def host_report_msg(hostname, module_name, result, oneline):
-    ''' summarize the JSON results for a particular host '''
-    buf = ''
-    failed = is_failed(result)
-    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
-        if not failed:
-            buf = command_success_msg(hostname, result, oneline)
-        else:
-            buf = command_failure_msg(hostname, result, oneline)
-    else:
-        if not failed:
-            buf = regular_success_msg(hostname, result, oneline)
-        else:
-            buf = regular_failure_msg(hostname, result, oneline)
-    return buf
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''

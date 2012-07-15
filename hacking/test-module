@@ -83,7 +83,7 @@ except:
 print "***********************************"
 print "PARSED OUTPUT"
 
-print utils.bigjson(results)
+print utils.jsonify(results,format=True)
 
 sys.exit(0)
 
