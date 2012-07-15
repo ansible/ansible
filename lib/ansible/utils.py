@@ -63,13 +63,6 @@ def smjson(result):
     result2 = result.copy()
     return json.dumps(result2, sort_keys=True)
 
-def task_start_msg(name, conditional):
-    # FIXME: move to callbacks code
-    if conditional:
-        return "NOTIFIED: [%s]" % name
-    else:
-        return "TASK: [%s]" % name
-
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''
     if not oneline:
