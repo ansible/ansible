@@ -235,52 +235,8 @@ class Runner(object):
         return remote
 
     # *****************************************************
-    
+
     def _execute_module(self, conn, tmp, remote_module_path, args, 
-        async_jid=None, async_module=None, async_limit=None):
-
-        items = self.module_vars.get('items', None)
-        if items is None or len(items) == 0:
-            # executing a single item
-            return self._execute_module_internal(
-                conn, tmp, remote_module_path, args, 
-                async_jid=async_jid, async_module=async_module, async_limit=async_limit
-            )
-        else:
-            # executing using with_items, so make multiple calls
-            # TODO: refactor
-            aggregrate = {}
-            all_comm_ok = True
-            all_changed = False
-            all_failed = False
-            results = []
-            for x in items:
-                self.module_vars['item'] = x
-                result = self._execute_module_internal(
-                        conn, tmp, remote_module_path, args, 
-                        async_jid=async_jid, async_module=async_module, async_limit=async_limit
-                )
-                results.append(result.result)
-                if result.comm_ok == False:
-                    all_comm_ok = False
-                    break
-                for x in results:
-                    if x.get('changed') == True: 
-                        all_changed = True
-                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
-                        all_failed = True   
-                        break
-            msg = 'All items succeeded'
-            if all_failed:
-                msg = "One or more items failed."
-            rd_result = dict(failed=all_failed, changed=all_changed, results=results, msg=msg)
-            if not all_failed:
-                del rd_result['failed']
-            return ReturnData(host=conn.host, comm_ok=all_comm_ok, result=rd_result)
- 
-    # *****************************************************
-
-    def _execute_module_internal(self, conn, tmp, remote_module_path, args, 
         async_jid=None, async_module=None, async_limit=None):
 
         ''' runs a module that has already been transferred '''
@@ -466,7 +422,7 @@ class Runner(object):
         remote_md5 = self._remote_md5(conn, tmp, source)
 
         if remote_md5 == '0':
-            result = dict(msg="missing remote file", changed=False)
+            result = dict(msg="missing remote file: %s" % source, changed=False)
             return ReturnData(host=conn.host, result=result)
         elif remote_md5 != local_md5:
             # create the containing directories, if needed
@@ -606,7 +562,44 @@ class Runner(object):
     # *****************************************************
 
     def _executor_internal(self, host):
-        ''' callback executed in parallel for each host. returns (hostname, connected_ok, extra) '''
+        ''' executes any module one or more times '''
+
+        items = self.module_vars.get('items', [])
+        if len(items) == 0:
+            return self._executor_internal_inner(host)
+        else:
+            # executing using with_items, so make multiple calls
+            # TODO: refactor
+            aggregrate = {}
+            all_comm_ok = True
+            all_changed = False
+            all_failed = False
+            results = []
+            for x in items:
+                self.module_vars['item'] = x
+                result = self._executor_internal_inner(host)
+                results.append(result.result)
+                if result.comm_ok == False:
+                    all_comm_ok = False
+                    break
+                for x in results:
+                    if x.get('changed') == True:
+                        all_changed = True
+                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
+                        all_failed = True
+                        break
+            msg = 'All items succeeded'
+            if all_failed:
+                msg = "One or more items failed."
+            rd_result = dict(failed=all_failed, changed=all_changed, results=results, msg=msg)
+            if not all_failed:
+                del rd_result['failed']
+            return ReturnData(host=host, comm_ok=all_comm_ok, result=rd_result)
+
+    # *****************************************************
+
+    def _executor_internal_inner(self, host):
+        ''' decides how to invoke a module '''
 
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
@@ -634,7 +627,6 @@ class Runner(object):
         result = None
 
         handler = getattr(self, "_execute_%s" % self.module_name, None)
-
         if handler:
             result = handler(conn, tmp)
         else:
