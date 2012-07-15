@@ -36,7 +36,7 @@ class Connection(object):
         elif transport == 'paramiko':
             conn = paramiko_ssh.ParamikoConnection(self.runner, host, port)
         elif transport == 'ssh':
-            conn = SSHConnection(self.runner, host, port)
+            conn = ssh.SSHConnection(self.runner, host, port)
         if conn is None:
             raise Exception("unsupported connection type")
         return conn.connect()
