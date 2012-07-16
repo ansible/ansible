@@ -168,7 +168,7 @@ class Ec2Inventory(object):
         ''' Reads the settings from the ec2.ini file '''
         
         config = ConfigParser.SafeConfigParser()
-        config.read('ec2.ini')
+        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
         
         # Regions
         self.regions = []
@@ -265,7 +265,7 @@ class Ec2Inventory(object):
         
         # Inventory: Group by security group
         for group in instance.groups:
-            key = self.to_safe("security-group_" + group.name)
+            key = self.to_safe("security_group_" + group.name)
             self.push(self.inventory, key, dest)
                 
         # Inventory: Group by tag keys
