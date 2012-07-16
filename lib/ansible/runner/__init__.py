@@ -422,7 +422,7 @@ class Runner(object):
         remote_md5 = self._remote_md5(conn, tmp, source)
 
         if remote_md5 == '0':
-            result = dict(msg="missing remote file: %s" % source, changed=False)
+            result = dict(msg="missing remote file", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
         elif remote_md5 != local_md5:
             # create the containing directories, if needed
@@ -433,12 +433,12 @@ class Runner(object):
             conn.fetch_file(source, dest)
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
-                result = dict(failed=True, msg="md5 mismatch", md5sum=new_md5)
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source)
                 return ReturnData(host=conn.host, result=result)
             result = dict(changed=True, md5sum=new_md5)
             return ReturnData(host=conn.host, result=result)
         else:
-            result = dict(changed=False, md5sum=local_md5)
+            result = dict(changed=False, md5sum=local_md5, file=source)
             return ReturnData(host=conn.host, result=result)
         
         
