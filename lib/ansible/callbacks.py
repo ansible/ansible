@@ -15,20 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#######################################################
-
 import utils
 import sys
 import getpass
 import os
 import subprocess
 
-#######################################################
+cowsay = None
+if os.path.exists("/usr/bin/cowsay"):
+    cowsay = "/usr/bin/cowsay"
+elif os.path.exists("/usr/games/cowsay"):
+    cowsay = "/usr/games/cowsay"
 
 class AggregateStats(object):
     ''' holds stats about per-host activity during playbook runs '''   
  
     def __init__(self):
+
         self.processed   = {}
         self.failures    = {}
         self.ok          = {}
@@ -76,17 +79,65 @@ class AggregateStats(object):
 
 ########################################################################
 
+def regular_generic_msg(hostname, result, oneline, caption):
+    ''' output on the result of a module run that is not command '''
+
+    if not oneline:
+        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result,format=True))
+    else:
+        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
+
+
 def banner(msg):
-    res = ""
-    if os.path.exists("/usr/bin/cowsay"):
-        cmd = subprocess.Popen("/usr/bin/cowsay -W 60 \"%s\"" % msg, 
+
+    if cowsay != None:
+        cmd = subprocess.Popen("%s -W 60 \"%s\"" % (cowsay, msg), 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (out, err) = cmd.communicate()
-        res = "%s\n" % out 
+        return "%s\n" % out 
     else:
-        res = "%s ********************* \n" % msg
-    return res
-  
+        return "\n%s ********************* " % msg
+
+def command_generic_msg(hostname, result, oneline, caption):
+    ''' output the result of a command run '''
+
+    rc     = result.get('rc', '0')
+    stdout = result.get('stdout','')
+    stderr = result.get('stderr', '')
+    msg    = result.get('msg', '')
+
+    if not oneline:
+        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
+        if stdout:
+            buf += stdout
+        if stderr:
+            buf += stderr
+        if msg:
+            buf += msg
+        return buf + "\n"
+    else:
+        if stderr:
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s\n" % (hostname, caption, rc, stdout, stderr)
+        else:
+            return "%s | %s | rc=%s | (stdout) %s\n" % (hostname, caption, rc, stdout)
+
+def host_report_msg(hostname, module_name, result, oneline):
+    ''' summarize the JSON results for a particular host '''
+
+    failed = utils.is_failed(result)
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
+        if not failed:
+            return command_generic_msg(hostname, result, oneline, 'success')
+        else:
+            return command_generic_msg(hostname, result, oneline, 'FAILED')
+    else:
+        if not failed:
+            return regular_generic_msg(hostname, result, oneline, 'success')
+        else:
+            return regular_generic_msg(hostname, result, oneline, 'FAILED')
+
+
+###############################################
 
 class DefaultRunnerCallbacks(object):
     ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
@@ -127,33 +178,43 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks for use by /usr/bin/ansible '''
 
     def __init__(self):
+
         # set by /usr/bin/ansible later
         self.options = None 
         self._async_notified = {}
 
     def on_failed(self, host, res):
+
         self._on_any(host,res)
 
     def on_ok(self, host, res):
+
         self._on_any(host,res)
  
     def on_unreachable(self, host, res):
+
         if type(res) == dict:
             res = res.get('msg','')
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.bigjson(dict(failed=True, msg=res)))
+            utils.write_tree_file(
+                self.options.tree, host, 
+                utils.jsonify(dict(failed=True, msg=res),format=True)
+            )
  
     def on_skipped(self, host):
         pass
 
     def on_error(self, host, err):
+
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
     
     def on_no_hosts(self):
+
         print >>sys.stderr, "no hosts matched\n"
 
     def on_async_poll(self, host, res, jid, clock):
+
         if jid not in self._async_notified:
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
@@ -161,15 +222,18 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             print "<job %s> polling, %ss remaining"%(jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        print "<job %s> finished on %s => %s"%(jid, host, utils.bigjson(res))
+
+        print "<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True))
 
     def on_async_failed(self, host, res, jid):
-        print "<job %s> FAILED on %s => %s"%(jid, host, utils.bigjson(res))
+
+        print "<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True))
 
     def _on_any(self, host, result):
-        print utils.host_report_msg(host, self.options.module_name, result, self.options.one_line)
+
+        print host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.bigjson(result))
+            utils.write_tree_file(self.options.tree, host, utils.json(result,format=True))
 
 ########################################################################
 
@@ -177,33 +241,41 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
     def __init__(self, stats, verbose=False):
+
         self.stats = stats
         self._async_notified = {}
         self.verbose = verbose
 
     def on_unreachable(self, host, msg):
+
         print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
-        print "failed: [%s] => %s\n" % (host, utils.smjson(results))
+
+        print "failed: [%s] => %s" % (host, utils.jsonify(results))
 
     def on_ok(self, host, host_result):
+
         # show verbose output for non-setup module results if --verbose is used
         if not self.verbose or host_result.get("verbose_override",None) is not None:
-            print "ok: [%s]\n" % (host)
+            print "ok: [%s]" % (host)
         else:
-            print "ok: [%s] => %s" % (host, utils.smjson(host_result))
+            print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
 
     def on_error(self, host, err):
-        print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
+
+        print >>sys.stderr, "err: [%s] => %s" % (host, err)
 
     def on_skipped(self, host):
-        print "skipping: [%s]\n" % host
+
+        print "skipping: [%s]" % host
 
     def on_no_hosts(self):
+
         print "no hosts matched or remaining\n"
 
     def on_async_poll(self, host, res, jid, clock):
+
         if jid not in self._async_notified:
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
@@ -211,9 +283,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print "<job %s> polling, %ss remaining"%(jid, clock)
 
     def on_async_ok(self, host, res, jid):
+
         print "<job %s> finished on %s"%(jid, host)
 
     def on_async_failed(self, host, res, jid):
+
         print "<job %s> FAILED on %s"%(jid, host)
 
 ########################################################################
@@ -222,34 +296,45 @@ class PlaybookCallbacks(object):
     ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
   
     def __init__(self, verbose=False):
+
         self.verbose = verbose
 
     def on_start(self):
-        print "\n"
+
+        pass
 
     def on_notify(self, host, handler):
+
         pass
 
     def on_task_start(self, name, is_conditional):
-        print banner(utils.task_start_msg(name, is_conditional))
+
+        msg = "TASK: [%s]" % name
+        if is_conditional:
+            msg = "NOTIFIED: [%s]" % name
+        print banner(msg)
 
     def on_vars_prompt(self, varname, private=True):
+
         msg = 'input for %s: ' % varname
         if private:
             return getpass.getpass(msg)
         return raw_input(msg)
         
-    def on_setup_primary(self):
-        print banner("SETUP PHASE")
-    
-    def on_setup_secondary(self):
-        print banner("VARIABLE IMPORT PHASE")
+    def on_setup(self):
 
+        print banner("GATHERING FACTS")
+    
     def on_import_for_host(self, host, imported_file):
+
         print "%s: importing %s" % (host, imported_file)
 
     def on_not_import_for_host(self, host, missing_file):
+
         print "%s: not importing file: %s" % (host, missing_file)
 
     def on_play_start(self, pattern):
+
         print banner("PLAY [%s]" % pattern)
+
+

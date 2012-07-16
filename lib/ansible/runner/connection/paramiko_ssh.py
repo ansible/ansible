@@ -14,27 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-################################################
 
 import warnings
 import traceback
 import os
-import time
 import re
 import shutil
 import subprocess
 import pipes
 import socket
 import random
-
 from ansible import errors
-# prevent paramiko warning noise
-# see http://stackoverflow.com/questions/3920502/
+
+# prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
+HAVE_PARAMIKO=False
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import paramiko
+    try:
+        import paramiko
+        HAVE_PARAMIKO=True
+    except ImportError:
+        pass
 
 class ParamikoConnection(object):
     ''' SSH based connections with Paramiko '''
@@ -47,23 +47,20 @@ class ParamikoConnection(object):
         if port is None:
             self.port = self.runner.remote_port
 
-    def _get_conn(self):
-        user = self.runner.remote_user
+    def connect(self):
+        ''' activates the connection object '''
 
+        if not HAVE_PARAMIKO:
+            raise errors.AnsibleError("paramiko is not installed")
+
+        user = self.runner.remote_user
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            ssh.connect(
-                self.host,
-                username=user,
-                allow_agent=True,
-                look_for_keys=True,
-                key_filename=self.runner.private_key_file,
-                password=self.runner.remote_pass,
-                timeout=self.runner.timeout,
-                port=self.port
-            )
+            ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
+                key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
+                timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
@@ -75,17 +72,12 @@ class ParamikoConnection(object):
             else:
                 raise errors.AnsibleConnectionFailed(msg)
 
-        return ssh
-
-    def connect(self):
-        ''' connect to the remote host '''
-
-        self.ssh = self._get_conn()
+        self.ssh = ssh
         return self
 
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
-
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
         ''' run a command on the remote host '''
+
         bufsize = 4096
         chan = self.ssh.get_transport().open_session()
         chan.get_pty() 
@@ -119,10 +111,7 @@ class ParamikoConnection(object):
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
-        stdin = chan.makefile('wb', bufsize)
-        stdout = chan.makefile('rb', bufsize)
-        stderr = ''  # stderr goes to stdout when using a pty, so this will never output anything.
-        return stdin, stdout, stderr
+        return (chan.makefile('wb', bufsize), chan.makefile('rb', bufsize), '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -132,21 +121,19 @@ class ParamikoConnection(object):
         try:
             sftp.put(in_path, out_path)
         except IOError:
-            traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
         sftp.close()
 
     def fetch_file(self, in_path, out_path):
+        ''' save a remote file to the specified path '''
         sftp = self.ssh.open_sftp()
         try:
             sftp.get(in_path, out_path)
         except IOError:
-            traceback.print_exc()
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
         sftp.close()
 
     def close(self):
         ''' terminate the connection '''
-
         self.ssh.close()
 

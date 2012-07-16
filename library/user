@@ -54,6 +54,13 @@ def add_user_info(kwargs):
     if user_exists(name):
         kwargs['state'] = 'present'
         info = user_info(name)
+        if info == False:
+            if 'failed' in kwargs:
+                kwargs['notice'] = "failed to look up user name: %s" % name
+            else:
+                kwargs['msg'] = "failed to look up user name: %s" % name
+            kwargs['failed'] = True
+            return kwargs
         kwargs['uid'] = info[2]
         kwargs['group'] = info[3]
         kwargs['comment'] = info[4]
@@ -70,16 +77,15 @@ def add_user_info(kwargs):
 def user_del(user, **kwargs):
     cmd = [USERDEL]
     for key in kwargs:
-        if key == 'force' and kwargs[key]:
+        if key == 'force' and kwargs[key] == 'yes':
             cmd.append('-f')
-        elif key == 'remove' and kwargs[key]:
+        elif key == 'remove' and kwargs[key] == 'yes':
             cmd.append('-r')
     cmd.append(user)
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 def user_add(user, **kwargs):
     cmd = [USERADD]
@@ -119,11 +125,10 @@ def user_add(user, **kwargs):
         elif key == 'system' and kwargs[key] == 'yes':
             cmd.append('-r')
     cmd.append(user)
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 """
 Without spwd, we would have to resort to reading /etc/shadow
@@ -184,13 +189,12 @@ def user_mod(user, **kwargs):
                 cmd.append(kwargs[key])
     # skip if no changes to be made
     if len(cmd) == 1:
-        return False
+        return (None, '', '')
     cmd.append(user)
-    rc = subprocess.call(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if rc == 0:
-        return True
-    else:
-        return False
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
 
 def group_exists(group):
     try:
@@ -290,8 +294,8 @@ password   = params.get('password', None)
 
 # ===========================================
 # following options are specific to userdel
-force      = params.get('force', False)
-remove     = params.get('remove', False)
+force      = params.get('force', 'no')
+remove     = params.get('remove', 'no')
 
 # ===========================================
 # following options are specific to useradd
@@ -310,30 +314,47 @@ if system not in ['yes', 'no']:
     fail_json(msg='invalid system')
 if append not in [ 'yes', 'no' ]:
     fail_json(msg='invalid append')
+if force not in ['yes', 'no']:
+    fail_json(msg="invalid option for force, requires yes or no (defaults to no)")
+if remove not in ['yes', 'no']:
+    fail_json(msg="invalid option for remove, requires yes or no (defaults to no)")
 if name is None:
     fail_json(msg='name is required')
 
-changed = False
-rc = 0
+rc = None
+out = ''
+err = ''
+result = {}
+result['name'] = name
 if state == 'absent':
     if user_exists(name):
-        changed = user_del(name, force=force, remove=remove)
-    exit_json(name=name, changed=changed, force=force, remove=remove)
+        (rc, out, err) = user_del(name, force=force, remove=remove)
+        if rc != 0:
+            fail_json(name=name, msg=err)
+        result['force'] = force
+        result['remove'] = remove
 elif state == 'present':
     if not user_exists(name):
-        changed = user_add(name, uid=uid, group=group, groups=groups,
-                           comment=comment, home=home, shell=shell,
-                           password=password, createhome=createhome,
-                           system=system)
+        (rc, out, err) = user_add(name, uid=uid, group=group, groups=groups,
+                                  comment=comment, home=home, shell=shell,
+                                  password=password, createhome=createhome,
+                                  system=system)
     else:
-        changed = user_mod(name, uid=uid, group=group, groups=groups,
-                           comment=comment, home=home, shell=shell,
-                           password=password, append=append)
-
+        (rc, out, err) = user_mod(name, uid=uid, group=group, groups=groups,
+                                  comment=comment, home=home, shell=shell,
+                                  password=password, append=append)
+    if rc is not None and rc != 0:
+        fail_json(name=name, msg=err)
     if password is not None:
-        exit_json(name=name, changed=changed, password="XXXXXXXX")
-    else:
-        exit_json(name=name, changed=changed)
+        result['password'] = 'NOTLOGGINGPASSWORD'
 
-fail_json(name=name, msg='Unexpected position reached')
+if rc is None:
+    result['changed'] = False
+else:
+    result['changed'] = True
+if out:
+    result['stdout'] = out
+if err:
+    result['stderr'] = err
+exit_json(**result)
 sys.exit(0)

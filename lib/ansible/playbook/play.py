@@ -26,8 +26,10 @@ import os
 class Play(object):
 
     __slots__ = [ 
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook', '_ds', '_handlers', '_tasks' 
+       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
+       'handlers', 'remote_user', 'remote_port',
+       'sudo', 'sudo_user', 'transport', 'playbook', 
+       'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
     ]
 
     # *************************************************
@@ -37,6 +39,7 @@ class Play(object):
 
         # TODO: more error handling
 
+
         hosts = ds.get('hosts')
         if hosts is None:
             raise errors.AnsibleError('hosts declaration is required')
@@ -44,26 +47,39 @@ class Play(object):
             hosts = ';'.join(hosts)
         hosts = utils.template(hosts, playbook.extra_vars, {})
 
-        self._ds         = ds
-        self.playbook    = playbook
-        self.hosts       = hosts 
-        self.name        = ds.get('name', self.hosts)
-        self.vars        = ds.get('vars', {})
-        self.vars_files  = ds.get('vars_files', [])
-        self.vars_prompt = ds.get('vars_prompt', {})
-        self.vars        = self._get_vars(self.playbook.basedir)
-        self._tasks      = ds.get('tasks', [])
-        self._handlers   = ds.get('handlers', [])
-        self.remote_user = ds.get('user', self.playbook.remote_user)
-        self.remote_port = ds.get('port', self.playbook.remote_port)
-        self.sudo        = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user   = ds.get('sudo_user', self.playbook.sudo_user)
-        self.transport   = ds.get('connection', self.playbook.transport)
+        self._ds          = ds
+        self.playbook     = playbook
+        self.hosts        = hosts 
+        self.name         = ds.get('name', self.hosts)
+        self.vars         = ds.get('vars', {})
+        self.vars_files   = ds.get('vars_files', [])
+        self.vars_prompt  = ds.get('vars_prompt', {})
+        self.vars         = self._get_vars(self.playbook.basedir)
+        self._tasks       = ds.get('tasks', [])
+        self._handlers    = ds.get('handlers', [])
+        self.remote_user  = ds.get('user', self.playbook.remote_user)
+        self.remote_port  = ds.get('port', self.playbook.remote_port)
+        self.sudo         = ds.get('sudo', self.playbook.sudo)
+        self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
+        self.transport    = ds.get('connection', self.playbook.transport)
+        self.tags         = ds.get('tags', None)
+        self.gather_facts = ds.get('gather_facts', True)
+
+        self._update_vars_files_for_host(None)
+
         self._tasks      = self._load_tasks(self._ds, 'tasks')
         self._handlers   = self._load_tasks(self._ds, 'handlers')
 
+        if self.tags is None:
+            self.tags = []
+        elif type(self.tags) in [ str, unicode ]:
+            self.tags = [ self.tags ]
+        elif type(self.tags) != list:
+            self.tags = []
+
         if self.sudo_user != 'root':
             self.sudo = True
+        
 
     # *************************************************
 
@@ -76,6 +92,7 @@ class Play(object):
             task_vars = self.vars.copy()
             if 'include' in x:
                 tokens = shlex.split(x['include'])
+
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
                     task_vars[k]=v
@@ -86,15 +103,13 @@ class Play(object):
             else:
                 raise Exception("unexpected task type")
             for y in data:
-                items = y.get('with_items',None)
-                if items is None:
-                    items = [ '' ]
-                elif isinstance(items, basestring):
-                    items = utils.varLookup(items, task_vars)
-                for item in items:
-                    mv = task_vars.copy()
-                    mv['item'] = item
-                    results.append(Task(self,y,module_vars=mv))
+                mv = task_vars.copy()
+                results.append(Task(self,y,module_vars=mv))
+
+        for x in results:
+            if self.tags is not None:
+                x.tags.extend(self.tags)
+
         return results
 
     # *************************************************
@@ -143,16 +158,40 @@ class Play(object):
 
     def update_vars_files(self, hosts):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
+         
+        # now loop through all the hosts...
         for h in hosts:
             self._update_vars_files_for_host(h)
 
     # *************************************************
 
+    def should_run(self, tags):
+        ''' does the play match any of the tags? '''
+
+        if len(self._tasks) == 0:
+            return False
+
+        for task in self._tasks:
+            for task_tag in task.tags:
+                if task_tag in tags:
+                    return True
+        return False                    
+
+    # *************************************************
+
+    def _has_vars_in(self, msg):
+        return ((msg.find("$") != -1) or (msg.find("{{") != -1))
+
+    # *************************************************
+
     def _update_vars_files_for_host(self, host):
 
-        if not host in self.playbook.SETUP_CACHE:
+        if (host is not None) and (not host in self.playbook.SETUP_CACHE):
             # no need to process failed hosts or hosts not in this play
             return
+
+        if type(self.vars_files) != list:
+            self.vars_files = [ self.vars_files ]
 
         for filename in self.vars_files:
 
@@ -162,29 +201,51 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = utils.template(real_filename, self.playbook.SETUP_CACHE[host])
-                    filename2 = utils.template(filename2, self.vars)
-                    filename2 = utils.path_dwim(self.playbook.basedir, filename2)
-                    sequence.append(filename2)
-                    if os.path.exists(filename2):
+                    filename2 = utils.template(real_filename, self.vars)
+                    filename3 = filename2
+                    if host is not None:
+                        filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                    filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                    sequence.append(filename4)
+                    if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename2)
-                        self.playbook.SETUP_CACHE[host].update(data)
-                        self.playbook.callbacks.on_import_for_host(host, filename2)
-                        break
-                    else:
-                        self.playbook.callbacks.on_not_import_for_host(host, filename2)
+                        data = utils.parse_yaml_from_file(filename4)
+                        if host is not None:
+                            if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                                # this filename has variables in it that were fact specific
+                                # so it needs to be loaded into the per host SETUP_CACHE
+                                self.playbook.SETUP_CACHE[host].update(data)
+                                self.playbook.callbacks.on_import_for_host(host, filename4)
+                        elif not self._has_vars_in(filename4):
+                            # found a non-host specific variable, load into vars and NOT
+                            # the setup cache
+                            self.vars.update(data)
+                    elif host is not None:
+                        self.playbook.callbacks.on_not_import_for_host(host, filename4)
                 if not found:
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
 
             else:
+                # just one filename supplied, load it!
 
-                filename2 = utils.template(filename, self.playbook.SETUP_CACHE[host])
-                filename2 = utils.template(filename2, self.vars)
-                fpath = utils.path_dwim(self.playbook.basedir, filename2)
-                new_vars = utils.parse_yaml_from_file(fpath)
+                filename2 = utils.template(filename, self.vars)
+                filename3 = filename2
+                if host is not None:
+                    filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                if self._has_vars_in(filename4):
+                    return
+                new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
-                    self.playbook.SETUP_CACHE[host].update(new_vars)
-                #else: could warn if vars file contains no vars. 
+                    if type(new_vars) != dict:
+                        raise errors.AnsibleError("files specified in vars_files must be a YAML dictionary: %s" % filename4)
+                        
+                    if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                        # running a host specific pass and has host specific variables
+                        # load into setup cache 
+                        self.playbook.SETUP_CACHE[host].update(new_vars)
+                    elif host is None:
+                        # running a non-host specific pass and we can update the global vars instead    
+                        self.vars.update(new_vars)

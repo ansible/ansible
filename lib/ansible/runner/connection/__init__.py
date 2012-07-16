@@ -18,17 +18,6 @@
 
 ################################################
 
-import warnings
-import traceback
-import os
-import time
-import re
-import shutil
-import subprocess
-import pipes
-import socket
-import random
-
 import local
 import paramiko_ssh
 import ssh
@@ -36,17 +25,17 @@ import ssh
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
 
-    def __init__(self, runner, transport,sudo_user):
+    def __init__(self, runner):
         self.runner = runner
-        self.transport = transport
-        self.sudo_user = sudo_user
+
     def connect(self, host, port=None):
         conn = None
-        if self.transport == 'local':
+        transport = self.runner.transport
+        if transport == 'local':
             conn = local.LocalConnection(self.runner, host)
-        elif self.transport == 'paramiko':
+        elif transport == 'paramiko':
             conn = paramiko_ssh.ParamikoConnection(self.runner, host, port)
-        elif self.transport == 'ssh':
+        elif transport == 'ssh':
             conn = ssh.SSHConnection(self.runner, host, port)
         if conn is None:
             raise Exception("unsupported connection type")

@@ -221,15 +221,14 @@ class TestInventory(unittest.TestCase):
     def test_yaml(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts()
-        print hosts
-        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['garfield', 'goofy', 'hera', 'jerry', 'jupiter', 'loki', 'mars', 'mickey', 'odie', 'odin', 'poseidon', 'saturn', 'thor', 'tom', 'zeus']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_all(self):
         inventory = self.yaml_inventory()
         hosts = inventory.list_hosts('all')
 
-        expected_hosts=['jupiter', 'saturn', 'mars', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['garfield', 'goofy', 'hera', 'jerry', 'jupiter', 'loki', 'mars', 'mickey', 'odie', 'odin', 'poseidon', 'saturn', 'thor', 'tom', 'zeus']
         self.compare(hosts, expected_hosts)
 
     def test_yaml_norse(self):
@@ -323,3 +322,29 @@ class TestInventory(unittest.TestCase):
         assert 'group_names' in vars
         assert sorted(vars['group_names']) == [ 'norse', 'ruler' ]
 
+    def test_yaml_some_animals(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("cat:mouse")
+        expected_hosts=['garfield', 'jerry', 'mickey', 'tom']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml_comic(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("comic")
+        expected_hosts=['garfield', 'odie']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml_orange(self):
+        inventory = self.yaml_inventory()
+        hosts = inventory.list_hosts("orange")
+        expected_hosts=['garfield', 'goofy']
+        self.compare(hosts, expected_hosts)
+
+    def test_yaml_garfield_vars(self):
+        inventory = self.yaml_inventory()
+        vars = inventory.get_variables('garfield')
+        assert vars == {'ears': 'pointy',
+                        'inventory_hostname': 'garfield',
+                        'group_names': ['cat', 'comic', 'orange'],
+                        'nose': 'pink'}
+ 

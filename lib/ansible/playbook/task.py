@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 from ansible import errors
 from ansible import utils
 
@@ -24,47 +22,81 @@ class Task(object):
 
     __slots__ = [ 
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 'play', 'notified_by',
+        'notify', 'module_name', 'module_args', 'module_vars', 
+        'play', 'notified_by', 'tags', 'with_items', 'first_available_file'
     ]
 
     def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
 
-        # TODO: more error handling
-        # include task specific vars
-
         self.module_vars = module_vars
-
         self.play        = play
+
+        # load various attributes
         self.name        = ds.get('name', None)
         self.action      = ds.get('action', '')
+        self.tags        = [ 'all' ]
+
+        # notified by is used by Playbook code to flag which hosts
+        # need to run a notifier
         self.notified_by = []
 
+        # if no name is specified, use the action line as the name
         if self.name is None:
             self.name = self.action
 
+        # load various attributes
         self.only_if = ds.get('only_if', 'True')
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
         self.notify = ds.get('notify', [])
+        self.first_available_file = ds.get('first_available_file', None)
+        self.with_items = ds.get('with_items', None)
+
+        # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
             self.notify = [ self.notify ]
 
+        # split the action line into a module name + arguments
         tokens = self.action.split(None, 1)
         if len(tokens) < 1:
             raise errors.AnsibleError("invalid/missing action in task")
-
         self.module_name = tokens[0]
         self.module_args = ''
         if len(tokens) > 1:
             self.module_args = tokens[1]
 
+        import_tags = self.module_vars.get('tags',[])
+        if type(import_tags) in [str,unicode]:
+            # allow the user to list comma delimited tags
+            import_tags = import_tags.split(",")
 
         self.name = utils.template(self.name, self.module_vars)
         self.action = utils.template(self.name, self.module_vars)
 
+        # handle mutually incompatible options
+        if self.with_items is not None and self.first_available_file is not None:
+            raise errors.AnsibleError("with_items and first_available_file are mutually incompatible in a single task")
 
-        if 'first_available_file' in ds:
-            self.module_vars['first_available_file'] = ds.get('first_available_file')
+        # make first_available_file accessable to Runner code
+        if self.first_available_file:
+            self.module_vars['first_available_file'] = self.first_available_file
+      
+        # process with_items so it can be used by Runner code 
+        if self.with_items is None:
+            self.with_items = [ ]
+        elif isinstance(self.with_items, basestring):
+            self.with_items = utils.varLookup(self.with_items, self.module_vars)
+            if type(self.with_items) != list:
+                raise errors.AnsibleError("with_items must be a list, got: %s" % self.with_items)
+        self.module_vars['items'] = self.with_items
 
-
+        # tags allow certain parts of a playbook to be run without running the whole playbook
+        apply_tags = ds.get('tags', None)
+        if apply_tags is not None:
+            if type(apply_tags) in [ str, unicode ]:
+                self.tags.append(apply_tags)
+            elif type(apply_tags) == list:
+                self.tags.extend(apply_tags)
+        self.tags.extend(import_tags)
+                

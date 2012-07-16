@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################
-
 import sys
 import os
 import shlex
@@ -25,7 +23,9 @@ import codecs
 import jinja2
 import yaml
 import optparse
-from operator import methodcaller
+import operator
+from ansible import errors
+import ansible.constants as C
 
 try:
     import json
@@ -37,86 +37,33 @@ try:
 except ImportError: 
     from md5 import md5 as _md5
 
-from ansible import errors
-import ansible.constants as C
-
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
 
 def err(msg):
     ''' print an error message to stderr '''
+
     print >> sys.stderr, msg
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
+
     err(msg)
     sys.exit(rc)
 
-def bigjson(result):
-    ''' format JSON output (uncompressed) '''
+def jsonify(result, format=False):
+    ''' format JSON output (uncompressed or uncompressed) '''
+
     result2 = result.copy()
-    return json.dumps(result2, sort_keys=True, indent=4)
-
-def smjson(result):
-    ''' format JSON output (compressed) '''
-    result2 = result.copy()
-    return json.dumps(result2, sort_keys=True)
-
-def task_start_msg(name, conditional):
-    # FIXME: move to callbacks code
-    if conditional:
-        return "NOTIFIED: [%s]" % name
+    if format:
+        return json.dumps(result2, sort_keys=True, indent=4)
     else:
-        return "TASK: [%s]" % name
-
-def regular_generic_msg(hostname, result, oneline, caption):
-    ''' output on the result of a module run that is not command '''
-    if not oneline:
-        return "%s | %s >> %s\n" % (hostname, caption, bigjson(result))
-    else:
-        return "%s | %s >> %s\n" % (hostname, caption, smjson(result))
-
-def regular_success_msg(hostname, result, oneline):
-    ''' output the result of a successful module run '''
-    return regular_generic_msg(hostname, result, oneline, 'success')
-
-def regular_failure_msg(hostname, result, oneline):
-    ''' output the result of a failed module run '''
-    return regular_generic_msg(hostname, result, oneline, 'FAILED')
-
-def command_generic_msg(hostname, result, oneline, caption):
-    ''' output the result of a command run '''
-    rc     = result.get('rc', '0')
-    stdout = result.get('stdout','')
-    stderr = result.get('stderr', '')
-    msg    = result.get('msg', '')
-    if not oneline:
-        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
-        if stdout:
-            buf += stdout
-        if stderr:
-            buf += stderr
-        if msg:
-            buf += msg
-        buf += "\n"
-        return buf
-    else:
-        if stderr:
-            return "%s | %s | rc=%s | (stdout) %s (stderr) %s\n" % (hostname, caption, rc, stdout, stderr)
-        else:
-            return "%s | %s | rc=%s | (stdout) %s\n" % (hostname, caption, rc, stdout)
-
-def command_success_msg(hostname, result, oneline):
-    ''' output from a successful command run '''
-    return command_generic_msg(hostname, result, oneline, 'success')
-
-def command_failure_msg(hostname, result, oneline):
-    ''' output from a failed command run '''
-    return command_generic_msg(hostname, result, oneline, 'FAILED')
+        return json.dumps(result2, sort_keys=True)
 
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
+
     # TODO: might be nice to append playbook runs per host in a similar way
     # in which case, we'd want append mode.
     path = os.path.join(tree, hostname)
@@ -126,33 +73,12 @@ def write_tree_file(tree, hostname, buf):
 
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
-    failed = False
-    rc = 0
-    if type(result) == dict:
-        failed = result.get('failed', 0)
-        rc     = result.get('rc', 0)
-    if rc != 0:
-        return True    
-    return failed
 
-def host_report_msg(hostname, module_name, result, oneline):
-    ''' summarize the JSON results for a particular host '''
-    buf = ''
-    failed = is_failed(result)
-    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
-        if not failed:
-            buf = command_success_msg(hostname, result, oneline)
-        else:
-            buf = command_failure_msg(hostname, result, oneline)
-    else:
-        if not failed:
-            buf = regular_success_msg(hostname, result, oneline)
-        else:
-            buf = regular_failure_msg(hostname, result, oneline)
-    return buf
+    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
+
     if tree != '/':
         tree = os.path.realpath(os.path.expanduser(tree))
     if not os.path.exists(tree):
@@ -165,6 +91,7 @@ def prepare_writeable_dir(tree):
 
 def path_dwim(basedir, given):
     ''' make relative paths work like folks expect '''
+
     if given.startswith("/"):
         return given
     elif given.startswith("~/"):
@@ -174,21 +101,23 @@ def path_dwim(basedir, given):
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
+
     return json.loads(data)
 
 def parse_json(data):
     ''' this version for module return data only '''
+
     try:
         return json.loads(data)
     except:
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
         results = {}
-        try :
+        try:
             tokens = shlex.split(data)
         except: 
             print "failed to parse json: "+ data
-            raise; 
+            raise 
             
         for t in tokens:
             if t.find("=") == -1:
@@ -210,6 +139,7 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
 def _varLookup(name, vars):
     ''' find the contents of a possibly complex variable in vars. '''
+
     path = name.split('.')
     space = vars
     for part in path:
@@ -231,22 +161,17 @@ _KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(com
 
 def varLookup(varname, vars):
     ''' helper function used by varReplace '''
+
     m = _KEYCRE.search(varname)
     if not m:
         return None
     return _varLookup(m.group(2), vars)
 
 def varReplace(raw, vars):
-    '''Perform variable replacement of $vars
-
-    @param raw: String to perform substitution on.  
-    @param vars: Dictionary of variables to replace. Key is variable name
-        (without $ prefix). Value is replacement string.
-    @return: Input raw string with substituted values.
-    '''
+    ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
-    done = []                      # Completed chunks to return
+    done = [] # Completed chunks to return
 
     while raw:
         m = _KEYCRE.search(raw)
@@ -269,22 +194,27 @@ def varReplace(raw, vars):
 
 def _template(text, vars, setup_cache=None):
     ''' run a text buffer through the templating engine '''
+
     vars = vars.copy()
     vars['hostvars'] = setup_cache
-    text = varReplace(unicode(text), vars)
-    return text
+    return varReplace(unicode(text), vars)
 
 def template(text, vars, setup_cache=None):
-    ''' run a text buffer through the templating engine 
-        until it no longer changes '''
+    ''' run a text buffer through the templating engine until it no longer changes '''
+
     prev_text = ''
+    depth = 0
     while prev_text != text:
+        depth = depth + 1
+        if (depth > 20):
+            raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
         text = _template(text, vars, setup_cache)
     return text
 
 def template_from_file(basedir, path, vars, setup_cache):
     ''' run a file through the templating engine '''
+
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
@@ -297,10 +227,12 @@ def template_from_file(basedir, path, vars, setup_cache):
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
+
     return yaml.load(data)
   
 def parse_yaml_from_file(path):
     ''' convert a yaml file to a data structure '''
+
     try:
         data = file(path).read()
     except IOError:
@@ -309,6 +241,7 @@ def parse_yaml_from_file(path):
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
+
     options = {}
     if args is not None:
         vargs = shlex.split(args, posix=True)
@@ -320,6 +253,7 @@ def parse_kv(args):
 
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
+
     if not os.path.exists(filename):
         return None
     digest = _md5()
@@ -332,18 +266,15 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
-
-
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook 
 # below this line
 
-# FIXME: move to seperate file
-
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
+
     def format_help(self, formatter=None):
-        self.option_list.sort(key=methodcaller('get_opt_string'))
+        self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
@@ -399,5 +330,4 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
             help='run asynchronously, failing after X seconds (default=N/A)')
 
     return parser
-
 

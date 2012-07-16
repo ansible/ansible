@@ -119,28 +119,6 @@ class TestRunner(unittest.TestCase):
         ])
         assert result['changed'] == False
 
-    def test_template(self):
-        input_ = self._get_test_file('sample.j2')
-        metadata = self._get_test_file('metadata.json')
-        output = self._get_stage_file('sample.out')
-        result = self._run('template', [
-            "src=%s" % input_,
-            "dest=%s" % output,
-            "metadata=%s" % metadata
-        ])
-        assert os.path.exists(output)
-        out = file(output).read()
-        assert out.find("duck") != -1
-        assert result['changed'] == True
-        assert 'md5sum' in result
-        assert 'failed' not in result
-        result = self._run('template', [
-            "src=%s" % input_,
-            "dest=%s" % output,
-            "metadata=%s" % metadata
-        ])
-        assert result['changed'] == False
-
     def test_command(self):
         # test command module, change trigger, etc
         result = self._run('command', [ "/bin/echo", "hi" ])
@@ -176,21 +154,6 @@ class TestRunner(unittest.TestCase):
         assert result['rc'] == 0
         assert len(result['stdout']) > 100000
         assert result['stderr'] == ''
-
-    def test_setup(self):
-        output = self._get_stage_file('output.json')
-        result = self._run('setup', [ "metadata=%s" % output, "a=2", "b=3", "c=4" ])
-        assert 'failed' not in result
-        assert 'md5sum' in result
-        assert result['changed'] == True
-        outds = json.loads(file(output).read())
-        assert outds['c'] == '4'
-        # not bothering to test change hooks here since ohai/facter results change
-        # almost every time so changed is always true, this just tests that
-        # rewriting the file is ok
-        result = self._run('setup', [ "metadata=%s" % output, "a=2", "b=3", "c=4" ])
-        print "RAW RESULT=%s" % result
-        assert 'md5sum' in result
 
     def test_async(self):
         # test async launch and job status
@@ -231,14 +194,13 @@ class TestRunner(unittest.TestCase):
     def test_service(self):
         # TODO: tests for the service module
         pass
+
     def test_assemble(self):
         input = self._get_test_file('assemble.d')
-        metadata = self._get_test_file('metadata.json')
         output = self._get_stage_file('sample.out')
         result = self._run('assemble', [
             "src=%s" % input,
             "dest=%s" % output,
-            "metadata=%s" % metadata
         ])
         assert os.path.exists(output)
         out = file(output).read()
@@ -251,7 +213,6 @@ class TestRunner(unittest.TestCase):
         result = self._run('assemble', [
             "src=%s" % input,
             "dest=%s" % output,
-            "metadata=%s" % metadata
         ])
         assert result['changed'] == False
 

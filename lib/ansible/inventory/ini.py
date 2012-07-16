@@ -54,6 +54,7 @@ class InventoryParser(object):
     # delta asdf=jkl favcolor=red 
 
     def _parse_base_groups(self):
+        # FIXME: refactor
 
         ungrouped = Group(name='ungrouped')
         all = Group(name='all')
@@ -79,9 +80,9 @@ class InventoryParser(object):
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
                 if hostname.find(":") != -1:
-                   tokens2  = hostname.split(":")
-                   hostname = tokens2[0]
-                   port     = tokens2[1]
+                    tokens2  = hostname.split(":")
+                    hostname = tokens2[0]
+                    port     = tokens2[1]
                 host = None
                 if hostname in self.hosts:
                     host = self.hosts[hostname]
@@ -89,9 +90,9 @@ class InventoryParser(object):
                     host = Host(name=hostname, port=port)
                     self.hosts[hostname] = host
                 if len(tokens) > 1:
-                   for t in tokens[1:]:
-                      (k,v) = t.split("=")
-                      host.set_variable(k,v)
+                    for t in tokens[1:]:
+                        (k,v) = t.split("=")
+                        host.set_variable(k,v)
                 self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
@@ -134,7 +135,7 @@ class InventoryParser(object):
                 line = line.replace("[","").replace(":vars]","")
                 group = self.groups.get(line, None)
                 if group is None:
-                   raise errors.AnsibleError("can't add vars to undefined group: %s" % line)
+                    raise errors.AnsibleError("can't add vars to undefined group: %s" % line)
             elif line.startswith("#"):
                 pass
             elif line.startswith("["):

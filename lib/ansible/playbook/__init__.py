@@ -15,30 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 import ansible.inventory
 import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
 import os
+import collections
 from play import Play
 
-#############################################
-
 class PlayBook(object):
-
     '''
-    runs an ansible playbook, given as a datastructure
-    or YAML filename.  a playbook is a deployment, config
-    management, or automation based set of commands to
-    run in series.
+    runs an ansible playbook, given as a datastructure or YAML filename.  
+    A playbook is a deployment, config management, or automation based 
+    set of commands to run in series.
 
-    multiple plays/tasks do not execute simultaneously,
-    but tasks in each pattern do execute in parallel
-    (according to the number of forks requested) among
-    the hosts they address
+    multiple plays/tasks do not execute simultaneously, but tasks in each 
+    pattern do execute in parallel (according to the number of forks 
+    requested) among the hosts they address
     '''
 
     # *****************************************************
@@ -61,7 +55,8 @@ class PlayBook(object):
         stats            = None,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
-        extra_vars       = None):
+        extra_vars       = None,
+        only_tags        = None):
 
         """
         playbook:         path to a playbook file
@@ -80,14 +75,16 @@ class PlayBook(object):
         sudo:             if not specified per play, requests all plays use sudo mode
         """
 
-        self.SETUP_CACHE = {}
+        self.SETUP_CACHE = collections.defaultdict(dict)
 
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
         if extra_vars is None:
             extra_vars = {}
-       
+        if only_tags is None:
+            only_tags = [ 'all' ]
+ 
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -105,16 +102,43 @@ class PlayBook(object):
         self.extra_vars       = extra_vars
         self.global_vars      = {}
         self.private_key_file = private_key_file
+        self.only_tags        = only_tags
 
-        self.inventory = ansible.inventory.Inventory(host_list)
+        self.inventory   = ansible.inventory.Inventory(host_list)
         
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
-        self.basedir    = os.path.dirname(playbook)
-        self.playbook  = utils.parse_yaml_from_file(playbook)
-
+        self.basedir     = os.path.dirname(playbook)
+        self.playbook    = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
+
+    # *****************************************************
+
+    def _load_playbook_from_file(self, path):
+        '''
+        run top level error checking on playbooks and allow them to include other playbooks.
+        '''
+
+        playbook_data  = utils.parse_yaml_from_file(path)
+        accumulated_plays = []
+
+        if type(playbook_data) != list:
+            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
+
+        for play in playbook_data:
+            if type(play) != dict:
+                raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
+            if 'include' in play:
+                if len(play.keys()) == 1:
+                    included_path = utils.path_dwim(self.basedir, play['include'])
+                    accumulated_plays.extend(self._load_playbook_from_file(included_path))
+                else:
+                    raise errors.AnsibleError("parse error: top level includes cannot be used with other directives: %s" % play)
+            else:
+                accumulated_plays.append(play)
+
+        return accumulated_plays
 
     # *****************************************************
         
@@ -124,7 +148,7 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for play_ds in self.playbook:
-            self.SETUP_CACHE = {}
+            self.SETUP_CACHE = collections.defaultdict(dict)
             self._run_play(Play(self,play_ds))
 
         # summarize the results
@@ -191,18 +215,16 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
-
-        # add facts to the global setup cache
-        for host, result in results['contacted'].iteritems():
-            if "ansible_facts" in result:
-                for k,v in result['ansible_facts'].iteritems():
-                    self.SETUP_CACHE[host][k]=v
-
-        self.stats.compute(results)
-
         # if no hosts are matched, carry on
         if results is None:
             results = {}
+
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            facts = results.get('ansible_facts', {})
+            self.SETUP_CACHE[host].update(facts)
+
+        self.stats.compute(results)
  
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
@@ -231,28 +253,21 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _do_setup_step(self, play, vars_files=None):
-
-        ''' push variables down to the systems and get variables+facts back up '''
-
-        # this enables conditional includes like $facter_os.yml and is only done
-        # after the original pass when we have that data.
-        #
-
-        if vars_files is not None:
-            self.callbacks.on_setup_secondary()
-            play.update_vars_files(self.inventory.list_hosts(play.hosts))
-        else:
-            self.callbacks.on_setup_primary()
-
+    def _do_setup_step(self, play):
+        ''' get facts from the remote system '''
+        
         host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
             if not (h in self.stats.failures or h in self.stats.dark) ]
 
+        if not play.gather_facts:
+            return {}
+
+        self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=play.hosts, module_name='setup', module_args=play.vars, inventory=self.inventory,
+            pattern=play.hosts, module_name='setup', module_args={}, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user, 
@@ -265,11 +280,8 @@ class PlayBook(object):
         # now for each result, load into the setup cache so we can
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
-        if vars_files is None:
-            # first pass only or we'll erase good work
-            for (host, result) in setup_ok.iteritems():
-                if 'ansible_facts' in result:
-                    self.SETUP_CACHE[host] = result['ansible_facts']
+        for (host, result) in setup_ok.iteritems():
+            self.SETUP_CACHE[host] = result.get('ansible_facts', {})
         return setup_results
 
     # *****************************************************
@@ -277,18 +289,29 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
+        if not play.should_run(self.only_tags):
+            return
+
         self.callbacks.on_play_start(play.name)
 
-        # push any variables down to the system # and get facts/ohai/other data back up
-        rc = self._do_setup_step(play) # pattern, vars, user, port, sudo, sudo_user, transport, None)
+        # get facts from system
+        rc = self._do_setup_step(play) 
 
         # now with that data, handle contentional variable file imports!
         if play.vars_files and len(play.vars_files) > 0:
-            rc = self._do_setup_step(play, play.vars_files)
+            play.update_vars_files(self.inventory.list_hosts(play.hosts))
 
-        # run all the top level tasks, these get run on every node
         for task in play.tasks():
-            self._run_task(play, task, False)
+            
+            # only run the task if the requested tags match
+            should_run = False
+            for x in self.only_tags:
+                for y in task.tags:
+                    if (x==y):
+                        should_run = True
+                        break
+            if should_run:
+                self._run_task(play, task, False)
 
         # run notify actions
         for handler in play.handlers():

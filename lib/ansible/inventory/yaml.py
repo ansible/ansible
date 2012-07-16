@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -24,9 +22,7 @@ from ansible import errors
 from ansible import utils
 
 class InventoryParserYaml(object):
-    """ 
-    Host inventory for ansible.
-    """
+    ''' Host inventory parser for ansible '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
@@ -37,6 +33,7 @@ class InventoryParserYaml(object):
         self._parse(data)
 
     def _make_host(self, hostname):
+
         if hostname in self._hosts:
             return self._hosts[hostname]
         else:
@@ -47,6 +44,7 @@ class InventoryParserYaml(object):
     # see file 'test/yaml_hosts' for syntax
 
     def _parse(self, data):
+        # FIXME: refactor into subfunctions
 
         all = Group('all')
         ungrouped = Group('ungrouped')
@@ -73,8 +71,8 @@ class InventoryParserYaml(object):
                         vars = subresult.get('vars',{})
                         if type(vars) == list:
                             for subitem in vars:
-                               for (k,v) in subitem.items():
-                                   host.set_variable(k,v) 
+                                for (k,v) in subitem.items():
+                                    host.set_variable(k,v) 
                         elif type(vars) == dict:
                             for (k,v) in subresult.get('vars',{}).items():
                                 host.set_variable(k,v)
@@ -106,12 +104,33 @@ class InventoryParserYaml(object):
 
             elif type(item) == dict and 'host' in item:
                 host = self._make_host(item['host'])
+
                 vars = item.get('vars', {})
                 if type(vars)==list:
                     varlist, vars = vars, {}
                     for subitem in varlist:
                         vars.update(subitem)
                 for (k,v) in vars.items():
-                   host.set_variable(k,v)
+                    host.set_variable(k,v)
+
+                groups = item.get('groups', {})
+                if type(groups) in [ str, unicode ]:
+                    groups = [ groups ]
+                if type(groups)==list:
+                    for subitem in groups:
+                        if subitem in self.groups:
+                            group = self.groups[subitem]
+                        else:
+                            group = Group(subitem)
+                            self.groups[group.name] = group
+                            all.add_child_group(group)
+                        group.add_host(host)
+                        grouped_hosts.append(host)
+
                 if host not in grouped_hosts:
                     ungrouped.add_host(host)
+
+        # make sure ungrouped.hosts is the complement of grouped_hosts
+        ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]
+
+

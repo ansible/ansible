@@ -16,17 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-################################################
-
 import os
-import time
 import subprocess
 import shlex
 import pipes
 import random
 import select
 import fcntl
-
 from ansible import errors
 
 class SSHConnection(object):
@@ -39,6 +35,7 @@ class SSHConnection(object):
 
     def connect(self):
         ''' connect to the remote host '''
+
         self.common_args = []
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
@@ -56,7 +53,7 @@ class SSHConnection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path,sudo_user,sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
@@ -126,8 +123,6 @@ class SSHConnection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         sftp_cmd = ["sftp"] + self.common_args + [self.host]
         p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -136,5 +131,6 @@ class SSHConnection(object):
             raise errors.AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
 
     def close(self):
-        ''' terminate the connection '''
+        ''' not applicable since we're executing openssh binaries '''
         pass
+

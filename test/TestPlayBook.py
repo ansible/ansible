@@ -30,12 +30,9 @@ class TestCallbacks(object):
     def on_start(self):
         EVENTS.append('start')
 
-    def on_setup_primary(self):
+    def on_setup(self):
         EVENTS.append([ 'primary_setup' ])
  
-    def on_setup_secondary(self):
-        EVENTS.append([ 'secondary_setup' ])
-
     def on_skipped(self, host):
         EVENTS.append([ 'skipped', [ host ]])
 
@@ -86,12 +83,9 @@ class TestCallbacks(object):
     def on_unreachable(self, host, msg):
         EVENTS.append([ 'failed/dark', [ host, msg ]])
 
-    def on_setup_primary(self):
+    def on_setup(self):
         pass
     
-    def on_setup_secondary(self):
-        pass
-
     def on_no_hosts(self):
         pass
 
@@ -144,7 +138,6 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks = self.test_callbacks
        )
        result = self.playbook.run()
-       # print utils.bigjson(dict(events=EVENTS))
        return result
 
    def test_one(self):
@@ -153,19 +146,20 @@ class TestPlaybook(unittest.TestCase):
 
        # if different, this will output to screen 
        print "**ACTUAL**"
-       print utils.bigjson(actual)
+       print utils.jsonify(actual, format=True)
        expected =  { 
             "127.0.0.2": {
                 "changed": 9, 
                 "failures": 0, 
-                "ok": 12, 
+                "ok": 11, 
                 "skipped": 1, 
                 "unreachable": 0
             }
        }
        print "**EXPECTED**"
-       print utils.bigjson(expected)
-       assert utils.bigjson(expected) == utils.bigjson(actual)
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
        # make sure the template module took options from the vars section
        data = file('/tmp/ansible_test_data_template.out').read()

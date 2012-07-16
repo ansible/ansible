@@ -15,38 +15,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#############################################
-
-# from ansible import errors
-
 class Group(object):
-    """ 
-    Group of ansible hosts
-    """
+    ''' a group of ansible hosts '''
 
     def __init__(self, name=None):
+
         self.name = name
         self.hosts = []
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
         if self.name is None:
-           raise Exception("group name is required")
+            raise Exception("group name is required")
 
     def add_child_group(self, group):
+
         if self == group:
             raise Exception("can't add group to itself")
         self.child_groups.append(group)
         group.parent_groups.append(self)
 
     def add_host(self, host):
+
         self.hosts.append(host)
         host.add_group(self)
 
     def set_variable(self, key, value):
+
         self.vars[key] = value
 
     def get_hosts(self):
+
         hosts = []
         for kid in self.child_groups:
             hosts.extend(kid.get_hosts())
@@ -54,14 +53,16 @@ class Group(object):
         return hosts 
 
     def get_variables(self):
+
         vars = {}
         # FIXME: verify this variable override order is what we want
         for ancestor in self.get_ancestors():
-           vars.update(ancestor.get_variables())
+            vars.update(ancestor.get_variables())
         vars.update(self.vars)
         return vars
 
     def _get_ancestors(self):
+
         results = {}
         for g in self.parent_groups:
             results[g.name] = g
@@ -69,8 +70,6 @@ class Group(object):
         return results
 
     def get_ancestors(self):
+
         return self._get_ancestors().values()
-
-
-
 

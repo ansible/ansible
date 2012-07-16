@@ -3,12 +3,30 @@ Ansible Changes By Release
 
 0.6 "Cabo" ------------ pending
 
-* groups variable available a hash to return the hosts in each group name
+* groups variable available as a hash to return the hosts in each group name
 * fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
 * apt module now takes an optional install-recommends=yes|no (default yes)
 * fixes to the return codes of the copy module
 * copy module takes a remote md5sum to avoid large file transfer
 * when sudoing to root, still use /etc/ansible/setup as the metadata path, as if root
+* support to tag tasks and includes and use --tags in playbook CLI 
+* various user and group module fixes (error handling, etc)
+* apt module now takes an optional force parameter
+* slightly better psychic service status handling for the service module
+* cowsay support on Ubuntu
+* playbooks can now include other playbooks (example/playbooks/nested_playbooks.yml)
+* paramiko is now only imported if needed when running from source checkout
+* fetch module fixes for SSH connection type
+* modules now consistently all take yes/no for boolean parameters (some accepted true/false)
+* in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
+* setup module no longer saves to disk, template module now only used in playbooks
+* setup module no longer needs to run twice per playbook
+* vars_files now usable with with_items, provided file paths don't contain host specific facts
+* error reporting if with_items value is unbound
+* with_items no longer creates lots of tasks, creates one task that makes multiple calls
+* can use host_specific facts inside with_items (see above)
+* at the top level of a playbook, set 'gather_facts: False' to skip fact gathering
+* first_available_file and with_items used together will now raise an error
 
 0.5 "Amsterdam" ------- July 04, 2012
 

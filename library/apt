@@ -28,6 +28,10 @@ import subprocess
 import syslog
 import traceback
 
+# added to stave off future warnings about apt api
+import warnings; 
+warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
+
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
 
@@ -86,11 +90,16 @@ def package_status(pkgname, version, cache):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
-def install(pkgspec, cache, upgrade=False, default_release=None, install_recommends=True):
+def install(pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
     name, version = package_split(pkgspec)
     installed, upgradable = package_status(name, version, cache)
     if not installed or (upgrade and upgradable):
-        cmd = "%s --option Dpkg::Options::=--force-confold -q -y install '%s'" % (APT, pkgspec)
+        if force:
+            force_yes = '--force-yes'
+        else:
+            force_yes = ''
+
+        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install '%s'" % (APT, force_yes, pkgspec)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
         if not install_recommends:
@@ -142,6 +151,7 @@ update_cache       = params.get('update-cache', 'no')
 purge              = params.get('purge', 'no')
 default_release    = params.get('default-release', None)
 install_recommends = params.get('install-recommends', 'yes')
+force              = params.get('force', 'no')
 
 if state not in ['installed', 'latest', 'removed']:
     fail_json(msg='invalid state')
@@ -151,6 +161,9 @@ if update_cache not in ['yes', 'no']:
 
 if purge not in ['yes', 'no']:
     fail_json(msg='invalid value for purge (requires yes or no -- default is no)')
+
+if force not in ['yes', 'no']:
+    fail_json(msg='invalid option for force (requires yes or no -- default is no)')
 
 if package is None and update_cache != 'yes':
     fail_json(msg='pkg=name and/or update-cache=yes is required')
@@ -163,26 +176,32 @@ cache = apt.Cache()
 if default_release:
     apt_pkg.config['APT::Default-Release'] = default_release
     # reopen cache w/ modified config
-    cache.open()
+    cache.open(progress=None)
 
 if update_cache == 'yes':
     cache.update()
-    cache.open()
+    cache.open(progress=None)
     if package == None:
         exit_json(changed=False)
+
+if force == 'yes':
+    force_yes = True
+else:
+    force_yes = False
 
 if package.count('=') > 1:
     fail_json(msg='invalid package spec')
 
 if state == 'latest':
     if '=' in package:
-        fail_json(msg='version number inconsistent with state=latest')
+        fail_json(msg='version number inconsistent with state=latest') 
     changed = install(package, cache, upgrade=True,
                       default_release=default_release,
-                      install_recommends=install_recommends)
+                      install_recommends=install_recommends,
+                      force=force_yes)
 elif state == 'installed':
     changed = install(package, cache, default_release=default_release,
-                      install_recommends=install_recommends)
+                      install_recommends=install_recommends,force=force_yes)
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
