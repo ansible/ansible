@@ -252,7 +252,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_failed(self, host, results):
 
-        print "failed: [%s] => %s\n" % (host, utils.jsonify(results))
+        print "failed: [%s] => %s" % (host, utils.jsonify(results))
 
     def on_ok(self, host, host_result):
 
@@ -264,11 +264,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_error(self, host, err):
 
-        print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
+        print >>sys.stderr, "err: [%s] => %s" % (host, err)
 
     def on_skipped(self, host):
 
-        print "skipping: [%s]\n" % host
+        print "skipping: [%s]" % host
 
     def on_no_hosts(self):
 
