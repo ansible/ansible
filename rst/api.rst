@@ -169,6 +169,32 @@ a conf.d file appropriately or something similar.  Who knows?
 
 So that's the Cobbler integration support -- using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.
 
+Example: AWS EC2 External Inventory Script
+``````````````````````````````````````````
+
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the `EC2 external inventory  <https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py>`_ script.
+
+You can use this script in one of two ways. The easiest is to use ansible's `-i` command line option and specify the path to the script.
+
+    ansible -i examples/scripts/ec2_external_inventory.py -u ubuntu us-east-1d -m ping
+
+The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini` file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
+
+To successfully make an API call to AWS, you will need to configure Boto. There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_, but the simplest is just to export two environment variables:
+
+    export AWS_ACCESS_KEY_ID='AK123'
+    export AWS_SECRET_ACCESS_KEY='abc123'
+
+You can test the script by itself to make sure your config is correct
+
+    cd examples/scripts
+    ./ec2_external_inventory.py --list
+
+After a few moments, you should see your entire EC2 inventory across all regions in JSON.
+
+Since each region requires its own API call, if you are only using a small set of regions, feel free to edit `ec2.ini` and list just the regions you are interested in. There are other config options in `ec2.ini` including cache control.
+
+
 .. seealso::
 
    :doc:`modules`
