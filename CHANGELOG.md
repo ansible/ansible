@@ -29,6 +29,7 @@ Ansible Changes By Release
 * first_available_file and with_items used together will now raise an error
 * ec2 inventory script
 * mount module
+* apt module now passes DEBIAN_FRONTEND=noninteractive
 
 0.5 "Amsterdam" ------- July 04, 2012
 
