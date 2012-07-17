@@ -261,14 +261,7 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        var_result = result.get('ansible_facts',{})
-
-        # note: do not allow variables from playbook to be stomped on
-        # by variables coming up from facter/ohai/etc.  They
-        # should be prefixed anyway
-        for (k, v) in var_result.iteritems():
-            if not k in self.setup_cache[host]:
-                self.setup_cache[host][k] = v
+        self.setup_cache[host] = result.get('ansible_facts', {})
 
     # *****************************************************
 
@@ -333,7 +326,7 @@ class Runner(object):
         if 'first_available_file' in self.module_vars:
             found = False
             for fn in self.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject, self.setup_cache)
+                fn = utils.template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -345,7 +338,7 @@ class Runner(object):
         if self.module_vars is not None:
             inject.update(self.module_vars)
 
-        source = utils.template(source, inject, self.setup_cache)
+        source = utils.template(source, inject)
         source = utils.path_dwim(self.basedir, source)
 
         local_md5 = utils.md5(source)
@@ -468,7 +461,7 @@ class Runner(object):
         if 'first_available_file' in self.module_vars:
             found = False
             for fn in self.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject, self.setup_cache)
+                fn = utils.template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
