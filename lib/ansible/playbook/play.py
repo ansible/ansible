@@ -39,7 +39,6 @@ class Play(object):
 
         # TODO: more error handling
 
-
         hosts = ds.get('hosts')
         if hosts is None:
             raise errors.AnsibleError('hosts declaration is required')
@@ -79,7 +78,6 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
-        
 
     # *************************************************
 
@@ -96,7 +94,7 @@ class Play(object):
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
                     task_vars[k]=v
-                include_file = tokens[0]
+                include_file = utils.template(tokens[0], task_vars)
                 data = utils.parse_yaml_from_file(utils.path_dwim(self.playbook.basedir, include_file))
             elif type(x) == dict:
                 data = [x]
