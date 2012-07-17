@@ -32,10 +32,22 @@ class Play(object):
        'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
     ]
 
+    # to catch typos and so forth -- these are userland names
+    # and don't line up 1:1 with how they are stored
+    VALID_KEYS = [
+       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
+       'tasks', 'handlers', 'user', 'port', 'include',
+       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts'
+    ]
+
     # *************************************************
 
     def __init__(self, playbook, ds):
         ''' constructor loads from a play datastructure '''
+
+        for x in ds.keys():
+             if not x in Play.VALID_KEYS:
+                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
 
         # TODO: more error handling
 

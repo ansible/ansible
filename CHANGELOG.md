@@ -30,6 +30,7 @@ Ansible Changes By Release
 * ec2 inventory script
 * mount module
 * apt module now passes DEBIAN_FRONTEND=noninteractive
+* to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
 
 0.5 "Amsterdam" ------- July 04, 2012
 
