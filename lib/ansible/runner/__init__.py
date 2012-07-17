@@ -393,14 +393,25 @@ class Runner(object):
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
 
-        # compare old and new md5 for support of change hooks
-        local_md5 = utils.md5(dest)
+        # calculate md5 sum for the remote file
         remote_md5 = self._remote_md5(conn, tmp, source)
 
         if remote_md5 == '0':
-            result = dict(msg="missing remote file", file=source, changed=False)
+            result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
-        elif remote_md5 != local_md5:
+
+        if remote_md5 == '1':
+            result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+            return ReturnData(host=conn.host, result=result)
+
+        if remote_md5 == '2':
+            result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+            return ReturnData(host=conn.host, result=result)
+
+        # calculate md5 sum for the local file
+        local_md5 = utils.md5(dest)
+
+        if remote_md5 != local_md5:
             # create the containing directories, if needed
             if not os.path.isdir(os.path.dirname(dest)):
                 os.makedirs(os.path.dirname(dest))
@@ -651,19 +662,18 @@ class Runner(object):
     # *****************************************************
 
     def _remote_md5(self, conn, tmp, path):
-        ''' 
-        takes a remote md5sum without requiring python, and returns 0 if no file
-        '''
-
-        test = "[[ -r %s ]]" % path
+        ''' takes a remote md5sum without requiring python, and returns 0 if no file ''' 
+    
+        test = "rc=0; [[ -r \"%s\" ]] || rc=2; [[ -f \"%s\" ]] || rc=1" % (path,path)
         md5s = [
-            "(%s && /usr/bin/md5sum %s 2>/dev/null)" % (test,path),
-            "(%s && /sbin/md5sum -q %s 2>/dev/null)" % (test,path),
-            "(%s && /usr/bin/digest -a md5 -v %s 2>/dev/null)" % (test,path)
+            "(/usr/bin/md5sum %s 2>/dev/null)" % path,
+            "(/sbin/md5sum -q %s 2>/dev/null)" % path,
+            "(/usr/bin/digest -a md5 -v %s 2>/dev/null)" % path
         ]
+    
         cmd = " || ".join(md5s)
-        cmd = "%s || (echo \"0 %s\")" % (cmd, path)
-        return self._low_level_exec_command(conn, cmd, tmp, True).split()[0]
+        cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
+        return self._low_level_exec_command(conn, cmd, tmp, sudoable=False).split()[0]
 
     # *****************************************************
 
