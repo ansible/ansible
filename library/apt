@@ -33,7 +33,7 @@ import warnings;
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 APT_PATH = "/usr/bin/apt-get"
-APT = "DEBIAN_PRIORITY=critical %s" % APT_PATH
+APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
 
 def exit_json(rc=0, **kwargs):
     print json.dumps(kwargs)
