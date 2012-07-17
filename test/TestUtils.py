@@ -222,7 +222,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
+        res = ansible.utils.template_from_file("test", "template-basic", vars)
 
         assert res == 'hello world'
 
@@ -231,7 +231,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template_from_file("test", "template-whitespace", vars, {})
+        res = ansible.utils.template_from_file("test", "template-whitespace", vars)
 
         assert res == 'hello world\n'
 
@@ -240,7 +240,7 @@ class TestUtils(unittest.TestCase):
             'who': u'wórld',
         }
 
-        res = ansible.utils.template_from_file("test", "template-basic", vars, {})
+        res = ansible.utils.template_from_file("test", "template-basic", vars)
 
         assert res == u'hello wórld'
 
