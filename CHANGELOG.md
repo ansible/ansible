@@ -27,6 +27,8 @@ Ansible Changes By Release
 * can use host_specific facts inside with_items (see above)
 * at the top level of a playbook, set 'gather_facts: False' to skip fact gathering
 * first_available_file and with_items used together will now raise an error
+* ec2 inventory script
+* mount module
 
 0.5 "Amsterdam" ------- July 04, 2012
 
