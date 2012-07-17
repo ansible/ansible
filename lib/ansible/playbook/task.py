@@ -26,8 +26,18 @@ class Task(object):
         'play', 'notified_by', 'tags', 'with_items', 'first_available_file'
     ]
 
+    # to prevent typos and such
+    VALID_KEYS = [
+         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 'first_available_file',
+         'include', 'tags'
+    ]
+
     def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
+
+        for x in ds.keys():
+            if not x in Task.VALID_KEYS:
+                raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
         self.module_vars = module_vars
         self.play        = play
