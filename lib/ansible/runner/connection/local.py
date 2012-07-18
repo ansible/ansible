@@ -37,12 +37,12 @@ class LocalConnection(object):
         ''' run a command on the local host '''
 
         if self.runner.sudo and sudoable:
+            if self.runner.sudo_pass:
+                # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
+                # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
+                # so this doesn't seem to be a huge priority
+                raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
             cmd = "sudo -s %s" % cmd
-        if self.runner.sudo_pass:
-            # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
-            # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
-            # so this doesn't seem to be a huge priority
-            raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
 
         p = subprocess.Popen(cmd, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
