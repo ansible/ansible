@@ -59,14 +59,15 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
-    def __init__(self, facts):
-        self.facts = facts
-
-    def populate(self):
+    def __init__(self):
+        self.facts = {}
         self.get_platform_facts()
         self.get_distribution_facts()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
+
+    def populate(self):
+        return self.facts
 
     # Platform
     # patform.system() can be Linux, Darwin, Java, or Windows
@@ -156,25 +157,18 @@ class Hardware(Facts):
     """
     platform = 'Generic'
 
-    def __new__(cls, facts, *arguments, **keyword):
+    def __new__(cls, *arguments, **keyword):
         subclass = cls
         for sc in Hardware.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self, facts):
-        Facts.__init__(self, facts)
-        self.facts['memfree_mb'] = 'NA'
-        self.facts['memtotal_mb'] = 'NA'
-        self.facts['swapfree_mb'] = 'NA'
-        self.facts['swaptotal_mb'] = 'NA'
-        self.facts['processor'] = ['NA']
-        self.facts['processor_cores'] = 'NA'
-        self.facts['processor_count'] = 'NA'
+    def __init__(self):
+        Facts.__init__(self)
 
     def populate(self):
-        pass
+        return self.facts
 
 class LinuxHardware(Hardware):
     """
@@ -210,13 +204,14 @@ class LinuxHardware(Hardware):
                     "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
                     "CompactPCI", "AdvancedTCA" ]
 
-    def __init__(self, facts):
-        Hardware.__init__(self, facts)
+    def __init__(self):
+        Hardware.__init__(self)
 
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        return self.facts
 
     def get_memory_facts(self):
         if not os.access("/proc/meminfo", os.R_OK):
@@ -274,12 +269,13 @@ class SunOSHardware(Hardware):
     """
     platform = 'SunOS'
 
-    def __init__(self, facts):
-        Hardware.__init__(self, facts)
+    def __init__(self):
+        Hardware.__init__(self)
 
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        return self.facts
 
     def get_cpu_facts(self):
         cmd = subprocess.Popen("/usr/sbin/psrinfo -v", shell=True,
@@ -327,12 +323,13 @@ class FreeBSDHardware(Hardware):
     platform = 'FreeBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
 
-    def __init__(self, facts):
-        Hardware.__init__(self, facts)
+    def __init__(self):
+        Hardware.__init__(self)
 
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        return self.facts
 
     def get_cpu_facts(self):
         self.facts['processor'] = []
@@ -387,19 +384,18 @@ class Network(Facts):
     """
     platform = 'Generic'
 
-    def __new__(cls, facts, *arguments, **keyword):
+    def __new__(cls, *arguments, **keyword):
         subclass = cls
         for sc in Network.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self, facts):
-        Facts.__init__(self, facts)
-        self.facts['interfaces'] = ['NA']
+    def __init__(self):
+        Facts.__init__(self)
 
     def populate(self):
-        pass
+        return self.facts
 
 class LinuxNetwork(Network):
     """
@@ -411,11 +407,12 @@ class LinuxNetwork(Network):
     SIOCGIFCONF   = 0x8912
     SIOCGIFHWADDR = 0x8927
 
-    def __init__(self, facts):
-        Network.__init__(self, facts)
+    def __init__(self):
+        Network.__init__(self)
 
     def populate(self):
         self.get_network_facts()
+        return self.facts
 
     # get list of interfaces that are up
     def get_interfaces(self):
@@ -501,20 +498,18 @@ class Virtual(Facts):
     All subclasses MUST define platform.
     """
 
-    def __new__(cls, facts, *arguments, **keyword):
+    def __new__(cls, *arguments, **keyword):
         subclass = cls
         for sc in Virtual.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self, facts):
-        Facts.__init__(self, facts)
-        self.facts['virtualization_type'] = 'NA'
-        self.facts['virtualization_role'] = 'NA'
+    def __init__(self):
+        Facts.__init__(self)
 
     def populate(self):
-        pass
+        return self.facts
 
 class LinuxVirtual(Virtual):
     """
@@ -524,11 +519,14 @@ class LinuxVirtual(Virtual):
     """
     platform = 'Linux'
 
-    def __init__(self, facts):
-        Virtual.__init__(self, facts)
-        self.facts = facts
+    def __init__(self):
+        Virtual.__init__(self)
 
     def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
             self.facts['virtualization_role'] = 'guest'
@@ -548,10 +546,10 @@ class LinuxVirtual(Virtual):
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'guest'
-        if 'QEMU' in self.facts['processor'][0]:
+        if 'processor' in self.facts and 'QEMU' in self.facts['processor'][0]:
             self.facts['virtualization_type'] = 'kvm'
             self.facts['virtualization_role'] = 'guest'
-        if self.facts['distribution'] == 'VMwareESX':
+        if 'distribution' in self.facts and self.facts['distribution'] == 'VMwareESX':
             self.facts['virtualization_type'] = 'VMware'
             self.facts['virtualization_role'] = 'host'
         # You can spawn a dmidecode process and parse that or infer from devices
@@ -566,15 +564,11 @@ class LinuxVirtual(Virtual):
 
 def ansible_facts():
     facts = {}
-    f = Facts(facts)
-    f.populate()
-    f = Hardware(f.facts)
-    f.populate()
-    f = Network(f.facts)
-    f.populate()
-    f = Virtual(f.facts)
-    f.populate()
-    return f.facts
+    facts.update(Facts().populate())
+    facts.update(Hardware().populate())
+    facts.update(Network().populate())
+    facts.update(Virtual().populate())
+    return facts
 
 # ===========================================
 
