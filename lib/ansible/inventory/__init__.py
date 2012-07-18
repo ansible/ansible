@@ -53,6 +53,7 @@ class Inventory(object):
         if type(host_list) in [ str, unicode ]:
             if host_list.find(",") != -1:
                 host_list = host_list.split(",")
+                host_list = [ h for h in host_list if h and h.strip() ]
 
         if type(host_list) == list:
             all = Group('all')
