@@ -221,7 +221,7 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in results['contacted'].iteritems():
-            facts = results.get('ansible_facts', {})
+            facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
 
         self.stats.compute(results)
