@@ -47,7 +47,17 @@ params = {}
 for x in items:
     (k, v) = x.split("=")
     params[k] = v
-source  = os.path.expanduser(params['src'])
+
+# If the correct param is not specified, instead of printing
+# python error, print something meaningful
+if 'src' in params:
+    source  = os.path.expanduser(params['src'])
+else:
+    print json.dumps(dict(
+        failed = 1,
+        msg    = "The slurp expects the 'src' parameter. Found parameter(s)=> " + ",".join(params.keys()) 
+    ))
+    sys.exit(1)
 
 # ==========================================
  
