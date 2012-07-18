@@ -42,26 +42,39 @@ class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False):
         ''' 
-        @argument_spec: a hash of argument names, where the values are none if
-        the types are NOT checked, or a list of valid types where the argument
-        must be one of those values.  All possible arguments must be listed.
-
-        @required_arguments: a list of arguments that must be sent to the module
+        common code for quickly building an ansible module in Python
+        (although you can write modules in anything that can return JSON)
+        see library/slurp and others for examples
         '''
 
         self.argument_spec = argument_spec
         (self.params, self.args) = self._load_params()
+
+        self._handle_aliases()
+        self._set_defaults()
+
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
         if not no_log:
             self._log_invocation()
 
+    def _handle_aliases(self):
+        for (k,v) in self.argument_spec.iteritems():
+            aliases = v.get('aliases', None)
+            if aliases is None:
+                continue
+            if type(aliases) != list:
+                self.fail_json(msg='internal error: aliases must be a list')
+            for alias in aliases:
+                if alias in self.params:
+                    self.params[k] = self.params[alias]
+
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
         missing = []
         for (k,v) in self.argument_spec.iteritems():
-            (type_spec, required) = v
+            required = v.get('required', False)
             if required and k not in self.params:
                 missing.append(k)
         if len(missing) > 0:
@@ -70,13 +83,23 @@ class AnsibleModule(object):
     def _check_argument_types(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
         for (k,v) in self.argument_spec.iteritems():
-            (type_spec, required) = v
-            if type_spec is not None:
-                if type(spec) == list:
-                    if v not in spec:
-                        self.fail_json(msg="value of %s must be one of: %s, recieved: %s" % (k, ",".join(spec), v))
-                else:
-                    self.fail_json(msg="internal error: do not know how to interpret argument_spec")
+            choices = v.get('choices',None)
+            if choices is None:
+                continue
+            if type(choices) == list:
+                if k in self.params:
+                    if self.params[k] not in choices:
+                        choices_str=",".join(choices)
+                        msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                        self.fail_json(msg=msg)
+            else:
+                self.fail_json(msg="internal error: do not know how to interpret argument_spec")
+
+    def _set_defaults(self):
+         for (k,v) in self.argument_spec.iteritems():
+             default = v.get('default', '__NO_DEFAULT__')
+             if default != '__NO_DEFAULT__' and k not in self.params:
+                 self.params[k] = default
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
@@ -97,17 +120,17 @@ class AnsibleModule(object):
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % self.args)
 
-    def exit_json(self, rc=0, **kwargs):
+    def exit_json(self, **kwargs):
         ''' return from the module, without error '''
-        kwargs['rc'] = rc
         print json.dumps(kwargs)
-        sys.exit(rc)
+        sys.exit(0)
 
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-        self.exit_json(rc=1, **kwargs)
+        print json.dumps(kwargs)
+        sys.exit(1)
 
 # == END DYNAMICALLY INSERTED CODE ===
 

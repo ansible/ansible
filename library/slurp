@@ -24,7 +24,7 @@ import base64
 
 module = AnsibleModule(
     argument_spec = dict(
-        src=(None,True),
+        src = dict(required=True),
     )
 )
 source = module.params['src']
