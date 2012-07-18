@@ -79,16 +79,11 @@ cmd = subprocess.Popen("%s %s" % (modfile, argspath),
     stderr=subprocess.PIPE)
 (out, err) = cmd.communicate()
 
-if err and err != '':
-    print "***********************************"
-    print "RECIEVED DATA ON STDERR, THIS WILL CRASH YOUR MODULE"
-    print err
-    sys.exit(1)
-
 try:
     print "***********************************"
     print "RAW OUTPUT"
     print out
+    print err
     results = utils.parse_json(out)
     
 except:
