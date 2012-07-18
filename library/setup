@@ -562,6 +562,14 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_type'] = 'VirtualPC'
                 self.facts['virtualization_role'] = 'guest'
 
+def get_file_content(path):
+    data = None
+    if os.path.exists(path) and os.access(path, os.R_OK):
+        data = open(path).read().strip()
+        if len(data) == 0:
+            data = None
+    return data
+
 def ansible_facts():
     facts = {}
     facts.update(Facts().populate())
