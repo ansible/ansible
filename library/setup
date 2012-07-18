@@ -546,7 +546,8 @@ class LinuxVirtual(Virtual):
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'guest'
-        if 'processor' in self.facts and 'QEMU' in self.facts['processor'][0]:
+        data = get_file_content('/proc/cpuinfo')
+        if 'QEMU' in data:
             self.facts['virtualization_type'] = 'kvm'
             self.facts['virtualization_role'] = 'guest'
         if 'distribution' in self.facts and self.facts['distribution'] == 'VMwareESX':
