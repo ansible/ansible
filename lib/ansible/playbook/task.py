@@ -95,10 +95,6 @@ class Task(object):
         # process with_items so it can be used by Runner code 
         if self.with_items is None:
             self.with_items = [ ]
-        elif isinstance(self.with_items, basestring):
-            self.with_items = utils.varLookup(self.with_items, self.module_vars)
-            if type(self.with_items) != list:
-                raise errors.AnsibleError("with_items must be a list, got: %s" % self.with_items)
         self.module_vars['items'] = self.with_items
 
         # tags allow certain parts of a playbook to be run without running the whole playbook

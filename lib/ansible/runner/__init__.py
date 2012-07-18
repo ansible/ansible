@@ -548,9 +548,24 @@ class Runner(object):
     def _executor_internal(self, host):
         ''' executes any module one or more times '''
 
+        host_variables = self.inventory.get_variables(host)
+        port = host_variables.get('ansible_ssh_port', self.remote_port)
+        inject = self.setup_cache[host].copy()
+        inject.update(host_variables)
+        inject.update(self.module_vars)
+
         items = self.module_vars.get('items', [])
+        if isinstance(items, basestring) and items.startswith("$"):
+            items = items.replace("$","")
+            if items in inject:
+                items = inject[items]
+            else:
+                raise errors.AnsibleError("unbound variable in with_items: %s" % items)
+        if type(items) != list:
+            raise errors.AnsibleError("with_items only takes a list: %s" % items)
+          
         if len(items) == 0:
-            return self._executor_internal_inner(host)
+            return self._executor_internal_inner(host, inject, port)
         else:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -560,8 +575,8 @@ class Runner(object):
             all_failed = False
             results = []
             for x in items:
-                self.module_vars['item'] = x
-                result = self._executor_internal_inner(host)
+                inject['item'] = x
+                result = self._executor_internal_inner(host, inject, port)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -582,15 +597,8 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host):
+    def _executor_internal_inner(self, host, inject, port):
         ''' decides how to invoke a module '''
-
-        host_variables = self.inventory.get_variables(host)
-        port = host_variables.get('ansible_ssh_port', self.remote_port)
-
-        inject = self.setup_cache[host].copy()
-        inject.update(host_variables)
-        inject.update(self.module_vars)
 
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
