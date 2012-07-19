@@ -235,7 +235,7 @@ def ensure(my, state, pkgspec):
             if not my.doPackageLists(pkgnarrow='installed', patterns=[pkgspec]).installed:
                 msg = "No Package matching '%s' found available, installed or updated" % pkgspec
                 return { 'changed':False, 'failed':True, 'msg': msg }
-            return { 'changed':False,}
+            return { 'changed':False, 'msg': 'package[s] ' + pkgspec}
 
         # we have something in updates or available
         if not updates:
@@ -255,6 +255,7 @@ def ensure(my, state, pkgspec):
 
 
         res['changed'] = changed
+        res['msg'] = 'package[s] ' + pkgspec
 
         if failed:
             res['failed'] = failed

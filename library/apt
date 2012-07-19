@@ -205,6 +205,6 @@ elif state == 'installed':
 elif state == 'removed':
     changed = remove(package, cache, purge == 'yes')
 
-exit_json(changed=changed)
+exit_json(changed=changed, msg="package[s] " + package)
 
 
