@@ -75,7 +75,6 @@ def _find_binaries():
 
 def _get_service_status(name):
     rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
-    status = status_stdout + status_stderr
 
     # set the running state to None because we don't know it yet
     running = None
@@ -99,16 +98,18 @@ def _get_service_status(name):
     # if the job status is still not known check it by status output keywords
     if running == None:
         # first tranform the status output that could irritate keyword matching
-        cleaned_status_stdout = status_stdout.lower().replace(name.lower(),'')
-        if cleaned_status_stdout.find("stop") != -1:
+        cleanout = status_stdout.lower().replace(name.lower(), '')
+        if "stop" in cleanout:
             running = False
-        elif cleaned_status_stdout.find("run") != -1 and cleaned_status_stdout.find("not") != -1:
+        elif "run" in cleanout and "not" in cleanout:
             running = False
-        elif cleaned_status_stdout.find("run") != -1 and cleaned_status_stdout.find("not") == -1:
+        elif "run" in cleanout and "not" not in cleanout:
             running = True
-        elif cleaned_status_stdout.find("start") != -1 and cleaned_status_stdout.find("not") == -1:
+        elif "start" in cleanout and "not" not in cleanout:
             running = True
-        elif 'could not access pid file' in cleaned_status_stdout:
+        elif 'could not access pid file' in cleanout:
+            running = False
+        elif 'is dead and pid file exists' in cleanout:
             running = False
 
     # if the job status is still not known check it by special conditions
@@ -205,8 +206,9 @@ if state or enable:
         print json.dumps({
             "failed" : True,
             "msg"    : "failed determining the current service state => state stays unchanged",
+            "changed": False
         })
-        print >> sys.stderr, out + err
+        sys.exit(1)
     elif state:
         # a state change command has been requested
 
@@ -244,10 +246,9 @@ if state or enable:
     if rc != 0:
 
         print json.dumps({
-            "failed" : 1,
+            "failed" : True,
             "rc"     : rc,
         })
-        print >> sys.stderr, out + err
         sys.exit(1)
 
 
@@ -260,20 +261,8 @@ if state or enable:
     if list_items and list_items in [ 'status' ]:
         result['status'] = stdout
     print json.dumps(result)
-
     
-elif list_items is not None:
-
-    # solo list=status mode, don't change anything, just return
-    # suitable for /usr/bin/ansible usage or API, playbooks
-    # not so much
-
-    print json.dumps({
-        "status" : status
-    })
-
 else:
- 
     print json.dumps(dict(failed=True, msg="expected state or list parameters"))
 
 
