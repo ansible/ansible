@@ -24,19 +24,28 @@ import base64
 import syslog
 
 try:
-   import json
+    import json
 except ImportError:
-   import simplejson as json
+    import simplejson as json
+
+#
+# Exit with the failed state
+#
+def fail_json(d):
+    print json.dumps(d)
+    sys.exit(1)
 
 # ===========================================
 # convert arguments of form a=b c=d
 # to a dictionary
 
-if len(sys.argv) == 1:
-    sys.exit(1)
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    sys.exit(1)
+if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
+    argfile = sys.argv[1]
+else:
+    fail_json(dict(
+        failed = 1,
+        msg    = "an unexpected error occurred. args file: %s does not exist" % os.path.abspath(sys.argv[1])
+    ))
 
 args = open(argfile, 'r').read()
 items = shlex.split(args)
@@ -53,28 +62,25 @@ for x in items:
 if 'src' in params:
     source  = os.path.expanduser(params['src'])
 else:
-    print json.dumps(dict(
+    fail_json(dict(
         failed = 1,
-        msg    = "The slurp expects the 'src' parameter. Found parameter(s)=> " + ",".join(params.keys()) 
+        msg    = "module expects the 'src' parameter. found parameter(s): %s" % ",".join(params.keys()) 
     ))
-    sys.exit(1)
 
 # ==========================================
  
 # raise an error if there is no template metadata
 if not os.path.exists(source):
-    print json.dumps(dict(
+    fail_json(dict(
         failed = 1,
         msg    = "file not found: %s" % source
     ))
-    sys.exit(1)
 
 if not os.access(source, os.R_OK):
-    print json.dumps(dict(
+    fail_json(dict(
         failed = 1,
         msg    = "file is not readable: %s" % source
     ))
-    sys.exit(1)
 
 # ==========================================
 
