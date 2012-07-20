@@ -36,6 +36,7 @@ import ansible.constants as C
 import ansible.inventory
 from ansible import utils
 from ansible import errors
+from ansible import module_common
 import poller
 import connection
 from ansible import callbacks as ans_callbacks
@@ -721,16 +722,20 @@ class Runner(object):
 
         # use the correct python interpreter for the host
         host_variables = self.inventory.get_variables(conn.host)
+
+        module_data = ""
+        with open(in_path) as f:
+            module_data = f.read()
+            module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+          
         if 'ansible_python_interpreter' in host_variables:
             interpreter = host_variables['ansible_python_interpreter']
-            with open(in_path) as f:
-                module_lines = f.readlines()
+            module_lines = module_data.split('\n')
             if '#!' and 'python' in module_lines[0]:
                 module_lines[0] = "#!%s" % interpreter
-            self._transfer_str(conn, tmp, module, '\n'.join(module_lines))
-        else:
-            conn.put_file(in_path, out_path)
+            module_data = "\n".join(module_lines)
 
+        self._transfer_str(conn, tmp, module, module_data)
         return out_path
 
     # *****************************************************

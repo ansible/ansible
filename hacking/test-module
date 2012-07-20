@@ -31,6 +31,7 @@ import os
 import subprocess
 import traceback
 from ansible import utils
+from ansible import module_common
 
 try:
     import json
@@ -54,6 +55,23 @@ argsfile = open(argspath, 'w')
 argsfile.write(args)
 argsfile.close()
 
+module_fh = open(modfile)
+module_data = module_fh.read()
+included_boilerplate = module_data.find(module_common.REPLACER) != -1
+module_fh.close()
+
+if included_boilerplate:
+    module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
+    print "* including generated source, if any, saving to: %s" % modfile2_path
+    print "* this will offset any line numbers in tracebacks!"
+    modfile2 = open(modfile2_path, 'w')
+    modfile2.write(module_data)
+    modfile2.close()
+    modfile = modfile2_path
+else:
+    print "* module boilerplate substitution not requested in module, tracebacks will be unaltered"
+
 os.system("chmod +x %s" % modfile)
 cmd = subprocess.Popen("%s %s" % (modfile, argspath), 
     shell=True,
@@ -61,16 +79,11 @@ cmd = subprocess.Popen("%s %s" % (modfile, argspath),
     stderr=subprocess.PIPE)
 (out, err) = cmd.communicate()
 
-if err and err != '':
-    print "***********************************"
-    print "RECIEVED DATA ON STDERR, THIS WILL CRASH YOUR MODULE"
-    print err
-    sys.exit(1)
-
 try:
     print "***********************************"
     print "RAW OUTPUT"
     print out
+    print err
     results = utils.parse_json(out)
     
 except:
