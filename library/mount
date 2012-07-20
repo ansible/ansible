@@ -19,17 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-import os
-import os.path
-import shlex
-import subprocess
-import sys
-import syslog
-
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 #mount module - mount fs and define in fstab
 #usage:
@@ -38,14 +29,6 @@ import syslog
 # present == add to fstab, do not change mount state
 # mounted == add to fstab if not there and make sure it is mounted
 # unmounted == do not change fstab state, but unmount
-
-def exit_json(rc=0, **kwargs):
-    print json.dumps(kwargs)
-    sys.exit(rc)
-
-def fail_json(**kwargs):
-    kwargs['failed'] = True
-    exit_json(rc=1, **kwargs)
 
 def write_fstab(lines, dest):
 
@@ -59,10 +42,12 @@ def write_fstab(lines, dest):
 def set_mount(**kwargs):
     "set/change a mount point location in fstab"
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = { 'opts':'defaults',
-             'dump':'0',
-             'passno':'0',
-             'fstab':'/etc/fstab' }
+    args = {
+        'opts': 'defaults',
+        'dump': '0',
+        'passno': '0',
+        'fstab': '/etc/fstab'
+    }
     args.update(kwargs)
 
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n' 
@@ -116,10 +101,12 @@ def set_mount(**kwargs):
 def unset_mount(**kwargs):
     "remove a mount point from fstab"
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = { 'opts':'default',
-             'dump':'0',
-             'passno':'0',
-             'fstab':'/etc/fstab' }
+    args = {
+        'opts': 'default',
+        'dump': '0',
+        'passno': '0',
+        'fstab': '/etc/fstab'
+    }
     args.update(kwargs)
 
     to_write = []
@@ -166,7 +153,7 @@ def mount(**kwargs):
     if call.returncode == 0:
         return 0, ''
     else:
-        return call.rc, out+err
+        return call.returncode, out+err
 
 def umount(**kwargs):
     "unmount a path"
@@ -177,59 +164,37 @@ def umount(**kwargs):
     if call.returncode == 0:
         return 0, ''
     else:
-        return call.rc, out+err
-
-argfile = sys.argv[1]
-args    = open(argfile, 'r').read()
-items   = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-if not len(items):
-    fail_json(msg='the module requires arguments -a')
-    sys.exit(1)
-
-params = {}
-for x in items:
-    (k, v) = x.split("=",1)
-    params[k] = v
-
-state      = params.get('state',None)
-name       = params.get('name', None)
-opts       = params.get('opts', None)
-passno     = params.get('passno', None)
-dump       = params.get('dump', None)
-src        = params.get('src', None)
-fstype     = params.get('fstype', None)
-fstab      = params.get('fstab', None)
+        return call.returncode, out+err
 
 
-if state not in [ 'present', 'absent', 'mounted', 'unmounted' ]:
-    fail_json(msg='invalid state')
-
-if not name:
-    fail_json(msg='no name option given')
-
-if not src:
-    fail_json(msg='no src option given')
-
-if not fstype:
-    fail_json(msg='no fstype option given')
-
+module = AnsibleModule(
+    argument_spec = dict(
+        state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
+        name   = dict(required=True),
+        opts   = dict(default=None),
+        passno = dict(default=None),
+        dump   = dict(default=None),
+        src    = dict(required=True),
+        fstype = dict(required=True),
+        fstab  = dict(default=None)
+    )
+)
 
 changed = False
 rc = 0
-args = {'name':name,
-        'src':src,
-        'fstype':fstype }
-if passno is not None:
-    args['passno'] = passno
-if opts is not None:
-    args['opts'] = opts
-if dump is not None:
-    args['dump'] = dump
-if fstab is not None:
-    args['fstab'] = fstab
+args = {
+    'name': module.params['name'],
+    'src': module.params['src'],
+    'fstype': module.params['fstype']
+}
+if module.params['passno'] is not None:
+    args['passno'] = module.params['passno']
+if module.params['opts'] is not None:
+    args['opts'] = module.params['opts']
+if module.params['dump'] is not None:
+    args['dump'] = module.params['dump']
+if module.params['fstab'] is not None:
+    args['fstab'] = module.params['fstab']
 
 
 # absent == remove from fstab and unmounted
@@ -237,7 +202,8 @@ if fstab is not None:
 # present == add to fstab, do not change mount state
 # mounted == add to fstab if not there and make sure it is mounted, if it has changed in fstab then remount it
 
-
+state = module.params['state']
+name  = module.params['name']
 if state == 'absent':
     name, changed = unset_mount(**args)
     if changed:
@@ -252,7 +218,7 @@ if state == 'absent':
             except (OSError, IOError), e:
                 fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
 
-    exit_json(changed=changed, **args)
+    module.exit_json(changed=changed, **args)
 
 
 if state == 'unmounted':
@@ -262,7 +228,7 @@ if state == 'unmounted':
             fail_json(msg="Error unmounting %s: %s" % (name, msg))
         changed = True
 
-    exit_json(changed=changed, **args)
+    module.exit_json(changed=changed, **args)
 
     
 
@@ -287,7 +253,7 @@ if state in ['mounted', 'present']:
             fail_json(msg="Error mounting %s: %s" % (name, msg))
 
 
-    exit_json(changed=changed, **args)
+    module.exit_json(changed=changed, **args)
 
-fail_json(msg='Unexpected position reached')
+module.fail_json(msg='Unexpected position reached')
 sys.exit(0)
