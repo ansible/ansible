@@ -248,27 +248,50 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_unreachable(self, host, msg):
 
-        print "fatal: [%s] => %s" % (host, msg)
+        item = msg.get('item', None)
+
+        if item:
+            print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)
+        else:
+            print "fatal: [%s] => %s" % (host, msg)
 
     def on_failed(self, host, results):
 
-        print "failed: [%s] => %s" % (host, utils.jsonify(results))
+        item = results.get('item', None)
+
+        if item:
+            print "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
+        else:
+            print "failed: [%s] => %s" % (host, utils.jsonify(results))
 
     def on_ok(self, host, host_result):
 
+        item = host_result.get('item', None)
+
         # show verbose output for non-setup module results if --verbose is used
         if not self.verbose or host_result.get("verbose_override",None) is not None:
-            print "ok: [%s]" % (host)
+            if item:
+                print "ok: [%s] => (item=%s)" % (host,item)
+            else:   
+                print "ok: [%s]" % (host)
         else:
-            print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
+            if item:
+                print "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result))
+            else:
+                print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
 
     def on_error(self, host, err):
 
-        print >>sys.stderr, "err: [%s] => %s" % (host, err)
+        item = err.get('item', None)
+
+        if item:
+            print >>sys.stderr, "err: [%s] => (item=%s) => %s" % (host, item, err)
+        else:
+            print >>sys.stderr, "err: [%s] => %s" % (host, err)
 
     def on_skipped(self, host):
 
-        print "skipping: [%s]" % host
+            print "skipping: [%s]" % host
 
     def on_no_hosts(self):
 
