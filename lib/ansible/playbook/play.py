@@ -213,10 +213,12 @@ class Play(object):
                 for x in groups:
                     path = os.path.join(basedir, "group_vars/%s" % x)
                     if os.path.exists(path):
-                        self.vars_files.append(path)
+                        data = utils.parse_yaml_from_file(path)
+                        self.playbook.SETUP_CACHE[host].update(data)
                 path = os.path.join(basedir, "host_vars/%s" % hostrec.name)
                 if os.path.exists(path):
-                    self.vars_files.append(path)
+                    data = utils.parse_yaml_from_file(path)
+                    self.playbook.SETUP_CACHE[host].update(data)
 
         for filename in self.vars_files:
 
