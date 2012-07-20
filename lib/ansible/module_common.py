@@ -111,7 +111,7 @@ class AnsibleModule(object):
         items   = shlex.split(args)
         params = {}
         for x in items:
-            (k, v) = x.split("=")
+            (k, v) = x.split("=",1)
             params[k] = v
         return (params, args)        
 
