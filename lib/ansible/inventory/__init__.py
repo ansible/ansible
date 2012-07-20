@@ -80,6 +80,7 @@ class Inventory(object):
     def _match(self, str, pattern_str):
         return fnmatch.fnmatch(str, pattern_str)
 
+    # TODO: cache this logic so if called a second time the result is not recalculated
     def get_hosts(self, pattern="all"):
         """ Get all host objects matching the pattern """
         hosts = {}
@@ -107,6 +108,8 @@ class Inventory(object):
     def get_groups(self):
         return self.groups
 
+    # TODO: cache this logic so if called a second time the result is not recalculated
+    # if using inventory scripts
     def get_host(self, hostname):
         for group in self.groups:
             for host in group.get_hosts():
@@ -120,12 +123,16 @@ class Inventory(object):
                 return group
         return None
 
+    # TODO: cache this logic so if called a second time the result is not recalculated
+    # if using inventory scripts
     def get_group_variables(self, groupname):
         group = self.get_group(groupname)
         if group is None:
             raise Exception("group not found: %s" % groupname)
         return group.get_variables()
 
+    # TODO: cache this logic so if called a second time the result is not recalculated
+    # if using inventory scripts
     def get_variables(self, hostname):
 
         if self._is_script:
@@ -169,3 +176,15 @@ class Inventory(object):
         """ Do not restrict list operations """
 
         self._restriction = None
+
+    def is_file(self):
+        """ did inventory come from a file? """
+        if not isinstance(self.host_list, basestring):
+            return False
+        return os.path.exists(self.host_list)
+
+    def basedir(self):
+        """ if inventory came from a file, what's the directory? """
+        if not self.is_file():
+            return None
+        return os.path.dirname(self.host_list)
