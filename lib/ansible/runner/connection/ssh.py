@@ -104,6 +104,8 @@ class SSHConnection(object):
                 stdout += os.read(p.stdout.fileno(), 1024)
         # older versions of ssh generate this error which we ignore
         stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
+        # suppress Ubuntu 10.04/12.04 error on -tt option 
+        stdout=stdout.replace("tcgetattr: Inappropriate ioctl for device\n","")
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
