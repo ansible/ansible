@@ -192,16 +192,6 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def _template(text, vars):
-    ''' run a text buffer through the templating engine '''
-
-    if vars is None:
-        raise Exception('vars is none')
-    vars = vars.copy()
-    # FIXME: do this in runner code
-    vars['hostvars'] = vars.get('setup_cache', {})
-    return varReplace(unicode(text), vars)
-
 def template(text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
@@ -212,7 +202,7 @@ def template(text, vars):
         if (depth > 20):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
-        text = _template(text, vars)
+        text = varReplace(unicode(text), vars)
     return text
 
 def template_from_file(basedir, path, vars):
