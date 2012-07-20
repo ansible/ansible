@@ -528,10 +528,9 @@ class Runner(object):
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
         inject = self.setup_cache[host].copy()
-        inject['hostvars'] = self.setup_cache
         inject.update(host_variables)
         inject.update(self.module_vars)
-
+        inject['hostvars'] = self.setup_cache
 
         items = self.module_vars.get('items', [])
         if isinstance(items, basestring) and items.startswith("$"):
