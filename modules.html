@@ -251,12 +251,17 @@ Defaults to &#8216;no&#8217;.</li>
 <ul class="simple">
 <li>Corresponds to the -t option for apt, and sets pin priorities</li>
 </ul>
+<p><em>install-recommends</em>: (devel branch now, part of ansible 0.6 later)</p>
+<ul class="simple">
+<li>Corresponds to the &#8211;no-install-recommends option for apt. Defaults to &#8216;yes&#8217;, which means install the recommended packages the same way APT does by default. Set this to &#8216;no&#8217; to add the option not to install recommended packages.</li>
+</ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo update-cache=yes
 apt pkg=foo state=removed
 apt pkg=foo state=installed
 apt pkg=foo=1.00 state=installed
-apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes</pre>
+apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
+apt pkg=openjdk-6-jdk state=latest install-recommends=no</pre>
 </div>
 </div>
 <div class="section" id="assemble">
