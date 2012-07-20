@@ -622,7 +622,9 @@ class Runner(object):
             chained = True
             self.module_name = result.result['daisychain']
             result2 = self._executor_internal_inner(host, inject, port)
+            changed = result.result.get('changed',False) or result2.result.get('changed',False)
             result.result.update(result2.result)
+            result.result['changed'] = changed
             del result.result['daisychain']
 
         self._delete_remote_files(conn, tmp)
