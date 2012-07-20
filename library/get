@@ -42,8 +42,20 @@ try:
 except ImportError: 
     from md5 import md5 as _md5
 
-# Le truc magique: I love this!
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+HAS_URLLIB2=True
+try:
+    import urllib2
+except ImportError: 
+    HAS_URLLIB2=False
+HAS_URLPARSE=True
+try:
+    import urlparse
+    import socket
+except ImportError: 
+    HAS_URLPARSE=False
+
+# ==============================================================
+# support
 
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
@@ -59,7 +71,7 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
-# ===========================================
+# ==============================================================
 # url handling
 
 def url_filename(url):
@@ -146,85 +158,90 @@ def url_get(url, dest):
         msg="Source URL %s failed to transfer: httpcode=%s, msg=%s" % (url, info['status'], info['msg'])
         module.fail_json(msg=msg)
 
-# ===========================================
+# ==============================================================
+# main
 
-module = AnsibleModule(
-    argument_spec = dict(
-        url = dict(required=True),
-	dest = dict(required=True),
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            url = dict(required=True),
+            dest = dict(required=True),
+        )
     )
-)
-
-url = module.params.get('url', '')
-dest = module.params.get('dest', '')
-
-if url == "":
-    module.fail_json(msg="url= URL missing")
-if dest == "":
-    module.fail_json(msg="dest= missing")
-
-dest = os.path.expanduser(dest)
-
-try:
-    import urllib2
-except ImportError: 
-    module.fail_json(msg="urllib2 is not installed")
-import urlparse
-import socket
-
-
-# Here we go... if this succeeds, tmpsrc is the name of a temporary file
-# containing slurped content. If it fails, we've already raised an error
-# to Ansible
-
-tmpsrc, info = url_get(url, dest)
-
-md5sum_src = None
-
-dest = info.get('destpath', None)
-
-# raise an error if there is no tmpsrc file
-if not os.path.exists(tmpsrc):
+    
+    url = module.params.get('url', '')
+    dest = module.params.get('dest', '')
+    
+    if url == "":
+        module.fail_json(msg="url= URL missing")
+    if dest == "":
+        module.fail_json(msg="dest= missing")
+    
+    dest = os.path.expanduser(dest)
+    
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
+    
+    
+    # Here we go... if this succeeds, tmpsrc is the name of a temporary file
+    # containing slurped content. If it fails, we've already raised an error
+    # to Ansible
+    
+    tmpsrc, info = url_get(url, dest)
+    
+    md5sum_src = None
+    
+    dest = info.get('destpath', None)
+    
+    # raise an error if there is no tmpsrc file
+    if not os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
+        module.fail_json( msg="Source %s failed to transfer" % (tmpsrc))
+    if not os.access(tmpsrc, os.R_OK):
+        os.remove(tmpsrc)
+        module.fail_json( msg="Source %s not readable" % (tmpsrc))
+    md5sum_src = md5(tmpsrc)
+    
+    
+    md5sum_dest = None
+    # check if there is no dest file
+    if os.path.exists(dest):
+        # raise an error if copy has no permission on dest
+        if not os.access(dest, os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (dest))
+        if not os.access(dest, os.R_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not readable" % (dest))
+        md5sum_dest = md5(dest)
+    else:
+        if not os.access(os.path.dirname(dest), os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
+    
+    if md5sum_src != md5sum_dest:
+        # was os.system("cp %s %s" % (src, dest))
+        try:
+            shutil.copyfile(tmpsrc, dest)
+        except shutil.Error:
+            os.remove(tmpsrc)
+            module.fail_json( msg="failed to copy: %s and %s are the same" % (tmpsrc, dest)) 
+        except IOError:
+            os.remove(tmpsrc)
+            module.fail_json( msg="failed to copy: %s to %s" % (tmpsrc, dest)) 
+        changed = True
+    else:
+        changed = False
+    
+    # Mission complete
+    
     os.remove(tmpsrc)
-    module.fail_json( msg="Source %s failed to transfer" % (tmpsrc))
-if not os.access(tmpsrc, os.R_OK):
-    os.remove(tmpsrc)
-    module.fail_json( msg="Source %s not readable" % (tmpsrc))
-md5sum_src = md5(tmpsrc)
+    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src, changed=changed, msg=info.get('msg', ''))
 
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
-md5sum_dest = None
-# check if there is no dest file
-if os.path.exists(dest):
-    # raise an error if copy has no permission on dest
-    if not os.access(dest, os.W_OK):
-        os.remove(tmpsrc)
-        module.fail_json( msg="Destination %s not writable" % (dest))
-    if not os.access(dest, os.R_OK):
-        os.remove(tmpsrc)
-        module.fail_json( msg="Destination %s not readable" % (dest))
-    md5sum_dest = md5(dest)
-else:
-    if not os.access(os.path.dirname(dest), os.W_OK):
-        os.remove(tmpsrc)
-        module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
-
-if md5sum_src != md5sum_dest:
-    # was os.system("cp %s %s" % (src, dest))
-    try:
-        shutil.copyfile(tmpsrc, dest)
-    except shutil.Error:
-        os.remove(tmpsrc)
-        module.fail_json( msg="failed to copy: %s and %s are the same" % (tmpsrc, dest)) 
-    except IOError:
-        os.remove(tmpsrc)
-        module.fail_json( msg="failed to copy: %s to %s" % (tmpsrc, dest)) 
-    changed = True
-else:
-    changed = False
-
-# Mission complete
-
-os.remove(tmpsrc)
-module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src, changed=changed, msg=info.get('msg', ''))
-
+main()
