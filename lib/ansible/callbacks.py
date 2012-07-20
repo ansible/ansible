@@ -246,29 +246,47 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
         self.verbose = verbose
 
-    def on_unreachable(self, host, msg):
+    def on_unreachable(self, host, msg, item=None):
 
-        print "fatal: [%s] => %s" % (host, msg)
+        if item:
+            print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)
+        else:
+            print "fatal: [%s] => %s" % (host, msg)
 
-    def on_failed(self, host, results):
+    def on_failed(self, host, results, item=None):
 
-        print "failed: [%s] => %s" % (host, utils.jsonify(results))
+        if item:
+            print "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
+        else:
+            print "failed: [%s] => %s" % (host, utils.jsonify(results))
 
-    def on_ok(self, host, host_result):
+    def on_ok(self, host, host_result, item=None):
 
         # show verbose output for non-setup module results if --verbose is used
         if not self.verbose or host_result.get("verbose_override",None) is not None:
-            print "ok: [%s]" % (host)
+            if item:
+                print "ok: [%s] => (item=%s)" % (host,item)
+            else:   
+                print "ok: [%s]" % (host)
         else:
-            print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
+            if item:
+                print "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result))
+            else:
+                print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
 
-    def on_error(self, host, err):
+    def on_error(self, host, err, item=None):
 
-        print >>sys.stderr, "err: [%s] => %s" % (host, err)
+        if item:
+            print >>sys.stderr, "err: [%s] => (item=%s) => %s" % (host, item, err)
+        else:
+            print >>sys.stderr, "err: [%s] => %s" % (host, err)
 
-    def on_skipped(self, host):
+    def on_skipped(self, host, item=None):
 
-        print "skipping: [%s]" % host
+        if item:
+            print "skipping: [%s] => (item=%s)" % (host, item)
+        else:
+            print "skipping: [%s]" % host
 
     def on_no_hosts(self):
 

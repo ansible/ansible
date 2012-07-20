@@ -646,12 +646,18 @@ class Runner(object):
             self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
+            try:
+                if inject['item']:
+                    item=inject['item']
+            except KeyError:
+                item=None
+
             if 'skipped' in data:
-                self.callbacks.on_skipped(result.host)
+                self.callbacks.on_skipped(result.host, item=item)
             elif not result.is_successful():
-                self.callbacks.on_failed(result.host, result.result)
+                self.callbacks.on_failed(result.host, result.result, item=item)
             else:
-                self.callbacks.on_ok(result.host, result.result)
+                self.callbacks.on_ok(result.host, result.result, item=item)
 
         return result
 
