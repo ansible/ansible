@@ -496,11 +496,14 @@ class LinuxNetwork(Network):
             prefix = int(l[2], 16)
             str_addr = ':'.join( [ l[0][i:i+4] for i in range(0, len(l[0]), 4) ] )
             # Normalize ipv6 address from format in /proc/net/if_inet6
-            addr = socket.inet_ntop(socket.AF_INET6,
-                                    socket.inet_pton(socket.AF_INET6, str_addr))
-            self.facts[iface]['ipv6'].append( { 'address': addr,
-                                                'prefix': prefix,
-                                                'scope': scope } )
+            try:
+                addr = socket.inet_ntop(socket.AF_INET6,
+                    socket.inet_pton(socket.AF_INET6, str_addr))
+                self.facts[iface]['ipv6'].append( { 'address': addr,
+                                                    'prefix': prefix,
+                                                    'scope': scope } )
+            except socket.error:
+                return
 
 class Virtual(Facts):
     """
