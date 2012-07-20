@@ -67,7 +67,7 @@ with the aforementioned bracket headers in the inventory file::
     webservers
     webservers:dbservers
 
-In 0.5 and later, you can exclude groups as well, for instance, all webservers not in Phoenix::
+You can exclude groups as well, for instance, all webservers not in Phoenix::
 
     webservers:!phoenix
 
@@ -138,51 +138,52 @@ variables to groups.  These variables can be used by /usr/bin/ansible-playbook, 
    southwest
    southeast
 
-YAML Inventory Format
-+++++++++++++++++++++
+If you need to store lists or hash data, or prefer to keep host and group specific variables
+seperate from the inventory file, see the next section.
 
-For that prefer to use it, the inventory file can also be expressed in
-YAML::
+Splitting Out Host and Group Specific Data
+++++++++++++++++++++++++++++++++++++++++++
+
+In Ansible 0.6 and later, in addition to the storing variables directly in the INI file, host and
+group variables can be stored in individual files relative to the inventory file.  These
+variable files are in YAML format.
+
+Assuming the inventory file path is::
+
+    /etc/ansible/hosts
+
+If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
+in YAML files at the following locations will be made available to the host::
+
+    /etc/ansible/group_vars/raleigh
+    /etc/ansible/group_vars/webservers
+    /etc/ansible/host_vars/foosball
+
+For instance, suppose you have hosts grouped by datacenter, and each datacenter
+uses some different servers.  The data in the groupfile '/etc/ansible/group_vars/raleigh' for
+the 'raleigh' group might look like::
 
     ---
-    
-    # some ungrouped hosts, either use the short string form or the "host: " prefix
-    - host: jupiter
-    - mars
+    ntp_server: acme.example.org
+    database_server: storage.example.org
 
-    # variables can be assigned like this...
-    - host: saturn
-      vars:
-      - moon: titan
+It is ok if these files do not exist, this is an optional feature.
 
-    # groups can also set variables to all hosts in the group
-    # here are a bunch of hosts using a non-standard SSH port
-    # and also defining a variable 'ntpserver'
-    - group: greek
-      hosts:
-      - zeus
-      - hera
-      - poseidon
-      vars:
-      - ansible_ssh_port: 3000
-      - ntp_server: olympus.example.com
-
-    # individual hosts can still set variables inside of groups too
-    # so you aren't limited to just group variables and host variables.
-    - group: norse
-      hosts:
-      - host: thor
-        vars:
-        - hammer: True
-      - odin
-      - loki
-      vars:
-        - asdf: 1234
+Tip: Keeping your inventory file and variables in a git repo (or other version control) 
+is an excellent way to track changes to your inventory and host variables.
 
 Tip: If you ever have two python interpreters on a system, set a variable called 'ansible_python_interpreter' to
-the Python interpreter path you would like to use.  (This is available in version 0.5 and later)
+the Python interpreter path you would like to use.
 
-Tip: Be sure to start your YAML file with the YAML record designator ``---``.
+YAML Inventory
+++++++++++++++
+
+Ansible's YAML inventory format is deprecated and will be removed in Ansible 0.7.  Ansible 0.6 includes
+a `conversion script <https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py>`_.
+
+Usage::
+
+    yaml_to_ini.py /etc/ansible/hosts
 
 .. seealso::
 
