@@ -384,6 +384,13 @@ class Network(Facts):
     """
     platform = 'Generic'
 
+    IPV6_SCOPE = { '0' : 'global',
+                   '10' : 'host',
+                   '20' : 'link',
+                   '40' : 'admin',
+                   '50' : 'site',
+                   '80' : 'organization' }
+
     def __new__(cls, *arguments, **keyword):
         subclass = cls
         for sc in Network.__subclasses__():
@@ -404,43 +411,48 @@ class LinuxNetwork(Network):
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     """
     platform = 'Linux'
-    SIOCGIFCONF   = 0x8912
-    SIOCGIFHWADDR = 0x8927
 
     def __init__(self):
         Network.__init__(self)
 
     def populate(self):
-        self.get_network_facts()
+        self.facts['interfaces'] = self.get_interfaces()
+        self.get_interface_facts()
+        self.get_ipv4_facts()
+        self.get_ipv6_facts()
         return self.facts
 
-    # get list of interfaces that are up
+    # get list of interfaces
     def get_interfaces(self):
-        length = 4096
-        offset = 32
-        step = 32
-        if platform.architecture()[0] == '64bit':
-            offset = 16
-            step = 40
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        names = array.array('B', '\0' * length)
-        bytelen = struct.unpack('iL', fcntl.ioctl(
-            s.fileno(), LinuxNetwork.SIOCGIFCONF, struct.pack(
-                'iL', length, names.buffer_info()[0])
-            ))[0]
-        return [names.tostring()[i:i+offset].split('\0', 1)[0]
-                for i in range(0, bytelen, step)]
+        names = []
+        data = get_file_content('/proc/net/dev')
+        # Format of /proc/net/dev is:
+        # Inter-|   Receive  ...
+        #  face |bytes       ...
+        #     lo:  595059
+        for line in data.split('\n'):
+            if ':' in line:
+                names.append(line.split(':')[0].strip())
+        return names
 
     def get_iface_hwaddr(self, iface):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        info = fcntl.ioctl(s.fileno(), LinuxNetwork.SIOCGIFHWADDR,
-                           struct.pack('256s', iface[:15]))
-        return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+        data = get_file_content('/sys/class/net/%s/address' % iface)
+        if data is None:
+            return 'unknown'
+        else:
+            return data.strip()
 
-    def get_network_facts(self):
-        self.facts['interfaces'] = self.get_interfaces()
+    def get_interface_facts(self):
         for iface in self.facts['interfaces']:
+            if iface not in self.facts:
+                self.facts[iface] = {}
             self.facts[iface] = { 'macaddress': self.get_iface_hwaddr(iface) }
+            if os.path.exists('/sys/class/net/%s/mtu' % iface):
+                mtu = get_file_content('/sys/class/net/%s/mtu' % iface)
+                self.facts[iface]['mtu'] = mtu.strip()
+
+    def get_ipv4_facts(self):
+        for iface in self.facts['interfaces']:
             # This is lame, but there doesn't appear to be a good way
             # to get all addresses for both IPv4 and IPv6.
             cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
@@ -468,24 +480,27 @@ class LinuxNetwork(Network):
                     ip = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['address']))[0]
                     mask = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['netmask']))[0]
                     self.facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
-                if 'inet6 addr' in line:
-                    (ip, prefix) = data[2].split('/')
-                    scope = data[3].split(':')[1].lower()
-                    if 'ipv6' not in self.facts[iface]:
-                        self.facts[iface]['ipv6'] = []
-                    self.facts[iface]['ipv6'].append( { 'address': ip,
-                                                        'prefix': prefix,
-                                                        'scope': scope } )
-                # Slightly different output in net-tools-1.60-134.20120127git
-                # Looks like
-                # inet6 fe80::21b:21ff:fe6e:5baa  prefixlen 64  scopeid 0x20<link>
-                elif 'inet6 ' in line:
-                    if 'ipv6' not in self.facts[iface]:
-                        self.facts[iface]['ipv6'] = []
-                    scope = data[5].split('<')[1][:-1]
-                    self.facts[iface]['ipv6'].append( { 'address': data[1],
-                                                        'prefix': data[3],
-                                                        'scope': scope } )
+
+    def get_ipv6_facts(self):
+        data = get_file_content('/proc/net/if_inet6')
+        if data is None:
+            return
+        for line in data.split('\n'):
+            l = line.split()
+            iface = l[5]
+            if 'ipv6' not in self.facts[iface]:
+                self.facts[iface]['ipv6'] = []
+            scope = l[3]
+            if Network.IPV6_SCOPE.has_key(l[3]):
+                scope = Network.IPV6_SCOPE[l[3]]
+            prefix = int(l[2], 16)
+            str_addr = ':'.join( [ l[0][i:i+4] for i in range(0, len(l[0]), 4) ] )
+            # Normalize ipv6 address from format in /proc/net/if_inet6
+            addr = socket.inet_ntop(socket.AF_INET6,
+                                    socket.inet_pton(socket.AF_INET6, str_addr))
+            self.facts[iface]['ipv6'].append( { 'address': addr,
+                                                'prefix': prefix,
+                                                'scope': scope } )
 
 class Virtual(Facts):
     """
