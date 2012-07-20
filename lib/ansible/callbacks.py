@@ -248,7 +248,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_unreachable(self, host, msg):
 
-        item = msg.get('item', None)
+        item = None
+        if type(msg) == dict:
+            item = msg.get('item', None)
 
         if item:
             print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)

@@ -368,9 +368,8 @@ class Runner(object):
             exec_rc = ReturnData(host=conn.host, result=result)
 
         if exec_rc.is_successful():
-            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
-        else:
-            return exec_rc
+            exec_rc.result['daisychain']='file'
+        return exec_rc
 
     # *****************************************************
 
@@ -429,28 +428,6 @@ class Runner(object):
             result = dict(changed=False, md5sum=local_md5, file=source)
             return ReturnData(host=conn.host, result=result)
         
-        
-    # *****************************************************
-
-    def _chain_file_module(self, conn, tmp, exec_rc, options, inject=None):
-
-        ''' handles changing file attribs after copy/template operations '''
-
-        old_changed = exec_rc.result.get('changed', False)
-        module = self._transfer_module(conn, tmp, 'file')
-        args = ' '.join([ "%s=%s" % (k,v) for (k,v) in options.items() ])
-        exec_rc2 = self._execute_module(conn, tmp, module, args, inject=inject)
-
-        new_changed = False
-        if exec_rc2.is_successful():
-            new_changed = exec_rc2.result.get('changed', False)
-            exec_rc.result.update(exec_rc2.result)
-
-        if old_changed or new_changed:
-            exec_rc.result['changed'] = True
-
-        return exec_rc
-
     # *****************************************************
 
     def _execute_template(self, conn, tmp, inject=None):
@@ -504,10 +481,9 @@ class Runner(object):
         exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=inject)
  
         # modify file attribs if needed
-        if exec_rc.comm_ok:
-            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
-        else:
-            return exec_rc
+        if exec_rc.is_successful():
+            exec_rc.result['daisychain']='file'
+        return exec_rc
 
     # *****************************************************
 
@@ -532,8 +508,9 @@ class Runner(object):
             exec_rc = self._executor_internal(host)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
-            if not exec_rc.comm_ok:
-                self.callbacks.on_unreachable(host, exec_rc.result)
+            # redundant, right?
+            #if not exec_rc.comm_ok:
+            #    self.callbacks.on_unreachable(host, exec_rc.result)
             return exec_rc
         except errors.AnsibleError, ae:
             msg = str(ae)
@@ -640,6 +617,14 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
+        chained = False
+        if result.is_successful() and 'daisychain' in result.result:
+            chained = True
+            self.module_name = result.result['daisychain']
+            result2 = self._executor_internal_inner(host, inject, port)
+            result.result.update(result2.result)
+            del result.result['daisychain']
+
         self._delete_remote_files(conn, tmp)
         conn.close()
 
@@ -650,12 +635,13 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
-            if 'skipped' in data:
-                self.callbacks.on_skipped(result.host)
-            elif not result.is_successful():
-                self.callbacks.on_failed(result.host, result.result)
-            else:
-                self.callbacks.on_ok(result.host, result.result)
+            if not chained:
+                if 'skipped' in data:
+                    self.callbacks.on_skipped(result.host)
+                elif not result.is_successful():
+                    self.callbacks.on_failed(result.host, data)
+                else:
+                    self.callbacks.on_ok(result.host, data)
 
         return result
 
