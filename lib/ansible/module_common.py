@@ -33,6 +33,7 @@ try:
 except ImportError:
     import simplejson as json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -118,7 +119,9 @@ class AnsibleModule(object):
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % self.args)
+        # Sanitize possible password argument when logging
+        log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", self.args)
+        syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
