@@ -14,7 +14,6 @@ class TestInventory(unittest.TestCase):
         self.inventory_file         = os.path.join(self.test_dir, 'simple_hosts')
         self.complex_inventory_file = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script       = os.path.join(self.test_dir, 'inventory_api.py')
-        self.inventory_yaml         = os.path.join(self.test_dir, 'yaml_hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -34,9 +33,6 @@ class TestInventory(unittest.TestCase):
 
     def script_inventory(self):
         return Inventory(self.inventory_script)
-
-    def yaml_inventory(self):
-        return Inventory(self.inventory_yaml)
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
@@ -216,135 +212,3 @@ class TestInventory(unittest.TestCase):
                         'group_names': ['norse'],
                         'inventory_hostname': 'thor'}
 
-    ### Tests for yaml inventory file
-
-    def test_yaml(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts()
-        expected_hosts=['garfield', 'goofy', 'hera', 'jerry', 'jupiter', 'loki', 'mars', 'mickey', 'odie', 'odin', 'poseidon', 'saturn', 'thor', 'tom', 'zeus']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_all(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts('all')
-
-        expected_hosts=['garfield', 'goofy', 'hera', 'jerry', 'jupiter', 'loki', 'mars', 'mickey', 'odie', 'odin', 'poseidon', 'saturn', 'thor', 'tom', 'zeus']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_norse(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("norse")
-
-        expected_hosts=['thor', 'odin', 'loki']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_ungrouped(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("ungrouped")
-
-        expected_hosts=['jupiter', 'mars']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_combined(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("norse:greek")
-
-        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_restrict(self):
-        inventory = self.yaml_inventory()
-
-        restricted_hosts = ['hera', 'poseidon', 'thor']
-        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
-
-        inventory.restrict_to(restricted_hosts)
-        hosts = inventory.list_hosts("norse:greek")
-
-        self.compare(hosts, restricted_hosts)
-
-        inventory.lift_restriction()
-        hosts = inventory.list_hosts("norse:greek")
-
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('thor')
-        assert vars == {'group_names': ['norse'],
-                        'hammer':True,
-                        'inventory_hostname': 'thor'}
-
-    def test_yaml_list_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('zeus')
-        assert vars == {'ansible_ssh_port': 3001,
-                        'group_names': ['greek', 'ruler'],
-                        'inventory_hostname': 'zeus',
-                        'ntp_server': 'olympus.example.com'}
-
-    def test_yaml_change_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('thor')
-
-        vars["hammer"] = False
-
-        vars = inventory.get_variables('thor')
-        print vars
-        assert vars == {'hammer':True,
-                        'inventory_hostname': 'thor',
-                        'group_names': ['norse']}
-
-    def test_yaml_host_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('saturn')
-
-        print vars
-        assert vars == {'inventory_hostname': 'saturn',
-                        'moon': 'titan',
-                        'moon2': 'enceladus',
-                        'group_names': ['multiple']}
-
-    def test_yaml_port(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('hera')
-
-        print vars
-        assert vars == {'ansible_ssh_port': 3000,
-                        'inventory_hostname': 'hera',
-                        'ntp_server': 'olympus.example.com',
-                        'group_names': ['greek']}
-
-    def test_yaml_multiple_groups(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('odin')
-
-        assert 'group_names' in vars
-        assert sorted(vars['group_names']) == [ 'norse', 'ruler' ]
-
-    def test_yaml_some_animals(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("cat:mouse")
-        expected_hosts=['garfield', 'jerry', 'mickey', 'tom']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_comic(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("comic")
-        expected_hosts=['garfield', 'odie']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_orange(self):
-        inventory = self.yaml_inventory()
-        hosts = inventory.list_hosts("orange")
-        expected_hosts=['garfield', 'goofy']
-        self.compare(hosts, expected_hosts)
-
-    def test_yaml_garfield_vars(self):
-        inventory = self.yaml_inventory()
-        vars = inventory.get_variables('garfield')
-        assert vars == {'ears': 'pointy',
-                        'inventory_hostname': 'garfield',
-                        'group_names': ['cat', 'comic', 'orange'],
-                        'nose': 'pink'}
- 
