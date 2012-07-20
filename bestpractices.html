@@ -225,7 +225,7 @@ will require <cite>handlers</cite>, <cite>tasks</cite>, and <cite>templates</cit
 - hosts: webservers
   user: root
 
-  vars_files
+  vars_files:
     - ../global_vars.yml
     - vars/main.yml
   tasks:
@@ -237,7 +237,7 @@ will require <cite>handlers</cite>, <cite>tasks</cite>, and <cite>templates</cit
 are contained in &#8216;acme/handlers/main.yml&#8217;.  As a reminder, handlers are mostly just used to notify services to restart
 when things change, and these are described in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
 <p>Including more than one setup file or more than one handlers file is of course legal.</p>
-<p>Having playbooks be able to include other playbooks is coming in release 0.5.</p>
+<p>Having playbooks be able to include other playbooks is coming in a future release. See Issue 538.</p>
 <p>Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
 You don&#8217;t have to do this though. It&#8217;s fine to select sections of your infrastructure to manage at a single time.
 You may wish to construct simple shell scripts to wrap calls to ansible-playbook.</p>
