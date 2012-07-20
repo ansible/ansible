@@ -20,6 +20,8 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible import errors
 from ansible import utils
+import os
+import yaml
 import sys
 
 class InventoryParserYaml(object):
@@ -51,6 +53,7 @@ class InventoryParserYaml(object):
         # FIXME: refactor into subfunctions
 
         all = Group('all')
+
         ungrouped = Group('ungrouped')
         all.add_child_group(ungrouped)
 
@@ -137,4 +140,67 @@ class InventoryParserYaml(object):
         # make sure ungrouped.hosts is the complement of grouped_hosts
         ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]
 
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print "usage: yaml_to_ini.py /path/to/ansible/hosts"
+        sys.exit(1)
 
+    result = ""
+
+    original = sys.argv[1]
+    yamlp = InventoryParserYaml(filename=sys.argv[1])
+    dirname = os.path.dirname(original)
+
+    group_names = [ g.name for g in yamlp.groups.values() ]
+
+    for group_name in sorted(group_names):
+
+        record = yamlp.groups[group_name]
+
+        if group_name == 'all':
+            continue
+ 
+        hosts = record.hosts
+        result = result + "[%s]\n" % record.name
+        for h in hosts:
+            result = result + "%s\n" % h.name
+        result = result + "\n"
+
+        groupfiledir = os.path.join(dirname, "group_vars")
+        if not os.path.exists(groupfiledir):
+            print "* creating: %s" % groupfiledir
+            os.makedirs(groupfiledir)
+        groupfile = os.path.join(groupfiledir, group_name)
+        print "* writing group variables for %s into %s" % (group_name, groupfile)
+        groupfh = open(groupfile, 'w')
+        groupfh.write(yaml.dump(record.get_variables()))
+        groupfh.close()
+
+    for (host_name, host_record) in yamlp._hosts.iteritems():
+        hostfiledir = os.path.join(dirname, "host_vars")
+        if not os.path.exists(hostfiledir):
+            print "* creating: %s" % hostfiledir
+            os.makedirs(hostfiledir)
+        hostfile = os.path.join(hostfiledir, host_record.name)
+        print "* writing host variables for %s into %s" % (host_record.name, hostfile)
+        hostfh = open(hostfile, 'w')
+        hostfh.write(yaml.dump(host_record.get_variables()))
+        hostfh.close()
+ 
+
+    # also need to keep a hash of variables per each host
+    # and variables per each group
+    # and write those to disk
+
+    newfilepath = os.path.join(dirname, "hosts.new")
+    fdh = open(newfilepath, 'w')
+    fdh.write(result)
+    fdh.close()
+
+    print "* COMPLETE: review your new inventory file and replace your original when ready"
+    print "*           new inventory file saved as %s" % newfilepath  
+    print "*           edit group specific variables in %s/group_vars/" % dirname
+    print "*           edit host specific variables in %s/host_vars/" % dirname
+
+    # now need to write this to disk as (oldname).new
+    # and inform the user

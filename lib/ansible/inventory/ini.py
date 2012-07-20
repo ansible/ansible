@@ -46,6 +46,7 @@ class InventoryParser(object):
         self._parse_group_children()
         self._parse_group_variables()
         return self.groups
+ 
 
     # [webservers]
     # alpha
