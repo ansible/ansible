@@ -153,7 +153,8 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#host-variables">Host Variables</a></li>
 <li><a class="reference internal" href="#group-variables">Group Variables</a></li>
 <li><a class="reference internal" href="#groups-of-groups-and-group-variables">Groups of Groups, and Group Variables</a></li>
-<li><a class="reference internal" href="#yaml-inventory-format">YAML Inventory Format</a></li>
+<li><a class="reference internal" href="#splitting-out-host-and-group-specific-data">Splitting Out Host and Group Specific Data</a></li>
+<li><a class="reference internal" href="#yaml-inventory">YAML Inventory</a></li>
 </ul>
 </li>
 </ul>
@@ -234,7 +235,7 @@ with the aforementioned bracket headers in the inventory file:</p>
 <div class="highlight-python"><pre>webservers
 webservers:dbservers</pre>
 </div>
-<p>In 0.5 and later, you can exclude groups as well, for instance, all webservers not in Phoenix:</p>
+<p>You can exclude groups as well, for instance, all webservers not in Phoenix:</p>
 <div class="highlight-python"><pre>webservers:!phoenix</pre>
 </div>
 <p>Individual host names (or IPs), but not groups, can also be referenced using
@@ -296,49 +297,45 @@ northeast
 southwest
 southeast</pre>
 </div>
+<p>If you need to store lists or hash data, or prefer to keep host and group specific variables
+seperate from the inventory file, see the next section.</p>
 </div>
-<div class="section" id="yaml-inventory-format">
-<h2>YAML Inventory Format<a class="headerlink" href="#yaml-inventory-format" title="Permalink to this headline">¶</a></h2>
-<p>For that prefer to use it, the inventory file can also be expressed in
-YAML:</p>
+<div class="section" id="splitting-out-host-and-group-specific-data">
+<h2>Splitting Out Host and Group Specific Data<a class="headerlink" href="#splitting-out-host-and-group-specific-data" title="Permalink to this headline">¶</a></h2>
+<p>In Ansible 0.6 and later, in addition to the storing variables directly in the INI file, host and
+group variables can be stored in individual files relative to the inventory file.  These
+variable files are in YAML format.</p>
+<p>Assuming the inventory file path is:</p>
+<div class="highlight-python"><pre>/etc/ansible/hosts</pre>
+</div>
+<p>If the host is named &#8216;foosball&#8217;, and in groups &#8216;raleigh&#8217; and &#8216;webservers&#8217;, variables
+in YAML files at the following locations will be made available to the host:</p>
+<div class="highlight-python"><pre>/etc/ansible/group_vars/raleigh
+/etc/ansible/group_vars/webservers
+/etc/ansible/host_vars/foosball</pre>
+</div>
+<p>For instance, suppose you have hosts grouped by datacenter, and each datacenter
+uses some different servers.  The data in the groupfile &#8216;/etc/ansible/group_vars/raleigh&#8217; for
+the &#8216;raleigh&#8217; group might look like:</p>
 <div class="highlight-python"><pre>---
-
-# some ungrouped hosts, either use the short string form or the "host: " prefix
-- host: jupiter
-- mars
-
-# variables can be assigned like this...
-- host: saturn
-  vars:
-  - moon: titan
-
-# groups can also set variables to all hosts in the group
-# here are a bunch of hosts using a non-standard SSH port
-# and also defining a variable 'ntpserver'
-- group: greek
-  hosts:
-  - zeus
-  - hera
-  - poseidon
-  vars:
-  - ansible_ssh_port: 3000
-  - ntp_server: olympus.example.com
-
-# individual hosts can still set variables inside of groups too
-# so you aren't limited to just group variables and host variables.
-- group: norse
-  hosts:
-  - host: thor
-    vars:
-    - hammer: True
-  - odin
-  - loki
-  vars:
-    - asdf: 1234</pre>
+ntp_server: acme.example.org
+database_server: storage.example.org</pre>
 </div>
+<p>It is ok if these files do not exist, this is an optional feature.</p>
+<p>Tip: Keeping your inventory file and variables in a git repo (or other version control)
+is an excellent way to track changes to your inventory and host variables.</p>
 <p>Tip: If you ever have two python interpreters on a system, set a variable called &#8216;ansible_python_interpreter&#8217; to
-the Python interpreter path you would like to use.  (This is available in version 0.5 and later)</p>
-<p>Tip: Be sure to start your YAML file with the YAML record designator <tt class="docutils literal"><span class="pre">---</span></tt>.</p>
+the Python interpreter path you would like to use.</p>
+<p>Tip: Be sure to start any YAML file with the YAML record designator <tt class="docutils literal"><span class="pre">---</span></tt> on the first line.</p>
+</div>
+<div class="section" id="yaml-inventory">
+<h2>YAML Inventory<a class="headerlink" href="#yaml-inventory" title="Permalink to this headline">¶</a></h2>
+<p>Ansible&#8217;s YAML inventory format is deprecated and will be removed in Ansible 0.7.  Ansible 0.6 includes
+a <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py">conversion script</a>.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">yaml_to_ini</span><span class="o">.</span><span class="n">py</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">ansible</span><span class="o">/</span><span class="n">hosts</span>
+</pre></div>
+</div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -370,7 +367,7 @@ the Python interpreter path you would like to use.  (This is available in versio
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jul 04, 2012.<br/>
+      Last updated on Jul 20, 2012.<br/>
     </p>
   </div>
 </footer>
