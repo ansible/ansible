@@ -1,0 +1,263 @@
+#!/usr/bin/python
+
+# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Synopsis:
+#        ansible -m get_url -a "url=http://some.place/some.file dest=/tmp/file"
+#
+# Arguments:
+#    url=                (mandatory, no default)
+#    dest=                (mandatory, no default)
+#        if dest= is a file, url is copied to that file
+#        if dest= is a directory, determine name from url= and store it in dest/
+#    mode, owner, group, ... from the "file" module are also supported
+#
+# Playbook:
+#   The dest=<directory> feature lets you do this in a Playbook:
+#
+#          - name: Grab a bunch of jQuery stuff
+#            action: get_url url=http://code.jquery.com/$item  dest=${jquery_directory} mode=0444
+#            with_items:
+#            - jquery.min.js
+#            - mobile/latest/jquery.mobile.min.js
+#            - ui/jquery-ui-git.css
+#
+# TODO:
+#    timeout=
+#    Support gzip compression? 
+#        http://www.diveintopython.net/http_web_services/gzip_compression.html
+
+import sys
+import os
+import shlex
+import shutil
+import syslog
+import datetime
+import tempfile
+
+try:
+    from hashlib import md5 as _md5
+except ImportError: 
+    from md5 import md5 as _md5
+
+HAS_URLLIB2=True
+try:
+    import urllib2
+except ImportError: 
+    HAS_URLLIB2=False
+HAS_URLPARSE=True
+try:
+    import urlparse
+    import socket
+except ImportError: 
+    HAS_URLPARSE=False
+
+# ==============================================================
+# support
+
+def md5(filename):
+    ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    if not os.path.exists(filename):
+        return None
+    digest = _md5()
+    blocksize = 64 * 1024
+    infile = open(filename, 'rb')
+    block = infile.read(blocksize)
+    while block:
+        digest.update(block)
+        block = infile.read(blocksize)
+    infile.close()
+    return digest.hexdigest()
+
+# ==============================================================
+# url handling
+
+def url_filename(url):
+    return os.path.basename(urlparse.urlsplit(url)[2])
+
+def url_do_get(url, dest):
+    """Get url and return request and info
+       Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
+    """
+    USERAGENT = 'ansible-httpget'
+    info = {}
+    info['url'] = url
+    r = None
+
+    if dest:
+        if os.path.isdir(dest):
+            destpath = "%s/%s" % (dest, url_filename(url))
+        else:
+            destpath = dest
+    else:
+        destpath = url_filename(url)
+
+    info['destpath'] = destpath
+
+    request = urllib2.Request(url)
+    request.add_header('User-agent', USERAGENT)
+
+    if os.path.exists(destpath):
+        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(destpath))
+        tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
+        request.add_header('If-Modified-Since', tstamp)
+
+    try:
+        r = urllib2.urlopen(request)
+
+        dinfo = dict(r.info())
+        for x in dinfo:
+             info[x] = dinfo[x]
+
+        info['msg'] = "OK %s octets" % r.headers.get('Content-Length', 'unknown')
+        info['status'] = 200
+    except urllib2.HTTPError as e:
+        # Must not fail_json() here so caller can handle HTTP 304 unmodified
+        info['msg'] = "%s" % e
+        info['status'] = e.code
+        return r, info
+    except urllib2.URLError as e:
+        if 'code' in e:
+            co = e.code
+        else:
+            co = -1
+        resp = "%s" % e
+        module.fail_json(msg="Request failed", status_code=co, response=resp)
+
+    return r, info
+
+def url_get(url, dest):
+    """Get url and store at dest. If dest is a directory, determine filename
+       from url, otherwise dest is a file
+       Return info about the request.
+    """
+
+    req, info = url_do_get(url, dest)
+
+    # TODO: should really handle 304, but how? src file could exist (and be
+    #       newer) but be empty ...
+
+    if info['status'] == 304:
+        module.exit_json(url=url, dest=info.get('destpath', dest), changed=False, msg=info.get('msg', ''))
+
+    # We have the data. Create a temporary file and copy content into that
+    # to do the MD5-thing
+
+    if info['status'] == 200:
+        destpath = info['destpath']
+
+        fd, tempname = tempfile.mkstemp()
+        f = os.fdopen(fd, 'wb')
+        try:
+            shutil.copyfileobj(req, f)
+        except Exception, err:
+            os.remove(tempname)
+            module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        f.close()
+        req.close()
+
+        return tempname, info
+    else:
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url)
+
+# ==============================================================
+# main
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            url = dict(required=True),
+            dest = dict(required=True),
+        )
+    )
+    
+    url = module.params.get('url', '')
+    dest = module.params.get('dest', '')
+    
+    if url == "":
+        module.fail_json(msg="url= URL missing")
+    if dest == "":
+        module.fail_json(msg="dest= missing")
+    
+    dest = os.path.expanduser(dest)
+    
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
+    
+    
+    # Here we go... if this succeeds, tmpsrc is the name of a temporary file
+    # containing slurped content. If it fails, we've already raised an error
+    # to Ansible
+    
+    tmpsrc, info = url_get(url, dest)
+    
+    md5sum_src = None
+    
+    dest = info.get('destpath', None)
+    
+    # raise an error if there is no tmpsrc file
+    if not os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
+    if not os.access(tmpsrc, os.R_OK):
+        os.remove(tmpsrc)
+        module.fail_json( msg="Source %s not readable" % (tmpsrc))
+    md5sum_src = md5(tmpsrc)
+    
+    
+    md5sum_dest = None
+    # check if there is no dest file
+    if os.path.exists(dest):
+        # raise an error if copy has no permission on dest
+        if not os.access(dest, os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (dest))
+        if not os.access(dest, os.R_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not readable" % (dest))
+        md5sum_dest = md5(dest)
+    else:
+        if not os.access(os.path.dirname(dest), os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
+    
+    if md5sum_src != md5sum_dest:
+        # was os.system("cp %s %s" % (src, dest))
+        try:
+            shutil.copyfile(tmpsrc, dest)
+        except Exception, err:
+            os.remove(tmpsrc)
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err))) 
+        changed = True
+    else:
+        changed = False
+    
+    # Mission complete
+    
+    os.remove(tmpsrc)
+    module.exit_json(url=url, dest=dest, src=tmpsrc,
+        md5sum=md5sum_src, changed=changed, msg=info.get('msg', ''),
+        daisychain="file")
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
