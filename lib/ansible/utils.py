@@ -211,9 +211,7 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
-    # FIXME: possibly a bit inefficient here, do this in runner code
     vars = vars.copy()
-    vars['hostvars'] = vars.get('setup_cache',{})
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
