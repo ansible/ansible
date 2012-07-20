@@ -646,6 +646,7 @@ class Runner(object):
             self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
+            result.result['item'] = inject.get('item', None)
             if 'skipped' in data:
                 self.callbacks.on_skipped(result.host)
             elif not result.is_successful():
