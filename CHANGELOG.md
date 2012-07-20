@@ -32,6 +32,11 @@ Ansible Changes By Release
 * apt module now passes DEBIAN_FRONTEND=noninteractive
 * to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
 * automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
+* setup module fixes if no ipv6 support
+* internals: template in common module boilerplate
+* git module fixes
+* various ssh connection fixes for old Ubuntu clients
+* setup module overhaul, more modular 
 
 0.5 "Amsterdam" ------- July 04, 2012
 
