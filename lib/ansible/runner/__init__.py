@@ -495,9 +495,8 @@ class Runner(object):
         exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
 
         if exec_rc.is_successful():
-            return self._chain_file_module(conn, tmp, exec_rc, options, inject=inject)
-        else:
-            return exec_rc
+            exec_rc.result['daisychain'] = 'file'
+        return exec_rc
 
     # *****************************************************
 
