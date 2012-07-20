@@ -262,7 +262,7 @@ class Runner(object):
         ''' allows discovered variables to be used in templates and action statements '''
 
         host = conn.host
-        self.setup_cache[host] = result.get('ansible_facts', {})
+        self.setup_cache[host].update(result.get('ansible_facts', {}))
 
     # *****************************************************
 
