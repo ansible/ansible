@@ -318,15 +318,15 @@ class Runner(object):
         options = utils.parse_kv(self.module_args)
         source  = options.get('src', None)
         dest    = options.get('dest', None)
-        if (source is None and not 'first_available_file' in self.module_vars) or dest is None:
+        if (source is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src and dest are required")
             return ReturnData(host=conn.host, result=result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
-        if 'first_available_file' in self.module_vars:
+        if 'first_available_file' in inject:
             found = False
-            for fn in self.module_vars.get('first_available_file'):
+            for fn in inject.get('first_available_file'):
                 fn = utils.template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
@@ -336,12 +336,7 @@ class Runner(object):
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, results=results)
        
-        if self.module_vars is None:
-            self.module_vars = {}
-        lookup_table = self.module_vars.copy()
-        lookup_table.update(inject)
-
-        source = utils.template(source, lookup_table)
+        source = utils.template(source, inject)
         source = utils.path_dwim(self.basedir, source)
 
         local_md5 = utils.md5(source)
@@ -363,7 +358,7 @@ class Runner(object):
 
             # run the copy module
             args = "src=%s dest=%s" % (tmp_src, dest)
-            exec_rc = self._execute_module(conn, tmp, module, args, inject=lookup_table)
+            exec_rc = self._execute_module(conn, tmp, module, args, inject=inject)
         else:
             # no need to transfer the file, already correct md5
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
@@ -442,13 +437,13 @@ class Runner(object):
         options  = utils.parse_kv(self.module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
-        if (source is None and 'first_available_file' not in self.module_vars) or dest is None:
+        if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(host=conn.host, comm_ok=False, result=result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
-        if 'first_available_file' in self.module_vars:
+        if 'first_available_file' in inject:
             found = False
             for fn in self.module_vars.get('first_available_file'):
                 fn = utils.template(fn, inject)
@@ -460,19 +455,14 @@ class Runner(object):
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, comm_ok=False, result=result)
 
-        if self.module_vars is None:
-            self.module_vars = {}
-        lookup_table = self.module_vars.copy()
-        lookup_table.update(inject)
-
-        source = utils.template(source, lookup_table)
+        source = utils.template(source, inject)
 
         # install the template module
         copy_module = self._transfer_module(conn, tmp, 'copy')
 
         # template the source data locally
         try:
-            resultant = utils.template_from_file(self.basedir, source, lookup_table)
+            resultant = utils.template_from_file(self.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(host=conn.host, comm_ok=False, result=result)
@@ -481,7 +471,7 @@ class Runner(object):
             
         # run the COPY module
         args = "src=%s dest=%s" % (xfered, dest)
-        exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=lookup_table)
+        exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=inject)
  
         # modify file attribs if needed
         if exec_rc.is_successful():
