@@ -87,7 +87,7 @@ def get_version(dest):
 def clone(repo, dest, branch):
    ''' makes a new git repo if it does not already exist '''
    try:
-       os.makedirs(dest)
+       os.makedirs(os.path.dirname(dest))
    except:
        pass
    cmd = "git clone %s %s" % (repo, dest)
