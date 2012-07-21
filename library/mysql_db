@@ -19,72 +19,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    import json
+    import MySQLdb
 except ImportError:
-    import simplejson as json
-import sys
-import os
-import os.path
-import shlex
-import syslog
-import re
-
-# ===========================================
-# Standard Ansible support methods.
-#
-
-def exit_json(rc=0, **kwargs):
-    print json.dumps(kwargs)
-    sys.exit(rc)
-
-def fail_json(**kwargs):
-    kwargs["failed"] = True
-    exit_json(rc=1, **kwargs)
-
-# ===========================================
-# Standard Ansible argument parsing code.
-#
-
-if len(sys.argv) == 1:
-    fail_json(msg="the mysql module requires arguments (-a)")
-
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    fail_json(msg="argument file not found")
-
-args = open(argfile, "r").read()
-items = shlex.split(args)
-syslog.openlog("ansible-%s" % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, "Invoked with %s" % args)
-
-if not len(items):
-    fail_json(msg="the mysql module requires arguments (-a)")
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
+    mysqldb_found = False
+else:
+    mysqldb_found = True
 
 # ===========================================
 # MySQL module specific support methods.
 #
 
-# Import MySQLdb here instead of at the top, so we can use the fail_json function.
-try:
-    import MySQLdb
-except ImportError:
-    fail_json(msg="The Python MySQL package is missing")
-
-def db_exists(db):
+def db_exists(cursor, db):
     res = cursor.execute("SHOW DATABASES LIKE %s", (db,))
     return bool(res)
 
-def db_delete(db):
+def db_delete(cursor, db):
     query = "DROP DATABASE %s" % db
     cursor.execute(query)
     return True
 
-def db_create(db,):
+def db_create(cursor, db):
     query = "CREATE DATABASE %s" % db
     res = cursor.execute(query)
     return True
@@ -93,30 +47,38 @@ def db_create(db,):
 # Module execution.
 #
 
-# Gather arguments into local variables.
-loginuser = params.get("loginuser", "root")
-loginpass = params.get("loginpass", "")
-loginhost = params.get("loginhost", "localhost")
-db        = params.get("db", None)
-state     = params.get("state", "present")
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            loginuser=dict(default="root"),
+            loginpass=dict(required=True),
+            loginhost=dict(default="localhost"),
+            db=dict(required=True),
+            state=dict(default="present")
+        )
+    )
 
-if state not in ["present", "absent"]:
-    fail_json(msg="invalid state, must be 'present' or 'absent'")
+    if not mysqldb_found:
+        module.fail_json(msg="the python mysqldb module is required")
 
-if db is not None:
+    db = module.params["db"]
+    state = module.params["state"]
     changed = False
     try:
-        db_connection = MySQLdb.connect(host=loginhost, user=loginuser, passwd=loginpass, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=module.params["loginuser"], passwd=module.params["loginpass"], db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
-        fail_json(msg="unable to connect to database")
+        module.fail_json(msg="unable to connect to database")
 
-    if db_exists(db):
+    if db_exists(cursor, db):
         if state == "absent":
-            changed = db_delete(db)
+            changed = db_delete(cursor, db)
     else:
         if state == "present":
-            changed = db_create(db)
-    exit_json(changed=changed, db=db)
+            changed = db_create(cursor, db)
 
-fail_json(msg="invalid parameters passed, db parameter required")
+    module.exit_json(changed=changed, db=db)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
