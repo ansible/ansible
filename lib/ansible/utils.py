@@ -258,6 +258,12 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
+def default(value, function):
+    ''' syntactic sugar around lazy evaluation of defaults '''
+    if value is None:
+        return function()
+    return value
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook 
 # below this line

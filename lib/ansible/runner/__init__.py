@@ -94,91 +94,60 @@ class ReturnData(object):
     def is_successful(self):
         return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
 
+    def daisychain(self, module_name):
+        ''' request a module call follow this one '''
+        if self.is_successful():
+            self.result['daisychain'] = module_name
+        return self
+
 class Runner(object):
     ''' core API interface to ansible '''
 
+    # see bin/ansible for how this is used...
+
     def __init__(self, 
-        host_list=C.DEFAULT_HOST_LIST, module_path=C.DEFAULT_MODULE_PATH,
-        module_name=C.DEFAULT_MODULE_NAME, module_args=C.DEFAULT_MODULE_ARGS, 
-        forks=C.DEFAULT_FORKS, timeout=C.DEFAULT_TIMEOUT, 
-        pattern=C.DEFAULT_PATTERN, remote_user=C.DEFAULT_REMOTE_USER, 
-        remote_pass=C.DEFAULT_REMOTE_PASS, remote_port=C.DEFAULT_REMOTE_PORT, 
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, sudo_pass=C.DEFAULT_SUDO_PASS, 
-        background=0, basedir=None, setup_cache=None, 
-        transport=C.DEFAULT_TRANSPORT, conditional='True', callbacks=None, 
-        verbose=False, sudo=False, sudo_user=C.DEFAULT_SUDO_USER,
-        module_vars=None, is_playbook=False, inventory=None):
+        host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
+        module_path=C.DEFAULT_MODULE_PATH,  # ex: /usr/share/ansible
+        module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
+        module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
+        forks=C.DEFAULT_FORKS,              # parallelism level
+        timeout=C.DEFAULT_TIMEOUT,          # for async, kill after X seconds
+        pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
+        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
+        remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
+        remote_port=C.DEFAULT_REMOTE_PORT,  # if SSH on different ports
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords 
+        sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
+        background=0,                       # async poll every X seconds, else 0 for non-async
+        basedir=None,                       # directory of playbook, if applicable
+        setup_cache=None,                   # used to share fact data w/ other tasks
+        transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
+        conditional='True',                 # run only if this fact expression evals to true
+        callbacks=None,                     # used for output
+        verbose=False,                      # whether to show more or less
+        sudo=False,                         # whether to run sudo or not
+        sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
+        module_vars=None,                   # a playbooks internals thing 
+        is_playbook=False,                  # running from playbook or not?
+        inventory=None                      # reference to Inventory object
+        ):
 
-        """
-        host_list        : path to a host list file, like /etc/ansible/hosts
-        module_path      : path to modules, like /usr/share/ansible
-        module_name      : which module to run (string)
-        module_args      : args to pass to the module (string)
-        forks            : desired level of paralellism (hosts to run on at a time)
-        timeout          : connection timeout, such as a SSH timeout, in seconds
-        pattern          : pattern or groups to select from in inventory
-        remote_user      : connect as this remote username
-        remote_pass      : supply this password (if not using keys)
-        remote_port      : use this default remote port (if not set by the inventory system)
-        private_key_file : use this private key as your auth key
-        sudo_user        : If you want to sudo to a user other than root.
-        sudo_pass        : sudo password if using sudo and sudo requires a password
-        background       : run asynchronously with a cap of this many # of seconds (if not 0)
-        basedir          : paths used by modules if not absolute are relative to here
-        setup_cache      : this is a internalism that is going away
-        transport        : transport mode (paramiko, local)
-        conditional      : only execute if this string, evaluated, is True
-        callbacks        : output callback class
-        sudo             : log in as remote user and immediately sudo to root
-        module_vars      : provides additional variables to a template.
-        is_playbook      : indicates Runner is being used by a playbook.  affects behavior in various ways.
-        inventory        : inventory object, if host_list is not provided
-        """
-
-        # -- handle various parameters that need checking/mangling
-
-        if setup_cache is None:
-            setup_cache = collections.defaultdict(dict)
-        if type(module_args) not in [str, unicode, dict]:
-            raise errors.AnsibleError("module_args must be a string or dict: %s" % self.module_args)
-
-        if basedir is None: 
-            basedir = os.getcwd()
-        self.basedir     = basedir
-
-        if callbacks is None:
-            callbacks = ans_callbacks.DefaultRunnerCallbacks()
-        self.callbacks = callbacks
-
-        self.generated_jid = str(random.randint(0, 999999999999))
-
-        self.transport = transport
-
-        if self.transport == 'ssh' and remote_pass:
-            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
-        if self.transport == 'local':
-            self.remote_user = pwd.getpwuid(os.geteuid())[0]
-
-        if inventory is None:
-            self.inventory = ansible.inventory.Inventory(host_list)
-        else:
-            self.inventory = inventory
-
-        if module_vars is None:
-            module_vars = {}
- 
-        # -- save constructor parameters for later use
-        
+        # storage & defaults
+        self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.basedir          = utils.default(basedir, lambda: os.getcwd())
+        self.callbacks        = utils.default(callbacks, lambda: ans_callbacks.DefaultRunnerCallbacks())
+        self.generated_jid    = str(random.randint(0, 999999999999))
+        self.transport        = transport
+        self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+        self.module_vars      = utils.default(module_vars, lambda: {})
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
-        self.setup_cache      = setup_cache
         self.conditional      = conditional
         self.module_path      = module_path
         self.module_name      = module_name
         self.forks            = int(forks)
         self.pattern          = pattern
         self.module_args      = module_args
-        self.module_vars      = module_vars
         self.timeout          = timeout
         self.verbose          = verbose
         self.remote_user      = remote_user
@@ -190,7 +159,13 @@ class Runner(object):
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
 
-        # ensure we're using unique tmp paths
+        # misc housekeeping
+        if self.transport == 'ssh' and remote_pass:
+            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
+        if self.transport == 'local':
+            self.remote_user = pwd.getpwuid(os.geteuid())[0]
+ 
+        # ensure we are using unique tmp paths
         random.seed()
 
     # *****************************************************
@@ -258,14 +233,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _add_result_to_setup_cache(self, conn, result):
-        ''' allows discovered variables to be used in templates and action statements '''
-
-        host = conn.host
-        self.setup_cache[host].update(result.get('ansible_facts', {}))
-
-    # *****************************************************
-
     def _execute_raw(self, conn, tmp, inject=None):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
         return ReturnData(host=conn.host, result=dict(
@@ -285,7 +252,7 @@ class Runner(object):
         module = self._transfer_module(conn, tmp, module_name, inject)
         exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
         if exec_rc.is_successful():
-            self._add_result_to_setup_cache(conn, exec_rc.result)
+            self.setup_cache[conn.host].update(exec_rc.result.get('ansible_facts', {}))
         return exec_rc
 
     # *****************************************************
@@ -358,15 +325,12 @@ class Runner(object):
 
             # run the copy module
             args = "src=%s dest=%s" % (tmp_src, dest)
-            exec_rc = self._execute_module(conn, tmp, module, args, inject=inject)
+            return self._execute_module(conn, tmp, module, args, inject=inject).daisychain('file')
+
         else:
             # no need to transfer the file, already correct md5
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
-            exec_rc = ReturnData(host=conn.host, result=result)
-
-        if exec_rc.is_successful():
-            exec_rc.result['daisychain']='file'
-        return exec_rc
+            return ReturnData(host=conn.host, result=result).daisychain('file')
 
     # *****************************************************
 
@@ -393,6 +357,8 @@ class Runner(object):
         # calculate md5 sum for the remote file
         remote_md5 = self._remote_md5(conn, tmp, source)
 
+        # these don't fail because you may want to transfer a log file that possibly MAY exist
+        # but keep going to fetch other log files
         if remote_md5 == '0':
             result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
@@ -468,10 +434,7 @@ class Runner(object):
             
         # run the copy module, queue the file module
         args = "src=%s dest=%s" % (xfered, dest)
-        exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=inject)
-        if exec_rc.is_successful():
-            exec_rc.result['daisychain']='file'
-        return exec_rc
+        return self._execute_module(conn, tmp, copy_module, args, inject=inject).daisychain('file')
 
     # *****************************************************
 
@@ -481,11 +444,7 @@ class Runner(object):
         module_name = 'assemble'
         options = utils.parse_kv(self.module_args)
         module = self._transfer_module(conn, tmp, module_name, inject)
-        exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
-
-        if exec_rc.is_successful():
-            exec_rc.result['daisychain'] = 'file'
-        return exec_rc
+        return self._execute_module(conn, tmp, module, self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
 
