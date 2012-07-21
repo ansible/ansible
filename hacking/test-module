@@ -30,8 +30,8 @@ import sys
 import os
 import subprocess
 import traceback
-from ansible import utils
-from ansible import module_common
+import ansible.utils as utils
+import ansible.module_common as module_common
 
 try:
     import json
