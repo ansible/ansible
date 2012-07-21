@@ -42,271 +42,558 @@ try:
 except ImportError:
     import simplejson as json
 
-_I386RE = re.compile(r'i[3456]86')
-SIOCGIFCONF   = 0x8912
-SIOCGIFHWADDR = 0x8927
-MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
-# DMI bits
-DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
-             'product_name': '/sys/devices/virtual/dmi/id/product_name',
-             'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
-             'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
-             'product_version': '/sys/devices/virtual/dmi/id/product_version',
-             'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
-             'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
-             'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
-# From smolt and DMI spec
-FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
-                "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
-                "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
-                "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
-                "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
-                "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
-                "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                "CompactPCI", "AdvancedTCA" ]
-# For the most part, we assume that platform.dist() will tell the truth.
-# This is the fallback to handle unknowns or exceptions
-OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
-                '/etc/vmware-release': 'VMwareESX' }
-SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
+class Facts(object):
+    """
+    This class should only attempt to populate those facts that
+    are mostly generic to all systems.  This includes platform facts,
+    service facts (eg. ssh keys or selinux), and distribution facts.
+    Anything that requires extensive code or may have more than one
+    possible implementation to establish facts for a given topic should
+    subclass Facts.
+    """
 
-def get_file_content(path):
-    if os.path.exists(path) and os.access(path, os.R_OK):
-        data = open(path).read().strip()
-        if len(data) == 0:
-            data = None
-    else:
-        data = None
-    return data
+    _I386RE = re.compile(r'i[3456]86')
+    # For the most part, we assume that platform.dist() will tell the truth.
+    # This is the fallback to handle unknowns or exceptions
+    OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
+                    '/etc/vmware-release': 'VMwareESX' }
+    SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
-# platform.dist() is deprecated in 2.6
-# in 2.6 and newer, you should use platform.linux_distribution()
-def get_distribution_facts(facts):
-    dist = platform.dist()
-    facts['distribution'] = dist[0].capitalize() or 'NA'
-    facts['distribution_version'] = dist[1] or 'NA'
-    facts['distribution_release'] = dist[2] or 'NA'
-    # Try to handle the exceptions now ...
-    for (path, name) in OSDIST_DICT.items():
-        if os.path.exists(path):
-            if facts['distribution'] == 'Fedora':
-                pass
-            elif name == 'RedHat':
-                data = get_file_content(path)
-                if 'Red Hat' in data:
-                    facts['distribution'] = name
-                else:
-                    facts['distribution'] = data.split()[0]
-            else:
-                facts['distribution'] = name
+    def __init__(self):
+        self.facts = {}
+        self.get_platform_facts()
+        self.get_distribution_facts()
+        self.get_public_ssh_host_keys()
+        self.get_selinux_facts()
 
-# Platform
-# patform.system() can be Linux, Darwin, Java, or Windows
-def get_platform_facts(facts):
-    facts['system'] = platform.system()
-    facts['kernel'] = platform.release()
-    facts['machine'] = platform.machine()
-    facts['python_version'] = platform.python_version()
-    if facts['machine'] == 'x86_64':
-        facts['architecture'] = facts['machine']
-    elif _I386RE.search(facts['machine']):
-        facts['architecture'] = 'i386'
-    else:
-        facts['archtecture'] = facts['machine']
-    if facts['system'] == 'Linux':
-        get_distribution_facts(facts)
+    def populate(self):
+        return self.facts
 
-def get_memory_facts(facts):
-    if not os.access("/proc/meminfo", os.R_OK):
-        return facts
-    for line in open("/proc/meminfo").readlines():
-        data = line.split(":", 1)
-        key = data[0]
-        if key in MEMORY_FACTS:
-            val = data[1].strip().split(' ')[0]
-            facts["%s_mb" % key.lower()] = long(val) / 1024
-
-def get_cpu_facts(facts):
-    i = 0
-    physid = 0
-    sockets = {}
-    if not os.access("/proc/cpuinfo", os.R_OK):
-        return facts
-    for line in open("/proc/cpuinfo").readlines():
-        data = line.split(":", 1)
-        key = data[0].strip()
-        if key == 'model name':
-            if 'processor' not in facts:
-                facts['processor'] = []
-            facts['processor'].append(data[1].strip())
-            i += 1
-        elif key == 'physical id':
-            physid = data[1].strip()
-            if physid not in sockets:
-                sockets[physid] = 1
-        elif key == 'cpu cores':
-            sockets[physid] = int(data[1].strip())
-    if len(sockets) > 0:
-        facts['processor_count'] = len(sockets)
-        facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
-    else:
-        facts['processor_count'] = i
-        facts['processor_cores'] = 'NA'
-
-def get_hardware_facts(facts):
-    get_memory_facts(facts)
-    get_cpu_facts(facts)
-    for (key,path) in DMI_DICT.items():
-        data = get_file_content(path)
-        if data is not None:
-            if key == 'form_factor':
-                facts['form_factor'] = FORM_FACTOR[int(data)]
-            else:
-                facts[key] = data
+    # Platform
+    # patform.system() can be Linux, Darwin, Java, or Windows
+    def get_platform_facts(self):
+        self.facts['system'] = platform.system()
+        self.facts['kernel'] = platform.release()
+        self.facts['machine'] = platform.machine()
+        self.facts['python_version'] = platform.python_version()
+        self.facts['fqdn'] = socket.getfqdn()
+        self.facts['hostname'] = self.facts['fqdn'].split('.')[0]
+        if self.facts['machine'] == 'x86_64':
+            self.facts['architecture'] = self.facts['machine']
+        elif Facts._I386RE.search(self.facts['machine']):
+            self.facts['architecture'] = 'i386'
         else:
-            facts[key] = 'NA'
+            self.facts['archtecture'] = self.facts['machine']
+        if self.facts['system'] == 'Linux':
+            self.get_distribution_facts()
 
-def get_linux_virtual_facts(facts):
-    if os.path.exists("/proc/xen"):
-        facts['virtualization_type'] = 'xen'
-        facts['virtualization_role'] = 'guest'
-        if os.path.exists("/proc/xen/capabilities"):
-            facts['virtualization_role'] = 'host'
-    if os.path.exists("/proc/modules"):
-        modules = []
-        for line in open("/proc/modules").readlines():
-            data = line.split(" ", 1)
-            modules.append(data[0])
-        if 'kvm' in modules:
-            facts['virtualization_type'] = 'kvm'
-            facts['virtualization_role'] = 'host'
-        elif 'vboxdrv' in modules:
-            facts['virtualization_type'] = 'virtualbox'
-            facts['virtualization_role'] = 'host'
-        elif 'vboxguest' in modules:
-            facts['virtualization_type'] = 'virtualbox'
-            facts['virtualization_role'] = 'guest'
-    if 'QEMU' in facts['processor'][0]:
-        facts['virtualization_type'] = 'kvm'
-        facts['virtualization_role'] = 'guest'
-    if facts['distribution'] == 'VMwareESX':
-        facts['virtualization_type'] = 'VMware'
-        facts['virtualization_role'] = 'host'
-    # You can spawn a dmidecode process and parse that or infer from devices
-    for dev_model in glob.glob('/sys/block/?da/device/vendor'):
-        info = open(dev_model).read()
-        if 'VMware' in info:
-            facts['virtualization_type'] = 'VMware'
-            facts['virtualization_role'] = 'guest'
-        elif 'Virtual HD' in info or 'Virtual CD' in info:
-            facts['virtualization_type'] = 'VirtualPC'
-            facts['virtualization_role'] = 'guest'
+    # platform.dist() is deprecated in 2.6
+    # in 2.6 and newer, you should use platform.linux_distribution()
+    def get_distribution_facts(self):
+        dist = platform.dist()
+        self.facts['distribution'] = dist[0].capitalize() or 'NA'
+        self.facts['distribution_version'] = dist[1] or 'NA'
+        self.facts['distribution_release'] = dist[2] or 'NA'
+        # Try to handle the exceptions now ...
+        for (path, name) in Facts.OSDIST_DICT.items():
+            if os.path.exists(path):
+                if self.facts['distribution'] == 'Fedora':
+                    pass
+                elif name == 'RedHat':
+                    data = get_file_content(path)
+                    if 'Red Hat' in data:
+                        self.facts['distribution'] = name
+                    else:
+                        self.facts['distribution'] = data.split()[0]
+                else:
+                    self.facts['distribution'] = name
 
-def get_virtual_facts(facts):
-    facts['virtualization_type'] = 'None'
-    facts['virtualization_role'] = 'None'
-    if facts['system'] == 'Linux':
-        facts = get_linux_virtual_facts(facts)
+    def get_public_ssh_host_keys(self):
+        dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
+        rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
+        if dsa is None:
+            dsa = 'NA'
+        else:
+            self.facts['ssh_host_key_dsa_public'] = dsa.split()[1]
+        if rsa is None:
+            rsa = 'NA'
+        else:
+            self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
 
-# get list of interfaces that are up
-def get_interfaces(facts):
-    if facts['system'] == 'SunOS':
-        return []
-    length = 4096
-    offset = 32
-    step = 32
-    if platform.architecture()[0] == '64bit':
-        offset = 16
-        step = 40
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    names = array.array('B', '\0' * length)
-    bytelen = struct.unpack('iL', fcntl.ioctl(
-        s.fileno(), SIOCGIFCONF, struct.pack(
-            'iL', length, names.buffer_info()[0])
-        ))[0]
-    return [names.tostring()[i:i+offset].split('\0', 1)[0]
-            for i in range(0, bytelen, step)]
+    def get_selinux_facts(self):
+        if not HAVE_SELINUX:
+            self.facts['selinux'] = False
+            return
+        self.facts['selinux'] = {}
+        if not selinux.is_selinux_enabled():
+            self.facts['selinux']['status'] = 'disabled'
+        else:
+            self.facts['selinux']['status'] = 'enabled'
+            self.facts['selinux']['policyvers'] = selinux.security_policyvers()
+            (rc, configmode) = selinux.selinux_getenforcemode()
+            if rc == 0 and Facts.SELINUX_MODE_DICT.has_key(configmode):
+                self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT[configmode]
+            mode = selinux.security_getenforce()
+            if Facts.SELINUX_MODE_DICT.has_key(mode):
+                self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT[mode]
+            (rc, policytype) = selinux.selinux_getpolicytype()
+            if rc == 0:
+                self.facts['selinux']['type'] = policytype
 
-def get_iface_hwaddr(iface):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), SIOCGIFHWADDR,
-                       struct.pack('256s', iface[:15]))
-    return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+class Hardware(Facts):
+    """
+    This is a generic Hardware subclass of Facts.  This should be further
+    subclassed to implement per platform.  If you subclass this, it
+    should define:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
 
-def get_network_facts(facts):
-    facts['fqdn'] = socket.getfqdn()
-    facts['hostname'] = facts['fqdn'].split('.')[0]
-    facts['interfaces'] = get_interfaces(facts)
-    for iface in facts['interfaces']:
-        facts[iface] = { 'macaddress': get_iface_hwaddr(iface) }
-        # This is lame, but there doesn't appear to be a good way
-        # to get all addresses for both IPv4 and IPv6.
-        cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
+    All subclasses MUST define platform.
+    """
+    platform = 'Generic'
+
+    def __new__(cls, *arguments, **keyword):
+        subclass = cls
+        for sc in Hardware.__subclasses__():
+            if sc.platform == platform.system():
+                subclass = sc
+        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+
+    def __init__(self):
+        Facts.__init__(self)
+
+    def populate(self):
+        return self.facts
+
+class LinuxHardware(Hardware):
+    """
+    Linux-specific subclass of Hardware.  Defines memory and CPU facts:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
+
+    In addition, it also defines number of DMI facts.
+    """
+    platform = 'Linux'
+    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+    # DMI bits
+    DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
+                 'product_name': '/sys/devices/virtual/dmi/id/product_name',
+                 'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
+                 'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
+                 'product_version': '/sys/devices/virtual/dmi/id/product_version',
+                 'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
+                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+                 'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
+    # From smolt and DMI spec
+    FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
+                    "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
+                    "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
+                    "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
+                    "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
+                    "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
+                    "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
+                    "CompactPCI", "AdvancedTCA" ]
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        self.get_dmi_facts()
+        return self.facts
+
+    def get_memory_facts(self):
+        if not os.access("/proc/meminfo", os.R_OK):
+            return
+        for line in open("/proc/meminfo").readlines():
+            data = line.split(":", 1)
+            key = data[0]
+            if key in LinuxHardware.MEMORY_FACTS:
+                val = data[1].strip().split(' ')[0]
+                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+
+    def get_cpu_facts(self):
+        i = 0
+        physid = 0
+        sockets = {}
+        if not os.access("/proc/cpuinfo", os.R_OK):
+            return
+        self.facts['processor'] = []
+        for line in open("/proc/cpuinfo").readlines():
+            data = line.split(":", 1)
+            key = data[0].strip()
+            if key == 'model name':
+                if 'processor' not in self.facts:
+                    self.facts['processor'] = []
+                self.facts['processor'].append(data[1].strip())
+                i += 1
+            elif key == 'physical id':
+                physid = data[1].strip()
+                if physid not in sockets:
+                    sockets[physid] = 1
+            elif key == 'cpu cores':
+                sockets[physid] = int(data[1].strip())
+        if len(sockets) > 0:
+            self.facts['processor_count'] = len(sockets)
+            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+        else:
+            self.facts['processor_count'] = i
+            self.facts['processor_cores'] = 'NA'
+
+    def get_dmi_facts(self):
+        for (key,path) in LinuxHardware.DMI_DICT.items():
+            data = get_file_content(path)
+            if data is not None:
+                if key == 'form_factor':
+                    self.facts['form_factor'] = LinuxHardware.FORM_FACTOR[int(data)]
+                else:
+                    self.facts[key] = data
+            else:
+                self.facts[key] = 'NA'
+
+class SunOSHardware(Hardware):
+    """
+    In addition to the generic memory and cpu facts, this also sets
+    swap_reserved_mb and swap_allocated_mb that is available from *swap -s*.
+    """
+    platform = 'SunOS'
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        return self.facts
+
+    def get_cpu_facts(self):
+        cmd = subprocess.Popen("/usr/sbin/psrinfo -v", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        self.facts['processor'] = []
+        for line in out.split('\n'):
+            if 'processor operates' in line:
+                if 'processor' not in self.facts:
+                    self.facts['processor'] = []
+                self.facts['processor'].append(line.strip())
+        self.facts['processor_cores'] = 'NA'
+        self.facts['processor_count'] = len(self.facts['processor'])
+
+    def get_memory_facts(self):
+        cmd = subprocess.Popen("/usr/sbin/prtconf", shell=False,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        for line in out.split('\n'):
+            if 'Memory size' in line:
+                self.facts['memtotal_mb'] = line.split()[2]
+        cmd = subprocess.Popen("/usr/sbin/swap -s", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        allocated = long(out.split()[1][:-1])
+        reserved = long(out.split()[5][:-1])
+        used = long(out.split()[8][:-1])
+        free = long(out.split()[10][:-1])
+        self.facts['swapfree_mb'] = free / 1024
+        self.facts['swaptotal_mb'] = (free + used) / 1024
+        self.facts['swap_allocated_mb'] = allocated / 1024
+        self.facts['swap_reserved_mb'] = reserved / 1024
+
+class FreeBSDHardware(Hardware):
+    """
+    FreeBSD-specific subclass of Hardware.  Defines memory and CPU facts:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
+    """
+    platform = 'FreeBSD'
+    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        return self.facts
+
+    def get_cpu_facts(self):
+        self.facts['processor'] = []
+        cmd = subprocess.Popen("/sbin/sysctl -n hw.ncpu", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        self.facts['processor_count'] = out.strip()
+        for line in open(FreeBSDHardware.DMESG_BOOT).readlines():
+            if 'CPU:' in line:
+                cpu = re.sub(r'CPU:\s+', r"", line)
+                self.facts['processor'].append(cpu.strip())
+            if 'Logical CPUs per core' in line:
+                self.facts['processor_cores'] = line.split()[4]
+
+    def get_memory_facts(self):
+        cmd = subprocess.Popen("/sbin/sysctl vm.stats", shell=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         for line in out.split('\n'):
             data = line.split()
-            if 'inet addr' in line:
-                if 'ipv4' not in facts[iface]:
-                    facts[iface]['ipv4'] = {}
-                facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
-                                         'netmask': data[-1].split(':')[1] }
-                ip = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['address']))[0]
-                mask = struct.unpack("!L", socket.inet_aton(facts[iface]['ipv4']['netmask']))[0]
-                facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
-            if 'inet6 addr' in line:
-                (ip, prefix) = data[2].split('/')
-                scope = data[3].split(':')[1].lower()
-                if 'ipv6' not in facts[iface]:
-                    facts[iface]['ipv6'] = []
-                facts[iface]['ipv6'].append( { 'address': ip,
-                                               'prefix': prefix,
-                                               'scope': scope } )
-    return facts
+            if 'vm.stats.vm.v_page_size' in line:
+                pagesize = long(data[1])
+            if 'vm.stats.vm.v_page_count' in line:
+                pagecount = long(data[1])
+            if 'vm.stats.vm.v_free_count' in line:
+                freecount = long(data[1])
+        self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
+        self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
+        # Get swapinfo.  swapinfo output looks like:
+        # Device          1M-blocks     Used    Avail Capacity
+        # /dev/ada0p3        314368        0   314368     0%
+        # 
+        cmd = subprocess.Popen("/usr/sbin/swapinfo -m", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        lines = out.split('\n')
+        if len(lines[-1]) == 0:
+            lines.pop()
+        data = lines[-1].split()
+        self.facts['swaptotal_mb'] = data[1]
+        self.facts['swapfree_mb'] = data[3]
 
-def get_public_ssh_host_keys(facts):
-    dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
-    rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
-    if dsa is None:
-        dsa = 'NA'
-    else:
-        facts['ssh_host_key_dsa_public'] = dsa.split()[1]
-    if rsa is None:
-        rsa = 'NA'
-    else:
-        facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+class Network(Facts):
+    """
+    This is a generic Network subclass of Facts.  This should be further
+    subclassed to implement per platform.  If you subclass this,
+    you must define:
+    - interfaces (a list of interface names)
+    - interface_<name> dictionary of ipv4, ipv6, and mac address information.
 
-def get_selinux_facts(facts):
-    if not HAVE_SELINUX:
-        facts['selinux'] = False
-        return
-    facts['selinux'] = {}
-    if not selinux.is_selinux_enabled():
-        facts['selinux']['status'] = 'disabled'
-    else:
-        facts['selinux']['status'] = 'enabled'
-        facts['selinux']['policyvers'] = selinux.security_policyvers()
-        (rc, configmode) = selinux.selinux_getenforcemode()
-        if rc == 0 and SELINUX_MODE_DICT.has_key(configmode):
-            facts['selinux']['config_mode'] = SELINUX_MODE_DICT[configmode]
-        mode = selinux.security_getenforce()
-        if SELINUX_MODE_DICT.has_key(mode):
-            facts['selinux']['mode'] = SELINUX_MODE_DICT[mode]
-        (rc, policytype) = selinux.selinux_getpolicytype()
-        if rc == 0:
-            facts['selinux']['type'] = policytype
+    All subclasses MUST define platform.
+    """
+    platform = 'Generic'
 
-def get_service_facts(facts):
-    get_public_ssh_host_keys(facts)
-    get_selinux_facts(facts)
+    IPV6_SCOPE = { '0' : 'global',
+                   '10' : 'host',
+                   '20' : 'link',
+                   '40' : 'admin',
+                   '50' : 'site',
+                   '80' : 'organization' }
+
+    def __new__(cls, *arguments, **keyword):
+        subclass = cls
+        for sc in Network.__subclasses__():
+            if sc.platform == platform.system():
+                subclass = sc
+        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+
+    def __init__(self):
+        Facts.__init__(self)
+
+    def populate(self):
+        return self.facts
+
+class LinuxNetwork(Network):
+    """
+    This is a Linux-specific subclass of Network.  It defines
+    - interfaces (a list of interface names)
+    - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    """
+    platform = 'Linux'
+
+    def __init__(self):
+        Network.__init__(self)
+
+    def populate(self):
+        self.facts['interfaces'] = self.get_interfaces()
+        self.get_interface_facts()
+        self.get_ipv4_facts()
+        self.get_ipv6_facts()
+        return self.facts
+
+    # get list of interfaces
+    def get_interfaces(self):
+        names = []
+        data = get_file_content('/proc/net/dev')
+        # Format of /proc/net/dev is:
+        # Inter-|   Receive  ...
+        #  face |bytes       ...
+        #     lo:  595059
+        for line in data.split('\n'):
+            if ':' in line:
+                names.append(line.split(':')[0].strip())
+        return names
+
+    def get_iface_hwaddr(self, iface):
+        data = get_file_content('/sys/class/net/%s/address' % iface)
+        if data is None:
+            return 'unknown'
+        else:
+            return data.strip()
+
+    def get_interface_facts(self):
+        for iface in self.facts['interfaces']:
+            if iface not in self.facts:
+                self.facts[iface] = {}
+            self.facts[iface] = { 'macaddress': self.get_iface_hwaddr(iface) }
+            if os.path.exists('/sys/class/net/%s/mtu' % iface):
+                mtu = get_file_content('/sys/class/net/%s/mtu' % iface)
+                self.facts[iface]['mtu'] = mtu.strip()
+
+    def get_ipv4_facts(self):
+        for iface in self.facts['interfaces']:
+            # This is lame, but there doesn't appear to be a good way
+            # to get all addresses for both IPv4 and IPv6.
+            cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            for line in out.split('\n'):
+                is_ipv4 = False
+                data = line.split()
+                if 'inet addr' in line:
+                    if 'ipv4' not in self.facts[iface]:
+                        self.facts[iface]['ipv4'] = {}
+                    is_ipv4 = True
+                    self.facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
+                                                  'netmask': data[-1].split(':')[1] }
+                # Slightly different output in net-tools-1.60-134.20120127git
+                # Looks like
+                # inet 192.168.1.2  netmask 255.255.255.0  broadcast 192.168.1.255
+                elif 'inet ' in line:
+                    is_ipv4 = True
+                    if 'ipv4' not in self.facts[iface]:
+                        self.facts[iface]['ipv4'] = {}
+                    self.facts[iface]['ipv4'] = { 'address': data[1],
+                                                  'netmask': data[3] }
+                if is_ipv4:
+                    ip = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['address']))[0]
+                    mask = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['netmask']))[0]
+                    self.facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
+
+    def get_ipv6_facts(self):
+        if not socket.has_ipv6:
+            return
+        data = get_file_content('/proc/net/if_inet6')
+        if data is None:
+            return
+        for line in data.split('\n'):
+            l = line.split()
+            iface = l[5]
+            if 'ipv6' not in self.facts[iface]:
+                self.facts[iface]['ipv6'] = []
+            scope = l[3]
+            if Network.IPV6_SCOPE.has_key(l[3]):
+                scope = Network.IPV6_SCOPE[l[3]]
+            prefix = int(l[2], 16)
+            str_addr = ':'.join( [ l[0][i:i+4] for i in range(0, len(l[0]), 4) ] )
+            # Normalize ipv6 address from format in /proc/net/if_inet6
+            addr = socket.inet_ntop(socket.AF_INET6,
+                                    socket.inet_pton(socket.AF_INET6, str_addr))
+            self.facts[iface]['ipv6'].append( { 'address': addr,
+                                                'prefix': prefix,
+                                                'scope': scope } )
+
+class Virtual(Facts):
+    """
+    This is a generic Virtual subclass of Facts.  This should be further
+    subclassed to implement per platform.  If you subclass this,
+    you should define:
+    - virtualization_type
+    - virtualization_role
+
+    All subclasses MUST define platform.
+    """
+
+    def __new__(cls, *arguments, **keyword):
+        subclass = cls
+        for sc in Virtual.__subclasses__():
+            if sc.platform == platform.system():
+                subclass = sc
+        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+
+    def __init__(self):
+        Facts.__init__(self)
+
+    def populate(self):
+        return self.facts
+
+class LinuxVirtual(Virtual):
+    """
+    This is a Linux-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'Linux'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        if os.path.exists("/proc/xen"):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            if os.path.exists("/proc/xen/capabilities"):
+                self.facts['virtualization_role'] = 'host'
+        if os.path.exists("/proc/modules"):
+            modules = []
+            for line in open("/proc/modules").readlines():
+                data = line.split(" ", 1)
+                modules.append(data[0])
+            if 'kvm' in modules:
+                self.facts['virtualization_type'] = 'kvm'
+                self.facts['virtualization_role'] = 'host'
+            elif 'vboxdrv' in modules:
+                self.facts['virtualization_type'] = 'virtualbox'
+                self.facts['virtualization_role'] = 'host'
+            elif 'vboxguest' in modules:
+                self.facts['virtualization_type'] = 'virtualbox'
+                self.facts['virtualization_role'] = 'guest'
+        data = get_file_content('/proc/cpuinfo')
+        if 'QEMU' in data:
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+        if 'distribution' in self.facts and self.facts['distribution'] == 'VMwareESX':
+            self.facts['virtualization_type'] = 'VMware'
+            self.facts['virtualization_role'] = 'host'
+        # You can spawn a dmidecode process and parse that or infer from devices
+        for dev_model in glob.glob('/sys/block/?da/device/vendor'):
+            info = open(dev_model).read()
+            if 'VMware' in info:
+                self.facts['virtualization_type'] = 'VMware'
+                self.facts['virtualization_role'] = 'guest'
+            elif 'Virtual HD' in info or 'Virtual CD' in info:
+                self.facts['virtualization_type'] = 'VirtualPC'
+                self.facts['virtualization_role'] = 'guest'
+
+def get_file_content(path):
+    data = None
+    if os.path.exists(path) and os.access(path, os.R_OK):
+        data = open(path).read().strip()
+        if len(data) == 0:
+            data = None
+    return data
 
 def ansible_facts():
     facts = {}
-    get_platform_facts(facts)
-    get_hardware_facts(facts)
-    get_virtual_facts(facts)
-    get_network_facts(facts)
-    get_service_facts(facts)
+    facts.update(Facts().populate())
+    facts.update(Hardware().populate())
+    facts.update(Network().populate())
+    facts.update(Virtual().populate())
     return facts
 
 # ===========================================

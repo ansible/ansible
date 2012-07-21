@@ -31,6 +31,7 @@ Ansible Changes By Release
 * mount module
 * apt module now passes DEBIAN_FRONTEND=noninteractive
 * to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
+* automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
 
 0.5 "Amsterdam" ------- July 04, 2012
 

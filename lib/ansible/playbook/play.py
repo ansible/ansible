@@ -203,6 +203,21 @@ class Play(object):
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+  
+        if (host is not None):
+            inventory = self.playbook.inventory
+            hostrec = inventory.get_host(host)
+            groups = [ g.name for g in hostrec.groups ]
+            basedir = inventory.basedir()
+            if basedir is not None:
+                for x in groups:
+                    path = os.path.join(basedir, "group_vars/%s" % x)
+                    if os.path.exists(path):
+                        self.vars_files.append(path)
+                path = os.path.join(basedir, "host_vars/%s" % hostrec.name)
+                if os.path.exists(path):
+                    self.vars_files.append(path)
+
         for filename in self.vars_files:
 
             if type(filename) == list:
