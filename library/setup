@@ -482,6 +482,8 @@ class LinuxNetwork(Network):
                     self.facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
 
     def get_ipv6_facts(self):
+        if not socket.has_ipv6:
+            return
         data = get_file_content('/proc/net/if_inet6')
         if data is None:
             return
