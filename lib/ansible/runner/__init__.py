@@ -207,10 +207,10 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_module(self, conn, tmp, module):
+    def _transfer_module(self, conn, tmp, module, inject):
         ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
 
-        outpath = self._copy_module(conn, tmp, module)
+        outpath = self._copy_module(conn, tmp, module, inject)
         self._low_level_exec_command(conn, "chmod +x %s" % outpath, tmp)
         return outpath
 
@@ -282,7 +282,7 @@ class Runner(object):
             module_name = 'command'
             self.module_args += " #USE_SHELL"
 
-        module = self._transfer_module(conn, tmp, module_name)
+        module = self._transfer_module(conn, tmp, module_name, inject)
         exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
         if exec_rc.is_successful():
             self._add_result_to_setup_cache(conn, exec_rc.result)
@@ -299,8 +299,8 @@ class Runner(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        async  = self._transfer_module(conn, tmp, 'async_wrapper')
-        module = self._transfer_module(conn, tmp, module_name)
+        async  = self._transfer_module(conn, tmp, 'async_wrapper', inject)
+        module = self._transfer_module(conn, tmp, module_name, inject)
 
         return self._execute_module(conn, tmp, async, module_args,
            async_module=module, 
@@ -354,7 +354,7 @@ class Runner(object):
 
             # install the copy  module
             self.module_name = 'copy'
-            module = self._transfer_module(conn, tmp, 'copy')
+            module = self._transfer_module(conn, tmp, 'copy', inject)
 
             # run the copy module
             args = "src=%s dest=%s" % (tmp_src, dest)
@@ -396,11 +396,9 @@ class Runner(object):
         if remote_md5 == '0':
             result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
-
         if remote_md5 == '1':
             result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
-
         if remote_md5 == '2':
             result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
             return ReturnData(host=conn.host, result=result)
@@ -458,22 +456,19 @@ class Runner(object):
         source = utils.template(source, inject)
 
         # install the template module
-        copy_module = self._transfer_module(conn, tmp, 'copy')
+        copy_module = self._transfer_module(conn, tmp, 'copy', inject)
 
-        # template the source data locally
+        # template the source data locally & transfer
         try:
             resultant = utils.template_from_file(self.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(host=conn.host, comm_ok=False, result=result)
-
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
             
-        # run the COPY module
+        # run the copy module, queue the file module
         args = "src=%s dest=%s" % (xfered, dest)
         exec_rc = self._execute_module(conn, tmp, copy_module, args, inject=inject)
- 
-        # modify file attribs if needed
         if exec_rc.is_successful():
             exec_rc.result['daisychain']='file'
         return exec_rc
@@ -482,9 +477,10 @@ class Runner(object):
 
     def _execute_assemble(self, conn, tmp, inject=None):
         ''' handler for assemble operations '''
+
         module_name = 'assemble'
         options = utils.parse_kv(self.module_args)
-        module = self._transfer_module(conn, tmp, module_name)
+        module = self._transfer_module(conn, tmp, module_name, inject)
         exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
 
         if exec_rc.is_successful():
@@ -520,6 +516,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
+
         inject = self.setup_cache[host].copy()
         inject.update(host_variables)
         inject.update(self.module_vars)
@@ -687,7 +684,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _copy_module(self, conn, tmp, module):
+    def _copy_module(self, conn, tmp, module, inject):
         ''' transfer a module over SFTP, does not run it '''
 
         if module.startswith("/"):
@@ -703,16 +700,14 @@ class Runner(object):
 
         out_path = os.path.join(tmp, module)
 
-        # use the correct python interpreter for the host
-        host_variables = self.inventory.get_variables(conn.host)
-
         module_data = ""
         with open(in_path) as f:
             module_data = f.read()
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
           
-        if 'ansible_python_interpreter' in host_variables:
-            interpreter = host_variables['ansible_python_interpreter']
+        # use the correct python interpreter for the host
+        if 'ansible_python_interpreter' in inject:
+            interpreter = inject['ansible_python_interpreter']
             module_lines = module_data.split('\n')
             if '#!' and 'python' in module_lines[0]:
                 module_lines[0] = "#!%s" % interpreter
