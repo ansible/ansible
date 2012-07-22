@@ -3,6 +3,8 @@ Ansible Changes By Release
 
 0.6 "Cabo" ------------ pending
 
+* inventory file can use a line of the form base[beg:end:step] to define a
+  set of hosts that use such a numerical range for hostnames 
 * groups variable available as a hash to return the hosts in each group name
 * fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
 * apt module now takes an optional install-recommends=yes|no (default yes)

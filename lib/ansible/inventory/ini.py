@@ -86,7 +86,8 @@ class InventoryParser(object):
                 # Two cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
-                if (hostname.find("]") != -1 and 
+                if (hostname.find("[") != -1 and
+                    hostname.find("]") != -1 and
                     hostname.find(":") != -1 and
                     (hostname.rindex("]") < hostname.rindex(":")) or
                     (hostname.find("]") == -1 and hostname.find(":") != -1)):
