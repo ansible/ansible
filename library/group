@@ -17,50 +17,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import os
 import grp
-import shlex
 import subprocess
-import sys
-import syslog
 
-GROUPADD = "/usr/sbin/groupadd"
-GROUPDEL = "/usr/sbin/groupdel"
-GROUPMOD = "/usr/sbin/groupmod"
-
-def exit_json(rc=0, **kwargs):
-    if 'name' in kwargs:
-        add_group_info(kwargs)
-    print json.dumps(kwargs)
-    sys.exit(rc)
-
-def fail_json(**kwargs):
-    kwargs['failed'] = True
-    exit_json(rc=1, **kwargs)
-
-def add_group_info(kwargs):
-    name = kwargs['name']
-    if group_exists(name):
-        kwargs['state'] = 'present'
-        info = group_info(name)
-        kwargs['gid'] = info[2]
+def get_bin_path(module, arg):
+    if os.path.exists('/usr/sbin/%s' % arg):
+        return '/usr/sbin/%s' % arg
+    elif os.path.exists('/sbin/%s' % arg):
+        return '/sbin/%s' % arg
     else:
-        kwargs['state'] = 'absent'
-    return kwargs
+        module.fail_json(msg="Cannot find %s" % arg)
 
-def group_del(group):
-    cmd = [GROUPDEL, group]
+def group_del(module, group):
+    cmd = [get_bin_path(module, 'groupdel'), group]
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
     return (rc, out, err)
 
-def group_add(group, **kwargs):
-    cmd = [GROUPADD]
+def group_add(module, group, **kwargs):
+    cmd = [get_bin_path(module, 'groupadd')]
     for key in kwargs:
         if key == 'gid' and kwargs[key] is not None:
             cmd.append('-g')
@@ -73,8 +50,8 @@ def group_add(group, **kwargs):
     rc = p.returncode
     return (rc, out, err)
 
-def group_mod(group, **kwargs):
-    cmd = [GROUPMOD]
+def group_mod(module, group, **kwargs):
+    cmd = [get_bin_path(module, 'groupmod')]
     info = group_info(group)
     for key in kwargs:
         if key == 'gid':
@@ -107,78 +84,56 @@ def group_info(group):
     
 # ===========================================
 
-if not os.path.exists(GROUPADD):
-    if os.path.exists("/sbin/groupadd"):
-        GROUPADD = "/sbin/groupadd"
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state=dict(default='present', choices=['present', 'absent']),
+            name=dict(required=True),
+            gid=dict(default=None),
+            system=dict(default='no', choices=['yes', 'no']),
+        )
+    )
+
+    state = module.params['state']
+    name = module.params['name']
+    gid = module.params['gid']
+    system = module.params['system']
+    rc = None
+    out = ''
+    err = ''
+    result = {}
+    result['name'] = name
+    result['state'] = state
+    if state == 'absent':
+        if group_exists(name):
+            (rc, out, err) = group_del(module, name)
+            if rc != 0:
+                module.fail_json(name=name, msg=err)
+    elif state == 'present':
+        if not group_exists(name):
+            (rc, out, err) = group_add(module, name, gid=gid, system=system)
+        else:
+            (rc, out, err) = group_mod(module, name, gid=gid)
+
+        if rc is not None and rc != 0:
+            module.fail_json(name=name, msg=err)
+
+    if rc is None:
+        result['changed'] = False
     else:
-        fail_json(msg="Cannot find groupadd")
-if not os.path.exists(GROUPDEL):
-    if os.path.exists("/sbin/groupdel"):
-        GROUPDEL = "/sbin/groupdel"
-    else:
-        fail_json(msg="Cannot find groupdel")
-if not os.path.exists(GROUPMOD):
-    if os.path.exists("/sbin/groupmod"):
-        GROUPDEL = "/sbin/groupmod"
-    else:
-        fail_json(msg="Cannot find groupmod")
+        result['changed'] = True
+    if out:
+        result['stdout'] = out
+    if err:
+        result['stderr'] = err
 
-if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
-    argfile = sys.argv[1]
-    args    = open(argfile, 'r').read()
-else:
-    args = ' '.join(sys.argv[1:])
-items   = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-if not len(items):
-    fail_json(msg='the module requires arguments -a')
-    sys.exit(1)
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
-
-state       = params.get('state','present')
-name        = params.get('name', None)
-gid         = params.get('gid', None)
-system      = params.get('system', 'no')
-
-if state not in [ 'present', 'absent' ]:
-    fail_json(msg='invalid state')
-if system not in ['yes', 'no']:
-    fail_json(msg='invalid system')
-if name is None:
-    fail_json(msg='name is required')
-
-rc = None
-out = ''
-err = ''
-result = {}
-result['name'] = name
-if state == 'absent':
     if group_exists(name):
-        (rc, out, err) = group_del(name)
-        if rc != 0:
-            fail_json(name=name, msg=err)
-elif state == 'present':
-    if not group_exists(name):
-        (rc, out, err) = group_add(name, gid=gid, system=system)
-    else:
-        (rc, out, err) = group_mod(name, gid=gid)
+        info = group_info(name)
+        result['system'] = system
+        result['gid'] = info[2]
 
-    if rc is not None and rc != 0:
-        fail_json(name=name, msg=err)
+    module.exit_json(**result)
 
-if rc is None:
-    result['changed'] = False
-else:
-    result['changed'] = True
-if out:
-    result['stdout'] = out
-if err:
-    result['stderr'] = err
-exit_json(**result)
-fail_json(name=name, msg='Unexpected position reached')
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
