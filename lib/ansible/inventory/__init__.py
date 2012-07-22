@@ -36,13 +36,20 @@ class Inventory(object):
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_is_script',
-                  'parser' ] 
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ] 
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
         self.host_list = host_list
+
+        # caching to avoid repeated calculations, particularly with
+        # external inventory scripts.
+ 
+        self._vars_per_host  = {}
+        self._vars_per_group = {}
+        self._hosts_cache    = {}
 
         # the inventory object holds a list of groups
         self.groups = []
@@ -111,9 +118,12 @@ class Inventory(object):
     def get_groups(self):
         return self.groups
 
-    # TODO: cache this logic so if called a second time the result is not recalculated
-    # if using inventory scripts
     def get_host(self, hostname):
+        if hostname not in self._hosts_cache:
+            self._hosts_cache[hostname] = self._get_host(hostname)
+        return self._hosts_cache[hostname]
+
+    def _get_host(self, hostname):
         for group in self.groups:
             for host in group.get_hosts():
                 if hostname == host.name:
@@ -125,18 +135,24 @@ class Inventory(object):
             if group.name == groupname:
                 return group
         return None
-
-    # TODO: cache this logic so if called a second time the result is not recalculated
-    # if using inventory scripts
+   
     def get_group_variables(self, groupname):
+        if groupname not in self._vars_per_group:
+            self._vars_per_group[groupname] = self._get_group_variables(groupname)
+        return self._vars_per_group[groupname]
+
+    def _get_group_variables(self, groupname):
         group = self.get_group(groupname)
         if group is None:
             raise Exception("group not found: %s" % groupname)
         return group.get_variables()
 
-    # TODO: cache this logic so if called a second time the result is not recalculated
-    # if using inventory scripts
     def get_variables(self, hostname):
+        if hostname not in self._vars_per_host:
+            self._vars_per_host[hostname] = self._get_variables(hostname)
+        return self._vars_per_host[hostname]
+
+    def _get_variables(self, hostname):
 
         if self._is_script:
             host = self.get_host(hostname)

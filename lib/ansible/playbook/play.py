@@ -209,12 +209,10 @@ class Play(object):
                     path = os.path.join(basedir, "group_vars/%s" % x)
                     if os.path.exists(path):
                         data = utils.parse_yaml_from_file(path)
-                        print "GROUPFILE: %s" % data
                         self.playbook.SETUP_CACHE[host].update(data)
                 path = os.path.join(basedir, "host_vars/%s" % hostrec.name)
                 if os.path.exists(path):
                     data = utils.parse_yaml_from_file(path)
-                    print "HOSTFILE: %s" % data
                     self.playbook.SETUP_CACHE[host].update(data)
 
         for filename in self.vars_files:
@@ -238,13 +236,11 @@ class Play(object):
                             if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                                 # this filename has variables in it that were fact specific
                                 # so it needs to be loaded into the per host SETUP_CACHE
-                                print "VF1 UPDATE: %s" % data
                                 self.playbook.SETUP_CACHE[host].update(data)
                                 self.playbook.callbacks.on_import_for_host(host, filename4)
                         elif not self._has_vars_in(filename4):
                             # found a non-host specific variable, load into vars and NOT
                             # the setup cache
-                            print "VF2 UPDATE: %s" % data
                             self.vars.update(data)
                     elif host is not None:
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
@@ -273,9 +269,7 @@ class Play(object):
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache 
-                        print "VF3 update: %s" % new_vars
                         self.playbook.SETUP_CACHE[host].update(new_vars)
                     elif host is None:
                         # running a non-host specific pass and we can update the global vars instead    
-                        print "VF4 update: %s" % new_vars
                         self.vars.update(new_vars)
