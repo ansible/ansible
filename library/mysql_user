@@ -19,75 +19,29 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    import json
+    import MySQLdb
 except ImportError:
-    import simplejson as json
-import sys
-import os
-import os.path
-import shlex
-import syslog
-import re
-
-# ===========================================
-# Standard Ansible support methods.
-#
-
-def exit_json(rc=0, **kwargs):
-    print json.dumps(kwargs)
-    sys.exit(rc)
-
-def fail_json(**kwargs):
-    kwargs["failed"] = True
-    exit_json(rc=1, **kwargs)
-
-# ===========================================
-# Standard Ansible argument parsing code.
-#
-
-if len(sys.argv) == 1:
-    fail_json(msg="the mysql module requires arguments (-a)")
-
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    fail_json(msg="argument file not found")
-
-args = open(argfile, "r").read()
-items = shlex.split(args)
-syslog.openlog("ansible-%s" % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, "Invoked with %s" % args)
-
-if not len(items):
-    fail_json(msg="the mysql module requires arguments (-a)")
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
+    mysqldb_found = False
+else:
+    mysqldb_found = True
 
 # ===========================================
 # MySQL module specific support methods.
 #
 
-# Import MySQLdb here instead of at the top, so we can use the fail_json function.
-try:
-    import MySQLdb
-except ImportError:
-    fail_json(msg="The Python MySQL package is missing")
-
-def user_exists(user, host):
+def user_exists(cursor, user, host):
     cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(user, host, passwd, new_priv):
+def user_add(cursor, user, host, passwd, new_priv):
     cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,passwd))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
-            privileges_grant(user,host,db_table,priv)
+            privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(user, host, passwd, new_priv):
+def user_mod(cursor, user, host, passwd, new_priv):
     changed = False
 
     # Handle passwords.
@@ -102,20 +56,20 @@ def user_mod(user, host, passwd, new_priv):
 
     # Handle privileges.
     if new_priv is not None:
-        curr_priv = privileges_get(user,host)
+        curr_priv = privileges_get(cursor, user,host)
 
         # If the user has privileges on a db.table that doesn't appear at all in
         # the new specification, then revoke all privileges on it.
         for db_table, priv in curr_priv.iteritems():
             if db_table not in new_priv:
-                privileges_revoke(user,host,db_table)
+                privileges_revoke(cursor, user,host,db_table)
                 changed = True
 
         # If the user doesn't currently have any privileges on a db.table, then
         # we can perform a straight grant operation.
         for db_table, priv in new_priv.iteritems():
             if db_table not in curr_priv:
-                privileges_grant(user,host,db_table,priv)
+                privileges_grant(cursor, user,host,db_table,priv)
                 changed = True
 
         # If the db.table specification exists in both the user's current privileges
@@ -124,17 +78,17 @@ def user_mod(user, host, passwd, new_priv):
         for db_table in db_table_intersect:
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
-                privileges_revoke(user,host,db_table)
-                privileges_grant(user,host,db_table,new_priv[db_table])
+                privileges_revoke(cursor, user,host,db_table)
+                privileges_grant(cursor, user,host,db_table,new_priv[db_table])
                 changed = True
 
     return changed
 
-def user_delete(user, host):
+def user_delete(cursor, user, host):
     cursor.execute("DROP USER %s@%s", (user,host))
     return True
 
-def privileges_get(user,host):
+def privileges_get(cursor, user,host):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
     Here's an example of the string that is returned from MySQL:
@@ -150,7 +104,7 @@ def privileges_get(user,host):
     for grant in grants:
         res = re.match("GRANT\ (.+)\ ON\ (.+)\ TO", grant[0])
         if res is None:
-            fail_json(msg="unable to parse the MySQL grant string")
+            module.fail_json(msg="unable to parse the MySQL grant string")
         privileges = res.group(1).split(", ")
         privileges = ['ALL' if x=='ALL PRIVILEGES' else x for x in privileges]
         db = res.group(2).replace('`', '')
@@ -178,11 +132,11 @@ def privileges_unpack(priv):
 
     return output
 
-def privileges_revoke(user,host,db_table):
+def privileges_revoke(cursor, user,host,db_table):
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
 
-def privileges_grant(user,host,db_table,priv):
+def privileges_grant(cursor, user,host,db_table,priv):
     priv_string = ",".join(priv)
     query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
     cursor.execute(query)
@@ -191,44 +145,54 @@ def privileges_grant(user,host,db_table,priv):
 # Module execution.
 #
 
-# Gather arguments into local variables.
-loginuser = params.get("loginuser", "root")
-loginpass = params.get("loginpass", "")
-loginhost = params.get("loginhost", "localhost")
-user      = params.get("user", None)
-passwd    = params.get("passwd", None)
-host      = params.get("host", "localhost")
-state     = params.get("state", "present")
-priv      = params.get("priv", None)
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            loginuser=dict(default="root"),
+            loginpass=dict(default=""),
+            loginhost=dict(default="localhost"),
+            user=dict(required=True),
+            passwd=dict(default=None),
+            host=dict(default="localhost"),
+            state=dict(default="present", choices=["absent", "present"]),
+            priv=dict(default=None),
+        )
+    )
+    user = module.params["user"]
+    passwd = module.params["passwd"]
+    host = module.params["host"]
+    state = module.params["state"]
+    priv = module.params["priv"]
 
-if state not in ["present", "absent"]:
-    fail_json(msg="invalid state, must be 'present' or 'absent'")
+    if not mysqldb_found:
+        module.fail_json(msg="the python mysqldb module is required")
 
-if priv is not None:
+    if priv is not None:
+        try:
+            priv = privileges_unpack(priv)
+        except:
+            module.fail_json(msg="invalid privileges string")
+
     try:
-        priv = privileges_unpack(priv)
-    except:
-        fail_json(msg="invalid privileges string")
-
-if user is not None:
-    try:
-        db_connection = MySQLdb.connect(host=loginhost, user=loginuser, passwd=loginpass, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=module.params["loginuser"], passwd=module.params["loginpass"], db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
-        fail_json(msg="unable to connect to database")
+        module.fail_json(msg="unable to connect to database")
 
     if state == "present":
-        if user_exists(user, host):
-            changed = user_mod(user, host, passwd, priv)
+        if user_exists(cursor, user, host):
+            changed = user_mod(cursor, user, host, passwd, priv)
         else:
             if passwd is None:
-                fail_json(msg="passwd parameter required when adding a user")
-            changed = user_add(user, host, passwd, priv)
+                module.fail_json(msg="passwd parameter required when adding a user")
+            changed = user_add(cursor, user, host, passwd, priv)
     elif state == "absent":
-        if user_exists(user, host):
-            changed = user_delete(user, host)
+        if user_exists(cursor, user, host):
+            changed = user_delete(cursor, user, host)
         else:
             changed = False
-    exit_json(changed=changed, user=user)
+    module.exit_json(changed=changed, user=user)
 
-fail_json(msg="invalid parameters passed, user parameter required")
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

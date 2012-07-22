@@ -51,10 +51,10 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             loginuser=dict(default="root"),
-            loginpass=dict(required=True),
+            loginpass=dict(default=""),
             loginhost=dict(default="localhost"),
             db=dict(required=True),
-            state=dict(default="present")
+            state=dict(default="present", choices=["absent", "present"]),
         )
     )
 
