@@ -24,6 +24,9 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.inventory.expand_hosts import detect_range
+from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible import errors
 from ansible import errors
 from ansible import utils
 
@@ -80,21 +83,39 @@ class InventoryParser(object):
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
-                if hostname.find(":") != -1:
-                    tokens2  = hostname.split(":")
-                    hostname = tokens2[0]
-                    port     = tokens2[1]
+                # Two cases to check:
+                # 0. A hostname that contains a range pesudo-code and a port
+                # 1. A hostname that contains just a port
+                if (hostname.find("]") != -1 and 
+                    hostname.find(":") != -1 and
+                    (hostname.rindex("]") < hostname.rindex(":")) or
+                    (hostname.find("]") == -1 and hostname.find(":") != -1)):
+                        tokens2  = hostname.rsplit(":", 1)
+                        hostname = tokens2[0]
+                        port     = tokens2[1]
+                
                 host = None
+                _all_hosts = []
                 if hostname in self.hosts:
                     host = self.hosts[hostname]
+                    _all_hosts.append(host)
                 else:
-                    host = Host(name=hostname, port=port)
-                    self.hosts[hostname] = host
+                    if detect_range(hostname):
+                        _hosts = expand_hostname_range(hostname)
+                        for _ in _hosts:
+                            host = Host(name=_, port=port)
+                            self.hosts[_] = host
+                            _all_hosts.append(host)
+                    else:
+                        host = Host(name=hostname, port=port)
+                        self.hosts[hostname] = host
+                        _all_hosts.append(host)
                 if len(tokens) > 1:
                     for t in tokens[1:]:
                         (k,v) = t.split("=")
                         host.set_variable(k,v)
-                self.groups[active_group_name].add_host(host)
+                for _ in _all_hosts:
+                    self.groups[active_group_name].add_host(_)
 
     # [southeast:children]
     # atlanta
