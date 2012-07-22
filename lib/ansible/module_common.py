@@ -39,6 +39,11 @@ import subprocess
 import sys
 import syslog
 
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    from md5 import md5 as _md5
+
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False):
@@ -134,6 +139,21 @@ class AnsibleModule(object):
         kwargs['failed'] = True
         print json.dumps(kwargs)
         sys.exit(1)
+
+    def md5(self, filename):
+        ''' Return MD5 hex digest of local file, or None if file is not present. '''
+        if not os.path.exists(filename):
+            return None
+        digest = _md5()
+        blocksize = 64 * 1024
+        infile = open(filename, 'rb')
+        block = infile.read(blocksize)
+        while block:
+            digest.update(block)
+            block = infile.read(blocksize)
+        infile.close()
+        return digest.hexdigest()
+
 
 # == END DYNAMICALLY INSERTED CODE ===
 

@@ -211,9 +211,7 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
-    # FIXME: possibly a bit inefficient here, do this in runner code
     vars = vars.copy()
-    vars['hostvars'] = vars.get('setup_cache',{})
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
@@ -259,6 +257,12 @@ def md5(filename):
         block = infile.read(blocksize)
     infile.close()
     return digest.hexdigest()
+
+def default(value, function):
+    ''' syntactic sugar around lazy evaluation of defaults '''
+    if value is None:
+        return function()
+    return value
 
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook 

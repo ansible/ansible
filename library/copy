@@ -16,108 +16,53 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-import sys
 import os
-import shlex
 import shutil
-import syslog
 
-try:
-    from hashlib import md5 as _md5
-except ImportError: 
-    from md5 import md5 as _md5
+def main():
 
-# ===========================================
-# convert arguments of form a=b c=d
-# to a dictionary
-# FIXME: make more idiomatic
+    module = AnsibleModule(
+        argument_spec = dict(
+            src=dict(required=True),
+            dest=dict(required=True)
+        )
+    ) 
 
-def dump_kv(vars):
-    return " ".join("%s='%s'" % (k,v) for (k,v) in vars.items())
+    src  = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params['dest'])
 
-def exit_kv(rc=0, **kwargs):
-    if 'path' in kwargs:
-        add_path_info(kwargs)
-    print dump_kv(kwargs)
-    sys.exit(rc)
+    if not os.path.exists(src):
+        module.fail_json(msg="Source %s failed to transfer" % (src))
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source %s not readable" % (src))
 
-def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
-    if not os.path.exists(filename):
-        return None
-    digest = _md5()
-    blocksize = 64 * 1024
-    infile = open(filename, 'rb')
-    block = infile.read(blocksize)
-    while block:
-        digest.update(block)
-        block = infile.read(blocksize)
-    infile.close()
-    return digest.hexdigest()
+    md5sum_src = module.md5(src)
+    md5sum_dest = None
 
-# ===========================================
+    if os.path.exists(dest):
+        if not os.access(dest, os.W_OK):
+            module.fail_json(msg="Destination %s not writable" % (dest))
+        if not os.access(dest, os.R_OK):
+            module.fail_json(msg="Destination %s not readable" % (dest))
+        md5sum_dest = module.md5(dest)
+    else:
+        if not os.access(os.path.dirname(dest), os.W_OK):
+            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
-if len(sys.argv) == 1:
-    exit_kv(rc=1, failed=1, msg="incorrect number of arguments given")
+    if md5sum_src != md5sum_dest:
+        try:
+            shutil.copyfile(src, dest)
+        except shutil.Error:
+            module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest)) 
+        except IOError:
+            module.fail_json(msg="failed to copy: %s to %s" % (src, dest)) 
+        changed = True
+    else:
+        changed = False
 
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    exit_kv(rc=1, failed=1, msg="file %s does not exist" % (argfile))
+    module.exit_json(dest=dest, src=src, md5sum=md5sum_src, changed=changed)
 
-args = open(argfile, 'r').read()
-items = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
-
-src  = params['src']
-dest = params['dest']
-if src:
-    src = os.path.expanduser(src)
-if dest:
-    dest = os.path.expanduser(dest)
-
-md5sum_src = None
-# raise an error if there is no src file
-if not os.path.exists(src):
-    exit_kv(rc=1, failed=1, msg="Source %s failed to transfer" % (src))
-if not os.access(src, os.R_OK):
-    exit_kv(rc=1, failed=1, msg="Source %s not readable" % (src))
-md5sum_src = md5(src)
-
-md5sum_dest = None
-# check if there is no dest file
-if os.path.exists(dest):
-    # raise an error if copy has no permission on dest
-    if not os.access(dest, os.W_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (dest))
-    if not os.access(dest, os.R_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not readable" % (dest))
-    md5sum_dest = md5(dest)
-else:
-    if not os.access(os.path.dirname(dest), os.W_OK):
-        exit_kv(rc=1, failed=1, msg="Destination %s not writable" % (os.path.dirname(dest)))
-
-if md5sum_src != md5sum_dest:
-    # was os.system("cp %s %s" % (src, dest))
-    try:
-        shutil.copyfile(src, dest)
-    except shutil.Error:
-        exit_kv(rc=1, failed=1, msg="failed to copy: %s and %s are the same" % (src, dest)) 
-    except IOError:
-        exit_kv(rc=1, failed=1, msg="failed to copy: %s to %s" % (src, dest)) 
-    changed = True
-else:
-    changed = False
-
-# mission accomplished
-#print "md5sum=%s changed=%s" % (md5sum_src, changed)
-exit_kv(dest=dest, src=src, md5sum=md5sum_src, changed=changed)
-
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
