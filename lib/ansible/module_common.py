@@ -128,22 +128,27 @@ class AnsibleModule(object):
         log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", self.args)
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
+    def jsonify(self, data):
+        return json.dumps(data)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
-        print json.dumps(kwargs)
+        print self.jsonify(kwargs)
         sys.exit(0)
 
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-        print json.dumps(kwargs)
+        print self.jsonify(kwargs)
         sys.exit(1)
 
     def md5(self, filename):
         ''' Return MD5 hex digest of local file, or None if file is not present. '''
         if not os.path.exists(filename):
             return None
+        if os.path.isdir(filename):
+            self.fail_json(msg="attempted to take md5sum of directory: %s" % filename)
         digest = _md5()
         blocksize = 64 * 1024
         infile = open(filename, 'rb')
