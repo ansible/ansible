@@ -30,7 +30,7 @@ from pprint import pprint
 
 def detect_range(line = None):
     '''
-    A helper function that checks a given line to see if it contains
+    A helper function that checks a given host line to see if it contains
     a range pattern. The following are examples:
 
     o node[1:6]
@@ -43,10 +43,10 @@ def detect_range(line = None):
     Returnes True if the given line contains a pattern, else False.
     '''
     if (not line.startswith("[") and 
-        line.lstrip().find("[") != -1 and 
-        (line.rstrip().endswith("]") or
-         line.rstrip().find("]") != -1) and
-        line.index("[") < line.index("]")):   
+        line.find("[") != -1 and 
+        line.find(":") != -1 and
+        line.find("]") != -1 and
+        line.index("[") < line.index(":") < line.index("]")):   
         return True
     else:
         return False
@@ -59,17 +59,17 @@ def expand_hostname_range(line = None):
 
     The '[' and ']' characters are used to maintain the pseudo-code
     appearance. They are replaced in this function with '|' to ease
-    the string splitting.
+    string splitting.
 
     References: http://ansible.github.com/patterns.html#hosts-and-groups
     '''
     all_hosts = []
     if line:
-        # A hostname such as node[1:6:2]-webserver is considered to consists
+        # A hostname such as db[1:6:2]-node is considered to consists
         # three parts: 
-        # head: 'node'
-        # nrange: [1:6:2]
-        # tail: '-webserver'
+        # head: 'db'
+        # nrange: [1:6:2]; range is a built-in. Can't use the name
+        # tail: '-node'
         
         (head, nrange, tail) = line.replace('[','|').replace(']','|').split('|')
         bounds = nrange.split(":")
@@ -103,7 +103,12 @@ def main():
     '''
     A function for self-testing.
     '''
-    test_data = ["mail.example.com",
+    test_data = ["[webservers]",
+                 "[dbservers]",
+                 "[webservers:!phoenix]",
+                 "[atlanta:vars]",
+                 "[southeast:childern]",
+                 "mail.example.com",
                  "www.example.com",
                  "db.example.com",
                  "node[:6]", 
@@ -122,7 +127,7 @@ def main():
             all_hosts = expand_hostname_range(data)
             pprint(all_hosts)
         else:
-            print data
+            print "!!! Not expanded!!! %s" % data
 
     return 0
     
