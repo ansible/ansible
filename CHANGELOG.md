@@ -37,6 +37,7 @@ Ansible Changes By Release
 * git module fixes
 * various ssh connection fixes for old Ubuntu clients
 * setup module overhaul, more modular 
+* minor caching logic added to inventory to reduce hammering of inventroy scripts.
 
 0.5 "Amsterdam" ------- July 04, 2012
 
