@@ -35,6 +35,9 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_is_script',
+                  'parser' ] 
+
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
         # the host file file, or script path, or list of hosts

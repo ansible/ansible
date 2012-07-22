@@ -25,6 +25,8 @@ import sys
 class InventoryParserYaml(object):
     ''' Host inventory parser for ansible '''
 
+    __slots__ = [ '_hosts', 'groups' ]
+
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         sys.stderr.write("WARNING: YAML inventory files are deprecated in 0.6 and will be removed in 0.7, to migrate" +

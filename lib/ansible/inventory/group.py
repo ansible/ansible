@@ -18,6 +18,8 @@
 class Group(object):
     ''' a group of ansible hosts '''
 
+    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups' ]
+
     def __init__(self, name=None):
 
         self.name = name
