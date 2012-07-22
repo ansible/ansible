@@ -12,5 +12,5 @@
     - jquery.min.js
     - mobile/latest/jquery.mobile.min.js
     - ui/jquery-ui-git.css
-  - name: Pass urlencoded name to CGI
-    action: get_url url=http://example.com/name.cgi?name='${person}' dest=/tmp/test
+  #- name: Pass urlencoded name to CGI
+  #  action: get_url url=http://example.com/name.cgi?name='${person}' dest=/tmp/test

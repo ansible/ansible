@@ -537,6 +537,14 @@ class Runner(object):
             group_hosts[g.name] = [ h.name for h in g.hosts ]
         inject['groups'] = group_hosts
 
+        # allow module args to work as a dictionary
+        # though it is usually a string
+        new_args = ""
+        if type(self.module_args) == dict:
+            for (k,v) in self.module_args.iteritems():
+                new_args = new_args + "%s='%s' " % (k,v)
+            self.module_args = new_args
+
         conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
             result = utils.jsonify(dict(skipped=True))
@@ -568,6 +576,8 @@ class Runner(object):
         if result.is_successful() and 'daisychain' in result.result:
             chained = True
             self.module_name = result.result['daisychain']
+            if 'daisychain_args' in result.result:
+                self.module_args = result.result['daisychain_args']
             result2 = self._executor_internal_inner(host, inject, port)
             changed = result.result.get('changed',False) or result2.result.get('changed',False)
             result.result.update(result2.result)
