@@ -47,12 +47,12 @@ def parse():
     :return : (options, args)"""
     parser = optparse.OptionParser()
 
-    parser.usage = "%prog [options] (-h for help)"
+    parser.usage = "%prog -[options] (-h for help)"
 
     parser.add_option('-m', '--module-path', dest='module_path',
-        help="path of module to execute")
+        help="REQUIRED: full path of module source to execute")
     parser.add_option('-a', '--args', dest='module_args', default="",
-        help="module arguments")
+        help="module argument string")
     parser.add_option('-D', '--debugger', dest='debugger', 
         help="path to python debugger (e.g. /usr/bin/pdb)")
     options, args = parser.parse_args()
