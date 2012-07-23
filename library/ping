@@ -18,8 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 def main():
-  syslog.openlog('ansible-%s' % os.path.basename(__file__))
-  syslog.syslog(syslog.LOG_NOTICE, 'Invoked as-is')
   print json.dumps({ "ping" : "pong" })
 
 # this is magic, see lib/ansible/module_common.py
