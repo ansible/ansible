@@ -142,11 +142,16 @@ Connection type to use\&. Possible options are
 .sp
 Ansible stores the hosts it can potentially operate on in an inventory
 file\&. The syntax is one host per line\&. Optionally, a single line can be
-used to define a set of hosts that are named using a numerical range using
-the form head[beg:end:step]tail, where if beg is left out, it defaults to
-0, and if step is left out, it defaults to 1\&. An example:
-mail[1:6:2].example.com, where 'head' is 'mail', beg is 1, end is 6, step
-is 2, and 'tail' is '.example.com'\&. Groups headers are allowed and are included on their own line, enclosed in square brackets\&.
+used to define a set of hosts that are named using a numerical range with
+the form head[beg:end]tail, where if beg is left out, it defaults to
+0\&. An example: mail[1:6:2].example.com, where 'head' is 'mail', beg is 1,
+end is 6, and 'tail' is '.example.com'\&. Optionally, beg can be specified
+as a string padded with zero(s) to the left. If so provided, it acts as a
+formatting hint during hostname expansion\&. Note that in such cases, end
+must be of the same length as beg - this serves as a confirmation that a
+user really wishes to use such a host expansion format, else an exception
+will be raised. An example: mail[001:003].example.com is to be expanded to
+mail001.example.com, mail002.example.com, and mail003.example.com\&. Groups headers are allowed and are included on their own line, enclosed in square brackets\&.
 .SH "FILES"
 .sp
 /etc/ansible/hosts \(em Default inventory file

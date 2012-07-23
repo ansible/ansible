@@ -29,7 +29,7 @@ wheel.colors.com
 # Your personal website also runs a webserver:
 myserver.com
 # An example for host expansion that uses beg, end, and step 
-www[1:6:2].example.com
+www[001:006].example.com
 
 # Ex 3: A collection of database servers in the 'dbservers' group
 [dbservers]
@@ -40,4 +40,4 @@ db02.intranet.mydomain.net
 # Perhaps you serve a db off your personal server too:
 myserver.com
 # An example for host expansion that uses beg, end, and the default step 
-db[1:6]-node.example.com
+db-[001:006]-node.example.com
