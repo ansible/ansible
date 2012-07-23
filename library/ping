@@ -17,15 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+def main():
+  syslog.openlog('ansible-%s' % os.path.basename(__file__))
+  syslog.syslog(syslog.LOG_NOTICE, 'Invoked as-is')
+  print json.dumps({ "ping" : "pong" })
 
-import os
-import syslog
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked as-is')
-
-print json.dumps({ "ping" : "pong" })
+main()
