@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # (c) 2012, Zettar Inc.
 # Written by Chin Fang <fangchin@zettar.com>
 #
@@ -80,12 +78,15 @@ def expand_hostname_range(line = None):
             beg = "0"
         if not end:
             raise ValueError("host range end value missing!")
-        rlen = len(beg) # range length formatting hint
+        if beg[0] == '0' and len(beg) > 1:
+            rlen = len(beg) # range length formatting hint
+        else:
+            rlen = None
         if rlen > 1 and rlen != len(end):
             raise ValueError("host range format incorrectly specified!")
                 
         for _ in range(int(beg), int(end)):
-            if rlen > 1:
+            if rlen:
                 rseq = str(_).zfill(rlen) # range sequence
             else:
                 rseq = str(_)
@@ -112,6 +113,8 @@ def main():
                  "node[:5].example.com",
                  "node-[01:06].example.com",
                  "node[:6]-webserver", 
+                 "data-[10:15]-node.example.com",
+                 "data-[010:015]-node.example.com",
                  "node-[0001:0006]-webserver"]
 
     for data in test_data:
