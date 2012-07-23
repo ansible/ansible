@@ -29,8 +29,6 @@ expanded into 001, 002 ...009, 010.
 Note that when beg is specified with left zero padding, then the length of
 end must be the same as that of beg, else a exception is raised.
 '''
-import sys
-from pprint import pprint
 
 def detect_range(line = None):
     '''
@@ -94,38 +92,3 @@ def expand_hostname_range(line = None):
             all_hosts.append(hname)
                    
         return all_hosts
-
-def main():
-    '''
-    A function for self-testing.
-    '''
-    test_data = ["[webservers]",
-                 "[dbservers]",
-                 "[webservers:!phoenix]",
-                 "[atlanta:vars]",
-                 "[southeast:childern]",
-                 "mail.example.com",
-                 "www.example.com",
-                 "db.example.com",
-                 "node[:6]", 
-                 "node[1:6]",
-                 "node[001:006]",
-                 "node[:5].example.com",
-                 "node-[01:06].example.com",
-                 "node[:6]-webserver", 
-                 "data-[10:15]-node.example.com",
-                 "data-[010:015]-node.example.com",
-                 "node-[0001:0006]-webserver"]
-
-    for data in test_data:
-        print "===> testing %s..." % data
-        if detect_range(data):
-            all_hosts = expand_hostname_range(data)
-            pprint(all_hosts)
-        else:
-            print "!!! Not expanded!!! %s" % data
-
-    return 0
-    
-if __name__ == '__main__':
-    sys.exit(main())

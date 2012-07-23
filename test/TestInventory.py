@@ -44,14 +44,24 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts()
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 
+                        'cerberus001','cerberus002','cerberus003',
+                        'cottus99', 'cottus100',
+                        'poseidon', 'thor', 'odin', 'loki',
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_all(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 
+                        'cerberus001','cerberus002','cerberus003',
+                        'cottus99', 'cottus100',
+                        'poseidon', 'thor', 'odin', 'loki',
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_norse(self):
@@ -65,21 +75,29 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter', 'saturn']
+        expected_hosts=['jupiter', 'saturn', 
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_combined(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("norse:greek")
 
-        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['zeus', 'hera', 'poseidon', 
+                        'cerberus001','cerberus002','cerberus003',
+                        'cottus99','cottus100',
+                        'thor', 'odin', 'loki']
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_restrict(self):
         inventory = self.simple_inventory()
 
         restricted_hosts = ['hera', 'poseidon', 'thor']
-        expected_hosts=['zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
+        expected_hosts=['zeus', 'hera', 'poseidon', 
+                        'cerberus001','cerberus002','cerberus003',
+                        'cottus99', 'cottus100',
+                        'thor', 'odin', 'loki']
 
         inventory.restrict_to(restricted_hosts)
         hosts = inventory.list_hosts("norse:greek")
@@ -99,11 +117,15 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
 
         hosts = inventory.list_hosts("all:!greek")
-        expected_hosts=['jupiter', 'saturn', 'thor', 'odin', 'loki']
+        expected_hosts=['jupiter', 'saturn', 'thor', 'odin', 'loki',
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
         hosts = inventory.list_hosts("all:!norse:!greek")
-        expected_hosts=['jupiter', 'saturn']
+        expected_hosts=['jupiter', 'saturn',
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_vars(self):
