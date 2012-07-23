@@ -23,10 +23,12 @@
 # modules
 #
 # example:
-#    test-module ../library/command /bin/sleep 3
-#    test-module ../library/service name=httpd ensure=restarted
+#    test-module -m ../library/command -a "/bin/sleep 3"
+#    test-module -m ../library/service -a "name=httpd ensure=restarted"
+#    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
 
 import sys
+import base64
 import os
 import subprocess
 import traceback
@@ -60,17 +62,17 @@ def parse():
     else:
         return options, args
 
-def write_argsfile( argstring):
-    """Write args to a file for the module's use.
-    
-    :return: full path to args file"""
+def write_argsfile(argstring):
+    """ Write args to a file for old-style module's use. """
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
     argsfile.write(argstring)
     argsfile.close()
     return argspath
 
-def boilerplate_module( modfile):
+def boilerplate_module(modfile, args):
+    """ simulate what ansible does with new style modules """
+
     module_fh = open(modfile)
     module_data = module_fh.read()
     included_boilerplate = module_data.find(module_common.REPLACER) != -1
@@ -78,6 +80,9 @@ def boilerplate_module( modfile):
 
     if included_boilerplate:
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+        encoded_args = base64.b64encode(args)
+        module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+
         modfile2_path = os.path.expanduser("~/.ansible_module_generated")
         print "* including generated source, if any, saving to: %s" % modfile2_path
         print "* this will offset any line numbers in tracebacks/debuggers!"
@@ -85,18 +90,21 @@ def boilerplate_module( modfile):
         modfile2.write(module_data)
         modfile2.close()
         modfile = modfile2_path
-        return modfile2_path
+        return (modfile2_path, included_boilerplate)
     else:
         print "* module boilerplate substitution not requested in module, line numbers will be unaltered"
-        return modfile
+        return (modfile, included_boilerplate)
 
 def runtest( modfile, argspath):
     """Test run a module, piping it's output for reporting."""
+
     os.system("chmod +x %s" % modfile)
-    cmd = subprocess.Popen("%s %s" % (modfile, argspath), 
-        shell=True,
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE)
+
+    invoke = "%s" % (modfile)
+    if argspath is not None:     
+        invoke = "%s %s" % (modfile, argspath)
+
+    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
 
     try:
@@ -105,7 +113,6 @@ def runtest( modfile, argspath):
         print out
         print err
         results = utils.parse_json(out)
-        
     except:
         print "***********************************"
         print "INVALID OUTPUT FORMAT"
@@ -115,23 +122,27 @@ def runtest( modfile, argspath):
 
     print "***********************************"
     print "PARSED OUTPUT"
-
     print utils.jsonify(results,format=True)
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
-    subprocess.call( "%s %s %s" % (debugger, modfile, argspath), shell=True)
+
+    if argspath is not None:
+        subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
+    else:
+        subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
 def main(): 
+
     options, args = parse()
-
-    argspath = write_argsfile( options.module_args)
-    modfile = boilerplate_module( options.module_path)
-
+    (modfile, is_new_style) = boilerplate_module(options.module_path, options.module_args)
+    argspath=None
+    if not is_new_style:
+        argspath = write_argsfile(options.module_args)
     if options.debugger: 
-        rundebug( options.debugger, modfile, argspath)
+        rundebug(options.debugger, modfile, argspath)
     else:
-        runtest( modfile, argspath)
+        runtest(modfile, argspath)
 	
 if __name__ == "__main__":
     main()
