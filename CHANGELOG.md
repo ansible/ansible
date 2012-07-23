@@ -33,11 +33,12 @@ Ansible Changes By Release
 * to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
 * automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
 * setup module fixes if no ipv6 support
-* internals: template in common module boilerplate
+* internals: template in common module boilerplate, also causes less SSH operations when used
 * git module fixes
 * various ssh connection fixes for old Ubuntu clients
 * setup module overhaul, more modular 
-* minor caching logic added to inventory to reduce hammering of inventroy scripts.
+* minor caching logic added to inventory to reduce hammering of inventory scripts.
+* ./hacking/test-module now supports options like ansible takes and has a debugger mode
 
 0.5 "Amsterdam" ------- July 04, 2012
 
