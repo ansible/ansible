@@ -17,65 +17,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import os
-import re
 import pwd
 import grp
-import shlex
 import subprocess
-import sys
-import syslog
 try:
     import spwd
     HAVE_SPWD=True
 except:
     HAVE_SPWD=False
 
-USERADD = "/usr/sbin/useradd"
-USERMOD = "/usr/sbin/usermod"
-USERDEL = "/usr/sbin/userdel"
-
-def exit_json(rc=0, **kwargs):
-    if 'name' in kwargs:
-        add_user_info(kwargs)
-    print json.dumps(kwargs)
-    sys.exit(rc)
-
-def fail_json(**kwargs):
-    kwargs['failed'] = True
-    exit_json(rc=1, **kwargs)
-
-def add_user_info(kwargs):
-    name = kwargs['name']
-    if user_exists(name):
-        kwargs['state'] = 'present'
-        info = user_info(name)
-        if info == False:
-            if 'failed' in kwargs:
-                kwargs['notice'] = "failed to look up user name: %s" % name
-            else:
-                kwargs['msg'] = "failed to look up user name: %s" % name
-            kwargs['failed'] = True
-            return kwargs
-        kwargs['uid'] = info[2]
-        kwargs['group'] = info[3]
-        kwargs['comment'] = info[4]
-        kwargs['home'] = info[5]
-        kwargs['shell'] = info[6]
-        kwargs['createhome'] = os.path.exists(info[5])
-        groups = user_group_membership(name)
-        if len(groups) > 0:
-            kwargs['groups'] = groups
+def get_bin_path(module, arg):
+    if os.path.exists('/usr/sbin/%s' % arg):
+        return '/usr/sbin/%s' % arg
+    elif os.path.exists('/sbin/%s' % arg):
+        return '/sbin/%s' % arg
     else:
-        kwargs['state'] = 'absent'
-    return kwargs
+        module.fail_json(msg="Cannot find %s" % arg)
 
-def user_del(user, **kwargs):
-    cmd = [USERDEL]
+def user_del(module, user, **kwargs):
+    cmd = [get_bin_path(module, 'userdel')]
     for key in kwargs:
         if key == 'force' and kwargs[key] == 'yes':
             cmd.append('-f')
@@ -87,21 +48,21 @@ def user_del(user, **kwargs):
     rc = p.returncode
     return (rc, out, err)
 
-def user_add(user, **kwargs):
-    cmd = [USERADD]
+def user_add(module, user, **kwargs):
+    cmd = [get_bin_path(module, 'useradd')]
     for key in kwargs:
         if key == 'uid' and kwargs[key] is not None:
             cmd.append('-u')
             cmd.append(kwargs[key])
         elif key == 'group' and kwargs[key] is not None:
             if not group_exists(kwargs[key]):
-                fail_json(msg="Group %s does not exist" % (kwargs[key]))
+                module.fail_json(msg="Group %s does not exist" % (kwargs[key]))
             cmd.append('-g')
             cmd.append(kwargs[key])
         elif key == 'groups' and kwargs[key] is not None:
             for g in kwargs[key].split(','):
                 if not group_exists(g):
-                    fail_json(msg="Group %s does not exist" % (g))
+                    module.fail_json(msg="Group %s does not exist" % (g))
             cmd.append('-G')
             cmd.append(kwargs[key])
         elif key == 'comment' and kwargs[key] is not None:
@@ -134,8 +95,8 @@ def user_add(user, **kwargs):
 Without spwd, we would have to resort to reading /etc/shadow
 to get the encrypted string.  For now, punt on idempotent password changes.
 """
-def user_mod(user, **kwargs):
-    cmd = [USERMOD]
+def user_mod(module, user, **kwargs):
+    cmd = [get_bin_path(module, 'usermod')]
     info = user_info(user)
     for key in kwargs:
         if key == 'uid':
@@ -144,7 +105,7 @@ def user_mod(user, **kwargs):
                 cmd.append(kwargs[key])
         elif key == 'group' and kwargs[key] is not None:
             if not group_exists(kwargs[key]):
-                fail_json(msg="Group %s does not exist" % (kwargs[key]))
+                module.fail_json(msg="Group %s does not exist" % (kwargs[key]))
             ginfo = group_info(group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -154,7 +115,7 @@ def user_mod(user, **kwargs):
             groups = kwargs[key].split(',')
             for g in groups:
                 if not group_exists(g):
-                    fail_json(msg="Group %s does not exist" % (g))
+                    module.fail_json(msg="Group %s does not exist" % (g))
             group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
             groups_need_mod = False
 
@@ -250,111 +211,102 @@ def user_info(user):
 
 # ===========================================
 
-if not os.path.exists(USERADD):
-    if os.path.exists("/sbin/useradd"):
-        USERADD = "/sbin/useradd"
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state=dict(default='present', choices=['present', 'absent']),
+            name=dict(required=True),
+            uid=dict(default=None),
+            group=dict(default=None),
+            groups=dict(default=None),
+            comment=dict(default=None),
+            home=dict(default=None),
+            shell=dict(default=None),
+            password=dict(default=None),
+            # following options are specific to userdel
+            force=dict(default='no', choices=['yes', 'no']),
+            remove=dict(default='no', choices=['yes', 'no']),
+            # following options are specific to useradd
+            createhome=dict(default='yes', choices=['yes', 'no']),
+            system=dict(default='no', choices=['yes', 'no']),
+            # following options are specific to usermod
+            append=dict(default='no', choices=['yes', 'no']),
+        )
+    )
+
+    state      = module.params['state']
+    name       = module.params['name']
+    uid        = module.params['uid']
+    group      = module.params['group']
+    groups     = module.params['groups']
+    comment    = module.params['comment']
+    home       = module.params['home']
+    shell      = module.params['shell']
+    password   = module.params['password']
+    force      = module.params['force']
+    remove     = module.params['remove']
+    createhome = module.params['createhome']
+    system     = module.params['system']
+    append     = module.params['append']
+
+    rc = None
+    out = ''
+    err = ''
+    result = {}
+    result['name'] = name
+    result['state'] = state
+    if state == 'absent':
+        if user_exists(name):
+            (rc, out, err) = user_del(module, name, force=force, remove=remove)
+            if rc != 0:
+                module.fail_json(name=name, msg=err, rc=rc)
+            result['force'] = force
+            result['remove'] = remove
+    elif state == 'present':
+        if not user_exists(name):
+            (rc, out, err) = user_add(module,
+                                      name, uid=uid, group=group, groups=groups,
+                                      comment=comment, home=home, shell=shell,
+                                      password=password, createhome=createhome,
+                                      system=system)
+            result['system'] = system
+            result['createhome'] = createhome
+        else:
+            (rc, out, err) = user_mod(module,
+                                      name, uid=uid, group=group, groups=groups,
+                                      comment=comment, home=home, shell=shell,
+                                      password=password, append=append)
+            result['append'] = append
+        if rc is not None and rc != 0:
+            module.fail_json(name=name, msg=err, rc=rc)
+        if password is not None:
+            result['password'] = 'NOT_LOGGING_PASSWORD'
+
+    if rc is None:
+        result['changed'] = False
     else:
-        fail_json(msg="Cannot find useradd")
-if not os.path.exists(USERMOD):
-    if os.path.exists("/sbin/usermod"):
-        USERMOD = "/sbin/usermod"
-    else:
-        fail_json(msg="Cannot find usermod")
-if not os.path.exists(USERDEL):
-    if os.path.exists("/sbin/userdel"):
-        USERDEL = "/sbin/userdel"
-    else:
-        fail_json(msg="Cannot find userdel")
-
-argfile = sys.argv[1]
-args    = open(argfile, 'r').read()
-items   = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", args)
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
-
-if not len(items):
-    fail_json(msg='the module requires arguments -a')
-    sys.exit(1)
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
-
-state      = params.get('state','present')
-name       = params.get('name', None)
-uid        = params.get('uid', None)
-group      = params.get('group', None)
-groups     = params.get('groups', None)
-comment    = params.get('comment', None)
-home       = params.get('home', None)
-shell      = params.get('shell', None)
-password   = params.get('password', None)
-
-# ===========================================
-# following options are specific to userdel
-force      = params.get('force', 'no')
-remove     = params.get('remove', 'no')
-
-# ===========================================
-# following options are specific to useradd
-createhome = params.get('createhome', 'yes')
-system     = params.get('system', 'no')
-
-# ===========================================
-# following options are specific to usermod
-append     = params.get('append', 'no')
-
-if state not in [ 'present', 'absent' ]:
-    fail_json(msg='invalid state')
-if createhome not in [ 'yes', 'no' ]:
-    fail_json(msg='invalid createhome')
-if system not in ['yes', 'no']:
-    fail_json(msg='invalid system')
-if append not in [ 'yes', 'no' ]:
-    fail_json(msg='invalid append')
-if force not in ['yes', 'no']:
-    fail_json(msg="invalid option for force, requires yes or no (defaults to no)")
-if remove not in ['yes', 'no']:
-    fail_json(msg="invalid option for remove, requires yes or no (defaults to no)")
-if name is None:
-    fail_json(msg='name is required')
-
-rc = None
-out = ''
-err = ''
-result = {}
-result['name'] = name
-if state == 'absent':
+        result['changed'] = True
+    if out:
+        result['stdout'] = out
+    if err:
+        result['stderr'] = err
     if user_exists(name):
-        (rc, out, err) = user_del(name, force=force, remove=remove)
-        if rc != 0:
-            fail_json(name=name, msg=err)
-        result['force'] = force
-        result['remove'] = remove
-elif state == 'present':
-    if not user_exists(name):
-        (rc, out, err) = user_add(name, uid=uid, group=group, groups=groups,
-                                  comment=comment, home=home, shell=shell,
-                                  password=password, createhome=createhome,
-                                  system=system)
-    else:
-        (rc, out, err) = user_mod(name, uid=uid, group=group, groups=groups,
-                                  comment=comment, home=home, shell=shell,
-                                  password=password, append=append)
-    if rc is not None and rc != 0:
-        fail_json(name=name, msg=err)
-    if password is not None:
-        result['password'] = 'NOTLOGGINGPASSWORD'
+        info = user_info(name)
+        if info == False:
+            result['msg'] = "failed to look up user name: %s" % name
+            result['failed'] = True
+        result['uid'] = info[2]
+        result['group'] = info[3]
+        result['comment'] = info[4]
+        result['home'] = info[5]
+        result['shell'] = info[6]
+        groups = user_group_membership(name)
+        result['uid'] = info[2]
+        if len(groups) > 0:
+            result['groups'] = groups
 
-if rc is None:
-    result['changed'] = False
-else:
-    result['changed'] = True
-if out:
-    result['stdout'] = out
-if err:
-    result['stderr'] = err
-exit_json(**result)
-sys.exit(0)
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
