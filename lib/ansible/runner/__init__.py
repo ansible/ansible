@@ -31,6 +31,7 @@ import base64
 import getpass
 import codecs
 import collections
+import re
 
 import ansible.constants as C 
 import ansible.inventory
@@ -548,7 +549,7 @@ class Runner(object):
         conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
             result = utils.jsonify(dict(skipped=True))
-            self.callbacks.on_skipped(host)
+            self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
 
         conn = None
