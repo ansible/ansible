@@ -60,7 +60,7 @@ def url_do_get(module, url, dest):
 
     if os.path.isdir(dest):
         urlfilename = url_filename(url)
-        actualdest = "%s/%s" % (dest, url_filename(url))
+        actualdest = "%s/%s" % (dest, urlfilename)
         module.params['path'] = actualdest
     else:
          actualdest = dest
