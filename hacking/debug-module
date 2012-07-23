@@ -1,0 +1,83 @@
+#!/usr/bin/python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# this script is for testing modules without running through the
+# entire guts of ansible, and is very helpful for when developing
+# modules
+#
+# example:
+#    test-module ../library/command /bin/sleep 3
+#    test-module ../library/service name=httpd ensure=restarted
+
+import sys
+import os
+import subprocess
+import traceback
+import ansible.utils as utils
+import ansible.module_common as module_common
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+debugger_path = os.getenv("ANSIBLE_DEBUGGER","/usr/bin/pdb")
+
+modfile = None
+
+if len(sys.argv) == 1:
+    print >>sys.stderr, "usage: test-module ./library/command [key=value ...]"
+    sys.exit(1)
+
+modfile = sys.argv[1]
+if len(sys.argv) > 1:
+    args = " ".join(sys.argv[2:])
+else:
+    args = ""
+
+argspath = os.path.expanduser("~/.ansible_test_module_arguments")
+argsfile = open(argspath, 'w')
+argsfile.write(args)
+argsfile.close()
+
+module_fh = open(modfile)
+module_data = module_fh.read()
+included_boilerplate = module_data.find(module_common.REPLACER) != -1
+module_fh.close()
+
+if included_boilerplate:
+    module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
+    print "* including generated source, if any, saving to: %s" % modfile2_path
+    print "* this will offset any line numbers in tracebacks!"
+    modfile2 = open(modfile2_path, 'w')
+    modfile2.write(module_data)
+    modfile2.close()
+    modfile = modfile2_path
+else:
+    print "* module boilerplate substitution not requested in module, tracebacks will be unaltered"
+
+os.system("chmod +x %s" % modfile)
+subprocess.call("%s %s %s" % (debugger_path, modfile, argspath), shell=True)
+
+sys.exit(0)
+
+
+
