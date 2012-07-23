@@ -274,7 +274,7 @@ class Runner(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        return self._execute_module(conn, tmp, 'async', module_args,
+        return self._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_name, 
            async_jid=self.generated_jid, 
            async_limit=self.background,
@@ -443,9 +443,8 @@ class Runner(object):
         # will be unneccessary as it can decide to daisychain via it's own module returns.
         # and this function can be deleted.  
 
-        module_name = 'assemble'
         options = utils.parse_kv(self.module_args)
-        return self._execute_module(conn, tmp, 'inject', self.module_args, inject=inject).daisychain('file')
+        return self._execute_module(conn, tmp, 'assemble', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
 
