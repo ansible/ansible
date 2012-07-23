@@ -26,6 +26,7 @@ if os.path.exists("/usr/bin/cowsay"):
     cowsay = "/usr/bin/cowsay"
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
+cowvoice = voice = os.getenv("ANSIBLE_COWVOICE", "flaming-sheep")
 
 class AggregateStats(object):
     ''' holds stats about per-host activity during playbook runs '''   
@@ -88,10 +89,10 @@ def regular_generic_msg(hostname, result, oneline, caption):
         return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
 
 
-def banner(msg):
+def banner(msg, opts=""):
 
     if cowsay != None:
-        cmd = subprocess.Popen("%s -W 60 \"%s\"" % (cowsay, msg), 
+        cmd = subprocess.Popen("%s %s -W 60 \"%s\"" % (cowsay, opts, msg), 
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (out, err) = cmd.communicate()
         return "%s\n" % out 
@@ -261,6 +262,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         item = results.get('item', None)
 
+        msg = "FAILED: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
+        print banner(msg, opts="-d -f \"%s\"" % cowvoice)
         if item:
             print "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
         else:
