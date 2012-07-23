@@ -291,8 +291,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             print >>sys.stderr, "err: [%s] => %s" % (host, err)
 
-    def on_skipped(self, host):
+    def on_skipped(self, host, item=None):
 
+	if item:
+            print "skipping: [%s] => (item=%s)" % (host, item)
+        else:
             print "skipping: [%s]" % host
 
     def on_no_hosts(self):
