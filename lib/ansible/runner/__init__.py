@@ -317,8 +317,8 @@ class Runner(object):
             conn.put_file(source, tmp_src)
 
             # run the copy module
-            args = "src=%s dest=%s" % (tmp_src, dest)
-            return self._execute_module(conn, tmp, 'copy', args, inject=inject).daisychain('file')
+            self.module_args = "src=%s dest=%s" % (tmp_src, dest)
+            return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
         else:
             # no need to transfer the file, already correct md5
@@ -571,7 +571,9 @@ class Runner(object):
             if 'daisychain_args' in result.result:
                 self.module_args = result.result['daisychain_args']
             result2 = self._executor_internal_inner(host, inject, port)
-            changed = result.result.get('changed',False) or result2.result.get('changed',False)
+            changed = False
+            if result.result.get('changed',False) or result2.result.get('changed',False):
+                changed = True
             result.result.update(result2.result)
             result.result['changed'] = changed
             del result.result['daisychain']
