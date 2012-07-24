@@ -576,7 +576,7 @@ class Runner(object):
             result.result['changed'] = changed
             del result.result['daisychain']
 
-        #self._delete_remote_files(conn, tmp)
+        self._delete_remote_files(conn, tmp)
         conn.close()
 
         if not result.comm_ok:
