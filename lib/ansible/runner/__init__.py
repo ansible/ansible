@@ -279,8 +279,10 @@ class Runner(object):
         # should drop module in same directory
         (module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
 
+        self._low_level_exec_command(conn, "chmod +x %s" % module_path, tmp)
+
         return self._execute_module(conn, tmp, 'async_wrapper', module_args,
-           async_module=module_name, 
+           async_module=module_path,
            async_jid=self.generated_jid, 
            async_limit=self.background,
            inject=inject
