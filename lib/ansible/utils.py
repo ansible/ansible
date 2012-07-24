@@ -25,6 +25,7 @@ import yaml
 import optparse
 import operator
 from ansible import errors
+from ansible import color
 import ansible.constants as C
 
 try:
@@ -328,4 +329,6 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
             help='run asynchronously, failing after X seconds (default=N/A)')
 
     return parser
+
+
 
