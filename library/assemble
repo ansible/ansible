@@ -38,14 +38,6 @@ except ImportError:
 # ===========================================
 # Support methods
 
-def exit_json(rc=0, **kwargs):
-   print json.dumps(kwargs)
-   sys.exit(rc)
-
-def fail_json(**kwargs):
-   kwargs['failed'] = True
-   exit_json(rc=1, **kwargs)
-
 def assemble_from_fragments(path):
     ''' assemble a file from a directory of fragments '''
     assembled = []
@@ -61,67 +53,52 @@ def write_temp_file(data):
     os.close(fd)
     return path
 
-def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
-    if not os.path.exists(filename):
-        return None
-    digest = _md5()
-    blocksize = 64 * 1024
-    infile = open(filename, 'rb')
-    block = infile.read(blocksize)
-    while block:
-        digest.update(block)
-        block = infile.read(blocksize)
-    infile.close()
-    return digest.hexdigest()
+# ==============================================================
+# main
 
-# ===========================================
+def main():
+    
+    module = AnsibleModule(
+        argument_spec = dict(
+            src = dict(required=True),
+            dest = dict(required=True),
+        )
+    )
+    
+    changed=False
+    pathmd5 = None
+    destmd5 = None
+    src = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params['dest'])
+  
+    if src:
+        src = os.path.expanduser(src)
+    if dest:
+        dest = os.path.expanduser(dest)
+    
+    if not os.path.exists(src):
+        fail_json(msg="Source (%s) does not exist" % src)
+    
+    if not os.path.isdir(src):
+        fail_json(msg="Source (%s) is not a directory" % src)
+    
+    path = write_temp_file(assemble_from_fragments(src))
+    pathmd5 = module.md5(path)
+    
+    if os.path.exists(dest):
+        destmd5 = module.md5(dest)
+    
+    if pathmd5 != destmd5:
+        shutil.copy(path, dest)
+        changed = True
+    
 
-if len(sys.argv) == 1:
-   fail_json(msg="the assemble module requires arguments (-a)")
+    # Mission complete
+    module.exit_json(src=src, dest=dest, md5sum=destmd5, 
+        changed=changed, msg="OK",
+        daisychain="file", daisychain_args=module.params)
 
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-   fail_json(msg="Argument file not found")
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
-args = open(argfile, 'r').read()
-items = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-if not len(items):
-   fail_json(msg="the assemble module requires arguments (-a)")
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
-
-changed = False
-pathmd5 = None
-destmd5 = None
-src  = params.get('src', None)
-dest = params.get('dest', None)
-
-if src:
-    src = os.path.expanduser(src)
-if dest:
-    dest = os.path.expanduser(dest)
-
-if not os.path.exists(src):
-    fail_json(msg="Source (%s) does not exist" % src)
-
-if not os.path.isdir(src):
-    fail_json(msg="Source (%s) is not a directory" % src)
-
-path = write_temp_file(assemble_from_fragments(src))
-pathmd5 = md5(path)
-
-if os.path.exists(dest):
-    destmd5 = md5(dest)
-
-if pathmd5 != destmd5:
-    shutil.copy(path, dest)
-    changed = True
-
-exit_json(md5sum=pathmd5, changed=changed)
+main()
