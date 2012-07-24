@@ -16,7 +16,7 @@ bikeshed.org
 bastion.secure.bikeshed.org
 192.168.100.1
 192.168.100.10
-# An example for host expansion that uses default beg and step
+# An example for host expansion that uses the default 'beg' and an 'end'
 mail[:5].example.com
 
 # Ex 2: A collection of hosts belonging to the 'webservers' group
@@ -28,8 +28,8 @@ wheel.colors.com
 192.168.1.110
 # Your personal website also runs a webserver:
 myserver.com
-# An example for host expansion that uses beg, end, with beg
-# acting as a formatting hint during host name expansion
+# An example for host expansion that uses both a 'beg' and an 'end', with
+# the 'beg' acting as a formatting hint during host name expansion
 www[001:006].example.com
 
 # Ex 3: A collection of database servers in the 'dbservers' group
@@ -40,5 +40,6 @@ db02.intranet.mydomain.net
 10.25.1.57
 # Perhaps you serve a db off your personal server too:
 myserver.com
-# An example for host expansion that uses beg, and end
+# An example for host expansion that uses a regular 'beg' and a regular
+# 'end'
 db-[99:101]-node.example.com
