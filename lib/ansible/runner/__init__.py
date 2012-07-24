@@ -439,8 +439,8 @@ class Runner(object):
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
             
         # run the copy module, queue the file module
-        args = "src=%s dest=%s" % (xfered, dest)
-        return self._execute_module(conn, tmp, 'copy', args, inject=inject).daisychain('file')
+        self.module_args = "src=%s dest=%s" % (xfered, dest)
+        return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
 
@@ -592,7 +592,7 @@ class Runner(object):
             result.result['changed'] = changed
             del result.result['daisychain']
 
-        self._delete_remote_files(conn, tmp)
+        #self._delete_remote_files(conn, tmp)
         conn.close()
 
         if not result.comm_ok:
