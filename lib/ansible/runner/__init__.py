@@ -111,7 +111,7 @@ class Runner(object):
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
         module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
         forks=C.DEFAULT_FORKS,              # parallelism level
-        timeout=C.DEFAULT_TIMEOUT,          # for async, kill after X seconds
+        timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
@@ -268,11 +268,16 @@ class Runner(object):
     def _execute_async_module(self, conn, tmp, module_name, inject=None):
         ''' transfer the given module name, plus the async module, then run it '''
 
+        
+
         # shell and command module are the same
         module_args = self.module_args
         if module_name == 'shell':
             module_name = 'command'
             module_args += " #USE_SHELL"
+
+        # should drop module in same directory
+        (module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
 
         return self._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_name, 
