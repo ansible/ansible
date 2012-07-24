@@ -435,7 +435,6 @@ class Runner(object):
         # will be unneccessary as it can decide to daisychain via it's own module returns.
         # and this function can be deleted.  
 
-        options = utils.parse_kv(self.module_args)
         return self._execute_module(conn, tmp, 'assemble', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
@@ -516,7 +515,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, inject, port):
+    def _executor_internal_inner(self, host, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
         # special non-user/non-fact variables:
@@ -564,19 +563,24 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
-        chained = False
+        result.result['module'] = self.module_name
         if result.is_successful() and 'daisychain' in result.result:
-            chained = True
             self.module_name = result.result['daisychain']
             if 'daisychain_args' in result.result:
                 self.module_args = result.result['daisychain_args']
-            result2 = self._executor_internal_inner(host, inject, port)
+            result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
+            result2.result['module'] = self.module_name
             changed = False
+            # print "result1=%s" % result.result
+            # print "result2=%s" % result2.result
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
-            result.result.update(result2.result)
-            result.result['changed'] = changed
+            # print "DEBUG=%s" % changed
+            result2.result.update(result.result)
+            result2.result['changed'] = changed
+            result = result2
             del result.result['daisychain']
+            # print "DEBUG2=%s" % result.result['changed']
 
         self._delete_remote_files(conn, tmp)
         conn.close()
@@ -588,13 +592,15 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
-            if not chained:
-                if 'skipped' in data:
-                    self.callbacks.on_skipped(result.host)
-                elif not result.is_successful():
-                    self.callbacks.on_failed(result.host, data)
-                else:
-                    self.callbacks.on_ok(result.host, data)
+            if is_chained:
+                # no callbacks
+                return result
+            if 'skipped' in data:
+                self.callbacks.on_skipped(result.host)
+            elif not result.is_successful():
+                self.callbacks.on_failed(result.host, data)
+            else:
+                self.callbacks.on_ok(result.host, data)
         return result
 
     # *****************************************************
