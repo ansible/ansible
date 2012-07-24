@@ -16,12 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 import subprocess
 import sys
@@ -29,79 +23,83 @@ import datetime
 import traceback
 import shlex
 import os
-import syslog
 
-argfile = sys.argv[1]
-args = open(argfile, 'r').read()
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+def main():
 
-shell = False
+    # the command module is the one ansible module that does not take key=value args
+    # hence don't copy this one if you are looking to build others!
+    module = CommandModule(argument_spec=dict())
 
-if args.find("#USE_SHELL") != -1:
-   args = args.replace("#USE_SHELL", "")
-   shell = True
+    shell = module.params['shell']
+    args  = module.params['args']
 
-check_args = shlex.split(args)
-for x in check_args:
-   if x.startswith("creates="):
-       # do not run the command if the line contains creates=filename
-       # and the filename already exists.  This allows idempotence 
-       # of command executions.
-       (k,v) = x.split("=",1)
-       if os.path.exists(v):
-           print json.dumps({
-               "cmd"     : args,
-               "stdout"  : "skipped, since %s exists" % v,
-               "skipped" : True,
-               "changed" : False,
-               "stderr"  : "",
-               "rc"      : 0,
-           })
-           sys.exit(0)
-       args = args.replace(x,'')
-       
+    if not shell:
+        args = shlex.split(args)
+    startd = datetime.datetime.now()
 
-if not shell:
-    args = shlex.split(args)
+    try:
+        cmd = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+    except (OSError, IOError), e:
+        module.fail_json(cmd=args, msg=str(e))
+    except:
+        module.fail_json(msg=traceback.format_exc())
 
-startd = datetime.datetime.now()
+    endd = datetime.datetime.now()
+    delta = endd - startd
 
-try:
-    cmd = subprocess.Popen(args, shell=shell, 
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = cmd.communicate()
-except (OSError, IOError), e:
-    print json.dumps({
-        "cmd"    : args,
-        "failed" : 1,
-        "msg"    : str(e),
-        })
-    sys.exit(1)
-except:
-    print json.dumps({
-        "failed" : 1,
-        "msg" : traceback.format_exc()
-    })   
-    sys.exit(1)
+    if out is None:
+       out = ''
+    if err is None:
+       err = ''
 
-endd = datetime.datetime.now()
-delta = endd - startd
+    module.exit_json(
+        cmd     = args,
+        stdout  = out.strip(),
+        stderr  = err.strip(),
+        rc      = cmd.returncode,
+        start   = str(startd),
+        end     = str(endd),
+        delta   = str(delta),
+        changed = True
+    )
 
-if out is None:
-   out = ''
-if err is None:
-   err = ''
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
-result = {
-   "cmd"     : args,
-   "stdout"  : out.strip(),
-   "stderr"  : err.strip(),
-   "rc"      : cmd.returncode,
-   "start"   : str(startd),
-   "end"     : str(endd),
-   "delta"   : str(delta),
-   "changed" : True
-}
+# only the command module should ever need to do this
+# everything else should be simple key=value
 
-print json.dumps(result)
+class CommandModule(AnsibleModule):
+
+    def _load_params(self):
+        ''' read the input and return a dictionary and the arguments string '''
+        args = base64.b64decode(MODULE_ARGS)
+        items   = shlex.split(args)
+        params = {}
+        params['shell'] = False
+        if args.find("#USE_SHELL") != -1:
+             args = args.replace("#USE_SHELL", "")
+             params['shell'] = True
+
+        check_args = shlex.split(args)
+        for x in check_args:
+            if x.startswith("creates="):
+                # do not run the command if the line contains creates=filename
+                # and the filename already exists.  This allows idempotence
+                # of command executions.
+                (k,v) = x.split("=",1)
+                if os.path.exists(v):
+                    self.exit_json(
+                        cmd=args,
+                        stdout="skipped, since %s exists" % v,
+                        skipped=True,
+                        changed=False,
+                        stderr=False,
+                        rc=0
+                    )
+                args = args.replace(x,'')
+        params['args'] = args
+        return (params, args)
+
+main()
