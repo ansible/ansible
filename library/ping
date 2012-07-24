@@ -18,7 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 def main():
-  print json.dumps({ "ping" : "pong" })
+  module = AnsibleModule(
+      argument_spec = dict()
+  )
+  module.exit_json(ping="pong")
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
