@@ -106,7 +106,7 @@ def user_mod(module, user, **kwargs):
         elif key == 'group' and kwargs[key] is not None:
             if not group_exists(kwargs[key]):
                 module.fail_json(msg="Group %s does not exist" % (kwargs[key]))
-            ginfo = group_info(group)
+            ginfo = group_info(kwargs[key])
             if info[3] != ginfo[2]:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
