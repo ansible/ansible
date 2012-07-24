@@ -14,9 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-################################################
 
 import multiprocessing
 import signal
@@ -183,15 +180,6 @@ class Runner(object):
 
     # *****************************************************
 
-    #def _transfer_module(self, conn, tmp, module, inject):
-    #    ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
-    #
-    #    outpath = self._copy_module(conn, tmp, module, inject)
-    #    self._low_level_exec_command(conn, "chmod +x %s" % outpath, tmp)
-    #    return outpath
-
-    # *****************************************************
-
     def _transfer_str(self, conn, tmp, name, data):
         ''' transfer string to remote file '''
 
@@ -269,17 +257,13 @@ class Runner(object):
     def _execute_async_module(self, conn, tmp, module_name, inject=None):
         ''' transfer the given module name, plus the async module, then run it '''
 
-        
-
         # shell and command module are the same
         module_args = self.module_args
         if module_name == 'shell':
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        # should drop module in same directory
         (module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
-
         self._low_level_exec_command(conn, "chmod +x %s" % module_path, tmp)
 
         return self._execute_module(conn, tmp, 'async_wrapper', module_args,
@@ -609,7 +593,6 @@ class Runner(object):
                     self.callbacks.on_failed(result.host, data)
                 else:
                     self.callbacks.on_ok(result.host, data)
-
         return result
 
     # *****************************************************
