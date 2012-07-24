@@ -268,7 +268,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results))
 
-        return color.string(msg, 'red')
+        return stringc(msg, 'red')
 
     def on_ok(self, host, host_result):
 
