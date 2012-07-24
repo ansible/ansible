@@ -17,23 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import os
 import os.path
 import sys
-import shlex
 import shutil
-import syslog
 import tempfile
-
-try:
-    from hashlib import md5 as _md5
-except ImportError: 
-    from md5 import md5 as _md5
-
 
 # ===========================================
 # Support methods
@@ -71,11 +59,6 @@ def main():
     src = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
   
-    if src:
-        src = os.path.expanduser(src)
-    if dest:
-        dest = os.path.expanduser(dest)
-    
     if not os.path.exists(src):
         fail_json(msg="Source (%s) does not exist" % src)
     
