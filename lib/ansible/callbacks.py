@@ -342,13 +342,13 @@ class PlaybookCallbacks(object):
             msg = "NOTIFIED: [%s]" % name
         print banner(msg)
 
-    def on_vars_prompt(self, varname, private="yes", prompt=None):
+    def on_vars_prompt(self, varname, private=True, prompt=None):
 
         if prompt:
             msg = prompt
         else:
             msg = 'input for %s: ' % varname
-        if private == "yes":
+        if private:
             return getpass.getpass(msg)
         return raw_input(msg)
         
