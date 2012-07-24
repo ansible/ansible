@@ -155,10 +155,22 @@ class Play(object):
         else:
             vars.update(self.vars)
 
-        if type(self.vars_prompt) != dict:
-            raise errors.AnsibleError("'vars_prompt' section must contain only key/value pairs")
-        for vname in self.vars_prompt:
-            vars[vname] = self.playbook.callbacks.on_vars_prompt(vname)
+        if type(self.vars_prompt) != list:
+            raise errors.AnsibleError("'vars_prompt' section must contain a list of variable dictionaries")
+        for var in self.vars_prompt:
+            try:
+                vname = var.pop("name")
+            except KeyError:
+                raise errors.AnsibleError("A variable dictionary in 'vars_prompt' must always have a 'name' key")
+            if not ((vname[0].isalpha() or vname[0] == '_') and vname.replace('_','').isalnum()):
+                raise errors.AnsibleError("A variable name must consist of a letter or underscore,"
+                                          " followed by a string of letters, numbers, and underscores")
+            prompt = var.pop("prompt", None)
+            private = var.pop("private", "yes")
+            if private not in ["yes", "no"]:
+               raise error.AnsibleError("'private' key must have a value of 'yes' or 'no'")
+
+            vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt)
 
         results = self.playbook.extra_vars.copy()
         results.update(vars)
