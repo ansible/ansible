@@ -23,13 +23,16 @@
 # modules
 #
 # example:
-#    test-module ../library/command /bin/sleep 3
-#    test-module ../library/service name=httpd ensure=restarted
+#    test-module -m ../library/command -a "/bin/sleep 3"
+#    test-module -m ../library/service -a "name=httpd ensure=restarted"
+#    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
 
 import sys
+import base64
 import os
 import subprocess
 import traceback
+import optparse
 import ansible.utils as utils
 import ansible.module_common as module_common
 
@@ -38,67 +41,110 @@ try:
 except ImportError:
     import simplejson as json
 
-modfile = None
+def parse():
+    """parse command line
 
-if len(sys.argv) == 1:
-    print >>sys.stderr, "usage: test-module ./library/command [key=value ...]"
-    sys.exit(1)
+    :return : (options, args)"""
+    parser = optparse.OptionParser()
 
-modfile = sys.argv[1]
-if len(sys.argv) > 1:
-    args = " ".join(sys.argv[2:])
-else:
-    args = ""
+    parser.usage = "%prog -[options] (-h for help)"
 
-argspath = os.path.expanduser("~/.ansible_test_module_arguments")
-argsfile = open(argspath, 'w')
-argsfile.write(args)
-argsfile.close()
+    parser.add_option('-m', '--module-path', dest='module_path',
+        help="REQUIRED: full path of module source to execute")
+    parser.add_option('-a', '--args', dest='module_args', default="",
+        help="module argument string")
+    parser.add_option('-D', '--debugger', dest='debugger', 
+        help="path to python debugger (e.g. /usr/bin/pdb)")
+    options, args = parser.parse_args()
+    if not options.module_path:
+        parser.print_help()
+        sys.exit(1)
+    else:
+        return options, args
 
-module_fh = open(modfile)
-module_data = module_fh.read()
-included_boilerplate = module_data.find(module_common.REPLACER) != -1
-module_fh.close()
+def write_argsfile(argstring):
+    """ Write args to a file for old-style module's use. """
+    argspath = os.path.expanduser("~/.ansible_test_module_arguments")
+    argsfile = open(argspath, 'w')
+    argsfile.write(argstring)
+    argsfile.close()
+    return argspath
 
-if included_boilerplate:
-    module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
-    print "* including generated source, if any, saving to: %s" % modfile2_path
-    print "* this will offset any line numbers in tracebacks!"
-    modfile2 = open(modfile2_path, 'w')
-    modfile2.write(module_data)
-    modfile2.close()
-    modfile = modfile2_path
-else:
-    print "* module boilerplate substitution not requested in module, tracebacks will be unaltered"
+def boilerplate_module(modfile, args):
+    """ simulate what ansible does with new style modules """
 
-os.system("chmod +x %s" % modfile)
-cmd = subprocess.Popen("%s %s" % (modfile, argspath), 
-    shell=True,
-    stdout=subprocess.PIPE, 
-    stderr=subprocess.PIPE)
-(out, err) = cmd.communicate()
+    module_fh = open(modfile)
+    module_data = module_fh.read()
+    included_boilerplate = module_data.find(module_common.REPLACER) != -1
+    module_fh.close()
 
-try:
+    if included_boilerplate:
+        module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+        encoded_args = base64.b64encode(args)
+        module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+
+        modfile2_path = os.path.expanduser("~/.ansible_module_generated")
+        print "* including generated source, if any, saving to: %s" % modfile2_path
+        print "* this will offset any line numbers in tracebacks/debuggers!"
+        modfile2 = open(modfile2_path, 'w')
+        modfile2.write(module_data)
+        modfile2.close()
+        modfile = modfile2_path
+        return (modfile2_path, included_boilerplate)
+    else:
+        print "* module boilerplate substitution not requested in module, line numbers will be unaltered"
+        return (modfile, included_boilerplate)
+
+def runtest( modfile, argspath):
+    """Test run a module, piping it's output for reporting."""
+
+    os.system("chmod +x %s" % modfile)
+
+    invoke = "%s" % (modfile)
+    if argspath is not None:     
+        invoke = "%s %s" % (modfile, argspath)
+
+    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+
+    try:
+        print "***********************************"
+        print "RAW OUTPUT"
+        print out
+        print err
+        results = utils.parse_json(out)
+    except:
+        print "***********************************"
+        print "INVALID OUTPUT FORMAT"
+        print out
+        traceback.print_exc()
+        sys.exit(1)
+
     print "***********************************"
-    print "RAW OUTPUT"
-    print out
-    print err
-    results = utils.parse_json(out)
-    
-except:
-    print "***********************************"
-    print "INVALID OUTPUT FORMAT"
-    print out
-    traceback.print_exc()
-    sys.exit(1)
+    print "PARSED OUTPUT"
+    print utils.jsonify(results,format=True)
 
-print "***********************************"
-print "PARSED OUTPUT"
+def rundebug(debugger, modfile, argspath):
+    """Run interactively with console debugger."""
 
-print utils.jsonify(results,format=True)
+    if argspath is not None:
+        subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
+    else:
+        subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
-sys.exit(0)
+def main(): 
 
+    options, args = parse()
+    (modfile, is_new_style) = boilerplate_module(options.module_path, options.module_args)
+    argspath=None
+    if not is_new_style:
+        argspath = write_argsfile(options.module_args)
+    if options.debugger: 
+        rundebug(options.debugger, modfile, argspath)
+    else:
+        runtest(modfile, argspath)
+	
+if __name__ == "__main__":
+    main()
 
 

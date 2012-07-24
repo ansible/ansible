@@ -14,9 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-################################################
 
 import multiprocessing
 import signal
@@ -31,6 +28,7 @@ import base64
 import getpass
 import codecs
 import collections
+import re
 
 import ansible.constants as C 
 import ansible.inventory
@@ -111,7 +109,7 @@ class Runner(object):
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
         module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
         forks=C.DEFAULT_FORKS,              # parallelism level
-        timeout=C.DEFAULT_TIMEOUT,          # for async, kill after X seconds
+        timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
@@ -182,15 +180,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _transfer_module(self, conn, tmp, module, inject):
-        ''' transfers a module file to the remote side to execute it, but does not execute it yet '''
-
-        outpath = self._copy_module(conn, tmp, module, inject)
-        self._low_level_exec_command(conn, "chmod +x %s" % outpath, tmp)
-        return outpath
-
-    # *****************************************************
-
     def _transfer_str(self, conn, tmp, name, data):
         ''' transfer string to remote file '''
 
@@ -212,7 +201,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_module(self, conn, tmp, remote_module_path, args, 
+    def _execute_module(self, conn, tmp, module_name, args, 
         async_jid=None, async_module=None, async_limit=None, inject=None):
 
         ''' runs a module that has already been transferred '''
@@ -220,13 +209,22 @@ class Runner(object):
         if type(args) == dict:
             args = utils.jsonify(args,format=True)
 
-        args = utils.template(args, inject)
+        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
+        self._low_level_exec_command(conn, "chmod +x %s" % remote_module_path, tmp)
 
-        argsfile = self._transfer_str(conn, tmp, 'arguments', args)
-        if async_jid is None:
-            cmd = "%s %s" % (remote_module_path, argsfile)
+        cmd = ""
+        if not is_new_style:
+            args = utils.template(args, inject)
+            argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+            if async_jid is None:
+                cmd = "%s %s" % (remote_module_path, argsfile)
+            else:
+                cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
         else:
-            cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
+            if async_jid is None:
+                cmd = "%s" % (remote_module_path)
+            else:
+                cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         return ReturnData(host=conn.host, result=res)
@@ -249,8 +247,7 @@ class Runner(object):
             module_name = 'command'
             self.module_args += " #USE_SHELL"
 
-        module = self._transfer_module(conn, tmp, module_name, inject)
-        exec_rc = self._execute_module(conn, tmp, module, self.module_args, inject=inject)
+        exec_rc = self._execute_module(conn, tmp, module_name, self.module_args, inject=inject)
         if exec_rc.is_successful():
             self.setup_cache[conn.host].update(exec_rc.result.get('ansible_facts', {}))
         return exec_rc
@@ -266,11 +263,11 @@ class Runner(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        async  = self._transfer_module(conn, tmp, 'async_wrapper', inject)
-        module = self._transfer_module(conn, tmp, module_name, inject)
+        (module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
+        self._low_level_exec_command(conn, "chmod +x %s" % module_path, tmp)
 
-        return self._execute_module(conn, tmp, async, module_args,
-           async_module=module, 
+        return self._execute_module(conn, tmp, 'async_wrapper', module_args,
+           async_module=module_path,
            async_jid=self.generated_jid, 
            async_limit=self.background,
            inject=inject
@@ -319,13 +316,9 @@ class Runner(object):
             tmp_src = tmp + source.split('/')[-1]
             conn.put_file(source, tmp_src)
 
-            # install the copy  module
-            self.module_name = 'copy'
-            module = self._transfer_module(conn, tmp, 'copy', inject)
-
             # run the copy module
-            args = "src=%s dest=%s" % (tmp_src, dest)
-            return self._execute_module(conn, tmp, module, args, inject=inject).daisychain('file')
+            self.module_args = "src=%s dest=%s" % (tmp_src, dest)
+            return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
         else:
             # no need to transfer the file, already correct md5
@@ -421,9 +414,6 @@ class Runner(object):
 
         source = utils.template(source, inject)
 
-        # install the template module
-        copy_module = self._transfer_module(conn, tmp, 'copy', inject)
-
         # template the source data locally & transfer
         try:
             resultant = utils.template_from_file(self.basedir, source, inject)
@@ -433,18 +423,19 @@ class Runner(object):
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
             
         # run the copy module, queue the file module
-        args = "src=%s dest=%s" % (xfered, dest)
-        return self._execute_module(conn, tmp, copy_module, args, inject=inject).daisychain('file')
+        self.module_args = "src=%s dest=%s" % (xfered, dest)
+        return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
 
     def _execute_assemble(self, conn, tmp, inject=None):
         ''' handler for assemble operations '''
 
-        module_name = 'assemble'
-        options = utils.parse_kv(self.module_args)
-        module = self._transfer_module(conn, tmp, module_name, inject)
-        return self._execute_module(conn, tmp, module, self.module_args, inject=inject).daisychain('file')
+        # FIXME: once assemble is ported over to the use the new common logic, this method
+        # will be unneccessary as it can decide to daisychain via it's own module returns.
+        # and this function can be deleted.  
+
+        return self._execute_module(conn, tmp, 'assemble', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
 
@@ -524,7 +515,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, inject, port):
+    def _executor_internal_inner(self, host, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
         # special non-user/non-fact variables:
@@ -548,7 +539,7 @@ class Runner(object):
         conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
             result = utils.jsonify(dict(skipped=True))
-            self.callbacks.on_skipped(host)
+            self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
 
         conn = None
@@ -572,17 +563,24 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
-        chained = False
+        result.result['module'] = self.module_name
         if result.is_successful() and 'daisychain' in result.result:
-            chained = True
             self.module_name = result.result['daisychain']
             if 'daisychain_args' in result.result:
                 self.module_args = result.result['daisychain_args']
-            result2 = self._executor_internal_inner(host, inject, port)
-            changed = result.result.get('changed',False) or result2.result.get('changed',False)
-            result.result.update(result2.result)
-            result.result['changed'] = changed
+            result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
+            result2.result['module'] = self.module_name
+            changed = False
+            # print "result1=%s" % result.result
+            # print "result2=%s" % result2.result
+            if result.result.get('changed',False) or result2.result.get('changed',False):
+                changed = True
+            # print "DEBUG=%s" % changed
+            result2.result.update(result.result)
+            result2.result['changed'] = changed
+            result = result2
             del result.result['daisychain']
+            # print "DEBUG2=%s" % result.result['changed']
 
         self._delete_remote_files(conn, tmp)
         conn.close()
@@ -594,14 +592,15 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
-            if not chained:
-                if 'skipped' in data:
-                    self.callbacks.on_skipped(result.host)
-                elif not result.is_successful():
-                    self.callbacks.on_failed(result.host, data)
-                else:
-                    self.callbacks.on_ok(result.host, data)
-
+            if is_chained:
+                # no callbacks
+                return result
+            if 'skipped' in data:
+                self.callbacks.on_skipped(result.host)
+            elif not result.is_successful():
+                self.callbacks.on_failed(result.host, data)
+            else:
+                self.callbacks.on_ok(result.host, data)
         return result
 
     # *****************************************************
@@ -670,10 +669,15 @@ class Runner(object):
         out_path = os.path.join(tmp, module)
 
         module_data = ""
+        is_new_style=False
         with open(in_path) as f:
             module_data = f.read()
+            if module_common.REPLACER in module_data:
+                is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-          
+            encoded_args = base64.b64encode(utils.template(self.module_args, inject))
+            module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+ 
         # use the correct python interpreter for the host
         if 'ansible_python_interpreter' in inject:
             interpreter = inject['ansible_python_interpreter']
@@ -683,7 +687,7 @@ class Runner(object):
             module_data = "\n".join(module_lines)
 
         self._transfer_str(conn, tmp, module, module_data)
-        return out_path
+        return (out_path, is_new_style)
 
     # *****************************************************
 

@@ -16,10 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
+REPLACER_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 
 MODULE_COMMON = """
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
+
+MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
@@ -32,6 +35,7 @@ try:
     import json
 except ImportError:
     import simplejson as json
+import base64
 import os
 import re
 import shlex
@@ -109,11 +113,7 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
-            argfile = sys.argv[1]
-            args    = open(argfile, 'r').read()
-        else:
-            args = ' '.join(sys.argv[1:])
+        args = base64.b64decode(MODULE_ARGS)
         items   = shlex.split(args)
         params = {}
         for x in items:
