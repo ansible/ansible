@@ -143,7 +143,7 @@ Connection type to use\&. Possible options are
 Ansible stores the hosts it can potentially operate on in an inventory
 file\&. The syntax is one host per line\&. Optionally, ansible can use a
 line of the form base[beg:end]tail to define a set of hosts, where
-[beg:end] defines a numerical range, where if 'beg' is left out, it
+[beg:end] defines a numerical range. If 'beg' is left out, it
 defaults to 0\&.  An example: mail[1:6].example.com, where 'head'
 is 'mail', 'beg' is 1, 'end' is 6, and 'tail' is '.example.com'\&. In
 addition, 'beg' can be a a string padded with zero(s) to the left. If so
