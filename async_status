@@ -18,96 +18,54 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-import shlex
-import os
-import subprocess
-import sys
 import datetime
 import traceback
-import syslog
 
-# ===========================================
+def main():
 
-# FIXME: better error handling
+    module = AnsibleModule(argument_spec=dict(
+        jid=dict(required=True),
+        mode=dict(default='status', choices=['status','cleanup']),
+    ))
 
-argsfile = sys.argv[1]
-args = open(argsfile, 'r').read()
-items = shlex.split(args)
+    mode = module.params['mode']
+    jid  = module.params['jid']
 
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+    # setup logging directory
+    logdir = os.path.expanduser("~/.ansible_async")
+    log_path = os.path.join(logdir, jid)
 
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
+    if not os.path.exists(log_path):
+        module.fail_json(msg="could not find job", ansible_job_id=jid)
 
-mode = params.get('mode', 'status')
-jid  = params.get('jid', None)
+    if mode == 'cleanup':
+        os.unlink(log_path)
+        module.exit_json(ansible_job_id=jid, erased=log_path)
 
-# ===========================================
+    # NOT in cleanup mode, assume regular status mode
+    # no remote kill mode currently exists, but probably should
+    # consider log_path + ".pid" file and also unlink that above
 
-if jid is None:
-    print json.dumps({
-        "failed" : True,
-        "msg"    : "jid=INTEGER is required"
-    })
-    sys.exit(1)
+    data = file(log_path).read()
+    try:
+        data = json.loads(data)
+    except Exception, e:
+        if data == '':
+            # file not written yet?  That means it is running
+            module.exit_json(results_file=log_path, ansible_job_id=jid, started=1)
+        else:
+            module_fail_json(ansible_job_id=jid, results_file=log_path, 
+                msg="Could not parse job output: %s" % data)
+
+    if not data.has_key("started"):
+        data['finished'] = 1
+        data['ansible_job_id'] = jid
+    module.exit_json(**data)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
 
 
-# setup logging directory
-logdir = os.path.expanduser("~/.ansible_async")
-log_path = os.path.join(logdir, jid)
-
-if not os.path.exists(log_path):
-    print json.dumps({
-        "failed" : 1,
-        "msg" : "could not find job",
-        "ansible_job_id" : jid
-    })
-    sys.exit(1)
-
-if mode == 'cleanup':
-    os.unlink(log_path)
-    print json.dumps({
-        "ansible_job_id" : jid,
-        "erased" : log_path
-    })
-    sys.exit(0)
-
-# NOT in cleanup mode, assume regular status mode
-# no remote kill mode currently exists, but probably should
-# consider log_path + ".pid" file and also unlink that above
-
-data = file(log_path).read()
-try:
-   data = json.loads(data)
-except Exception, e:
-   if data == '':
-       # file not written yet?  That means it is running
-       print json.dumps({
-           "results_file" : log_path,
-           "ansible_job_id" : jid,
-           "started" : 1,
-       })
-   else:
-       print json.dumps({
-           "failed" : True,
-           "ansible_job_id" : jid,
-           "results_file" : log_path,
-           "msg" : "Could not parse job output: %s" % data,
-       })
-   sys.exit(0)
-
-if not data.has_key("started"):
-   data['finished'] = 1
-data['ansible_job_id'] = jid
-
-print json.dumps(data)
-sys.exit(0)
 
 
