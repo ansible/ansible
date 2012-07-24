@@ -20,6 +20,7 @@ import sys
 import getpass
 import os
 import subprocess
+from ansible.color import stringc
 
 cowsay = None
 if os.path.exists("/usr/bin/cowsay"):
@@ -125,17 +126,18 @@ def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
 
     failed = utils.is_failed(result)
+    msg = ''
     if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
         if not failed:
-            return command_generic_msg(hostname, result, oneline, 'success')
+            msg = command_generic_msg(hostname, result, oneline, 'success')
         else:
-            return command_generic_msg(hostname, result, oneline, 'FAILED')
+            msg = command_generic_msg(hostname, result, oneline, 'FAILED')
     else:
         if not failed:
-            return regular_generic_msg(hostname, result, oneline, 'success')
+            msg = regular_generic_msg(hostname, result, oneline, 'success')
         else:
-            return regular_generic_msg(hostname, result, oneline, 'FAILED')
-
+            msg = regular_generic_msg(hostname, result, oneline, 'FAILED')
+    return msg
 
 ###############################################
 
@@ -262,45 +264,62 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         item = results.get('item', None)
 
         if item:
-            print "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
+            msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
         else:
-            print "failed: [%s] => %s" % (host, utils.jsonify(results))
+            msg = "failed: [%s] => %s" % (host, utils.jsonify(results))
+
+        return color.string(msg, 'red')
 
     def on_ok(self, host, host_result):
 
         item = host_result.get('item', None)
 
         # show verbose output for non-setup module results if --verbose is used
+        msg = '' 
         if not self.verbose or host_result.get("verbose_override",None) is not None:
             if item:
-                print "ok: [%s] => (item=%s)" % (host,item)
+                msg = "ok: [%s] => (item=%s)" % (host,item)
             else:   
-                print "ok: [%s]" % (host)
+                if 'ansible_job_id' not in host_result or 'finished' in host_result:
+                    msg = "ok: [%s]" % (host)
         else:
+            # verbose ...
             if item:
-                print "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result))
+                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result))
             else:
-                print "ok: [%s] => %s" % (host, utils.jsonify(host_result))
+                if 'ansible_job_id' not in host_result or 'finished' in host_result:
+                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result))
+
+        if msg != '':
+            if not 'changed' in host_result or not host_result['changed']:
+                print stringc(msg, 'green')
+            else:
+                print stringc(msg, 'yellow')
 
     def on_error(self, host, err):
 
         item = err.get('item', None)
-
+        msg = ''
         if item:
-            print >>sys.stderr, "err: [%s] => (item=%s) => %s" % (host, item, err)
+            msg = "err: [%s] => (item=%s) => %s" % (host, item, err)
         else:
-            print >>sys.stderr, "err: [%s] => %s" % (host, err)
+            msg = "err: [%s] => %s" % (host, err)
+
+        msg = stringc(msg, 'red')
+        print >>sys.stderr, msg
 
     def on_skipped(self, host, item=None):
 
-	if item:
-            print "skipping: [%s] => (item=%s)" % (host, item)
+	msg = ''
+        if item:
+            msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
-            print "skipping: [%s]" % host
+            msg = "skipping: [%s]" % host
+        print stringc(msg, 'yellow')
 
     def on_no_hosts(self):
 
-        print "no hosts matched or remaining\n"
+        print stringc("no hosts matched or remaining\n", 'orange')
 
     def on_async_poll(self, host, res, jid, clock):
 
@@ -308,15 +327,19 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            print "<job %s> polling, %ss remaining"%(jid, clock)
+            msg = "<job %s> polling, %ss remaining"%(jid, clock)
+            print stringc(msg, 'blue')
 
     def on_async_ok(self, host, res, jid):
 
-        print "<job %s> finished on %s"%(jid, host)
+        msg = "<job %s> finished on %s"%(jid, host)
+        print stringc(msg, 'blue')
 
     def on_async_failed(self, host, res, jid):
 
-        print "<job %s> FAILED on %s"%(jid, host)
+        msg = "<job %s> FAILED on %s"%(jid, host)
+        print stringc(msg, 'red')
+
 
 ########################################################################
 
