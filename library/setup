@@ -455,7 +455,7 @@ class LinuxNetwork(Network):
         for iface in self.facts['interfaces']:
             # This is lame, but there doesn't appear to be a good way
             # to get all addresses for both IPv4 and IPv6.
-            cmd = subprocess.Popen("/sbin/ifconfig %s" % iface, shell=True,
+            cmd = subprocess.Popen("env LANG=\"\" /sbin/ifconfig %s" % iface, shell=True,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = cmd.communicate()
             for line in out.split('\n'):
