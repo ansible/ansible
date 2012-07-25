@@ -29,7 +29,7 @@ done for reference.
 * [Hadoop](https://github.com/jkleint/ansible-contrib/tree/master/playbooks/hadoop_jkleint) - jkleint
 * [LAMP](https://github.com/fourkitchens/server-playbooks) - [Four Kitchens](http://fourkitchens.com)
 * [Ganglia (demo)](https://github.com/mpdehaan/ansible-examples) - mpdehaan
-* [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - imcocoy
+* [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
 
 Blogs & Articles
 ================
@@ -40,7 +40,8 @@ Blogs & Articles
 * [Configuration Management With Ansible](http://jpmens.net/2012/06/06/configuration-management-with-ansible/) - jp_mens
 * [Shell Scripts As Ansible Modules](http://jpmens.net/2012/07/05/shell-scripts-as-ansible-modules/) - jp_mens
 * [Ansible Facts](http://jpmens.net/2012/07/15/ansible-it-s-a-fact/) - jp_mens
-* [Ansible Pull Mode](http://www.capsunlock.net/2012/05/using-ansible-pull-and-user-data-to-setup-ec2-or-openstack-servers.html) - imcocoy
+* [Infrastructure as Data](http://www.capsunlock.net/2012/04/ansible-infrastructure-as-data-not-infrastructure-as-code.html) - cocoy
+* [Ansible Pull Mode](http://www.capsunlock.net/2012/05/using-ansible-pull-and-user-data-to-setup-ec2-or-openstack-servers.html) - cocoy
 
 Disclaimer
 ==========
