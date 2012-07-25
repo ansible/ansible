@@ -45,6 +45,7 @@ Ansible Changes By Release
 * minor caching logic added to inventory to reduce hammering of inventory scripts.
 * ./hacking/test-module now supports options like ansible takes and has a debugger mode
 * playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
+* support ranges of hosts in the host file
 
 0.5 "Amsterdam" ------- July 04, 2012
 

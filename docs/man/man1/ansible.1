@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 07/04/2012
+.\"      Date: 07/24/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.6
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "07/04/2012" "Ansible 0\&.6" "System administration commands"
+.TH "ANSIBLE" "1" "07/24/2012" "Ansible 0\&.6" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -140,19 +140,9 @@ Connection type to use\&. Possible options are
 .RE
 .SH "INVENTORY"
 .sp
-Ansible stores the hosts it can potentially operate on in an inventory
-file\&. The syntax is one host per line\&. Optionally, ansible can use a
-line of the form base[beg:end]tail to define a set of hosts, where
-[beg:end] defines a numerical range. If 'beg' is left out, it
-defaults to 0\&.  An example: mail[1:6].example.com, where 'head'
-is 'mail', 'beg' is 1, 'end' is 6, and 'tail' is '.example.com'\&. In
-addition, 'beg' can be a a string padded with zero(s) to the left. If so
-provided, it acts as a formatting hint during hostname expansion. The usage
-must be confirmed by having an 'end' that has the same length as 'beg',
-else an exception is raised. An example: mail[001:003].example.com is to be
-expanded to mail001.example.com, mail002.example.com, and
-mail003.example.com\&. Groups headers are allowed and are included on their
-own line, enclosed in square brackets\&.
+Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets that start the line\&.
+.sp
+Ranges of hosts are also supported\&. For more information and additional options, see the documentation on http://ansible\&.github\&.com/\&.
 .SH "FILES"
 .sp
 /etc/ansible/hosts \(em Default inventory file

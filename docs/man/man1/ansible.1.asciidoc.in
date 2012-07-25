@@ -31,7 +31,6 @@ A name of a group in the inventory file, a shell-like glob selecting
 hosts in inventory file, or any combination of the two separated by
 semicolons.
 
-
 OPTIONS
 -------
 
@@ -112,7 +111,11 @@ INVENTORY
 
 Ansible stores the hosts it can potentially operate on in an inventory
 file. The syntax is one host per line.  Groups headers are allowed and
-are included on their own line, enclosed in square brackets.
+are included on their own line, enclosed in square brackets that
+start the line.
+
+Ranges of hosts are also supported.  For more information and
+additional options, see the documentation on http://ansible.github.com/.
 
 FILES
 -----
