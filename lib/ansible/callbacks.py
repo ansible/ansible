@@ -378,11 +378,13 @@ class PlaybookCallbacks(object):
     
     def on_import_for_host(self, host, imported_file):
 
-        print "%s: importing %s" % (host, imported_file)
+        msg = "%s: importing %s" % (host, imported_file)
+        print stringc(msg, 'blue')
 
     def on_not_import_for_host(self, host, missing_file):
 
-        print "%s: not importing file: %s" % (host, missing_file)
+        msg = "%s: not importing file: %s" % (host, missing_file)
+        print stringc(msg, 'blue')
 
     def on_play_start(self, pattern):
 
