@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 '''
 This module is for enhancing ansible's inventory parsing capability such
 that it can deal with hostnames specified using a simple pattern in the
@@ -69,13 +70,13 @@ def expand_hostname_range(line = None):
         (head, nrange, tail) = line.replace('[','|').replace(']','|').split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2:
-            raise ValueError("host range incorrectly specified!")
+            raise ValueError("host range incorrectly specified")
         beg = bounds[0]
         end = bounds[1]
         if not beg:
             beg = "0"
         if not end:
-            raise ValueError("host range end value missing!")
+            raise ValueError("host range end value missing")
         if beg[0] == '0' and len(beg) > 1:
             rlen = len(beg) # range length formatting hint
         else:
@@ -83,7 +84,7 @@ def expand_hostname_range(line = None):
         if rlen > 1 and rlen != len(end):
             raise ValueError("host range format incorrectly specified!")
                 
-        for _ in range(int(beg), int(end)):
+        for _ in range(int(beg), int(end)+1):
             if rlen:
                 rseq = str(_).zfill(rlen) # range sequence
             else:

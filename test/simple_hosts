@@ -1,13 +1,13 @@
 jupiter
 saturn
-thrudgelmir[:6]
+thrudgelmir[:5]
 
 [greek]
 zeus
 hera:3000
 poseidon
-cerberus[001:004]
-cottus[99:101]
+cerberus[001:003]
+cottus[99:100]
 
 [norse]
 thor
