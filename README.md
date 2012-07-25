@@ -35,11 +35,12 @@ Scripts
 =======
 
 Ansible isn't just a program, it's also an API.  Here's some examples of some clever integrations with the "Runner" and
-also Playbook APIs.
+also Playbook APIs, and integrations with other interesting pieces of software.
 
-* [virt-install + Ansible provisioning](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
-* [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
+* [Ansible w/ Vagrant](https://github.com/dsander/vagrant-ansible) - dsander
 * [EC2 external inventory](https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py) - pas256
+* [virt-install](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
+* [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
 * [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py) - mpdehaan
 * [uptime (API demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py) - mpdehaan                                                                                                                     
 
