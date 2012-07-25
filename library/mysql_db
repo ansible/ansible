@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import ConfigParser
 try:
     import MySQLdb
 except ImportError:
@@ -43,6 +44,16 @@ def db_create(cursor, db):
     res = cursor.execute(query)
     return True
 
+def load_mycnf():
+    config = ConfigParser.RawConfigParser()
+    mycnf = os.path.expanduser('~/.my.cnf')
+    config.read(mycnf)
+    try:
+        creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'pass'))
+    except ConfigParser.NoOptionError:
+        return False
+    return creds
+
 # ===========================================
 # Module execution.
 #
@@ -50,8 +61,8 @@ def db_create(cursor, db):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            loginuser=dict(default="root"),
-            loginpass=dict(default=""),
+            loginuser=dict(default=None),
+            loginpass=dict(default=None),
             loginhost=dict(default="localhost"),
             db=dict(required=True),
             state=dict(default="present", choices=["absent", "present"]),
@@ -63,13 +74,29 @@ def main():
 
     db = module.params["db"]
     state = module.params["state"]
-    changed = False
+
+    # Either the caller passes both a username and password with which to connect to
+    # mysql, or they pass neither and allow this module to read the credentials from
+    # ~/.my.cnf.
+    loginpass = module.params["loginpass"]
+    loginuser = module.params["loginuser"]
+    if loginuser is None and loginpass is None:
+        mycnf_creds = load_mycnf()
+        if mycnf_creds is False:
+            module.fail_json(msg="incomplete login arguments passed and can't find them in ~/.my.cnf")
+        else:
+            loginuser = mycnf_creds["user"]
+            loginpass = mycnf_creds["passwd"]
+    elif loginpass is None or loginuser is None:
+        module.fail_json(msg="when supplying login arguments, both user and pass must be provided")
+
     try:
-        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=module.params["loginuser"], passwd=module.params["loginpass"], db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpass, db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
         module.fail_json(msg="unable to connect to database")
 
+    changed = False
     if db_exists(cursor, db):
         if state == "absent":
             changed = db_delete(cursor, db)
