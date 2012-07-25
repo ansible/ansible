@@ -32,6 +32,7 @@ import sys
 import shlex
 import subprocess
 import syslog
+from urlparse import urlparse
 
 # ===========================================
 # Basic support methods
@@ -73,6 +74,9 @@ dest = params['dest']
 repo = params['repo']
 branch  = params.get('branch', 'master')
 version = params.get('version', 'HEAD')
+delete_reflogs = params.get('delete_reflogs', 'no')
+if delete_reflogs not in ['yes', 'no']:
+    fail_json(msg='invalid value for delete_reflogs (requires yes or no -- default is no')
 
 # ===========================================
 
@@ -84,21 +88,60 @@ def get_version(dest):
    sha = sha[0].split()[1]
    return sha
 
+def del_reflogs(dest, branch):
+   ''' Should be called after each git command for which deleting reflogs is meaningful.
+       That is, commands that create reflog messages with credentials or other sensitive data.'''
+
+   os.chdir(dest)
+
+   cmd = "git reflog delete HEAD@{0} %s@{0}" % branch
+   cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   (out, err) = cmd.communicate()
+   rc = cmd.returncode
+   
+   return (rc, out, err)
+
 def clone(repo, dest, branch):
    ''' makes a new git repo if it does not already exist '''
    try:
        os.makedirs(os.path.dirname(dest))
    except:
        pass
+
    cmd = "git clone %s %s" % (repo, dest)
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    (out, err) = cmd.communicate()
    rc = cmd.returncode
    
    if branch is None or rc != 0: 
-     return (out, err)
+       return (out, err)
 
    os.chdir(dest)
+
+   # For security reasons, rewrite remote repo url without credentials (if there were any)
+   # Also, delete_reflogs must be set to 'yes' in playbooks that use repo urls with passwords,
+   repo_parsed = urlparse(repo)
+   if repo_parsed.scheme and (repo_parsed.username or repo_parsed.password):
+       if repo_parsed.port:
+           repo_nocredentials = "%s://%s:%s%s" % (repo_parsed.scheme, repo_parsed.hostname,
+                                                  repo_parsed.port, repo_parsed.path)
+       else:
+           repo_nocredentials = "%s://%s%s" % (repo_parsed.scheme, repo_parsed.hostname,
+                                               repo_parsed.path)
+       cmd = "git remote set-url origin '%s'" % repo_nocredentials
+       cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+       (out, err) = cmd.communicate()
+       rc = cmd.returncode
+       if rc != 0:
+           fail_json(out=out, err=err)
+   
+   # Cloning from a repository with credentials in url creates a reflog with the credentials
+   # in common view, so we should delete the reflog.
+   if delete_reflogs == "yes":
+       (rc, out, err) = del_reflogs(dest, branch)
+       if rc != 0:
+           fail_json(out=out, err=err)
+    
    cmd = "git checkout -b %s origin/%s" % (branch, branch) 
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    return cmd.communicate()
@@ -140,10 +183,10 @@ def pull(repo, dest, branch):
       if cur_branch != default_branch:
          (out, err) = switchLocalBranch( default_branch )
 
-      cmd = "git pull -u origin"
+      cmd = "git pull -u %s" % repo
 
    elif branch == cur_branch:
-      cmd = "git pull -u origin"
+      cmd = "git pull -u %s" % repo
 
    else:
       m = re.search( '^\s+%s$' % branch, gbranch_out, flags=re.M ) #see if we've already checked it out
@@ -151,10 +194,20 @@ def pull(repo, dest, branch):
          cmd = "git checkout --track -b %s origin/%s" % (branch, branch)
 
       else:
-         cmd = "git pull -u origin"
+         cmd = "git pull -u %s" % repo
 
    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   return cmd.communicate()
+   (out, err) = cmd.communicate()
+   rc = cmd.returncode
+
+   # Pulling from a repository with credentials in url creates a reflog with the credentials
+   # in common view, so we should delete the reflog.
+   if rc == 0 and delete_reflogs == "yes":
+       (rc, out, err) = del_reflogs(dest, branch)
+       if rc != 0:
+           fail_json(out=out, err=err)
+
+   return (out, err)
 
 def switchver(version, dest):
    ''' once pulled, switch to a particular SHA or tag '''
