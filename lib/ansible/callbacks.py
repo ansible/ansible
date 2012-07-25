@@ -319,7 +319,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_no_hosts(self):
 
-        print stringc("no hosts matched or remaining\n", 'orange')
+        print stringc("no hosts matched or remaining\n", 'red')
 
     def on_async_poll(self, host, res, jid, clock):
 
