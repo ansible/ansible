@@ -19,7 +19,6 @@
 
 import os
 import os.path
-import sys
 import shutil
 import tempfile
 
@@ -60,10 +59,10 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
   
     if not os.path.exists(src):
-        fail_json(msg="Source (%s) does not exist" % src)
+        module.fail_json(msg="Source (%s) does not exist" % src)
     
     if not os.path.isdir(src):
-        fail_json(msg="Source (%s) is not a directory" % src)
+        module.fail_json(msg="Source (%s) is not a directory" % src)
     
     path = write_temp_file(assemble_from_fragments(src))
     pathmd5 = module.md5(path)
