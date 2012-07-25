@@ -40,7 +40,7 @@ also Playbook APIs.
 * [virt-install + Ansible provisioning](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
 * [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
 * [EC2 external inventory](https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py) - pas256
-* [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py)
+* [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py) - mpdehaan
 * [uptime (API demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py) - mpdehaan                                                                                                                     
 
 Blogs & Articles
