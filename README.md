@@ -19,7 +19,7 @@ Selected Playbooks
 ==================
 
 * [Hadoop](https://github.com/jkleint/ansible-contrib/tree/master/playbooks/hadoop_jkleint) - jkleint
-* [LAMP](https://github.com/fourkitchens/server-playbooks) - [Four Kitchens][http://fourkitchens.com]
+* [LAMP](https://github.com/fourkitchens/server-playbooks) - [Four Kitchens](http://fourkitchens.com)
 * [Ganglia](https://github.com/mpdehaan/ansible-examples) - mpdehaan
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - imcocoy
 
