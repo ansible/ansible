@@ -31,6 +31,18 @@ done for reference.
 * [Ganglia (demo)](https://github.com/mpdehaan/ansible-examples) - mpdehaan
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
 
+Scripts
+=======
+
+Ansible isn't just a program, it's also an API.  Here's some examples of some clever integrations with the "Runner" and
+also Playbook APIs.
+
+* [virt-install + Ansible provisioning](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
+* [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
+* [EC2 external inventory](https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py) - pas256
+* [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py)
+* [uptime (API demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py) - mpdehaan                                                                                                                     
+
 Blogs & Articles
 ================
 
