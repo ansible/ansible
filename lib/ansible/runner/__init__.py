@@ -317,6 +317,7 @@ class Runner(object):
             conn.put_file(source, tmp_src)
 
             # run the copy module
+            self.module_args = "%s src=%s" % (self.module_args, tmp_src)
             return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
         else:
