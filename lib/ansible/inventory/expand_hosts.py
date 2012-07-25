@@ -31,6 +31,8 @@ Note that when beg is specified with left zero padding, then the length of
 end must be the same as that of beg, else a exception is raised.
 '''
 
+from ansible import errors
+
 def detect_range(line = None):
     '''
     A helper function that checks a given host line to see if it contains
@@ -70,19 +72,19 @@ def expand_hostname_range(line = None):
         (head, nrange, tail) = line.replace('[','|').replace(']','|').split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2:
-            raise ValueError("host range incorrectly specified")
+            raise errors.AnsibleError("host range incorrectly specified")
         beg = bounds[0]
         end = bounds[1]
         if not beg:
             beg = "0"
         if not end:
-            raise ValueError("host range end value missing")
+            raise errors.AnsibleError("host range end value missing")
         if beg[0] == '0' and len(beg) > 1:
             rlen = len(beg) # range length formatting hint
         else:
             rlen = None
         if rlen > 1 and rlen != len(end):
-            raise ValueError("host range format incorrectly specified!")
+            raise errors.AnsibleError("host range format incorrectly specified!")
                 
         for _ in range(int(beg), int(end)+1):
             if rlen:
