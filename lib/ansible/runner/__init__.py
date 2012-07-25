@@ -492,7 +492,12 @@ class Runner(object):
             all_changed = False
             all_failed = False
             results = []
+            # Save module name and args since daisy-chaining can overwrite them
+            module_name = self.module_name
+            module_args = self.module_args
             for x in items:
+                self.module_name = module_name
+                self.module_args = module_args
                 inject['item'] = x
                 result = self._executor_internal_inner(host, inject, port)
                 results.append(result.result)
