@@ -22,14 +22,9 @@ import traceback
 import warnings; 
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
+# APT related constants
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
-
-try:
-    import apt, apt_pkg
-except ImportError:
-    json.dumps(dict(msg="could not import apt, please install the python-apt package on this host", failed=True))
-    sys.exit(1)
 
 def run_apt(command):
     try:
@@ -55,11 +50,11 @@ def package_split(pkgspec):
     else:
         return parts[0], None
 
-def package_status(pkgname, version, cache):
+def package_status(m, pkgname, version, cache):
     try:
         pkg = cache[pkgname]
     except KeyError:
-        fail_json(msg="No package matching '%s' is available" % pkgname)
+        m.fail_json(msg="No package matching '%s' is available" % pkgname)
     if version:
         try :
             return pkg.is_installed and pkg.installed.version == version, False
@@ -73,9 +68,9 @@ def package_status(pkgname, version, cache):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
-def install(pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
+def install(m, pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
     name, version = package_split(pkgspec)
-    installed, upgradable = package_status(name, version, cache)
+    installed, upgradable = package_status(m, name, version, cache)
     if not installed or (upgrade and upgradable):
         if force:
             force_yes = '--force-yes'
@@ -89,20 +84,25 @@ def install(pkgspec, cache, upgrade=False, default_release=None, install_recomme
             cmd += " --no-install-recommends"
 
         rc, out, err = run_apt(cmd)
-        return rc, out, err
+        if rc:
+            m.fail_json(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
+        else:
+            m.exit_json(changed=True)
     else:
-        return -1, "", "" # -1 depicts that nothing was changed
+        m.exit_json(changed=False)
 
-def remove(pkgspec, cache, purge=False):
+def remove(m, pkgspec, cache, purge=False):
     name, version = package_split(pkgspec)
-    installed, upgradable = package_status(name, version, cache)
+    installed, upgradable = package_status(m, name, version, cache)
     if not installed:
-        return -1, "", "" # -1 depicts nothing was changed
+        m.exit_json(changed=False)
     else:
         purge = '--purge' if purge else ''
         cmd = "%s -q -y %s remove '%s'" % (APT, purge, name)
         rc, out, err = run_apt(cmd)
-        return rc, out, error
+        if rc:
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (name, err))
+        m.exit_json(changed=True)
     
 
 def main():
@@ -117,6 +117,11 @@ def main():
             force = dict(default='no', choices=['yes', 'no'])
         )
     )
+
+    try:
+        import apt, apt_pkg
+    except:
+        module.fail_json("Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     if not os.path.exists(APT_PATH):
         module.fail_json(msg="Cannot find apt-get")
@@ -148,27 +153,18 @@ def main():
         module.fail_json(msg='invalid package spec')
     
     if p['state'] == 'latest':
-        if '=' in package:
+        if '=' in p['package']:
             module.fail_json(msg='version number inconsistent with state=latest') 
-
-        rc, out, err = install(p['package'], cache, upgrade=True,
-                          default_release=p['default_release'],
-                          install_recommends=install_recommends,
-                          force=force_yes)
+        install(module, p['package'], cache, upgrade=True,
+                  default_release=p['default_release'],
+                  install_recommends=install_recommends,
+                  force=force_yes)
 
     elif p['state'] == 'installed':
-        rc, out, err = install(p['package'], cache, default_release=p['default_release'],
-                          install_recommends=install_recommends,force=force_yes)
+        install(module, p['package'], cache, default_release=p['default_release'],
+                  install_recommends=install_recommends,force=force_yes)
     elif p['state'] == 'removed':
-        rc, out, err = remove(p['package'], cache, purge == 'yes')
-    
-    if rc:
-        if rc == -1:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json(msg=err)
-    else:
-        module.exit_json(changed=True)
+        remove(module, p['package'], cache, purge == 'yes')
     
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
