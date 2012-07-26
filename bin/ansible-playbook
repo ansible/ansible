@@ -31,9 +31,7 @@ from ansible.color import ANSIBLE_COLOR, stringc
 
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
-    if num == 0:
-        color='black';
-    if ANSIBLE_COLOR:
+    if num != 0 and ANSIBLE_COLOR:
         return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
     else:
         return "%s=%-4s" % (lead, str(num))
