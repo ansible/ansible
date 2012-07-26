@@ -14,7 +14,7 @@ Who They Are                                        What They Do
 `Skyline.es <http://skylin.es>`_                    Realtime Photo Search Engine
 ==================================================  ===================================================
 
-and lots of other people (you should see our Google Analytics data).  Tweet at [Michael DeHaan](http://twitter.com/laserllama) or [email him](mailto:michael.dehaan@gmail.com) to get your company or project listed here.  (It's free!)
+and lots of other people (you should see our Google Analytics data).  Tweet at `Michael DeHaan <http://twitter.com/laserllama>`_ or `email him <mailto:michael.dehaan@gmail.com>`_ to get your company or project listed here.  (It's free!)
 
 .. seealso::
 
