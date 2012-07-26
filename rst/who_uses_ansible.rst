@@ -24,5 +24,5 @@ and lots of other people (you should see our Google Analytics data).  Tweet at `
        #ansible IRC chat channel
    `List of Github Contributors <https://github.com/ansible/ansible/graphs/contributors>`_
        all the awesome folks who have contributed improvements to Ansible
-   `Github Impact Graphs <https://github.com/ansible/ansible/graphs/impact>`
+   `Github Impact Graphs <https://github.com/ansible/ansible/graphs/impact>`_
        week-to-week source code activity, by contributor
