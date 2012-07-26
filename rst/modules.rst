@@ -304,6 +304,10 @@ Deploys software (or files) from git checkouts.
 * What version to check out -- either the git SHA, the literal string
   ``HEAD``, branch name, or a tag name.
 
+*remote*:
+
+* Name of the remote branch, defaults to 'origin'.
+
 Example action from Ansible :doc:`playbooks`::
 
     git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
