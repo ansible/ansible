@@ -221,6 +221,11 @@ class PlayBook(object):
             results = {}
 
         self.stats.compute(results)
+
+        # add facts to the global setup cache
+        for host, result in results['contacted'].iteritems():
+            facts = result.get('ansible_facts', {})
+            self.SETUP_CACHE[host].update(facts)
  
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
