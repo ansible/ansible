@@ -421,7 +421,7 @@ class Runner(object):
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
             
         # run the copy module, queue the file module
-        self.module_args = "src=%s dest=%s" % (xfered, dest)
+        self.module_args = "%s src=%s dest=%s" % (self.module_args, xfered, dest)
         return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
 
     # *****************************************************
