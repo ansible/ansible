@@ -52,7 +52,8 @@ Manages apt-packages (such as for Debian/Ubuntu).
 
 *update-cache*:
 
-* Whether the apt cache must be updated prior to operation. Optional, and can be
+* Whether the apt cache must be updated prior to operation. This is equivalent
+  to doing "apt-get update". Optional, and can be
   'yes', or 'no'. The default is 'no'.  This can be done as the part of a
   package operation or as a seperate step.
 
