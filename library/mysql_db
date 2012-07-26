@@ -47,10 +47,10 @@ def db_create(cursor, db):
 def load_mycnf():
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser('~/.my.cnf')
-    config.read(mycnf)
     try:
+        config.readfp(open(mycnf))
         creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'pass'))
-    except ConfigParser.NoOptionError:
+    except (ConfigParser.NoOptionError, IOError):
         return False
     return creds
 
