@@ -178,14 +178,19 @@ class Play(object):
     def should_run(self, tags):
         ''' does the play match any of the tags? '''
 
-        if len(self._tasks) == 0:
-            return False
-
+        tags_counted = 0
         for task in self._tasks:
             for task_tag in task.tags:
+                tags_counted = tags_counted + 1
                 if task_tag in tags:
                     return True
-        return False                    
+
+        if tags_counted > 0:
+            return False  
+   
+        # didn't tag the play, and the play contains no steps
+        # so assume we just want to gather facts
+        return True                  
 
     # *************************************************
 

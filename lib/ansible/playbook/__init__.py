@@ -24,6 +24,8 @@ import os
 import collections
 from play import Play
 
+SETUP_CACHE = collections.defaultdict(dict)
+
 class PlayBook(object):
     '''
     runs an ansible playbook, given as a datastructure or YAML filename.  
@@ -75,7 +77,7 @@ class PlayBook(object):
         sudo:             if not specified per play, requests all plays use sudo mode
         """
 
-        self.SETUP_CACHE = collections.defaultdict(dict)
+        self.SETUP_CACHE = SETUP_CACHE
 
         if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
@@ -148,7 +150,6 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for play_ds in self.playbook:
-            self.SETUP_CACHE = collections.defaultdict(dict)
             self._run_play(Play(self,play_ds))
 
         # summarize the results
@@ -218,11 +219,6 @@ class PlayBook(object):
         # if no hosts are matched, carry on
         if results is None:
             results = {}
-
-        # add facts to the global setup cache
-        for host, result in results['contacted'].iteritems():
-            facts = result.get('ansible_facts', {})
-            self.SETUP_CACHE[host].update(facts)
 
         self.stats.compute(results)
  
