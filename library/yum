@@ -249,11 +249,10 @@ def ensure(my, state, pkgspec):
             res['results'] = out
 
         return res
-        
-    return {'changed': False,
-            'failed': True,
-            'results':'',
-            'errors': 'Ensure state %r unknown' % state }
+
+    # should be caught by AnsibleModule argument_spec        
+    return dict(changed=False, failed=True, results='', errors='unexpected state')
+ 
 
 
 def update(args):
@@ -277,24 +276,21 @@ def main():
     #   list=pkgspec
     
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec = dict(
+            pkg=dict(aliases=['name']),
+            # removed==absent, installed==present, these are accepted as aliases
+            state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
+            list=dict(choices=['installed','updates','available','repos','pkgspec']),
+        )
     )
 
     params = module.params
-    usage = "The module expects arguments of the following forms: state=<installed|removed|latest> pkg=<pkgspec> OR list=<installed|updates|available|repos|pkgspec>. pkgspec is nothing but the package specification. Example: google-chrome-stable.i386"
-
-    if not len(params):
-        module.fail_json(msg=usage)
-
-    # if nothing else changes - it fails
-    results = { 'changed':False, 
-                'failed':True, 
-                'results':'', 
-                'errors':'', 
-                'msg':usage }
 
     if 'conf_file' not in params:
         params['conf_file'] = None
+
+    if 'list' in params and 'pkg' in params:
+        module.fail_json(msg="expected 'list=' or 'name=', but not both")
     
     if 'list' in params:
         try:
@@ -302,21 +298,20 @@ def main():
             results = dict(results=list_stuff(my, params['list']))
         except Exception, e:
             module.fail_json(msg=str(e))
+        module.exit_json(**results)
             
     else:
-        pkg = params.get('pkg', params.get('package', params.get('name', None))) 
+        pkg = params['pkg']
         if 'pkg' is None:
-            module.fail_json(msg=usage)
+            module.fail_json(msg="expected 'list=' or 'name='")
         else:
             try:
                 my = yum_base(conf_file=params['conf_file'], cachedir=True)        
-                state = params.get('state', 'installed')
+                state = params['state']
                 results = ensure(my, state, pkg)
             except Exception, e:
                 module.fail_json(msg=str(e))
-
-    module.exit_json(**results)
-
+            module.exit_json(**results)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
