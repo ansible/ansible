@@ -239,7 +239,8 @@ noted, any given module does support change hooks.</p>
 </ul>
 <p><em>update-cache</em>:</p>
 <ul class="simple">
-<li>Whether the apt cache must be updated prior to operation. Optional, and can be
+<li>Whether the apt cache must be updated prior to operation. This is equivalent
+to doing &#8220;apt-get update&#8221;. Optional, and can be
 &#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.  This can be done as the part of a
 package operation or as a seperate step.</li>
 </ul>
@@ -446,11 +447,11 @@ file path=/some/path state=directory context=default</pre>
 <p><em>version</em>:</p>
 <ul class="simple">
 <li>What version to check out &#8211; either the git SHA, the literal string
-<tt class="docutils literal"><span class="pre">HEAD</span></tt>, or a tag name.</li>
+<tt class="docutils literal"><span class="pre">HEAD</span></tt>, branch name, or a tag name.</li>
 </ul>
-<p><em>branch</em>:</p>
+<p><em>remote</em>:</p>
 <ul class="simple">
-<li>(new in 0.4) Which branch name to checkout.  Defaults to &#8216;master&#8217;.</li>
+<li>Name of the remote branch, defaults to &#8216;origin&#8217;.</li>
 </ul>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
