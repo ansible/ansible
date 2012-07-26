@@ -62,7 +62,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             loginuser=dict(default=None),
-            loginpass=dict(default=None),
+            loginpasswd=dict(default=None),
             loginhost=dict(default="localhost"),
             db=dict(required=True),
             state=dict(default="present", choices=["absent", "present"]),
