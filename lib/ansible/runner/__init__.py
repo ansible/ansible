@@ -248,8 +248,6 @@ class Runner(object):
             self.module_args += " #USE_SHELL"
 
         exec_rc = self._execute_module(conn, tmp, module_name, self.module_args, inject=inject)
-        if exec_rc.is_successful():
-            self.setup_cache[conn.host].update(exec_rc.result.get('ansible_facts', {}))
         return exec_rc
 
     # *****************************************************
