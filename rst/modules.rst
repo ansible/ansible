@@ -302,11 +302,11 @@ Deploys software (or files) from git checkouts.
 *version*:
 
 * What version to check out -- either the git SHA, the literal string
-  ``HEAD``, or a tag name.
+  ``HEAD``, branch name, or a tag name.
 
-*branch*:
+*remote*:
 
-* (new in 0.4) Which branch name to checkout.  Defaults to 'master'.
+* Name of the remote branch, defaults to 'origin'.
 
 Example action from Ansible :doc:`playbooks`::
 
