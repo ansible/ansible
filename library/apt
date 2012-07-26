@@ -28,7 +28,7 @@ APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
 try:
     import apt, apt_pkg
 except ImportError:
-    json.dumps(msg="could not import apt, please install the python-apt package on this host", failed=True)
+    json.dumps(dict(msg="could not import apt, please install the python-apt package on this host", failed=True))
     sys.exit(1)
 
 def run_apt(command):
