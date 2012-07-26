@@ -252,7 +252,8 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   user: yourname
-  sudo: True</pre>
+  sudo: True
+  sudo_user: privileged_user</pre>
 </div>
 <p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<cite>-K</cite>).
 If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
@@ -285,7 +286,9 @@ playbook, and can be used on each system just like explicitly set
 variables.</p>
 <p>Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
 variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.  Ansible variables (0.3 and later)
-are not surprisingly prefixed with <tt class="docutils literal"><span class="pre">ansible_</span></tt>.  So for instance, if I wanted
+are not surprisingly prefixed with <tt class="docutils literal"><span class="pre">ansible_</span></tt> (See the <a class="reference internal" href="modules.html#setup"><em>setup</em></a> module
+documentation for a list of Ansible variables).</p>
+<p>So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say:</p>
 <div class="highlight-python"><pre>- name: write the motd
   action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
