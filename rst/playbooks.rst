@@ -118,7 +118,10 @@ variables.
 
 Facter variables are prefixed with ``facter_`` and Ohai
 variables are prefixed with ``ohai_``.  Ansible variables (0.3 and later) 
-are not surprisingly prefixed with ``ansible_``.  So for instance, if I wanted
+are not surprisingly prefixed with ``ansible_`` (See the :ref:`setup` module
+documentation for a list of Ansible variables).
+
+So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say::
 
    - name: write the motd
