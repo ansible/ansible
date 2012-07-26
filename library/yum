@@ -19,22 +19,9 @@
 #
 
 
-import os
-import sys
 import yum
-import subprocess
 import datetime
-import shlex
-import re
 import traceback
-import syslog
-
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-    
 
 def yum_base(conf_file=None, cachedir=False):
     my = yum.YumBase()
@@ -289,73 +276,50 @@ def main():
     #   list=repos
     #   list=pkgspec
     
-    if len(sys.argv) == 1:
-        msg = "the yum module requires arguments (-a)"
-        return 1, msg
+    module = AnsibleModule(
+        argument_spec = dict()
+    )
 
-    argfile = sys.argv[1]
-    if not os.path.exists(argfile):
-        msg = "Argument file not found"
-        return 1, msg
+    params = module.params
+    usage = "The module expects arguments of the following forms: state=<installed|removed|latest> pkg=<pkgspec> OR list=<installed|updates|available|repos|pkgspec>. pkgspec is nothing but the package specification. Example: google-chrome-stable.i386"
 
-    args = open(argfile, 'r').read()
-    items = shlex.split(args)
-    syslog.openlog('ansible-%s' % os.path.basename(__file__))
-    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-    if not len(items):
-        msg = "the yum module requires arguments (-a)"
-        return 1, msg
+    if not len(params):
+        module.fail_json(msg=usage)
 
     # if nothing else changes - it fails
     results = { 'changed':False, 
                 'failed':True, 
                 'results':'', 
                 'errors':'', 
-                'msg':args }
-    params = {}
-    for x in items:
-        try:
-            (k, v) = x.split("=", 1)
-        except ValueError:
-            msg = "invalid arguments: %s" % args
-            return 1, msg
-            
-        params[k] = v
+                'msg':usage }
 
     if 'conf_file' not in params:
         params['conf_file'] = None
-
     
     if 'list' in params:
         try:
             my = yum_base(conf_file=params['conf_file'], cachedir=True)
             results = dict(results=list_stuff(my, params['list']))
         except Exception, e:
-            return 1, str(e)
+            module.fail_json(msg=str(e))
             
     else:
         pkg = params.get('pkg', params.get('package', params.get('name', None))) 
         if 'pkg' is None:
-            results['msg'] = "No pkg specified"
+            module.fail_json(msg=usage)
         else:
             try:
                 my = yum_base(conf_file=params['conf_file'], cachedir=True)        
                 state = params.get('state', 'installed')
                 results = ensure(my, state, pkg)
             except Exception, e:
-                return 1, str(e)
+                module.fail_json(msg=str(e))
 
-    print json.dumps(results)
-    return 0, None
+    module.exit_json(**results)
 
-if __name__ == "__main__":
-    rc, msg = main()
-    if rc != 0: # something went wrong emit the msg
-        print json.dumps({
-            "failed" : rc,
-            "msg" : msg
-        })   
-        sys.exit(rc)
 
-    
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
+
