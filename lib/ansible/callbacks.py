@@ -328,12 +328,12 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
             msg = "<job %s> polling, %ss remaining"%(jid, clock)
-            print stringc(msg, 'blue')
+            print stringc(msg, 'cyan')
 
     def on_async_ok(self, host, res, jid):
 
         msg = "<job %s> finished on %s"%(jid, host)
-        print stringc(msg, 'blue')
+        print stringc(msg, 'cyan')
 
     def on_async_failed(self, host, res, jid):
 
@@ -379,12 +379,12 @@ class PlaybookCallbacks(object):
     def on_import_for_host(self, host, imported_file):
 
         msg = "%s: importing %s" % (host, imported_file)
-        print stringc(msg, 'blue')
+        print stringc(msg, 'cyan')
 
     def on_not_import_for_host(self, host, missing_file):
 
         msg = "%s: not importing file: %s" % (host, missing_file)
-        print stringc(msg, 'blue')
+        print stringc(msg, 'cyan')
 
     def on_play_start(self, pattern):
 
