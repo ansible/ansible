@@ -187,20 +187,20 @@ def main():
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
     # ~/.my.cnf.
-    loginpass = module.params["loginpass"]
+    loginpasswd = module.params["loginpasswd"]
     loginuser = module.params["loginuser"]
-    if loginuser is None and loginpass is None:
+    if loginuser is None and loginpasswd is None:
         mycnf_creds = load_mycnf()
         if mycnf_creds is False:
             module.fail_json(msg="incomplete login arguments passed and can't find them in ~/.my.cnf")
         else:
             loginuser = mycnf_creds["user"]
-            loginpass = mycnf_creds["passwd"]
-    elif loginpass is None or loginuser is None:
+            loginpasswd = mycnf_creds["passwd"]
+    elif loginpasswd is None or loginuser is None:
         module.fail_json(msg="when supplying login arguments, both user and pass must be provided")
 
     try:
-        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpass, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpasswd, db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
         module.fail_json(msg="unable to connect to database")
