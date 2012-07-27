@@ -16,25 +16,22 @@
 #    ansible-playbook foo.yml --extra-vars="foo=100 bar=101"
 # or through external inventory scripts (see online API docs)
 
-# prompted variables are a list of variable names and a description
-# that will be presented to the user, or a list of variable dictionaries
-# with the following accepted keys / value types: 
-#    'name' / text
-#    'prompt' / text (optional)
-#    'private' / boolean (optional)
+# here's basic mode prompting.  Specify a hash of variable names and a prompt for
+# each.
+#
+# vars_prompt:
+#   release_version: "product release version"
 
-# prompted variables as key/value pairs:
+# prompts can also be specified like this, allowing for hiding the prompt as 
+# entered.  In the future, this may also be used to support crypted variables
+
   vars_prompt:
-     release_version: "product release version"
-
-# prompted variables as a list of variable dictionaries:
-#  vars_prompt:
-#    - name: "some_password"
-#      prompt: "Enter password: "
-#      private: True
-#    - name: "release_version"
-#      prompt: "Product release version: "
-#      private: False
+    - name: "some_password"
+      prompt: "Enter password"
+      private: True
+    - name: "release_version"
+      prompt: "Product release version"
+      private: False
 
 # this is just a simple example to show that vars_prompt works, but
 # you might ask for a tag to use with the git module or perhaps

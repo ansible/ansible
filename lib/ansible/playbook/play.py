@@ -157,24 +157,18 @@ class Play(object):
 
         if type(self.vars_prompt) == list:
             for var in self.vars_prompt:
-                try:
-                    vname = var.get("name")
-                except KeyError:
-                    raise errors.AnsibleError("A variable dictionary in 'vars_prompt' must always have a 'name' key")
-                if not ((vname[0].isalpha() or vname[0] == '_') and vname.replace('_','').isalnum()):
-                    raise errors.AnsibleError("'%s' cannot be used as a variable name. Variable names must consist of"
-                                              " a letter or underscore, followed by a string of letters, numbers, and underscores"
-                                              % vname)
-                prompt = var.get("prompt", None)
+                if not 'name' in var:
+                    raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
+                vname = var['name']
+                prompt = "%s: " % var.get("prompt", vname)
                 private = var.get("private", True)
-    
                 vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt)
         elif type(self.vars_prompt) == dict:
-            for vname in self.vars_prompt:
-                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname)
+            for (vname, prompt) in self.vars_prompt.iteritems():
+                prompt = "%s: " % prompt
+                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, False, prompt)
         else:
-            raise errors.AnsibleError("'vars_prompt' section must contain either key/value pairs or a list"
-                                      " of variable dictionaries (see docs for accepted dictionary keys)")
+            raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
         results = self.playbook.extra_vars.copy()
         results.update(vars)
