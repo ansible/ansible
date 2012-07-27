@@ -42,7 +42,7 @@ def exit_json(rc=0, **kwargs):
 
 def fail_json(**kwargs):
    kwargs['failed'] = True
-   exit_json(rc=1, **kwargs)
+   exit_json(**kwargs)
 
 # ===========================================
 # convert arguments of form a=b c=d
