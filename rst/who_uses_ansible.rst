@@ -9,7 +9,7 @@ Who They Are                                        What They Do
 `The Fedora Project <http://fedoraproject.org>`_    produces the popular Linux distribution
 `Basho <http://basho.com>`_                         makers of NoSQL key-value store Riak
 `Four Kitchens <http://fourkitchens.com>`_          "the Drupal Experts"
-`Steelhouse.com <http://steelhouse.com>`_           Behavioral Commerce
+`Steelhouse <http://steelhouse.com>`_               Behavioral Commerce
 `Cygate AB <http://cygate.se>`_                     IT solutions from Malmö, Sweden
 `Skyline.es <http://skylin.es>`_                    Realtime Photo Search Engine
 ==================================================  ===================================================
