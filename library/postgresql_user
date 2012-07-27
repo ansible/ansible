@@ -1,0 +1,152 @@
+#!/usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import psycopg2
+except ImportError:
+    postgresqldb_found = False
+else:
+    postgresqldb_found = True
+
+# ===========================================
+# PostgreSQL module specific support methods.
+#
+
+
+def user_exists(cursor, user):
+    query = "SELECT rolname FROM pg_roles WHERE rolname=%(user)s"
+    cursor.execute(query, {'user': user})
+    return cursor.rowcount > 0
+
+
+def user_add(cursor, user, passwd, db):
+    """Create a new user with write access to the database"""
+    query = "CREATE USER %(user)s with PASSWORD '%(passwd)s'"
+    cursor.execute(query % {"user": user, "passwd": passwd})
+    grant_privileges(cursor, user, db)
+    return True
+
+
+def has_privileges(cursor, user, db):
+    """Check if the user has create privileges on the database"""
+    query = "SELECT has_database_privilege(%(user)s, %(db)s, 'CREATE')"
+    cursor.execute(query, {'user': user, 'db': db})
+    return cursor.fetchone()[0]
+
+
+def grant_privileges(cursor, user, db):
+    """Grant all privileges on the database"""
+    query = "GRANT ALL PRIVILEGES ON DATABASE %(db)s TO %(user)s"
+    cursor.execute(query % {'user': user, 'db': db})
+
+
+def revoke_privileges(cursor, user, db):
+    """Revoke all privileges on the database"""
+    query = "REVOKE ALL PRIVILEGES ON DATABASE %(db)s FROM %(user)s"
+    cursor.execute(query % {'user': user, 'db': db})
+
+
+def user_mod(cursor, user, passwd, db):
+    """Update password and permissions"""
+    changed = False
+
+    # Handle passwords.
+    if passwd is not None:
+        select = "SELECT rolpassword FROM pg_authid where rolname=%(user)s"
+        cursor.execute(select, {"user": user})
+        current_pass_hash = cursor.fetchone()[0]
+        # Not sure how to hash the new password, so we just initiate the
+        # change and check if the hash changed
+        alter = "ALTER USER %(user)s WITH PASSWORD '%(passwd)s'"
+        cursor.execute(alter % {"user": user, "passwd": passwd})
+        cursor.execute(select, {"user": user})
+        new_pass_hash = cursor.fetchone()[0]
+        if current_pass_hash != new_pass_hash:
+            changed = True
+
+    # Handle privileges.
+    # For now, we just check if the user has access to the database
+    if not has_privileges(cursor, user, db):
+        grant_privileges(cursor, user, db)
+        changed = True
+
+    return changed
+
+
+def user_delete(cursor, user, db):
+    """Delete a user, first revoking privileges"""
+    revoke_privileges(cursor, user, db)
+    cursor.execute("DROP USER %(user)s" % {'user': user})
+    return True
+
+
+
+# ===========================================
+# Module execution.
+#
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            loginuser=dict(default="postgres"),
+            loginpass=dict(default=""),
+            loginhost=dict(default=""),
+            user=dict(required=True),
+            passwd=dict(default=None),
+            state=dict(default="present", choices=["absent", "present"]),
+            db=dict(required=True),
+        )
+    )
+    user = module.params["user"]
+    passwd = module.params["passwd"]
+    state = module.params["state"]
+    db = module.params["db"]
+
+    if not postgresqldb_found:
+        module.fail_json(msg="the python psycopg2 module is required")
+
+    try:
+        db_connection = psycopg2.connect(host=module.params["loginhost"],
+                                         user=module.params["loginuser"],
+                                         password=module.params["loginpass"],
+                                         database=db)
+        cursor = db_connection.cursor()
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
+    if state == "present":
+        if user_exists(cursor, user):
+            changed = user_mod(cursor, user, passwd, db)
+        else:
+            if passwd is None:
+                msg = "passwd parameter required when adding a user"
+                module.fail_json(msg=msg)
+            changed = user_add(cursor, user, passwd, db)
+
+    elif state == "absent":
+        if user_exists(cursor, user):
+            changed = user_delete(cursor, user, db)
+        else:
+            changed = False
+    # Commit the database changes
+    db_connection.commit()
+    module.exit_json(changed=changed, user=user)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

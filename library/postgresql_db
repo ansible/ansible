@@ -1,0 +1,94 @@
+#!/usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    import psycopg2
+except ImportError:
+    postgresqldb_found = False
+else:
+    postgresqldb_found = True
+
+# ===========================================
+# PostgreSQL module specific support methods.
+#
+
+
+def db_exists(cursor, db):
+    query = "SELECT * FROM pg_database WHERE datname=%(db)s"
+    cursor.execute(query, {'db': db})
+    return cursor.rowcount == 1
+
+
+def db_delete(cursor, db):
+    query = "DROP DATABASE %s" % db
+    cursor.execute(query)
+    return True
+
+
+def db_create(cursor, db):
+    query = "CREATE DATABASE %s" % db
+    cursor.execute(query)
+    return True
+
+# ===========================================
+# Module execution.
+#
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            loginuser=dict(default="postgres"),
+            loginpass=dict(default=""),
+            loginhost=dict(default=""),
+            db=dict(required=True),
+            state=dict(default="present", choices=["absent", "present"]),
+        )
+    )
+
+    if not postgresqldb_found:
+        module.fail_json(msg="the python psycopg2 module is required")
+
+    db = module.params["db"]
+    state = module.params["state"]
+    changed = False
+    try:
+        db_connection = psycopg2.connect(host=module.params["loginhost"],
+                                         user=module.params["loginuser"],
+                                         password=module.params["loginpass"],
+                                         database="template1")
+        # Enable autocommit so we can create databases
+        db_connection.autocommit = True
+        cursor = db_connection.cursor()
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
+    try:
+        if db_exists(cursor, db):
+            if state == "absent":
+                changed = db_delete(cursor, db)
+        else:
+            if state == "present":
+                changed = db_create(cursor, db)
+    except Exception as e:
+        module.fail_json(msg="Database query failed: %s" % e)
+
+    module.exit_json(changed=changed, db=db)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
