@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import ConfigParser
 try:
     import MySQLdb
 except ImportError:
@@ -141,6 +142,18 @@ def privileges_grant(cursor, user,host,db_table,priv):
     query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
     cursor.execute(query)
 
+def load_mycnf():
+    config = ConfigParser.RawConfigParser()
+    mycnf = os.path.expanduser('~/.my.cnf')
+    if not os.path.exists(mycnf):
+        return False
+    try:
+        config.readfp(open(mycnf))
+        creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'pass'))
+    except (ConfigParser.NoOptionError, IOError):
+        return False
+    return creds
+
 # ===========================================
 # Module execution.
 #
@@ -148,8 +161,8 @@ def privileges_grant(cursor, user,host,db_table,priv):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            loginuser=dict(default="root"),
-            loginpass=dict(default=""),
+            loginuser=dict(default=None),
+            loginpasswd=dict(default=None),
             loginhost=dict(default="localhost"),
             user=dict(required=True),
             passwd=dict(default=None),
@@ -173,8 +186,23 @@ def main():
         except:
             module.fail_json(msg="invalid privileges string")
 
+    # Either the caller passes both a username and password with which to connect to
+    # mysql, or they pass neither and allow this module to read the credentials from
+    # ~/.my.cnf.
+    loginpasswd = module.params["loginpasswd"]
+    loginuser = module.params["loginuser"]
+    if loginuser is None and loginpasswd is None:
+        mycnf_creds = load_mycnf()
+        if mycnf_creds is False:
+            module.fail_json(msg="incomplete login arguments passed and can't find them in ~/.my.cnf")
+        else:
+            loginuser = mycnf_creds["user"]
+            loginpasswd = mycnf_creds["passwd"]
+    elif loginpasswd is None or loginuser is None:
+        module.fail_json(msg="when supplying login arguments, both user and pass must be provided")
+
     try:
-        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=module.params["loginuser"], passwd=module.params["loginpass"], db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpasswd, db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
         module.fail_json(msg="unable to connect to database")
