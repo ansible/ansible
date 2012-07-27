@@ -201,6 +201,16 @@ class Runner(object):
 
     # *****************************************************
 
+    def _fix_owner(self, conn, remote_path, tmp, is_executable=False):
+        """Fix ownership and permissions if sudo'ing to non-root"""
+        if self.sudo and (self.sudo_user != 'root'):
+            sudo_user = self.sudo_user
+            self.sudo_user = "root"
+            self._low_level_exec_command(conn, "chown %s %s" % (sudo_user, remote_path), tmp, True)
+            if is_executable:
+                self._low_level_exec_command(conn, "chmod 700 %s" % remote_path, tmp, True)
+            self.sudo_user = sudo_user
+
     def _execute_module(self, conn, tmp, module_name, args, 
         async_jid=None, async_module=None, async_limit=None, inject=None):
 
@@ -211,11 +221,13 @@ class Runner(object):
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
         self._low_level_exec_command(conn, "chmod +x %s" % remote_module_path, tmp)
+        self._fix_owner(conn, remote_module_path, tmp, True)
 
         cmd = ""
         if not is_new_style:
             args = utils.template(args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+            self._fix_owner(conn, argsfile, tmp)
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
             else:
@@ -690,6 +702,7 @@ class Runner(object):
             module_data = "\n".join(module_lines)
 
         self._transfer_str(conn, tmp, module, module_data)
+        self._fix_owner(conn, out_path, tmp)
         return (out_path, is_new_style)
 
     # *****************************************************
