@@ -49,6 +49,7 @@ Ansible Changes By Release
 * hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
 * MySQL and PostgreSQL modules for user and db management
 * vars_prompt now supports private password entry (see examples/playbooks/prompts.yml)
+* sudoing to a user other than root now works more seamlessly (uses /tmp, avoids umask issues)
 
 0.5 "Amsterdam" ------- July 04, 2012
 
