@@ -598,73 +598,65 @@ def ansible_facts():
 
 # ===========================================
 
-# load config & template variables
+def run_setup(module):
 
-if len(sys.argv) == 1:
-    sys.exit(1)
+    setup_options = {}
+    facts = ansible_facts()
+ 
+    for (k, v) in facts.items():
+        setup_options["ansible_%s" % k] = v
 
+    # if facter is installed, and we can use --json because
+    # ruby-json is ALSO installed, include facter data in the JSON
 
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-    sys.exit(1)
+    if os.path.exists("/usr/bin/facter"):
+       cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
+           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+       out, err = cmd.communicate()
+       facter = True
+       try:
+           facter_ds = json.loads(out)
+       except:
+           facter = False
+       if facter:
+           for (k,v) in facter_ds.items():
+               setup_options["facter_%s" % k] = v
 
-setup_options = open(argfile).read().strip()
-try:
-   setup_options = json.loads(setup_options)
-except:
-   list_options = shlex.split(setup_options)
-   setup_options = {}
-   for opt in list_options:
-       (k,v) = opt.split("=")
-       setup_options[k]=v   
+    # ditto for ohai, but just top level string keys
+    # because it contains a lot of nested stuff we can't use for
+    # templating w/o making a nicer key for it (TODO)
 
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % setup_options)
+    if os.path.exists("/usr/bin/ohai"):
+       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+       out, err = cmd.communicate()
+       ohai = True
+       try:
+           ohai_ds = json.loads(out)
+       except:
+           ohai = False
+       if ohai:
+           for (k,v) in ohai_ds.items():
+               if type(v) == str or type(v) == unicode:
+                   k2 = "ohai_%s" % k
+                   setup_options[k2] = v
 
-# Get some basic facts in case facter or ohai are not installed
-for (k, v) in ansible_facts().items():
-    setup_options["ansible_%s" % k] = v
+    setup_result = {}
+    setup_result['ansible_facts'] = setup_options
 
-# if facter is installed, and we can use --json because
-# ruby-json is ALSO installed, include facter data in the JSON
+    # hack to keep --verbose from showing all the setup module results
+    setup_result['verbose_override'] = True
 
-if os.path.exists("/usr/bin/facter"):
-   cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
-       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   out, err = cmd.communicate()
-   facter = True
-   try:
-       facter_ds = json.loads(out)
-   except:
-       facter = False
-   if facter:
-       for (k,v) in facter_ds.items():
-           setup_options["facter_%s" % k] = v
+    return setup_result
 
-# ditto for ohai, but just top level string keys
-# because it contains a lot of nested stuff we can't use for
-# templating w/o making a nicer key for it (TODO)
+def main():
+    module = AnsibleModule(
+        argument_spec = dict()
+    )
+    data = run_setup(module)
+    module.exit_json(**data)
 
-if os.path.exists("/usr/bin/ohai"):
-   cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   out, err = cmd.communicate()
-   ohai = True
-   try:
-       ohai_ds = json.loads(out)
-   except:
-       ohai = False
-   if ohai:
-       for (k,v) in ohai_ds.items():
-           if type(v) == str or type(v) == unicode:
-               k2 = "ohai_%s" % k
-               setup_options[k2] = v
-
-setup_result = {}
-setup_result['ansible_facts'] = setup_options
-
-# hack to keep --verbose from showing all the setup module results
-setup_result['verbose_override'] = True
-
-print json.dumps(setup_result)
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
 
