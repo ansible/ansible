@@ -30,6 +30,7 @@ done for reference.
 * [LAMP](https://github.com/fourkitchens/server-playbooks) - [Four Kitchens](http://fourkitchens.com)
 * [Ganglia (demo)](https://github.com/mpdehaan/ansible-examples) - mpdehaan
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
+* [OpenStack](http://github.com/lorin/openstack-ansible) - lorin
 
 Scripts
 =======
