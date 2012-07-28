@@ -14,9 +14,8 @@ Let's review how we execute three different modules from the command line::
     ansible webservers -m command -a "/sbin/reboot -t now"
 
 Each module supports taking arguments.  Nearly all modules take ``key=value`` 
-arguments, space delimited.  Some modules take
-no arguments, and the command/shell modules simply take the string
-of the command you want to run.
+arguments, space delimited.  Some modules take no arguments, and the 
+command/shell modules simply take the string of the command you want to run.
 
 From playbooks, Ansible modules are executed in a very similar way::
 
@@ -42,33 +41,24 @@ apt
 
 Manages apt-packages (such as for Debian/Ubuntu).
 
-*pkg*:
-
-* A package name or package specifier with version, like `foo`, or `foo=1.0` to install a specific version of the foo package.
-
-*state*:
-
-* Can be either 'installed', 'removed', or 'latest'.  The default is 'installed'.  (In 0.4 and later, the aliases 'absent' and 'present' can also be used.  They correspond with 'removed' and 'installed')
-
-*update-cache*:
-
-* Whether the apt cache must be updated prior to operation. This is equivalent
-  to doing "apt-get update". Optional, and can be
-  'yes', or 'no'. The default is 'no'.  This can be done as the part of a
-  package operation or as a seperate step.
-
-*purge*:
-
-* Will force purge of configuration file for when ensure is set to 'removed'.
-  Defaults to 'no'.
-
-*default-release*:
-
-* Corresponds to the -t option for apt, and sets pin priorities
-
-*install-recommends*: (devel branch now, part of ansible 0.6 later)
-
-* Corresponds to the --no-install-recommends option for apt. Defaults to 'yes', which means install the recommended packages the same way APT does by default. Set this to 'no' to add the option not to install recommended packages.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | no       |         | A package name or package specifier with version, like `foo` or `foo=1.0`  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              | no       | present | 'absent', 'present', or 'latest'.                                          |  
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| update-cache       | no       | no      | run the equivalent of apt-get update before the operation?                 |
+|                    |          |         | Can be run as part of the package installation or a seperate step          | 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| purge              | no       | no      | Will forge purge of configuration files if state is set to 'removed'.      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| default-release    | no       |         | Corresponds to the -t option for apt and sets pin priorities               |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| install-recommends | no       | yes     | Corresponds to the --no-install-recommends option for apt, default         |
+|                    |          |         | behavior works as apt's default behavior, 'no' does not install            |
+|                    |          |         | recommended packages.  Suggested packages are never installed.             |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -90,13 +80,15 @@ Assmeble will take a directory of files that have already been transferred to th
 together to produce a destination file.  Files are assembled in string sorting order.   Puppet calls this idea
 "fragments".
 
-*src*:
-
-* An already existing directory full of source files.
-
-*dest*:
-
-* A file to create using the concatenation of all of the source files.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| src                | yes      |         | An already existing directory full of source files                         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | A file to create using the concatenation of all of the source files        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| OTHERS             |          |         | All arguments that the file module takes may also be used                  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -110,17 +102,15 @@ authorized_key
 
 (new in 0.5).  Adds or removes an authorized key for a user from a remote host.
 
-*user*:
-
-* Name of the user who access is being granted or remoted to.
-
-*state*:
-
-* Either 'absent' or 'present', this is whether the given key should be in the authorized keys file or not.
-
-*key*:
-
-* The actual key, as a string.  
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| user               | yes      |         | Name of the user who should have access to the remote host                 |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| key                | yes      |         | the SSH public key, as a string                                            |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              | no       | present | whether the given key should or should not be in the file                  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -169,17 +159,18 @@ The copy module moves a file on the local box to remote locations.  In addition 
 listed below, the arguments available to the `file` module can also be passed to the copy
 module.
 
-*src*:
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| src                | yes      |         | Local path to a file to copy to the remote server, can be absolute or      |
+|                    |          |         | relative.                                                                  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | Remote absolute path where the file should end up                          | 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| OTHERS             |          |         | All arguments the file module takes are also supported                     |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
-* Local path to a file to copy to the remote server.  This can be an
-  absolute or relative path.
-
-
-*dest*:
-
-* Remote absolute path where the file should end up.
-
-This module also returns md5sum information about the resultant file.
+This module also returns md5sum and other information about the resultant file.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -208,17 +199,16 @@ fetch
 This module works like 'copy', but in reverse.  It is used for fetching files
 from remote machines and storing them locally in a file tree, organized by hostname.
 
-*src*:
-
-* The file on the remote system to fetch.  This needs to be a file, not a directory. Recursive fetching may be supported later.
-
-*dest*:
-
-* A directory to save the file into.  For example, if the 'dest' directory is '/foo', a src file named '/tmp/bar' on host 'host.example.com', would be saved into '/foo/host.example.com/tmp/bar' (in Ansible 0.0.3 and later).
-
-The fetch module is a useful way to gather log files from remote systems.  If you require
-fetching multiple files from remote systems, you may wish to execute a tar command and
-then fetch the tarball.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| src                | yes      |         | The file on the remote system to fetch.  This needs to be a file, not      |
+|                    |          |         | a directory.  Recursive fetching may be supported in a later release.      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | A directory to save the file into.  For example, if the 'dest' directory   |
+|                    |          |         | is '/foo', a src file named '/tmp/bar' on host 'host.example.com', would   |
+|                    |          |         | be saved into '/foo/host.example.com/tmp/bar'                              |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example::
 
@@ -228,53 +218,47 @@ Example::
 file
 ````
 
-Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. 
-All parameters available to the file module are also available when running the `copy` or 
-`template` modules.
+Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
+support the same options as the file module -- including 'copy', 'template', and 'assmeble'.
 
-*dest*:
-
-* alias for 'path'. Sets an absolute path to a file on the filesystem when used with 'state=file'. When used with 'state=link', sets the destination to create a symbolic link defined by 'src' key.
-
-*state*:
-
-* either 'file', 'link', 'directory', or 'absent'.  The default is 'file'.  If 'directory', the directory and all immediate subdirectories will be created if they do not exist.  If 'file', the file will NOT be created if it does not exist, specify `copy` or `template` for the module name instead if you need to put content at the specified location.  If 'link', the symbolic link will be created or changed.  If 'absent', directories will be recursively deleted, and files or symlinks will be unlinked.
-
-*mode*:
-
-* the mode the file or directory should be, such as 644, as would be given to `chmod`.  English modes like "g+x" are not yet supported.
-
-*owner*:
-
-* name of user that should own the file or directory, as would be given to `chown`
-
-*group*:
-
-* name of group that should own the file or directory, as would be given to `chgrp`
-
-*src*:
-
-* path of the file to link to (applies only to 'link' state)
-
-*seuser*:
-
-* 'user' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'user' portion of default context from the policy if available.
-
-*serole*:
-
-* 'role' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'role' portion of default context from the policy if available.
-
-*setype*:
-
-* 'type' part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify '_default', it will use the 'type' portion of default context from the policy if available.
-
-*selevel*:
-
-* 'level' part of SELinux file context.  This is the MLS and MCS attribute of the file context, also sometimes known as the 'range'.  It defaults to 's0'.  Only used only used on hosts with SELinux present.  If you specify '_default', it will use the 'level' portion of default context from the policy if available.
-
-*context*:
-
-* accepts only 'default' as value.  This will restore a file's selinux context to the default context in the policy.  Does nothing if no default is available. Only used on hosts with SELinux present.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| dest               | yes      |         | defines the file being managed, unless when used with state=link, and      |
+|                    |          |         | then sets the destination to create a symbolic link to using 'src'         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              |          | file    | values are 'file', 'link', 'directory', or 'absent'.  If directory,        |
+|                    |          |         | all immediate subdirectories will be created if they do not exist.  If     |
+|                    |          |         | 'file', the file will NOT be created if it does not exist, see the 'copy'  |
+|                    |          |         | or 'template' module if you want that behavior.  If 'link', the symbolic   |
+|                    |          |         | link will be created or changed.  If absent, directories will be           |
+|                    |          |         | recursively deleted, and files or symlinks will be unlinked.               |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| mode               |          |         | mode the file or directory shoudl be, such as 0644 as would be fed to      |
+|                    |          |         | chmod.  English modes like 'g+x' are not yet supported                     |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| owner              |          |         | name of the user that should own the file/directory, as would be fed to    |
+|                    |          |         | chown                                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| group              |          |         | name of the group that should own the file/directory, as would be fed to   |
+|                    |          |         | group                                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| src                |          |         | path of the file to link to (applies only to state=link)                   |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| seuser             |          |         | user part of SELinux file context.  Will default to system policy, if      |
+|                    |          |         | applicable.  If set to '_default', it will use the 'user' portion of the   | 
+|                    |          |         | the policy if available                                                    |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| serole             |          |         | role part of SELinux file context, '_default' feature works as above.      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| setype             |          |         | type part of SELinux file context, '_default' feature works as above       |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| selevel            |          | s0      | level part of the SELinux file context.  This is the MLS/MCS attribute,    |
+|                    |          |         | sometimes known as the 'range'.  '_default' feature works as above         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| context            |          |         | accepts only 'default' as a value.  This will restore a file's selinux     |
+|                    |          |         | context in the policy.  Does nothing if no default is available.           |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -292,22 +276,18 @@ git
 
 Deploys software (or files) from git checkouts.
 
-*repo*:
-
-* git, ssh, or http protocol address of the git repo to checkout.
-
-*dest*:
-
-* Where to check it out, an absolute directory path.
-
-*version*:
-
-* What version to check out -- either the git SHA, the literal string
-  ``HEAD``, branch name, or a tag name.
-
-*remote*:
-
-* Name of the remote branch, defaults to 'origin'.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| repo               | yes      |         | git, ssh, or http protocol address of the git repo                         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | absolute path of where the repo should be checked out to                   |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| version            |          |         | what version to check out -- either the git SHA, the literal string        |
+|                    |          |         | 'HEAD', branch name, or a tag name.                                        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| remote             |          | origin  | name of the remote branch                                                  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -320,22 +300,17 @@ group
 
 Adds or removes groups.
 
-*name*:
-
-* name of the group
-
-*gid*:
-
-* optional gid to set for the group
-
-*state*:
-
-* either 'absent', or 'present'.  'present' is the default.
-
-*system*:
-
-* (new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.  Value is 'yes' or 'no', default is 'no'.
-
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | name of the group                                                          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| gid                |          |         | optional git to set for the group                                          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              |          | present | 'absent' or 'present'                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| system             |          | no      | if 'yes', indicates that the group being created is a system group.        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 To control members of the group, see the users resource.
 
@@ -398,25 +373,21 @@ service
 
 Controls services on remote machines.
 
-*state*:
-
-* Values are ``started``, ``stopped``, ``reloaded``, or ``restarted``.
-  Started/stopped are idempotent actions that will not run commands
-  unless necessary.  ``restarted`` will always bounce the service, ``reloaded``
-  will always issue a reload.
-
-*enabled*:
-
-* (new in 0.4) Whether the service should start on boot.  Either 'yes' or 'no'.
-  Uses chkconfig or updates-rc.d as appropriate.
-
-*list*:
-
-* (new in 0.4) When used with the value 'status', returns the status of the service along with other results.  This is primarily useful for /usr/bin/ansible, and not meaningful for playbooks.
-
-*name*:
-
-* The name of the service.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | name of the service                                                        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              | no       | started | 'started', 'stopped', 'reloaded', or 'restarted'.  Started/stopped are     |
+|                    |          |         | idempotent actions that will not run commands unless neccessary.           |
+|                    |          |         | 'restarted' will always bounce the service, 'reloaded' will always reload. |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| enabled            | no       |         | Whether the service should start on boot.  Either 'yes' or 'no'.           |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| list               | no       |         | when used as 'list=status', returns the status of the service along with   |
+|                    |          |         | other results.  Primarily useful for /usr/bin/ansible or playbooks with    |
+|                    |          |         | --verbose.                                                                 |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -430,11 +401,9 @@ Example action from Ansible :doc:`playbooks`::
 setup
 `````
 
-Writes a JSON file containing key/value data, for use in templating.
-Call this once before using the :ref:`template` module.  Playbooks
-will execute this module automatically as the first step in each play
-using the variables section, so it is unnecessary to make explicit
-calls to setup within a playbook.
+This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
+in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
+to a host.
 
 Ansible provides many 'facts' about the system, automatically.
 
@@ -514,19 +483,9 @@ All variables are bubbled up to the caller.  Using the ansible facts and choosin
 to not install facter and ohai means you can avoid ruby-dependencies
 on your remote systems.
 
-*variablename*:
-
-* Arbitrary variable names, which must be a mix of alphanumeric characters and underscores, can also be defined. Setting a variable creates a ``key=value`` pair in the JSON file for use in templating.
-
-Example action from Ansible :doc:`playbooks`::
-
-    vars:
-        ntpserver: 'ntp.example.com'
-        xyz: 1234
-
 Example action from `/usr/bin/ansible`::
 
-    ansible all -m setup -a "ntpserver=ntp.example.com xyz=1234"
+    ansible testserver -m setup
 
 
 .. _shell:
@@ -560,21 +519,18 @@ Example action from a playbook::
 template
 ````````
 
-Templates a file out to a remote server.  Call the :ref:`setup` module
-prior to usage if you are not running from a playbook.   In addition to the options
-listed below, the arguments available to the `file` and `copy` modules can also be passed
-to the template module.
+Templates a file out to a remote server.  
 
-*src*:
-
-* Path of a Jinja2 formatted template on the local server.  This can
-  be a relative or absolute path.
-
-*dest*:
-
-* Location to render the template on the remote server
-
-This module also returns md5sum information about the resultant file.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| src                | yes      |         | Path of a Jinja2 formatted template on the local server.  This can be      |
+|                    |          |         | a relative or absolute path.                                               |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | Location to render the template on the remote server                       |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| OTHERS             |          |         | This module also supports all of the arguments to the file module          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from a playbook::
 
@@ -588,61 +544,40 @@ user
 
 Creates user accounts, manipulates existing user accounts, and removes user accounts.
 
-*name*:
-
-* Name of the user to create, remove, or edit
-
-*comment*:
-
-* Optionally sets the description of the user
-
-*uid*:
-
-* optional uid to set for the user
-
-*group*:
-
-* Optionally sets the user's primary group, takes a group name
-
-*groups*:
-
-* Put the user in the specified groups, takes comma delimited group names
-
-*append*:
-
-* If true, will only add additional groups to the user listed in 'groups', rather than making the user only be in those specified groups
-
-*shell*:
-
-* Optionally sets the user's shell
-
-*createhome*:
-
-* Whether to create the user's home directory.  Takes 'yes', or 'no'.  The default is 'yes'.
-   
-*home=*:
-
-* Specifies where the user's home directory should be, if not in /home/$username.
- 
-*password*:
-
-* Sets the user's password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.
-
-*state*:
-
-* Defaults to 'present'.  When 'absent', the user account will be removed if present.  Optionally additional removal behaviors can be set with the 'force' or 'remove' parameter values (see below).
-
-*system*:
-
-* (new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.  Value is 'yes' or 'no', default is 'no'.
-
-*force*:
-
-* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for ``--force`` is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
-
-*remove*:
-
-* When used with a state of 'absent', the behavior denoted in the 'userdel' manpage for ``--remove`` is also used when removing the user.  Value is 'yes' or 'no', default is 'no'.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | name of the user to create, remove, or edit                                |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| comment            |          |         | optionally sets the description of the user                                |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| uid                |          |         | optionally sets the uid of the user                                        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| group              |          |         | optionally sets the user's primary group (takes a group name)              |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| groups             |          |         | puts the user in this comma-delimited list of groups                       |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| append             |          | no      | if 'yes', will only add groups, not set them to just the list in 'groups'  | 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| shell              |          |         | optionally set the user's shell                                            |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| createhome         |          | yes     | unless 'no', a home directory will be made for the user                    |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| home               |          |         | sets where the user's homedir should be, if not the default                | 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| password           |          |         | optionally set the user's password to this crypted value.  See the user's  |
+|                    |          |         | example in the github examples directory for what this looks like in a     |
+|                    |          |         | playbook                                                                   |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              |          | present | when 'absent', removes the user.                                           |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| system             |          | no      | only when initially creating, setting this to 'yes' makes the user a       |
+|                    |          |         | system account.  This setting cannot be changed on existing users.         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| force              |          | no      | when used with state=absent, behavior is as with userdel --force           | 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| remove             |          | no      | when used with state=remove, behavior is as with userdel --remove          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -658,17 +593,18 @@ virt
 Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.
 
-*guest*:
-
-* The name of the guest VM being managed
-
-*state*
-
-* Desired state of the VM.  Either `running`, `shutdown`, `destroyed`, or `undefined`.  Note that there may be some lag for state requests like 'shutdown', and these states only refer to the virtual machine states.  After starting a guest, the guest OS may not be immediately accessible.
-
-*command*:
-
-* In addition to state management, various non-idempotent commands are available for API and script usage (but don't make much sense in a playbook).  These mostly return information, though some also affect state.  See examples below.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | name of the guest VM being managed                                         |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              |          |         | 'running', 'shutdown', 'destroyed', or 'undefined'.  Note that there may   |
+|                    |          |         | be some lag for state requests like 'shutdown' since these refer only to   |
+|                    |          |         | VM states.  After starting a guest, it may not be immediately accessible.  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| command            |          |         | in addition to state management, various non-idempotent commands are       |
+|                    |          |         | available.  See examples below.                                            |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -700,20 +636,16 @@ yum
 
 Will install, upgrade, remove, and list packages with the yum package manager.
 
-*pkg*:
-
-* A package name or package specifier with version, like name-1.0
-
-*state*:
-
-* Can be either 'installed', 'latest', or 'removed'.  The default is 'installed'. (In 0.4 and later, the aliases 'absent' and 'present' can also be used.  They correspond with 'removed' and 'installed')
-
-*list*:
-
-* When 'list' is supplied instead of 'state', the yum module can list
-  various configuration attributes.  Values include 'installed', 'updates',
-  'available', 'repos', or any package specifier.  (This is more intended for
-  use with /usr/bin/ansible or the API, not playbooks.)
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | package name, or package specifier with version, like 'name-1.0'           |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              |          | present | 'present', 'latest', or 'absent'.                                          |  
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| list               |          |         | various non-idempotent commands for usage with /usr/bin/ansible and not    |
+|                    |          |         | playbooks.  See examples below.                                            |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
