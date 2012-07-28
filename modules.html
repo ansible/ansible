@@ -210,9 +210,8 @@ ansible webservers -m ping
 ansible webservers -m command -a "/sbin/reboot -t now"</pre>
 </div>
 <p>Each module supports taking arguments.  Nearly all modules take <tt class="docutils literal"><span class="pre">key=value</span></tt>
-arguments, space delimited.  Some modules take
-no arguments, and the command/shell modules simply take the string
-of the command you want to run.</p>
+arguments, space delimited.  Some modules take no arguments, and the
+command/shell modules simply take the string of the command you want to run.</p>
 <p>From playbooks, Ansible modules are executed in a very similar way:</p>
 <div class="highlight-python"><pre>- name: reboot the servers
   action: command /sbin/reboot -t now</pre>
@@ -229,34 +228,56 @@ noted, any given module does support change hooks.</p>
 <div class="section" id="apt">
 <span id="id1"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
-<p><em>pkg</em>:</p>
-<ul class="simple">
-<li>A package name or package specifier with version, like <cite>foo</cite>, or <cite>foo=1.0</cite> to install a specific version of the foo package.</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;removed&#8217;, or &#8216;latest&#8217;.  The default is &#8216;installed&#8217;.  (In 0.4 and later, the aliases &#8216;absent&#8217; and &#8216;present&#8217; can also be used.  They correspond with &#8216;removed&#8217; and &#8216;installed&#8217;)</li>
-</ul>
-<p><em>update-cache</em>:</p>
-<ul class="simple">
-<li>Whether the apt cache must be updated prior to operation. This is equivalent
-to doing &#8220;apt-get update&#8221;. Optional, and can be
-&#8216;yes&#8217;, or &#8216;no&#8217;. The default is &#8216;no&#8217;.  This can be done as the part of a
-package operation or as a seperate step.</li>
-</ul>
-<p><em>purge</em>:</p>
-<ul class="simple">
-<li>Will force purge of configuration file for when ensure is set to &#8216;removed&#8217;.
-Defaults to &#8216;no&#8217;.</li>
-</ul>
-<p><em>default-release</em>:</p>
-<ul class="simple">
-<li>Corresponds to the -t option for apt, and sets pin priorities</li>
-</ul>
-<p><em>install-recommends</em>: (devel branch now, part of ansible 0.6 later)</p>
-<ul class="simple">
-<li>Corresponds to the &#8211;no-install-recommends option for apt. Defaults to &#8216;yes&#8217;, which means install the recommended packages the same way APT does by default. Set this to &#8216;no&#8217; to add the option not to install recommended packages.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>A package name or package specifier with version, like <cite>foo</cite> or <cite>foo=1.0</cite></td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>present</td>
+<td>&#8216;absent&#8217;, &#8216;present&#8217;, or &#8216;latest&#8217;.</td>
+</tr>
+<tr><td>update-cache</td>
+<td>no</td>
+<td>no</td>
+<td>run the equivalent of apt-get update before the operation?
+Can be run as part of the package installation or a seperate step</td>
+</tr>
+<tr><td>purge</td>
+<td>no</td>
+<td>no</td>
+<td>Will forge purge of configuration files if state is set to &#8216;removed&#8217;.</td>
+</tr>
+<tr><td>default-release</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>Corresponds to the -t option for apt and sets pin priorities</td>
+</tr>
+<tr><td>install-recommends</td>
+<td>no</td>
+<td>yes</td>
+<td>Corresponds to the &#8211;no-install-recommends option for apt, default
+behavior works as apt&#8217;s default behavior, &#8216;no&#8217; does not install
+recommended packages.  Suggested packages are never installed.</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>apt pkg=foo update-cache=yes
 apt pkg=foo state=removed
@@ -273,14 +294,38 @@ and does not support a conf.d style structure where it is easy to build up the c
 Assmeble will take a directory of files that have already been transferred to the system, and concatenate them
 together to produce a destination file.  Files are assembled in string sorting order.   Puppet calls this idea
 &#8220;fragments&#8221;.</p>
-<p><em>src</em>:</p>
-<ul class="simple">
-<li>An already existing directory full of source files.</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>A file to create using the concatenation of all of the source files.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>src</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>An already existing directory full of source files</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>A file to create using the concatenation of all of the source files</td>
+</tr>
+<tr><td>OTHERS</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>All arguments that the file module takes may also be used</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf</pre>
 </div>
@@ -288,18 +333,38 @@ together to produce a destination file.  Files are assembled in string sorting o
 <div class="section" id="authorized-key">
 <span id="id3"></span><h2>authorized_key<a class="headerlink" href="#authorized-key" title="Permalink to this headline">¶</a></h2>
 <p>(new in 0.5).  Adds or removes an authorized key for a user from a remote host.</p>
-<p><em>user</em>:</p>
-<ul class="simple">
-<li>Name of the user who access is being granted or remoted to.</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>Either &#8216;absent&#8217; or &#8216;present&#8217;, this is whether the given key should be in the authorized keys file or not.</li>
-</ul>
-<p><em>key</em>:</p>
-<ul class="simple">
-<li>The actual key, as a string.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>user</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>Name of the user who should have access to the remote host</td>
+</tr>
+<tr><td>key</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>the SSH public key, as a string</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>present</td>
+<td>whether the given key should or should not be in the file</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>authorized_key user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"</pre>
 </div>
@@ -332,16 +397,40 @@ following:</p>
 <p>The copy module moves a file on the local box to remote locations.  In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
 module.</p>
-<p><em>src</em>:</p>
-<ul class="simple">
-<li>Local path to a file to copy to the remote server.  This can be an
-absolute or relative path.</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>Remote absolute path where the file should end up.</li>
-</ul>
-<p>This module also returns md5sum information about the resultant file.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>src</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>Local path to a file to copy to the remote server, can be absolute or
+relative.</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>Remote absolute path where the file should end up</td>
+</tr>
+<tr><td>OTHERS</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>All arguments the file module takes are also supported</td>
+</tr>
+</tbody>
+</table>
+<p>This module also returns md5sum and other information about the resultant file.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
 </div>
@@ -360,70 +449,129 @@ module behind the scenes.</p>
 <h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
 <p>This module works like &#8216;copy&#8217;, but in reverse.  It is used for fetching files
 from remote machines and storing them locally in a file tree, organized by hostname.</p>
-<p><em>src</em>:</p>
-<ul class="simple">
-<li>The file on the remote system to fetch.  This needs to be a file, not a directory. Recursive fetching may be supported later.</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory is &#8216;/foo&#8217;, a src file named &#8216;/tmp/bar&#8217; on host &#8216;host.example.com&#8217;, would be saved into &#8216;/foo/host.example.com/tmp/bar&#8217; (in Ansible 0.0.3 and later).</li>
-</ul>
-<p>The fetch module is a useful way to gather log files from remote systems.  If you require
-fetching multiple files from remote systems, you may wish to execute a tar command and
-then fetch the tarball.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>src</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>The file on the remote system to fetch.  This needs to be a file, not
+a directory.  Recursive fetching may be supported in a later release.</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory
+is &#8216;/foo&#8217;, a src file named &#8216;/tmp/bar&#8217; on host &#8216;host.example.com&#8217;, would
+be saved into &#8216;/foo/host.example.com/tmp/bar&#8217;</td>
+</tr>
+</tbody>
+</table>
 <p>Example:</p>
 <div class="highlight-python"><pre>fetch src=/var/log/messages dest=/home/logtree</pre>
 </div>
 </div>
 <div class="section" id="file">
 <h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
-<p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.
-All parameters available to the file module are also available when running the <cite>copy</cite> or
-<cite>template</cite> modules.</p>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>alias for &#8216;path&#8217;. Sets an absolute path to a file on the filesystem when used with &#8216;state=file&#8217;. When used with &#8216;state=link&#8217;, sets the destination to create a symbolic link defined by &#8216;src&#8217; key.</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>either &#8216;file&#8217;, &#8216;link&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  The default is &#8216;file&#8217;.  If &#8216;directory&#8217;, the directory and all immediate subdirectories will be created if they do not exist.  If &#8216;file&#8217;, the file will NOT be created if it does not exist, specify <cite>copy</cite> or <cite>template</cite> for the module name instead if you need to put content at the specified location.  If &#8216;link&#8217;, the symbolic link will be created or changed.  If &#8216;absent&#8217;, directories will be recursively deleted, and files or symlinks will be unlinked.</li>
-</ul>
-<p><em>mode</em>:</p>
-<ul class="simple">
-<li>the mode the file or directory should be, such as 644, as would be given to <cite>chmod</cite>.  English modes like &#8220;g+x&#8221; are not yet supported.</li>
-</ul>
-<p><em>owner</em>:</p>
-<ul class="simple">
-<li>name of user that should own the file or directory, as would be given to <cite>chown</cite></li>
-</ul>
-<p><em>group</em>:</p>
-<ul class="simple">
-<li>name of group that should own the file or directory, as would be given to <cite>chgrp</cite></li>
-</ul>
-<p><em>src</em>:</p>
-<ul class="simple">
-<li>path of the file to link to (applies only to &#8216;link&#8217; state)</li>
-</ul>
-<p><em>seuser</em>:</p>
-<ul class="simple">
-<li>&#8216;user&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;user&#8217; portion of default context from the policy if available.</li>
-</ul>
-<p><em>serole</em>:</p>
-<ul class="simple">
-<li>&#8216;role&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;role&#8217; portion of default context from the policy if available.</li>
-</ul>
-<p><em>setype</em>:</p>
-<ul class="simple">
-<li>&#8216;type&#8217; part of SELinux file context.  Will default to what is provided by system policy, if available.  Only used on systems with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;type&#8217; portion of default context from the policy if available.</li>
-</ul>
-<p><em>selevel</em>:</p>
-<ul class="simple">
-<li>&#8216;level&#8217; part of SELinux file context.  This is the MLS and MCS attribute of the file context, also sometimes known as the &#8216;range&#8217;.  It defaults to &#8216;s0&#8217;.  Only used only used on hosts with SELinux present.  If you specify &#8216;_default&#8217;, it will use the &#8216;level&#8217; portion of default context from the policy if available.</li>
-</ul>
-<p><em>context</em>:</p>
-<ul class="simple">
-<li>accepts only &#8216;default&#8217; as value.  This will restore a file&#8217;s selinux context to the default context in the policy.  Does nothing if no default is available. Only used on hosts with SELinux present.</li>
-</ul>
+<p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
+support the same options as the file module &#8211; including &#8216;copy&#8217;, &#8216;template&#8217;, and &#8216;assmeble&#8217;.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>defines the file being managed, unless when used with state=link, and
+then sets the destination to create a symbolic link to using &#8216;src&#8217;</td>
+</tr>
+<tr><td>state</td>
+<td>&nbsp;</td>
+<td>file</td>
+<td>values are &#8216;file&#8217;, &#8216;link&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  If directory,
+all immediate subdirectories will be created if they do not exist.  If
+&#8216;file&#8217;, the file will NOT be created if it does not exist, see the &#8216;copy&#8217;
+or &#8216;template&#8217; module if you want that behavior.  If &#8216;link&#8217;, the symbolic
+link will be created or changed.  If absent, directories will be
+recursively deleted, and files or symlinks will be unlinked.</td>
+</tr>
+<tr><td>mode</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>mode the file or directory shoudl be, such as 0644 as would be fed to
+chmod.  English modes like &#8216;g+x&#8217; are not yet supported</td>
+</tr>
+<tr><td>owner</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>name of the user that should own the file/directory, as would be fed to
+chown</td>
+</tr>
+<tr><td>group</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>name of the group that should own the file/directory, as would be fed to
+group</td>
+</tr>
+<tr><td>src</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>path of the file to link to (applies only to state=link)</td>
+</tr>
+<tr><td>seuser</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>user part of SELinux file context.  Will default to system policy, if
+applicable.  If set to &#8216;_default&#8217;, it will use the &#8216;user&#8217; portion of the
+the policy if available</td>
+</tr>
+<tr><td>serole</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>role part of SELinux file context, &#8216;_default&#8217; feature works as above.</td>
+</tr>
+<tr><td>setype</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>type part of SELinux file context, &#8216;_default&#8217; feature works as above</td>
+</tr>
+<tr><td>selevel</td>
+<td>&nbsp;</td>
+<td>s0</td>
+<td>level part of the SELinux file context.  This is the MLS/MCS attribute,
+sometimes known as the &#8216;range&#8217;.  &#8216;_default&#8217; feature works as above</td>
+</tr>
+<tr><td>context</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>accepts only &#8216;default&#8217; as a value.  This will restore a file&#8217;s selinux
+context in the policy.  Does nothing if no default is available.</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
 file path=/some/path owner=foo group=foo state=directory
@@ -436,23 +584,44 @@ file path=/some/path state=directory context=default</pre>
 <div class="section" id="git">
 <span id="id7"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
-<p><em>repo</em>:</p>
-<ul class="simple">
-<li>git, ssh, or http protocol address of the git repo to checkout.</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>Where to check it out, an absolute directory path.</li>
-</ul>
-<p><em>version</em>:</p>
-<ul class="simple">
-<li>What version to check out &#8211; either the git SHA, the literal string
-<tt class="docutils literal"><span class="pre">HEAD</span></tt>, branch name, or a tag name.</li>
-</ul>
-<p><em>remote</em>:</p>
-<ul class="simple">
-<li>Name of the remote branch, defaults to &#8216;origin&#8217;.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>repo</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>git, ssh, or http protocol address of the git repo</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>absolute path of where the repo should be checked out to</td>
+</tr>
+<tr><td>version</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>what version to check out &#8211; either the git SHA, the literal string
+&#8216;HEAD&#8217;, branch name, or a tag name.</td>
+</tr>
+<tr><td>remote</td>
+<td>&nbsp;</td>
+<td>origin</td>
+<td>name of the remote branch</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22</pre>
 </div>
@@ -460,22 +629,43 @@ file path=/some/path state=directory context=default</pre>
 <div class="section" id="group">
 <span id="id8"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
-<p><em>name</em>:</p>
-<ul class="simple">
-<li>name of the group</li>
-</ul>
-<p><em>gid</em>:</p>
-<ul class="simple">
-<li>optional gid to set for the group</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>either &#8216;absent&#8217;, or &#8216;present&#8217;.  &#8216;present&#8217; is the default.</li>
-</ul>
-<p><em>system</em>:</p>
-<ul class="simple">
-<li>(new in 0.4) Indicates the group (when being created), should be a system group.  This does not allow changing groups from and to system groups.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the group</td>
+</tr>
+<tr><td>gid</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optional git to set for the group</td>
+</tr>
+<tr><td>state</td>
+<td>&nbsp;</td>
+<td>present</td>
+<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
+</tr>
+<tr><td>system</td>
+<td>&nbsp;</td>
+<td>no</td>
+<td>if &#8216;yes&#8217;, indicates that the group being created is a system group.</td>
+</tr>
+</tbody>
+</table>
 <p>To control members of the group, see the users resource.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>group name=somegroup state=present</pre>
@@ -518,26 +708,47 @@ for this module.</p>
 <div class="section" id="id11">
 <h2>service<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>Values are <tt class="docutils literal"><span class="pre">started</span></tt>, <tt class="docutils literal"><span class="pre">stopped</span></tt>, <tt class="docutils literal"><span class="pre">reloaded</span></tt>, or <tt class="docutils literal"><span class="pre">restarted</span></tt>.
-Started/stopped are idempotent actions that will not run commands
-unless necessary.  <tt class="docutils literal"><span class="pre">restarted</span></tt> will always bounce the service, <tt class="docutils literal"><span class="pre">reloaded</span></tt>
-will always issue a reload.</li>
-</ul>
-<p><em>enabled</em>:</p>
-<ul class="simple">
-<li>(new in 0.4) Whether the service should start on boot.  Either &#8216;yes&#8217; or &#8216;no&#8217;.
-Uses chkconfig or updates-rc.d as appropriate.</li>
-</ul>
-<p><em>list</em>:</p>
-<ul class="simple">
-<li>(new in 0.4) When used with the value &#8216;status&#8217;, returns the status of the service along with other results.  This is primarily useful for /usr/bin/ansible, and not meaningful for playbooks.</li>
-</ul>
-<p><em>name</em>:</p>
-<ul class="simple">
-<li>The name of the service.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the service</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>started</td>
+<td>&#8216;started&#8217;, &#8216;stopped&#8217;, &#8216;reloaded&#8217;, or &#8216;restarted&#8217;.  Started/stopped are
+idempotent actions that will not run commands unless neccessary.
+&#8216;restarted&#8217; will always bounce the service, &#8216;reloaded&#8217; will always reload.</td>
+</tr>
+<tr><td>enabled</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>Whether the service should start on boot.  Either &#8216;yes&#8217; or &#8216;no&#8217;.</td>
+</tr>
+<tr><td>list</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>when used as &#8216;list=status&#8217;, returns the status of the service along with
+other results.  Primarily useful for /usr/bin/ansible or playbooks with
+&#8211;verbose.</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>service name=httpd state=started
 service name=httpd state=stopped
@@ -547,11 +758,9 @@ service name=httpd state=reloaded</pre>
 </div>
 <div class="section" id="setup">
 <span id="id12"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<p>Writes a JSON file containing key/value data, for use in templating.
-Call this once before using the <a class="reference internal" href="#template"><em>template</em></a> module.  Playbooks
-will execute this module automatically as the first step in each play
-using the variables section, so it is unnecessary to make explicit
-calls to setup within a playbook.</p>
+<p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
+in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
+to a host.</p>
 <p>Ansible provides many &#8216;facts&#8217; about the system, automatically.</p>
 <p>Some of the variables that are supplied are listed below.  These in particular
 are from a VMWare Fusion 4 VM running CentOS 6.2:</p>
@@ -625,17 +834,8 @@ tell their source.</p>
 <p>All variables are bubbled up to the caller.  Using the ansible facts and choosing
 to not install facter and ohai means you can avoid ruby-dependencies
 on your remote systems.</p>
-<p><em>variablename</em>:</p>
-<ul class="simple">
-<li>Arbitrary variable names, which must be a mix of alphanumeric characters and underscores, can also be defined. Setting a variable creates a <tt class="docutils literal"><span class="pre">key=value</span></tt> pair in the JSON file for use in templating.</li>
-</ul>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>vars:
-    ntpserver: 'ntp.example.com'
-    xyz: 1234</pre>
-</div>
 <p>Example action from <cite>/usr/bin/ansible</cite>:</p>
-<div class="highlight-python"><pre>ansible all -m setup -a "ntpserver=ntp.example.com xyz=1234"</pre>
+<div class="highlight-python"><pre>ansible testserver -m setup</pre>
 </div>
 </div>
 <div class="section" id="shell">
@@ -658,20 +858,40 @@ command was running.</p>
 </div>
 <div class="section" id="template">
 <span id="id14"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
-<p>Templates a file out to a remote server.  Call the <a class="reference internal" href="#setup"><em>setup</em></a> module
-prior to usage if you are not running from a playbook.   In addition to the options
-listed below, the arguments available to the <cite>file</cite> and <cite>copy</cite> modules can also be passed
-to the template module.</p>
-<p><em>src</em>:</p>
-<ul class="simple">
-<li>Path of a Jinja2 formatted template on the local server.  This can
-be a relative or absolute path.</li>
-</ul>
-<p><em>dest</em>:</p>
-<ul class="simple">
-<li>Location to render the template on the remote server</li>
-</ul>
-<p>This module also returns md5sum information about the resultant file.</p>
+<p>Templates a file out to a remote server.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>src</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>Path of a Jinja2 formatted template on the local server.  This can be
+a relative or absolute path.</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>Location to render the template on the remote server</td>
+</tr>
+<tr><td>OTHERS</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>This module also supports all of the arguments to the file module</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from a playbook:</p>
 <div class="highlight-python"><pre>template src=/srv/mytemplates/foo.j2 dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
 </div>
@@ -679,62 +899,96 @@ be a relative or absolute path.</li>
 <div class="section" id="user">
 <span id="id15"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
-<p><em>name</em>:</p>
-<ul class="simple">
-<li>Name of the user to create, remove, or edit</li>
-</ul>
-<p><em>comment</em>:</p>
-<ul class="simple">
-<li>Optionally sets the description of the user</li>
-</ul>
-<p><em>uid</em>:</p>
-<ul class="simple">
-<li>optional uid to set for the user</li>
-</ul>
-<p><em>group</em>:</p>
-<ul class="simple">
-<li>Optionally sets the user&#8217;s primary group, takes a group name</li>
-</ul>
-<p><em>groups</em>:</p>
-<ul class="simple">
-<li>Put the user in the specified groups, takes comma delimited group names</li>
-</ul>
-<p><em>append</em>:</p>
-<ul class="simple">
-<li>If true, will only add additional groups to the user listed in &#8216;groups&#8217;, rather than making the user only be in those specified groups</li>
-</ul>
-<p><em>shell</em>:</p>
-<ul class="simple">
-<li>Optionally sets the user&#8217;s shell</li>
-</ul>
-<p><em>createhome</em>:</p>
-<ul class="simple">
-<li>Whether to create the user&#8217;s home directory.  Takes &#8216;yes&#8217;, or &#8216;no&#8217;.  The default is &#8216;yes&#8217;.</li>
-</ul>
-<p><em>home=</em>:</p>
-<ul class="simple">
-<li>Specifies where the user&#8217;s home directory should be, if not in /home/$username.</li>
-</ul>
-<p><em>password</em>:</p>
-<ul class="simple">
-<li>Sets the user&#8217;s password to this crypted value.  Pass in a result from crypt.  See the users example in the github examples directory for what this looks like in a playbook.</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>Defaults to &#8216;present&#8217;.  When &#8216;absent&#8217;, the user account will be removed if present.  Optionally additional removal behaviors can be set with the &#8216;force&#8217; or &#8216;remove&#8217; parameter values (see below).</li>
-</ul>
-<p><em>system</em>:</p>
-<ul class="simple">
-<li>(new in 0.4) Indicates the user (when being created), should be a system account.  This does not allow changing users from and to system accounts.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
-</ul>
-<p><em>force</em>:</p>
-<ul class="simple">
-<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for <tt class="docutils literal"><span class="pre">--force</span></tt> is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
-</ul>
-<p><em>remove</em>:</p>
-<ul class="simple">
-<li>When used with a state of &#8216;absent&#8217;, the behavior denoted in the &#8216;userdel&#8217; manpage for <tt class="docutils literal"><span class="pre">--remove</span></tt> is also used when removing the user.  Value is &#8216;yes&#8217; or &#8216;no&#8217;, default is &#8216;no&#8217;.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the user to create, remove, or edit</td>
+</tr>
+<tr><td>comment</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optionally sets the description of the user</td>
+</tr>
+<tr><td>uid</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optionally sets the uid of the user</td>
+</tr>
+<tr><td>group</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optionally sets the user&#8217;s primary group (takes a group name)</td>
+</tr>
+<tr><td>groups</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>puts the user in this comma-delimited list of groups</td>
+</tr>
+<tr><td>append</td>
+<td>&nbsp;</td>
+<td>no</td>
+<td>if &#8216;yes&#8217;, will only add groups, not set them to just the list in &#8216;groups&#8217;</td>
+</tr>
+<tr><td>shell</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optionally set the user&#8217;s shell</td>
+</tr>
+<tr><td>createhome</td>
+<td>&nbsp;</td>
+<td>yes</td>
+<td>unless &#8216;no&#8217;, a home directory will be made for the user</td>
+</tr>
+<tr><td>home</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>sets where the user&#8217;s homedir should be, if not the default</td>
+</tr>
+<tr><td>password</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>optionally set the user&#8217;s password to this crypted value.  See the user&#8217;s
+example in the github examples directory for what this looks like in a
+playbook</td>
+</tr>
+<tr><td>state</td>
+<td>&nbsp;</td>
+<td>present</td>
+<td>when &#8216;absent&#8217;, removes the user.</td>
+</tr>
+<tr><td>system</td>
+<td>&nbsp;</td>
+<td>no</td>
+<td>only when initially creating, setting this to &#8216;yes&#8217; makes the user a
+system account.  This setting cannot be changed on existing users.</td>
+</tr>
+<tr><td>force</td>
+<td>&nbsp;</td>
+<td>no</td>
+<td>when used with state=absent, behavior is as with userdel &#8211;force</td>
+</tr>
+<tr><td>remove</td>
+<td>&nbsp;</td>
+<td>no</td>
+<td>when used with state=remove, behavior is as with userdel &#8211;remove</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
 user name=mdehaan groups=wheel,skynet
@@ -745,18 +999,41 @@ user name=mdehaan state=absent force=yes</pre>
 <span id="id16"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
-<p><em>guest</em>:</p>
-<ul class="simple">
-<li>The name of the guest VM being managed</li>
-</ul>
-<p><em>state</em></p>
-<ul class="simple">
-<li>Desired state of the VM.  Either <cite>running</cite>, <cite>shutdown</cite>, <cite>destroyed</cite>, or <cite>undefined</cite>.  Note that there may be some lag for state requests like &#8216;shutdown&#8217;, and these states only refer to the virtual machine states.  After starting a guest, the guest OS may not be immediately accessible.</li>
-</ul>
-<p><em>command</em>:</p>
-<ul class="simple">
-<li>In addition to state management, various non-idempotent commands are available for API and script usage (but don&#8217;t make much sense in a playbook).  These mostly return information, though some also affect state.  See examples below.</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the guest VM being managed</td>
+</tr>
+<tr><td>state</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&#8216;running&#8217;, &#8216;shutdown&#8217;, &#8216;destroyed&#8217;, or &#8216;undefined&#8217;.  Note that there may
+be some lag for state requests like &#8216;shutdown&#8217; since these refer only to
+VM states.  After starting a guest, it may not be immediately accessible.</td>
+</tr>
+<tr><td>command</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>in addition to state management, various non-idempotent commands are
+available.  See examples below.</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>virt guest=alpha state=running
 virt guest=alpha state=shutdown
@@ -781,21 +1058,39 @@ ansible host -m virt -a "command=virttype"</pre>
 <div class="section" id="yum">
 <span id="id17"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
-<p><em>pkg</em>:</p>
-<ul class="simple">
-<li>A package name or package specifier with version, like name-1.0</li>
-</ul>
-<p><em>state</em>:</p>
-<ul class="simple">
-<li>Can be either &#8216;installed&#8217;, &#8216;latest&#8217;, or &#8216;removed&#8217;.  The default is &#8216;installed&#8217;. (In 0.4 and later, the aliases &#8216;absent&#8217; and &#8216;present&#8217; can also be used.  They correspond with &#8216;removed&#8217; and &#8216;installed&#8217;)</li>
-</ul>
-<p><em>list</em>:</p>
-<ul class="simple">
-<li>When &#8216;list&#8217; is supplied instead of &#8216;state&#8217;, the yum module can list
-various configuration attributes.  Values include &#8216;installed&#8217;, &#8216;updates&#8217;,
-&#8216;available&#8217;, &#8216;repos&#8217;, or any package specifier.  (This is more intended for
-use with /usr/bin/ansible or the API, not playbooks.)</li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>package name, or package specifier with version, like &#8216;name-1.0&#8217;</td>
+</tr>
+<tr><td>state</td>
+<td>&nbsp;</td>
+<td>present</td>
+<td>&#8216;present&#8217;, &#8216;latest&#8217;, or &#8216;absent&#8217;.</td>
+</tr>
+<tr><td>list</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>various non-idempotent commands for usage with /usr/bin/ansible and not
+playbooks.  See examples below.</td>
+</tr>
+</tbody>
+</table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>yum pkg=httpd state=latest
 yum pkg=httpd state=removed
