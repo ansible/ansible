@@ -149,7 +149,6 @@ s.parentNode.insertBefore(ga, s);
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Introducing Ansible</a></li>
 <li><a class="reference internal" href="#architecture">Architecture</a></li>
-<li><a class="reference internal" href="#resources">Resources</a></li>
 <li><a class="reference internal" href="#documentation">Documentation</a><ul>
 </ul>
 </li>
@@ -246,7 +245,8 @@ steps on all your webservers, then some steps on your database
 servers, and then some steps on monitoring servers &#8211; all the
 while sharing variables between them is trivial.</td>
 </tr>
-<tr><td>Doesn&#8217;t choose sides</td>
+<tr><td>Doesn&#8217;t choose sides in the
+language war</td>
 <td>Modules can be written in Bash, Perl, Python, Ruby, whatever.
 Playbooks are not a programming language, but a data format.</td>
 </tr>
@@ -276,19 +276,36 @@ already using &#8211; openssh.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="resources">
-<h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
-<p>Your ideas and contributions are welcome.  We&#8217;re also happy to help
-you with questions about Ansible.</p>
-<ul class="simple">
-<li>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github</li>
-<li>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></li>
-<li>See the presentation on <a class="reference external" href="http://speakerdeck.com/u/mpdehaan/p/ansible">Speakerdeck</a></li>
-<li>Visit the <a class="reference external" href="http://groups.google.com/group/ansible-project">Google Group</a></li>
-<li>Chat on <a class="reference external" href="http://webchat.freenode.net/?channels=ansible">FreeNode</a></li>
-<li>Join the <a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></li>
-</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="77%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head" colspan="2">Community</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td colspan="2">Your ideas and contributions are welcome.  We&#8217;re also happy to help
+you with questions about Ansible.</td>
+</tr>
+<tr><td>Get the source</td>
+<td>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github</td>
+</tr>
+<tr><td>File a bug</td>
+<td>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></td>
+</tr>
+<tr><td>Spread the word</td>
+<td>Watch slides on <a class="reference external" href="http://speakerdeck.com/u/mpdehaan/p/ansible">Speakerdeck</a></td>
+</tr>
+<tr><td>Join the mailing list</td>
+<td>Visit the <a class="reference external" href="http://groups.google.com/group/ansible-project">Google Group</a></td>
+</tr>
+<tr><td>Chat</td>
+<td>Visit the channel on <a class="reference external" href="http://webchat.freenode.net/?channels=ansible">FreeNode</a></td>
+</tr>
+</tbody>
+</table>
 <table border="1" class="docutils">
 <colgroup>
 <col width="100%" />
@@ -315,25 +332,6 @@ migrate all my stuff to the much more sensical ansible. Nice work</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
-<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
-</ul>
-</div>
 <table border="1" class="docutils">
 <colgroup>
 <col width="100%" />
@@ -358,6 +356,25 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
+</ul>
+</div>
 </div>
 
 
