@@ -641,6 +641,8 @@ class Runner(object):
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.remote_user == 'root':
             basetmp = os.path.join('/var/tmp', basefile)
+        elif self.sudo and self.sudo_user != 'root':
+            basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
         if self.remote_user != 'root':
