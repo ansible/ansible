@@ -210,7 +210,11 @@ class Runner(object):
             args = utils.jsonify(args,format=True)
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
-        self._low_level_exec_command(conn, "chmod +x %s" % remote_module_path, tmp)
+        cmd = "chmod +x %s" % remote_module_path
+        if self.sudo and self.sudo_user != 'root':
+            # deal with possible umask issues once sudo'ed to other user
+            cmd = "chmod 555 %s" % remote_module_path
+        self._low_level_exec_command(conn, cmd, tmp)
 
         cmd = ""
         if not is_new_style:
