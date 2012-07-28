@@ -60,8 +60,8 @@ Architecture
 |                                    | servers, and then some steps on monitoring servers -- all the     |
 |                                    | while sharing variables between them is trivial.                  |
 +------------------------------------+-------------------------------------------------------------------+
-| Doesn't choose sides               | Modules can be written in Bash, Perl, Python, Ruby, whatever.     |
-|                                    | Playbooks are not a programming language, but a data format.      |
+| Doesn't choose sides in the        | Modules can be written in Bash, Perl, Python, Ruby, whatever.     |
+| language war                       | Playbooks are not a programming language, but a data format.      |
 +------------------------------------+-------------------------------------------------------------------+
 | Infrastructure Is Not Code,        | Playbooks are not a programming language, they are designed to be |
 | Infrastructure Is Data             | super-easy to write, and easy to audit by non-developers.  You    |
@@ -84,18 +84,22 @@ Architecture
 |                                    | already using -- openssh.                                         |  
 +------------------------------------+-------------------------------------------------------------------+  
 
-Resources
-`````````
-
-Your ideas and contributions are welcome.  We're also happy to help 
-you with questions about Ansible.
-
-* Visit the `project page <https://github.com/ansible/ansible>`_ on Github
-* View the `issue tracker <https://github.com/ansible/ansible/issues>`_
-* See the presentation on `Speakerdeck <http://speakerdeck.com/u/mpdehaan/p/ansible>`_
-* Visit the `Google Group <http://groups.google.com/group/ansible-project>`_
-* Chat on `FreeNode <http://webchat.freenode.net/?channels=ansible>`_
-* Join the `Mailing List <http://groups.google.com/group/ansible-project>`_
++-----------------------------------------------------------------------------------------------------------+
+| Community                                                                                                 |
++===========================================================================================================+
+| Your ideas and contributions are welcome.  We're also happy to help                                       |
+| you with questions about Ansible.                                                                         |
++------------------------+----------------------------------------------------------------------------------+
+| Get the source         | Visit the `project page <https://github.com/ansible/ansible>`_ on Github         |
++------------------------+----------------------------------------------------------------------------------+
+| File a bug             | View the `issue tracker <https://github.com/ansible/ansible/issues>`_            |
++------------------------+----------------------------------------------------------------------------------+
+| Spread the word        | Watch slides on `Speakerdeck <http://speakerdeck.com/u/mpdehaan/p/ansible>`_     |
++------------------------+----------------------------------------------------------------------------------+
+| Join the mailing list  | Visit the `Google Group <http://groups.google.com/group/ansible-project>`_       |
++------------------------+----------------------------------------------------------------------------------+
+| Chat                   | Visit the channel on `FreeNode <http://webchat.freenode.net/?channels=ansible>`_ |
++------------------------+----------------------------------------------------------------------------------+
 
 +-----------------------------------------------------------------------------------------------------------+
 | What People Are Saying                                                                                    |
@@ -116,7 +120,22 @@ you with questions about Ansible.
 | migrate all my stuff to the much more sensical ansible. Nice work                                         |
 +-----------------------------------------------------------------------------------------------------------+
 
-
++--------------------------------------------------------------------------------------------------+
+| Presented By...                                                                                  |
++==================================================================================================+
+| Ansible was created and is run by `Michael DeHaan <http://michaeldehaan.net>`_                   |
+| (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC                               |
+| based software developer and architect, who also created the popular                             |
+| DevOps install server `Cobbler <http://cobbler.github.com/>`_.                                   |
+| Cobbler is used to deploy mission critical systems all over the                                  |
+| planet, in industries ranging from massively multiplayer gaming, core                            |
+| internet infrastructure, finance, chip design, and more.  Michael also                           |
+| helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used  |
+| to orchestrate systems in lots of diverse places.  He's worked on systems                        |
+| software for IBM, Motorola, Red Hat's Emerging Technologies Group,                               |
+| Puppet Labs, and is now with `rPath <http://rpath.com>`_.  Reach Michael by email                |
+| `here <mailto:michael.dehaan@gmail.com>`_.                                                       |
++--------------------------------------------------------------------------------------------------+
 
 Documentation
 `````````````
@@ -137,19 +156,4 @@ Documentation
    faq
    who_uses_ansible
 
-+--------------------------------------------------------------------------------------------------+
-| Presented By...                                                                                  |
-+==================================================================================================+
-| Ansible was created and is run by `Michael DeHaan <http://michaeldehaan.net>`_                   |
-| (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC                               |
-| based software developer and architect, who also created the popular                             |
-| DevOps install server `Cobbler <http://cobbler.github.com/>`_.                                   |
-| Cobbler is used to deploy mission critical systems all over the                                  |
-| planet, in industries ranging from massively multiplayer gaming, core                            |
-| internet infrastructure, finance, chip design, and more.  Michael also                           |
-| helped co-author `Func <http://fedorahosted.org/func/>`_, a precursor to Ansible, which is used  |
-| to orchestrate systems in lots of diverse places.  He's worked on systems                        |
-| software for IBM, Motorola, Red Hat's Emerging Technologies Group,                               |
-| Puppet Labs, and is now with `rPath <http://rpath.com>`_.  Reach Michael by email                |
-| `here <mailto:michael.dehaan@gmail.com>`_.                                                       |
-+--------------------------------------------------------------------------------------------------+
+
