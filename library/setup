@@ -24,12 +24,10 @@ import sys
 import os
 import platform
 import re
-import shlex
 import socket
 import struct
 import subprocess
 import traceback
-import syslog
 
 try:
     import selinux
