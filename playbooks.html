@@ -327,9 +327,11 @@ unless they have to change things.</p>
 <p>The <cite>command</cite> and <cite>shell</cite> modules will actually rerun the same command again,
 which is totally ok if the command is something like
 &#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.</p>
-<p>Every task must have a name, which is included in the output from
+<p>Every task should have a <cite>name</cite>, which is included in the output from
 running the playbook.   This is output for humans, so it is
-nice to have reasonably good descriptions of each task step.</p>
+nice to have reasonably good descriptions of each task step.  If the name
+is not provided though, the string fed to &#8216;action&#8217; will be used for
+output.</p>
 <p>Here is what a basic task looks like, as with most modules,
 the service module takes key=value arguments:</p>
 <div class="highlight-python"><pre>tasks:
