@@ -156,6 +156,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#external-inventory">External Inventory</a><ul>
 <li><a class="reference internal" href="#script-conventions">Script Conventions</a></li>
 <li><a class="reference internal" href="#example-the-cobbler-external-inventory-script">Example: The Cobbler External Inventory Script</a></li>
+<li><a class="reference internal" href="#example-aws-ec2-external-inventory-script">Example: AWS EC2 External Inventory Script</a></li>
 </ul>
 </li>
 </ul>
@@ -330,6 +331,97 @@ override any that have the same name.</p>
 <p>So in other words, you can use those variables in arguments/actions as well.  You might use this to name
 a conf.d file appropriately or something similar.  Who knows?</p>
 <p>So that&#8217;s the Cobbler integration support &#8211; using the cobbler script as an example, it should be trivial to adapt Ansible to pull inventory, as well as variable information, from any data source.  If you create anything interesting, please share with the mailing list, and we can keep it in the source code tree for others to use.</p>
+</div>
+<div class="section" id="example-aws-ec2-external-inventory-script">
+<h3>Example: AWS EC2 External Inventory Script<a class="headerlink" href="#example-aws-ec2-external-inventory-script" title="Permalink to this headline">¶</a></h3>
+<p>If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py">EC2 external inventory</a> script.</p>
+<p>You can use this script in one of two ways. The easiest is to use Ansible&#8217;s <tt class="docutils literal"><span class="pre">-i</span></tt> command line option and specify the path to the script.</p>
+<blockquote>
+<div>ansible -i examples/scripts/ec2_external_inventory.py -u ubuntu us-east-1d -m ping</div></blockquote>
+<p>The second option is to copy the script to <cite>/etc/ansible/hosts</cite> and <cite>chmod +x</cite> it. You will also need to copy the <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> file to <cite>/etc/ansible/ec2.ini</cite>. Then you can run ansible as you would normally.</p>
+<p>To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a <a class="reference external" href="http://docs.pythonboto.org/en/latest/boto_config_tut.html">variety of methods</a> available, but the simplest is just to export two environment variables:</p>
+<blockquote>
+<div>export AWS_ACCESS_KEY_ID=&#8217;AK123&#8217;
+export AWS_SECRET_ACCESS_KEY=&#8217;abc123&#8217;</div></blockquote>
+<p>You can test the script by itself to make sure your config is correct</p>
+<blockquote>
+<div>cd examples/scripts
+./ec2_external_inventory.py &#8211;list</div></blockquote>
+<p>After a few moments, you should see your entire EC2 inventory across all regions in JSON.</p>
+<p>Since each region requires its own API call, if you are only using a small set of regions, feel free to edit <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> and list only the regions you are interested in. There are other config options in <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> including cache control, and destination variables.</p>
+<p>At their heart, inventory files are simply a mapping from some name to a destination address. The default <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> settings are configured for running Ansible from outside EC2 (from your laptop for example). If you are running Ansible from within EC2, internal DNS names and IP addresses may make more sense than public DNS names. In this case, you can modify the <tt class="docutils literal"><span class="pre">destination_variable</span></tt> in <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> to be the private DNS name of an instance. This is particularly important when running Ansible within a private subnet inside a VPC, where the only way to access an instance is via its private IP address. For VPC instances, <cite>vpc_destination_variable</cite> in <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> provides a means of using which ever <a class="reference external" href="http://docs.pythonboto.org/en/latest/ref/ec2.html#module-boto.ec2.instance">boto.ec2.instance variable</a> makes the most sense for your use case.</p>
+<p>The EC2 external inventory provides mappings to instances from several groups:</p>
+<dl class="docutils">
+<dt>Instance ID</dt>
+<dd>These are groups of one since instance IDs are unique.
+e.g.
+<tt class="docutils literal"><span class="pre">i-00112233</span></tt>
+<tt class="docutils literal"><span class="pre">i-a1b1c1d1</span></tt></dd>
+<dt>Region</dt>
+<dd>A group of all instances in an AWS region.
+e.g.
+<tt class="docutils literal"><span class="pre">us-east-1</span></tt>
+<tt class="docutils literal"><span class="pre">us-west-2</span></tt></dd>
+<dt>Availability Zone</dt>
+<dd>A group of all instances in an availability zone.
+e.g.
+<tt class="docutils literal"><span class="pre">us-east-1a</span></tt>
+<tt class="docutils literal"><span class="pre">us-east-1b</span></tt></dd>
+<dt>Security Group</dt>
+<dd>Instances belong to one or more security groups. A group is created for each security group, with all characters except alphanumerics, dashes (-) converted to underscores (_). Each group is prefixed by <tt class="docutils literal"><span class="pre">security_group_</span></tt>
+e.g.
+<tt class="docutils literal"><span class="pre">security_group_default</span></tt>
+<tt class="docutils literal"><span class="pre">security_group_webservers</span></tt>
+<tt class="docutils literal"><span class="pre">security_group_Pete_s_Fancy_Group</span></tt></dd>
+<dt>Tags</dt>
+<dd>Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is &#8216;Name&#8217;, though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format <tt class="docutils literal"><span class="pre">tag_KEY_VALUE</span></tt>
+e.g.
+<tt class="docutils literal"><span class="pre">tag_Name_Web</span></tt>
+<tt class="docutils literal"><span class="pre">tag_Name_redis-master-001</span></tt>
+<tt class="docutils literal"><span class="pre">tag_aws_cloudformation_logical-id_WebServerGroup</span></tt></dd>
+</dl>
+<p>When the Ansible is interacting with a specific server, the EC2 inventory script is called again with the <tt class="docutils literal"><span class="pre">--host</span> <span class="pre">HOST</span></tt> option. This looks up the HOST in the index cache to get the instance ID, and then makes an API call to AWS to get information about that specific instance. It then makes information about that instance available as variables to your playbooks. Each variable is prefixed by <tt class="docutils literal"><span class="pre">ec2_</span></tt>. Here are some of the variables available:</p>
+<ul class="simple">
+<li>ec2_architecture</li>
+<li>ec2_description</li>
+<li>ec2_dns_name</li>
+<li>ec2_id</li>
+<li>ec2_image_id</li>
+<li>ec2_instance_type</li>
+<li>ec2_ip_address</li>
+<li>ec2_kernel</li>
+<li>ec2_key_name</li>
+<li>ec2_launch_time</li>
+<li>ec2_monitored</li>
+<li>ec2_ownerId</li>
+<li>ec2_placement</li>
+<li>ec2_platform</li>
+<li>ec2_previous_state</li>
+<li>ec2_private_dns_name</li>
+<li>ec2_private_ip_address</li>
+<li>ec2_public_dns_name</li>
+<li>ec2_ramdisk</li>
+<li>ec2_region</li>
+<li>ec2_root_device_name</li>
+<li>ec2_root_device_type</li>
+<li>ec2_security_group_ids</li>
+<li>ec2_security_group_names</li>
+<li>ec2_spot_instance_request_id</li>
+<li>ec2_state</li>
+<li>ec2_state_code</li>
+<li>ec2_state_reason</li>
+<li>ec2_status</li>
+<li>ec2_subnet_id</li>
+<li>ec2_tag_Name</li>
+<li>ec2_tenancy</li>
+<li>ec2_virtualization_type</li>
+<li>ec2_vpc_id</li>
+</ul>
+<p>Both <tt class="docutils literal"><span class="pre">ec2_security_group_ids</span></tt> and <tt class="docutils literal"><span class="pre">ec2_security_group_names</span></tt> are comma-separated lists of all security groups. Each EC2 tag is a variable in the format <tt class="docutils literal"><span class="pre">ec2_tag_KEY</span></tt>.</p>
+<p>To see the complete list of variables available for an instance, run the script by itself:</p>
+<blockquote>
+<div>cd examples/scripts
+./ec2_external_inventory.py &#8211;host ec2-12-12-12-12.compute-1.amazonaws.com</div></blockquote>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
