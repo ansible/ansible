@@ -252,12 +252,24 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   user: yourname
+  sudo: True</pre>
+</div>
+<p>You can also login as you, and then sudo to different users than root:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: yourname
   sudo: True
-  sudo_user: privileged_user</pre>
+  sudo_user: postgres</pre>
 </div>
 <p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<cite>-K</cite>).
 If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
 Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p>
+<p>NOTE:  When using <cite>sudo_user</cite> to a user other than root, the module arguments are briefly written into
+a random tempfile in /tmp.  These are deleted immediately after the command is executed.  This only
+occurs when sudoing from a user like &#8216;bob&#8217; to &#8216;timmy&#8217;, not when going from &#8216;bob&#8217; to &#8216;root&#8217;, or
+logging in directly as &#8216;bob&#8217; or &#8216;root&#8217;.  If this concerns you that this data is briefly readable
+(not writeable), avoid transferring uncrypted passwords with <cite>sudo_user</cite> set.  In other cases, &#8216;/tmp&#8217; is not used and
+this does not come into play. Ansible also takes care to not log password parameters.</p>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
@@ -487,7 +499,7 @@ package is installed.  Try it!</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jul 27, 2012.<br/>
+      Last updated on Jul 28, 2012.<br/>
     </p>
   </div>
 </footer>
