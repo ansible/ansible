@@ -116,8 +116,10 @@ Architecture
 | really childs-play and I really adore its design. No more hassle with SSL keys, DNS based 'server         |
 | entries' (e.g. puppet and what not). Just plain (secure!) SSH keys and one is good to go."                |
 +-----------------------------------------------------------------------------------------------------------+
-| You may get a kick out of the fact that I'm using ansible to install puppetmaster(s).  I'm starting to    |
-| migrate all my stuff to the much more sensical ansible. Nice work                                         |
+| "You may get a kick out of the fact that I'm using ansible to install puppetmaster(s).  I'm starting to   |
+| migrate all my stuff to the much more sensical ansible. Nice work."                                       |
++-----------------------------------------------------------------------------------------------------------+
+| "Simple as hell"                                                                                          |
 +-----------------------------------------------------------------------------------------------------------+
 
 +--------------------------------------------------------------------------------------------------+
