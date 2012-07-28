@@ -131,16 +131,14 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
-            list_items = dict(choices=['status']),
-            enable = dict(choices=['on', 'off', 'true', 'false', 'yes', 'no', 'enable', 'disable', 'none'])
+            enable = dict(choices=BOOLEANS)
         )
     )
 
     p = module.params
     name = p['name']
     state = p.get('state', None)
-    list_items = p.get('list_items', None)
-    enable = p.get('enable', None)
+    enable = module.bool(p.get('enable', None))
 
     # ===========================================
     # find binaries locations on minion
@@ -203,8 +201,6 @@ def main():
 
     result = {"changed": changed}
     rc, stdout, stderr = _run("%s %s status" % (SERVICE, name))
-    if list_items == 'status':
-        result['status'] = stdout
     module.exit_json(**result);
     
 
