@@ -574,8 +574,6 @@ class Runner(object):
             result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
             result2.result['module'] = self.module_name
             changed = False
-            # print "result1=%s" % result.result
-            # print "result2=%s" % result2.result
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
             # print "DEBUG=%s" % changed
@@ -583,7 +581,6 @@ class Runner(object):
             result2.result['changed'] = changed
             result = result2
             del result.result['daisychain']
-            # print "DEBUG2=%s" % result.result['changed']
 
         self._delete_remote_files(conn, tmp)
         conn.close()
