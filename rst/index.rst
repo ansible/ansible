@@ -7,7 +7,7 @@ and command execution framework.  Other tools in this space have been too compli
 require too much bootstrapping, and have too much learning curve.  By comparison, Ansible is dead simple 
 and painless to extend. Puppet and Chef have about 60k lines of code.  Ansible's core is a little over 2000 lines.
 
-Ansible isn't just for configuration management -- it's also great for ad-hoc tasks, quickly firing off commands against nodes, and it excels at complex multi-node deployment tasks, being designed for that purpose from day one.  
+Ansible isn't just for configuration management -- it's also great for ad-hoc tasks, quickly firing off commands against nodes, and it excels at complex multi-tier deployment tasks, being designed for that purpose from day one.  
 
 Systems management doesn't have to be complicated.  We've learned well from the "Infrastructure is Code" movement.  
 Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project -- bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.  This is Ansible's philosophy and the main reason it's different.  Read on, though, and we'll tell you more.
@@ -17,27 +17,27 @@ Infrastructure should be easy and powerful to command, but it should not look li
 +=====================================================================+
 | Dead simple setup                                                   |
 +---------------------------------------------------------------------+
+| Can be easily run from a checkout, no installation required         |
++---------------------------------------------------------------------+
+| No agents or software to install on managed machines                |
++---------------------------------------------------------------------+
+| Ultra-secure; uses existing SSHd out of the box                     |
++---------------------------------------------------------------------+
+| Connect as any user, not just root, and sudo as needed              |
++---------------------------------------------------------------------+
 | Super fast & parallel by default                                    |
 +---------------------------------------------------------------------+
-| No server or client daemons; use existing SSHd out of the box       |
-+---------------------------------------------------------------------+
 | Supports Kerberized SSH, jump hosts, forwarding, etc                | 
-+---------------------------------------------------------------------+
-| No additional software required on client boxes                     |
-+---------------------------------------------------------------------+
-| Can be easily run from a checkout, no installation required         |
 +---------------------------------------------------------------------+
 | Modules are idempotent, but you can also easily use shell commands  |
 +---------------------------------------------------------------------+
 | Modules can be written in ANY language                              |
 +---------------------------------------------------------------------+
-| Awesome API for creating very powerful distributed scripts          |
-+---------------------------------------------------------------------+
-| Does not have to run remote steps as root                           |
+| Awesome API for creating very powerful distributed applications     |
 +---------------------------------------------------------------------+
 | Pluggable transports (SSH is just the default)                      |
 +---------------------------------------------------------------------+
-| Source host info & variables from files or external software        |
+| Can draw inventory data from external sources like EC2 and Cobbler  |
 +---------------------------------------------------------------------+
 | The easiest config management system to use, ever.                  |
 +---------------------------------------------------------------------+
