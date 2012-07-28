@@ -192,6 +192,7 @@ support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
 
+.. _fetch:
 
 fetch
 `````
@@ -214,6 +215,7 @@ Example::
 
     fetch src=/var/log/messages dest=/home/logtree
 
+.. _file:
 
 file
 ````

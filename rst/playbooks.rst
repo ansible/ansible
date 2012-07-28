@@ -171,9 +171,11 @@ The `command` and `shell` modules will actually rerun the same command again,
 which is totally ok if the command is something like 
 'chmod' or 'setsebool', etc.
 
-Every task must have a name, which is included in the output from
+Every task should have a `name`, which is included in the output from
 running the playbook.   This is output for humans, so it is
-nice to have reasonably good descriptions of each task step.
+nice to have reasonably good descriptions of each task step.  If the name
+is not provided though, the string fed to 'action' will be used for
+output.
 
 Here is what a basic task looks like, as with most modules,
 the service module takes key=value arguments::

@@ -162,7 +162,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
 <li><a class="reference internal" href="#raw">raw</a></li>
-<li><a class="reference internal" href="#id11">service</a></li>
+<li><a class="reference internal" href="#id13">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
@@ -446,7 +446,7 @@ Playbooks do not actually use this module, they use the <a class="reference inte
 module behind the scenes.</p>
 </div>
 <div class="section" id="fetch">
-<h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
 <p>This module works like &#8216;copy&#8217;, but in reverse.  It is used for fetching files
 from remote machines and storing them locally in a file tree, organized by hostname.</p>
 <table border="1" class="docutils">
@@ -484,7 +484,7 @@ be saved into &#8216;/foo/host.example.com/tmp/bar&#8217;</td>
 </div>
 </div>
 <div class="section" id="file">
-<h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
 <p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
 support the same options as the file module &#8211; including &#8216;copy&#8217;, &#8216;template&#8217;, and &#8216;assmeble&#8217;.</p>
 <table border="1" class="docutils">
@@ -582,7 +582,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="git">
-<span id="id7"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -627,7 +627,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="group">
-<span id="id8"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -672,7 +672,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="ohai">
-<span id="id9"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -682,7 +682,7 @@ support change hooks, nor does it make any changes on the system.</p>
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
-<span id="id10"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
 <p>This module does not support change hooks and is informative only - it
@@ -705,8 +705,8 @@ for this module.</p>
 <div class="highlight-python"><pre>ansible newhost.example.com raw -a "yum install python-simplejson"</pre>
 </div>
 </div>
-<div class="section" id="id11">
-<h2>service<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id13">
+<h2>service<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -757,7 +757,7 @@ service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id12"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -839,7 +839,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id13"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -857,7 +857,7 @@ command was running.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id14"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -897,7 +897,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id15"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -996,7 +996,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id16"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1056,7 +1056,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id17"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
