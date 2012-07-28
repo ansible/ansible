@@ -386,7 +386,7 @@ def main():
         params[k] = v
 
     state      = params.get('state', None)
-    guest      = params.get('guest', None)
+    guest      = params.get('guest', params.get('name', None))
     command    = params.get('command', None)
     options    = params.get('options', [])
 

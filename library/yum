@@ -277,7 +277,7 @@ def main():
     
     module = AnsibleModule(
         argument_spec = dict(
-            pkg=dict(aliases=['name']),
+            pkg=dict(aliases=['name','package']),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(choices=['installed','updates','available','repos','pkgspec']),
