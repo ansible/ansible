@@ -19,12 +19,13 @@
 
 SERVICE = None
 CHKCONFIG = None
+INITCTL = None
 
 def _find_binaries(m):
     # list of possible paths for service/chkconfig binaries
     # with the most probable first
-    global CHKCONFIG
     global SERVICE
+    global CHKCONFIG
     global INITCTL
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl']
@@ -119,10 +120,11 @@ def _do_enable(name, enable):
         valid_argument['on'] = "enable"
         valid_argument['off'] = "disable"
 
-    if enable.lower() in ['on', 'true', 'yes', 'enable']:
-        rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['on']))
-    elif enable.lower() in ['off', 'false', 'no', 'disable']:
-        rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['off']))
+    if enable is not None:
+        if enable:
+            rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['on']))
+        else:
+            rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['off']))
     
     return rc, stdout, stderr
     
@@ -130,15 +132,14 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            state = dict(required=True, choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             enable = dict(choices=BOOLEANS)
         )
     )
 
-    p = module.params
-    name = p['name']
-    state = p.get('state', None)
-    enable = module.bool(p.get('enable', None))
+    name = module.params['name']
+    state = module.params['state']
+    enable = module.boolean(module.params.get('enable', None))
 
     # ===========================================
     # find binaries locations on minion

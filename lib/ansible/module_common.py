@@ -134,9 +134,10 @@ class AnsibleModule(object):
 
     def boolean(self, arg):
         ''' return a bool for the arg '''
+        if arg is None or type(arg) == bool:
+            return arg
         if type(arg) in types.StringTypes:
             arg = arg.lower()
-        
         if arg in BOOLEANS_TRUE:
             return True
         elif arg in BOOLEANS_FALSE:
