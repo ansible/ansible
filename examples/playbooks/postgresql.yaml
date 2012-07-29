@@ -1,0 +1,38 @@
+##
+# Example Ansible playbook that uses the PostgreSQL module.
+#
+# This installs PostgreSQL on an Ubuntu system, creates a database called
+# "myapp" and a user called "django" with password "mysupersecretpassword"
+# with access to the "myapp" database.
+#
+---
+- hosts: webservers
+  sudo: True
+  gather_facts: False
+
+  tasks:
+  - name: ensure apt cache is up to date
+    action: apt update_cache=yes
+  - name: ensure packages are installed
+    action: apt pkg=$item
+    with_items:
+        - postgresql
+        - libpq-dev
+        - python-psycopg2
+
+- hosts: webservers
+  sudo: True
+  sudo_user: postgres
+  gather_facts: False
+
+  vars:
+    dbname: myapp
+    dbuser: django
+    dbpassword: mysupersecreetpassword
+
+  tasks:
+  - name: ensure database is created
+    action: postgresql_db db=$dbname
+
+  - name: ensure user has access to database
+    action: postgresql_user db=$dbname user=$dbuser password=$dbpassword

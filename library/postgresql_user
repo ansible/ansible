@@ -33,10 +33,10 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, passwd, db):
+def user_add(cursor, user, password, db):
     """Create a new user with write access to the database"""
-    query = "CREATE USER %(user)s with PASSWORD '%(passwd)s'"
-    cursor.execute(query % {"user": user, "passwd": passwd})
+    query = "CREATE USER %(user)s with PASSWORD '%(password)s'"
+    cursor.execute(query % {"user": user, "password": password})
     grant_privileges(cursor, user, db)
     return True
 
@@ -60,19 +60,19 @@ def revoke_privileges(cursor, user, db):
     cursor.execute(query % {'user': user, 'db': db})
 
 
-def user_mod(cursor, user, passwd, db):
+def user_mod(cursor, user, password, db):
     """Update password and permissions"""
     changed = False
 
     # Handle passwords.
-    if passwd is not None:
+    if password is not None:
         select = "SELECT rolpassword FROM pg_authid where rolname=%(user)s"
         cursor.execute(select, {"user": user})
         current_pass_hash = cursor.fetchone()[0]
         # Not sure how to hash the new password, so we just initiate the
         # change and check if the hash changed
-        alter = "ALTER USER %(user)s WITH PASSWORD '%(passwd)s'"
-        cursor.execute(alter % {"user": user, "passwd": passwd})
+        alter = "ALTER USER %(user)s WITH PASSWORD '%(password)s'"
+        cursor.execute(alter % {"user": user, "password": password})
         cursor.execute(select, {"user": user})
         new_pass_hash = cursor.fetchone()[0]
         if current_pass_hash != new_pass_hash:
@@ -103,17 +103,17 @@ def user_delete(cursor, user, db):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            loginuser=dict(default="postgres"),
-            loginpass=dict(default=""),
-            loginhost=dict(default=""),
+            login_user=dict(default="postgres"),
+            login_password=dict(default=""),
+            login_host=dict(default=""),
             user=dict(required=True),
-            passwd=dict(default=None),
+            password=dict(default=None),
             state=dict(default="present", choices=["absent", "present"]),
             db=dict(required=True),
         )
     )
     user = module.params["user"]
-    passwd = module.params["passwd"]
+    password = module.params["password"]
     state = module.params["state"]
     db = module.params["db"]
 
@@ -121,9 +121,9 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     try:
-        db_connection = psycopg2.connect(host=module.params["loginhost"],
-                                         user=module.params["loginuser"],
-                                         password=module.params["loginpass"],
+        db_connection = psycopg2.connect(host=module.params["login_host"],
+                                         user=module.params["login_user"],
+                                         password=module.params["login_password"],
                                          database=db)
         cursor = db_connection.cursor()
     except Exception as e:
@@ -131,12 +131,12 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_mod(cursor, user, passwd, db)
+            changed = user_mod(cursor, user, password, db)
         else:
-            if passwd is None:
-                msg = "passwd parameter required when adding a user"
+            if password is None:
+                msg = "password parameter required when adding a user"
                 module.fail_json(msg=msg)
-            changed = user_add(cursor, user, passwd, db)
+            changed = user_add(cursor, user, password, db)
 
     elif state == "absent":
         if user_exists(cursor, user):
