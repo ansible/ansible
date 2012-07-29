@@ -52,9 +52,9 @@ def db_create(cursor, db):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            loginuser=dict(default="postgres"),
-            loginpass=dict(default=""),
-            loginhost=dict(default=""),
+            login_user=dict(default="postgres"),
+            login_password=dict(default=""),
+            login_host=dict(default=""),
             db=dict(required=True),
             state=dict(default="present", choices=["absent", "present"]),
         )
@@ -67,9 +67,9 @@ def main():
     state = module.params["state"]
     changed = False
     try:
-        db_connection = psycopg2.connect(host=module.params["loginhost"],
-                                         user=module.params["loginuser"],
-                                         password=module.params["loginpass"],
+        db_connection = psycopg2.connect(host=module.params["login_host"],
+                                         user=module.params["login_user"],
+                                         password=module.params["login_password"],
                                          database="template1")
         # Enable autocommit so we can create databases
         db_connection.autocommit = True
