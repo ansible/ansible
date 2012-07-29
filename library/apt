@@ -128,7 +128,7 @@ def main():
 
     p = module.params
     if p['package'] is None and p['update_cache'] != 'yes':
-        module.fail_json(msg='pkg=name and/or update-cache=yes is required')
+        module.fail_json(msg='pkg=name and/or update_cache=yes is required')
     
     install_recommends = (p['install_recommends'] == 'yes')
     
