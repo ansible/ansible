@@ -134,16 +134,18 @@ class TestInventory(unittest.TestCase):
 
         print vars
         assert vars == {'group_names': ['norse'],
-                        'inventory_hostname': 'thor'}
+                        'inventory_hostname': 'thor',
+                        'inventory_hostname_short': 'thor'}
 
     def test_simple_port(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('hera')
 
         print vars
-        expected = {'ansible_ssh_port': 3000,
-                        'group_names': ['greek'],
-                        'inventory_hostname': 'hera'}
+        expected = { 'ansible_ssh_port': 3000,
+                     'group_names': ['greek'],
+                     'inventory_hostname': 'hera',
+                     'inventory_hostname_short': 'hera' }
         print expected
         assert vars == expected
 
@@ -158,7 +160,7 @@ class TestInventory(unittest.TestCase):
 
         expected = dict(
             a='1', b='2', c='3', d='100002', rga='1', rgb='2', rgc='3', 
-            inventory_hostname='rtp_a', 
+            inventory_hostname='rtp_a', inventory_hostname_short='rtp_a', 
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
         print vars
@@ -232,5 +234,6 @@ class TestInventory(unittest.TestCase):
 
         assert vars == {'hammer':True,
                         'group_names': ['norse'],
-                        'inventory_hostname': 'thor'}
+                        'inventory_hostname': 'thor',
+                        'inventory_hostname_short': 'thor'}
 
