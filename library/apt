@@ -164,7 +164,7 @@ def main():
         install(module, p['package'], cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
     elif p['state'] == 'removed':
-        remove(module, p['package'], cache, purge == 'yes')
+        remove(module, p['package'], cache, purge = p['purge'])
     
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
