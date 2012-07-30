@@ -732,9 +732,9 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 
 Example action from Ansible :doc:`playbooks`::
 
-    yum pkg=httpd state=latest
-    yum pkg=httpd state=removed
-    yum pkg=httpd state=installed
+    yum name=httpd state=latest
+    yum name=httpd state=removed
+    yum name=httpd state=installed
 
 
 Writing your own modules
