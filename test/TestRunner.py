@@ -128,7 +128,7 @@ class TestRunner(unittest.TestCase):
         assert result['stdout'] == 'hi'
         assert result['stderr'] == ''
 
-        result = self._run('command', [ "/bin/false" ])
+        result = self._run('command', [ "false" ])
         assert result['rc'] == 1
         assert 'failed' not in result
 
