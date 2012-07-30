@@ -31,7 +31,11 @@ def main():
     module = CommandModule(argument_spec=dict())
 
     shell = module.params['shell']
+    chdir = module.params['chdir']
     args  = module.params['args']
+
+    if chdir:
+        os.chdir(chdir)
 
     if not shell:
         args = shlex.split(args)
@@ -77,6 +81,7 @@ class CommandModule(AnsibleModule):
         args = base64.b64decode(MODULE_ARGS)
         items   = shlex.split(args)
         params = {}
+        params['chdir'] = None
         params['shell'] = False
         if args.find("#USE_SHELL") != -1:
              args = args.replace("#USE_SHELL", "")
@@ -99,6 +104,14 @@ class CommandModule(AnsibleModule):
                         rc=0
                     )
                 args = args.replace(x,'')
+            elif x.startswith("chdir="):
+                (k,v) = x.split("=", 1)
+                if not (os.path.exists(v) and os.path.isdir(v)):
+                    self.fail_json(msg="cannot change to directory '%s': path does not exist" % v)
+                elif v[0] != '/':
+                    self.fail_json(msg="the path for 'chdir' argument must be fully qualified")
+                params['chdir'] = v
+                args = args.replace(x, '')
         params['args'] = args
         return (params, args)
 
