@@ -26,6 +26,7 @@ import optparse
 import operator
 from ansible import errors
 from ansible import color
+from ansible import __version__
 import ansible.constants as C
 
 try:
@@ -279,7 +280,7 @@ class SortedOptParser(optparse.OptionParser):
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
-    parser = SortedOptParser(usage)
+    parser = SortedOptParser(usage, version="%prog " + __version__)
     parser.add_option('-v','--verbose', default=False, action="store_true",
         help='verbose mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
