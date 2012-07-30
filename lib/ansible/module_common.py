@@ -23,6 +23,9 @@ MODULE_COMMON = """
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
+BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
@@ -42,6 +45,7 @@ import shlex
 import subprocess
 import sys
 import syslog
+import types
 
 try:
     from hashlib import md5 as _md5
@@ -128,6 +132,18 @@ class AnsibleModule(object):
         log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", self.args)
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
+    def boolean(self, arg):
+        ''' return a bool for the arg '''
+        if type(arg) in types.StringTypes:
+            arg = arg.lower()
+        
+        if arg in BOOLEANS_TRUE:
+            return True
+        elif arg in BOOLEANS_FALSE:
+            return False
+        else:
+            self.fail_json(msg='Boolean %s not in either boolean list' % arg)
+            
     def jsonify(self, data):
         return json.dumps(data)
 
