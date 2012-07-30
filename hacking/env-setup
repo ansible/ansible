@@ -1,20 +1,33 @@
 #!/bin/bash
-# usage: source ./hacking/env-setup
+# usage: source ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
-PREFIX_PYTHONPATH="$PWD/lib"
-PREFIX_PATH="$PWD/bin"
-PREFIX_MANPATH="$PWD/docs/man"
+# When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
+if [ -n "$BASH_SOURCE" ] ; then
+    HACKING_DIR=`dirname $BASH_SOURCE`
+else
+    HACKING_DIR="$PWD/hacking"
+fi
+FULL_PATH=`readlink -fn $HACKING_DIR`
+ANSIBLE_HOME=`dirname $FULL_PATH`
+
+PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
+PREFIX_PATH="$ANSIBLE_HOME/bin"
+PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
 export PATH=$PREFIX_PATH:$PATH
-export ANSIBLE_LIBRARY="$PWD/library"
+export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
 export MANPATH=$PREFIX_MANPATH:$MANPATH
 
-echo "PATH=$PATH"
-echo "PYTHONPATH=$PYTHONPATH"
-echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
-echo "MANPATH=$MANPATH"
+# Print out values unless -q is set
 
-echo "Reminder: specify your host file with -i"
-echo "Done."
+if [ $# -eq 0 -o "$1" != "-q" ] ; then
+    echo "PATH=$PATH"
+    echo "PYTHONPATH=$PYTHONPATH"
+    echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
+    echo "MANPATH=$MANPATH"
+    
+    echo "Reminder: specify your host file with -i"
+    echo "Done."
+fi
