@@ -35,24 +35,24 @@ def user_exists(cursor, user, host):
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, passwd, new_priv):
-    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,passwd))
+def user_add(cursor, user, host, password, new_priv):
+    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, passwd, new_priv):
+def user_mod(cursor, user, host, password, new_priv):
     changed = False
 
     # Handle passwords.
-    if passwd is not None:
+    if password is not None:
         cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
-        cursor.execute("SELECT PASSWORD(%s)", (passwd,))
+        cursor.execute("SELECT PASSWORD(%s)", (password,))
         new_pass_hash = cursor.fetchone()
         if current_pass_hash[0] != new_pass_hash[0]:
-            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,passwd))
+            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
             changed = True
 
     # Handle privileges.
@@ -149,7 +149,7 @@ def load_mycnf():
         return False
     try:
         config.readfp(open(mycnf))
-        creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'pass'))
+        creds = dict(user=config.get('client', 'user'),password=config.get('client', 'pass'))
     except (ConfigParser.NoOptionError, IOError):
         return False
     return creds
@@ -161,18 +161,18 @@ def load_mycnf():
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            loginuser=dict(default=None),
-            loginpasswd=dict(default=None),
-            loginhost=dict(default="localhost"),
+            login_user=dict(default=None),
+            login_password=dict(default=None),
+            login_host=dict(default="localhost"),
             user=dict(required=True),
-            passwd=dict(default=None),
+            password=dict(default=None),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
         )
     )
     user = module.params["user"]
-    passwd = module.params["passwd"]
+    password = module.params["password"]
     host = module.params["host"]
     state = module.params["state"]
     priv = module.params["priv"]
@@ -189,31 +189,32 @@ def main():
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
     # ~/.my.cnf.
-    loginpasswd = module.params["loginpasswd"]
-    loginuser = module.params["loginuser"]
-    if loginuser is None and loginpasswd is None:
+    login_password = module.params["login_password"]
+    login_user = module.params["login_user"]
+    if login_user is None and login_password is None:
         mycnf_creds = load_mycnf()
         if mycnf_creds is False:
-            module.fail_json(msg="incomplete login arguments passed and can't find them in ~/.my.cnf")
+            login_user = "root"
+            login_password = ""
         else:
-            loginuser = mycnf_creds["user"]
-            loginpasswd = mycnf_creds["passwd"]
-    elif loginpasswd is None or loginuser is None:
-        module.fail_json(msg="when supplying login arguments, both user and pass must be provided")
+            login_user = mycnf_creds["user"]
+            login_password = mycnf_creds["password"]
+    elif login_password is None or login_user is None:
+        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 
     try:
-        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpasswd, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
-        module.fail_json(msg="unable to connect to database")
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, passwd, priv)
+            changed = user_mod(cursor, user, host, password, priv)
         else:
-            if passwd is None:
-                module.fail_json(msg="passwd parameter required when adding a user")
-            changed = user_add(cursor, user, host, passwd, priv)
+            if password is None:
+                module.fail_json(msg="password parameter required when adding a user")
+            changed = user_add(cursor, user, host, password, priv)
     elif state == "absent":
         if user_exists(cursor, user, host):
             changed = user_delete(cursor, user, host)
