@@ -130,7 +130,7 @@ def main():
     if p['package'] is None and p['update_cache'] != 'yes':
         module.fail_json(msg='pkg=name and/or update_cache=yes is required')
     
-    install_recommends = (p['install_recommends'] == 'yes')
+    install_recommends = module.boolean(p['install_recommends'])
     
     cache = apt.Cache()
     if p['default_release']:
@@ -138,16 +138,13 @@ def main():
         # reopen cache w/ modified config
         cache.open(progress=None)
     
-    if p['update_cache'] == 'yes':
+    if modules.boolean(p['update_cache'])
         cache.update()
         cache.open(progress=None)
         if p['package'] == None:
             module.exit_json(changed=False)
     
-    if p['force'] == 'yes':
-        force_yes = True
-    else:
-        force_yes = False
+    force_yes = modules.boolean(p['force'])
     
     if p['package'].count('=') > 1:
         module.fail_json(msg='invalid package spec')
@@ -164,7 +161,7 @@ def main():
         install(module, p['package'], cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
     elif p['state'] == 'removed':
-        remove(module, p['package'], cache, purge == 'yes')
+        remove(module, p['package'], cache, purge = modules.boolean(p['purge']))
     
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
