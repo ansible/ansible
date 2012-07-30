@@ -9,6 +9,7 @@ import ansible.runner
 import os
 import shutil
 import time
+import tempfile
 try:
     import json
 except:
@@ -188,8 +189,22 @@ class TestRunner(unittest.TestCase):
         assert 'failed' not in result
 
     def test_git(self):
-        # TODO: tests for the git module
-        pass
+        if not get_binary("yum"):
+            raise SkipTest
+        repo = 'git://github.com/ansible/ansible.git'
+        dest = tempfile.mkdtemp()
+        result = self._run('git', ['repo=%s' % repo, 'dest=%s' % dest])
+        assert 'failed' not in result
+        result = self._run('git', [
+            'repo=%s' % repo,
+            'dest=%s' % dest,
+            'version=master'
+        ])
+        assert 'false' not in result
+        try:
+            shutil.rmtree(dest)
+        except OSError, e:
+            print "Failed to remove temp dir %s" % dest
 
     def test_service(self):
         # TODO: tests for the service module
