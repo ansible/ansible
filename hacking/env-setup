@@ -8,7 +8,9 @@ if [ -n "$BASH_SOURCE" ] ; then
 else
     HACKING_DIR="$PWD/hacking"
 fi
-FULL_PATH=`readlink -fn $HACKING_DIR`
+# The below is an alternative to readlink -fn which doesn't exist on OS X
+# Source: http://stackoverflow.com/a/1678636
+FULL_PATH=`python -c "import os, sys; print os.path.realpath('$HACKING_DIR')"`
 ANSIBLE_HOME=`dirname $FULL_PATH`
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
