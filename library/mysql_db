@@ -63,9 +63,9 @@ def load_mycnf():
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            loginuser=dict(default=None),
-            loginpasswd=dict(default=None),
-            loginhost=dict(default="localhost"),
+            login_user=dict(default=None),
+            login_password=dict(default=None),
+            login_host=dict(default="localhost"),
             db=dict(required=True),
             state=dict(default="present", choices=["absent", "present"]),
         )
@@ -80,23 +80,24 @@ def main():
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
     # ~/.my.cnf.
-    loginpasswd = module.params["loginpasswd"]
-    loginuser = module.params["loginuser"]
-    if loginuser is None and loginpasswd is None:
+    login_password = module.params["login_password"]
+    login_user = module.params["login_user"]
+    if login_user is None and login_password is None:
         mycnf_creds = load_mycnf()
         if mycnf_creds is False:
-            module.fail_json(msg="incomplete login arguments passed and can't find them in ~/.my.cnf")
+            login_user = "root"
+            login_password = ""
         else:
-            loginuser = mycnf_creds["user"]
-            loginpasswd = mycnf_creds["passwd"]
-    elif loginpasswd is None or loginuser is None:
-        module.fail_json(msg="when supplying login arguments, both user and pass must be provided")
+            login_user = mycnf_creds["user"]
+            login_password = mycnf_creds["passwd"]
+    elif login_password is None or login_user is None:
+        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 
     try:
-        db_connection = MySQLdb.connect(host=module.params["loginhost"], user=loginuser, passwd=loginpasswd, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception as e:
-        module.fail_json(msg="unable to connect to database")
+        module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
 
     changed = False
     if db_exists(cursor, db):
