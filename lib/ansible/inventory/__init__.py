@@ -105,7 +105,7 @@ class Inventory(object):
                 inverted = False
             for group in groups:
                 for host in group.get_hosts():
-                    if group.name == pat or pat == 'all' or self._match(host.name, pat):
+                    if self._match(group.name, pat) or pat == 'all' or self._match(host.name, pat):
                         # must test explicitly for None because [] means no hosts allowed
                         if self._restriction==None or host.name in self._restriction: 
                             if inverted:
