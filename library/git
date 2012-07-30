@@ -22,59 +22,10 @@
 # tag.  Latest is not supported, you should not be doing
 # that. Contribs welcome! -- MPD
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-import os
-import re
-import sys
-import shlex
-import subprocess
-import syslog
+import base64
 
-# ===========================================
-# Basic support methods
-
-def exit_json(rc=0, **kwargs):
-   print json.dumps(kwargs)
-   sys.exit(rc)
-
-def fail_json(**kwargs):
-   kwargs['failed'] = True
-   exit_json(**kwargs)
-
-# ===========================================
-# convert arguments of form a=b c=d
-# to a dictionary
-# FIXME: make more idiomatic
-
-if len(sys.argv) == 1:
-   fail_json(msg="the command module requires arguments (-a)")
-
-argfile = sys.argv[1]
-if not os.path.exists(argfile):
-   fail_json(msg="Argument file not found")
-
-args = open(argfile, 'r').read()
-items = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-if not len(items):
-   fail_json(msg="the command module requires arguments (-a)")
-
-params = {}
-for x in items:
-    (k, v) = x.split("=")
-    params[k] = v
-
-dest = params['dest']
-repo = params['repo']
-version = params.get('version', 'HEAD')
-remote = params.get('remote', 'origin')
-
-# ===========================================
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 def get_version(dest):
    ''' samples the version of the git repo '''
@@ -176,45 +127,55 @@ def switch_version(dest, remote, version):
     rc = cmd.returncode
     return (rc, out, err)
  
+def main():
+    module = AnsibleModule(
+        argument_spec = dict()
+    )
+    dest = module.params['dest']
+    repo = module.params['repo']
+    version = module.params.get('version', 'HEAD')
+    remote = module.params.get('remote', 'origin')
 
-gitconfig = os.path.join(dest, '.git', 'config')
+    gitconfig = os.path.join(dest, '.git', 'config')
 
-out, err, status = (None, None, None)
+    out, err, status = (None, None, None)
 
-# if there is no git configuration, do a clone operation
-# else pull and switch the version
+    # if there is no git configuration, do a clone operation
+    # else pull and switch the version
 
-before = None
-if not os.path.exists(gitconfig):
-   (rc, out, err) = clone(repo, dest)
-   if rc != 0:
-      fail_json(out=out, err=err, rc=rc)
-else:
-   # else do a pull   
-   before = get_version(dest)
-   (rc, out, err) = reset(dest)
-   if rc != 0:
-      fail_json(out=out, err=err, rc=rc)
-   (rc, out, err) = pull(repo, dest, version)
+    before = None
+    if not os.path.exists(gitconfig):
+       (rc, out, err) = clone(repo, dest)
+       if rc != 0:
+          module.fail_json(out=out, err=err, rc=rc)
+    else:
+       # else do a pull   
+       before = get_version(dest)
+       (rc, out, err) = reset(dest)
+       if rc != 0:
+          module.fail_json(out=out, err=err, rc=rc)
+       (rc, out, err) = pull(repo, dest, version)
 
-# handle errors from clone or pull
+    # handle errors from clone or pull
 
-if out.find('error') != -1 or err.find('ERROR') != -1:
-   fail_json(out=out, err=err)
+    if out.find('error') != -1 or err.find('ERROR') != -1:
+       module.fail_json(out=out, err=err)
 
-# switch to version specified regardless of whether
-# we cloned or pulled
+    # switch to version specified regardless of whether
+    # we cloned or pulled
 
-(rc, out, err) = switch_version(dest, remote, version)
-if err.find('error') != -1:
-   fail_json(out=out, err=err)
+    (rc, out, err) = switch_version(dest, remote, version)
+    if err.find('error') != -1:
+       module.fail_json(out=out, err=err)
 
-# determine if we changed anything
+    # determine if we changed anything
 
-after = get_version(dest)
-changed = False
+    after = get_version(dest)
+    changed = False
 
-if before != after:
-   changed = True
+    if before != after:
+       changed = True
 
-exit_json(changed=changed, before=before, after=after)
+    module.exit_json(changed=changed, before=before, after=after)
+
+main()
