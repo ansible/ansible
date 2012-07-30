@@ -17,29 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-import sys
-import shlex
-import subprocess
-import os.path
-import syslog
-
-# TODO: switch to fail_json and other helper functions
-# like other modules are using
-
-# ===========================================
-
 SERVICE = None
 CHKCONFIG = None
 
-def fail_json(d):
-    print json.dumps(d)
-    sys.exit(1)
-
-def _find_binaries():
+def _find_binaries(m):
     # list of possible paths for service/chkconfig binaries
     # with the most probable first
     global CHKCONFIG
@@ -63,11 +44,11 @@ def _find_binaries():
     elif location.get('update-rc.d', None):
         CHKCONFIG = location['update-rc.d']
     else:
-        fail_json(dict(failed=True, msg='unable to find chkconfig or update-rc.d binary'))
+        m.fail_json(msg='unable to find chkconfig or update-rc.d binary')
     if location.get('service', None):
         SERVICE = location['service']
     else:
-        fail_json(dict(failed=True, msg='unable to find service binary'))
+        m.fail_json(msg='unable to find service binary')
     if location.get('initctl', None):
         INITCTL = location['initctl']
     else:
@@ -145,57 +126,37 @@ def _do_enable(name, enable):
     
     return rc, stdout, stderr
     
-argfile = sys.argv[1]
-args = open(argfile, 'r').read()
-items = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(required=True),
+            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            list_items = dict(choices=['status']),
+            enable = dict(choices=['on', 'off', 'true', 'false', 'yes', 'no', 'enable', 'disable', 'none'])
+        )
+    )
 
-if not len(items):
-    fail_json(dict(failed=True, msg='this module requires arguments (-a)'))
+    p = module.params
+    name = p['name']
+    state = p.get('state', None)
+    list_items = p.get('list_items', None)
+    enable = p.get('enable', None)
 
-params = {}
-for arg in items:
-    if "=" not in arg:
-        fail_json(dict(failed=True, msg='expected key=value format arguments'))
-
-    (name, value) = arg.split("=")
-    params[name] = value
-
-name = params.get('name', None)
-
-if name is None:
-    fail_json(dict(failed=True, msg='missing name'))
-
-state = params.get('state', None)
-list_items = params.get('list', None)
-enable = params.get('enabled', params.get('enable', None))
-
-# running and started are the same
-if state and state.lower() not in [ 'running', 'started', 'stopped', 'restarted','reloaded' ]:
-    fail_json(dict(failed=True, msg='invalid value for state'))
-if list_items and list_items.lower() not in [ 'status' ]:
-    fail_json(dict(failed=True, msg='invalid value for list'))
-if enable and enable.lower() not in [ 'on', 'off', 'true', 'false', 'yes', 'no', 'enable', 'disable' ]:
-    fail_json(dict(failed=True, msg='invalid value for enable'))
+    # ===========================================
+    # find binaries locations on minion
+    _find_binaries(module)
     
+    # ===========================================
+    # get service status
+    running = _get_service_status(name)
 
-# ===========================================
-# find binaries locations on minion
-_find_binaries()
-
-
-# ===========================================
-# get service status
-running = _get_service_status(name)
-
-
-if state or enable:
-    rc = 0
-    out = ''
-    err = ''
+    # ===========================================
+    # Some common variables
     changed = False
-        
+    rc = 0
+    err = ''
+    out = ''
+    
     if enable:
         rc_enable, out_enable, err_enable = _do_enable(name, enable)
         rc += rc_enable
@@ -203,30 +164,24 @@ if state or enable:
         err += err_enable
 
     if state and running == None:
-        print json.dumps({
-            "failed" : True,
-            "msg"    : "failed determining the current service state => state stays unchanged",
-            "changed": False
-        })
-        sys.exit(1)
+        module.fail_json(msg="failed determining the current service state => state stays unchanged", changed=False)
+
     elif state:
         # a state change command has been requested
 
         # ===========================================
         # determine if we are going to change anything
-
-        if not running and state in ("started", "running"):
+        if not running and state in ["started", "running"]:
             changed = True
-        elif running and state in ("stopped","reloaded"):
+        elif running and state in ["stopped","reloaded"]:
             changed = True
         elif state == "restarted":
             changed = True
 
         # ===========================================
         # run change commands if we need to
-
         if changed:
-            if state in ('started', 'running'):
+            if state in ['started', 'running']:
                 rc_state, stdout, stderr = _run("%s %s start" % (SERVICE, name))
             elif state == 'stopped':
                 rc_state, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
@@ -244,27 +199,17 @@ if state or enable:
             rc = rc + rc_state
 
     if rc != 0:
-
-        print json.dumps({
-            "failed" : True,
-            "rc"     : rc,
-        })
-        sys.exit(1)
-
-
-    # ===============================================
-    # success
+        module.fail_json(msg=err)
 
     result = {"changed": changed}
-
     rc, stdout, stderr = _run("%s %s status" % (SERVICE, name))
-    if list_items and list_items in [ 'status' ]:
+    if list_items == 'status':
         result['status'] = stdout
-    print json.dumps(result)
+    module.exit_json(**result);
     
-else:
-    print json.dumps(dict(failed=True, msg="expected state or list parameters"))
 
+# this is magic, see lib/ansible/module_common.py 
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>> 
 
-sys.exit(0)
+main()
 
