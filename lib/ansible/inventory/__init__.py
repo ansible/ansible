@@ -163,9 +163,6 @@ class Inventory(object):
             )
             (out, err) = cmd.communicate()
             results = utils.parse_json(out)
-            results['inventory_hostname'] = hostname
-            groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
-            results['group_names'] = sorted(groups)
             return results
 
         host = self.get_host(hostname)
