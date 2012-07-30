@@ -19,7 +19,7 @@
 
 import traceback
 # added to stave off future warnings about apt api
-import warnings; 
+import warnings;
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 # APT related constants
@@ -28,7 +28,7 @@ APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
 
 def run_apt(command):
     try:
-        cmd = subprocess.Popen(command, shell=True, 
+        cmd = subprocess.Popen(command, shell=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
@@ -58,13 +58,13 @@ def package_status(m, pkgname, version, cache):
     if version:
         try :
             return pkg.is_installed and pkg.installed.version == version, False
-        except AttributeError: 
+        except AttributeError:
             #assume older version of python-apt is installed
             return pkg.isInstalled and pkg.installedVersion == version, False
     else:
         try :
             return pkg.is_installed, pkg.is_upgradable
-        except AttributeError: 
+        except AttributeError:
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
@@ -103,7 +103,7 @@ def remove(m, pkgspec, cache, purge=False):
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (name, err))
         m.exit_json(changed=True)
-    
+
 
 def main():
     module = AnsibleModule(
@@ -129,29 +129,29 @@ def main():
     p = module.params
     if p['package'] is None and p['update_cache'] != 'yes':
         module.fail_json(msg='pkg=name and/or update_cache=yes is required')
-    
+
     install_recommends = module.boolean(p['install_recommends'])
-    
+
     cache = apt.Cache()
     if p['default_release']:
         apt_pkg.config['APT::Default-Release'] = p['default_release']
         # reopen cache w/ modified config
         cache.open(progress=None)
-    
-    if modules.boolean(p['update_cache'])
+
+    if module.boolean(p['update_cache']):
         cache.update()
         cache.open(progress=None)
         if p['package'] == None:
             module.exit_json(changed=False)
-    
-    force_yes = modules.boolean(p['force'])
-    
+
+    force_yes = module.boolean(p['force'])
+
     if p['package'].count('=') > 1:
         module.fail_json(msg='invalid package spec')
-    
+
     if p['state'] == 'latest':
         if '=' in p['package']:
-            module.fail_json(msg='version number inconsistent with state=latest') 
+            module.fail_json(msg='version number inconsistent with state=latest')
         install(module, p['package'], cache, upgrade=True,
                   default_release=p['default_release'],
                   install_recommends=install_recommends,
@@ -161,8 +161,8 @@ def main():
         install(module, p['package'], cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
     elif p['state'] == 'removed':
-        remove(module, p['package'], cache, purge = modules.boolean(p['purge']))
-    
+        remove(module, p['package'], cache, purge = module.boolean(p['purge']))
+
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
