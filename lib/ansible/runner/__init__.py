@@ -124,6 +124,7 @@ class Runner(object):
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
         sudo=False,                         # whether to run sudo or not
+        su=False,                           # whether to run su or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
@@ -153,6 +154,7 @@ class Runner(object):
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
+        self.su               = su
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
 
@@ -210,7 +212,7 @@ class Runner(object):
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
         cmd = "chmod u+x %s" % remote_module_path
-        if self.sudo and self.sudo_user != 'root':
+        if (self.sudo or self.su) and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             cmd = "chmod a+rx %s" % remote_module_path
         self._low_level_exec_command(conn, cmd, tmp)
@@ -318,7 +320,7 @@ class Runner(object):
             tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
             # fix file permissions when the copy is done as a different user
-            if self.sudo and self.sudo_user != 'root':
+            if (self.su or self.sudo) and self.sudo_user != 'root':
                 self._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
@@ -667,7 +669,7 @@ class Runner(object):
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.remote_user == 'root':
             basetmp = os.path.join('/var/tmp', basefile)
-        elif self.sudo and self.sudo_user != 'root':
+        elif (self.sudo or self.su) and self.sudo_user != 'root':
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
