@@ -28,7 +28,7 @@ class Play(object):
     __slots__ = [ 
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
        'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook', 
+       'su', 'sudo', 'sudo_user', 'transport', 'playbook', 
        'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
     ]
 
@@ -37,7 +37,7 @@ class Play(object):
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts'
+       'su', 'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts'
     ]
 
     # *************************************************
@@ -70,6 +70,7 @@ class Play(object):
         self._handlers    = ds.get('handlers', [])
         self.remote_user  = ds.get('user', self.playbook.remote_user)
         self.remote_port  = ds.get('port', self.playbook.remote_port)
+        self.su           = ds.get('su', self.playbook.su)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
         self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport    = ds.get('connection', self.playbook.transport)
@@ -88,7 +89,7 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
-        if self.sudo_user != 'root':
+        if self.sudo_user != 'root' and not self.su:
             self.sudo = True
 
     # *************************************************

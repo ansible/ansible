@@ -82,30 +82,22 @@ class ParamikoConnection(object):
         chan = self.ssh.get_transport().open_session()
         chan.get_pty() 
 
-        if not self.runner.sudo or not sudoable:
-            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
+        quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
+        if not self.runner.sudo and not self.runner.su or not sudoable:
             chan.exec_command(quoted_command)
         else:
-            # Rather than detect if sudo wants a password this time, -k makes 
-            # sudo always ask for a password if one is required. The "--"
-            # tells sudo that this is the end of sudo options and the command
-            # follows.  Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote() 
-            # and pass the quoted string to the user's shell.  We loop reading
-            # output until we see the randomly-generated sudo prompt set with
-            # the -p option.
-            randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-            prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
-                prompt, sudo_user, pipes.quote(cmd))
+            if self.runner.sudo: 
+                sudocmd = 'sudo -u %s -- %s' % (sudo_user, quoted_command)
+            if self.runner.su:
+                sudocmd = 'su %s -c %s' % (sudo_user, quoted_command)
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
                 if self.runner.sudo_pass:
-                    while not sudo_output.endswith(prompt):
+                    while not sudo_output.endswith('assword: '):
                         chunk = chan.recv(bufsize)
                         if not chunk:
-                            raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                            raise errors.AnsibleError('ssh connection closed waiting for password prompt')
                         sudo_output += chunk
                     chan.sendall(self.runner.sudo_pass + '\n')
             except socket.timeout:

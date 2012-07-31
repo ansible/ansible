@@ -55,6 +55,7 @@ class PlayBook(object):
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
+        su               = False,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
@@ -75,6 +76,7 @@ class PlayBook(object):
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
+        su:               if not specified per play, requests all plays use su mode
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -98,6 +100,7 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.stats            = stats
+        self.su               = su
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.sudo_user        = sudo_user

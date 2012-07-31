@@ -77,11 +77,15 @@ class Cli(object):
         sudopass = None
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
-        if options.ask_sudo_pass:
+        if options.su:
+            sudopass = getpass.getpass(
+                prompt="%s password: " % options.sudo_user)
+        elif options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
             options.sudo = True
-        if options.sudo_user:
+        if options.sudo_user and not options.su:
             options.sudo = True
+
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
@@ -93,7 +97,7 @@ class Cli(object):
             inventory=inventory_manager, timeout=options.timeout, 
             private_key_file=options.private_key_file,
             forks=options.forks, 
-            pattern=pattern, 
+            pattern=pattern, su=options.su,
             callbacks=self.callbacks, sudo=options.sudo, 
             sudo_pass=sudopass,sudo_user=options.sudo_user,
             transport=options.connection, verbose=options.verbose

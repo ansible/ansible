@@ -124,6 +124,7 @@ class Runner(object):
         callbacks=None,                     # used for output
         verbose=False,                      # whether to show more or less
         sudo=False,                         # whether to run sudo or not
+        su=False,                           # whether to run su or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing 
         is_playbook=False,                  # running from playbook or not?
@@ -154,6 +155,7 @@ class Runner(object):
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
+        self.su               = su
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
 
@@ -211,7 +213,7 @@ class Runner(object):
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
         cmd = "chmod +x %s" % remote_module_path
-        if self.sudo and self.sudo_user != 'root':
+        if (self.sudo or self.su) and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             cmd = "chmod 555 %s" % remote_module_path
         self._low_level_exec_command(conn, cmd, tmp)
@@ -645,7 +647,7 @@ class Runner(object):
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.remote_user == 'root':
             basetmp = os.path.join('/var/tmp', basefile)
-        elif self.sudo and self.sudo_user != 'root':
+        elif (self.sudo or self.su) and self.sudo_user != 'root':
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp

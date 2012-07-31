@@ -315,6 +315,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
             dest='remote_user', 
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+        parser.add_option('-S', '--su', default=False, action="store_true",
+            dest='su', help="elevate privileges using su before commands")
     
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
