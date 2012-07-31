@@ -42,7 +42,7 @@ class LocalConnection(object):
                 # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
                 # so this doesn't seem to be a huge priority
                 raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
-            cmd = "sudo -s %s" % cmd
+            cmd = "sudo -u {0} -s {1}".format(sudo_user, cmd)
 
         p = subprocess.Popen(cmd, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
