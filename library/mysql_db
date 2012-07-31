@@ -39,8 +39,12 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_create(cursor, db):
-    query = "CREATE DATABASE %s" % db
+def db_create(cursor, db, encoding, collation):
+    if encoding:
+        encoding = " CHARACTER SET %s" % encoding
+    if collation:
+        collation = " COLLATE %s" % collation
+    query = "CREATE DATABASE %s%s%s" % (db, encoding, collation)
     res = cursor.execute(query)
     return True
 
@@ -67,6 +71,8 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
             db=dict(required=True),
+            encoding=dict(default=""),
+            collation=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
         )
     )
@@ -75,6 +81,8 @@ def main():
         module.fail_json(msg="the python mysqldb module is required")
 
     db = module.params["db"]
+    encoding = module.params["encoding"]
+    collation = module.params["collation"]
     state = module.params["state"]
 
     # Either the caller passes both a username and password with which to connect to
@@ -105,7 +113,7 @@ def main():
             changed = db_delete(cursor, db)
     else:
         if state == "present":
-            changed = db_create(cursor, db)
+            changed = db_create(cursor, db, encoding, collation)
 
     module.exit_json(changed=changed, db=db)
 
