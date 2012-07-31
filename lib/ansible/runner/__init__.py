@@ -616,9 +616,16 @@ class Runner(object):
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
 
         if type(stdout) != str:
-            return "\n".join(stdout.readlines())
+            out = "\n".join(stdout.readlines())
         else:
-            return stdout
+            out = stdout
+        
+        if type(stderr) != str:
+            err = "\n".join(stderr.readlines())
+        else:
+            err = stderr
+
+        return out + err
 
     # *****************************************************
 
