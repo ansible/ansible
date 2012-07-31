@@ -109,7 +109,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed']),
-            update_cache = dict(default='no', choices=['yes', 'no']),
+            update_cache = dict(default='no', choices=['yes', 'no'], aliases=['update-cache']),
             purge = dict(default='no', choices=['yes', 'no']),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
