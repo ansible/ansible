@@ -18,21 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import subprocess
-
 def get_facter_data():
-
     p = subprocess.Popen(["/usr/bin/env", "ohai"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
     return rc, out, err
 
 def main():
-
     module = AnsibleModule(
         argument_spec = dict()
     )
-
     rc, out, err = get_facter_data()
     if rc != 0:
        module.fail_json(msg=err)

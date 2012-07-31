@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import grp
-import subprocess
 
 def get_bin_path(module, arg):
     if os.path.exists('/usr/sbin/%s' % arg):

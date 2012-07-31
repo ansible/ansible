@@ -22,9 +22,7 @@
 # tag.  Latest is not supported, you should not be doing
 # that. Contribs welcome! -- MPD
 
-import os
 import re
-import subprocess
 
 def get_version(dest):
     ''' samples the version of the git repo '''
