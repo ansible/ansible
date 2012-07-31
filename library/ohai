@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def get_facter_data():
+def get_ohai_data():
     p = subprocess.Popen(["/usr/bin/env", "ohai"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
@@ -28,7 +28,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict()
     )
-    rc, out, err = get_facter_data()
+    rc, out, err = get_ohai_data()
     if rc != 0:
        module.fail_json(msg=err)
     else:
