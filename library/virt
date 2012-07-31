@@ -17,29 +17,23 @@ VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-
 # other modules
 import os
 import sys
 import subprocess
-import syslog
+
 try:
     import libvirt
 except ImportError:
-    print json.dumps({
-        "failed" : True,
-        "msg" : "libvirt python module unavailable",
-        "rc": VIRT_UNAVAILABLE,
-        })   
+    print "failed=True msg='libvirt python module unavailable'"
     sys.exit(1)
-
-
-import shlex
+    
+ALL_COMMANDS = []
+VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause', 
+                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
+HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
+ALL_COMMANDS.extend(VM_COMMANDS)
+ALL_COMMANDS.extend(HOST_COMMANDS)
 
 VIRT_STATE_NAME_MAP = {
    0 : "running",
@@ -175,7 +169,6 @@ class Virt(object):
             state.append("%s %s" % (vm,state_blurb))
         return state
 
-
     def info(self):
         vms = self.list_vms()
         info = dict()
@@ -227,7 +220,6 @@ class Virt(object):
     def virttype(self):
         return self.__get_conn().get_type()
         
-
     def autostart(self, vmid):
         self.conn = self.__get_conn()
         return self.conn.set_autostart(vmid, True)
@@ -237,87 +229,60 @@ class Virt(object):
         return self.conn.getFreeMemory()
 
     def shutdown(self, vmid):
-        """
-        Make the machine with the given vmid stop running.
-        Whatever that takes.
-        """
+        """ Make the machine with the given vmid stop running.  Whatever that takes.  """
         self.__get_conn()
         self.conn.shutdown(vmid)
         return 0
 
 
     def pause(self, vmid):
+        """ Pause the machine with the given vmid.  """
 
-        """
-        Pause the machine with the given vmid.
-        """
         self.__get_conn()
         return self.conn.suspend(vmid)
 
-
     def unpause(self, vmid):
-
-        """
-        Unpause the machine with the given vmid.
-        """
+        """ Unpause the machine with the given vmid.  """
 
         self.__get_conn()
         return self.conn.resume(vmid)
 
-
     def create(self, vmid):
+        """ Start the machine via the given vmid """
 
-        """
-        Start the machine via the given mac address.
-        """
         self.__get_conn()
         return self.conn.create(vmid)
 
     def start(self, vmid):
+        """ Start the machine via the given id/name """
 
-        """
-        Start the machine via the given id/name
-        """
         self.__get_conn()
         return self.conn.create(vmid)
 
-
     def destroy(self, vmid):
-
-        """
-        Pull the virtual power from the virtual domain, giving it virtually no
-        time to virtually shut down.
-        """
+        """ Pull the virtual power from the virtual domain, giving it virtually no time to virtually shut down.  """
         self.__get_conn()
         return self.conn.destroy(vmid)
 
-
     def undefine(self, vmid):
-
-        """
-        Stop a domain, and then wipe it from the face of the earth.
-        by deleting the disk image and its configuration file.
-        """
+        """ Stop a domain, and then wipe it from the face of the earth.  (delete disk/config file) """
 
         self.__get_conn()
         return self.conn.undefine(vmid)
 
-
     def status(self, vmid):
-
         """
         Return a state suitable for server consumption.  Aka, codes.py values, not XM output.
         """
-
         self.__get_conn()
         return self.conn.get_status(vmid)
-
 
     def get_xml(self, vmid):
         """
         Receive a Vm id as input
         Return an xml describing vm config returned by a libvirt call
         """
+
         conn = libvirt.openReadOnly(None)
         if conn == None:
             return (-1,'Failed to open connection to the hypervisor')
@@ -326,7 +291,6 @@ class Virt(object):
         except:
             return (-1,'Failed to find the main domain')
         return domV.XMLDesc(0)
-
 
     def get_maxVcpus(self, vmid):
         """
@@ -344,59 +308,18 @@ class Virt(object):
         self.__get_conn()
         return self.conn.get_MaxMemory(vmid)
 
-def main():
-    rc = VIRT_SUCCESS
-    vm_commands = ['create','status', 'start', 'stop', 'pause', 'unpause', 
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
-    host_commands = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
-    
-    msg = """
-    virtmodule arguments:
-      state=[running|shutdown] guest=guestname
-      command=some_virt_command  [guest=guestname]
-    """
-    
-    if len(sys.argv) == 1:
-        return VIRT_FAILED, msg
+def core(module):
 
-    argfile = sys.argv[1]
-    if not os.path.exists(argfile):
-        msg = "Argument file not found"
-        return VIRT_FAILED, msg
-
-    args = open(argfile, 'r').read()
-    items = shlex.split(args)
-    syslog.openlog('ansible-%s' % os.path.basename(__file__))
-    syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
-
-    if not len(items):
-        return VIRT_FAILED, msg
-
-
-    # guest=name state=[running|shutdown|destroyed|undefined]
-    # command=[some command] [guest=name]
-    
-    params = {}
-    if '=' not in args:
-        msg = "No proper arguments provided to virt module: %s" % args
-        return VIRT_FAILED, msg
-        
-    for x in items:
-        (k, v) = x.split("=")
-        params[k] = v
-
-    state      = params.get('state', None)
-    guest      = params.get('guest', params.get('name', None))
-    command    = params.get('command', None)
-    options    = params.get('options', [])
+    state      = module.params.get('state', None)
+    guest      = module.params.get('name', None)
+    command    = module.params.get('command', None)
 
     v = Virt()
     res = {}
     
     if state:
         if not guest:
-            msg = "state change requires a guest specified"
-            return VIRT_FAILED, msg
+            module.fail_json(msg = "state change requires a guest specified")
       
         res['changed'] = False
         if state == 'running':
@@ -407,15 +330,15 @@ def main():
             if v.status(guest) is not 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
-        
+        else:
+            module.fail_json(msg="unexpected state")    
+    
         return VIRT_SUCCESS, res
         
     if command:
-        if command in vm_commands:
+        if command in VM_COMMANDS:
             if not guest:
-                msg = "%s requires 1 argument: guest" % command
-                return VIRT_FAILED, msg
-                             
+                module.fail_json(msg = "%s requires 1 argument: guest" % command)
             res = getattr(v, command)(guest)
             if type(res) != dict:
                 res = { command: res }
@@ -428,25 +351,30 @@ def main():
             return rc, res
             
         else:
-            msg = "Command %s not recognized" % basecmd
-            rc = VIRT_FAILED
-        
-    return rc, msg
+            module.fail_json(msg="Command %s not recognized" % basecmd)
+       
+    module.fail_json(msg="expected state or command parameter to be specified") 
     
-if __name__ == "__main__":
+def main():
+  
+    module = AnsibleModule(argument_spec=dict(
+        name = dict(aliases=['guest']),
+        state = dict(choices=['running', 'shutdown']),
+        command = dict(choices=ALL_COMMANDS),
+    ))
+
+    rc = VIRT_SUCCESS
     try:
-        rc, result = main()
+        rc, result = core(module)
     except Exception, e:
-        rc = 1
-        result = str(e)
+        module.fail_json(msg=str(e))
 
     if rc != 0: # something went wrong emit the msg
-        print json.dumps({
-            "failed" : rc,
-            "msg" : result,
-            "rc": rc,
-        })   
-        sys.exit(rc)
+        module.fail_json(rc=rc, msg=result)
     else:
-        print json.dumps(result)
-    
+        module.exit_json(**result)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()    
