@@ -255,10 +255,10 @@ noted, any given module does support change hooks.</p>
 <td>present</td>
 <td>&#8216;absent&#8217;, &#8216;present&#8217;, or &#8216;latest&#8217;.</td>
 </tr>
-<tr><td>update-cache</td>
+<tr><td>update_cache</td>
 <td>no</td>
 <td>no</td>
-<td>run the equivalent of apt-get update before the operation?
+<td>Run the equivalent of apt-get update before the operation.
 Can be run as part of the package installation or a seperate step</td>
 </tr>
 <tr><td>purge</td>
@@ -266,12 +266,12 @@ Can be run as part of the package installation or a seperate step</td>
 <td>no</td>
 <td>Will forge purge of configuration files if state is set to &#8216;removed&#8217;.</td>
 </tr>
-<tr><td>default-release</td>
+<tr><td>default_release</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>Corresponds to the -t option for apt and sets pin priorities</td>
 </tr>
-<tr><td>install-recommends</td>
+<tr><td>install_recommends</td>
 <td>no</td>
 <td>yes</td>
 <td>Corresponds to the &#8211;no-install-recommends option for apt, default
@@ -1219,9 +1219,9 @@ playbooks.  See examples below.</td>
 </tbody>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>yum pkg=httpd state=latest
-yum pkg=httpd state=removed
-yum pkg=httpd state=installed</pre>
+<div class="highlight-python"><pre>yum name=httpd state=latest
+yum name=httpd state=removed
+yum name=httpd state=installed</pre>
 </div>
 </div>
 <div class="section" id="writing-your-own-modules">
