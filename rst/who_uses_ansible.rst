@@ -8,6 +8,7 @@ Who They Are                                        What They Do
 ==================================================  ===================================================
 `Basho <http://basho.com>`_                         makers of NoSQL key-value store Riak
 `Cygate AB <http://cygate.se>`_                     IT solutions from Malmö, Sweden
+`Dag IT Solutions <http://dagit.net>`_              "Enterprise Linux and Beyond"
 `Fedora Project <http://fedoraproject.org>`_        produces the popular Linux distribution
 `Four Kitchens <http://fourkitchens.com>`_          "the Drupal Experts"
 `Schmooze Com <http://www.schmoozecom.com/>`_       Creators of Industry-Leading PBX Platforms
