@@ -20,14 +20,10 @@
 import array
 import fcntl
 import glob
-import sys
-import os
 import platform
 import re
 import socket
 import struct
-import subprocess
-import traceback
 
 try:
     import selinux

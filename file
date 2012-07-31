@@ -17,33 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-import shlex
-import subprocess
 import shutil
 import stat
 import grp
 import pwd
-import syslog
 try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
     HAVE_SELINUX=False
-
-def dump_kv(vars):
-    return " ".join("%s='%s'" % (k,v) for (k,v) in vars.items())
-
-def exit_kv(rc=0, **kwargs):
-    if 'path' in kwargs:
-        add_path_info(kwargs)
-    print dump_kv(kwargs)
-    sys.exit(rc)
-
-def fail_kv(**kwargs):
-    kwargs['failed'] = True
-    exit_kv(rc=1, **kwargs)
 
 def add_path_info(kwargs):
     path = kwargs['path']
@@ -65,6 +47,14 @@ def add_path_info(kwargs):
     else:
         kwargs['state'] = 'absent'
     return kwargs 
+
+def module_exit_json(**kwargs):
+    add_path_info(kwargs)
+    module.exit_json(**kwargs)
+
+def module_fail_json(**kwargs):
+    add_path_info(kwargs)
+    module.fail_json(**kwargs)
 
 # Detect whether using selinux that is MLS-aware.
 # While this means you can set the level/range with
@@ -115,7 +105,7 @@ def selinux_context(path):
     try:
         ret = selinux.lgetfilecon(path)
     except:
-        fail_kv(path=path, msg='failed to retrieve selinux context')
+        module_fail_json(path=path, msg='failed to retrieve selinux context')
     if ret[0] == -1:
         return context
     context = ret[1].split(':')
@@ -123,56 +113,10 @@ def selinux_context(path):
 
 # ===========================================
 
-argfile = sys.argv[1]
-args    = open(argfile, 'r').read()
-items   = shlex.split(args)
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
-syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % args)
 
-if not len(items):
-    fail_kv(msg='the module requires arguments -a')
-    sys.exit(1)
 
-params = {}
-for x in items:
-    (k, v) = x.split("=",1)
-    params[k] = v
 
-state     = params.get('state','file')
-path      = params.get('path', params.get('dest', params.get('name', None)))
-if path:
-   path = os.path.expanduser(path)
-src       = params.get('src', None)
-if src:
-   src = os.path.expanduser(src)
-dest      = params.get('dest', None)
-mode      = params.get('mode', None)
-owner     = params.get('owner', None)
-group     = params.get('group', None)
 
-# selinux related options
-seuser    = params.get('seuser', None)
-serole    = params.get('serole', None)
-setype    = params.get('setype', None)
-selevel   = params.get('serange', 's0')
-secontext = [seuser, serole, setype]
-if selinux_mls_enabled():
-    secontext.append(selevel)
-
-default_secontext = selinux_default_context(path)
-for i in range(len(default_secontext)):
-    if i is not None and secontext[i] == '_default':
-        secontext[i] = default_secontext[i]
-
-if state not in [ 'file', 'directory', 'link', 'absent']:
-    fail_kv(msg='invalid state: %s' % state)
-
-if state == 'link' and (src is None or dest is None):
-    fail_kv(msg='src and dest are required for "link" state')
-elif path is None:
-    fail_kv(msg='path is required')
-
-changed = False
 
 # ===========================================
 # support functions
@@ -205,9 +149,9 @@ def set_context_if_different(path, context, changed):
         try:
             rc = selinux.lsetfilecon(path, ':'.join(new_context))
         except OSError:
-            fail_kv(path=path, msg='invalid selinux context')
+            module_fail_json(path=path, msg='invalid selinux context')
         if rc != 0:
-            fail_kv(path=path, msg='set selinux context failed')
+            module_fail_json(path=path, msg='set selinux context failed')
         changed = True
     return changed
     
@@ -218,7 +162,7 @@ def set_owner_if_different(path, owner, changed):
    if owner != user:
        rc = os.system("/bin/chown -R %s %s 2>/dev/null" % (owner, path))
        if rc != 0:
-           fail_kv(path=path, msg='chown failed')
+           module_fail_json(path=path, msg='chown failed')
        return True
 
    return changed
@@ -230,7 +174,7 @@ def set_group_if_different(path, group, changed):
    if old_group != group:
        rc = os.system("/bin/chgrp -R %s %s" % (group, path))
        if rc != 0:
-           fail_kv(path=path, msg='chgrp failed')
+           module_fail_json(path=path, msg='chgrp failed')
        return True
    return changed
 
@@ -241,7 +185,7 @@ def set_mode_if_different(path, mode, changed):
        # FIXME: support English modes
        mode = int(mode, 8)
    except Exception, e:
-       fail_kv(path=path, msg='mode needs to be something octalish', details=str(e))  
+       module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
  
    st = os.stat(path)
    prev_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -252,7 +196,7 @@ def set_mode_if_different(path, mode, changed):
        try:
            os.chmod(path, mode)
        except Exception, e:
-           fail_kv(path=path, msg='chmod failed', details=str(e))
+           module_fail_json(path=path, msg='chmod failed', details=str(e))
 
        st = os.stat(path)
        new_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -263,98 +207,150 @@ def set_mode_if_different(path, mode, changed):
 
 
 def rmtree_error(func, path, exc_info):
-   fail_kv(path=path, msg='failed to remove directory')
+    module_fail_json(path=path, msg='failed to remove directory')
 
 # ===========================================
 # go...
 
-prev_state = 'absent'
-if os.path.lexists(path):
-    if os.path.islink(path):
-        prev_state = 'link'
-    elif os.path.isfile(path):
-        prev_state = 'file'
-    else:
-        prev_state = 'directory'
+def main():
 
-if prev_state != 'absent' and state == 'absent':
-    try:
-        if prev_state == 'directory':
-            if os.path.islink(path):
-                os.unlink(path)
-            else:
-                shutil.rmtree(path, ignore_errors=False, onerror=rmtree_error)
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            state = dict(choices=['file','directory','link','absent'], default='file'),
+            path  = dict(aliases=['dest', 'name'], required=True),
+            src   = dict(),
+            mode  = dict(),
+            owner = dict(),
+            group = dict(),
+            seuser = dict(),
+            serole = dict(),
+            selevel = dict(),
+            secontext = dict(),
+        )
+    )
+
+    params = module.params
+    state  = params['state']
+    path   = os.path.expanduser(params['path'])
+    src    = params.get('src', None)
+    if src:
+        src = os.path.expanduser(src)
+
+    mode   = params.get('mode', None)
+    owner  = params.get('owner', None)
+    group  = params.get('group', None)
+
+    # selinux related options
+    seuser    = params.get('seuser', None)
+    serole    = params.get('serole', None)
+    setype    = params.get('setype', None)
+    selevel   = params.get('serange', 's0')
+    secontext = [seuser, serole, setype]
+    if selinux_mls_enabled():
+        secontext.append(selevel)
+
+    default_secontext = selinux_default_context(path)
+    for i in range(len(default_secontext)):
+        if i is not None and secontext[i] == '_default':
+            secontext[i] = default_secontext[i]
+
+    if state == 'link' and (src is None or path is None):
+        module_fail_json(msg='src and dest are required for "link" state')
+    elif path is None:
+        module_fail_json(msg='path is required')
+
+    changed = False
+
+    prev_state = 'absent'
+    if os.path.lexists(path):
+        if os.path.islink(path):
+            prev_state = 'link'
+        elif os.path.isfile(path):
+            prev_state = 'file'
         else:
-            os.unlink(path)
-    except Exception, e:
-        fail_kv(path=path, msg=str(e))
-    exit_kv(path=path, changed=True)
-    sys.exit(0)
+            prev_state = 'directory'
 
-if prev_state != 'absent' and prev_state != state:
-    fail_kv(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
+    if prev_state != 'absent' and state == 'absent':
+        try:
+            if prev_state == 'directory':
+                if os.path.islink(path):
+                    os.unlink(path)
+                else:
+                    shutil.rmtree(path, ignore_errors=False, onerror=rmtree_error)
+            else:
+                os.unlink(path)
+        except Exception, e:
+            module_fail_json(path=path, msg=str(e))
+        module_exit_json(path=path, changed=True)
 
-if prev_state == 'absent' and state == 'absent':
-    exit_kv(path=path, changed=False)
+    if prev_state != 'absent' and prev_state != state:
+        module_fail_json(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
 
-if state == 'file':
+    if prev_state == 'absent' and state == 'absent':
+        module_exit_json(path=path, changed=False)
 
-    if prev_state == 'absent':
-        fail_kv(path=path, msg='file does not exist, use copy or template module to create')
-
-    # set modes owners and context as needed
-    changed = set_context_if_different(path, secontext, changed)
-    changed = set_owner_if_different(path, owner, changed)
-    changed = set_group_if_different(path, group, changed)
-    changed = set_mode_if_different(path, mode, changed)
-
-    exit_kv(path=path, changed=changed)
-
-elif state == 'directory':
-
-    if prev_state == 'absent':
-        os.makedirs(path)
-        changed = True
+    if state == 'file':
  
-    # set modes owners and context as needed
-    changed = set_context_if_different(path, secontext, changed)
-    changed = set_owner_if_different(path, owner, changed)
-    changed = set_group_if_different(path, group, changed)
-    changed = set_mode_if_different(path, mode, changed)
+        if prev_state == 'absent':
+            module_fail_json(path=path, msg='file does not exist, use copy or template module to create')
 
-    exit_kv(path=path, changed=changed)
+        # set modes owners and context as needed
+        changed = set_context_if_different(path, secontext, changed)
+        changed = set_owner_if_different(path, owner, changed)
+        changed = set_group_if_different(path, group, changed)
+        changed = set_mode_if_different(path, mode, changed)
 
-elif state == 'link':
+        module_exit_json(path=path, changed=changed)
+
+    elif state == 'directory':
+
+        if prev_state == 'absent':
+            os.makedirs(path)
+            changed = True
+ 
+        # set modes owners and context as needed
+        changed = set_context_if_different(path, secontext, changed)
+        changed = set_owner_if_different(path, owner, changed)
+        changed = set_group_if_different(path, group, changed)
+        changed = set_mode_if_different(path, mode, changed)
+
+        module_exit_json(path=path, changed=changed)
+
+    elif state == 'link':
     
-    if os.path.isabs(src):
-        abs_src = src
-    else:
-        abs_src = os.path.join(os.path.dirname(dest), src)
-    if not os.path.exists(abs_src):
-        fail_kv(dest=dest, src=src, msg='src file does not exist')
+        if os.path.isabs(src):
+            abs_src = src
+        else:
+            abs_src = os.path.join(os.path.dirname(dest), src)
+        if not os.path.exists(abs_src):
+            module_fail_json(dest=dest, src=src, msg='src file does not exist')
    
-    if prev_state == 'absent':
-        os.symlink(src, dest)
-        changed = True
-    elif prev_state == 'link':
-        old_src = os.readlink(dest)
-        if not os.path.isabs(old_src):
-            old_src = os.path.join(os.path.dirname(dest), old_src)
-        if old_src != src:
-            os.unlink(dest)
-            os.symlink(src, dest)
-    else:
-        fail_kv(dest=dest, src=src, msg='unexpected position reached')
+        if prev_state == 'absent':
+            os.symlink(src, path)
+            changed = True
+        elif prev_state == 'link':
+            old_src = os.readlink(path)
+            if not os.path.isabs(old_src):
+                old_src = os.path.join(os.path.dirname(path), old_src)
+            if old_src != src:
+                os.unlink(path)
+                os.symlink(src, path)
+        else:
+            module_fail_json(dest=path, src=src, msg='unexpected position reached')
 
-    # set modes owners and context as needed
-    changed = set_context_if_different(dest, secontext, changed)
-    changed = set_owner_if_different(dest, owner, changed)
-    changed = set_group_if_different(dest, group, changed)
-    changed = set_mode_if_different(dest, mode, changed)
+        # set modes owners and context as needed
+        changed = set_context_if_different(path, secontext, changed)
+        changed = set_owner_if_different(path, owner, changed)
+        changed = set_group_if_different(path, group, changed)
+        changed = set_mode_if_different(path, mode, changed)
 
-    exit_kv(dest=dest, src=src, changed=changed)
+        module.exit_json(dest=path, src=src, changed=changed)
 
+    module_fail_json(path=path, msg='unexpected position reached')
 
-fail_kv(path=path, msg='unexpected position reached')
-sys.exit(0)
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
 
