@@ -26,18 +26,15 @@ else:
 # PostgreSQL module specific support methods.
 #
 
-
 def db_exists(cursor, db):
     query = "SELECT * FROM pg_database WHERE datname=%(db)s"
     cursor.execute(query, {'db': db})
     return cursor.rowcount == 1
 
-
 def db_delete(cursor, db):
     query = "DROP DATABASE %s" % db
     cursor.execute(query)
     return True
-
 
 def db_create(cursor, db):
     query = "CREATE DATABASE %s" % db
@@ -47,7 +44,6 @@ def db_create(cursor, db):
 # ===========================================
 # Module execution.
 #
-
 
 def main():
     module = AnsibleModule(

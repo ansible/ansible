@@ -19,9 +19,7 @@
 #
 # see examples/playbooks/get_url.yml
 
-import os
 import shutil
-import syslog
 import datetime
 import tempfile
 
@@ -188,5 +186,4 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
 main()

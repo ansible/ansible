@@ -17,11 +17,6 @@ VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
 
-# other modules
-import os
-import sys
-import subprocess
-
 try:
     import libvirt
 except ImportError:

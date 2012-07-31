@@ -19,13 +19,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-#mount module - mount fs and define in fstab
-#usage:
-# mount name=mountpoint, src=device_to_be_mounted fstype=fstype opts=mount_opts, dump=0 passno=0 state=[present|absent|mounted|unmounted] 
-# absent == remove from fstab and unmounted
-# present == add to fstab, do not change mount state
-# mounted == add to fstab if not there and make sure it is mounted
-# unmounted == do not change fstab state, but unmount
+# mount module - mount fs and define in fstab
+# usage:
+#
+# mount name=mountpoint, src=device_to_be_mounted fstype=fstype 
+#        opts=mount_opts, dump=0 passno=0 state=[present|absent|mounted|unmounted] 
+#
+#    absent == remove from fstab and unmounted
+#    present == add to fstab, do not change mount state
+#    mounted == add to fstab if not there and make sure it is mounted
+#    unmounted == do not change fstab state, but unmount
 
 def write_fstab(lines, dest):
 
@@ -37,14 +40,15 @@ def write_fstab(lines, dest):
     fs_w.close()
 
 def set_mount(**kwargs):
-    "set/change a mount point location in fstab"
+    """ set/change a mount point location in fstab """
+
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = {
-        'opts': 'defaults',
-        'dump': '0',
-        'passno': '0',
-        'fstab': '/etc/fstab'
-    }
+    args = dict(
+        opts   = 'defaults',
+        dump   = '0',
+        passno = '0',
+        fstab  = '/etc/fstab'
+    )
     args.update(kwargs)
 
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n' 
@@ -84,7 +88,6 @@ def set_mount(**kwargs):
         else:
              to_write.append(line)
          
-    
     if not exists:
         to_write.append(new_line % args)
         changed = True
@@ -96,14 +99,15 @@ def set_mount(**kwargs):
             
 
 def unset_mount(**kwargs):
-    "remove a mount point from fstab"
+    """ remove a mount point from fstab """
+
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    args = {
-        'opts': 'default',
-        'dump': '0',
-        'passno': '0',
-        'fstab': '/etc/fstab'
-    }
+    args = dict(
+        opts   = 'default',
+        dump   = '0',
+        passno = '0',
+        fstab  = '/etc/fstab'
+    )
     args.update(kwargs)
 
     to_write = []
@@ -138,7 +142,8 @@ def unset_mount(**kwargs):
 
      
 def mount(**kwargs):
-    "mount up a path or remount if needed"
+    """ mount up a path or remount if needed """
+
     name = kwargs['name']
     if os.path.ismount(name):
         cmd = ['/bin/mount', '-o', 'remount', name]
@@ -153,7 +158,8 @@ def mount(**kwargs):
         return call.returncode, out+err
 
 def umount(**kwargs):
-    "unmount a path"
+    """ unmount a path """
+
     name = kwargs['name']
     cmd = ['/bin/umount', name]
 
@@ -165,6 +171,7 @@ def umount(**kwargs):
         return call.returncode, out+err
 
 def main():
+
     module = AnsibleModule(
         argument_spec = dict(
             state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
@@ -194,7 +201,6 @@ def main():
     if module.params['fstab'] is not None:
         args['fstab'] = module.params['fstab']
     
-    
     # absent == remove from fstab and unmounted
     # unmounted == do not change fstab state, but unmount
     # present == add to fstab, do not change mount state
@@ -218,7 +224,6 @@ def main():
     
         module.exit_json(changed=changed, **args)
     
-    
     if state == 'unmounted':
         if os.path.ismount(name):
             res,msg  = umount(**args)
@@ -227,8 +232,6 @@ def main():
             changed = True
     
         module.exit_json(changed=changed, **args)
-    
-        
     
     if state in ['mounted', 'present']:
         name, changed = set_mount(**args)
@@ -258,5 +261,4 @@ def main():
     
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
 main()
