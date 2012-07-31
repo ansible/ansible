@@ -130,6 +130,7 @@ class AnsibleModule(object):
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
         # Sanitize possible password argument when logging
         log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", self.args)
+        log_args = re.sub(r'login_password=.+ (.*)', r"login_password=NOT_LOGGING_PASSWORD \1", log_args)
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
     def boolean(self, arg):
