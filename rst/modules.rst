@@ -48,14 +48,14 @@ Manages apt-packages (such as for Debian/Ubuntu).
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | state              | no       | present | 'absent', 'present', or 'latest'.                                          |  
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| update-cache       | no       | no      | run the equivalent of apt-get update before the operation?                 |
+| update_cache       | no       | no      | Run the equivalent of apt-get update before the operation.                 |
 |                    |          |         | Can be run as part of the package installation or a seperate step          | 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | purge              | no       | no      | Will forge purge of configuration files if state is set to 'removed'.      |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| default-release    | no       |         | Corresponds to the -t option for apt and sets pin priorities               |
+| default_release    | no       |         | Corresponds to the -t option for apt and sets pin priorities               |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| install-recommends | no       | yes     | Corresponds to the --no-install-recommends option for apt, default         |
+| install_recommends | no       | yes     | Corresponds to the --no-install-recommends option for apt, default         |
 |                    |          |         | behavior works as apt's default behavior, 'no' does not install            |
 |                    |          |         | recommended packages.  Suggested packages are never installed.             |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
