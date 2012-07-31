@@ -191,7 +191,7 @@ class TestRunner(unittest.TestCase):
     def test_git(self):
         if not get_binary("yum"):
             raise SkipTest
-        repo = 'git://github.com/ansible/ansible.git'
+        repo = 'http://github.com/ansible/ansible.git'
         dest = tempfile.mkdtemp()
         result = self._run('git', ['repo=%s' % repo, 'dest=%s' % dest])
         assert 'failed' not in result
