@@ -30,6 +30,8 @@ DEFAULT_POLL_INTERVAL  = os.environ.get('ANSIBLE_POLL_INTERVAL',15)
 DEFAULT_REMOTE_USER    = os.environ.get('ANSIBLE_REMOTE_USER','root')
 DEFAULT_REMOTE_PASS    = None
 DEFAULT_PRIVATE_KEY_FILE    = os.environ.get('ANSIBLE_PRIVATE_KEY_FILE',None)
+DEFAULT_SSH_CONFIG     = os.path.expanduser(os.environ.get(
+                             'ANSIBLE_SSH_CONFIG', '~/.ssh/config'))
 DEFAULT_SUDO_PASS      = None
 DEFAULT_SUDO_USER      = os.environ.get('ANSIBLE_SUDO_USER','root')
 DEFAULT_REMOTE_PORT    = 22
