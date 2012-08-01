@@ -66,7 +66,8 @@ class AnsibleModule(object):
 
         self._legal_inputs = []
         self._handle_aliases()
-        self._check_invalid_arguments()
+        # temporarily disabled
+        # self._check_invalid_arguments()
         self._set_defaults(pre=True)
 
         if not bypass_checks:
