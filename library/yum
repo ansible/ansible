@@ -280,15 +280,13 @@ def main():
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(choices=['installed','updates','available','repos','pkgspec']),
+            conf_file=dict()
         )
     )
 
     params = module.params
 
-    if 'conf_file' not in params:
-        params['conf_file'] = None
-
-    if 'list' in params and 'pkg' in params:
+    if params['list'] and params['pkg']:
         module.fail_json(msg="expected 'list=' or 'name=', but not both")
     
     if 'list' in params:

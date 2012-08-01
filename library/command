@@ -76,6 +76,12 @@ def main():
 
 class CommandModule(AnsibleModule):
 
+    def _handle_aliases(self):
+        pass
+
+    def _check_invalid_arguments(self):
+        pass
+
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
         args = base64.b64decode(MODULE_ARGS)
