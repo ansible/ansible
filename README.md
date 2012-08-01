@@ -56,7 +56,8 @@ Blogs & Articles
 * [Ansible Facts](http://jpmens.net/2012/07/15/ansible-it-s-a-fact/) - jp_mens
 * [Infrastructure as Data](http://www.capsunlock.net/2012/04/ansible-infrastructure-as-data-not-infrastructure-as-code.html) - cocoy
 * [Ansible Pull Mode](http://www.capsunlock.net/2012/05/using-ansible-pull-and-user-data-to-setup-ec2-or-openstack-servers.html) - cocoy
-
+* [Exploring Configuration Management With Ansible](http://palominodb.com/blog/2012/08/01/exploring-configuration-management-ansible) - Palamino DB                                                                                                                                 - 
+                                                                                                                              
 Disclaimer
 ==========
 
