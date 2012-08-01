@@ -157,8 +157,12 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#fetch">fetch</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
+<li><a class="reference internal" href="#get-url">get_url</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
 <li><a class="reference internal" href="#group">group</a></li>
+<li><a class="reference internal" href="#mount">mount</a></li>
+<li><a class="reference internal" href="#mysql-db">mysql_db</a></li>
+<li><a class="reference internal" href="#mysql-user">mysql_user</a></li>
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
 <li><a class="reference internal" href="#postgresql-db">postgresql_db</a></li>
@@ -277,6 +281,11 @@ Can be run as part of the package installation or a seperate step</td>
 <td>Corresponds to the &#8211;no-install-recommends option for apt, default
 behavior works as apt&#8217;s default behavior, &#8216;no&#8217; does not install
 recommended packages.  Suggested packages are never installed.</td>
+</tr>
+<tr><td>force</td>
+<td>no</td>
+<td>no</td>
+<td>If &#8216;yes&#8217;, force installs/removes.</td>
 </tr>
 </tbody>
 </table>
@@ -583,8 +592,54 @@ file path=/some/path state=directory setype=httpd_sys_content_t
 file path=/some/path state=directory context=default</pre>
 </div>
 </div>
+<div class="section" id="get-url">
+<span id="id9"></span><h2>get_url<a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
+<p>Downloads files from http, https, or ftp to the remote server.  The remote server must have direct
+access to the remote resource.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>url</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>http, https, or ftp URL</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>absolute path of where to download the file to.  If dest is a directory,
+the basename of the file on the remote server will be used.</td>
+</tr>
+<tr><td>OTHERS</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>all arguments accepted by the file module also work here</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>- name: Grab a bunch of jQuery stuff
+   action: get_url url=http://code.jquery.com/$item  dest=${jquery_directory} mode=0444
+   with_items:
+   - jquery.min.js
+   - mobile/latest/jquery.mobile.min.js
+   - ui/jquery-ui-git.css</pre>
+</div>
+</div>
 <div class="section" id="git">
-<span id="id9"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -612,13 +667,13 @@ file path=/some/path state=directory context=default</pre>
 <td>absolute path of where the repo should be checked out to</td>
 </tr>
 <tr><td>version</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
+<td>no</td>
+<td>HEAD</td>
 <td>what version to check out &#8211; either the git SHA, the literal string
 &#8216;HEAD&#8217;, branch name, or a tag name.</td>
 </tr>
 <tr><td>remote</td>
-<td>&nbsp;</td>
+<td>no</td>
 <td>origin</td>
 <td>name of the remote branch</td>
 </tr>
@@ -629,7 +684,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="group">
-<span id="id10"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -673,8 +728,197 @@ file path=/some/path state=directory context=default</pre>
 <div class="highlight-python"><pre>group name=somegroup state=present</pre>
 </div>
 </div>
+<div class="section" id="mount">
+<span id="id12"></span><h2>mount<a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
+<p>The mount module controls active and configured mount points (fstab).</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>path to the mountpoint, ex: /mnt/foo</td>
+</tr>
+<tr><td>src</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>device to be mounted</td>
+</tr>
+<tr><td>fstype</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>fstype</td>
+</tr>
+<tr><td>opts</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>mount options (see fstab docs)</td>
+</tr>
+<tr><td>dump</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>dump (see fstab docs)</td>
+</tr>
+<tr><td>passno</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>passno (see fstab docs)</td>
+</tr>
+<tr><td>state</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>&#8216;present&#8217;, &#8216;absent&#8217;, &#8216;mounted&#8217;, or &#8216;unmounted&#8217;.  If mounted/unmounted,
+the device will be actively mounted or unmounted as well as just
+configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal with fstab.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mysql-db">
+<span id="id13"></span><h2>mysql_db<a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
+<p>Add or remove MySQL databases from a remote host.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="9%" />
+<col width="0%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head" colspan="2">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td colspan="3"><div class="first last line-block">
+<div class="line">name of the database to add or remove</div>
+</div>
+</td>
+</tr>
+<tr><td>login_user</td>
+<td>no</td>
+<td colspan="2">&nbsp;</td>
+<td>user used to authenticate with</td>
+</tr>
+<tr><td>login_password</td>
+<td>no</td>
+<td colspan="2">&nbsp;</td>
+<td>password used to authenticate with</td>
+</tr>
+<tr><td>login_host</td>
+<td>no</td>
+<td colspan="2">localhost</td>
+<td>host running the database</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td colspan="2">present</td>
+<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
+</tr>
+<tr><td>collation</td>
+<td>no</td>
+<td colspan="2">&nbsp;</td>
+<td>collation mode</td>
+</tr>
+<tr><td>encoding</td>
+<td>no</td>
+<td colspan="2">&nbsp;</td>
+<td>encoding mode</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>- name: Create database
+  action: mysql_db loginpass=$mysql_root_password db=bobdata state=present</pre>
+</div>
+</div>
+<div class="section" id="mysql-user">
+<h2>mysql_user<a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
+<p>Adds or removes a user from a MySQL database.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="8%" />
+<col width="10%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the user (role) to add or remove</td>
+</tr>
+<tr><td>password</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>set the user&#8217;s password</td>
+</tr>
+<tr><td>db</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of an existing database to grant user access to</td>
+</tr>
+<tr><td>login_user</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>user (role) used to authenticate with</td>
+</tr>
+<tr><td>login_password</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>password used to authenticate with</td>
+</tr>
+<tr><td>login_host</td>
+<td>no</td>
+<td>localhost</td>
+<td>host running MySQL. Default (blank) implies localhost</td>
+</tr>
+<tr><td>priv</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>MySQL priveledges string</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>present</td>
+<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>- name: Create database user
+  action: mysql_user loginpass=$mysql_root_password name=bob passwd=12345 priv=*.*:ALL state=present
+
+- name: Ensure no user named 'sally' exists
+  action: mysql_user loginpass=$mysql_root_password name=sally state=absent</pre>
+</div>
+</div>
 <div class="section" id="ohai">
-<span id="id11"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -684,7 +928,7 @@ support change hooks, nor does it make any changes on the system.</p>
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
 </div>
 <div class="section" id="ping">
-<span id="id12"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
 successful contact.</p>
 <p>This module does not support change hooks and is informative only - it
@@ -717,7 +961,7 @@ host before using this module.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>db</td>
+<tr><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the database to add or remove</td>
@@ -775,7 +1019,7 @@ host before using this module.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>user</td>
+<tr><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the user (role) to add or remove</td>
@@ -817,7 +1061,7 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="raw">
-<span id="id13"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
 <p>Executes a low-down and dirty SSH command, not going through the module subsystem.</p>
 <p>This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
@@ -832,7 +1076,7 @@ for this module.</p>
 </div>
 </div>
 <div class="section" id="service">
-<span id="id14"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -883,7 +1127,7 @@ service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id15"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -965,7 +1209,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id16"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -983,7 +1227,7 @@ command was running.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id17"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1023,7 +1267,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id18"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1122,7 +1366,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id19"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1182,7 +1426,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id20"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
