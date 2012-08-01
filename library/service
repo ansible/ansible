@@ -132,14 +132,14 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(required=True, choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
-            enable = dict(choices=BOOLEANS)
+            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            enabled = dict(choices=BOOLEANS)
         )
     )
 
     name = module.params['name']
     state = module.params['state']
-    enable = module.boolean(module.params.get('enable', None))
+    enable = module.boolean(module.params.get('enabled', None))
 
     # ===========================================
     # find binaries locations on minion
@@ -156,7 +156,7 @@ def main():
     err = ''
     out = ''
     
-    if enable:
+    if module.params['enabled']:
         rc_enable, out_enable, err_enable = _do_enable(name, enable)
         rc += rc_enable
         out += out_enable
