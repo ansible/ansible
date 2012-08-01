@@ -77,11 +77,11 @@ def url_do_get(module, url, dest):
         r = urllib2.urlopen(request)
         info.update(r.info())
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
-    except urllib2.HTTPError as e:
+    except urllib2.HTTPError, e:
         # Must not fail_json() here so caller can handle HTTP 304 unmodified
         info.update(dict(msg=str(e), status=e.code))
         return r, info
-    except urllib2.URLError as e:
+    except urllib2.URLError, e:
         code = getattr(e, 'code', -1)
         module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
 
