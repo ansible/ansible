@@ -251,6 +251,8 @@ class Play(object):
                     if os.path.exists(filename4):
                         found = True
                         data = utils.parse_yaml_from_file(filename4)
+                        if type(data) != dict:
+                            raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                         if host is not None:
                             if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                                 # this filename has variables in it that were fact specific
@@ -283,8 +285,7 @@ class Play(object):
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
-                        raise errors.AnsibleError("files specified in vars_files must be a YAML dictionary: %s" % filename4)
-                        
+                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % filename4)
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache 
