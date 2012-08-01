@@ -106,7 +106,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default=""),
             login_host=dict(default=""),
-            user=dict(required=True),
+            user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             state=dict(default="present", choices=["absent", "present"]),
             db=dict(required=True),
