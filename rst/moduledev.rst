@@ -6,16 +6,20 @@ or by the `ansible` or `ansible-playbook` programs.
 
 Modules can be written in any language and are found in the path specified 
 by `ANSIBLE_LIBRARY_PATH` or the ``--module-path`` command line option.
- 
+
 Tutorial 
 ````````
-
 Let's build a module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.  
 
 We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
 is fine.  
+
+Now Python Ansible modules contain some extremely powerful shortcuts (that all the core modules use)
+but first we are going to build a module the very hard way.  The reason we do this is because modules
+written in any language OTHER than Python are going to have to do exactly this.  We'll show the easy
+way later. 
 
 So, here's an example.  You would never really need to build a module to set the system time,
 the 'command' module could already be used to do this.  Though we're going to make one.
@@ -47,7 +51,7 @@ There's a useful test script in the source checkout for ansible::
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module ./time
+    ansible/hacking/test-module -m ./time
 
 You should see output that looks something like this::
 
@@ -168,7 +172,6 @@ This should return something like::
 
     {"changed": True, "time": "2012-03-14 12:23:00.000307"}
 
-
 Module Provided 'Facts'
 ```````````````````````
 
@@ -192,17 +195,57 @@ These 'facts' will be available to all statements called after that module (but 
 A good idea might be make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
 
+Common Module Boilerplate
+`````````````````````````
+
+As mentioned, if you are writing a module in Python, there are some very powerful shortcuts you can use.
+Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
+only shorter in terms of code, they are actually FASTER in terms of execution time.
+
+Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible/tree/devel/library>`_ that come with Ansible.  
+
+The 'group' and 'user' modules are reasonably non-trival and showcase what this looks like.
+
+Key parts include always ending the module file with::
+
+    # include magic from lib/ansible/module_common.py
+    #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+    main()
+
+And instantiating the module class like::
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            state     = dict(default='present', choices=['present', 'absent']),
+            name      = dict(required=True),
+            enabled   = dict(required=True, choices=BOOLEANS),
+            something = dict(aliases=['whatever'])
+        )
+    )
+
+The AnsibleModule provides lots of common code for handling returns, parses your arguments
+for you, and allows you to check inputs.
+
+Successful returns are made like this::
+
+    module.exit_json(changed=True, something_else=12345)
+
+And failures are just as simple (where 'msg' is a required parameter to explain the error)::
+
+    module.exit_json(msg="Something fatal happened")
+
+There are also other useful functions in the module class, such as module.md5(path).  See 
+lib/ansible/module_common.py in the source checkout for implementation details.
+
+Again, modules developed this way are best tested with the hacking/test-module script in the git
+source checkout.  Because of the magic involved, this is really the only way the scripts
+can function outside of Ansible.
+
+If submitting a module to ansible's core code, which we encourage, use of the AnsibleModule
+class is required.
+
 Common Pitfalls
 ```````````````
-
-If writing a module in Python and you have managed nodes running
-Python 2.4 or lower, this is generally a good idea, because
-json isn't in the Python standard library until 2.5.::
-
-    try:
-        import json
-    except ImportError:
-        import simplejson as json
 
 You should also never do this in a module::
 
@@ -222,26 +265,31 @@ will still be shown in Ansible, but the command will not succeed.
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
 
-Conventions
-```````````
+Conventions/Recomendations
+``````````````````````````
 
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
 
-* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file.
+* If the module is addressing an object, the parameter for that object should be called 'name' whenever possible, or accept 'name' as an alias.
 
-* Modules must be self contained in one file to be auto-transferred by ansible
+* If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`. 
 
-* If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional.
+* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "choices=BOOLEANS" and a module.boolean(value) casting function.
 
-* Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.
+* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
 
-* In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.
+* Modules must be self contained in one file to be auto-transferred by ansible.
 
-* Return codes are actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+* If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
+
+* Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+
+* In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
+
+* Return codes from modules are not actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.  
 
 * As results from many hosts will be aggregrated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
-
 
 Shorthand Vs JSON
 `````````````````
@@ -260,12 +308,12 @@ JSON is probably the simplest way to go.
 Sharing Your Module
 ```````````````````
 
-If you think your module is generally useful to others, Ansible is preparing
-an 'ansible-contrib' repo.  Stop by the mailing list and we'll help you to
-get your module included.  Contrib modules can be implemented in a variety
-of languages.  Including a README with your module is a good idea so folks
-can understand what arguments it takes and so on.  We would like to build
-up as many of these as possible in as many languages as possible.
+If you think your module is generally useful to others, a good place to share it
+is in `Ansible Resources <https://github.com/ansible/ansible-resources>`.  This is maintained
+as a simple repo with pointers to other github projects.
+
+Contrib modules here can be implemented in a variety of languages.  
+We would like to build up as many of these as possible in as many languages as possible.
 
 `Ansible Mailing List <http://groups.google.com/group/ansible-project>`_
 
@@ -274,8 +322,9 @@ Getting Your Module Into Core
 
 High-quality modules with minimal dependencies 
 can be included in the core, but core modules (just due to the programming
-preferences of the developers) will need to be implemented in Python.
-Stop by the mailing list to inquire about requirements.
+preferences of the developers) will need to be implemented in Python and use
+the AnsibleModule common code, and should generally use consistent arguments with the rest of
+the program.   Stop by the mailing list to inquire about requirements.
 
 .. seealso::
 
