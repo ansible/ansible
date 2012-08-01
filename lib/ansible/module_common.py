@@ -54,7 +54,7 @@ except ImportError:
 
 class AnsibleModule(object):
 
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False):
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False, check_invalid_arguments=True):
         ''' 
         common code for quickly building an ansible module in Python
         (although you can write modules in anything that can return JSON)
@@ -66,8 +66,11 @@ class AnsibleModule(object):
 
         self._legal_inputs = []
         self._handle_aliases()
-        # temporarily disabled
-        # self._check_invalid_arguments()
+    
+        # this may be disabled where modules are going to daisy chain into others
+        if check_invalid_arguments:
+            self._check_invalid_arguments()
+
         self._set_defaults(pre=True)
 
         if not bypass_checks:

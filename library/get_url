@@ -128,6 +128,8 @@ def main():
         module.fail_json(msg="urlparse is not installed")
 
     module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        check_invalid_arguments = False,
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
