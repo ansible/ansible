@@ -226,10 +226,9 @@ command/shell modules simply take the string of the command you want to run.</p>
 command line or playbooks, you don&#8217;t really need to know much about
 that.  If you&#8217;re writing your own module, you care, and this means you do
 not have to write modules in any particular language &#8211; you get to choose.</p>
-<p>Most modules other than command are <cite>idempotent</cite>, meaning they will seek
-to avoid changes to the system unless a change needs to be made.  When using Ansible
-playbooks, these modules can trigger &#8216;change events&#8217;.  Unless otherwise
-noted, any given module does support change hooks.</p>
+<p>Modules are <cite>idempotent</cite>, meaning they will seek to avoid changes to the system unless a change needs to be made.  When using Ansible
+playbooks, these modules can trigger &#8216;change events&#8217; in the form of notifying &#8216;handlers&#8217;
+to run additional tasks.</p>
 <p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
 <div class="section" id="apt">
 <span id="id1"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
@@ -384,24 +383,52 @@ together to produce a destination file.  Files are assembled in string sorting o
 <span id="id4"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
 arguments, space delimited.</p>
-<p>If you want to run a command through the shell (say you are using
-&#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;|&#8217;, etc), you actually want the &#8216;shell&#8217; module instead.
-The &#8216;command&#8217; module is much more secure as it&#8217;s not affected by the user&#8217;s environment.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>(free form)</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>the command module takes a free form command to run</td>
+</tr>
+<tr><td>creates</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>a filename, when it already exists, this step will NOT be run</td>
+</tr>
+<tr><td>chdir</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>cd into this directory before running the command (0.6 and later)</td>
+</tr>
+</tbody>
+</table>
 <p>The given command will be executed on all selected nodes.  It will not
 be processed through the shell, so variables like &#8220;$HOME&#8221; and
 operations like &#8220;&lt;&#8221;, &#8220;&gt;&#8221;, &#8220;|&#8221;, and &#8220;&amp;&#8221; will not work.  As such, all
 paths to commands must be fully qualified.</p>
-<p>This module does not support change hooks and returns the return code
-from the program as well as timing information about how long the
-command was running.</p>
+<p>NOTE:: If you want to run a command through the shell (say you are using
+&#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;|&#8217;, etc), you actually want the &#8216;shell&#8217; module instead.
+The &#8216;command&#8217; module is much more secure as it&#8217;s not affected by the user&#8217;s environment.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>command /sbin/shutdown -t now</pre>
 </div>
-<p>If you only want to run a command if a certain file does not exist, you can do the
-following:</p>
+<p>creates and chdir can be specified after the command.  For instance, if you only want to run a command if a certain file does not exist, you can do the following:</p>
 <div class="highlight-python"><pre>command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database</pre>
 </div>
-<p>The <cite>creates=</cite> option will not be passed to the executable.</p>
+<p>The <cite>creates=</cite> and <cite>chdir</cite> options will not be passed to the actual executable.</p>
 </div>
 <div class="section" id="copy">
 <span id="id5"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
@@ -441,7 +468,6 @@ relative.</td>
 </tr>
 </tbody>
 </table>
-<p>This module also returns md5sum and other information about the resultant file.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
 </div>
@@ -451,10 +477,11 @@ relative.</td>
 <p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
-<p>This module is informative only - it takes no parameters &amp; does not
-support change hooks, nor does it make any changes on the system.
-Playbooks do not actually use this module, they use the <a class="reference internal" href="#setup"><em>setup</em></a>
+<p>Playbooks do not actually use this module, they use the <a class="reference internal" href="#setup"><em>setup</em></a>
 module behind the scenes.</p>
+<p>Example from /usr/bin/ansible:</p>
+<div class="highlight-python"><pre>ansible foo.example.org -m ohai</pre>
+</div>
 </div>
 <div class="section" id="fetch">
 <span id="id7"></span><h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
@@ -922,18 +949,19 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
-<p>This module is information only - it takes no parameters &amp; does not
-support change hooks, nor does it make any changes on the system.</p>
 <p>Playbooks should not call the ohai module, playbooks call the
 <a class="reference internal" href="#setup"><em>setup</em></a> module behind the scenes instead.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>ansible foo.example.org -m ohai</pre>
+</div>
 </div>
 <div class="section" id="ping">
 <span id="id15"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
-<p>A trivial test module, this module always returns the integer <tt class="docutils literal"><span class="pre">1</span></tt> on
-successful contact.</p>
-<p>This module does not support change hooks and is informative only - it
-takes no parameters &amp; does not support change hooks, nor does it make
-any changes on the system.</p>
+<p>A trivial test module, this module always returns &#8216;pong&#8217; on
+successful contact.  It does not make sense in playbooks, but is useful
+from /usr/bin/ansible:</p>
+<div class="highlight-python"><pre>ansible webservers -m ping</pre>
+</div>
 </div>
 <div class="section" id="postgresql-db">
 <h2>postgresql_db<a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
@@ -1206,15 +1234,44 @@ on your remote systems.</p>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>(free form)</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>the command module takes a free form command to run</td>
+</tr>
+<tr><td>creates</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>a filename, when it already exists, this step will NOT be run</td>
+</tr>
+<tr><td>chdir</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>cd into this directory before running the command (0.6 and later)</td>
+</tr>
+</tbody>
+</table>
 <p>The given command will be executed on all selected nodes.</p>
-<p>If you want to execute a command securely and predicably, it may
+<p>NOTE:: If you want to execute a command securely and predicably, it may
 be better to use the &#8216;command&#8217; module instead.  Best practices
 when writing playbooks will follow the trend of using &#8216;command&#8217;
 unless &#8216;shell&#8217; is explicitly required.  When running ad-hoc commands,
 use your best judgement.</p>
-<p>This module does not support change hooks and returns the return code
-from the program as well as timing information about how long the
-command was running.</p>
 <p>Example action from a playbook:</p>
 <div class="highlight-python"><pre>shell somescript.sh &gt;&gt; somelog.txt</pre>
 </div>
