@@ -6,12 +6,51 @@ are not neccessary, but many of them will prove useful.  If a feature doesn't se
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
+Tags
+````
+
+(New in 0.6) If you have a large playbook it may become useful to be able to run a specific
+part of the configuration.  Both plays and tasks support a "tags:" attribute for this reason.
+
+Example::
+
+    tasks:
+
+        - action: yum name=$item state=installed
+          with_items:
+             - httpd
+             - memcached
+          tags:
+             - packages
+
+        - action: template src=templates/src.j2 dest=/etc/foo.conf
+          tags:
+             - configuration
+
+If you wanted to just run the "configuration" and "packages" part of a very long playbook, you could do this::
+
+    ansible-playbook example.yml --tags "configuration,packages"
+
+Playbooks Including Playbooks
+`````````````````````````````
+
+(New in 0.6) To further advance the concept of include files, playbook files can include other playbook
+files.  Suppose you define the behavior of all your webservers in "webservers.yml" and
+all your database servers in "dbservers.yml".  You can create a "site.yml" that would
+reconfigure all of your systems like this::
+
+    ----
+    - include: playbooks/webservers.yml
+    - include: playbooks/dbservers.yml
+
+This concept works great with tags to rapidly select exactly what plays you want to run, and exactly
+what parts of those plays.
+
 Accessing Complex Variable Data
 +++++++++++++++++++++++++++++++
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
-them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address using
-Ansible 0.4 and later::
+them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address::
 
     ${ansible_eth0.ipv4.address}
 
@@ -30,25 +69,18 @@ Accessing Information About Other Hosts
 +++++++++++++++++++++++++++++++++++++++
 
 If your database server wants to check the value of a 'fact' from another node, or an inventory variable
-assigned to another node, it's easy to do so within a template or even an action line (note: this uses syntax available in 0.4 and later)::
+assigned to another node, it's easy to do so within a template or even an action line::
 
     ${hostvars.hostname.factname}
 
 NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
 want to reference data from must be included in either the current play or any previous play.
 
-Magic Variables
-+++++++++++++++
-
-Some variables made available to hosts don't come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won't need.
-
-*group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
-syntax to make template source files that vary based on the group membership (or role) of the host::
+Additionally, *group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
 
    {% if 'webserver' in group_names %}
       # some part of a configuration file that only applies to webservers
    {% endif %}
-
 
 *groups* is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group. 
 For example::
@@ -57,12 +89,14 @@ For example::
       # something that applies to all app servers.
    {% endfor %}
 
-
 Use cases include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
 
 *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
-reasons.  Don't worry about it unless you think you need it.
+reasons.  If you have a long FQDN, *inventory_hostname_short* (in Ansible 0.6) also contains the part up to the first
+period.   
+
+Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Variable File Seperation
 ++++++++++++++++++++++++
@@ -96,6 +130,8 @@ The contents of each variables file is a simple YAML dictionary, like this::
     somevar: somevalue
     password: magic
 
+NOTE: It's also possible to keep per-host and per-group variables in very similar files, this is covered in :ref:`patterns`.
+
 Prompting For Sensitive Data
 ++++++++++++++++++++++++++++
 
@@ -117,6 +153,18 @@ in a push-script::
 
 There are full examples of both of these items in the github examples/playbooks directory.
 
+An alternative form of vars_prompt allows for hiding input from the user, and may later support
+some other options, but otherwise works equivalently::
+
+   vars_prompt:
+     - name: "some_password"
+       prompt: "Enter password"
+       private: True
+     - name: "release_version"
+       prompt: "Product release version"
+       private: False
+
+
 Passing Variables On The Command Line
 +++++++++++++++++++++++++++++++++++++
 
@@ -125,6 +173,18 @@ the ansible command line.  This is particularly useful when writing a generic re
 where you may want to pass in the version of the application to deploy::
 
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
+
+This is useful, for, among other things, setting the hosts group or the user for the playbook.
+
+Example::
+
+    -----
+    - user: $user
+      hosts: $hosts
+      tasks:
+         - ...
+
+    ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
 
 Conditional Execution
 +++++++++++++++++++++
@@ -140,20 +200,32 @@ Don't panic -- it's actually pretty simple::
       favcolor: blue
       is_favcolor_blue: "'$favcolor' == 'blue'"
       is_centos: "'$facter_operatingsystem' == 'CentOS'"
+
     tasks:
       - name: "shutdown if my favorite color is blue"
         action: command /sbin/shutdown -t now
         only_if: '$is_favcolor_blue'
       
 Variables from tools like `facter` and `ohai` can be used here, if installed, or you can
-use variables that bubble up from ansible (0.3 and later).   As a reminder,
+use variables that bubble up from ansible, which many are provided by the :ref:`setup` module.   As a reminder,
 these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  Ansible's
-built in variables are prefixed with `ansible_`. The only_if
-expression is actually a tiny small bit of Python, so be sure to quote variables and make something
+built in variables are prefixed with `ansible_`. 
+
+The only_if expression is actually a tiny small bit of Python, so be sure to quote variables and make something
 that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' instead of 'vars' to define
 all of your conditional expressions in a way that makes them very easy to reuse between plays
 and playbooks.
 
+You cannot use live checks here, like 'os.path.exists', so don't try.  
+
+It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
+make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
+there will be accessible to future tasks::
+
+    tasks:
+        - name: gather site specific fact data
+          action: site_facts
+        - action: command echo ${my_custom_fact_can_be_used_now}
 
 Conditional Imports
 +++++++++++++++++++
@@ -216,6 +288,10 @@ To save some typing, repeated tasks can be written in short-hand like so::
          - testuser1
          - testuser2
 
+If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
+
+    with_items: $somelist
+
 The above would be the equivalent of::
 
     - name: add user testuser1
@@ -231,7 +307,7 @@ Selecting Files And Templates Based On Variables
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
 Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
-The following construct (new in 0.4) selects the first available file appropriate for the variables of a given host,
+The following construct selects the first available file appropriate for the variables of a given host,
 which is often much cleaner than putting a lot of if conditionals in a template.
 
 The following example shows how to template out a configuration file that was very different between, say,
@@ -312,11 +388,21 @@ use the default remote connection type::
     hosts: 127.0.0.1
     connection: local
 
+Turning Off Facts
++++++++++++++++++
+
+If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
+can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
+systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
+
+    - hosts: whatever
+      gather_facts: False
+
 Pull-Mode Playbooks
 +++++++++++++++++++
 
-The use of playbooks in local mode (above) is made extremely powerful with the addition of `ansible-pull` in the
-0.4 release.   A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
+The use of playbooks in local mode (above) is made extremely powerful with the addition of `ansible-pull`.
+A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
 checkout.
 
 The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
@@ -327,6 +413,12 @@ the cron frequency, logging locations, and parameters to ansible-pull.
 This is useful both for extreme scale-out as well as periodic remediation.  Usage of the 'fetch' module to retrieve
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.
 
+Style Points
+++++++++++++
+
+Ansible playbooks are colorized.  If you do not like this, set the ANSIBLE_NOCOLOR=1 environment variable.
+
+Ansible playbooks also look more impressive with cowsay installed, and we encourage installing this package.
 
 .. seealso::
 

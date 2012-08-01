@@ -174,8 +174,7 @@ Module Provided 'Facts'
 
 The 'setup' module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
-this, just have the module return a `ansible_facts` key, like so, along with other return data.  This requires
-Ansible 0.4 and later::
+this, just have the module return a `ansible_facts` key, like so, along with other return data::
 
     {
         "changed" : True,

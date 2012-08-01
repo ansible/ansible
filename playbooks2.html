@@ -149,9 +149,10 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Advanced Playbooks</a><ul>
+<li><a class="reference internal" href="#tags">Tags</a></li>
+<li><a class="reference internal" href="#playbooks-including-playbooks">Playbooks Including Playbooks</a><ul>
 <li><a class="reference internal" href="#accessing-complex-variable-data">Accessing Complex Variable Data</a></li>
 <li><a class="reference internal" href="#accessing-information-about-other-hosts">Accessing Information About Other Hosts</a></li>
-<li><a class="reference internal" href="#magic-variables">Magic Variables</a></li>
 <li><a class="reference internal" href="#variable-file-seperation">Variable File Seperation</a></li>
 <li><a class="reference internal" href="#prompting-for-sensitive-data">Prompting For Sensitive Data</a></li>
 <li><a class="reference internal" href="#passing-variables-on-the-command-line">Passing Variables On The Command Line</a></li>
@@ -161,7 +162,11 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#selecting-files-and-templates-based-on-variables">Selecting Files And Templates Based On Variables</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
 <li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
+<li><a class="reference internal" href="#turning-off-facts">Turning Off Facts</a></li>
 <li><a class="reference internal" href="#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
+<li><a class="reference internal" href="#style-points">Style Points</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -195,11 +200,44 @@ s.parentNode.insertBefore(ga, s);
 are not neccessary, but many of them will prove useful.  If a feature doesn&#8217;t seem immediately
 relevant, feel free to skip it.  For many people, the features documented in <cite>playbooks</cite> will
 be 90% or more of what they use in Ansible.</p>
+<div class="section" id="tags">
+<h2>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
+<p>(New in 0.6) If you have a large playbook it may become useful to be able to run a specific
+part of the configuration.  Both plays and tasks support a &#8220;tags:&#8221; attribute for this reason.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>tasks:
+
+    - action: yum name=$item state=installed
+      with_items:
+         - httpd
+         - memcached
+      tags:
+         - packages
+
+    - action: template src=templates/src.j2 dest=/etc/foo.conf
+      tags:
+         - configuration</pre>
+</div>
+<p>If you wanted to just run the &#8220;configuration&#8221; and &#8220;packages&#8221; part of a very long playbook, you could do this:</p>
+<div class="highlight-python"><pre>ansible-playbook example.yml --tags "configuration,packages"</pre>
+</div>
+</div>
+<div class="section" id="playbooks-including-playbooks">
+<h2>Playbooks Including Playbooks<a class="headerlink" href="#playbooks-including-playbooks" title="Permalink to this headline">¶</a></h2>
+<p>(New in 0.6) To further advance the concept of include files, playbook files can include other playbook
+files.  Suppose you define the behavior of all your webservers in &#8220;webservers.yml&#8221; and
+all your database servers in &#8220;dbservers.yml&#8221;.  You can create a &#8220;site.yml&#8221; that would
+reconfigure all of your systems like this:</p>
+<div class="highlight-python"><pre>----
+- include: playbooks/webservers.yml
+- include: playbooks/dbservers.yml</pre>
+</div>
+<p>This concept works great with tags to rapidly select exactly what plays you want to run, and exactly
+what parts of those plays.</p>
 <div class="section" id="accessing-complex-variable-data">
-<h2>Accessing Complex Variable Data<a class="headerlink" href="#accessing-complex-variable-data" title="Permalink to this headline">¶</a></h2>
+<h3>Accessing Complex Variable Data<a class="headerlink" href="#accessing-complex-variable-data" title="Permalink to this headline">¶</a></h3>
 <p>Some provided facts, like networking information, are made available as nested data structures.  To access
-them a simple &#8216;$foo&#8217; is not sufficient, but it is still easy to do.   Here&#8217;s how we get an IP address using
-Ansible 0.4 and later:</p>
+them a simple &#8216;$foo&#8217; is not sufficient, but it is still easy to do.   Here&#8217;s how we get an IP address:</p>
 <div class="highlight-python"><pre>${ansible_eth0.ipv4.address}</pre>
 </div>
 <p>It is also possible to access variables whose elements are arrays:</p>
@@ -212,19 +250,14 @@ that is preferred:</p>
 </div>
 </div>
 <div class="section" id="accessing-information-about-other-hosts">
-<h2>Accessing Information About Other Hosts<a class="headerlink" href="#accessing-information-about-other-hosts" title="Permalink to this headline">¶</a></h2>
+<h3>Accessing Information About Other Hosts<a class="headerlink" href="#accessing-information-about-other-hosts" title="Permalink to this headline">¶</a></h3>
 <p>If your database server wants to check the value of a &#8216;fact&#8217; from another node, or an inventory variable
-assigned to another node, it&#8217;s easy to do so within a template or even an action line (note: this uses syntax available in 0.4 and later):</p>
+assigned to another node, it&#8217;s easy to do so within a template or even an action line:</p>
 <div class="highlight-python"><pre>${hostvars.hostname.factname}</pre>
 </div>
 <p>NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
 want to reference data from must be included in either the current play or any previous play.</p>
-</div>
-<div class="section" id="magic-variables">
-<h2>Magic Variables<a class="headerlink" href="#magic-variables" title="Permalink to this headline">¶</a></h2>
-<p>Some variables made available to hosts don&#8217;t come from definitions in a playbook, the inventory file, or discovery from the system.  There are only two of these, and are used in special cases that many users won&#8217;t need.</p>
-<p><em>group_names</em> is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2
-syntax to make template source files that vary based on the group membership (or role) of the host:</p>
+<p>Additionally, <em>group_names</em> is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host:</p>
 <div class="highlight-python"><pre>{% if 'webserver' in group_names %}
    # some part of a configuration file that only applies to webservers
 {% endif %}</pre>
@@ -238,10 +271,12 @@ For example:</p>
 <p>Use cases include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.</p>
 <p><em>inventory_hostname</em> is the name of the hostname as configured in Ansible&#8217;s inventory host file.  This can
 be useful for when you don&#8217;t want to rely on the discovered hostname <cite>ansible_hostname</cite> or for other mysterious
-reasons.  Don&#8217;t worry about it unless you think you need it.</p>
+reasons.  If you have a long FQDN, <em>inventory_hostname_short</em> (in Ansible 0.6) also contains the part up to the first
+period.</p>
+<p>Don&#8217;t worry about any of this unless you think you need it.  You&#8217;ll know when you do.</p>
 </div>
 <div class="section" id="variable-file-seperation">
-<h2>Variable File Seperation<a class="headerlink" href="#variable-file-seperation" title="Permalink to this headline">¶</a></h2>
+<h3>Variable File Seperation<a class="headerlink" href="#variable-file-seperation" title="Permalink to this headline">¶</a></h3>
 <p>It&#8217;s a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
 important variables private.  Similarly, sometimes you may just
@@ -267,9 +302,10 @@ sharing your playbook source with them.</p>
 somevar: somevalue
 password: magic</pre>
 </div>
+<p>NOTE: It&#8217;s also possible to keep per-host and per-group variables in very similar files, this is covered in <a class="reference internal" href="patterns.html#patterns"><em>Inventory &amp; Patterns</em></a>.</p>
 </div>
 <div class="section" id="prompting-for-sensitive-data">
-<h2>Prompting For Sensitive Data<a class="headerlink" href="#prompting-for-sensitive-data" title="Permalink to this headline">¶</a></h2>
+<h3>Prompting For Sensitive Data<a class="headerlink" href="#prompting-for-sensitive-data" title="Permalink to this headline">¶</a></h3>
 <p>You may wish to prompt the user for certain input, and can
 do so with the similarly named &#8216;vars_prompt&#8217; section.  This has uses
 beyond security, for instance, you may use the same playbook for all
@@ -286,17 +322,37 @@ in a push-script:</p>
     favcolor: "what is your favorite color?"</pre>
 </div>
 <p>There are full examples of both of these items in the github examples/playbooks directory.</p>
+<p>An alternative form of vars_prompt allows for hiding input from the user, and may later support
+some other options, but otherwise works equivalently:</p>
+<div class="highlight-python"><pre>vars_prompt:
+  - name: "some_password"
+    prompt: "Enter password"
+    private: True
+  - name: "release_version"
+    prompt: "Product release version"
+    private: False</pre>
+</div>
 </div>
 <div class="section" id="passing-variables-on-the-command-line">
-<h2>Passing Variables On The Command Line<a class="headerlink" href="#passing-variables-on-the-command-line" title="Permalink to this headline">¶</a></h2>
+<h3>Passing Variables On The Command Line<a class="headerlink" href="#passing-variables-on-the-command-line" title="Permalink to this headline">¶</a></h3>
 <p>In addition to <cite>vars_prompt</cite> and <cite>vars_files</cite>, it is possible to send variables over
 the ansible command line.  This is particularly useful when writing a generic release playbook
 where you may want to pass in the version of the application to deploy:</p>
 <div class="highlight-python"><pre>ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre>
 </div>
+<p>This is useful, for, among other things, setting the hosts group or the user for the playbook.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>-----
+- user: $user
+  hosts: $hosts
+  tasks:
+     - ...
+
+ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"</pre>
+</div>
 </div>
 <div class="section" id="conditional-execution">
-<h2>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h2>
+<h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.</p>
@@ -306,22 +362,32 @@ Don&#8217;t panic &#8211; it&#8217;s actually pretty simple:</p>
   favcolor: blue
   is_favcolor_blue: "'$favcolor' == 'blue'"
   is_centos: "'$facter_operatingsystem' == 'CentOS'"
+
 tasks:
   - name: "shutdown if my favorite color is blue"
     action: command /sbin/shutdown -t now
     only_if: '$is_favcolor_blue'</pre>
 </div>
 <p>Variables from tools like <cite>facter</cite> and <cite>ohai</cite> can be used here, if installed, or you can
-use variables that bubble up from ansible (0.3 and later).   As a reminder,
+use variables that bubble up from ansible, which many are provided by the <a class="reference internal" href="modules.html#setup"><em>setup</em></a> module.   As a reminder,
 these variables are prefixed, so it&#8217;s <cite>$facter_operatingsystem</cite>, not <cite>$operatingsystem</cite>.  Ansible&#8217;s
-built in variables are prefixed with <cite>ansible_</cite>. The only_if
-expression is actually a tiny small bit of Python, so be sure to quote variables and make something
+built in variables are prefixed with <cite>ansible_</cite>.</p>
+<p>The only_if expression is actually a tiny small bit of Python, so be sure to quote variables and make something
 that evaluates to <cite>True</cite> or <cite>False</cite>.  It is a good idea to use &#8216;vars_files&#8217; instead of &#8216;vars&#8217; to define
 all of your conditional expressions in a way that makes them very easy to reuse between plays
 and playbooks.</p>
+<p>You cannot use live checks here, like &#8216;os.path.exists&#8217;, so don&#8217;t try.</p>
+<p>It&#8217;s also easy to provide your own facts if you want, which is covered in <a class="reference internal" href="moduledev.html"><em>Module Development</em></a>.  To run them, just
+make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
+there will be accessible to future tasks:</p>
+<div class="highlight-python"><pre>tasks:
+    - name: gather site specific fact data
+      action: site_facts
+    - action: command echo ${my_custom_fact_can_be_used_now}</pre>
+</div>
 </div>
 <div class="section" id="conditional-imports">
-<h2>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h2>
+<h3>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.</p>
 <p>As an example, the name of the Apache package may be different between CentOS and Debian,
@@ -364,13 +430,16 @@ in more streamlined &amp; auditable configuration rules &#8211; especially becau
 minimum of decision points to track.</p>
 </div>
 <div class="section" id="loop-shorthand">
-<h2>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h2>
+<h3>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h3>
 <p>To save some typing, repeated tasks can be written in short-hand like so:</p>
 <div class="highlight-python"><pre>- name: add user $item
   action: user name=$item state=present groups=wheel
   with_items:
      - testuser1
      - testuser2</pre>
+</div>
+<p>If you have defined a YAML list in a variables file, or the &#8216;vars&#8217; section, you can also do:</p>
+<div class="highlight-python"><pre>with_items: $somelist</pre>
 </div>
 <p>The above would be the equivalent of:</p>
 <div class="highlight-python"><pre>- name: add user testuser1
@@ -382,9 +451,9 @@ minimum of decision points to track.</p>
 manager transactions.</p>
 </div>
 <div class="section" id="selecting-files-and-templates-based-on-variables">
-<h2>Selecting Files And Templates Based On Variables<a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h2>
+<h3>Selecting Files And Templates Based On Variables<a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
-The following construct (new in 0.4) selects the first available file appropriate for the variables of a given host,
+The following construct selects the first available file appropriate for the variables of a given host,
 which is often much cleaner than putting a lot of if conditionals in a template.</p>
 <p>The following example shows how to template out a configuration file that was very different between, say,
 CentOS and Debian:</p>
@@ -396,7 +465,7 @@ CentOS and Debian:</p>
 </div>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
-<h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
+<h3>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h3>
 <p>By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
 a small parallelism value (aka <tt class="docutils literal"><span class="pre">--forks</span></tt>), you may wish that long
@@ -446,7 +515,7 @@ tasks even faster.  This also increases the efficiency of polling.</p>
 </div>
 </div>
 <div class="section" id="local-playbooks">
-<h2>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h2>
+<h3>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h3>
 <p>It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
 to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
@@ -459,10 +528,19 @@ use the default remote connection type:</p>
 connection: local</pre>
 </div>
 </div>
+<div class="section" id="turning-off-facts">
+<h3>Turning Off Facts<a class="headerlink" href="#turning-off-facts" title="Permalink to this headline">¶</a></h3>
+<p>If you know you don&#8217;t need any fact data about your hosts, and know everything about your systems centrally, you
+can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
+systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this:</p>
+<div class="highlight-python"><pre>- hosts: whatever
+  gather_facts: False</pre>
+</div>
+</div>
 <div class="section" id="pull-mode-playbooks">
-<h2>Pull-Mode Playbooks<a class="headerlink" href="#pull-mode-playbooks" title="Permalink to this headline">¶</a></h2>
-<p>The use of playbooks in local mode (above) is made extremely powerful with the addition of <cite>ansible-pull</cite> in the
-0.4 release.   A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
+<h3>Pull-Mode Playbooks<a class="headerlink" href="#pull-mode-playbooks" title="Permalink to this headline">¶</a></h3>
+<p>The use of playbooks in local mode (above) is made extremely powerful with the addition of <cite>ansible-pull</cite>.
+A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
 checkout.</p>
 <p>The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
 cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
@@ -470,6 +548,11 @@ architecture, which has near-limitless scaling potential.  The setup playbook ca
 the cron frequency, logging locations, and parameters to ansible-pull.</p>
 <p>This is useful both for extreme scale-out as well as periodic remediation.  Usage of the &#8216;fetch&#8217; module to retrieve
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.</p>
+</div>
+<div class="section" id="style-points">
+<h3>Style Points<a class="headerlink" href="#style-points" title="Permalink to this headline">¶</a></h3>
+<p>Ansible playbooks are colorized.  If you do not like this, set the ANSIBLE_NOCOLOR=1 environment variable.</p>
+<p>Ansible playbooks also look more impressive with cowsay installed, and we encourage installing this package.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -490,6 +573,7 @@ logs from ansible-pull runs would be an excellent way to gather and analyze remo
 <dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
 <dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
 </dl>
+</div>
 </div>
 </div>
 </div>
@@ -522,7 +606,7 @@ logs from ansible-pull runs would be an excellent way to gather and analyze remo
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Jul 30, 2012.<br/>
+      Last updated on Jul 31, 2012.<br/>
     </p>
   </div>
 </footer>
