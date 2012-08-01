@@ -147,7 +147,7 @@ class DefaultRunnerCallbacks(object):
     def __init__(self):
         pass
 
-    def on_failed(self, host, res):
+    def on_failed(self, host, res, ignore_errors=False):
         pass
 
     def on_ok(self, host, res):
@@ -185,7 +185,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         self.options = None 
         self._async_notified = {}
 
-    def on_failed(self, host, res):
+    def on_failed(self, host, res, ignore_errors=False):
 
         self._on_any(host,res)
 
@@ -259,7 +259,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             print "fatal: [%s] => %s" % (host, msg)
 
-    def on_failed(self, host, results, ignore_errors):
+    def on_failed(self, host, results, ignore_errors=False):
 
         item = results.get('item', None)
 

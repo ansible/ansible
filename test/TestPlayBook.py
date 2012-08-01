@@ -54,8 +54,8 @@ class TestCallbacks(object):
     def on_unreachable(self, host, msg):
         EVENTS.append([ 'unreachable', [ host, msg ]])
 
-    def on_failed(self, host, results):
-        EVENTS.append([ 'failed', [ host, results ]])
+    def on_failed(self, host, results, ignore_errors):
+        EVENTS.append([ 'failed', [ host, results, ignore_errors ]])
 
     def on_ok(self, host, result):
         # delete certain info from host_result to make test comparisons easier
