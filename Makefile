@@ -28,13 +28,21 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 # VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
 
+### Get the branch information from git
+ifneq ($(shell which git),)
+GIT_DATE := $(shell git log -n 1 --format="%ai")
+endif
+DATE := $(shell date --date="$(GIT_DATE)" +%Y%m%d%H%M)
+
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
-RPMVERSION := $(shell awk '/Version/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
-RPMRELEASE := $(shell awk '/Release/{print $$2; exit}' < $(RPMSPEC) | cut -d "%" -f1)
 RPMDIST = $(shell rpm --eval '%dist')
-RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
+RPMRELEASE = 1
+ifeq ($(OFFICIAL),)
+    RPMRELEASE = 0.git$(DATE)
+endif
+RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 ########################################################
 
@@ -102,6 +110,7 @@ sdist: clean
 rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
+	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
 
 srpm: rpmcommon
 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
@@ -110,7 +119,8 @@ srpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	-bs $(RPMSPEC)
+	-bs rpm-build/$(NAME).spec
+	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo "    rpm-build/$(RPMNVR).src.rpm"
@@ -123,7 +133,8 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	-ba $(RPMSPEC)
+	-ba rpm-build/$(NAME).spec
+	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
