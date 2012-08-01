@@ -259,7 +259,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             print "fatal: [%s] => %s" % (host, msg)
 
-    def on_failed(self, host, results):
+    def on_failed(self, host, results, ignore_errors):
 
         item = results.get('item', None)
 
@@ -269,6 +269,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results))
 
         print stringc(msg, 'red')
+        if ignore_errors:
+            print stringc("...ignoring", 'yellow')
 
     def on_ok(self, host, host_result):
 
