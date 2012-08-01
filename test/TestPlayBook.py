@@ -33,7 +33,7 @@ class TestCallbacks(object):
     def on_setup(self):
         EVENTS.append([ 'primary_setup' ])
  
-    def on_skipped(self, host):
+    def on_skipped(self, host, item=None):
         EVENTS.append([ 'skipped', [ host ]])
 
     def on_import_for_host(self, host, filename):
