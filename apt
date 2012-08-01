@@ -69,15 +69,20 @@ def package_status(m, pkgname, version, cache):
             return pkg.isInstalled, pkg.isUpgradable
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
-    name, version = package_split(pkgspec)
-    installed, upgradable = package_status(m, name, version, cache)
-    if not installed or (upgrade and upgradable):
+    packages = ""
+    for package in pkgspec:
+        name, version = package_split(package)
+        installed, upgradable = package_status(m, name, version, cache)
+        if not installed or (upgrade and upgradable):
+            packages += "'%s' " % package
+    
+    if len(packages) != 0:
         if force:
             force_yes = '--force-yes'
         else:
             force_yes = ''
 
-        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install '%s'" % (APT, force_yes, pkgspec)
+        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install %s" % (APT, force_yes,packages)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
         if not install_recommends:
@@ -85,23 +90,28 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
 
         rc, out, err = run_apt(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (pkgspec, err))
+            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
         else:
             m.exit_json(changed=True)
     else:
         m.exit_json(changed=False)
 
 def remove(m, pkgspec, cache, purge=False):
-    name, version = package_split(pkgspec)
-    installed, upgradable = package_status(m, name, version, cache)
-    if not installed:
+    packages = ""
+    for package in pkgspec:
+        name, version = package_split(package)
+        installed, upgradable = package_status(m, name, version, cache)
+        if installed:
+            packages += "'%s' " % package
+    
+    if len(packages) == 0:
         m.exit_json(changed=False)
     else:
         purge = '--purge' if purge else ''
-        cmd = "%s -q -y %s remove '%s'" % (APT, purge, name)
+        cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
         rc, out, err = run_apt(cmd)
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (name, err))
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)
 
 
@@ -145,23 +155,25 @@ def main():
             module.exit_json(changed=False)
 
     force_yes = module.boolean(p['force'])
-
-    if p['package'].count('=') > 1:
-        module.fail_json(msg='invalid package spec')
+    
+    packages = p['package'].split(',')
+    latest = p['state'] == 'latest' 
+    for package in packages:
+        if package.count('=') > 1:
+            module.fail_json(msg="invalid package spec: %s" % package)
+        if latest and '=' in package:
+            module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
     if p['state'] == 'latest':
-        if '=' in p['package']:
-            module.fail_json(msg='version number inconsistent with state=latest')
-        install(module, p['package'], cache, upgrade=True,
-                  default_release=p['default_release'],
-                  install_recommends=install_recommends,
-                  force=force_yes)
-
+        install(module, packages, cache, upgrade=True,
+                default_release=p['default_release'],
+                install_recommends=install_recommends,
+                force=force_yes)
     elif p['state'] == 'installed':
-        install(module, p['package'], cache, default_release=p['default_release'],
+        install(module, packages, cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
     elif p['state'] == 'removed':
-        remove(module, p['package'], cache, purge = module.boolean(p['purge']))
+        remove(module, packages, cache, purge = module.boolean(p['purge']))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
