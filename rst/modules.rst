@@ -59,6 +59,8 @@ Manages apt-packages (such as for Debian/Ubuntu).
 |                    |          |         | behavior works as apt's default behavior, 'no' does not install            |
 |                    |          |         | recommended packages.  Suggested packages are never installed.             |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
+| force              | no       | no      | If 'yes', force installs/removes.                                          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -271,6 +273,34 @@ Example action from Ansible :doc:`playbooks`::
     file path=/some/path state=directory setype=httpd_sys_content_t
     file path=/some/path state=directory context=default
 
+.. _get_url:
+
+get_url
+```````
+
+Downloads files from http, https, or ftp to the remote server.  The remote server must have direct
+access to the remote resource.
+
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| url                | yes      |         | http, https, or ftp URL                                                    |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dest               | yes      |         | absolute path of where to download the file to.  If dest is a directory,   |
+|                    |          |         | the basename of the file on the remote server will be used.                |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| OTHERS             | no       |         | all arguments accepted by the file module also work here                   |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+
+Example action from Ansible :doc:`playbooks`::
+
+    - name: Grab a bunch of jQuery stuff
+       action: get_url url=http://code.jquery.com/$item  dest=${jquery_directory} mode=0444
+       with_items:
+       - jquery.min.js
+       - mobile/latest/jquery.mobile.min.js
+       - ui/jquery-ui-git.css
+
 .. _git:
 
 git
@@ -285,10 +315,10 @@ Deploys software (or files) from git checkouts.
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | dest               | yes      |         | absolute path of where the repo should be checked out to                   |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| version            |          |         | what version to check out -- either the git SHA, the literal string        |
+| version            | no       | HEAD    | what version to check out -- either the git SHA, the literal string        |
 |                    |          |         | 'HEAD', branch name, or a tag name.                                        |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| remote             |          | origin  | name of the remote branch                                                  |
+| remote             | no       | origin  | name of the remote branch                                                  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
@@ -319,6 +349,98 @@ To control members of the group, see the users resource.
 Example action from Ansible :doc:`playbooks`::
 
    group name=somegroup state=present
+
+.. _mount:
+
+mount
+`````
+
+The mount module controls active and configured mount points (fstab).
+
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | path to the mountpoint, ex: /mnt/foo                                       |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| src                | yes      |         | device to be mounted                                                       |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| fstype             | yes      |         | fstype                                                                     |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| opts               | no       |         | mount options (see fstab docs)                                             |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| dump               | no       |         | dump (see fstab docs)                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| passno             | no       |         | passno (see fstab docs)                                                    |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              | yes      |         | 'present', 'absent', 'mounted', or 'unmounted'.  If mounted/unmounted,     |
+|                    |          |         | the device will be actively mounted or unmounted as well as just           |
+|                    |          |         | configured in fstab.  'absent', and 'present' only deal with fstab.        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+
+.. _mysql_db:
+
+mysql_db
+````````
+
+Add or remove MySQL databases from a remote host.
+
++--------------------+----------+----------+-----------------------------------------------------------------------------+
+| parameter          | required | default  | comments                                                                    |
++====================+==========+==========+=============================================================================+
+| name               | yes      |           | name of the database to add or remove                                      |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+| login_user         | no       |           | user used to authenticate with                                             |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+| login_password     | no       |           | password used to authenticate with                                         |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+| login_host         | no       | localhost | host running the database                                                  |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+| state              | no       | present   | 'absent' or 'present'                                                      |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+| collation          | no       |           | collation mode                                                             |
++--------------------+----------+-----------+----------------------------------------------------------------------------+ 
+| encoding           | no       |           | encoding mode                                                              |
++--------------------+----------+-----------+----------------------------------------------------------------------------+
+
+Example action from Ansible :doc:`playbooks`::
+
+   - name: Create database
+     action: mysql_db loginpass=$mysql_root_password db=bobdata state=present
+
+
+mysql_user
+``````````
+
+Adds or removes a user from a MySQL database.
+
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| parameter          | required | default    | comments                                                                   |
++====================+==========+============+============================================================================+
+| name               | yes      |            | name of the user (role) to add or remove                                   |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| password           | yes      |            | set the user's password                                                    |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| db                 | yes      |            | name of an existing database to grant user access to                       |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| login_user         | no       |            | user (role) used to authenticate with                                      |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| login_password     | no       |            | password used to authenticate with                                         |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| login_host         | no       | localhost  | host running MySQL. Default (blank) implies localhost                      |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| priv               | no       |            | MySQL priveledges string                                                   |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+| state              | no       | present    | 'absent' or 'present'                                                      |
++--------------------+----------+------------+----------------------------------------------------------------------------+
+
+Example action from Ansible :doc:`playbooks`::
+
+    - name: Create database user
+      action: mysql_user loginpass=$mysql_root_password name=bob passwd=12345 priv=*.*:ALL state=present
+
+    - name: Ensure no user named 'sally' exists
+      action: mysql_user loginpass=$mysql_root_password name=sally state=absent
+
 
 .. _ohai:
 
@@ -370,7 +492,7 @@ host before using this module.
 +--------------------+----------+----------+----------------------------------------------------------------------------+
 | parameter          | required | default  | comments                                                                   |
 +====================+==========+==========+============================================================================+
-| db                 | yes      |          | name of the database to add or remove                                      |
+| name               | yes      |          | name of the database to add or remove                                      |
 +--------------------+----------+----------+----------------------------------------------------------------------------+
 | login_user         | no       | postgres | user (role) used to authenticate with PostgreSQL                           |
 +--------------------+----------+----------+----------------------------------------------------------------------------+
@@ -407,7 +529,7 @@ host before using this module.
 +--------------------+----------+----------+----------------------------------------------------------------------------+
 | parameter          | required | default  | comments                                                                   |
 +====================+==========+==========+============================================================================+
-| user               | yes      |          | name of the user (role) to add or remove                                   |
+| name               | yes      |          | name of the user (role) to add or remove                                   |
 +--------------------+----------+----------+----------------------------------------------------------------------------+
 | password           | yes      |          | set the user's password                                                    |
 +--------------------+----------+----------+----------------------------------------------------------------------------+
