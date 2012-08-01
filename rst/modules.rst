@@ -27,10 +27,9 @@ command line or playbooks, you don't really need to know much about
 that.  If you're writing your own module, you care, and this means you do
 not have to write modules in any particular language -- you get to choose.
 
-Most modules other than command are `idempotent`, meaning they will seek
-to avoid changes to the system unless a change needs to be made.  When using Ansible
-playbooks, these modules can trigger 'change events'.  Unless otherwise
-noted, any given module does support change hooks.
+Modules are `idempotent`, meaning they will seek to avoid changes to the system unless a change needs to be made.  When using Ansible
+playbooks, these modules can trigger 'change events' in the form of notifying 'handlers'
+to run additional tasks.
 
 Let's see what's available in the Ansible module library, out of the box:
 
@@ -127,29 +126,34 @@ command
 The command module takes the command name followed by a list of
 arguments, space delimited.  
 
-If you want to run a command through the shell (say you are using
-'<', '>', '|', etc), you actually want the 'shell' module instead.  
-The 'command' module is much more secure as it's not affected by the user's environment.
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| (free form)        | N/A      | N/A     | the command module takes a free form command to run                        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| creates            | no       |         | a filename, when it already exists, this step will NOT be run              |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| chdir              | no       |         | cd into this directory before running the command (0.6 and later)          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 The given command will be executed on all selected nodes.  It will not
 be processed through the shell, so variables like "$HOME" and 
 operations like "<", ">", "|", and "&" will not work.  As such, all
 paths to commands must be fully qualified.
 
-This module does not support change hooks and returns the return code
-from the program as well as timing information about how long the
-command was running.
+NOTE:: If you want to run a command through the shell (say you are using
+'<', '>', '|', etc), you actually want the 'shell' module instead.  
+The 'command' module is much more secure as it's not affected by the user's environment.
 
 Example action from Ansible :doc:`playbooks`::
 
     command /sbin/shutdown -t now
 
-If you only want to run a command if a certain file does not exist, you can do the
-following::
+creates and chdir can be specified after the command.  For instance, if you only want to run a command if a certain file does not exist, you can do the following::
 
     command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
 
-The `creates=` option will not be passed to the executable.
+The `creates=` and `chdir` options will not be passed to the actual executable.
 
 
 .. _copy:
@@ -172,8 +176,6 @@ module.
 | OTHERS             |          |         | All arguments the file module takes are also supported                     |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
-This module also returns md5sum and other information about the resultant file.
-
 Example action from Ansible :doc:`playbooks`::
 
     copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
@@ -189,10 +191,12 @@ JSON data that can be useful for inventory purposes.
 
 Requires that 'facter' and 'ruby-json' be installed on the remote end.
 
-This module is informative only - it takes no parameters & does not
-support change hooks, nor does it make any changes on the system.
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
+    
+Example from /usr/bin/ansible::
+
+    ansible foo.example.org -m ohai
 
 .. _fetch:
 
@@ -452,24 +456,23 @@ Ohai data is a bit more verbose and nested than facter.
 
 Requires that 'ohai' be installed on the remote end.
 
-This module is information only - it takes no parameters & does not
-support change hooks, nor does it make any changes on the system.
-
 Playbooks should not call the ohai module, playbooks call the
 :ref:`setup` module behind the scenes instead.
+
+Example::
+
+    ansible foo.example.org -m ohai
 
 .. _ping:
 
 ping
 ````
 
-A trivial test module, this module always returns the integer ``1`` on
-successful contact.
+A trivial test module, this module always returns 'pong' on
+successful contact.  It does not make sense in playbooks, but is useful
+from /usr/bin/ansible::
 
-This module does not support change hooks and is informative only - it
-takes no parameters & does not support change hooks, nor does it make
-any changes on the system.
-
+    ansible webservers -m ping
 
 .. postgresql_db:
 
@@ -697,17 +700,23 @@ The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user's configured shell on the remote node.
 
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| (free form)        | N/A      | N/A     | the command module takes a free form command to run                        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| creates            | no       |         | a filename, when it already exists, this step will NOT be run              |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| chdir              | no       |         | cd into this directory before running the command (0.6 and later)          |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+
 The given command will be executed on all selected nodes.  
 
-If you want to execute a command securely and predicably, it may
+NOTE:: If you want to execute a command securely and predicably, it may 
 be better to use the 'command' module instead.  Best practices
 when writing playbooks will follow the trend of using 'command'
 unless 'shell' is explicitly required.  When running ad-hoc commands,
 use your best judgement.
-
-This module does not support change hooks and returns the return code
-from the program as well as timing information about how long the
-command was running.
 
 Example action from a playbook::
 
