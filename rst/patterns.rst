@@ -110,7 +110,7 @@ Variables can also be applied to an entire group at once::
 Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
-Using Ansible 0.4, it is possible to make groups of groups and assign
+It is also possible to make groups of groups and assign
 variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
 /usr/bin/ansible::
 

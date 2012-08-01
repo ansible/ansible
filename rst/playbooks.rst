@@ -1,11 +1,10 @@
 Playbooks
 =========
 
-Playbooks are a completely different way to use ansible and are
-particularly awesome.   They are the basis for a really simple 
+Playbooks are a completely different way to use ansible than in task execution mode, and are
+particularly awesome.   Simply put, playbooks are the basis for a really simple 
 configuration management and multi-machine deployment system, 
-unlike any that already exist, and
-one that is very well suited to deploying complex applications.
+unlike any that already exist, and one that is very well suited to deploying complex applications.
 
 Playbooks can declare configurations, but they can also orchestrate steps of
 any manual ordered process, even as different steps must bounce back and forth
@@ -21,11 +20,15 @@ Let's dive in and see how they work.  As you go, you may wish to open
 the `github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_ in
 another tab, so you can apply the theory to what things look like in practice.
 
-Playbook Example
-````````````````
+Playbook Language Example
+`````````````````````````
 
 Playbooks are expressed in YAML format and have a minimum of syntax.
 Each playbook is composed of one or more 'plays' in a list.  
+
+The goal of a play is map a group of hosts to some well defined roles, represented by
+things ansible called tasks.  At the basic level, a task is nothing more than a call
+to an ansible module, which you should have learned about in earlier chapters.
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -116,25 +119,21 @@ These variables can be used later in the playbook like this::
 
     $varname or ${varname}
 
-The later is useful in the event you need to do something like ${other}_concatenated_value.
+The later is useful in the event you need to do something like ${other}_some_string.
 
-The full power of the Jinja2 templating language is also available (note: in 0.4, this is only true inside of templates), which looks like this::
+The full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_ templating language is also available, which looks like this::
 
     {{ varname }}
 
 The Jinja2 documentation provides information about how to construct loops and conditionals for those
 who which to use more advanced templating.  This is optional and the $varname format still works in template
-files.
+files. 
 
-If there are discovered variables about the system (ansible provides some of these,
-plus we include ones taken from facter or ohai if installed) these variables bubble up back into the
-playbook, and can be used on each system just like explicitly set
-variables.  
-
-Facter variables are prefixed with ``facter_`` and Ohai
-variables are prefixed with ``ohai_``.  Ansible variables (0.3 and later) 
-are not surprisingly prefixed with ``ansible_`` (See the :ref:`setup` module
-documentation for a list of Ansible variables).
+If there are discovered variables about the system, called 'facts', these variables bubble up back into the
+playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
+of these, prefixed with 'ansible', and are documented under :ref:`setup` in the module documentation.  Additionally,
+facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai
+variables are prefixed with ``ohai_``.  
 
 So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say::
@@ -153,23 +152,26 @@ Tasks list
 
 Each play contains a list of tasks.  Tasks are executed in order, one
 at a time, against all machines matched by the host pattern,
-before moving on to the next task.
+before moving on to the next task.  It is important to understand that, within a play,
+all hosts are going to get the same task directives.  It is the purpose of a play to map
+a selection of hosts to tasks.
 
-Hosts with failed tasks are taken out of the rotation for the entire
-playbook.  If things fail, simply correct the playbook file and rerun.
+When running the playbook, which runs top to bottom, hosts with failed tasks are 
+taken out of the rotation for the entire playbook.  If things fail, simply correct the playbook file and rerun.
 
 The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
-Modules other than `command` and `shell` are 'idempotent', meaning if you run them
+Modules are 'idempotent', meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.  
 
-The `command` and `shell` modules will actually rerun the same command again, 
+The `command` and `shell` modules will typically rerun the same command again, 
 which is totally ok if the command is something like 
-'chmod' or 'setsebool', etc.
+'chmod' or 'setsebool', etc.  Though there is a 'creates' flag available which can
+be used to make these modules also idempotent.
 
 Every task should have a `name`, which is included in the output from
 running the playbook.   This is output for humans, so it is
@@ -192,6 +194,13 @@ them work just like you would expect. Simple::
      - name: disable selinux 
        action: command /sbin/setenforce 0
 
+The command and shell module care about return codes, so if you have a command
+who's successful exit code is not zero, you may wish to do this:
+
+   tasks:
+     - name: run this command and ignore the result
+       action: shell /usr/bin/somecommand & /bin/true
+
 Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
@@ -201,11 +210,13 @@ a variable called 'vhost' in the 'vars' section, you could do this::
 
 Those same variables are usable in templates, which we'll get to later.
 
+Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
+make more sense to break up tasks using the 'include:' directive.  We'll show that a bit later.
 
 Running Operations On Change
 ````````````````````````````
 
-As we've mentioned, nearly all modules are written to be 'idempotent' and can relay  when
+As we've mentioned, modules are written to be 'idempotent' and can relay  when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
@@ -246,13 +257,15 @@ won't need them for much else.
    Notify handlers are always run in the order written.
 
 
-Include Files And Reuse
-```````````````````````
+Include Files And Encouraging Reuse
+```````````````````````````````````
 
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
-include files to do this.
+include files to do this.  Use of included task lists is a great way to define a role
+that system is going to fulfill.  Remember, the goal of a play in a playbook is to map
+a group of systems into multiple roles.  Let's see what this looks like...
 
-An include file simply contains a flat list of tasks, like so::
+A task include file simply contains a flat list of tasks, like so::
 
     ---
     # possibly saved as tasks/foo.yml
@@ -261,12 +274,12 @@ An include file simply contains a flat list of tasks, like so::
     - name: placeholder bar
       action: command /bin/bar
 
-Include directives look like this::
+Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
    - tasks:
       - include: tasks/foo.yml
 
-You can also pass variables into includes directly.  We might call this a 'parameterized include'.
+You can also pass variables into includes.  We call this a 'parameterized include'.
 
 For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
@@ -276,17 +289,17 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
-Variables passed in can be used in the included files.  You can reference them like this::
+Variables passed in can then be used in the included files.  You can reference them like this::
    
    $user
 
-In addition to the explicitly passed in parameters, all variables from
-the vars section are also available for use here as well.  
+(In addition to the explicitly passed in parameters, all variables from
+the vars section are also available for use here as well.)
 
 .. note::
-   Include statements are only usable from the top level
-   playbook file.  This means includes can not include other
-   includes.  This may be implemented in a later release.
+   Task include statements are only usable one-level deep.
+   This means task includes can not include other
+   task includes.  This may change in a later release.
 
 Includes can also be used in the 'handlers' section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
@@ -305,10 +318,12 @@ of a play::
 
 You can mix in includes along with your regular non-included tasks and handlers.
 
-Note that you can not conditionally path the location to an include file, like you can
+NOTE:: you can not conditionally path the location to an include file, like you can
 with 'vars_files'.  If you find yourself needing to do this, consider how you can
-restructure your playbook to be more class/role oriented.  
-
+restructure your playbook to be more class/role oriented.  This is to say you cannot
+use a 'fact' to decide what include file to use.  All hosts contained within the play
+are going to get the same tasks.  ('only_if' provides some ability for hosts to conditionally
+skip tasks).
 
 Executing A Playbook
 ````````````````````

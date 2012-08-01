@@ -433,7 +433,6 @@ raw
 ```
 
 Executes a low-down and dirty SSH command, not going through the module subsystem.
-This module is new in Ansible 0.4.
 
 This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
