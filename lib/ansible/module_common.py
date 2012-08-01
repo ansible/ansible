@@ -64,25 +64,42 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         (self.params, self.args) = self._load_params()
 
+        self._legal_inputs = []
         self._handle_aliases()
-        self._set_defaults()
+        self._check_invalid_arguments()
+        self._set_defaults(pre=True)
 
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
+
+        self._set_defaults(pre=False)
         if not no_log:
             self._log_invocation()
 
+
     def _handle_aliases(self):
         for (k,v) in self.argument_spec.iteritems():
+            self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
+            default = v.get('default', None)
+            required = v.get('required', False)
+            if default is not None and required:
+                # not alias specific but this is a good place to check this
+                self.fail_json(msg="internal error: required and default are mutally exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
                 self.fail_json(msg='internal error: aliases must be a list')
             for alias in aliases:
+                self._legal_inputs.append(alias)
                 if alias in self.params:
                     self.params[k] = self.params[alias]
+
+    def _check_invalid_arguments(self):
+        for (k,v) in self.params.iteritems():
+            if k not in self._legal_inputs:
+                self.fail_json(msg="unsupported parameter for module: %s" % k)
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
@@ -109,11 +126,17 @@ class AnsibleModule(object):
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
 
-    def _set_defaults(self):
+    def _set_defaults(self, pre=True):
          for (k,v) in self.argument_spec.iteritems():
-             default = v.get('default', '__NO_DEFAULT__')
-             if default != '__NO_DEFAULT__' and k not in self.params:
-                 self.params[k] = default
+             default = v.get('default', None)
+             if pre == True:
+                 # this prevents setting defaults on required items
+                 if default and k not in self.params:
+                     self.params[k] = default
+             else:
+                 # make sure things without a default still get set None
+                 if k not in self.params:
+                     self.params[k] = default
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
