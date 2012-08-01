@@ -23,13 +23,13 @@ class Task(object):
     __slots__ = [ 
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 
-        'play', 'notified_by', 'tags', 'with_items', 'first_available_file'
+        'play', 'notified_by', 'tags', 'with_items', 'first_available_file', 'ignore_errors'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 'first_available_file',
-         'include', 'tags'
+         'include', 'tags', 'ignore_errors'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -62,7 +62,8 @@ class Task(object):
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
         self.with_items = ds.get('with_items', None)
-
+        self.ignore_errors = ds.get('ignore_errors', False)
+        
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
             self.notify = [ self.notify ]
@@ -96,6 +97,9 @@ class Task(object):
         if self.with_items is None:
             self.with_items = [ ]
         self.module_vars['items'] = self.with_items
+
+        # make ignore_errors accessable to Runner code
+        self.module_vars['ignore_errors'] = self.ignore_errors
 
         # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)
