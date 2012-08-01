@@ -588,10 +588,6 @@ Controls services on remote machines.
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | enabled            | no       |         | Whether the service should start on boot.  Either 'yes' or 'no'.           |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| list               | no       |         | when used as 'list=status', returns the status of the service along with   |
-|                    |          |         | other results.  Primarily useful for /usr/bin/ansible or playbooks with    |
-|                    |          |         | --verbose.                                                                 |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
