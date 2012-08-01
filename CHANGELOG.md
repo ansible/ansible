@@ -3,52 +3,64 @@ Ansible Changes By Release
 
 0.6 "Cabo" ------------ pending
 
-* inventory file can use a line of the form base[beg:end]tail to define a
-  set of hosts, where [beg:end] defines a numerical range. 'beg' can be a
-  a string padded with zero(s) to the left. If so provided, it acts as
-  a formatting hint during hostname expansion. The hint must be confirmed
-  by having an 'end' that has the same length as 'beg'
-* groups variable available as a hash to return the hosts in each group name
-* fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
-* apt module now takes an optional install-recommends=yes|no (default yes)
-* fixes to the return codes of the copy module
-* copy module takes a remote md5sum to avoid large file transfer
-* when sudoing to root, still use /etc/ansible/setup as the metadata path, as if root
+playbooks:
+
 * support to tag tasks and includes and use --tags in playbook CLI 
-* various user and group module fixes (error handling, etc)
-* apt module now takes an optional force parameter
-* slightly better psychic service status handling for the service module
-* cowsay support on Ubuntu
 * playbooks can now include other playbooks (example/playbooks/nested_playbooks.yml)
-* paramiko is now only imported if needed when running from source checkout
-* fetch module fixes for SSH connection type
-* modules now consistently all take yes/no for boolean parameters (some accepted true/false)
-* in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
-* setup module no longer saves to disk, template module now only used in playbooks
-* setup module no longer needs to run twice per playbook
 * vars_files now usable with with_items, provided file paths don't contain host specific facts
 * error reporting if with_items value is unbound
 * with_items no longer creates lots of tasks, creates one task that makes multiple calls
 * can use host_specific facts inside with_items (see above)
 * at the top level of a playbook, set 'gather_facts: False' to skip fact gathering
 * first_available_file and with_items used together will now raise an error
-* ec2 inventory script
-* mount module
-* apt module now passes DEBIAN_FRONTEND=noninteractive
 * to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
 * automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
+* playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
+* hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
+
+inventory:
+
+* inventory file can use a line of the form base[beg:end]tail to define a
+  set of hosts, where [beg:end] defines a numerical range. 'beg' can be a
+  a string padded with zero(s) to the left. If so provided, it acts as
+  a formatting hint during hostname expansion. The hint must be confirmed
+  by having an 'end' that has the same length as 'beg'
+* groups variable available as a hash to return the hosts in each group name
+* in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
+* YAML inventory is deprecated and will be removed in 0.7
+* ec2 inventory script
+* support ranges of hosts in the host file
+
+modules:
+
+* fetch module now does not fail a system when requesting file paths (ex: logs) that don't exist
+* apt module now takes an optional install-recommends=yes|no (default yes)
+* fixes to the return codes of the copy module
+* copy module takes a remote md5sum to avoid large file transfer
+* various user and group module fixes (error handling, etc)
+* apt module now takes an optional force parameter
+* slightly better psychic service status handling for the service module
+* fetch module fixes for SSH connection type
+* modules now consistently all take yes/no for boolean parameters (and DWIM on true/false/1/0/y/n/etc)
+* setup module no longer saves to disk, template module now only used in playbooks
+* setup module no longer needs to run twice per playbook
+* apt module now passes DEBIAN_FRONTEND=noninteractive
+* mount module (manages active mounts + fstab)
 * setup module fixes if no ipv6 support
 * internals: template in common module boilerplate, also causes less SSH operations when used
 * git module fixes
-* various ssh connection fixes for old Ubuntu clients
 * setup module overhaul, more modular 
 * minor caching logic added to inventory to reduce hammering of inventory scripts.
-* ./hacking/test-module now supports options like ansible takes and has a debugger mode
-* playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
-* support ranges of hosts in the host file
-* hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
 * MySQL and PostgreSQL modules for user and db management
 * vars_prompt now supports private password entry (see examples/playbooks/prompts.yml)
+
+internals:
+
+* when sudoing to root, still use /etc/ansible/setup as the metadata path, as if root
+* paramiko is now only imported if needed when running from source checkout
+* cowsay support on Ubuntu
+* various ssh connection fixes for old Ubuntu clients
+* ./hacking/test-module now supports options like ansible takes and has a debugger mode
 * sudoing to a user other than root now works more seamlessly (uses /tmp, avoids umask issues)
 
 0.5 "Amsterdam" ------- July 04, 2012
