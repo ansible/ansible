@@ -164,7 +164,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            user=dict(required=True),
+            user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),

@@ -20,16 +20,11 @@ playbooks:
 
 inventory:
 
-* inventory file can use a line of the form base[beg:end]tail to define a
-  set of hosts, where [beg:end] defines a numerical range. 'beg' can be a
-  a string padded with zero(s) to the left. If so provided, it acts as
-  a formatting hint during hostname expansion. The hint must be confirmed
-  by having an 'end' that has the same length as 'beg'
 * groups variable available as a hash to return the hosts in each group name
 * in YAML inventory, hosts can list their groups in inverted order now also (see tests/yaml_hosts)
 * YAML inventory is deprecated and will be removed in 0.7
 * ec2 inventory script
-* support ranges of hosts in the host file
+* support ranges of hosts in the host file, like www[001-100].example.com (supports leading zeros and also not)
 
 modules:
 

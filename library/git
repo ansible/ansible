@@ -142,7 +142,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             dest=dict(required=True),
-            repo=dict(required=True),
+            repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin')
         )

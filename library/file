@@ -31,7 +31,7 @@ def add_path_info(kwargs):
     path = kwargs['path']
     if os.path.exists(path):
         (user, group) = user_and_group(path)
-        kwargs['user']  = user
+        kwargs['owner']  = user
         kwargs['group'] = group
         st = os.stat(path)
         kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
@@ -209,13 +209,10 @@ def set_mode_if_different(path, mode, changed):
 def rmtree_error(func, path, exc_info):
     module_fail_json(path=path, msg='failed to remove directory')
 
-# ===========================================
-# go...
-
 def main():
 
     global module
-    module = AnsibleModule(
+    module = AnsibleFileModule(
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
@@ -351,6 +348,12 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
 
+class AnsibleFileModule(AnsibleModule):
+
+    def _check_invalid_arguments(self):
+        # needed to support daisy chaining
+        pass
+
+main()
 
