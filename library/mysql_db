@@ -70,7 +70,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            db=dict(required=True),
+            db=dict(required=True, aliases=['name']),
             encoding=dict(default=""),
             collation=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),

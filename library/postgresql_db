@@ -57,7 +57,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default=""),
             login_host=dict(default=""),
-            db=dict(required=True),
+            db=dict(required=True, aliases=['name']),
             owner=dict(default=""),
             template=dict(default=""),
             encoding=dict(default=""),
