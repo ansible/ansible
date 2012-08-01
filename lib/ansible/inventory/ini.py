@@ -168,7 +168,7 @@ class InventoryParser(object):
                 if line.find("=") == -1:
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
-                    (k,v) = line.split("=")
+                    (k,v) = line.split("=",1)
                     group.set_variable(k,v)
 
 
