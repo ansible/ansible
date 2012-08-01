@@ -3,6 +3,13 @@ Best Practices
 
 Here are some tips for making the most of Ansible.
 
+Always Mention State
+++++++++++++++++++++
+
+The 'state' parameter is optional to a lot of modules.  Whether state=present or state=absent, it's always
+best to leave that parameter in your playbooks to make it clear, especially as some modules support additional
+states.
+
 Group By Roles
 ++++++++++++++
 
