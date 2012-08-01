@@ -158,6 +158,8 @@ def main():
     
     if module.params['enabled']:
         rc_enable, out_enable, err_enable = _do_enable(name, enable)
+        if rc == 0:
+            changed = True
         rc += rc_enable
         out += out_enable
         err += err_enable
@@ -201,6 +203,10 @@ def main():
         module.fail_json(msg=err)
 
     result = {"changed": changed}
+    if module.params['enabled']:
+        result['enabled'] = module.params['enabled']
+    if state:
+        result['state'] = state
     rc, stdout, stderr = _run("%s %s status" % (SERVICE, name))
     module.exit_json(**result);
     
