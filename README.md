@@ -4,7 +4,7 @@ Ansible
 Ansible is a radically simple configuration-management, deployment, task-execution, and 
 multinode orchestration framework.   
 
-Read all about at it at (http://ansible.github.com)
+Read the documentation at http://ansible.github.com
 
 Design Principles
 =================
