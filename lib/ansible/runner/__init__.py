@@ -602,7 +602,7 @@ class Runner(object):
             if 'skipped' in data:
                 self.callbacks.on_skipped(result.host)
             elif not result.is_successful():
-                ignore_errors = self.module_vars['ignore_errors']
+                ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(result.host, data, ignore_errors)
                 if ignore_errors:
                     if 'failed' in result.result:
