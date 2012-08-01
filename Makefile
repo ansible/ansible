@@ -133,11 +133,12 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
+	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
-	@echo "    rpm-build/noarch/$(RPMNVR).noarch.rpm"
+	@echo "    rpm-build/$(RPMNVR).noarch.rpm"
 	@echo "#############################################"
 
 debian: sdist
