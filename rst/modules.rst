@@ -50,7 +50,7 @@ Manages apt-packages (such as for Debian/Ubuntu).
 | update_cache       | no       | no      | Run the equivalent of apt-get update before the operation.                 |
 |                    |          |         | Can be run as part of the package installation or a seperate step          | 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| purge              | no       | no      | Will forge purge of configuration files if state is set to 'removed'.      |
+| purge              | no       | no      | Will forge purge of configuration files if state is set to 'absent'.       |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | default_release    | no       |         | Corresponds to the -t option for apt and sets pin priorities               |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
