@@ -83,7 +83,8 @@ class Task(object):
             import_tags = import_tags.split(",")
 
         self.name = utils.template(self.name, self.module_vars)
-        self.action = utils.template(self.name, self.module_vars)
+        self.action = utils.template(self.action, self.module_vars)
+        self.module_args = utils.template(self.module_args, self.module_vars)
 
         # handle mutually incompatible options
         if self.with_items is not None and self.first_available_file is not None:
