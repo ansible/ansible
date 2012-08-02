@@ -16,9 +16,9 @@ def _ensure_virtualenv():
         return _run('%s %s' % (VIRTUALENV, ENV))
 
 
-def _is_installed(package):
+def _is_package_installed(name):
     rc, status_stdout, status_stderr = _run_pip('freeze')
-    return package.lower() in status_stdout.lower()
+    return name.lower() in status_stdout.lower()
 
 
 def _run_pip(cmd):
@@ -35,7 +35,7 @@ def _run(cmd):
 
 def main():
     arg_spec = dict(
-        state=dict(default='installed', choices=['installed', 'uninstalled']),
+        state=dict(required=True, choices=['installed', 'uninstalled']),
         name=dict(default=None, required=False),
         requirements=dict(default=None, required=False),
         virtualenv=dict(default=None, required=False)
@@ -90,7 +90,7 @@ def main():
         out += out_venv
         err += err_venv
 
-        installed = _is_installed(name)
+        installed = _is_package_installed(name)
 
         changed = ((installed and state == 'uninstalled') or
                    (not installed and state == 'installed'))
