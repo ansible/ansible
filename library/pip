@@ -5,12 +5,8 @@ VIRTUALENV = '/usr/local/bin/virtualenv'
 ENV = None
 
 
-def _get_activate_path():
-    return os.path.join(ENV, 'bin', 'activate')
-
-
 def _ensure_virtualenv():
-    if os.path.exists(_get_activate_path()):
+    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
         return 0, '', ''
     else:
         return _run('%s %s' % (VIRTUALENV, ENV))
@@ -72,6 +68,13 @@ def main():
 
     cmd = None
 
+    if ENV:
+        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+
+        rc += rc_venv
+        out += out_venv
+        err += err_venv
+
     if requirements:
         cmd = '%s -r %s' % (command_map[state], requirements)
         rc_pip, out_pip, err_pip = _run_pip(cmd)
@@ -83,13 +86,6 @@ def main():
         changed = 'Successfully installed' in out
 
     if name:
-
-        rc_venv, out_venv, err_venv = _ensure_virtualenv()
-
-        rc += rc_venv
-        out += out_venv
-        err += err_venv
-
         installed = _is_package_installed(name)
 
         changed = ((installed and state == 'uninstalled') or
