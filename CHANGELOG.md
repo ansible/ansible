@@ -17,6 +17,8 @@ playbooks:
 * automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
 * playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
 * hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
+* ignore_errors: True on a task can be used to allow a task to fail and not stop the play
+* with_items with the apt module will install/remove/update everything in a single command (yum pending)
 
 inventory:
 
