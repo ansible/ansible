@@ -158,8 +158,6 @@ def main():
     
     if module.params['enabled']:
         rc_enable, out_enable, err_enable = _do_enable(name, enable)
-        if rc == 0:
-            changed = True
         rc += rc_enable
         out += out_enable
         err += err_enable
