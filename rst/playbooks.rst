@@ -263,15 +263,15 @@ An include file simply contains a flat list of tasks, like so::
 
 Include directives look like this::
 
-   - tasks:
-      - include: tasks/foo.yml
+   tasks:
+    - include: tasks/foo.yml
 
 You can also pass variables into includes directly.  We might call this a 'parameterized include'.
 
 For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
 
-   - tasks:
+   tasks:
      - include: wordpress.yml user=timmy 
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
