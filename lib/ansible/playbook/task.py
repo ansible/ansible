@@ -71,7 +71,7 @@ class Task(object):
         # split the action line into a module name + arguments
         tokens = self.action.split(None, 1)
         if len(tokens) < 1:
-            raise errors.AnsibleError("invalid/missing action in task.\n name: %s\n action: %s" % (self.name, self.action))
+            raise errors.AnsibleError("invalid/missing action in task. name: %s" % self.name)
         self.module_name = tokens[0]
         self.module_args = ''
         if len(tokens) > 1:
