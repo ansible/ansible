@@ -105,7 +105,12 @@ class ParamikoConnection(object):
                     while not sudo_output.endswith(prompt):
                         chunk = chan.recv(bufsize)
                         if not chunk:
-                            raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                            if 'unknown user' in sudo_output:
+                                raise errors.AnsibleError(
+                                    'user %s does not exist' % sudo_user)
+                            else:
+                                raise errors.AnsibleError('ssh connection ' +
+                                    'closed waiting for password prompt')
                         sudo_output += chunk
                     chan.sendall(self.runner.sudo_pass + '\n')
             except socket.timeout:
