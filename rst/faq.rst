@@ -1,6 +1,12 @@
 FAQ
 ===
 
+Why Is It Called Ansible?
+-------------------------
+
+One of my favorite books is Orson Scott Card's "Ender's Game".  In the book, the Ansible is a method of instantaneous
+long distance "hyperspace" communication with a large number of space ships.  You should read it!
+
 What inspired Ansible?
 ----------------------
 
