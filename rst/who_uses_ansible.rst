@@ -1,7 +1,7 @@
 Who Uses Ansible
 ================
 
-Ansible is used by all sorts of organizations from hosted web applications, media companies, consultancies, and ISVs.   Some of these include:
+Ansible is used by all sorts of organizations from hosted web applications, media companies, universities, consultancies, and ISVs -- all over the world. Some of these users include:
 
 ==================================================  ===================================================
 Who They Are                                        What They Do

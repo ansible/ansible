@@ -149,6 +149,7 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Best Practices</a><ul>
+<li><a class="reference internal" href="#always-mention-state">Always Mention State</a></li>
 <li><a class="reference internal" href="#group-by-roles">Group By Roles</a></li>
 <li><a class="reference internal" href="#directory-organization">Directory Organization</a></li>
 <li><a class="reference internal" href="#bundling-ansible-modules-with-playbooks">Bundling Ansible Modules With Playbooks</a></li>
@@ -183,6 +184,12 @@ s.parentNode.insertBefore(ga, s);
   <div class="section" id="best-practices">
 <h1>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this headline">¶</a></h1>
 <p>Here are some tips for making the most of Ansible.</p>
+<div class="section" id="always-mention-state">
+<h2>Always Mention State<a class="headerlink" href="#always-mention-state" title="Permalink to this headline">¶</a></h2>
+<p>The &#8216;state&#8217; parameter is optional to a lot of modules.  Whether state=present or state=absent, it&#8217;s always
+best to leave that parameter in your playbooks to make it clear, especially as some modules support additional
+states.</p>
+</div>
 <div class="section" id="group-by-roles">
 <h2>Group By Roles<a class="headerlink" href="#group-by-roles" title="Permalink to this headline">¶</a></h2>
 <p>A system can be in multiple groups.  See <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.   Having groups named after things like
