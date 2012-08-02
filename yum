@@ -106,7 +106,7 @@ def run_yum(command):
         rc = 1
         err = traceback.format_exc()
         out = ''
-
+    
         if out is None:
            out = ''
         if err is None:
@@ -119,7 +119,7 @@ def run_yum(command):
 def ensure(my, state, pkgspec):
     yumconf = my.conf.config_file_path
     res = {}
-    if state == 'installed':
+    if state in [ 'installed', 'present' ]:
         # check if pkgspec is installed
         if re.search('[></=]',pkgspec):
             try:
@@ -170,7 +170,7 @@ def ensure(my, state, pkgspec):
         
         return res
         
-    if state == 'removed':
+    if state in [ 'absent', 'removed' ]:
         # check if pkgspec is installed
         # if not return {changed: False, failed=False }
         # if so try to remove it:
@@ -250,7 +250,7 @@ def ensure(my, state, pkgspec):
         return res
 
     # should be caught by AnsibleModule argument_spec        
-    return dict(changed=False, failed=True, results='', errors='unexpected state')
+    return dict(changed=False, failed=True, results='', errors="unexpected state: %s" % state)
  
 
 
@@ -289,7 +289,7 @@ def main():
     if params['list'] and params['pkg']:
         module.fail_json(msg="expected 'list=' or 'name=', but not both")
     
-    if 'list' in params:
+    if params['list']:
         try:
             my = yum_base(conf_file=params['conf_file'], cachedir=True)
             results = dict(results=list_stuff(my, params['list']))
