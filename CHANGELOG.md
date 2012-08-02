@@ -18,7 +18,7 @@ playbooks:
 * playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
 * hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
 * ignore_errors: True on a task can be used to allow a task to fail and not stop the play
-* with_items with the apt module will install/remove/update everything in a single command (yum pending)
+* with_items with the apt/yum module will install/remove/update everything in a single command
 
 inventory:
 
@@ -50,6 +50,7 @@ modules:
 * minor caching logic added to inventory to reduce hammering of inventory scripts.
 * MySQL and PostgreSQL modules for user and db management
 * vars_prompt now supports private password entry (see examples/playbooks/prompts.yml)
+* yum module modified to be more tolerant of plugins spewing random console messages (ex: RHN)
 
 internals:
 
