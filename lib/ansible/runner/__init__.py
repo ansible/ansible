@@ -485,7 +485,7 @@ class Runner(object):
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
 
-        if self.module_name in [ 'apt' ]:
+        if self.module_name in [ 'apt', 'yum' ]:
             # hack for apt and soon yum, with_items maps back into a single module call
             inject['item'] = ",".join(items)
             items = []
