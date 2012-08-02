@@ -312,7 +312,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_skipped(self, host, item=None):
 
-	msg = ''
+        msg = ''
         if item:
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
