@@ -326,7 +326,6 @@ def latest(module, items, repoq, yum_basecmd):
             res['msg'] += err
         else:
             res['changed'] = True
-            res['failed'] = False
             res['rc'] = 0
             res['results'] += out
             res['msg'] += err
