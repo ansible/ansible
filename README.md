@@ -57,7 +57,7 @@ Blogs & Articles
 * [Infrastructure as Data](http://www.capsunlock.net/2012/04/ansible-infrastructure-as-data-not-infrastructure-as-code.html) - cocoy
 * [Ansible Pull Mode](http://www.capsunlock.net/2012/05/using-ansible-pull-and-user-data-to-setup-ec2-or-openstack-servers.html) - cocoy
 * [Exploring Configuration Management With Ansible](http://palominodb.com/blog/2012/08/01/exploring-configuration-management-ansible) - Palamino DB                                                                                                                                 - 
-* [You Should Consider Using SSH Based Configuration Management](http://www.lshift.net/blog/2012/07/30/you-should-consider-using-ssh-based-configuration-management) - [lshift.net](http://lshift.net)
+* [You Should Consider Using SSH Based Configuration Management](http://www.lshift.net/blog/2012/07/30/you-should-consider-using-ssh-based-configuration-management) - LShift Ltd
 
 Disclaimer
 ==========
