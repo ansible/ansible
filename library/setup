@@ -189,6 +189,7 @@ class LinuxHardware(Hardware):
                  'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
                  'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
     # From smolt and DMI spec
+    # See http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
     FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
                     "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
                     "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
@@ -196,7 +197,7 @@ class LinuxHardware(Hardware):
                     "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
                     "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
                     "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                    "CompactPCI", "AdvancedTCA" ]
+                    "CompactPCI", "AdvancedTCA", "Blade" ]
 
     def __init__(self):
         Hardware.__init__(self)
@@ -250,7 +251,6 @@ class LinuxHardware(Hardware):
             data = get_file_content(path)
             if data is not None:
                 if key == 'form_factor':
-
                     try:
                         self.facts['form_factor'] = LinuxHardware.FORM_FACTOR[int(data)]
                     except IndexError, e:
