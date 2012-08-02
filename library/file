@@ -224,7 +224,7 @@ def main():
             seuser = dict(),
             serole = dict(),
             selevel = dict(),
-            secontext = dict(),
+            setype = dict(),
         )
     )
 
