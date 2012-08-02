@@ -149,7 +149,6 @@ def install(module, items, repoq, yum_basecmd):
     res['results'] = ''
     res['msg'] = ''
     res['rc'] = 0
-    res['failed'] = False
     res['changed'] = False
 
     for spec in items:
@@ -203,13 +202,11 @@ def install(module, items, repoq, yum_basecmd):
         # look for the pkg via obsoletes
         if rc:
             res['changed'] = False
-            res['failed'] = True
             res['rc'] = rc
             res['results'] += out
             res['msg'] += err
         else:
             res['changed'] = True
-            res['failed'] = False
             res['rc'] = 0
             res['results'] += out
             res['msg'] += err
@@ -222,7 +219,6 @@ def remove(module, items, repoq, yum_basecmd):
     res['results'] = ''
     res['msg'] = ''
     res['changed'] = False
-    res['failed'] = False
     res['rc'] = 0
     
     for spec in items:
@@ -261,7 +257,6 @@ def remove(module, items, repoq, yum_basecmd):
             res['msg'] += err
         else:
             res['changed'] = True
-            res['failed'] = False
             res['rc'] = 0
             res['results'] += out
             res['msg'] += err
@@ -273,7 +268,6 @@ def latest(module, items, repoq, yum_basecmd):
     res['results'] = ''
     res['msg'] = ''
     res['changed'] = False
-    res['failed'] = False
     res['rc'] = 0
     
     for spec in items:
