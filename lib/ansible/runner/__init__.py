@@ -475,6 +475,7 @@ class Runner(object):
         inject['hostvars'] = self.setup_cache
 
         items = self.module_vars.get('items', [])
+
         if isinstance(items, basestring) and items.startswith("$"):
             items = items.replace("$","")
             if items in inject:
@@ -483,6 +484,11 @@ class Runner(object):
                 raise errors.AnsibleError("unbound variable in with_items: %s" % items)
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
+
+        if self.module_name in [ 'apt' ]:
+            # hack for apt and soon yum, with_items maps back into a single module call
+            inject['item'] = ",".join(items)
+            items = []
           
         if len(items) == 0:
             return self._executor_internal_inner(host, inject, port)
