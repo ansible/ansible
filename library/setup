@@ -250,7 +250,11 @@ class LinuxHardware(Hardware):
             data = get_file_content(path)
             if data is not None:
                 if key == 'form_factor':
-                    self.facts['form_factor'] = LinuxHardware.FORM_FACTOR[int(data)]
+
+                    try:
+                        self.facts['form_factor'] = LinuxHardware.FORM_FACTOR[int(data)]
+                    except IndexError, e:
+                        self.facts['form_factor'] = 'unknown (%s)' % data
                 else:
                     self.facts[key] = data
             else:
