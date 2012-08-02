@@ -322,7 +322,7 @@ def main():
         else:
             abs_src = os.path.join(os.path.dirname(dest), src)
         if not os.path.exists(abs_src):
-            module_fail_json(dest=dest, src=src, msg='src file does not exist')
+            module_fail_json(path=path, src=src, msg='src file does not exist')
    
         if prev_state == 'absent':
             os.symlink(src, path)
