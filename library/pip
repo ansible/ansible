@@ -1,8 +1,24 @@
 #!/usr/bin/python
 
-PIP = '/usr/local/bin/pip'
-VIRTUALENV = '/usr/local/bin/virtualenv'
+PIP = None
+VIRTUALENV = None
 ENV = None
+
+
+def _find_binary(name):
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    for p in paths:
+        e = p + '/' +  name
+        if os.path.exists(e):
+            return e
+
+
+def _find_pip():
+    if ENV:
+        return os.path.join(ENV, 'bin', 'pip')
+    return _find_binary('pip')
+
 
 
 def _ensure_virtualenv():
@@ -46,7 +62,8 @@ def main():
     global ENV
 
     ENV = module.params['virtualenv']
-    PIP = os.path.join(ENV, 'bin', 'pip') if ENV else PIP
+    PIP = _find_pip()
+    VIRTUALENV = _find_binary('virtualenv')
 
     rc = 0
     err = ''
@@ -124,7 +141,8 @@ def main():
     if rc != 0:
         module.fail_json(msg=err, cmd=cmd)
 
-    module.exit_json(changed=changed, pip=PIP, name=name, version=version, state=state,
+    module.exit_json(changed=changed, pip_cmd=PIP, virtualenv_cmd=VIRTUALENV,
+                     name=name, version=version, state=state,
                      requirements=requirements, virtualenv=ENV, status=out,
                      environment=_run_pip('freeze'))
 
