@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 Ansible module to add authorized_keys for ssh logins.
 (c) 2012, Brad Olson <brado@movedbylight.com>
