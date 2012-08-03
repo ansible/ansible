@@ -12,13 +12,14 @@ def _ensure_virtualenv():
         return _run('%s %s' % (VIRTUALENV, ENV))
 
 
-def _is_package_installed(name):
+def _is_package_installed(name, version=None):
+    full_name = name + '==' if version is None else name + '==' + version
     rc, status_stdout, status_stderr = _run_pip('freeze')
-    return name.lower() in status_stdout.lower()
+    return full_name.lower() in status_stdout.lower(), full_name
 
 
 def _run_pip(cmd):
-    return _run('%s %s --use-mirrors' % (PIP, cmd))
+    return _run('%s %s' % (PIP, cmd))
 
 
 def _run(cmd):
@@ -31,8 +32,9 @@ def _run(cmd):
 
 def main():
     arg_spec = dict(
-        state=dict(required=True, choices=['installed', 'uninstalled']),
+        state=dict(default='present', choices=['absent', 'present', 'latest']),
         name=dict(default=None, required=False),
+        version=dict(default=None, required=False),
         requirements=dict(default=None, required=False),
         virtualenv=dict(default=None, required=False)
     )
@@ -52,8 +54,23 @@ def main():
 
     state = module.params['state']
     name = module.params['name']
+    version = module.params['version']
     requirements = module.params['requirements']
-    command_map = dict(installed='install', uninstalled='uninstall -y')
+    command_map = dict(present='install', absent='uninstall -y', latest='install --upgrade')
+
+    if state == 'latest' and requirements is not None:
+        module.fail_json(msg='If `state` is set to `latest` the `requirements` '
+                             'paramater must not be specified.')
+
+    if name is not None and '==' in name:
+        module.fail_json(msg='It looks like you specified the version number '
+                             'in the library name. Use the `version` parameter '
+                             'to specify versio instead')
+
+    if version is not None and name is None:
+        module.fail_json(msg='The `version` parameter must be used with the '
+                             '`name` parameter and not with the `requirements` '
+                             'paramter')
 
     if name is None and requirements is None:
         module.fail_json(msg='You must specify a python library name via '
@@ -67,6 +84,7 @@ def main():
                              '`requirements` parameter')
 
     cmd = None
+    installed = None
 
     if ENV:
         rc_venv, out_venv, err_venv = _ensure_virtualenv()
@@ -76,23 +94,27 @@ def main():
         err += err_venv
 
     if requirements:
-        cmd = '%s -r %s' % (command_map[state], requirements)
+        cmd = '%s -r %s --use-mirrors' % (command_map[state], requirements)
         rc_pip, out_pip, err_pip = _run_pip(cmd)
 
         rc += rc_pip
         out += out_pip
         err += err_pip
 
-        changed = 'Successfully installed' in out
+        def did_install(out):
+            return 'Successfully installed' in out
+
+        changed = ((did_install(out) and state == 'installed') or
+                   (not did_install(out) and state == 'uninstalled'))
 
     if name:
-        installed = _is_package_installed(name)
+        installed = _is_package_installed(name, version)
 
         changed = ((installed and state == 'uninstalled') or
                    (not installed and state == 'installed'))
 
         if changed:
-            cmd = '%s %s' % (command_map[state], name)
+            cmd = '%s %s --use-mirrors' % (command_map[state], name)
             rc_pip, out_pip, err_pip = _run_pip(cmd)
 
             rc += rc_pip
@@ -102,7 +124,9 @@ def main():
     if rc != 0:
         module.fail_json(msg=err, cmd=cmd)
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, pip=PIP, name=name, version=version, state=state,
+                     requirements=requirements, virtualenv=ENV, status=out,
+                     environment=_run_pip('freeze'))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
