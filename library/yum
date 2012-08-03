@@ -1,4 +1,6 @@
 #!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
 #
