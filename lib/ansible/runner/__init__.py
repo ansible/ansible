@@ -188,7 +188,7 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data.encode("utf8"))
+        afo.write(data.encode('utf8'))
         afo.flush()
         afo.close()
 
@@ -700,7 +700,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = base64.b64encode(utils.template(self.module_args, inject).encode('utf-8'))
+            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
  
         # use the correct python interpreter for the host

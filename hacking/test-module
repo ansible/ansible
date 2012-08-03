@@ -79,8 +79,9 @@ def boilerplate_module(modfile, args):
     module_fh.close()
 
     if included_boilerplate:
+
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-        encoded_args = base64.b64encode(args)
+        encoded_args = "\"\"\"%s\"\"\"" % args.replace("\"","\\\"")
         module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
 
         modfile2_path = os.path.expanduser("~/.ansible_module_generated")
