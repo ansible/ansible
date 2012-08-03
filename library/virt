@@ -1,9 +1,11 @@
 #!/usr/bin/python 
+# -*- coding: utf-8 -*-
+
 """
 Virt management features
 
 Copyright 2007, 2012 Red Hat, Inc
-Michael DeHaan <mdehaan@redhat.com>
+Michael DeHaan <michael.dehaan@gmail.com>
 Seth Vidal <skvidal@fedoraproject.org>
 
 This software may be freely redistributed under the terms of the GNU
