@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 #
@@ -84,7 +85,7 @@ class CommandModule(AnsibleModule):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        args = base64.b64decode(MODULE_ARGS)
+        args = MODULE_ARGS
         items   = shlex.split(args)
         params = {}
         params['chdir'] = None
