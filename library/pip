@@ -14,11 +14,14 @@ def _find_binary(name):
             return e
 
 
+def _get_full_name(name, version=None):
+    return name + '==' if version is None else name + '==' + version
+
+
 def _find_pip():
     if ENV:
         return os.path.join(ENV, 'bin', 'pip')
     return _find_binary('pip')
-
 
 
 def _ensure_virtualenv():
@@ -29,13 +32,8 @@ def _ensure_virtualenv():
 
 
 def _is_package_installed(name, version=None):
-    full_name = name + '==' if version is None else name + '==' + version
-    rc, status_stdout, status_stderr = _run_pip('freeze')
-    return full_name.lower() in status_stdout.lower(), full_name
-
-
-def _run_pip(cmd):
-    return _run('%s %s' % (PIP, cmd))
+    rc, status_stdout, status_stderr = _run('%s freeze' % PIP)
+    return _get_full_name(name, version).lower() in status_stdout.lower()
 
 
 def _run(cmd):
@@ -73,7 +71,11 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
-    command_map = dict(present='install', absent='uninstall -y', latest='install --upgrade')
+    command_map = dict(present='install', absent='uninstall', latest='install')
+
+    if state == 'latest' and version is not None:
+        module.fail_json(msg='If `state` is set to `latest` the `version` '
+                             'paramater must not be specified.')
 
     if state == 'latest' and requirements is not None:
         module.fail_json(msg='If `state` is set to `latest` the `requirements` '
@@ -111,8 +113,8 @@ def main():
         err += err_venv
 
     if requirements:
-        cmd = '%s -r %s --use-mirrors' % (command_map[state], requirements)
-        rc_pip, out_pip, err_pip = _run_pip(cmd)
+        cmd = '%s %s -r %s --use-mirrors' % (PIP, command_map[state], requirements)
+        rc_pip, out_pip, err_pip = _run(cmd)
 
         rc += rc_pip
         out += out_pip
@@ -121,18 +123,37 @@ def main():
         def did_install(out):
             return 'Successfully installed' in out
 
-        changed = ((did_install(out) and state == 'installed') or
-                   (not did_install(out) and state == 'uninstalled'))
+        changed = ((did_install(out) and state == 'present') or
+                   (not did_install(out) and state == 'absent'))
 
-    if name:
+    if name and state == 'latest':
+        cmd = '%s %s %s --upgrade' % (PIP, command_map[state], name)
+
+        rc_pip, out_pip, err_pip = _run(cmd)
+
+        rc += rc_pip
+        out += out_pip
+        err += err_pip
+
+        changed = 'Successfully installed' in out_pip
+
+    elif name:
         installed = _is_package_installed(name, version)
 
-        changed = ((installed and state == 'uninstalled') or
-                   (not installed and state == 'installed'))
+        changed = ((installed and state == 'absent') or
+                   (not installed and state == 'present'))
 
         if changed:
-            cmd = '%s %s --use-mirrors' % (command_map[state], name)
-            rc_pip, out_pip, err_pip = _run_pip(cmd)
+            full_name = _get_full_name(name, version) if state == 'present' else name
+
+            cmd = '%s %s %s' % (PIP, command_map[state], full_name)
+
+            if state == 'absent':
+                cmd = cmd + ' -y'
+            else:
+                cmd = cmd + ' --use-mirrors'
+
+            rc_pip, out_pip, err_pip = _run(cmd)
 
             rc += rc_pip
             out += out_pip
@@ -141,10 +162,8 @@ def main():
     if rc != 0:
         module.fail_json(msg=err, cmd=cmd)
 
-    module.exit_json(changed=changed, pip_cmd=PIP, virtualenv_cmd=VIRTUALENV,
-                     name=name, version=version, state=state,
-                     requirements=requirements, virtualenv=ENV, status=out,
-                     environment=_run_pip('freeze'))
+    module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                     state=state, requirements=requirements, virtualenv=ENV)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
