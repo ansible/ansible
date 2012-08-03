@@ -13,7 +13,7 @@ def _find_pip():
     paths = ['/usr/local/bin', '/usr/bin']
 
     if ENV:
-        paths.append(os.path.join(ENV, 'bin'))
+        paths = [os.path.join(ENV, 'bin')] + paths
 
     for p in paths:
         pe = p + '/pip'
@@ -23,7 +23,7 @@ def _find_pip():
     module.fail_json(msg='pip is not installed')
 
 
-def _find_virualenv():
+def _find_virtualenv():
     paths = ['/usr/local/bin', '/usr/bin']
 
     for p in paths:
@@ -77,7 +77,7 @@ def main():
     PIP = _find_pip()
 
     if ENV:
-        VIRTUALENV = _find_virualenv()
+        VIRTUALENV = _find_virtualenv()
 
         rc_venv, out_venv, err_venv = _ensure_virtualenv()
 
