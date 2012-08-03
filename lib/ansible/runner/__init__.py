@@ -548,6 +548,7 @@ class Runner(object):
             for (k,v) in self.module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
             self.module_args = new_args
+        self.module_args = utils.template(self.module_args, inject)
 
         conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
@@ -586,7 +587,6 @@ class Runner(object):
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
-            # print "DEBUG=%s" % changed
             result2.result.update(result.result)
             result2.result['changed'] = changed
             result = result2
