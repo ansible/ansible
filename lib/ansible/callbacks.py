@@ -235,7 +235,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 
         print host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.json(result,format=True))
+            utils.write_tree_file(self.options.tree, host, utils.jsonify(result,format=True))
 
 ########################################################################
 
