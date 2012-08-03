@@ -22,7 +22,8 @@ MODULE_COMMON = """
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
-MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
+MODULE_ARGS = <<INCLUDE_ANSIBLE_MODULE_ARGS>>
+
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
@@ -144,7 +145,7 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        args = base64.b64decode(MODULE_ARGS)
+        args = MODULE_ARGS
         items   = shlex.split(args)
         params = {}
         for x in items:

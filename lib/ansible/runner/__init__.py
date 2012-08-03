@@ -188,7 +188,7 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data.encode("utf8"))
+        afo.write(data.encode('utf8'))
         afo.flush()
         afo.close()
 
@@ -548,6 +548,7 @@ class Runner(object):
             for (k,v) in self.module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
             self.module_args = new_args
+        self.module_args = utils.template(self.module_args, inject)
 
         conditional = utils.template(self.conditional, inject)
         if not eval(conditional):
@@ -586,10 +587,9 @@ class Runner(object):
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
-            # print "DEBUG=%s" % changed
-            result2.result.update(result.result)
-            result2.result['changed'] = changed
-            result = result2
+            result.result.update(result2.result)
+            result.result['changed'] = changed
+            
             del result.result['daisychain']
 
         self._delete_remote_files(conn, tmp)
@@ -700,7 +700,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = base64.b64encode(utils.template(self.module_args, inject))
+            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
  
         # use the correct python interpreter for the host

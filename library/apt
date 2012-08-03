@@ -1,4 +1,6 @@
 #!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
 # (c) 2012, Flowroute LLC
 # Written by Matthew Williams <matthew@flowroute.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>

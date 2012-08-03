@@ -1,9 +1,11 @@
 #!/usr/bin/python 
+# -*- coding: utf-8 -*-
+
 """
 Virt management features
 
 Copyright 2007, 2012 Red Hat, Inc
-Michael DeHaan <mdehaan@redhat.com>
+Michael DeHaan <michael.dehaan@gmail.com>
 Seth Vidal <skvidal@fedoraproject.org>
 
 This software may be freely redistributed under the terms of the GNU
@@ -312,6 +314,7 @@ def core(module):
     v = Virt()
     res = {}
     
+    
     if state:
         if not guest:
             module.fail_json(msg = "state change requires a guest specified")
@@ -337,13 +340,13 @@ def core(module):
             res = getattr(v, command)(guest)
             if type(res) != dict:
                 res = { command: res }
-            return rc, res
+            return VIRT_SUCCESS, res
         
         elif hasattr(v, command):
             res = getattr(v, command)()
             if type(res) != dict:
                 res = { command: res }
-            return rc, res
+            return VIRT_SUCCESS, res
             
         else:
             module.fail_json(msg="Command %s not recognized" % basecmd)

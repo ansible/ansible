@@ -1,4 +1,6 @@
 #!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
 #
@@ -23,6 +25,8 @@ import traceback
 import os
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
+repoquery='/usr/bin/repoquery'
+yumbin='/usr/bin/yum'
 
 def is_installed(repoq, pkgspec, qf=def_qf):
     cmd = repoq + "--disablerepo=\* --pkgnarrow=installed --qf '%s' %s " % (qf, pkgspec)
@@ -104,9 +108,9 @@ def repolist(repoq, qf="%{repoid}"):
     
 def list_stuff(conf_file, stuff):
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = '/usr/bin/repoquery --plugins --quiet  -q '
+    repoq = '%s --plugins --quiet  -q ' % repoquery
     if conf_file and os.path.exists(conf_file):
-        repoq = '/usr/bin/repoquery -c %s --plugins --quiet  -q ' % conf_file
+        repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
 
     
     if stuff == 'installed':
@@ -146,7 +150,7 @@ def run(command):
 
 def install(module, items, repoq, yum_basecmd):
     res = {}
-    res['results'] = ''
+    res['results'] = []
     res['msg'] = ''
     res['rc'] = 0
     res['changed'] = False
@@ -185,7 +189,7 @@ def install(module, items, repoq, yum_basecmd):
             for this in pkglist:
                 if is_installed(repoq, this):
                     found = True
-                    res['results'] += '%s providing %s is already installed\n' % (this, spec)
+                    res['results'].append('%s providing %s is already installed' % (this, spec))
                     
             if found:
                 continue
@@ -195,7 +199,6 @@ def install(module, items, repoq, yum_basecmd):
             pkg = spec
         
         cmd = "%s install '%s'" % (yum_basecmd, pkg)
-        res['results'] += "\nInstalling %s\n" % pkg
         rc, out, err = run(cmd)
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
@@ -203,12 +206,12 @@ def install(module, items, repoq, yum_basecmd):
         if rc:
             res['changed'] = False
             res['rc'] = rc
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
         else:
             res['changed'] = True
             res['rc'] = 0
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
             
     module.exit_json(**res)
@@ -216,7 +219,7 @@ def install(module, items, repoq, yum_basecmd):
 
 def remove(module, items, repoq, yum_basecmd):
     res = {}
-    res['results'] = ''
+    res['results'] = []
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
@@ -241,6 +244,7 @@ def remove(module, items, repoq, yum_basecmd):
                     found = True
             
             if not found:
+                res['results'].append('%s is not installed' % spec)
                 continue
             pkg = spec
 
@@ -253,19 +257,19 @@ def remove(module, items, repoq, yum_basecmd):
             res['changed'] = False
             res['failed'] = True
             res['rc'] = rc
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
         else:
             res['changed'] = True
             res['rc'] = 0
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
     
     module.exit_json(**res)
 
 def latest(module, items, repoq, yum_basecmd):
     res = {}
-    res['results'] = ''
+    res['results'] = []
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
@@ -294,7 +298,7 @@ def latest(module, items, repoq, yum_basecmd):
                         nothing_to_do = True
                         
             if nothing_to_do:
-                res['results'] += "All packages providing %s are up to date" % spec
+                res['results'].append("All packages providing %s are up to date" % spec)
                 continue
                 
             if not found:
@@ -322,12 +326,12 @@ def latest(module, items, repoq, yum_basecmd):
             res['changed'] = False
             res['failed'] = True
             res['rc'] = rc
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
         else:
             res['changed'] = True
             res['rc'] = 0
-            res['results'] += out
+            res['results'].append(out)
             res['msg'] += err
     
     module.exit_json(**res)
@@ -344,11 +348,11 @@ def ensure(module, state, pkgspec, conf_file):
     if pkgspec.find(',') != -1:
         items = pkgspec.split(',')
 
-    yum_basecmd = '/usr/bin/yum -d1 -y '
-    repoq = '/usr/bin/repoquery --plugins --quiet  -q '
+    yum_basecmd = '%s -d 1 -y ' % yumbin
+    repoq = '%s --plugins --quiet  -q ' % repoquery
     if conf_file and os.path.exists(conf_file):
-        yum_basecmd = '/usr/bin/yum -c %s -d1 -y' % conf_file 
-        repoq = '/usr/bin/repoquery -c %s --plugins --quiet  -q ' % conf_file
+        yum_basecmd = '%s -c %s -d 1 -y' % (yumbin, conf_file)
+        repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
 
     if state in ['installed', 'present']:
         install(module, items, repoq, yum_basecmd)
@@ -392,7 +396,11 @@ def main():
 
     if params['list'] and params['pkg']:
         module.fail_json(msg="expected 'list=' or 'name=', but not both")
-    
+
+
+    if not os.path.exists(repoquery):
+        module.fail_json(msg="%s is required to run this module. Please install the yum-utils package." % repoquery)
+        
     if params['list']:
         results = dict(results=list_stuff(params['conf_file'], params['list']))
         module.exit_json(**results)
