@@ -5,23 +5,33 @@ VIRTUALENV = None
 ENV = None
 
 
-def _find_binary(name):
-    paths = ['/usr/local/bin', '/usr/bin']
-
-    for p in paths:
-        e = p + '/' +  name
-        if os.path.exists(e):
-            return e
-
-
 def _get_full_name(name, version=None):
-    return name + '==' if version is None else name + '==' + version
+    return name if version is None else name + '==' + version
 
 
 def _find_pip():
+    paths = ['/usr/local/bin', '/usr/bin']
+
     if ENV:
-        return os.path.join(ENV, 'bin', 'pip')
-    return _find_binary('pip')
+        paths.append(os.path.join(ENV, 'bin'))
+
+    for p in paths:
+        pe = p + '/pip'
+        if os.path.exists(pe):
+            return pe
+
+    module.fail_json(msg='pip is not installed')
+
+
+def _find_virualenv():
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    for p in paths:
+        ve = p + '/virtualenv'
+        if os.path.exists(ve):
+            return ve
+
+    module.fail_json(msg='virtualenv is not installed')
 
 
 def _ensure_virtualenv():
@@ -59,13 +69,21 @@ def main():
     global VIRTUALENV
     global ENV
 
-    ENV = module.params['virtualenv']
-    PIP = _find_pip()
-    VIRTUALENV = _find_binary('virtualenv')
-
     rc = 0
     err = ''
     out = ''
+
+    ENV = module.params['virtualenv']
+    PIP = _find_pip()
+
+    if ENV:
+        VIRTUALENV = _find_virualenv()
+
+        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+
+        rc += rc_venv
+        out += out_venv
+        err += err_venv
 
     state = module.params['state']
     name = module.params['name']
@@ -104,13 +122,6 @@ def main():
 
     cmd = None
     installed = None
-
-    if ENV:
-        rc_venv, out_venv, err_venv = _ensure_virtualenv()
-
-        rc += rc_venv
-        out += out_venv
-        err += err_venv
 
     if requirements:
         cmd = '%s %s -r %s --use-mirrors' % (PIP, command_map[state], requirements)
