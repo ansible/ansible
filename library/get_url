@@ -64,6 +64,8 @@ def url_do_get(module, url, dest):
     else:
          actualdest = dest
     info['daisychain_args'] = module.params
+    info['daisychain_args']['state'] = 'file'
+    info['daisychain_args']['dest'] = actualdest
     info['actualdest'] = actualdest
 
     request = urllib2.Request(url)

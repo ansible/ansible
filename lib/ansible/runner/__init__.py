@@ -587,9 +587,9 @@ class Runner(object):
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
-            result2.result.update(result.result)
-            result2.result['changed'] = changed
-            result = result2
+            result.result.update(result2.result)
+            result.result['changed'] = changed
+            
             del result.result['daisychain']
 
         self._delete_remote_files(conn, tmp)
