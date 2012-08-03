@@ -204,7 +204,7 @@ def template(text, vars):
         if (depth > 20):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
-        text = varReplace(unicode(text), vars)
+        text = varReplace(unicode(text), vars) 
     return text
 
 def template_from_file(basedir, path, vars):
@@ -238,10 +238,11 @@ def parse_kv(args):
 
     options = {}
     if args is not None:
-        vargs = shlex.split(args, posix=True)
+        # attempting to split a unicode here does bad things
+        vargs = shlex.split(str(args), posix=True)
         for x in vargs:
             if x.find("=") != -1:
-                k, v = x.split("=", 1)
+                k, v = x.split("=",1)
                 options[k]=v
     return options
 
