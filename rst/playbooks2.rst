@@ -46,8 +46,18 @@ reconfigure all of your systems like this::
 This concept works great with tags to rapidly select exactly what plays you want to run, and exactly
 what parts of those plays.
 
+Ignoring Failed Commands
+````````````````````````
+
+(New in 0.6) Generally playbooks will stop executing any more steps on a host that has a failure.
+Sometimes, though, you want to continue on.  To do so, write a task that looks like this::
+
+    - name: this will not be counted as a failure
+      action: command /bin/false
+      ignore_errors: True
+
 Accessing Complex Variable Data
-+++++++++++++++++++++++++++++++
+```````````````````````````````
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address::
@@ -66,7 +76,7 @@ that is preferred::
     {{ ansible_eth0["ipv4"]["address"] }}
 
 Accessing Information About Other Hosts
-+++++++++++++++++++++++++++++++++++++++
+```````````````````````````````````````
 
 If your database server wants to check the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -99,7 +109,7 @@ period.
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Variable File Seperation
-++++++++++++++++++++++++
+````````````````````````
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
@@ -133,7 +143,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 NOTE: It's also possible to keep per-host and per-group variables in very similar files, this is covered in :ref:`patterns`.
 
 Prompting For Sensitive Data
-++++++++++++++++++++++++++++
+````````````````````````````
 
 You may wish to prompt the user for certain input, and can
 do so with the similarly named 'vars_prompt' section.  This has uses
@@ -166,7 +176,7 @@ some other options, but otherwise works equivalently::
 
 
 Passing Variables On The Command Line
-+++++++++++++++++++++++++++++++++++++
+`````````````````````````````````````
 
 In addition to `vars_prompt` and `vars_files`, it is possible to send variables over
 the ansible command line.  This is particularly useful when writing a generic release playbook
@@ -187,7 +197,7 @@ Example::
     ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
 
 Conditional Execution
-+++++++++++++++++++++
+`````````````````````
 
 Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
@@ -228,7 +238,7 @@ there will be accessible to future tasks::
         - action: command echo ${my_custom_fact_can_be_used_now}
 
 Conditional Imports
-+++++++++++++++++++
+```````````````````
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -278,7 +288,7 @@ in more streamlined & auditable configuration rules -- especially because there 
 minimum of decision points to track.
 
 Loop Shorthand
-++++++++++++++
+``````````````
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
@@ -304,7 +314,7 @@ manager transactions.
 
 
 Selecting Files And Templates Based On Variables
-++++++++++++++++++++++++++++++++++++++++++++++++
+````````````````````````````````````````````````
 
 Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
 The following construct selects the first available file appropriate for the variables of a given host,
@@ -321,7 +331,7 @@ CentOS and Debian::
 
 
 Asynchronous Actions and Polling
-++++++++++++++++++++++++++++++++
+````````````````````````````````
 
 By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
@@ -372,7 +382,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
    tasks even faster.  This also increases the efficiency of polling.
 
 Local Playbooks
-+++++++++++++++
+```````````````
 
 It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
@@ -389,7 +399,7 @@ use the default remote connection type::
     connection: local
 
 Turning Off Facts
-+++++++++++++++++
+`````````````````
 
 If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
 can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
@@ -399,7 +409,7 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
       gather_facts: False
 
 Pull-Mode Playbooks
-+++++++++++++++++++
+```````````````````
 
 The use of playbooks in local mode (above) is made extremely powerful with the addition of `ansible-pull`.
 A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
@@ -414,7 +424,7 @@ This is useful both for extreme scale-out as well as periodic remediation.  Usag
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.
 
 Style Points
-++++++++++++
+````````````
 
 Ansible playbooks are colorized.  If you do not like this, set the ANSIBLE_NOCOLOR=1 environment variable.
 

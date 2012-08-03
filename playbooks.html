@@ -422,13 +422,13 @@ a group of systems into multiple roles.  Let&#8217;s see what this looks like...
   action: command /bin/bar</pre>
 </div>
 <p>Include directives look like this, and can be mixed in with regular tasks in a playbook:</p>
-<div class="highlight-python"><pre>- tasks:
-   - include: tasks/foo.yml</pre>
+<div class="highlight-python"><pre>tasks:
+ - include: tasks/foo.yml</pre>
 </div>
 <p>You can also pass variables into includes.  We call this a &#8216;parameterized include&#8217;.</p>
 <p>For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so:</p>
-<div class="highlight-python"><pre>- tasks:
+<div class="highlight-python"><pre>tasks:
   - include: wordpress.yml user=timmy
   - include: wordpress.yml user=alice
   - include: wordpress.yml user=bob</pre>
@@ -535,7 +535,7 @@ package is installed.  Try it!</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 01, 2012.<br/>
+      Last updated on Aug 02, 2012.<br/>
     </p>
   </div>
 </footer>
