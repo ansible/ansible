@@ -700,7 +700,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = base64.b64encode(utils.template(self.module_args, inject))
+            encoded_args = base64.b64encode(utils.template(self.module_args, inject).encode('utf-8'))
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
  
         # use the correct python interpreter for the host
