@@ -148,9 +148,12 @@ class AnsibleModule(object):
         args = MODULE_ARGS
         items   = shlex.split(args)
         params = {}
-        for x in items:
-            (k, v) = x.split("=",1)
-            params[k] = v
+        try:
+            for x in items:
+                (k, v) = x.split("=",1)
+                params[k] = v
+        except ValueError:
+            raise ValueError("Could not process task arguments: '%s'. Maybe a = is missing?" % args)
         return (params, args)        
 
     def _log_invocation(self):
