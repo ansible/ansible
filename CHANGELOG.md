@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-0.6 "Cabo" ------------ pending
+0.7 "Panama" -- release pending
+
+* I can barely see the roadmap from the heat coming off of it.
+
+0.6 "Cabo" -- August 6, 2012
 
 playbooks:
 
