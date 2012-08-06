@@ -10,20 +10,12 @@ def _find_supervisorctl():
         if os.path.exists(e):
             return e
 
-    module.fail_json(msg='supervisorctl and possible supervisord is not installed')
+    module.fail_json(msg='supervisorctl is not installed')
 
 
-def _ensure_virtualenv():
-    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
-        return 0, '', ''
-    else:
-        return _run('%s %s' % (VIRTUALENV, ENV))
-
-
-def _is_package_installed(name):
-    cmd = '%s --dry-run %s' % (EASY_INSTALL, name)
-    rc, status_stdout, status_stderr = _run(cmd)
-    return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
+def _is_running(name):
+    rc, out, err = _run('%s status %s' % (SUPERVISORCTL, name))
+    return 'RUNNING' in out
 
 
 def _run(cmd):
@@ -37,49 +29,50 @@ def _run(cmd):
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        virtualenv=dict(default=None, required=False)
+        state=dict(required=True, choices=['started', 'restarted', 'stopped'])
     )
 
     module = AnsibleModule(argument_spec=arg_spec)
 
-    global EASY_INSTALL
-    global VIRTUALENV
-    global ENV
+    global SUPERVISORCTL
 
     name = module.params['name']
-    ENV = module.params['virtualenv']
-    EASY_INSTALL = _find_easy_install()
+    state = module.params['state']
 
-    rc = 0
-    err = ''
-    out = ''
+    SUPERVISORCTL = _find_supervisorctl()
 
-    if ENV:
-        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+    running = _is_running(name)
 
-        rc += rc_venv
-        out += out_venv
-        err += err_venv
+    if running and state == 'stopped':
+        rc, out, err = _run('%s stop %s' % (SUPERVISORCTL, name))
 
-    cmd = None
-    changed = False
-    installed = _is_package_installed(name)
+        if '%s: stopped' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
 
-    if not installed:
-        cmd = '%s %s' % (EASY_INSTALL, name)
-        rc_pip, out_pip, err_pip = _run(cmd)
+        module.fail_json(msg=out)
 
-        rc += rc_pip
-        out += out_pip
-        err += err_pip
+    elif running and state == 'restarted':
+        rc, out, err = _run('%s update' % SUPERVISORCTL)
+        rc, out, err = _run('%s restart %s' % (SUPERVISORCTL, name))
 
-        changed = True
+        if '%s: stopped' % name in out and '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
 
-    if rc != 0:
-        module.fail_json(msg=err, cmd=cmd)
+        module.fail_json(msg=out)
 
-    module.exit_json(changed=changed, binary=EASY_INSTALL,
-                     name=name, virtualenv=ENV)
+    elif not running and state == 'started':
+        rc, out, err = _run('%s update' % SUPERVISORCTL)
+        rc, out, err = _run('%s start %s' % (SUPERVISORCTL, name))
+
+        if '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif not running and state == 'restarted':
+        module.fail_json(msg='Could not restart `%s` because it is not running')
+
+    module.exit_json(changed=False, name=name, state=state)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
