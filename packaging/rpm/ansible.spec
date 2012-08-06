@@ -5,8 +5,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 Name: ansible
 Release: 1%{?dist}
-Summary: Minimal SSH command and control
-Version: 0.6
+Summary: SSH-based configuration management, deployment, and task execution system
+Version: 0.7
 
 Group: Development/Libraries
 License: GPLv3
