@@ -1,6 +1,6 @@
 ---
 # see examples.yml first!
-# This file explains some more advanced features of playbooks.  
+# This file explains some more advanced features of playbooks.
 # because of the comments it's less concise than it normally is.  But feel
 # free to comment your playbooks if you like.
 
@@ -34,12 +34,12 @@
 
   # we could also have done something like:
   # - include: wordpress.yml user=timmy
-  # and had access to the template variable $user in the 
+  # and had access to the template variable $user in the
   # included file, if we wanted to.  Variables from vars
   # and vars_files are also available inside include files
 
   handlers:
- 
+
     # handlers can also be included from files, to promote reuse
     # and simpler recipes, you may wish to only have one
     # handler file for all your plays and playbooks
@@ -70,7 +70,7 @@
   # vars must be specified again for the next play in the playbook
   # but can be reused by including from vars_files if you want
   # you can use vars, vars_files, or both.  vars_files overrides
-  # those set in vars. 
+  # those set in vars.
 
   vars:
      release: 2.0

@@ -22,7 +22,7 @@
 # vars_prompt:
 #   release_version: "product release version"
 
-# prompts can also be specified like this, allowing for hiding the prompt as 
+# prompts can also be specified like this, allowing for hiding the prompt as
 # entered.  In the future, this may also be used to support crypted variables
 
   vars_prompt:
