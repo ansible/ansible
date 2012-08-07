@@ -1,8 +1,8 @@
-# ansibple-pull setup 
+# ansibple-pull setup
 #
 # on remote hosts, set up ansible to run periodically using the latest code
 # from a particular checkout, in pull based fashion, inverting Ansible's
-# usual push-based operating mode.  
+# usual push-based operating mode.
 #
 # This particular pull based mode is ideal for:
 #
@@ -12,7 +12,7 @@
 # DO NOT RUN THIS AGAINST YOUR HOSTS WITHOUT CHANGING THE repo_url
 # TO SOMETHING YOU HAVE PERSONALLY VERIFIED
 #
-# 
+#
 ---
 
 - hosts: pull_mode_hosts

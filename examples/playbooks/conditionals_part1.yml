@@ -37,7 +37,7 @@
 # and this is just a regular task line from a playbook, as we're used to.
 # but with variables in it that come from above.  Note that the variables
 # from above are *also* available in templates
-     
+
   tasks:
 
   - name: ensure apache is latest
@@ -47,5 +47,5 @@
   - name: fail
     action: command /bin/false
 
- 
+
 

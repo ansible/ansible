@@ -16,9 +16,9 @@
 # extraordinarily clean, and not littered with programming language
 # constructs -- so it's easily skimmed by humans.
 #
-# Remember to quote any variables if they are not numbers!  
+# Remember to quote any variables if they are not numbers!
 #
-# Interesting fact: aside from the $variables, these expressions are actually 
+# Interesting fact: aside from the $variables, these expressions are actually
 # tiny bits of Python.  They are evaluated in the context of each host, so different
 # steps can be skipped on different hosts!  They should evaluate to either True
 # or False
@@ -40,7 +40,7 @@
      - name: "do this if my favcolor is blue"
        action: shell /bin/false
        only_if: '$is_favcolor_blue'
-     
+
      - name: "do this if my favcolor is not blue"
        action: shell /bin/true
        only_if: 'not ($is_favcolor_blue)'

@@ -2,7 +2,7 @@
 # this is an example of how to template a file over using some variables derived
 # from the system.  For instance, if you wanted to have different configuration
 # templates by OS version, this is a neat way to do it.  Any Ansible facts, facter facts,
-# or ohai facts could be used to do this.  
+# or ohai facts could be used to do this.
 
 - hosts: all
 
