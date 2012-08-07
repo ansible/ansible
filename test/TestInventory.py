@@ -44,11 +44,11 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts()
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
                         'cerberus001','cerberus002','cerberus003',
                         'cottus99', 'cottus100',
                         'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
                         'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
@@ -56,11 +56,11 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
 
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 
+        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
                         'cerberus001','cerberus002','cerberus003',
                         'cottus99', 'cottus100',
                         'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
                         'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
@@ -75,8 +75,8 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("ungrouped")
 
-        expected_hosts=['jupiter', 'saturn', 
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+        expected_hosts=['jupiter', 'saturn',
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
                         'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
@@ -84,7 +84,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("norse:greek")
 
-        expected_hosts=['zeus', 'hera', 'poseidon', 
+        expected_hosts=['zeus', 'hera', 'poseidon',
                         'cerberus001','cerberus002','cerberus003',
                         'cottus99','cottus100',
                         'thor', 'odin', 'loki']
@@ -94,7 +94,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
 
         restricted_hosts = ['hera', 'poseidon', 'thor']
-        expected_hosts=['zeus', 'hera', 'poseidon', 
+        expected_hosts=['zeus', 'hera', 'poseidon',
                         'cerberus001','cerberus002','cerberus003',
                         'cottus99', 'cottus100',
                         'thor', 'odin', 'loki']
@@ -118,13 +118,13 @@ class TestInventory(unittest.TestCase):
 
         hosts = inventory.list_hosts("all:!greek")
         expected_hosts=['jupiter', 'saturn', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
                         'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
         hosts = inventory.list_hosts("all:!norse:!greek")
         expected_hosts=['jupiter', 'saturn',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2', 
+                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
                         'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
         assert sorted(hosts) == sorted(expected_hosts)
 
@@ -159,8 +159,8 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='100002', rga='1', rgb='2', rgc='3', 
-            inventory_hostname='rtp_a', inventory_hostname_short='rtp_a', 
+            a='1', b='2', c='3', d='100002', rga='1', rgb='2', rgc='3',
+            inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
         print vars
