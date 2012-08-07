@@ -27,14 +27,14 @@ import tempfile
 HAS_URLLIB2=True
 try:
     import urllib2
-except ImportError: 
+except ImportError:
     HAS_URLLIB2=False
 HAS_URLPARSE=True
 
 try:
     import urlparse
     import socket
-except ImportError: 
+except ImportError:
     HAS_URLPARSE=False
 
 # ==============================================================
@@ -92,7 +92,7 @@ def url_do_get(module, url, dest):
 
 def url_get(module, url, dest):
     """
-    Download url and store at dest. 
+    Download url and store at dest.
     If dest is a directory, determine filename from url.
     Return (tempfile, info about the request)
     """
@@ -123,8 +123,8 @@ def url_get(module, url, dest):
 # main
 
 def main():
-    
-    # does this really happen on non-ancient python? 
+
+    # does this really happen on non-ancient python?
     if not HAS_URLLIB2:
         module.fail_json(msg="urllib2 is not installed")
     if not HAS_URLPARSE:
@@ -138,16 +138,16 @@ def main():
             dest = dict(required=True),
         )
     )
-    
+
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
-    
+
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest)
     md5sum_src   = None
     md5sum_dest  = None
     dest         = info['actualdest']
-    
+
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
@@ -156,7 +156,7 @@ def main():
         os.remove(tmpsrc)
         module.fail_json( msg="Source %s not readable" % (tmpsrc))
     md5sum_src = module.md5(tmpsrc)
-     
+
     # check if there is no dest file
     if os.path.exists(dest):
         # raise an error if copy has no permission on dest
@@ -171,22 +171,22 @@ def main():
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
-    
+
     if md5sum_src != md5sum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err))) 
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
         changed = True
     else:
         changed = False
-    
+
     os.remove(tmpsrc)
 
     # Mission complete
-    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src, 
-        changed=changed, msg=info.get('msg',''), 
+    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
+        changed=changed, msg=info.get('msg',''),
         daisychain="file", daisychain_args=info.get('daisychain_args',''))
 
 # this is magic, see lib/ansible/module_common.py
