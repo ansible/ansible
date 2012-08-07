@@ -181,6 +181,30 @@ Example action from Ansible :doc:`playbooks`::
     copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 
 
+
+.. _easy_install
+
+easy_install
+````````````
+
+The easy_install module installs Python libraries.
+
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| name               | yes      |         | a Python library name                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| virtualenv         | no       |         | an optional virtualenv directory path to install into, if the virtualenv   |
+|                    |          |         | does not exist it is created automatically                                 |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+
+Example action from Ansible :doc:`playbooks`::
+
+    easy_install name=flask
+    easy_install name=flask==0.8
+    easy_install name=flask virtualenv=/srv/webapps/my_app/venv
+
+
 .. _facter:
 
 facter
