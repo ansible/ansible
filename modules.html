@@ -817,69 +817,73 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 <div class="section" id="mysql-db">
 <span id="id13"></span><h2>mysql_db<a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
 <p>Add or remove MySQL databases from a remote host.</p>
+<p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
+apt-get install python-mysqldb.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
+<col width="8%" />
 <col width="9%" />
-<col width="9%" />
-<col width="0%" />
-<col width="66%" />
+<col width="65%" />
 </colgroup>
 <thead valign="bottom">
 <tr><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
-<th class="head" colspan="2">comments</th>
+<th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
 <tr><td>name</td>
 <td>yes</td>
-<td colspan="3"><div class="first last line-block">
-<div class="line">name of the database to add or remove</div>
-</div>
-</td>
+<td>&nbsp;</td>
+<td>name of the database to add or remove</td>
 </tr>
 <tr><td>login_user</td>
 <td>no</td>
-<td colspan="2">&nbsp;</td>
-<td>user used to authenticate with</td>
+<td>&nbsp;</td>
+<td>user name used to authenticate with</td>
 </tr>
 <tr><td>login_password</td>
 <td>no</td>
-<td colspan="2">&nbsp;</td>
+<td>&nbsp;</td>
 <td>password used to authenticate with</td>
 </tr>
 <tr><td>login_host</td>
 <td>no</td>
-<td colspan="2">localhost</td>
+<td>localhost</td>
 <td>host running the database</td>
 </tr>
 <tr><td>state</td>
 <td>no</td>
-<td colspan="2">present</td>
+<td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
 </tr>
 <tr><td>collation</td>
 <td>no</td>
-<td colspan="2">&nbsp;</td>
+<td>&nbsp;</td>
 <td>collation mode</td>
 </tr>
 <tr><td>encoding</td>
 <td>no</td>
-<td colspan="2">&nbsp;</td>
+<td>&nbsp;</td>
 <td>encoding mode</td>
 </tr>
 </tbody>
 </table>
+<p>Both &#8216;login_password&#8217; and &#8216;login_username&#8217; are required when you are passing credentials.
+If none are present, the module will attempt to read the credentials from ~/.my.cnf, and
+finally fall back to using the MySQL default login of &#8216;root&#8217; with no password.</p>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>- name: Create database
-  action: mysql_db loginpass=$mysql_root_password db=bobdata state=present</pre>
+  action: mysql_db db=bobdata state=present</pre>
 </div>
 </div>
 <div class="section" id="mysql-user">
 <h2>mysql_user<a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes a user from a MySQL database.</p>
+<p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
+apt-get install python-mysqldb.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
@@ -901,19 +905,14 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 <td>name of the user (role) to add or remove</td>
 </tr>
 <tr><td>password</td>
-<td>yes</td>
+<td>no</td>
 <td>&nbsp;</td>
 <td>set the user&#8217;s password</td>
-</tr>
-<tr><td>db</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>name of an existing database to grant user access to</td>
 </tr>
 <tr><td>login_user</td>
 <td>no</td>
 <td>&nbsp;</td>
-<td>user (role) used to authenticate with</td>
+<td>user name used to authenticate with</td>
 </tr>
 <tr><td>login_password</td>
 <td>no</td>
@@ -923,12 +922,12 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 <tr><td>login_host</td>
 <td>no</td>
 <td>localhost</td>
-<td>host running MySQL. Default (blank) implies localhost</td>
+<td>host running MySQL.</td>
 </tr>
 <tr><td>priv</td>
 <td>no</td>
 <td>&nbsp;</td>
-<td>MySQL priveledges string</td>
+<td>MySQL privileges string in the format: db.table:priv1,priv2</td>
 </tr>
 <tr><td>state</td>
 <td>no</td>
@@ -937,12 +936,18 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 </tr>
 </tbody>
 </table>
+<p>Both &#8216;login_password&#8217; and &#8216;login_username&#8217; are required when you are passing credentials.
+If none are present, the module will attempt to read the credentials from ~/.my.cnf, and
+finally fall back to using the MySQL default login of &#8216;root&#8217; with no password.</p>
+<p>Example privileges string format:</p>
+<blockquote>
+<div>mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL</div></blockquote>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>- name: Create database user
-  action: mysql_user loginpass=$mysql_root_password name=bob passwd=12345 priv=*.*:ALL state=present
+  action: mysql_user name=bob passwd=12345 priv=*.*:ALL state=present
 
-- name: Ensure no user named 'sally' exists
-  action: mysql_user loginpass=$mysql_root_password name=sally state=absent</pre>
+- name: Ensure no user named 'sally' exists, also passing in the auth credentials.
+  action: mysql_user login_user=root login_password=123456 name=sally state=absent</pre>
 </div>
 </div>
 <div class="section" id="ohai">
