@@ -6,15 +6,15 @@ Cobbler external inventory script
 
 Ansible has a feature where instead of reading from /etc/ansible/hosts
 as a text file, it can query external programs to obtain the list
-of hosts, groups the hosts are in, and even variables to assign to each host.  
+of hosts, groups the hosts are in, and even variables to assign to each host.
 
 To use this, copy this file over /etc/ansible/hosts and chmod +x the file.
 This, more or less, allows you to keep one central database containing
 info about all of your managed instances.
 
 This script is an example of sourcing that data from Cobbler
-(http://cobbler.github.com).  With cobbler each --mgmt-class in cobbler 
-will correspond to a group in Ansible, and --ks-meta variables will be 
+(http://cobbler.github.com).  With cobbler each --mgmt-class in cobbler
+will correspond to a group in Ansible, and --ks-meta variables will be
 passed down for use in templates or even in argument lines.
 
 NOTE: The cobbler system names will not be used.  Make sure a
@@ -23,11 +23,11 @@ appears with two DNS names we do not add it twice because we don't want
 ansible talking to it twice.  The first one found will be used. If no
 --dns-name is set the system will NOT be visible to ansible.  We do
 not add cobbler system names because there is no requirement in cobbler
-that those correspond to addresses.  
+that those correspond to addresses.
 
 See http://ansible.github.com/api.html for more info
 
-Tested with Cobbler 2.0.11. 
+Tested with Cobbler 2.0.11.
 """
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -83,8 +83,8 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
         for (iname, ivalue) in interfaces.iteritems():
             this_dns_name = ivalue.get('dns_name', None)
             if this_dns_name is not None:
-                dns_name = this_dns_name       
- 
+                dns_name = this_dns_name
+
         if dns_name is None:
             continue
 
@@ -95,7 +95,7 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
             # hostname is not really what we want to insert, really insert the
             # first DNS name but no further DNS names
             groups[cls].append(dns_name)
- 
+
     print json.dumps(groups)
     sys.exit(0)
 
