@@ -8,7 +8,7 @@
 # the tag feature and can be used in conjunction for very fine grained
 # control over what you want to target when running ansible.
 
-- name: this is a play at the top level of a file  
+- name: this is a play at the top level of a file
   hosts: all
   user: root
   tasks:

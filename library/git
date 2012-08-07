@@ -166,7 +166,7 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
     else:
-        # else do a pull   
+        # else do a pull
         before = get_version(dest)
         (rc, out, err) = reset(dest)
         if rc != 0:

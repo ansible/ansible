@@ -58,11 +58,11 @@ class SSHConnection(object):
 
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
         if self.runner.sudo and sudoable:
-            # Rather than detect if sudo wants a password this time, -k makes 
+            # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required. The "--"
             # tells sudo that this is the end of sudo options and the command
             # follows.  Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote() 
+            # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
             # output until we see the randomly-generated sudo prompt set with
             # the -p option.
@@ -104,12 +104,12 @@ class SSHConnection(object):
                 stdout += os.read(p.stdout.fileno(), 1024)
         # older versions of ssh generate this error which we ignore
         stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
-        # suppress Ubuntu 10.04/12.04 error on -tt option 
+        # suppress Ubuntu 10.04/12.04 error on -tt option
         stdout=stdout.replace("tcgetattr: Inappropriate ioctl for device\n","")
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
-            
+
         return ('', stdout, '')
 
     def put_file(self, in_path, out_path):

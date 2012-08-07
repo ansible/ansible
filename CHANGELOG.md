@@ -1,11 +1,17 @@
 Ansible Changes By Release
 ==========================
 
-0.6 "Cabo" ------------ pending
+0.7 "Panama" -- release pending
+
+* I can barely see the roadmap from the heat coming off of it.
+
+* login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
+
+0.6 "Cabo" -- August 6, 2012
 
 playbooks:
 
-* support to tag tasks and includes and use --tags in playbook CLI 
+* support to tag tasks and includes and use --tags in playbook CLI
 * playbooks can now include other playbooks (example/playbooks/nested_playbooks.yml)
 * vars_files now usable with with_items, provided file paths don't contain host specific facts
 * error reporting if with_items value is unbound
@@ -46,7 +52,7 @@ modules:
 * setup module fixes if no ipv6 support
 * internals: template in common module boilerplate, also causes less SSH operations when used
 * git module fixes
-* setup module overhaul, more modular 
+* setup module overhaul, more modular
 * minor caching logic added to inventory to reduce hammering of inventory scripts.
 * MySQL and PostgreSQL modules for user and db management
 * vars_prompt now supports private password entry (see examples/playbooks/prompts.yml)
@@ -173,7 +179,7 @@ in kickstarts
 * better module debugging with -D
 * fetch module for pulling in files from remote hosts
 * command task supports creates=foo for idempotent semantics, won't
-run if file foo already exists 
+run if file foo already exists
 
 0.0.2 and 0.0.1
 

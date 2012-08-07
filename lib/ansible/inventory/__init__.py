@@ -23,7 +23,6 @@ import os
 import subprocess
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
-from ansible.inventory.yaml import InventoryParserYaml
 from ansible.inventory.script import InventoryScript
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
@@ -31,12 +30,12 @@ from ansible import errors
 from ansible import utils
 
 class Inventory(object):
-    """ 
+    """
     Host inventory for ansible.
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_is_script',
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ] 
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -46,14 +45,14 @@ class Inventory(object):
 
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
- 
+
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
 
         # the inventory object holds a list of groups
         self.groups = []
- 
+
         # a list of host(names) to contain current inquiries to
         self._restriction = None
 
@@ -83,10 +82,9 @@ class Inventory(object):
             if not data.startswith("---"):
                 self.parser = InventoryParser(filename=host_list)
                 self.groups = self.parser.groups.values()
-            else:         
-                self.parser = InventoryParserYaml(filename=host_list)
-                self.groups = self.parser.groups.values()
-      
+            else:
+                raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+
     def _match(self, str, pattern_str):
         return fnmatch.fnmatch(str, pattern_str)
 
@@ -107,7 +105,7 @@ class Inventory(object):
                 for host in group.get_hosts():
                     if self._match(group.name, pat) or pat == 'all' or self._match(host.name, pat):
                         # must test explicitly for None because [] means no hosts allowed
-                        if self._restriction==None or host.name in self._restriction: 
+                        if self._restriction==None or host.name in self._restriction:
                             if inverted:
                                 if host.name in hosts:
                                     del hosts[host.name]
@@ -135,7 +133,7 @@ class Inventory(object):
             if group.name == groupname:
                 return group
         return None
-   
+
     def get_group_variables(self, groupname):
         if groupname not in self._vars_per_group:
             self._vars_per_group[groupname] = self._get_group_variables(groupname)
@@ -157,8 +155,8 @@ class Inventory(object):
         if self._is_script:
             host = self.get_host(hostname)
             cmd = subprocess.Popen(
-                [self.host_list,"--host",hostname], 
-                stdout=subprocess.PIPE, 
+                [self.host_list,"--host",hostname],
+                stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
             (out, err) = cmd.communicate()
@@ -184,7 +182,7 @@ class Inventory(object):
         return [ h.name for h in self.get_hosts(pattern) ]
 
     def list_groups(self):
-        return [ g.name for g in self.groups ] 
+        return [ g.name for g in self.groups ]
 
     def get_restriction(self):
         return self._restriction

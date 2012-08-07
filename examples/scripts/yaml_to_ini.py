@@ -45,7 +45,7 @@ class InventoryParserYaml(object):
         else:
             host = Host(hostname)
             self._hosts[hostname] = host
-            return host 
+            return host
 
     # see file 'test/yaml_hosts' for syntax
 
@@ -79,7 +79,7 @@ class InventoryParserYaml(object):
                         if type(vars) == list:
                             for subitem in vars:
                                 for (k,v) in subitem.items():
-                                    host.set_variable(k,v) 
+                                    host.set_variable(k,v)
                         elif type(vars) == dict:
                             for (k,v) in subresult.get('vars',{}).items():
                                 host.set_variable(k,v)
@@ -91,7 +91,7 @@ class InventoryParserYaml(object):
                 vars = item.get('vars',{})
                 if type(vars) == dict:
                     for (k,v) in item.get('vars',{}).items():
-                        group.set_variable(k,v) 
+                        group.set_variable(k,v)
                 elif type(vars) == list:
                     for subitem in vars:
                         if type(subitem) != dict:
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
         if group_name == 'all':
             continue
- 
+
         hosts = record.hosts
         result = result + "[%s]\n" % record.name
         for h in hosts:
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         hostfh = open(hostfile, 'w')
         hostfh.write(yaml.dump(host_record.get_variables()))
         hostfh.close()
- 
+
 
     # also need to keep a hash of variables per each host
     # and variables per each group
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     fdh.close()
 
     print "* COMPLETE: review your new inventory file and replace your original when ready"
-    print "*           new inventory file saved as %s" % newfilepath  
+    print "*           new inventory file saved as %s" % newfilepath
     print "*           edit group specific variables in %s/group_vars/" % dirname
     print "*           edit host specific variables in %s/host_vars/" % dirname
 

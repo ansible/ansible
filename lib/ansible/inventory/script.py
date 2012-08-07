@@ -52,5 +52,5 @@ class InventoryScript(object):
                 # FIXME: hack shouldn't be needed
                 all.add_host(host)
             all.add_child_group(group)
-        return groups  
-        
+        return groups
+

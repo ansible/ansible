@@ -19,7 +19,7 @@
   # the tag to all tasks in it.  Here, each task is given
   # the tag extra
 
-  tags: 
+  tags:
      - extra
 
   tasks:
@@ -36,7 +36,7 @@
   user: root
   tasks:
   - name: hi
-    tags: 
+    tags:
        - bar
     action: shell echo "second task ran"
   - include: tasks/base.yml tags=base

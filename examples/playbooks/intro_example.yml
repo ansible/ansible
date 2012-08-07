@@ -38,9 +38,9 @@
   # let's demo file operations.
   #
   # We can 'copy' files or 'template' them instead, using jinja2
-  # as the templating engine.  This is done using the variables 
-  # from the vars section above mixed in with variables bubbled up 
-  # automatically from tools like facter and ohai.  'copy' 
+  # as the templating engine.  This is done using the variables
+  # from the vars section above mixed in with variables bubbled up
+  # automatically from tools like facter and ohai.  'copy'
   # works just like 'template' but does not do variable subsitution.
   #
   # If and only if the file changes, restart apache at the very

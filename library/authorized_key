@@ -38,7 +38,7 @@ import os.path
 
 def keyfile(user, write=False):
     """
-    Calculate name of authorized keys file, optionally creating the 
+    Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
 
     :param str user: name of user in passwd file
@@ -51,13 +51,13 @@ def keyfile(user, write=False):
     sshdir     = os.path.join(homedir, ".ssh")
     keysfile   = os.path.join(sshdir, "authorized_keys")
 
-    if not write: 
+    if not write:
         return keysfile
 
     uid = user_entry.pw_uid
     gid = user_entry.pw_gid
 
-    if not os.path.exists(sshdir): 
+    if not os.path.exists(sshdir):
         os.mkdir(sshdir, 0700)
     os.chown(sshdir, uid, gid)
     os.chmod(sshdir, 0700)
@@ -74,7 +74,7 @@ def keyfile(user, write=False):
 
 def readkeys(filename):
 
-    if not os.path.isfile(filename): 
+    if not os.path.isfile(filename):
         return []
     f = open(filename)
     keys = [line.rstrip() for line in f.readlines()]
@@ -97,19 +97,19 @@ def enforce_state(module, params):
     state = params.get("state", "present")
 
     # check current state -- just get the filename, don't create file
-    params["keyfile"] = keyfile(user, write=False) 
+    params["keyfile"] = keyfile(user, write=False)
     keys = readkeys(params["keyfile"])
     present = key in keys
 
     # handle idempotent state=present
     if state=="present":
-        if present: 
+        if present:
             module.exit_json(changed=False)
         keys.append(key)
         writekeys(keyfile(user,write=True), keys)
 
     elif state=="absent":
-        if not present: 
+        if not present:
             module.exit_json(changed=False)
         keys.remove(key)
         writekeys(keyfile(user,write=True), keys)
@@ -133,4 +133,4 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main() 
+main()
