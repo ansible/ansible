@@ -2,7 +2,7 @@
 ---
 - hosts: all
 
-# the 'weasels' string should show up in the output 
+# the 'weasels' string should show up in the output
 
   vars:
     answer: "Wuh, I think so, Brain, but if we didn't have ears, we'd look like weasels."
@@ -14,7 +14,7 @@
   vars_files:
     - common_vars.yml
     - [ '$facter_operatingsystem.yml', 'default_os.yml' ]
-    
+
   tasks:
 
   - name: test basic success command
@@ -34,7 +34,7 @@
 
   - name: test copy
     action: copy src=sample.j2 dest=/tmp/ansible_test_data_copy.out
-    notify: 
+    notify:
     - on change 1
 
 # this should trigger two change handlers, but the 2nd should
@@ -42,7 +42,7 @@
 
   - name: test template
     action: template src=sample.j2 dest=/tmp/ansible_test_data_template.out
-    notify: 
+    notify:
     - on change 1
     - on change 2
 

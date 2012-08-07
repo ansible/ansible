@@ -32,7 +32,7 @@ class TestCallbacks(object):
 
     def on_setup(self):
         EVENTS.append([ 'primary_setup' ])
- 
+
     def on_skipped(self, host, item=None):
         EVENTS.append([ 'skipped', [ host ]])
 
@@ -65,7 +65,7 @@ class TestCallbacks(object):
                 del host_result[k]
         for k in host_result.keys():
             if k.startswith('facter_') or k.startswith('ohai_'):
-                del host_result[k] 
+                del host_result[k]
         EVENTS.append([ 'ok', [ host, host_result ]])
 
     def on_play_start(self, pattern):
@@ -85,7 +85,7 @@ class TestCallbacks(object):
 
     def on_setup(self):
         pass
-    
+
     def on_no_hosts(self):
         pass
 
@@ -116,7 +116,7 @@ class TestPlaybook(unittest.TestCase):
        filename = os.path.join(self.test_dir, filename)
        assert os.path.exists(filename)
        return filename
- 
+
    def _get_stage_file(self, filename):
        # get a file inside the test output directory
        filename = os.path.join(self.stage_dir, filename)
@@ -144,15 +144,15 @@ class TestPlaybook(unittest.TestCase):
        pb = os.path.join(self.test_dir, 'playbook1.yml')
        actual = self._run(pb)
 
-       # if different, this will output to screen 
+       # if different, this will output to screen
        print "**ACTUAL**"
        print utils.jsonify(actual, format=True)
-       expected =  { 
+       expected =  {
             "127.0.0.2": {
-                "changed": 9, 
-                "failures": 0, 
-                "ok": 11, 
-                "skipped": 1, 
+                "changed": 9,
+                "failures": 0,
+                "ok": 11,
+                "skipped": 1,
                 "unreachable": 0
             }
        }
