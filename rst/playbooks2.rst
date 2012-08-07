@@ -9,8 +9,11 @@ be 90% or more of what they use in Ansible.
 Tags
 ````
 
-(New in 0.6) If you have a large playbook it may become useful to be able to run a specific
-part of the configuration.  Both plays and tasks support a "tags:" attribute for this reason.
+.. versionadded:: 0.6
+
+If you have a large playbook it may become useful to be able to run a
+specific part of the configuration.  Both plays and tasks support a
+"tags:" attribute for this reason.
 
 Example::
 
@@ -34,10 +37,13 @@ If you wanted to just run the "configuration" and "packages" part of a very long
 Playbooks Including Playbooks
 `````````````````````````````
 
-(New in 0.6) To further advance the concept of include files, playbook files can include other playbook
-files.  Suppose you define the behavior of all your webservers in "webservers.yml" and
-all your database servers in "dbservers.yml".  You can create a "site.yml" that would
-reconfigure all of your systems like this::
+.. versionadded:: 0.6
+
+To further advance the concept of include files, playbook files can
+include other playbook files.  Suppose you define the behavior of all
+your webservers in "webservers.yml" and all your database servers in
+"dbservers.yml".  You can create a "site.yml" that would reconfigure
+all of your systems like this::
 
     ----
     - include: playbooks/webservers.yml
@@ -49,8 +55,11 @@ what parts of those plays.
 Ignoring Failed Commands
 ````````````````````````
 
-(New in 0.6) Generally playbooks will stop executing any more steps on a host that has a failure.
-Sometimes, though, you want to continue on.  To do so, write a task that looks like this::
+.. deprecated:: 0.6
+
+Generally playbooks will stop executing any more steps on a host that
+has a failure.  Sometimes, though, you want to continue on.  To do so,
+write a task that looks like this::
 
     - name: this will not be counted as a failure
       action: command /bin/false

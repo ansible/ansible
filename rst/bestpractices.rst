@@ -82,8 +82,12 @@ You may wish to construct simple shell scripts to wrap calls to ansible-playbook
 Bundling Ansible Modules With Playbooks
 +++++++++++++++++++++++++++++++++++++++
 
-In version 0.5 and later, if a playbook has a "./library" directory relative to it's YAML file, this directory can be used to add ansible modules that will automatically be in the ansible module path.  This is a great way to keep modules that
-go with a playbook together.
+.. versionadded:: 0.5
+
+If a playbook has a "./library" directory relative to it's YAML file,
+this directory can be used to add ansible modules that will
+automatically be in the ansible module path.  This is a great way to
+keep modules that go with a playbook together.
 
 Miscellaneous Tips
 ++++++++++++++++++
