@@ -1,0 +1,91 @@
+#!/usr/bin/python
+
+EASY_INSTALL = None
+VIRTUALENV = '/usr/local/bin/virtualenv'
+ENV = None
+
+
+def _find_easy_install():
+    if ENV:
+        return os.path.join(ENV, 'bin', 'easy_install')
+
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    for p in paths:
+        e = p + '/easy_install'
+        if os.path.exists(e):
+            return e
+
+
+def _ensure_virtualenv():
+    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
+        return 0, '', ''
+    else:
+        return _run('%s %s' % (VIRTUALENV, ENV))
+
+
+def _is_package_installed(name):
+    cmd = '%s --dry-run %s' % (EASY_INSTALL, name)
+    rc, status_stdout, status_stderr = _run(cmd)
+    return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
+
+
+def _run(cmd):
+    # returns (rc, stdout, stderr) from shell command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    return (process.returncode, stdout, stderr)
+
+
+def main():
+    arg_spec = dict(
+        name=dict(required=True),
+        virtualenv=dict(default=None, required=False)
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec)
+
+    global EASY_INSTALL
+    global VIRTUALENV
+    global ENV
+
+    name = module.params['name']
+    ENV = module.params['virtualenv']
+    EASY_INSTALL = _find_easy_install()
+
+    rc = 0
+    err = ''
+    out = ''
+
+    if ENV:
+        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+
+        rc += rc_venv
+        out += out_venv
+        err += err_venv
+
+    cmd = None
+    changed = False
+    installed = _is_package_installed(name)
+
+    if not installed:
+        cmd = '%s %s' % (EASY_INSTALL, name)
+        rc_pip, out_pip, err_pip = _run(cmd)
+
+        rc += rc_pip
+        out += out_pip
+        err += err_pip
+
+        changed = True
+
+    if rc != 0:
+        module.fail_json(msg=err, cmd=cmd)
+
+    module.exit_json(changed=changed, binary=EASY_INSTALL,
+                     name=name, virtualenv=ENV)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
