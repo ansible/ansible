@@ -1,11 +1,11 @@
 Ansible Modules
 ===============
 
-Ansible ships with a number of modules (called the 'module library') 
+Ansible ships with a number of modules (called the 'module library')
 that can be executed directly on remote hosts or through :doc:`playbooks`.
 Users can also write their own modules.   These modules can control system
-resources, like services, packages, or files (anything really), or 
-handle executing system commands.  
+resources, like services, packages, or files (anything really), or
+handle executing system commands.
 
 Let's review how we execute three different modules from the command line::
 
@@ -13,14 +13,14 @@ Let's review how we execute three different modules from the command line::
     ansible webservers -m ping
     ansible webservers -m command -a "/sbin/reboot -t now"
 
-Each module supports taking arguments.  Nearly all modules take ``key=value`` 
-arguments, space delimited.  Some modules take no arguments, and the 
+Each module supports taking arguments.  Nearly all modules take ``key=value``
+arguments, space delimited.  Some modules take no arguments, and the
 command/shell modules simply take the string of the command you want to run.
 
 From playbooks, Ansible modules are executed in a very similar way::
 
     - name: reboot the servers
-      action: command /sbin/reboot -t now 
+      action: command /sbin/reboot -t now
 
 All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don't really need to know much about
@@ -45,10 +45,10 @@ Manages apt-packages (such as for Debian/Ubuntu).
 +====================+==========+=========+============================================================================+
 | name               | no       |         | A package name or package specifier with version, like `foo` or `foo=1.0`  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| state              | no       | present | 'absent', 'present', or 'latest'.                                          |  
+| state              | no       | present | 'absent', 'present', or 'latest'.                                          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | update_cache       | no       | no      | Run the equivalent of apt-get update before the operation.                 |
-|                    |          |         | Can be run as part of the package installation or a seperate step          | 
+|                    |          |         | Can be run as part of the package installation or a seperate step          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | purge              | no       | no      | Will forge purge of configuration files if state is set to 'absent'.       |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
@@ -124,7 +124,7 @@ command
 ```````
 
 The command module takes the command name followed by a list of
-arguments, space delimited.  
+arguments, space delimited.
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | parameter          | required | default | comments                                                                   |
@@ -137,12 +137,12 @@ arguments, space delimited.
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 The given command will be executed on all selected nodes.  It will not
-be processed through the shell, so variables like "$HOME" and 
+be processed through the shell, so variables like "$HOME" and
 operations like "<", ">", "|", and "&" will not work.  As such, all
 paths to commands must be fully qualified.
 
 NOTE:: If you want to run a command through the shell (say you are using
-'<', '>', '|', etc), you actually want the 'shell' module instead.  
+'<', '>', '|', etc), you actually want the 'shell' module instead.
 The 'command' module is much more secure as it's not affected by the user's environment.
 
 Example action from Ansible :doc:`playbooks`::
@@ -171,7 +171,7 @@ module.
 | src                | yes      |         | Local path to a file to copy to the remote server, can be absolute or      |
 |                    |          |         | relative.                                                                  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| dest               | yes      |         | Remote absolute path where the file should end up                          | 
+| dest               | yes      |         | Remote absolute path where the file should end up                          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | OTHERS             |          |         | All arguments the file module takes are also supported                     |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
@@ -187,13 +187,13 @@ facter
 ``````
 
 Runs the discovery program 'facter' on the remote system, returning
-JSON data that can be useful for inventory purposes.  
+JSON data that can be useful for inventory purposes.
 
 Requires that 'facter' and 'ruby-json' be installed on the remote end.
 
 Playbooks do not actually use this module, they use the :ref:`setup`
 module behind the scenes.
-    
+
 Example from /usr/bin/ansible::
 
     ansible foo.example.org -m ohai
@@ -254,7 +254,7 @@ support the same options as the file module -- including 'copy', 'template', and
 | src                |          |         | path of the file to link to (applies only to state=link)                   |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | seuser             |          |         | user part of SELinux file context.  Will default to system policy, if      |
-|                    |          |         | applicable.  If set to '_default', it will use the 'user' portion of the   | 
+|                    |          |         | applicable.  If set to '_default', it will use the 'user' portion of the   |
 |                    |          |         | the policy if available                                                    |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | serole             |          |         | role part of SELinux file context, '_default' feature works as above.      |
@@ -388,28 +388,35 @@ mysql_db
 
 Add or remove MySQL databases from a remote host.
 
-+--------------------+----------+----------+-----------------------------------------------------------------------------+
-| parameter          | required | default  | comments                                                                    |
-+====================+==========+==========+=============================================================================+
-| name               | yes      |           | name of the database to add or remove                                      |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
-| login_user         | no       |           | user used to authenticate with                                             |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
-| login_password     | no       |           | password used to authenticate with                                         |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
-| login_host         | no       | localhost | host running the database                                                  |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
-| state              | no       | present   | 'absent' or 'present'                                                      |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
-| collation          | no       |           | collation mode                                                             |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+ 
-| encoding           | no       |           | encoding mode                                                              |
-+--------------------+----------+-----------+----------------------------------------------------------------------------+
+Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
+apt-get install python-mysqldb.
+
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| parameter          | required | default   | comments                                                                    |
++====================+==========+===========+=============================================================================+
+| name               | yes      |           | name of the database to add or remove                                       |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| login_user         | no       |           | user name used to authenticate with                                         |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| login_password     | no       |           | password used to authenticate with                                          |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| login_host         | no       | localhost | host running the database                                                   |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| state              | no       | present   | 'absent' or 'present'                                                       |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| collation          | no       |           | collation mode                                                              |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+| encoding           | no       |           | encoding mode                                                               |
++--------------------+----------+-----------+-----------------------------------------------------------------------------+
+
+Both 'login_password' and 'login_username' are required when you are passing credentials.
+If none are present, the module will attempt to read the credentials from ~/.my.cnf, and
+finally fall back to using the MySQL default login of 'root' with no password.
 
 Example action from Ansible :doc:`playbooks`::
 
    - name: Create database
-     action: mysql_db loginpass=$mysql_root_password db=bobdata state=present
+     action: mysql_db db=bobdata state=present
 
 
 mysql_user
@@ -417,33 +424,42 @@ mysql_user
 
 Adds or removes a user from a MySQL database.
 
+Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
+apt-get install python-mysqldb.
+
 +--------------------+----------+------------+----------------------------------------------------------------------------+
 | parameter          | required | default    | comments                                                                   |
 +====================+==========+============+============================================================================+
 | name               | yes      |            | name of the user (role) to add or remove                                   |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
-| password           | yes      |            | set the user's password                                                    |
+| password           | no       |            | set the user's password                                                    |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
-| db                 | yes      |            | name of an existing database to grant user access to                       |
-+--------------------+----------+------------+----------------------------------------------------------------------------+
-| login_user         | no       |            | user (role) used to authenticate with                                      |
+| login_user         | no       |            | user name used to authenticate with                                        |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
 | login_password     | no       |            | password used to authenticate with                                         |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
-| login_host         | no       | localhost  | host running MySQL. Default (blank) implies localhost                      |
+| login_host         | no       | localhost  | host running MySQL.                                                        |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
-| priv               | no       |            | MySQL priveledges string                                                   |
+| priv               | no       |            | MySQL privileges string in the format: db.table:priv1,priv2                |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
 | state              | no       | present    | 'absent' or 'present'                                                      |
 +--------------------+----------+------------+----------------------------------------------------------------------------+
 
+Both 'login_password' and 'login_username' are required when you are passing credentials.
+If none are present, the module will attempt to read the credentials from ~/.my.cnf, and
+finally fall back to using the MySQL default login of 'root' with no password.
+
+Example privileges string format:
+
+    mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+
 Example action from Ansible :doc:`playbooks`::
 
     - name: Create database user
-      action: mysql_user loginpass=$mysql_root_password name=bob passwd=12345 priv=*.*:ALL state=present
+      action: mysql_user name=bob passwd=12345 priv=*.*:ALL state=present
 
-    - name: Ensure no user named 'sally' exists
-      action: mysql_user loginpass=$mysql_root_password name=sally state=absent
+    - name: Ensure no user named 'sally' exists, also passing in the auth credentials.
+      action: mysql_user login_user=root login_password=123456 name=sally state=absent
 
 
 .. _ohai:
@@ -561,12 +577,12 @@ Executes a low-down and dirty SSH command, not going through the module subsyste
 
 This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
-to run modules, since nearly all core modules require it.  Another is speaking to any 
+to run modules, since nearly all core modules require it.  Another is speaking to any
 devices such as routers that do not have any Python installed.  In any other case,
 using the 'shell' or 'command' module is much more appropriate.
 
-Arguments given to 'raw' are run directly through the configured remote shell and 
-only output is returned.  There is no error detection or change handler support 
+Arguments given to 'raw' are run directly through the configured remote shell and
+only output is returned.  There is no error detection or change handler support
 for this module.
 
 Example from `/usr/bin/ansible` to bootstrap a legacy python 2.4 host::
@@ -680,7 +696,7 @@ More ansible facts will be added with successive releases.
 If facter or ohai are installed, variables from these programs will
 also be snapshotted into the JSON file for usage in templating. These
 variables are prefixed with ``facter_`` and ``ohai_`` so it's easy to
-tell their source.  
+tell their source.
 
 All variables are bubbled up to the caller.  Using the ansible facts and choosing
 to not install facter and ohai means you can avoid ruby-dependencies
@@ -710,9 +726,9 @@ but runs the command through the user's configured shell on the remote node.
 | chdir              | no       |         | cd into this directory before running the command (0.6 and later)          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
-The given command will be executed on all selected nodes.  
+The given command will be executed on all selected nodes.
 
-NOTE:: If you want to execute a command securely and predicably, it may 
+NOTE:: If you want to execute a command securely and predicably, it may
 be better to use the 'command' module instead.  Best practices
 when writing playbooks will follow the trend of using 'command'
 unless 'shell' is explicitly required.  When running ad-hoc commands,
@@ -728,7 +744,7 @@ Example action from a playbook::
 template
 ````````
 
-Templates a file out to a remote server.  
+Templates a file out to a remote server.
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | parameter          | required | default | comments                                                                   |
@@ -766,13 +782,13 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | groups             |          |         | puts the user in this comma-delimited list of groups                       |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| append             |          | no      | if 'yes', will only add groups, not set them to just the list in 'groups'  | 
+| append             |          | no      | if 'yes', will only add groups, not set them to just the list in 'groups'  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | shell              |          |         | optionally set the user's shell                                            |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | createhome         |          | yes     | unless 'no', a home directory will be made for the user                    |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| home               |          |         | sets where the user's homedir should be, if not the default                | 
+| home               |          |         | sets where the user's homedir should be, if not the default                |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | password           |          |         | optionally set the user's password to this crypted value.  See the user's  |
 |                    |          |         | example in the github examples directory for what this looks like in a     |
@@ -783,7 +799,7 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 | system             |          | no      | only when initially creating, setting this to 'yes' makes the user a       |
 |                    |          |         | system account.  This setting cannot be changed on existing users.         |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| force              |          | no      | when used with state=absent, behavior is as with userdel --force           | 
+| force              |          | no      | when used with state=absent, behavior is as with userdel --force           |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | remove             |          | no      | when used with state=remove, behavior is as with userdel --remove          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
@@ -850,7 +866,7 @@ Will install, upgrade, remove, and list packages with the yum package manager.
 +====================+==========+=========+============================================================================+
 | name               | yes      |         | package name, or package specifier with version, like 'name-1.0'           |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| state              |          | present | 'present', 'latest', or 'absent'.                                          |  
+| state              |          | present | 'present', 'latest', or 'absent'.                                          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | list               |          |         | various non-idempotent commands for usage with /usr/bin/ansible and not    |
 |                    |          |         | playbooks.  See examples below.                                            |
