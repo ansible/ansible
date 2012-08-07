@@ -30,3 +30,5 @@ class AnsibleFileNotFound(AnsibleError):
 class AnsibleConnectionFailed(AnsibleError):
     pass
 
+class AnsibleYAMLValidationFailed(AnsibleError):
+    pass
