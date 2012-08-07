@@ -5,7 +5,7 @@
 # example playbook to bootstrap this script in the examples/ dir which
 # installs ansible and sets it up to run on cron.
 #
-# usage: 
+# usage:
 #   ansible-pull -d /var/ansible/local -U http://wherever/content.git -C production
 #
 # the git repo must contain a playbook named 'local.yml'

@@ -20,9 +20,9 @@ from ansible import utils
 
 class Task(object):
 
-    __slots__ = [ 
+    __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 
+        'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'with_items', 'first_available_file', 'ignore_errors'
     ]
 
@@ -63,7 +63,7 @@ class Task(object):
         self.first_available_file = ds.get('first_available_file', None)
         self.with_items = ds.get('with_items', None)
         self.ignore_errors = ds.get('ignore_errors', False)
-        
+
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
             self.notify = [ self.notify ]
@@ -92,8 +92,8 @@ class Task(object):
         # make first_available_file accessable to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
-      
-        # process with_items so it can be used by Runner code 
+
+        # process with_items so it can be used by Runner code
         if self.with_items is None:
             self.with_items = [ ]
         self.module_vars['items'] = self.with_items
@@ -109,4 +109,4 @@ class Task(object):
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
-                
+

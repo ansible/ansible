@@ -80,17 +80,17 @@ class ParamikoConnection(object):
 
         bufsize = 4096
         chan = self.ssh.get_transport().open_session()
-        chan.get_pty() 
+        chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
-            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd) 
+            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
             chan.exec_command(quoted_command)
         else:
-            # Rather than detect if sudo wants a password this time, -k makes 
+            # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required. The "--"
             # tells sudo that this is the end of sudo options and the command
             # follows.  Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote() 
+            # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
             # output until we see the randomly-generated sudo prompt set with
             # the -p option.

@@ -25,10 +25,10 @@ import os
 
 class Play(object):
 
-    __slots__ = [ 
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files', 
+    __slots__ = [
+       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook', 
+       'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
     ]
 
@@ -60,7 +60,7 @@ class Play(object):
 
         self._ds          = ds
         self.playbook     = playbook
-        self.hosts        = hosts 
+        self.hosts        = hosts
         self.name         = ds.get('name', self.hosts)
         self.vars         = ds.get('vars', {})
         self.vars_files   = ds.get('vars_files', [])
@@ -126,7 +126,7 @@ class Play(object):
 
     def tasks(self):
         ''' return task objects for this play '''
-        return self._tasks      
+        return self._tasks
 
     def handlers(self):
         ''' return handler objects for this play '''
@@ -146,7 +146,7 @@ class Play(object):
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
 
         vars = self.playbook.global_vars
-    
+
         # translate a list of vars into a dict
         if type(self.vars) == list:
             for item in self.vars:
@@ -178,7 +178,7 @@ class Play(object):
 
     def update_vars_files(self, hosts):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
-         
+
         # now loop through all the hosts...
         for h in hosts:
             self._update_vars_files_for_host(h)
@@ -196,11 +196,11 @@ class Play(object):
                     return True
 
         if tags_counted > 0:
-            return False  
-   
+            return False
+
         # didn't tag the play, and the play contains no steps
         # so assume we just want to gather facts
-        return True                  
+        return True
 
     # *************************************************
 
@@ -213,7 +213,7 @@ class Play(object):
 
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
- 
+
         if (host is not None):
             inventory = self.playbook.inventory
             hostrec = inventory.get_host(host)
@@ -288,8 +288,8 @@ class Play(object):
                         raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % filename4)
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
-                        # load into setup cache 
+                        # load into setup cache
                         self.playbook.SETUP_CACHE[host].update(new_vars)
                     elif host is None:
-                        # running a non-host specific pass and we can update the global vars instead    
+                        # running a non-host specific pass and we can update the global vars instead
                         self.vars.update(new_vars)

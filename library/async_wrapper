@@ -63,7 +63,7 @@ def daemonize_self():
     dev_null = file('/dev/null','rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
-    os.dup2(dev_null.fileno(), sys.stderr.fileno()) 
+    os.dup2(dev_null.fileno(), sys.stderr.fileno())
 
 if len(sys.argv) < 3:
     print json.dumps({
@@ -101,11 +101,11 @@ def _run_command(wrapped_cmd, jid, log_path):
     logfile.close()
     logfile = open(log_path, "w")
     result = {}
-  
+
     outdata = ''
     try:
         cmd = shlex.split(wrapped_cmd)
-        script = subprocess.Popen(cmd, shell=False, 
+        script = subprocess.Popen(cmd, shell=False,
             stdin=None, stdout=logfile, stderr=logfile)
         script.communicate()
         outdata = file(log_path).read()
@@ -125,7 +125,7 @@ def _run_command(wrapped_cmd, jid, log_path):
             "cmd" : wrapped_cmd,
             "data" : outdata, # temporary debug only
             "msg" : traceback.format_exc()
-        }   
+        }
         result['ansible_job_id'] = jid
         logfile.write(json.dumps(result))
     logfile.close()

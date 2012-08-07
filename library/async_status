@@ -55,7 +55,7 @@ def main():
             # file not written yet?  That means it is running
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1)
         else:
-            module_fail_json(ansible_job_id=jid, results_file=log_path, 
+            module_fail_json(ansible_job_id=jid, results_file=log_path,
                 msg="Could not parse job output: %s" % data)
 
     if not data.has_key("started"):

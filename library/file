@@ -47,7 +47,7 @@ def add_path_info(kwargs):
             kwargs['secontext'] = ':'.join(selinux_context(path))
     else:
         kwargs['state'] = 'absent'
-    return kwargs 
+    return kwargs
 
 def module_exit_json(**kwargs):
     add_path_info(kwargs)
@@ -155,7 +155,7 @@ def set_context_if_different(path, context, changed):
             module_fail_json(path=path, msg='set selinux context failed')
         changed = True
     return changed
-    
+
 def set_owner_if_different(path, owner, changed):
    if owner is None:
        return changed
@@ -167,7 +167,7 @@ def set_owner_if_different(path, owner, changed):
        return True
 
    return changed
-    
+
 def set_group_if_different(path, group, changed):
    if group is None:
        return changed
@@ -186,8 +186,8 @@ def set_mode_if_different(path, mode, changed):
        # FIXME: support English modes
        mode = int(mode, 8)
    except Exception, e:
-       module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))  
- 
+       module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
+
    st = os.stat(path)
    prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
@@ -290,7 +290,7 @@ def main():
         module_exit_json(path=path, changed=False)
 
     if state == 'file':
- 
+
         if prev_state == 'absent':
             module_fail_json(path=path, msg='file does not exist, use copy or template module to create')
 
@@ -307,7 +307,7 @@ def main():
         if prev_state == 'absent':
             os.makedirs(path)
             changed = True
- 
+
         # set modes owners and context as needed
         changed = set_context_if_different(path, secontext, changed)
         changed = set_owner_if_different(path, owner, changed)
@@ -317,14 +317,14 @@ def main():
         module_exit_json(path=path, changed=changed)
 
     elif state == 'link':
-    
+
         if os.path.isabs(src):
             abs_src = src
         else:
             abs_src = os.path.join(os.path.dirname(dest), src)
         if not os.path.exists(abs_src):
             module_fail_json(path=path, src=src, msg='src file does not exist')
-   
+
         if prev_state == 'absent':
             os.symlink(src, path)
             changed = True
