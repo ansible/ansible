@@ -43,6 +43,9 @@ def main():
 
     running = _is_running(name)
 
+    if running and state == 'started':
+        module.exit_json(changed=False, name=name, state=state, running=running)
+
     if running and state == 'stopped':
         rc, out, err = _run('%s stop %s' % (SUPERVISORCTL, name))
 
@@ -70,9 +73,9 @@ def main():
         module.fail_json(msg=out)
 
     elif not running and state == 'restarted':
-        module.fail_json(msg='Could not restart `%s` because it is not running')
+        module.fail_json(msg='Could not restart `%s` because it is not running' % name)
 
-    module.exit_json(changed=False, name=name, state=state)
+    module.exit_json(changed=False, name=name, state=state, running=running)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
