@@ -258,7 +258,7 @@ $ sudo make install</pre>
 <div class="section" id="via-rpm">
 <h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
 <p>RPMs for the last Ansible release are available for <a class="reference external" href="http://fedoraproject.org/wiki/EPEL">EPEL</a> 6 and currently supported
-Fedora distributions.</p>
+Fedora distributions.  Ansible itself can manage earlier operating systems that contain python 2.4 or higher.</p>
 <blockquote>
 <div># install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
 $ sudo yum install ansible</div></blockquote>
@@ -269,17 +269,14 @@ $ cd ./ansible
 $ make rpm
 $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm</pre>
 </div>
-<p>Note that if you are tracking the upstream source (i.e. git), the RPM revision will not be
-bumped with every source code change.  To get around this, you can use
-<tt class="docutils literal"><span class="pre">rpm</span> <span class="pre">-Uvh</span></tt> with <tt class="docutils literal"><span class="pre">--force</span></tt> when RPM tells you the package is still at the
-same version.  This is perfectly safe to do.</p>
 </div>
 <div class="section" id="debian-gentoo-arch-others">
 <h3>Debian, Gentoo, Arch, Others<a class="headerlink" href="#debian-gentoo-arch-others" title="Permalink to this headline">¶</a></h3>
-<p>Gentoo eBuilds are available <a class="reference external" href="https://github.com/uu/ubuilds">here</a></p>
-<p>Debian package recipes can be built from the source checkout, run:</p>
+<p>Ubuntu builds are available <a class="reference external" href="https://launchpad.net/~rquillo/+archive/ansible">in a PPA here</a></p>
+<p>Debian/Ubuntu package recipes can also be built from the source checkout, run:</p>
 <div class="highlight-python"><pre>make debian</pre>
 </div>
+<p>Gentoo eBuilds are available <a class="reference external" href="https://github.com/uu/ubuilds">on github here</a></p>
 <p>An Arch PKGBUILD is available on <a class="reference external" href="https://aur.archlinux.org/packages.php?ID=58621">AUR</a>
 If you have python3 installed on Arch, you probably want to symlink python to python2:</p>
 <div class="highlight-python"><pre>sudo ln -sf /usr/bin/python2 /usr/bin/python</pre>
@@ -392,7 +389,7 @@ explore, but you already have a fully working infrastructure!</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 03, 2012.<br/>
+      Last updated on Aug 06, 2012.<br/>
     </p>
   </div>
 </footer>

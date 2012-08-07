@@ -84,7 +84,7 @@ Via RPM
 +++++++
 
 RPMs for the last Ansible release are available for `EPEL <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
-Fedora distributions.
+Fedora distributions.  Ansible itself can manage earlier operating systems that contain python 2.4 or higher.
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
@@ -97,19 +97,16 @@ build an RPM you can distribute and install::
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm
 
-Note that if you are tracking the upstream source (i.e. git), the RPM revision will not be 
-bumped with every source code change.  To get around this, you can use
-``rpm -Uvh`` with ``--force`` when RPM tells you the package is still at the
-same version.  This is perfectly safe to do.
-
 Debian, Gentoo, Arch, Others
 ++++++++++++++++++++++++++++
 
-Gentoo eBuilds are available `here <https://github.com/uu/ubuilds>`_
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_
 
-Debian package recipes can be built from the source checkout, run::
+Debian/Ubuntu package recipes can also be built from the source checkout, run::
 
     make debian
+
+Gentoo eBuilds are available `on github here <https://github.com/uu/ubuilds>`_
 
 An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
 If you have python3 installed on Arch, you probably want to symlink python to python2::
