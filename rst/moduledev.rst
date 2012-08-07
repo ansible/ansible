@@ -330,7 +330,7 @@ the program.   Stop by the mailing list to inquire about requirements.
 
    :doc:`modules`
        Learn about available modules
-   `Github modules directory <https://github.com/ansible/ansible/tree/master/library>`_
+   `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
