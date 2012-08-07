@@ -132,10 +132,12 @@ By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko i
 very transparently, requires no configuration, and is a good choice for most users.
 However, it does not support some advanced SSH features that folks will want to use.
 
-Starting in version 0.5, if you want to leverage more advanced SSH features (such as Kerberized SSH or jump hosts), 
-pass the flag "--connection=ssh" to any ansible command, or set the
-ANSIBLE_TRANSPORT environment variable to 'ssh'. This will cause Ansible to use openssh
-tools instead.  
+.. versionadded:: 0.5
+
+If you want to leverage more advanced SSH features (such as Kerberized
+SSH or jump hosts), pass the flag "--connection=ssh" to any ansible
+command, or set the ANSIBLE_TRANSPORT environment variable to
+'ssh'. This will cause Ansible to use openssh tools instead.
 
 If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
 by default.  You are free to override this environment variable, but should still pass ControlMaster

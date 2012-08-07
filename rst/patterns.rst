@@ -144,9 +144,11 @@ seperate from the inventory file, see the next section.
 Splitting Out Host and Group Specific Data
 ++++++++++++++++++++++++++++++++++++++++++
 
-In Ansible 0.6 and later, in addition to the storing variables directly in the INI file, host and
-group variables can be stored in individual files relative to the inventory file.  These
-variable files are in YAML format.
+.. versionadded:: 0.6
+
+In addition to the storing variables directly in the INI file, host
+and group variables can be stored in individual files relative to the
+inventory file.  These variable files are in YAML format.
 
 Assuming the inventory file path is::
 
@@ -172,14 +174,19 @@ It is ok if these files do not exist, this is an optional feature.
 Tip: Keeping your inventory file and variables in a git repo (or other version control) 
 is an excellent way to track changes to your inventory and host variables.
 
-Tip: If you ever have two python interpreters on a system, set a variable called 'ansible_python_interpreter' to
-the Python interpreter path you would like to use.
+.. versionadded:: 0.5
+   If you ever have two python interpreters on a system, set a
+   variable called 'ansible_python_interpreter' to the Python
+   interpreter path you would like to use.
 
 YAML Inventory
 ++++++++++++++
 
-Ansible's YAML inventory format is deprecated and will be removed in Ansible 0.7.  Ansible 0.6 includes
-a `conversion script <https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py>`_.
+.. deprecated:: 0.7
+
+Ansible's YAML inventory format is deprecated and will be removed in
+Ansible 0.7.  Ansible 0.6 includes a `conversion script
+<https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py>`_.
 
 Usage::
 

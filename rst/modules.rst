@@ -96,11 +96,15 @@ Example action from Ansible :doc:`playbooks`::
 assemble
 ````````
 
-(new in 0.5) Assembles a configuration file from fragments.   Often a particular program will take a single configuration file
-and does not support a conf.d style structure where it is easy to build up the configuration from multiple sources.
-Assmeble will take a directory of files that have already been transferred to the system, and concatenate them
-together to produce a destination file.  Files are assembled in string sorting order.   Puppet calls this idea
-"fragments".
+.. versionadded:: 0.5
+
+Assembles a configuration file from fragments.  Often a particular
+program will take a single configuration file and does not support a
+conf.d style structure where it is easy to build up the configuration
+from multiple sources.  Assmeble will take a directory of files that
+have already been transferred to the system, and concatenate them
+together to produce a destination file.  Files are assembled in string
+sorting order.  Puppet calls this idea "fragments".
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | parameter          | required | default | comments                                                                   |
@@ -122,7 +126,9 @@ Example action from Ansible :doc:`playbooks`::
 authorized_key
 ``````````````
 
-(new in 0.5).  Adds or removes an authorized key for a user from a remote host.
+.. versionadded:: 0.5
+
+Adds or removes an authorized key for a user from a remote host.
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | parameter          | required | default | comments                                                                   |
