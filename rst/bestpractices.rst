@@ -118,7 +118,7 @@ Since a system can be in more than one group, if you have multiple datacenters o
        Learn how to extend Ansible by writing your own modules
    :doc:`patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
+   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

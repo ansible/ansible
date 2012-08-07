@@ -17,7 +17,7 @@ to push out your configuration or assure the configurations of your
 remote systems are in spec.
 
 Let's dive in and see how they work.  As you go, you may wish to open 
-the `github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_ in
+the `github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_ in
 another tab, so you can apply the theory to what things look like in practice.
 
 Playbook Language Example
@@ -362,7 +362,7 @@ package is installed.  Try it!
        Learn how to extend Ansible by writing your own modules
    :doc:`patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible/tree/master/examples/playbooks>`_
+   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

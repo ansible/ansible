@@ -269,7 +269,7 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
 of these options via an external inventory system.</p>
-<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding, but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
+<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding, but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
 <p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>
@@ -298,7 +298,7 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a &#8216;lightweight CMDB&#8217; by some admins.   This particular script will communicate with Cobbler
 using Cobbler&#8217;s XMLRPC API.</p>
-<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <cite>this script &lt;https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py&gt;</cite> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
+<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <cite>this script &lt;https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py&gt;</cite> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
 to be running when you are using Ansible.</p>
 <p>Test the file by running <cite>./etc/ansible/hosts</cite> directly.   You should see some JSON data output, but it may not have
 anything in it just yet.</p>

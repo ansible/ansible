@@ -89,7 +89,7 @@ in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
 of these options via an external inventory system.
 
-If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding, but we have a `Cobbler example <https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
+If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding, but we have a `Cobbler example <https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
 
 If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
 
@@ -123,7 +123,7 @@ layer that allows it to represent data for multiple configuration management sys
 been referred to as a 'lightweight CMDB' by some admins.   This particular script will communicate with Cobbler
 using Cobbler's XMLRPC API.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://github.com/ansible/ansible/blob/master/examples/scripts/cobbler_external_inventory.py>` to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py>` to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible.
 
 Test the file by running `./etc/ansible/hosts` directly.   You should see some JSON data output, but it may not have
