@@ -83,8 +83,10 @@ assigned to another node, it's easy to do so within a template or even an action
 
     ${hostvars.hostname.factname}
 
-NOTE: No database or other complex system is required to exchange data between hosts.  The hosts that you
-want to reference data from must be included in either the current play or any previous play.
+.. note::
+   No database or other complex system is required to exchange data
+   between hosts.  The hosts that you want to reference data from must
+   be included in either the current play or any previous play.
 
 Additionally, *group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
 
@@ -140,7 +142,9 @@ The contents of each variables file is a simple YAML dictionary, like this::
     somevar: somevalue
     password: magic
 
-NOTE: It's also possible to keep per-host and per-group variables in very similar files, this is covered in :ref:`patterns`.
+.. note::
+   It's also possible to keep per-host and per-group variables in very
+   similar files, this is covered in :ref:`patterns`.
 
 Prompting For Sensitive Data
 ````````````````````````````
@@ -256,8 +260,9 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
       - name: make sure apache is running
         action: service name=$apache state=running
 
-Note that a variable (`$facter_operatingsystem`) is being interpolated into the list of
-filenames being defined for vars_files.
+.. note::
+   The variable (`$facter_operatingsystem`) is being interpolated into
+   the list of filenames being defined for vars_files.
 
 As a reminder, the various YAML files contain just keys and values::
 
