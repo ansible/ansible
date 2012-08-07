@@ -5,6 +5,8 @@ Ansible Changes By Release
 
 * I can barely see the roadmap from the heat coming off of it.
 
+* login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
+
 0.6 "Cabo" -- August 6, 2012
 
 playbooks:
