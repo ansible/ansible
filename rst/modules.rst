@@ -141,9 +141,11 @@ be processed through the shell, so variables like "$HOME" and
 operations like "<", ">", "|", and "&" will not work.  As such, all
 paths to commands must be fully qualified.
 
-NOTE:: If you want to run a command through the shell (say you are using
-'<', '>', '|', etc), you actually want the 'shell' module instead.
-The 'command' module is much more secure as it's not affected by the user's environment.
+.. note::
+   If you want to run a command through the shell (say you are using
+   '<', '>', '|', etc), you actually want the 'shell' module instead.
+   The 'command' module is much more secure as it's not affected by
+   the user's environment.
 
 Example action from Ansible :doc:`playbooks`::
 
@@ -730,11 +732,12 @@ but runs the command through the user's configured shell on the remote node.
 
 The given command will be executed on all selected nodes.
 
-NOTE:: If you want to execute a command securely and predicably, it may
-be better to use the 'command' module instead.  Best practices
-when writing playbooks will follow the trend of using 'command'
-unless 'shell' is explicitly required.  When running ad-hoc commands,
-use your best judgement.
+.. note::
+   If you want to execute a command securely and predicably, it may be
+   better to use the 'command' module instead.  Best practices when
+   writing playbooks will follow the trend of using 'command' unless
+   'shell' is explicitly required.  When running ad-hoc commands, use
+   your best judgement.
 
 Example action from a playbook::
 
