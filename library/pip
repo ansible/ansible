@@ -1,0 +1,182 @@
+#!/usr/bin/python
+
+PIP = None
+VIRTUALENV = None
+ENV = None
+
+
+def _get_full_name(name, version=None):
+    return name if version is None else name + '==' + version
+
+
+def _find_pip():
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    if ENV:
+        paths = [os.path.join(ENV, 'bin')] + paths
+
+    for p in paths:
+        pe = p + '/pip'
+        if os.path.exists(pe):
+            return pe
+
+    module.fail_json(msg='pip is not installed')
+
+
+def _find_virtualenv():
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    for p in paths:
+        ve = p + '/virtualenv'
+        if os.path.exists(ve):
+            return ve
+
+    module.fail_json(msg='virtualenv is not installed')
+
+
+def _ensure_virtualenv():
+    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
+        return 0, '', ''
+    else:
+        return _run('%s %s' % (VIRTUALENV, ENV))
+
+
+def _is_package_installed(name, version=None):
+    rc, status_stdout, status_stderr = _run('%s freeze' % PIP)
+    return _get_full_name(name, version).lower() in status_stdout.lower()
+
+
+def _run(cmd):
+    # returns (rc, stdout, stderr) from shell command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    return (process.returncode, stdout, stderr)
+
+
+def main():
+    arg_spec = dict(
+        state=dict(default='present', choices=['absent', 'present', 'latest']),
+        name=dict(default=None, required=False),
+        version=dict(default=None, required=False),
+        requirements=dict(default=None, required=False),
+        virtualenv=dict(default=None, required=False)
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec)
+
+    global PIP
+    global VIRTUALENV
+    global ENV
+
+    rc = 0
+    err = ''
+    out = ''
+
+    ENV = module.params['virtualenv']
+    PIP = _find_pip()
+
+    if ENV:
+        VIRTUALENV = _find_virtualenv()
+
+        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+
+        rc += rc_venv
+        out += out_venv
+        err += err_venv
+
+    state = module.params['state']
+    name = module.params['name']
+    version = module.params['version']
+    requirements = module.params['requirements']
+    command_map = dict(present='install', absent='uninstall', latest='install')
+
+    if state == 'latest' and version is not None:
+        module.fail_json(msg='If `state` is set to `latest` the `version` '
+                             'paramater must not be specified.')
+
+    if state == 'latest' and requirements is not None:
+        module.fail_json(msg='If `state` is set to `latest` the `requirements` '
+                             'paramater must not be specified.')
+
+    if name is not None and '==' in name:
+        module.fail_json(msg='It looks like you specified the version number '
+                             'in the library name. Use the `version` parameter '
+                             'to specify versio instead')
+
+    if version is not None and name is None:
+        module.fail_json(msg='The `version` parameter must be used with the '
+                             '`name` parameter and not with the `requirements` '
+                             'paramter')
+
+    if name is None and requirements is None:
+        module.fail_json(msg='You must specify a python library name via '
+                             'the `name` parameter or a requirements file via '
+                             'the `requirements` paramter')
+
+    if name and requirements:
+        module.fail_json(msg='Both `name` and `requirements` were specified. '
+                             'Specify only the python library name via the '
+                             '`name` parameter or a requirements file via the '
+                             '`requirements` parameter')
+
+    cmd = None
+    installed = None
+
+    if requirements:
+        cmd = '%s %s -r %s --use-mirrors' % (PIP, command_map[state], requirements)
+        rc_pip, out_pip, err_pip = _run(cmd)
+
+        rc += rc_pip
+        out += out_pip
+        err += err_pip
+
+        def did_install(out):
+            return 'Successfully installed' in out
+
+        changed = ((did_install(out) and state == 'present') or
+                   (not did_install(out) and state == 'absent'))
+
+    if name and state == 'latest':
+        cmd = '%s %s %s --upgrade' % (PIP, command_map[state], name)
+
+        rc_pip, out_pip, err_pip = _run(cmd)
+
+        rc += rc_pip
+        out += out_pip
+        err += err_pip
+
+        changed = 'Successfully installed' in out_pip
+
+    elif name:
+        installed = _is_package_installed(name, version)
+
+        changed = ((installed and state == 'absent') or
+                   (not installed and state == 'present'))
+
+        if changed:
+            full_name = _get_full_name(name, version) if state == 'present' else name
+
+            cmd = '%s %s %s' % (PIP, command_map[state], full_name)
+
+            if state == 'absent':
+                cmd = cmd + ' -y'
+            else:
+                cmd = cmd + ' --use-mirrors'
+
+            rc_pip, out_pip, err_pip = _run(cmd)
+
+            rc += rc_pip
+            out += out_pip
+            err += err_pip
+
+    if rc != 0:
+        module.fail_json(msg=err, cmd=cmd)
+
+    module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                     state=state, requirements=requirements, virtualenv=ENV)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
