@@ -30,7 +30,7 @@ import codecs
 import collections
 import re
 
-import ansible.constants as C 
+import ansible.constants as C
 import ansible.inventory
 from ansible import utils
 from ansible import errors
@@ -38,7 +38,7 @@ from ansible import module_common
 import poller
 import connection
 from ansible import callbacks as ans_callbacks
-    
+
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -65,7 +65,7 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
- 
+
 ################################################
 
 class ReturnData(object):
@@ -103,7 +103,7 @@ class Runner(object):
 
     # see bin/ansible for how this is used...
 
-    def __init__(self, 
+    def __init__(self,
         host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
         module_path=C.DEFAULT_MODULE_PATH,  # ex: /usr/share/ansible
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
@@ -114,7 +114,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=C.DEFAULT_REMOTE_PORT,  # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords 
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
@@ -125,7 +125,7 @@ class Runner(object):
         verbose=False,                      # whether to show more or less
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
-        module_vars=None,                   # a playbooks internals thing 
+        module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
         inventory=None                      # reference to Inventory object
         ):
@@ -162,7 +162,7 @@ class Runner(object):
             raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
- 
+
         # ensure we are using unique tmp paths
         random.seed()
 
@@ -201,7 +201,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_module(self, conn, tmp, module_name, args, 
+    def _execute_module(self, conn, tmp, module_name, args,
         async_jid=None, async_module=None, async_limit=None, inject=None):
 
         ''' runs a module that has already been transferred '''
@@ -270,7 +270,7 @@ class Runner(object):
 
         return self._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_path,
-           async_jid=self.generated_jid, 
+           async_jid=self.generated_jid,
            async_limit=self.background,
            inject=inject
         )
@@ -301,7 +301,7 @@ class Runner(object):
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(host=conn.host, results=results)
-       
+
         source = utils.template(source, inject)
         source = utils.path_dwim(self.basedir, source)
 
@@ -309,10 +309,10 @@ class Runner(object):
         if local_md5 is None:
             result=dict(failed=True, msg="could not find src=%s" % source)
             return ReturnData(host=conn.host, result=result)
-            
-        remote_md5 = self._remote_md5(conn, tmp, dest) 
 
-        exec_rc = None 
+        remote_md5 = self._remote_md5(conn, tmp, dest)
+
+        exec_rc = None
         if local_md5 != remote_md5:
             # transfer the file to a remote tmp location
             tmp_src = tmp + source.split('/')[-1]
@@ -344,7 +344,7 @@ class Runner(object):
         source = utils.template(source, inject)
         # apply templating to dest argument
         dest = utils.template(dest, inject)
-       
+
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
@@ -383,7 +383,7 @@ class Runner(object):
         else:
             result = dict(changed=False, md5sum=local_md5, file=source)
             return ReturnData(host=conn.host, result=result)
-        
+
     # *****************************************************
 
     def _execute_template(self, conn, tmp, inject=None):
@@ -423,7 +423,7 @@ class Runner(object):
             result = dict(failed=True, msg=str(e))
             return ReturnData(host=conn.host, comm_ok=False, result=result)
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
-            
+
         # run the copy module, queue the file module
         self.module_args = "%s src=%s dest=%s" % (self.module_args, xfered, dest)
         return self._execute_module(conn, tmp, 'copy', self.module_args, inject=inject).daisychain('file')
@@ -435,7 +435,7 @@ class Runner(object):
 
         # FIXME: once assemble is ported over to the use the new common logic, this method
         # will be unneccessary as it can decide to daisychain via it's own module returns.
-        # and this function can be deleted.  
+        # and this function can be deleted.
 
         return self._execute_module(conn, tmp, 'assemble', self.module_args, inject=inject).daisychain('file')
 
@@ -489,7 +489,7 @@ class Runner(object):
             # hack for apt and soon yum, with_items maps back into a single module call
             inject['item'] = ",".join(items)
             items = []
-          
+
         if len(items) == 0:
             return self._executor_internal_inner(host, inject, port)
         else:
@@ -589,7 +589,7 @@ class Runner(object):
                 changed = True
             result.result.update(result2.result)
             result.result['changed'] = changed
-            
+
             del result.result['daisychain']
 
         self._delete_remote_files(conn, tmp)
@@ -631,7 +631,7 @@ class Runner(object):
             out = "\n".join(stdout.readlines())
         else:
             out = stdout
-        
+
         if type(stderr) != str:
             err = "\n".join(stderr.readlines())
         else:
@@ -642,15 +642,15 @@ class Runner(object):
     # *****************************************************
 
     def _remote_md5(self, conn, tmp, path):
-        ''' takes a remote md5sum without requiring python, and returns 0 if no file ''' 
-    
+        ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
+
         test = "rc=0; [[ -r \"%s\" ]] || rc=2; [[ -f \"%s\" ]] || rc=1" % (path,path)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,
             "(/usr/bin/digest -a md5 -v %s 2>/dev/null)" % path
         ]
-    
+
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
         return self._low_level_exec_command(conn, cmd, tmp, sudoable=False).split()[0]
@@ -702,7 +702,7 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
             encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
- 
+
         # use the correct python interpreter for the host
         if 'ansible_python_interpreter' in inject:
             interpreter = inject['ansible_python_interpreter']
@@ -771,13 +771,13 @@ class Runner(object):
 
     def run(self):
         ''' xfer & run module on all matched hosts '''
-       
+
         # find hosts that match the pattern
         hosts = self.inventory.list_hosts(self.pattern)
         if len(hosts) == 0:
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
- 
+
         hosts = [ (self,x) for x in hosts ]
         results = None
         if self.forks > 1:

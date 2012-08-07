@@ -36,7 +36,7 @@ except ImportError:
 
 try:
     from hashlib import md5 as _md5
-except ImportError: 
+except ImportError:
     from md5 import md5 as _md5
 
 ###############################################################
@@ -117,10 +117,10 @@ def parse_json(data):
         results = {}
         try:
             tokens = shlex.split(data)
-        except: 
+        except:
             print "failed to parse json: "+ data
-            raise 
-            
+            raise
+
         for t in tokens:
             if t.find("=") == -1:
                 raise errors.AnsibleError("failed to parse: %s" % data)
@@ -131,7 +131,7 @@ def parse_json(data):
                 elif value.lower() in [ 'false', '0' ]:
                     value = False
             if key == 'rc':
-                value = int(value)     
+                value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : data }
@@ -204,7 +204,7 @@ def template(text, vars):
         if (depth > 20):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
-        text = varReplace(unicode(text), vars) 
+        text = varReplace(unicode(text), vars)
     return text
 
 def template_from_file(basedir, path, vars):
@@ -223,7 +223,7 @@ def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
 
     return yaml.load(data)
-  
+
 def parse_yaml_from_file(path):
     ''' convert a yaml file to a data structure '''
 
@@ -268,7 +268,7 @@ def default(value, function):
     return value
 
 ####################################################################
-# option handling code for /usr/bin/ansible and ansible-playbook 
+# option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
 
 class SortedOptParser(optparse.OptionParser):
@@ -287,7 +287,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
-        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST, 
+        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
@@ -299,7 +299,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout', 
+        dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
 
     if output_opts:
@@ -314,9 +314,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
         parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
             default=None)   # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user', 
+            dest='remote_user',
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
-    
+
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
                           choices=C.DEFAULT_TRANSPORT_OPTS,
@@ -325,7 +325,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval', 
+            dest='poll_interval',
             help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds (default=N/A)')

@@ -52,7 +52,7 @@ class Group(object):
         for kid in self.child_groups:
             hosts.extend(kid.get_hosts())
         hosts.extend(self.hosts)
-        return hosts 
+        return hosts
 
     def get_variables(self):
 

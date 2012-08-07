@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """
@@ -24,9 +24,9 @@ try:
 except ImportError:
     print "failed=True msg='libvirt python module unavailable'"
     sys.exit(1)
-    
+
 ALL_COMMANDS = []
-VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause', 
+VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
                 'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
@@ -141,11 +141,11 @@ class LibvirtConnection(object):
     def get_autostart(self, vmid):
         vm = self.conn.lookupByName(vmid)
         return vm.autostart()
-    
+
     def set_autostart(self, vmid, val):
         vm = self.conn.lookupByName(vmid)
         return vm.setAutostart(val)
-    
+
 
 
 class Virt(object):
@@ -157,7 +157,7 @@ class Virt(object):
     def get_vm(self, vmid):
         self.__get_conn()
         return self.conn.find_vm(vmid)
-        
+
     def state(self):
         vms = self.list_vms()
         state = []
@@ -216,7 +216,7 @@ class Virt(object):
 
     def virttype(self):
         return self.__get_conn().get_type()
-        
+
     def autostart(self, vmid):
         self.conn = self.__get_conn()
         return self.conn.set_autostart(vmid, True)
@@ -313,26 +313,26 @@ def core(module):
 
     v = Virt()
     res = {}
-    
-    
+
+
     if state:
         if not guest:
             module.fail_json(msg = "state change requires a guest specified")
-      
+
         res['changed'] = False
         if state == 'running':
             if v.status(guest) is not 'running':
-                res['changed'] = True 
+                res['changed'] = True
                 res['msg'] = v.start(guest)
         elif state == 'shutdown':
             if v.status(guest) is not 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
         else:
-            module.fail_json(msg="unexpected state")    
-    
+            module.fail_json(msg="unexpected state")
+
         return VIRT_SUCCESS, res
-        
+
     if command:
         if command in VM_COMMANDS:
             if not guest:
@@ -341,20 +341,20 @@ def core(module):
             if type(res) != dict:
                 res = { command: res }
             return VIRT_SUCCESS, res
-        
+
         elif hasattr(v, command):
             res = getattr(v, command)()
             if type(res) != dict:
                 res = { command: res }
             return VIRT_SUCCESS, res
-            
+
         else:
             module.fail_json(msg="Command %s not recognized" % basecmd)
-       
-    module.fail_json(msg="expected state or command parameter to be specified") 
-    
+
+    module.fail_json(msg="expected state or command parameter to be specified")
+
 def main():
-  
+
     module = AnsibleModule(argument_spec=dict(
         name = dict(aliases=['guest']),
         state = dict(choices=['running', 'shutdown']),
@@ -375,4 +375,4 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()    
+main()

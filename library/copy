@@ -30,7 +30,7 @@ def main():
             src=dict(required=True),
             dest=dict(required=True)
         )
-    ) 
+    )
 
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
@@ -60,9 +60,9 @@ def main():
         try:
             shutil.copyfile(src, dest)
         except shutil.Error:
-            module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest)) 
+            module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
         except IOError:
-            module.fail_json(msg="failed to copy: %s to %s" % (src, dest)) 
+            module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
         changed = True
     else:
         changed = False

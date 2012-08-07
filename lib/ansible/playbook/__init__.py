@@ -28,12 +28,12 @@ SETUP_CACHE = collections.defaultdict(dict)
 
 class PlayBook(object):
     '''
-    runs an ansible playbook, given as a datastructure or YAML filename.  
-    A playbook is a deployment, config management, or automation based 
+    runs an ansible playbook, given as a datastructure or YAML filename.
+    A playbook is a deployment, config management, or automation based
     set of commands to run in series.
 
-    multiple plays/tasks do not execute simultaneously, but tasks in each 
-    pattern do execute in parallel (according to the number of forks 
+    multiple plays/tasks do not execute simultaneously, but tasks in each
+    pattern do execute in parallel (according to the number of forks
     requested) among the hosts they address
     '''
 
@@ -86,7 +86,7 @@ class PlayBook(object):
             extra_vars = {}
         if only_tags is None:
             only_tags = [ 'all' ]
- 
+
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -107,7 +107,7 @@ class PlayBook(object):
         self.only_tags        = only_tags
 
         self.inventory   = ansible.inventory.Inventory(host_list)
-        
+
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
@@ -143,7 +143,7 @@ class PlayBook(object):
         return accumulated_plays
 
     # *****************************************************
-        
+
     def run(self):
         ''' run all patterns in the playbook '''
 
@@ -186,11 +186,11 @@ class PlayBook(object):
             pattern=task.play.hosts, inventory=self.inventory, module_name=task.module_name,
             module_args=task.module_args, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=task.play.remote_user, 
+            timeout=self.timeout, remote_user=task.play.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=self.basedir,
-            conditional=task.only_if, callbacks=self.runner_callbacks, 
+            conditional=task.only_if, callbacks=self.runner_callbacks,
             verbose=self.verbose, sudo=task.play.sudo, sudo_user=task.play.sudo_user,
             transport=task.play.transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
@@ -226,7 +226,7 @@ class PlayBook(object):
         for host, result in results['contacted'].iteritems():
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
- 
+
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
             for host, results in results.get('contacted',{}).iteritems():
@@ -237,7 +237,7 @@ class PlayBook(object):
     # *****************************************************
 
     def _flag_handler(self, handlers, handler_name, host):
-        ''' 
+        '''
         if a task has any notify elements, flag handlers for run
         at end of execution cycle for hosts that have indicated
         changes have been made
@@ -256,8 +256,8 @@ class PlayBook(object):
 
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
-        
-        host_list = [ h for h in self.inventory.list_hosts(play.hosts) 
+
+        host_list = [ h for h in self.inventory.list_hosts(play.hosts)
             if not (h in self.stats.failures or h in self.stats.dark) ]
 
         if not play.gather_facts:
@@ -271,7 +271,7 @@ class PlayBook(object):
             pattern=play.hosts, module_name='setup', module_args={}, inventory=self.inventory,
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
-            setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user, 
+            setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             verbose=self.verbose, transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
@@ -297,14 +297,14 @@ class PlayBook(object):
         self.callbacks.on_play_start(play.name)
 
         # get facts from system
-        rc = self._do_setup_step(play) 
+        rc = self._do_setup_step(play)
 
         # now with that data, handle contentional variable file imports!
         if play.vars_files and len(play.vars_files) > 0:
             play.update_vars_files(self.inventory.list_hosts(play.hosts))
 
         for task in play.tasks():
-            
+
             # only run the task if the requested tags match
             should_run = False
             for x in self.only_tags:

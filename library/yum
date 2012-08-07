@@ -33,7 +33,7 @@ def is_installed(repoq, pkgspec, qf=def_qf):
     rc,out,err = run(cmd)
     if rc == 0:
         return [ p for p in out.split('\n') if p.strip() ]
-    
+
     return []
 
 def is_available(repoq, pkgspec, qf=def_qf):
@@ -50,7 +50,7 @@ def is_update(repoq, pkgspec, qf=def_qf):
     rc,out,err = run(cmd)
     if rc == 0:
         return set([ p for p in out.split('\n') if p.strip() ])
-  
+
     return []
 
 
@@ -60,26 +60,26 @@ def what_provides(repoq, req_spec, qf=def_qf):
     ret = []
     if rc == 0:
         ret = set([ p for p in out.split('\n') if p.strip() ])
-    
+
     return ret
 
 def local_nvra(path):
     """return nvra of a local rpm passed in"""
-    
+
     cmd = "/bin/rpm -qp --qf='%%{name}-%%{version}-%%{release}.%%{arch}\n' %s'" % path
     rc, out, err = run(cmd)
     if rc != 0:
         return None
     nvra = out.split('\n')[0]
     return nvra
-    
-    
+
+
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
         n,e,v,r,a,repo = pkgstr.split('|')
     else:
         return {'error_parsing': pkgstr}
-        
+
     d = {
         'name':n,
         'arch':a,
@@ -89,7 +89,7 @@ def pkg_to_dict(pkgstr):
         'repo':repo,
         'nevra': '%s:%s-%s-%s.%s' % (e,n,v,r,a)
         }
-        
+
     if repo == 'installed':
         d['yumstate'] = 'installed'
     else:
@@ -103,16 +103,16 @@ def repolist(repoq, qf="%{repoid}"):
     ret = []
     if rc == 0:
         ret = set([ p for p in out.split('\n') if p.strip() ])
-    
+
     return ret
-    
+
 def list_stuff(conf_file, stuff):
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
     repoq = '%s --plugins --quiet  -q ' % repoquery
     if conf_file and os.path.exists(conf_file):
         repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
 
-    
+
     if stuff == 'installed':
         return [ pkg_to_dict(p) for p in is_installed(repoq, '-a', qf=qf) if p.strip() ]
     elif stuff == 'updates':
@@ -126,7 +126,7 @@ def list_stuff(conf_file, stuff):
 
 def run(command):
     try:
-        cmd = subprocess.Popen(command, shell=True, 
+        cmd = subprocess.Popen(command, shell=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
@@ -144,7 +144,7 @@ def run(command):
            err = ''
     else:
         rc = cmd.returncode
-        
+
     return rc, out, err
 
 
@@ -161,8 +161,8 @@ def install(module, items, repoq, yum_basecmd):
         # check if pkgspec is installed (if possible for idempotence)
         # localpkg
         if spec.endswith('.rpm'):
-            # get the pkg name-v-r.arch                
-            nvra = local_nvra(spec) 
+            # get the pkg name-v-r.arch
+            nvra = local_nvra(spec)
             # look for them in the rpmdb
             if is_installed(repoq, nvra):
                 # if they are there, skip it
@@ -181,23 +181,23 @@ def install(module, items, repoq, yum_basecmd):
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
                 res['failed'] = True
                 module.exit_json(**res)
-            
+
             # if any of them are installed
             # then nothing to do
-            
+
             found = False
             for this in pkglist:
                 if is_installed(repoq, this):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
-                    
+
             if found:
                 continue
             # if not - then pass in the spec as what to install
-            # we could get here if nothing provides it but that's not 
-            # the error we're catching here 
+            # we could get here if nothing provides it but that's not
+            # the error we're catching here
             pkg = spec
-        
+
         cmd = "%s install '%s'" % (yum_basecmd, pkg)
         rc, out, err = run(cmd)
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
@@ -213,9 +213,9 @@ def install(module, items, repoq, yum_basecmd):
             res['rc'] = 0
             res['results'].append(out)
             res['msg'] += err
-            
+
     module.exit_json(**res)
-        
+
 
 def remove(module, items, repoq, yum_basecmd):
     res = {}
@@ -223,7 +223,7 @@ def remove(module, items, repoq, yum_basecmd):
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
-    
+
     for spec in items:
         pkg = None
 
@@ -237,12 +237,12 @@ def remove(module, items, repoq, yum_basecmd):
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
                 res['failed']=True
                 module.exit_json(**res)
-            
+
             found = False
             for this in pkglist:
                 if is_installed(repoq, this):
                     found = True
-            
+
             if not found:
                 res['results'].append('%s is not installed' % spec)
                 continue
@@ -250,7 +250,7 @@ def remove(module, items, repoq, yum_basecmd):
 
         cmd = "%s remove '%s'" % (yum_basecmd, pkg)
         rc, out, err = run(cmd)
-       
+
         # FIXME if we ran the remove - check to make sure it actually removed :(
         # look for the pkg in the rpmdb - this is notoriously hard for groups :(
         if rc != 0:
@@ -264,7 +264,7 @@ def remove(module, items, repoq, yum_basecmd):
             res['rc'] = 0
             res['results'].append(out)
             res['msg'] += err
-    
+
     module.exit_json(**res)
 
 def latest(module, items, repoq, yum_basecmd):
@@ -273,7 +273,7 @@ def latest(module, items, repoq, yum_basecmd):
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
-    
+
     for spec in items:
         pkg = None
 
@@ -296,11 +296,11 @@ def latest(module, items, repoq, yum_basecmd):
                         found = True
                     else:
                         nothing_to_do = True
-                        
+
             if nothing_to_do:
                 res['results'].append("All packages providing %s are up to date" % spec)
                 continue
-                
+
             if not found:
                 basecmd = 'install'
             else:
@@ -333,16 +333,16 @@ def latest(module, items, repoq, yum_basecmd):
             res['rc'] = 0
             res['results'].append(out)
             res['msg'] += err
-    
+
     module.exit_json(**res)
 
 
-    
+
 def ensure(module, state, pkgspec, conf_file):
     res = {}
     stdout = ""
     stderr = ""
-    
+
     # take multiple args comma separated
     items = [pkgspec]
     if pkgspec.find(',') != -1:
@@ -361,9 +361,9 @@ def ensure(module, state, pkgspec, conf_file):
     elif state == 'latest':
         latest(module, items, repoq, yum_basecmd)
 
-    # should be caught by AnsibleModule argument_spec        
+    # should be caught by AnsibleModule argument_spec
     return dict(changed=False, failed=True, results='', errors='unexpected state')
- 
+
 
 def remove_only(pkgspec):
     # remove this pkg and only this pkg - fail if it will require more to remove
@@ -380,7 +380,7 @@ def main():
     #   list=available
     #   list=repos
     #   list=pkgspec
-    
+
     module = AnsibleModule(
         argument_spec = dict(
             pkg=dict(aliases=['name']),
@@ -400,11 +400,11 @@ def main():
 
     if not os.path.exists(repoquery):
         module.fail_json(msg="%s is required to run this module. Please install the yum-utils package." % repoquery)
-        
+
     if params['list']:
         results = dict(results=list_stuff(params['conf_file'], params['list']))
         module.exit_json(**results)
-            
+
     else:
         pkg = params['pkg']
         if 'pkg' is None:

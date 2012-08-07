@@ -30,7 +30,7 @@ from ansible import errors
 from ansible import utils
 
 class InventoryParser(object):
-    """ 
+    """
     Host inventory for ansible.
     """
 
@@ -41,20 +41,20 @@ class InventoryParser(object):
         self.groups = {}
         self.hosts = {}
         self._parse()
- 
+
     def _parse(self):
 
         self._parse_base_groups()
         self._parse_group_children()
         self._parse_group_variables()
         return self.groups
- 
+
 
     # [webservers]
     # alpha
     # beta:2345
     # gamma sudo=True user=root
-    # delta asdf=jkl favcolor=red 
+    # delta asdf=jkl favcolor=red
 
     def _parse_base_groups(self):
         # FIXME: refactor
@@ -93,7 +93,7 @@ class InventoryParser(object):
                         tokens2  = hostname.rsplit(":", 1)
                         hostname = tokens2[0]
                         port     = tokens2[1]
-                
+
                 host = None
                 _all_hosts = []
                 if hostname in self.hosts:

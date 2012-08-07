@@ -56,7 +56,7 @@ except ImportError:
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False, check_invalid_arguments=True):
-        ''' 
+        '''
         common code for quickly building an ansible module in Python
         (although you can write modules in anything that can return JSON)
         see library/slurp and others for examples
@@ -67,7 +67,7 @@ class AnsibleModule(object):
 
         self._legal_inputs = []
         self._handle_aliases()
-    
+
         # this may be disabled where modules are going to daisy chain into others
         if check_invalid_arguments:
             self._check_invalid_arguments()
@@ -151,7 +151,7 @@ class AnsibleModule(object):
         for x in items:
             (k, v) = x.split("=",1)
             params[k] = v
-        return (params, args)        
+        return (params, args)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -173,7 +173,7 @@ class AnsibleModule(object):
             return False
         else:
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
-            
+
     def jsonify(self, data):
         return json.dumps(data)
 

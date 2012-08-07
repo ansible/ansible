@@ -29,8 +29,8 @@ elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
 
 class AggregateStats(object):
-    ''' holds stats about per-host activity during playbook runs '''   
- 
+    ''' holds stats about per-host activity during playbook runs '''
+
     def __init__(self):
 
         self.processed   = {}
@@ -49,7 +49,7 @@ class AggregateStats(object):
 
     def compute(self, runner_results, setup=False, poll=False):
         ''' walk through all results and increment stats '''
- 
+
         for (host, value) in runner_results.get('contacted', {}).iteritems():
             if ('failed' in value and bool(value['failed'])) or ('rc' in value and value['rc'] != 0):
                 self._increment('failures', host)
@@ -65,7 +65,7 @@ class AggregateStats(object):
 
         for (host, value) in runner_results.get('dark', {}).iteritems():
             self._increment('dark', host)
-            
+
 
     def summarize(self, host):
         ''' return information about a particular host '''
@@ -92,10 +92,10 @@ def regular_generic_msg(hostname, result, oneline, caption):
 def banner(msg):
 
     if cowsay != None:
-        cmd = subprocess.Popen("%s -W 60 \"%s\"" % (cowsay, msg), 
+        cmd = subprocess.Popen("%s -W 60 \"%s\"" % (cowsay, msg),
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (out, err) = cmd.communicate()
-        return "%s\n" % out 
+        return "%s\n" % out
     else:
         return "\n%s ********************* " % msg
 
@@ -182,7 +182,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def __init__(self):
 
         # set by /usr/bin/ansible later
-        self.options = None 
+        self.options = None
         self._async_notified = {}
 
     def on_failed(self, host, res, ignore_errors=False):
@@ -192,7 +192,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_ok(self, host, res):
 
         self._on_any(host,res)
- 
+
     def on_unreachable(self, host, res):
 
         if type(res) == dict:
@@ -200,17 +200,17 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         print "%s | FAILED => %s" % (host, res)
         if self.options.tree:
             utils.write_tree_file(
-                self.options.tree, host, 
+                self.options.tree, host,
                 utils.jsonify(dict(failed=True, msg=res),format=True)
             )
- 
+
     def on_skipped(self, host):
         pass
 
     def on_error(self, host, err):
 
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
-    
+
     def on_no_hosts(self):
 
         print >>sys.stderr, "no hosts matched\n"
@@ -277,11 +277,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         item = host_result.get('item', None)
 
         # show verbose output for non-setup module results if --verbose is used
-        msg = '' 
+        msg = ''
         if not self.verbose or host_result.get("verbose_override",None) is not None:
             if item:
                 msg = "ok: [%s] => (item=%s)" % (host,item)
-            else:   
+            else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result:
                     msg = "ok: [%s]" % (host)
         else:
@@ -347,7 +347,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
 class PlaybookCallbacks(object):
     ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
-  
+
     def __init__(self, verbose=False):
 
         self.verbose = verbose
@@ -376,11 +376,11 @@ class PlaybookCallbacks(object):
         if private:
             return getpass.getpass(msg)
         return raw_input(msg)
-        
+
     def on_setup(self):
 
         print banner("GATHERING FACTS")
-    
+
     def on_import_for_host(self, host, imported_file):
 
         msg = "%s: importing %s" % (host, imported_file)

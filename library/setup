@@ -360,7 +360,7 @@ class FreeBSDHardware(Hardware):
         # Get swapinfo.  swapinfo output looks like:
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
-        # 
+        #
         cmd = subprocess.Popen("/usr/sbin/swapinfo -m", shell=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
@@ -601,7 +601,7 @@ def run_setup(module):
 
     setup_options = {}
     facts = ansible_facts()
- 
+
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k] = v
 

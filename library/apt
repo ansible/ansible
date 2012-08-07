@@ -77,7 +77,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
         installed, upgradable = package_status(m, name, version, cache)
         if not installed or (upgrade and upgradable):
             packages += "'%s' " % package
-    
+
     if len(packages) != 0:
         if force:
             force_yes = '--force-yes'
@@ -105,7 +105,7 @@ def remove(m, pkgspec, cache, purge=False):
         installed, upgradable = package_status(m, name, version, cache)
         if installed:
             packages += "'%s' " % package
-    
+
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
@@ -157,9 +157,9 @@ def main():
             module.exit_json(changed=False)
 
     force_yes = module.boolean(p['force'])
-    
+
     packages = p['package'].split(',')
-    latest = p['state'] == 'latest' 
+    latest = p['state'] == 'latest'
     for package in packages:
         if package.count('=') > 1:
             module.fail_json(msg="invalid package spec: %s" % package)

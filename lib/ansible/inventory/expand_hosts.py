@@ -40,15 +40,15 @@ def detect_range(line = None):
 
     Returnes True if the given line contains a pattern, else False.
     '''
-    if (not line.startswith("[") and 
-        line.find("[") != -1 and 
+    if (not line.startswith("[") and
+        line.find("[") != -1 and
         line.find(":") != -1 and
         line.find("]") != -1 and
-        line.index("[") < line.index(":") < line.index("]")):   
+        line.index("[") < line.index(":") < line.index("]")):
         return True
     else:
         return False
-        
+
 def expand_hostname_range(line = None):
     '''
     A helper function that expands a given line that contains a pattern
@@ -64,11 +64,11 @@ def expand_hostname_range(line = None):
     all_hosts = []
     if line:
         # A hostname such as db[1:6]-node is considered to consists
-        # three parts: 
+        # three parts:
         # head: 'db'
         # nrange: [1:6]; range() is a built-in. Can't use the name
         # tail: '-node'
-        
+
         (head, nrange, tail) = line.replace('[','|').replace(']','|').split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2:
@@ -85,7 +85,7 @@ def expand_hostname_range(line = None):
             rlen = None
         if rlen > 1 and rlen != len(end):
             raise errors.AnsibleError("host range format incorrectly specified!")
-                
+
         for _ in range(int(beg), int(end)+1):
             if rlen:
                 rseq = str(_).zfill(rlen) # range sequence
@@ -93,5 +93,5 @@ def expand_hostname_range(line = None):
                 rseq = str(_)
             hname = ''.join((head, rseq, tail))
             all_hosts.append(hname)
-                   
+
         return all_hosts

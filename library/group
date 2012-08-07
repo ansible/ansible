@@ -80,7 +80,7 @@ def group_info(group):
     except KeyError:
         return False
     return info
-    
+
 # ===========================================
 
 def main():
