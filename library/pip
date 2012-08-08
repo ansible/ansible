@@ -1,4 +1,23 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Matt Wright <matt@nobien.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 PIP = None
 VIRTUALENV = None
@@ -46,6 +65,10 @@ def _is_package_installed(name, version=None):
     return _get_full_name(name, version).lower() in status_stdout.lower()
 
 
+def _did_install(out):
+    return 'Successfully installed' in out
+
+
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -64,10 +87,6 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=arg_spec)
-
-    global PIP
-    global VIRTUALENV
-    global ENV
 
     rc = 0
     err = ''
@@ -93,16 +112,16 @@ def main():
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='If `state` is set to `latest` the `version` '
-                             'paramater must not be specified.')
+                             'parameter must not be specified.')
 
     if state == 'latest' and requirements is not None:
         module.fail_json(msg='If `state` is set to `latest` the `requirements` '
-                             'paramater must not be specified.')
+                             'parameter must not be specified.')
 
     if name is not None and '==' in name:
         module.fail_json(msg='It looks like you specified the version number '
                              'in the library name. Use the `version` parameter '
-                             'to specify versio instead')
+                             'to specify version instead')
 
     if version is not None and name is None:
         module.fail_json(msg='The `version` parameter must be used with the '
@@ -131,11 +150,8 @@ def main():
         out += out_pip
         err += err_pip
 
-        def did_install(out):
-            return 'Successfully installed' in out
-
-        changed = ((did_install(out) and state == 'present') or
-                   (not did_install(out) and state == 'absent'))
+        changed = ((_did_install(out) and state == 'present') or
+                   (not _did_install(out) and state == 'absent'))
 
     if name and state == 'latest':
         cmd = '%s %s %s --upgrade' % (PIP, command_map[state], name)
