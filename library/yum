@@ -276,7 +276,7 @@ def latest(module, items, repoq, yum_basecmd):
 
     for spec in items:
         pkg = None
-
+        basecmd = update
         # groups, again
         if spec.startswith('@'):
             pkg = spec
