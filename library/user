@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import pwd
 import grp
 try:
@@ -25,6 +26,14 @@ try:
     HAVE_SPWD=True
 except:
     HAVE_SPWD=False
+
+SHADOWFILE = '/etc/shadow'
+if os.path.exists('/etc/master.passwd'):
+    SHADOWFILE = '/etc/master.passwd' # FreeBSD passwd
+# Note: while the above has the correct location for where
+# encrypted passwords are stored on FreeBSD, the code below doesn't
+# invoke adduser in lieu of useradd, nor pw in lieu of usermod.
+# That is, this won't work on FreeBSD.
 
 def get_bin_path(module, arg):
     if os.path.exists('/usr/sbin/%s' % arg):
@@ -198,15 +207,27 @@ def get_pwd_info(user):
 def user_info(user):
     if not user_exists(user):
         return False
-    try:
-        info = get_pwd_info(user)
-        if HAVE_SPWD:
-            sinfo = spwd.getspnam(user)
-    except KeyError:
-        return False
-    if HAVE_SPWD:
-        info[1] = sinfo[1]
+    info = get_pwd_info(user)
+    if len(info[1]) == 1 or len(info[1]) == 0:
+        info[1] = user_password(user)
     return info
+
+def user_password(user):
+    passwd = ''
+    if not user_exists(user):
+        return passwd
+    if HAVE_SPWD:
+        try:
+            passwd = spwd.getspnam(user)[1]
+        except KeyError:
+            return passwd
+    else:
+        # Read shadow file for user's encrypted password string
+        if os.path.exists(SHADOWFILE) and os.access(SHADOWFILE, os.R_OK):
+            for line in open(SHADOWFILE).readlines():
+                if line.startswith('%s:' % user):
+                    passwd = line.split(':')[1]
+    return passwd
 
 # ===========================================
 
