@@ -39,6 +39,12 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
+try:
+    import git
+    HAS_GIT = True
+except ImportError:
+    HAS_GIT = False
+
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -287,6 +293,25 @@ def default(value, function):
         return function()
     return value
 
+def _gitinfo():
+    result = ""
+    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
+    if HAS_GIT and os.path.exists(repo_path):
+        repo = git.Repo(repo_path)
+        head = repo.head
+        branch = head.reference.name
+        commit = head.commit.hexsha[:10]
+        result = "({0}) [{1}]".format(branch, commit)
+    return result
+
+def version(prog):
+    result = "{0} {1}".format(prog, __version__)
+    if HAS_GIT:
+        gitinfo = _gitinfo()
+        if gitinfo:
+            result = result + " {0}".format(gitinfo)
+    return result
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -301,7 +326,7 @@ class SortedOptParser(optparse.OptionParser):
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
-    parser = SortedOptParser(usage, version="%prog " + __version__)
+    parser = SortedOptParser(usage, version=version("%prog"))
     parser.add_option('-v','--verbose', default=False, action="store_true",
         help='verbose mode')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
