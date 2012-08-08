@@ -210,10 +210,10 @@ class Runner(object):
             args = utils.jsonify(args,format=True)
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
-        cmd = "chmod +x %s" % remote_module_path
+        cmd = "chmod u+x %s" % remote_module_path
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            cmd = "chmod 555 %s" % remote_module_path
+            cmd = "chmod a+rx %s" % remote_module_path
         self._low_level_exec_command(conn, cmd, tmp)
 
         cmd = ""
@@ -266,7 +266,7 @@ class Runner(object):
             module_args += " #USE_SHELL"
 
         (module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
-        self._low_level_exec_command(conn, "chmod +x %s" % module_path, tmp)
+        self._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_path,
@@ -315,8 +315,11 @@ class Runner(object):
         exec_rc = None
         if local_md5 != remote_md5:
             # transfer the file to a remote tmp location
-            tmp_src = tmp + source.split('/')[-1]
+            tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
+            # fix file permissions when the copy is done as a different user
+            if self.sudo and self.sudo_user:
+                self._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
             self.module_args = "%s src=%s" % (self.module_args, tmp_src)
@@ -669,7 +672,7 @@ class Runner(object):
 
         cmd = 'mkdir -p %s' % basetmp
         if self.remote_user != 'root':
-            cmd += ' && chmod a+x %s' % basetmp
+            cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
