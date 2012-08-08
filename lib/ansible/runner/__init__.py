@@ -318,7 +318,7 @@ class Runner(object):
             tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
             # fix file permissions when the copy is done as a different user
-            if self.sudo and self.sudo_user:
+            if self.sudo and self.sudo_user != 'root':
                 self._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
