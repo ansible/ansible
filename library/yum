@@ -349,10 +349,10 @@ def ensure(module, state, pkgspec, conf_file):
         items = pkgspec.split(',')
 
     yum_basecmd = '%s -d 1 -y ' % yumbin
-    repoq = '%s --plugins --quiet  -q ' % repoquery
+    repoq = '%s --show-duplicates --plugins --quiet  -q ' % repoquery
     if conf_file and os.path.exists(conf_file):
         yum_basecmd = '%s -c %s -d 1 -y' % (yumbin, conf_file)
-        repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
+        repoq = '%s --show-duplicates -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
 
     if state in ['installed', 'present']:
         install(module, items, repoq, yum_basecmd)
