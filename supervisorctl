@@ -1,0 +1,100 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Matt Wright <matt@nobien.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+SUPERVISORCTL = None
+
+def _find_supervisorctl():
+    paths = ['/usr/local/bin', '/usr/bin']
+
+    for p in paths:
+        e = p + '/supervisorctl'
+        if os.path.exists(e):
+            return e
+
+    module.fail_json(msg='supervisorctl is not installed')
+
+
+def _is_running(name):
+    rc, out, err = _run('%s status %s' % (SUPERVISORCTL, name))
+    return 'RUNNING' in out
+
+
+def _run(cmd):
+    # returns (rc, stdout, stderr) from shell command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    return (process.returncode, stdout, stderr)
+
+
+def main():
+    arg_spec = dict(
+        name=dict(required=True),
+        state=dict(required=True, choices=['started', 'restarted', 'stopped'])
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec)
+
+    name = module.params['name']
+    state = module.params['state']
+
+    SUPERVISORCTL = _find_supervisorctl()
+
+    running = _is_running(name)
+
+    if running and state == 'started':
+        module.exit_json(changed=False, name=name, state=state)
+
+    if running and state == 'stopped':
+        rc, out, err = _run('%s stop %s' % (SUPERVISORCTL, name))
+
+        if '%s: stopped' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif running and state == 'restarted':
+        rc, out, err = _run('%s update' % SUPERVISORCTL)
+        rc, out, err = _run('%s restart %s' % (SUPERVISORCTL, name))
+
+        if '%s: stopped' % name in out and '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif not running and state == 'started':
+        rc, out, err = _run('%s update' % SUPERVISORCTL)
+        rc, out, err = _run('%s start %s' % (SUPERVISORCTL, name))
+
+        if '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif not running and state == 'restarted':
+        module.fail_json(msg='Could not restart `%s` because it is not running' % name)
+
+    module.exit_json(changed=False, name=name, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
