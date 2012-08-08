@@ -124,16 +124,34 @@ class Facts(object):
             self.facts['selinux']['status'] = 'disabled'
         else:
             self.facts['selinux']['status'] = 'enabled'
-            self.facts['selinux']['policyvers'] = selinux.security_policyvers()
-            (rc, configmode) = selinux.selinux_getenforcemode()
-            if rc == 0 and Facts.SELINUX_MODE_DICT.has_key(configmode):
-                self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT[configmode]
-            mode = selinux.security_getenforce()
-            if Facts.SELINUX_MODE_DICT.has_key(mode):
-                self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT[mode]
-            (rc, policytype) = selinux.selinux_getpolicytype()
-            if rc == 0:
-                self.facts['selinux']['type'] = policytype
+            try:
+                self.facts['selinux']['policyvers'] = selinux.security_policyvers()
+            except:
+                self.facts['selinux']['policyvers'] = 'unknown'
+            try:
+                (rc, configmode) = selinux.selinux_getenforcemode()
+                if rc == 0 and Facts.SELINUX_MODE_DICT.has_key(configmode):
+                    self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT[configmode]
+                else:
+                    self.facts['selinux']['config_mode'] = 'unknown'
+            except OSError, e:
+                self.facts['selinux']['config_mode'] = 'unknown'
+            try:
+                mode = selinux.security_getenforce()
+                if Facts.SELINUX_MODE_DICT.has_key(mode):
+                    self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT[mode]
+                else:
+                    self.facts['selinux']['mode'] = 'unknown'
+            except OSError, e:
+                self.facts['selinux']['mode'] = 'unknown'
+            try:
+                (rc, policytype) = selinux.selinux_getpolicytype()
+                if rc == 0:
+                    self.facts['selinux']['type'] = policytype
+                else:
+                    self.facts['selinux']['type'] = 'unknown'
+            except OSError, e:
+                self.facts['selinux']['type'] = 'unknown'
 
 class Hardware(Facts):
     """
