@@ -37,7 +37,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
-from ansible import callbacks as ans_callbacks
+from ansible.callbacks import DefaultRunnerCallbacks, vvv
 
 HAS_ATFORK=True
 try:
@@ -132,7 +132,7 @@ class Runner(object):
         # storage & defaults
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
-        self.callbacks        = utils.default(callbacks, lambda: ans_callbacks.DefaultRunnerCallbacks())
+        self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
         self.generated_jid    = str(random.randint(0, 999999999999))
         self.transport        = transport
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
@@ -249,6 +249,7 @@ class Runner(object):
             module_name = 'command'
             self.module_args += " #USE_SHELL"
 
+        vvv("ARGS %s" % self.module_args, host=conn.host)
         exec_rc = self._execute_module(conn, tmp, module_name, self.module_args, inject=inject)
         return exec_rc
 
