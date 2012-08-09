@@ -23,6 +23,7 @@ import pipes
 import random
 import select
 import fcntl
+from ansible.callbacks import vvv
 from ansible import errors
 
 class SSHConnection(object):
@@ -72,6 +73,7 @@ class SSHConnection(object):
                 prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             ssh_cmd.append(sudocmd)
+            vvv("EXEC %s" % ssh_cmd, host=self.host)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if self.runner.sudo_pass:
@@ -92,6 +94,7 @@ class SSHConnection(object):
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         else:
             ssh_cmd.append(cmd)
+            vvv("EXEC %s" % ssh_cmd, host=self.host)
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -114,6 +117,7 @@ class SSHConnection(object):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         sftp_cmd = ["sftp"] + self.common_args + [self.host]
@@ -125,6 +129,7 @@ class SSHConnection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         sftp_cmd = ["sftp"] + self.common_args + [self.host]
         p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)

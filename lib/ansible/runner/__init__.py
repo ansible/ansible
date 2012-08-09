@@ -122,7 +122,6 @@ class Runner(object):
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
-        verbose=False,                      # whether to show more or less
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
@@ -147,7 +146,6 @@ class Runner(object):
         self.pattern          = pattern
         self.module_args      = module_args
         self.timeout          = timeout
-        self.verbose          = verbose
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port

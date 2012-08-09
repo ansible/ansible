@@ -51,7 +51,6 @@ class PlayBook(object):
         remote_port      = C.DEFAULT_REMOTE_PORT,
         transport        = C.DEFAULT_TRANSPORT,
         private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
-        verbose          = False,
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
@@ -94,7 +93,6 @@ class PlayBook(object):
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port
         self.transport        = transport
-        self.verbose          = verbose
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.stats            = stats
@@ -191,7 +189,7 @@ class PlayBook(object):
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=self.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
-            verbose=self.verbose, sudo=task.play.sudo, sudo_user=task.play.sudo_user,
+            sudo=task.play.sudo, sudo_user=task.play.sudo_user,
             transport=task.play.transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
@@ -272,7 +270,7 @@ class PlayBook(object):
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
-            verbose=self.verbose, transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True
+            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
 

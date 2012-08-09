@@ -29,6 +29,8 @@ from ansible import color
 from ansible import __version__
 import ansible.constants as C
 
+VERBOSITY=0
+
 try:
     import json
 except ImportError:
@@ -318,12 +320,17 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
+def increment_debug(option, opt, value, parser):
+    global VERBOSITY
+    VERBOSITY += 1
+
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
-    parser.add_option('-v','--verbose', default=False, action="store_true",
-        help='verbose mode')
+    parser.add_option('-v','--verbose', default=False, action="callback",
+        callback=increment_debug, help="verbose mode (-vvv for more)")
+
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',

@@ -28,6 +28,13 @@ if os.path.exists("/usr/bin/cowsay"):
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
 
+def vvv(msg, host=None):
+    if utils.VERBOSITY > 2:
+        if host is None:
+            print stringc(msg, 'blue')
+        else:
+            print stringc("<%s> %s" % (host, msg), 'blue')
+
 class AggregateStats(object):
     ''' holds stats about per-host activity during playbook runs '''
 
@@ -242,11 +249,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats, verbose=False):
+    def __init__(self, stats, verbose=utils.VERBOSITY):
 
+        self.verbose = verbose
         self.stats = stats
         self._async_notified = {}
-        self.verbose = verbose
 
     def on_unreachable(self, host, msg):
 
