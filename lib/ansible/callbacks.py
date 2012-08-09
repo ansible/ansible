@@ -28,8 +28,14 @@ if os.path.exists("/usr/bin/cowsay"):
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
 
+def vv(msg, host=None):
+    return verbose(msg, host=host, caplevel=1)
+
 def vvv(msg, host=None):
-    if utils.VERBOSITY > 2:
+    return verbose(msg, host=host, caplevel=2)
+
+def verbose(msg, host=None, caplevel=2):
+    if utils.VERBOSITY > caplevel:
         if host is None:
             print stringc(msg, 'blue')
         else:
