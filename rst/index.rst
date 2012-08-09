@@ -104,7 +104,7 @@ Architecture
 +------------------------+----------------------------------------------------------------------------------+
 
 +-----------------------------------------------------------------------------------------------------------+
-| What People Are Saying                                                                                    |
+| What (Real) People Are Saying                                                                             |
 +===========================================================================================================+
 | "I've been trying to grok Chef these last weeks, and really, I don't get it. I discovered ansible         |
 | yesterday at noon, successfully ran it at 1pm, made my first playbook by 2pm, and pushed two small        |
@@ -122,6 +122,9 @@ Architecture
 | migrate all my stuff to the much more sensical ansible. Nice work."                                       |
 +-----------------------------------------------------------------------------------------------------------+
 | "Simple as hell"                                                                                          |
++-----------------------------------------------------------------------------------------------------------+
+| "I swear, I have gotten more done with Ansible in three days than I did in not getting chef installed     |
+| in three weeks."                                                                                          |
 +-----------------------------------------------------------------------------------------------------------+
 
 +--------------------------------------------------------------------------------------------------+
