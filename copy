@@ -75,11 +75,12 @@ def main():
     if md5sum_src != md5sum_dest:
         try:
             if backup:
-                success, msg = backuplocal(dest)
-                if not success:
-                    module.fail_jason(msg=msg)
-                else:
-                    backup_file = msg
+                if os.path.exists(dest):
+                    success, msg = backuplocal(dest)
+                    if not success:
+                        module.fail_jason(msg=msg)
+                    else:
+                        backup_file = msg
             shutil.copyfile(src, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
