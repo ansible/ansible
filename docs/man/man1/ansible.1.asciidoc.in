@@ -44,6 +44,10 @@ The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
+*--private-key=*'PRIVATE_KEY_FILE'::
+
+Use this file to authenticate the connection.
+
 
 *-m* 'NAME', *--module-name=*'NAME'::
 
@@ -100,10 +104,13 @@ Use this remote 'USERNAME' instead of root.
 
 Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
 
+*--private-key=*'PRIVATE_KEY_FILE'::
+Use this file to authenticate the connection.
+
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
-Connection type to use.  Possible options are 'paramiko' (SSH) and 'local'.
-Local is mostly useful for crontab or kickstarts.
+Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
+and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
 
 INVENTORY
