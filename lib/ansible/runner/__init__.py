@@ -37,7 +37,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
-from ansible.callbacks import DefaultRunnerCallbacks, vvv
+from ansible.callbacks import DefaultRunnerCallbacks, vv, vvv
 
 HAS_ATFORK=True
 try:
@@ -249,7 +249,7 @@ class Runner(object):
             module_name = 'command'
             self.module_args += " #USE_SHELL"
 
-        vvv("ARGS %s" % self.module_args, host=conn.host)
+        vv("REMOTE_MODULE %s %s" % (module_name, self.module_args), host=conn.host)
         exec_rc = self._execute_module(conn, tmp, module_name, self.module_args, inject=inject)
         return exec_rc
 
