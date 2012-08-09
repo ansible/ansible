@@ -302,8 +302,8 @@ def _gitinfo():
             commit = f.readline()[:10] 
         date = time.localtime(os.stat(branch_path).st_mtime)
         offset = time.timezone if (time.daylight == 0) else time.altzone
-        result = "({0}) [{1}] {2} ({3:+04d})".format(branch, commit, 
-            time.strftime("%Y%m%d-%H%M%S", date), offset / -36)
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, 
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     return result
 
 def version(prog):
