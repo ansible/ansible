@@ -108,9 +108,9 @@ def repolist(repoq, qf="%{repoid}"):
 
 def list_stuff(conf_file, stuff):
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = '%s --plugins --quiet  -q ' % repoquery
+    repoq = '%s --show-duplicates --plugins --quiet  -q ' % repoquery
     if conf_file and os.path.exists(conf_file):
-        repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
+        repoq = '%s -c %s --show-duplicates --plugins --quiet  -q ' % (repoquery,conf_file)
 
     if stuff == 'installed':
         return [ pkg_to_dict(p) for p in is_installed(repoq, '-a', qf=qf) if p.strip() ]
@@ -385,7 +385,7 @@ def main():
             pkg=dict(aliases=['name']),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
-            list=dict(choices=['installed','updates','available','repos','pkgspec']),
+            list=dict(),
             conf_file=dict(default=None),
         )
     )
