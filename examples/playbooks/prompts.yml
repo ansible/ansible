@@ -32,6 +32,14 @@
     - name: "release_version"
       prompt: "Product release version"
       private: False
+   
+    - name: "my_password2"
+      prompt: "Enter password2"
+      private: True
+      encrypt: "md5_crypt" 
+      confirm: True
+      salt_size: 7
+      salt: "foo" 
 
 # this is just a simple example to show that vars_prompt works, but
 # you might ask for a tag to use with the git module or perhaps
