@@ -14,6 +14,7 @@ Ansible Changes By Release
 * YAML syntax errors detected and show where the problem is
 * better changed=True/False detection in user module on older Linux distros
 * when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
+* nicer errors from modules when arguments are not key=value
 
 0.6 "Cabo" -- August 6, 2012
 
