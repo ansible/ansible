@@ -17,6 +17,7 @@ Ansible Changes By Release
 * nicer errors from modules when arguments are not key=value
 * use -vvv for extreme debug levels. -v gives more playbook output as before
 * -vv shows module arguments to all module calls (and maybe some other things later)
+* if you ctrl+c a playbook it won't traceback
 
 0.6 "Cabo" -- August 6, 2012
 
