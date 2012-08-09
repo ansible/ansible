@@ -122,7 +122,10 @@ class ParamikoConnection(object):
         ''' transfer a file from local to remote '''
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        sftp = self.ssh.open_sftp()
+        try:
+            sftp = self.ssh.open_sftp()
+        except:
+            raise errors.AnsibleError("failed to open a SFTP connection")
         try:
             sftp.put(in_path, out_path)
         except IOError:
@@ -131,7 +134,10 @@ class ParamikoConnection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
-        sftp = self.ssh.open_sftp()
+        try:
+            sftp = self.ssh.open_sftp()
+        except:
+            raise errors.AnsibleError("failed to open a SFTP connection")
         try:
             sftp.get(in_path, out_path)
         except IOError:

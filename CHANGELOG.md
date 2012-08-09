@@ -6,6 +6,14 @@ Ansible Changes By Release
 * I can barely see the roadmap from the heat coming off of it.
 
 * login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
+* new modules -- pip, easy_install, apt_repository, supervisorctl
+* ansible --version will now give branch/SHA information if running from git
+* error handling for setup module when SELinux is in a weird state
+* misc yum module fixes
+* better sudo permissions when encountering different umasks
+* YAML syntax errors detected and show where the problem is
+* better changed=True/False detection in user module on older Linux distros
+* when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
 
 0.6 "Cabo" -- August 6, 2012
 
