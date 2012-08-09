@@ -28,6 +28,7 @@ from ansible import errors
 from ansible import color
 from ansible import __version__
 import ansible.constants as C
+import time
 
 VERBOSITY=0
 
@@ -290,16 +291,19 @@ def default(value, function):
     return value
 
 def _gitinfo():
-    ''' returns a string containing git branch and commit id 
-    using gitpython if installed and native file operations if not '''
+    ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
     if os.path.exists(repo_path):
         with open(os.path.join(repo_path, "HEAD")) as f:
             branch = f.readline().split('/')[-1].rstrip("\n")
-        with open(os.path.join(repo_path, "refs", "heads", branch)) as f:
+        branch_path = os.path.join(repo_path, "refs", "heads", branch)
+        with open(branch_path) as f:
             commit = f.readline()[:10] 
-        result = "({0} {1})".format(branch, commit)
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        offset = time.timezone if (time.daylight == 0) else time.altzone
+        result = "({0}) [{1}] {2} ({3:+04d})".format(branch, commit, 
+            time.strftime("%Y%m%d-%H%M%S", date), offset / -36)
     return result
 
 def version(prog):
