@@ -84,11 +84,8 @@ class ParamikoConnection(object):
         chan = self.ssh.get_transport().open_session()
         chan.get_pty()
 
-        if not self.runner.sudo or not sudoable:
-            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
-            vvv("EXEC %s" % quoted_command, host=self.host)
-            chan.exec_command(quoted_command)
-        else:
+        quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
+        if self.runner.sudo and sudoable: 
             # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required. The "--"
             # tells sudo that this is the end of sudo options and the command
@@ -101,12 +98,19 @@ class ParamikoConnection(object):
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
-            vvv("EXEC %s" % sudo_cmd, host=self.host)
+        if self.runner.su and sudoable:
+            sudocmd = 'su %s -c %s' % (sudo_user, quoted_command)
+            prompt = 'assword: '
+        if not self.runner.sudo and not self.runner.su or not sudoable:
+            vvv("EXEC %s" % quoted_command, host=self.host)
+            chan.exec_command(quoted_command)
+        else:
+            vvv("EXEC %s" % sudocmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
                 if self.runner.sudo_pass:
-                    while not sudo_output.endswith(prompt):
+                    while not sudo_output.endswith('assword: '):
                         chunk = chan.recv(bufsize)
                         if not chunk:
                             if 'unknown user' in sudo_output:

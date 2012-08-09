@@ -68,10 +68,13 @@ def main(args):
     sudopass = None
     if options.ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
-    if options.ask_sudo_pass:
+    if options.su:
+        sudopass = getpass.getpass(
+            prompt="%s password: " % options.sudo_user)
+    elif options.ask_sudo_pass:
         sudopass = getpass.getpass(prompt="sudo password: ")
         options.sudo = True
-    if options.sudo_user:
+    if options.sudo_user and not options.su:
         options.sudo = True
     options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
@@ -99,6 +102,7 @@ def main(args):
             sudo=options.sudo,
             sudo_user=options.sudo_user,
             sudo_pass=sudopass,
+            su=options.su,
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,

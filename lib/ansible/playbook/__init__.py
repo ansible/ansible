@@ -54,6 +54,7 @@ class PlayBook(object):
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
+        su               = False,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
@@ -74,6 +75,7 @@ class PlayBook(object):
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
+        su:               if not specified per play, requests all plays use su mode
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -96,6 +98,7 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.stats            = stats
+        self.su               = su
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.sudo_user        = sudo_user
@@ -190,7 +193,8 @@ class PlayBook(object):
             setup_cache=self.SETUP_CACHE, basedir=self.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.play.sudo, sudo_user=task.play.sudo_user,
-            transport=task.play.transport, sudo_pass=self.sudo_pass, is_playbook=True
+            transport=task.play.transport, sudo_pass=self.sudo_pass,
+            su=task.play.su, is_playbook=True
         )
 
         if task.async_seconds == 0:
@@ -266,11 +270,14 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=play.hosts, module_name='setup', module_args={}, inventory=self.inventory,
-            forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
-            remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
-            setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
-            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True
+            pattern=play.hosts, module_name='setup', module_args={},
+            inventory=self.inventory, forks=self.forks, module_path=self.module_path,
+            timeout=self.timeout, remote_user=play.remote_user,
+            remote_pass=self.remote_pass, remote_port=play.remote_port,
+            private_key_file=self.private_key_file, setup_cache=self.SETUP_CACHE,
+            callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
+            transport=play.transport, sudo_pass=self.sudo_pass,
+            su=self.su, is_playbook=True
         ).run()
         self.stats.compute(setup_results, setup=True)
 
