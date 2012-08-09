@@ -23,13 +23,15 @@
 
 import traceback
 import os
+import subprocess
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 repoquery='/usr/bin/repoquery'
 yumbin='/usr/bin/yum'
+rpmbin = '/bin/rpm'
 
 def is_installed(repoq, pkgspec, qf=def_qf):
-    cmd = repoq + "--disablerepo=\* --pkgnarrow=installed --qf '%s' %s " % (qf, pkgspec)
+    cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, pkgspec]
     rc,out,err = run(cmd)
     if rc == 0:
         return [ p for p in out.split('\n') if p.strip() ]
@@ -37,7 +39,7 @@ def is_installed(repoq, pkgspec, qf=def_qf):
     return []
 
 def is_available(repoq, pkgspec, qf=def_qf):
-    cmd = repoq + "--qf '%s' %s " % (qf, pkgspec)
+    cmd = repoq + ["--qf", qf, pkgspec]
     rc,out,err = run(cmd)
     if rc == 0:
         return [ p for p in out.split('\n') if p.strip() ]
@@ -46,7 +48,7 @@ def is_available(repoq, pkgspec, qf=def_qf):
 
 
 def is_update(repoq, pkgspec, qf=def_qf):
-    cmd = repoq + "--pkgnarrow=updates --qf '%s' %s " % (qf, pkgspec)
+    cmd = repoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
     rc,out,err = run(cmd)
     if rc == 0:
         return set([ p for p in out.split('\n') if p.strip() ])
@@ -55,23 +57,13 @@ def is_update(repoq, pkgspec, qf=def_qf):
 
 
 def what_provides(repoq, req_spec, qf=def_qf):
-    cmd = repoq + "--qf '%s' --whatprovides %s" % (qf, req_spec)
+    cmd = repoq + ["--qf", qf, "--whatprovides", req_spec]
     rc,out,err = run(cmd)
     ret = []
     if rc == 0:
         ret = set([ p for p in out.split('\n') if p.strip() ])
 
     return ret
-
-def local_nvra(path):
-    """return nvra of a local rpm passed in"""
-
-    cmd = "/bin/rpm -qp --qf='%%{name}-%%{version}-%%{release}.%%{arch}\n' %s'" % path
-    rc, out, err = run(cmd)
-    if rc != 0:
-        return None
-    nvra = out.split('\n')[0]
-    return nvra
 
 
 def pkg_to_dict(pkgstr):
@@ -98,7 +90,7 @@ def pkg_to_dict(pkgstr):
     return d
 
 def repolist(repoq, qf="%{repoid}"):
-    cmd = repoq + "--qf '%s' -a" % (qf)
+    cmd = repoq + ["--qf", qf, "-a"]
     rc,out,err = run(cmd)
     ret = []
     if rc == 0:
@@ -108,9 +100,9 @@ def repolist(repoq, qf="%{repoid}"):
 
 def list_stuff(conf_file, stuff):
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = '%s --plugins --quiet  -q ' % repoquery
+    repoq = [repoquery, '--plugins', '--quiet', '-q']
     if conf_file and os.path.exists(conf_file):
-        repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
+        repoq += ['-c', conf_file]
 
     if stuff == 'installed':
         return [ pkg_to_dict(p) for p in is_installed(repoq, '-a', qf=qf) if p.strip() ]
@@ -125,7 +117,7 @@ def list_stuff(conf_file, stuff):
 
 def run(command):
     try:
-        cmd = subprocess.Popen(command, shell=True,
+        cmd = subprocess.Popen(command,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
@@ -145,6 +137,58 @@ def run(command):
         rc = cmd.returncode
 
     return rc, out, err
+
+def install_no_repoq(module, items, yum_basecmd, latest=False):
+    res = {'changed': False}
+
+    if not latest:
+        to_install = []
+        for item in items:
+            rc, out, err = run([rpmbin, "-q",  "--whatprovides", item])
+            if rc != 0:
+                to_install.append(item)
+        if len(to_install) > 0:
+            res['changed'] = True
+    else:
+        rc, out, err = run(yum_basecmd + ["check-update"] + items)
+        if rc == 100:
+            res['changed'] = True
+            to_install = items
+        elif rc != 0:
+            module.fail_json(msg=err)
+
+    if len(to_install) > 0:
+        rc, out, err = run(yum_basecmd + ["--obsoletes", "install"] + to_install)
+        if rc != 0:
+            module.fail_json(msg=err)
+        for item in to_install:
+            rc, out, err = run([rpmbin, "-q",  "--whatprovides", item])
+            if rc != 0:
+                module.fail_json(msg="%s could not be installed" % item)
+
+    module.exit_json(**res)
+
+def remove_no_repoq(module, items, yum_basecmd):
+    res = {'changed': False}
+
+    to_remove = []
+    for item in items:
+        rc, out, err = run([rpmbin, "-q",  "--whatprovides", "--qf", "%{NAME}\n", item])
+        if rc == 0:
+            to_remove.append(out.strip())
+    if len(to_remove) > 0:
+        res['changed'] = True
+        rc, out, err = run(yum_basecmd + ["remove"] + to_remove)
+        if rc != 0:
+            module.fail_json(msg=err)
+        res['out'] = out
+        res['err'] = err
+        for item in to_remove:
+            rc, out, err = run([rpmbin, "-q", item])
+            if rc == 0:
+                module.fail_json(msg="%s was not removed" % item)
+
+    module.exit_json(**res)
 
 
 def install(module, items, repoq, yum_basecmd):
@@ -197,7 +241,7 @@ def install(module, items, repoq, yum_basecmd):
             # the error we're catching here
             pkg = spec
 
-        cmd = "%s install '%s'" % (yum_basecmd, pkg)
+        cmd = yum_basecmd + ['install', pkg]
         rc, out, err = run(cmd)
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
@@ -247,7 +291,7 @@ def remove(module, items, repoq, yum_basecmd):
                 continue
             pkg = spec
 
-        cmd = "%s remove '%s'" % (yum_basecmd, pkg)
+        cmd = yum_basecmd + ["remove", pkg]
         rc, out, err = run(cmd)
 
         # FIXME if we ran the remove - check to make sure it actually removed :(
@@ -308,7 +352,7 @@ def latest(module, items, repoq, yum_basecmd):
 
             pkg = spec
 
-        cmd = "%s %s '%s'" % (yum_basecmd, basecmd, pkg)
+        cmd = yum_basecmd + [basecmd, pkg]
         rc, out, err = run(cmd)
 
         # FIXME if it is - update it and check to see if it applied
@@ -335,38 +379,35 @@ def latest(module, items, repoq, yum_basecmd):
 
     module.exit_json(**res)
 
-
-
 def ensure(module, state, pkgspec, conf_file):
-    res = {}
-    stdout = ""
-    stderr = ""
-
     # take multiple args comma separated
-    items = [pkgspec]
-    if pkgspec.find(',') != -1:
-        items = pkgspec.split(',')
+    items = pkgspec.split(',')
 
-    yum_basecmd = '%s -d 1 -y ' % yumbin
-    repoq = '%s --show-duplicates --plugins --quiet  -q ' % repoquery
+    yum_basecmd = [yumbin, '-d', '1', '-y']
+    repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet', '-q']
     if conf_file and os.path.exists(conf_file):
-        yum_basecmd = '%s -c %s -d 1 -y' % (yumbin, conf_file)
-        repoq = '%s --show-duplicates -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
+        yum_basecmd += ['-c', conf_file]
+        repoq += ['-c', conf_file]
 
-    if state in ['installed', 'present']:
-        install(module, items, repoq, yum_basecmd)
-    elif state in ['removed', 'absent']:
-        remove(module, items, repoq, yum_basecmd)
-    elif state == 'latest':
-        latest(module, items, repoq, yum_basecmd)
+    if os.path.exists(repoquery):
+        if state in ['installed', 'present']:
+            install(module, items, repoq, yum_basecmd)
+        elif state in ['removed', 'absent']:
+            remove(module, items, repoq, yum_basecmd)
+        elif state == 'latest':
+            latest(module, items, repoq, yum_basecmd)
+    else:
+        if len(filter(lambda x: x.find('>') != -1 or x.find('<') != -1 or x.find('=') != -1, items)) > 0:
+            module.fail_json(msg="%s is required to use yum equality comparisons. Please install the yum-utils package." % repoquery)
+        if state in ['installed', 'present']:
+            install_no_repoq(module, items, yum_basecmd)
+        elif state in ['removed', 'absent']:
+            remove_no_repoq(module, items, yum_basecmd)
+        elif state == 'latest':
+            install_no_repoq(module, items, yum_basecmd, latest=True)
 
     # should be caught by AnsibleModule argument_spec
     return dict(changed=False, failed=True, results='', errors='unexpected state')
-
-
-def remove_only(pkgspec):
-    # remove this pkg and only this pkg - fail if it will require more to remove
-    pass
 
 def main():
     # state=installed pkg=pkgspec
@@ -396,17 +437,15 @@ def main():
     if params['list'] and params['pkg']:
         module.fail_json(msg="expected 'list=' or 'name=', but not both")
 
-
-    if not os.path.exists(repoquery):
-        module.fail_json(msg="%s is required to run this module. Please install the yum-utils package." % repoquery)
-
     if params['list']:
+        if not os.path.exists(repoquery):
+            module.fail_json(msg="%s is required to use list= with this module. Please install the yum-utils package." % repoquery)
         results = dict(results=list_stuff(params['conf_file'], params['list']))
         module.exit_json(**results)
 
     else:
         pkg = params['pkg']
-        if 'pkg' is None:
+        if pkg is None:
             module.fail_json(msg="expected 'list=' or 'name='")
         else:
             state = params['state']
