@@ -24,6 +24,8 @@ import subprocess
 import pipes
 import socket
 import random
+from ansible import utils
+from ansible.callbacks import vvv
 from ansible import errors
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
@@ -84,6 +86,7 @@ class ParamikoConnection(object):
 
         if not self.runner.sudo or not sudoable:
             quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
+            vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
             # Rather than detect if sudo wants a password this time, -k makes
@@ -98,6 +101,7 @@ class ParamikoConnection(object):
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
+            vvv("EXEC %s" % sudo_cmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
@@ -120,6 +124,7 @@ class ParamikoConnection(object):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
@@ -134,6 +139,7 @@ class ParamikoConnection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
             sftp = self.ssh.open_sftp()
         except:

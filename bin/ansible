@@ -96,7 +96,7 @@ class Cli(object):
             pattern=pattern,
             callbacks=self.callbacks, sudo=options.sudo,
             sudo_pass=sudopass,sudo_user=options.sudo_user,
-            transport=options.connection, verbose=options.verbose
+            transport=options.connection
         )
 
         if options.seconds:

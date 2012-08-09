@@ -15,6 +15,7 @@ Ansible Changes By Release
 * better changed=True/False detection in user module on older Linux distros
 * when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
 * nicer errors from modules when arguments are not key=value
+* use -vvv for extreme debug levels. -v gives more playbook output as before, -vv not really used yet
 
 0.6 "Cabo" -- August 6, 2012
 

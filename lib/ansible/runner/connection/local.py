@@ -20,6 +20,7 @@ import os
 import shutil
 import subprocess
 from ansible import errors
+from ansible.callbacks import vvv
 
 class LocalConnection(object):
     ''' Local based connections '''
@@ -44,6 +45,7 @@ class LocalConnection(object):
                 raise errors.AnsibleError("sudo with password is presently only supported on the paramiko (SSH) connection type")
             cmd = "sudo -u {0} -s {1}".format(sudo_user, cmd)
 
+        vvv("EXEC %s" % cmd, host=self.host)
         p = subprocess.Popen(cmd, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
@@ -52,6 +54,7 @@ class LocalConnection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
@@ -64,6 +67,7 @@ class LocalConnection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         ''' fetch a file from local to local -- for copatibility '''
         self.put_file(in_path, out_path)
 
