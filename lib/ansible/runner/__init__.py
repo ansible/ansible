@@ -28,6 +28,7 @@ import base64
 import getpass
 import codecs
 import collections
+import socket
 import re
 
 import ansible.constants as C
@@ -741,8 +742,11 @@ class Runner(object):
                 worker.join()
 
         results = []
-        while not result_queue.empty():
-            results.append(result_queue.get(block=False))
+        try:
+            while not result_queue.empty():
+                results.append(result_queue.get(block=False))
+        except socket.error:
+            raise errors.AnsibleError("<interrupted>")
         return results
 
     # *****************************************************
