@@ -112,7 +112,6 @@ def list_stuff(conf_file, stuff):
     if conf_file and os.path.exists(conf_file):
         repoq = '%s -c %s --plugins --quiet  -q ' % (repoquery,conf_file)
 
-
     if stuff == 'installed':
         return [ pkg_to_dict(p) for p in is_installed(repoq, '-a', qf=qf) if p.strip() ]
     elif stuff == 'updates':
