@@ -364,10 +364,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
             default=None)   # Can't default to root because we need to detect when this option was given
-        parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user',
-            help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
-
+        parser.add_option('-u', '--user', 
+            dest='remote_user', help='connect as this user')
+    
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
                           choices=C.DEFAULT_TRANSPORT_OPTS,

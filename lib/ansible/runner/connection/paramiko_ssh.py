@@ -27,6 +27,8 @@ import random
 from ansible import utils
 from ansible.callbacks import vvv
 from ansible import errors
+import ansible.constants as C
+import pwd
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -46,8 +48,6 @@ class ParamikoConnection(object):
         self.runner = runner
         self.host = host
         self.port = port
-        if port is None:
-            self.port = self.runner.remote_port
 
     def connect(self):
         ''' activates the connection object '''
@@ -55,7 +55,22 @@ class ParamikoConnection(object):
         if not HAVE_PARAMIKO:
             raise errors.AnsibleError("paramiko is not installed")
 
-        user = self.runner.remote_user
+        para_config = paramiko.SSHConfig()
+        
+        sshconfig = {}
+        try:
+            with open(C.DEFAULT_SSH_CONFIG) as f:
+                para_config.parse(f)
+            sshconfig = para_config.lookup(self.host)
+        except Exception:
+            pass 
+        
+        user = self.runner.remote_user or sshconfig.get(
+            'user', pwd.getpwuid(os.getuid())[0])
+
+        self.port = self.port or int(sshconfig.get(
+            'port', C.DEFAULT_REMOTE_PORT))
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 

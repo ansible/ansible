@@ -112,10 +112,10 @@ class Runner(object):
         forks=C.DEFAULT_FORKS,              # parallelism level
         timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
-        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
-        remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
-        remote_port=C.DEFAULT_REMOTE_PORT,  # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
+        remote_user=None,                   # ex: 'username'
+        remote_pass=None,                   # ex: 'password123' or None if using key
+        remote_port=None,                   # if SSH on different ports
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords 
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable

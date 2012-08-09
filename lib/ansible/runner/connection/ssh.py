@@ -50,7 +50,8 @@ class SSHConnection(object):
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
-        self.common_args += ["-o", "User="+self.runner.remote_user]
+        if self.runner.remote_user is not None:
+            self.common_args += ["-o", "User="+self.runner.remote_user]
 
         return self
 
