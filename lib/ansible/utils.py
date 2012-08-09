@@ -39,12 +39,6 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
-try:
-    import git
-    HAS_GIT = True
-except ImportError:
-    HAS_GIT = False
-
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -299,17 +293,11 @@ def _gitinfo():
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
     if os.path.exists(repo_path):
-        if HAS_GIT:
-            repo = git.Repo(repo_path)
-            head = repo.head
-            branch = head.reference.name
-            commit = head.commit.hexsha[:10]
-        else:
-            with open(os.path.join(repo_path, "HEAD")) as f:
-                branch = f.readline().split('/')[-1].rstrip("\n")
-            with open(os.path.join(repo_path, "refs", "heads", branch)) as f:
-                commit = f.readline()[:10] 
-        result = "({0}) [{1}]".format(branch, commit)
+        with open(os.path.join(repo_path, "HEAD")) as f:
+            branch = f.readline().split('/')[-1].rstrip("\n")
+        with open(os.path.join(repo_path, "refs", "heads", branch)) as f:
+            commit = f.readline()[:10] 
+        result = "({0} {1})".format(branch, commit)
     return result
 
 def version(prog):
