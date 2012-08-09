@@ -149,7 +149,10 @@ class AnsibleModule(object):
         items   = shlex.split(args)
         params = {}
         for x in items:
-            (k, v) = x.split("=",1)
+            try:
+                (k, v) = x.split("=",1)
+            except:
+                self.fail_json(msg="this module requires key=value arguments")
             params[k] = v
         return (params, args)
 
