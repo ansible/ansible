@@ -186,8 +186,8 @@ s.parentNode.insertBefore(ga, s);
    
   <div class="section" id="command-line">
 <h1>Command Line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h1>
-<p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running ad-hoc tasks.
-Start here.</p>
+<p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running
+ad hoc tasks.  Start here.</p>
 <p>For configuration management and deployments, you&#8217;ll want to pick up on
 using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.
 (See <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for more information about those)</p>
@@ -195,43 +195,62 @@ using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over dire
 <h2>Parallelism and Shell Commands<a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let&#8217;s
 set up SSH-agent so it can remember our credentials:</p>
-<div class="highlight-python"><pre>ssh-agent bash
-ssh-add ~/.ssh/id_rsa.pub</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ssh-agent bash
+<span class="nv">$ </span>ssh-add ~/.ssh/id_rsa.pub
+</pre></div>
 </div>
-<p>If you don&#8217;t want to use ssh-agent and want to instead SSH with a password instead of keys, you can with
-&#8211;ask-pass (-k), but it&#8217;s much better to just use ssh-agent.</p>
-<p>Now to run the command on all servers in a group, in this case, &#8216;atlanta&#8217;, in 10 parallel forks:</p>
-<div class="highlight-python"><pre>ansible atlanta -a "/sbin/reboot" -f 10</pre>
+<p>If you don&#8217;t want to use ssh-agent and want to instead SSH with a
+password instead of keys, you can with <tt class="docutils literal"><span class="pre">--ask-pass</span></tt> (<tt class="docutils literal"><span class="pre">-k</span></tt>), but
+it&#8217;s much better to just use ssh-agent.</p>
+<p>Now to run the command on all servers in a group, in this case,
+<em>atlanta</em>, in 10 parallel forks:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/sbin/reboot&quot;</span> -f 10
+</pre></div>
 </div>
 <p>If you want to run commands as a different user than root, it looks like this:</p>
-<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname
+</pre></div>
 </div>
 <p>If you want to run commands through sudo:</p>
-<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname --sudo <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
+</pre></div>
 </div>
-<p>Use &#8211;ask-sudo-pass (-K) if you are not using passwordless sudo.  This will interactively prompt
-you for the password to use.  Use of passwordless sudo makes things easier to automate, but it&#8217;s
-not required.</p>
-<p>It is also possible to sudo to a user other than root using &#8211;sudo-user (-U):</p>
-<div class="highlight-python"><pre>ansible atlanta -a "/usr/bin/foo" -u yourname -U otheruser [--ask-sudo-pass]</pre>
+<p>Use <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<tt class="docutils literal"><span class="pre">-K</span></tt>) if you are not using passwordless
+sudo.  This will interactively prompt you for the password to use.
+Use of passwordless sudo makes things easier to automate, but it&#8217;s not
+required.</p>
+<p>It is also possible to sudo to a user other than root using
+<tt class="docutils literal"><span class="pre">--sudo-user</span></tt> (<tt class="docutils literal"><span class="pre">-U</span></tt>):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname -U otheruser <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
+</pre></div>
 </div>
 <p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.</p>
-<p>The -f 10 in the above specifies the usage of 10 simultaneous processes.  Normally commands also take
-a <cite>-m</cite> for module name, but the default module name is &#8216;command&#8217;, so we didn&#8217;t need to specify that
-all of the time.  We&#8217;ll use <cite>-m</cite> in later examples to run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
-<p>Note that the command module requires absolute paths and does not support shell variables.  If we want to
-execute a module using the shell, we can do those things, and also use pipe and redirection operators.
-Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> page.  The shell
-module looks like this:</p>
-<div class="highlight-python"><pre>ansible raleigh -m shell -a 'echo $TERM'</pre>
+<p>The <tt class="docutils literal"><span class="pre">-f</span> <span class="pre">10</span></tt> in the above specifies the usage of 10 simultaneous
+processes.  Normally commands also take a <tt class="docutils literal"><span class="pre">-m</span></tt> for module name, but
+the default module name is <a class="reference internal" href="modules.html#command"><em>command</em></a>, so we didn&#8217;t need to
+specify that all of the time.  We&#8217;ll use <tt class="docutils literal"><span class="pre">-m</span></tt> in later examples to
+run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <a class="reference internal" href="modules.html#command"><em>command</em></a> module requires absolute paths and does not
+support shell variables.  If we want to execute a module using a
+shell, we can do those things, and also use pipe and redirection
+operators.  Read more about the differences on the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>
+page.</p>
 </div>
-<p>When running any command with the ansible &#8220;ad hoc&#8221; CLI (as opposed to playbooks), pay particular attention
-to shell quoting rules, so the shell doesn&#8217;t eat a variable before it gets passed to Ansible.  For example,
-using double vs single quotes in the above example would evaluate the variable on the box you were on.</p>
-<p>So far we&#8217;ve been demoing simple command execution, but most ansible modules usually do not work like
+<p>Using the <a class="reference internal" href="modules.html#shell"><em>shell</em></a> module looks like this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible raleigh -m shell -a <span class="s1">&#39;echo $TERM&#39;</span>
+</pre></div>
+</div>
+<p>When running any command with the ansible <em>ad hoc</em> CLI (as opposed to
+<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>), pay particular attention to shell quoting rules, so
+the shell doesn&#8217;t eat a variable before it gets passed to Ansible.
+For example, using double vs single quotes in the above example would
+evaluate the variable on the box you were on.</p>
+<p>So far we&#8217;ve been demoing simple command execution, but most Ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
 get it there.  This is commonly referred to as &#8216;idempotence&#8217;, and is a core design goal of ansible.
-However, we also recognize that running ad-hoc commands is equally important, so Ansible easily supports both.</p>
+However, we also recognize that running <em>ad hoc</em> commands is equally important, so Ansible easily supports both.</p>
 </div>
 <div class="section" id="file-transfer-templating">
 <h2>File Transfer &amp; Templating<a class="headerlink" href="#file-transfer-templating" title="Permalink to this headline">¶</a></h2>
@@ -239,59 +258,70 @@ However, we also recognize that running ad-hoc commands is equally important, so
 <p>Ansible can SCP lots of files to multiple machines in parallel, and
 optionally use them as template sources.</p>
 <p>To transfer a file directly to many different servers:</p>
-<div class="highlight-python"><pre>ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -m copy -a <span class="s2">&quot;src=/etc/hosts dest=/tmp/hosts&quot;</span>
+</pre></div>
 </div>
 <p>To use templating, first run the setup module to put the template
 variables you would like to use on the remote host. Then use the
 template module to write the files using those templates.</p>
-<p>Templates are written in <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2</a> format.
-Playbooks (covered elsewhere in the
-documentation) will run the setup module for you, making this even
-simpler:</p>
-<div class="highlight-python"><pre>ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
-ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
-ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"</pre>
+<p>Templates are written in <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2</a>
+format.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> will run the setup module for you, making
+this even simpler:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m setup    -a <span class="s2">&quot;favcolor=red ntp_server=192.168.1.1&quot;</span>
+<span class="nv">$ </span>ansible webservers -m template -a <span class="s2">&quot;src=/srv/motd.j2 dest=/etc/motd&quot;</span>
+<span class="nv">$ </span>ansible webservers -m template -a <span class="s2">&quot;src=/srv/ntp.j2 dest=/etc/ntp.conf&quot;</span>
+</pre></div>
 </div>
-<p>Ansible variables are used in templates by using the name surrounded by double
-curly-braces.  Ansible provides some &#8216;facts&#8217; about the system being managed
-automatically in playbooks or when the setup module is run manually.  If facter or ohai
-were installed on the remote machine, variables
-from those programs can be accessed too, using the appropriate prefix:</p>
-<div class="highlight-python"><pre>This is an Ansible variable: {{ favcolor }}
-This is an Ansible fact: {{ ansible_hostname }}
-This is a facter fact: {{ facter_hostname }}
-This is an ohai fact: {{ ohai_foo }}</pre>
+<p>Ansible variables are used in templates by using the name surrounded
+by double curly-braces.  Ansible provides some <em>facts</em> about the
+system being managed automatically in playbooks or when the setup
+module is run manually.  If facter or ohai were installed on the
+remote machine, variables from those programs can be accessed too,
+using the appropriate prefix:</p>
+<div class="highlight-django"><div class="highlight"><pre><span class="x">This is an Ansible variable: </span><span class="cp">{{</span> <span class="nv">favcolor</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">This is an Ansible fact: </span><span class="cp">{{</span> <span class="nv">ansible_hostname</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">This is a facter fact: </span><span class="cp">{{</span> <span class="nv">facter_hostname</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">This is an ohai fact: </span><span class="cp">{{</span> <span class="nv">ohai_foo</span> <span class="cp">}}</span><span class="x"></span>
+</pre></div>
 </div>
 <p>Using the Ansible facts is generally preferred as that way you can avoid a dependency
 on ruby.  If you want to use facter instead, you will also need rubygem-json because
 the facter packages may forget this as a dependency.</p>
-<p>The <cite>file</cite> module allows changing ownership and permissions on files.  These
-same options can be passed directly to the <cite>copy</cite> or <cite>template</cite> modules as well:</p>
-<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
-ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"</pre>
+<p>The <tt class="docutils literal"><span class="pre">file</span></tt> module allows changing ownership and permissions on files.  These
+same options can be passed directly to the <tt class="docutils literal"><span class="pre">copy</span></tt> or <tt class="docutils literal"><span class="pre">template</span></tt> modules as well:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m file -a <span class="s2">&quot;dest=/srv/foo/a.txt mode=600&quot;</span>
+<span class="nv">$ </span>ansible webservers -m file -a <span class="s2">&quot;dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan&quot;</span>
+</pre></div>
 </div>
-<p>The <cite>file</cite> module can also create directories, similar to <cite>mkdir -p</cite>:</p>
-<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/path/to/c mode=644 owner=mdehaan group=mdehaan state=directory"</pre>
+<p>The <tt class="docutils literal"><span class="pre">file</span></tt> module can also create directories, similar to <tt class="docutils literal"><span class="pre">mkdir</span> <span class="pre">-p</span></tt>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m file -a <span class="s2">&quot;dest=/path/to/c mode=644 owner=mdehaan group=mdehaan state=directory&quot;</span>
+</pre></div>
 </div>
 <p>As well as delete directories (recursively) and delete files:</p>
-<div class="highlight-python"><pre>ansible webservers -m file -a "dest=/path/to/c state=absent"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m file -a <span class="s2">&quot;dest=/path/to/c state=absent&quot;</span>
+</pre></div>
 </div>
 <p>The mode, owner, and group arguments can also be used on the copy or template lines.</p>
 </div>
 <div class="section" id="managing-packages">
 <h2>Managing Packages<a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
-<p>There are modules available for yum and apt.  Here are some examples with yum.</p>
+<p>There are modules available for yum and apt.  Here are some examples
+with <a class="reference internal" href="modules.html#yum"><em>yum</em></a>.</p>
 <p>Ensure a package is installed, but don&#8217;t update it:</p>
-<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=installed"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m yum -a <span class="s2">&quot;pkg=acme state=installed&quot;</span>
+</pre></div>
 </div>
 <p>Ensure a package is installed to a specific version:</p>
-<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme-1.5 state=installed"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m yum -a <span class="s2">&quot;pkg=acme-1.5 state=installed&quot;</span>
+</pre></div>
 </div>
 <p>Ensure a package is at the latest version:</p>
-<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=latest"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m yum -a <span class="s2">&quot;pkg=acme state=latest&quot;</span>
+</pre></div>
 </div>
 <p>Ensure a package is not installed:</p>
-<div class="highlight-python"><pre>ansible webservers -m yum -a "pkg=acme state=removed"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m yum -a <span class="s2">&quot;pkg=acme state=removed&quot;</span>
+</pre></div>
 </div>
 <p>Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module
@@ -299,11 +329,13 @@ for other package managers.  Stop by the mailing list for info/details.</p>
 </div>
 <div class="section" id="users-and-groups">
 <h2>Users and Groups<a class="headerlink" href="#users-and-groups" title="Permalink to this headline">¶</a></h2>
-<p>The user module allows easy creation and manipulation of existing user accounts, as well
-as removal of user accounts that may exist:</p>
-<div class="highlight-python"><pre>ansible all -m user -a "name=foo password=&lt;crypted password here&gt;"
+<p>The <a class="reference internal" href="modules.html#user"><em>user</em></a> module allows easy creation and manipulation of
+existing user accounts, as well as removal of user accounts that may
+exist:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m user -a <span class="s2">&quot;name=foo password=&lt;crypted password here&gt;&quot;</span>
 
-ansible all -m user -a "name=foo state=absent"</pre>
+<span class="nv">$ </span>ansible all -m user -a <span class="s2">&quot;name=foo state=absent&quot;</span>
+</pre></div>
 </div>
 <p>See the <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a> section for details on all of the available options, including
 how to manipulate groups and group membership.</p>
@@ -311,23 +343,27 @@ how to manipulate groups and group membership.</p>
 <div class="section" id="deploying-from-source-control">
 <h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
-<div class="highlight-python"><pre>ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m git -a <span class="s2">&quot;repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD&quot;</span>
+</pre></div>
 </div>
-<p>Since ansible modules can notify change handlers (see
-<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>) it is possible to tell ansible to run specific tasks
-when the code is updated, such as deploying Perl/Python/PHP/Ruby
-directly from git and then restarting apache.</p>
+<p>Since ansible modules can notify change handlers it is possible to
+tell ansible to run specific tasks when the code is updated, such as
+deploying Perl/Python/PHP/Ruby directly from git and then restarting
+apache.</p>
 </div>
 <div class="section" id="managing-services">
 <h2>Managing Services<a class="headerlink" href="#managing-services" title="Permalink to this headline">¶</a></h2>
 <p>Ensure a service is started on all webservers:</p>
-<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=started"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m service -a <span class="s2">&quot;name=httpd state=started&quot;</span>
+</pre></div>
 </div>
 <p>Alternatively, restart a service on all webservers:</p>
-<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=restarted"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m service -a <span class="s2">&quot;name=httpd state=restarted&quot;</span>
+</pre></div>
 </div>
 <p>Ensure a service is stopped:</p>
-<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=stopped"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m service -a <span class="s2">&quot;name=httpd state=stopped&quot;</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="time-limited-background-operations">
@@ -336,20 +372,24 @@ directly from git and then restarting apache.</p>
 checked on later. The same job ID is given to the same task on all
 hosts, so you won&#8217;t lose track.  If you kick hosts and don&#8217;t want
 to poll, it looks like this:</p>
-<div class="highlight-python"><pre>ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -B 3600 -a <span class="s2">&quot;/usr/bin/long_running_operation --do-stuff&quot;</span>
+</pre></div>
 </div>
 <p>If you do decide you want to check on the job status later, you can:</p>
-<div class="highlight-python"><pre>ansible all -m async_status -a "jid=123456789"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m async_status -a <span class="s2">&quot;jid=123456789&quot;</span>
+</pre></div>
 </div>
 <p>Polling is built-in and looks like this:</p>
-<div class="highlight-python"><pre>ansible all -B 3600 -P 60 -a "/usr/bin/long_running_operation --do-stuff"</pre>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -B 1800 -P 60 -a <span class="s2">&quot;/usr/bin/long_running_operation --do-stuff&quot;</span>
+</pre></div>
 </div>
-<p>The above example says &#8220;run for 60 minutes max (60*60=3600), poll for status every 60 seconds&#8221;.</p>
+<p>The above example says &#8220;run for 30 minutes max (<tt class="docutils literal"><span class="pre">-B</span></tt>: 30*60=1800),
+poll for status (<tt class="docutils literal"><span class="pre">-P</span></tt>) every 60 seconds&#8221;.</p>
 <p>Poll mode is smart so all jobs will be started before polling will begin on any machine.
-Be sure to use a high enough <cite>&#8211;forks</cite> value if you want to get all of your jobs started
+Be sure to use a high enough <tt class="docutils literal"><span class="pre">--forks</span></tt> value if you want to get all of your jobs started
 very quickly. After the time limit (in seconds) runs out (<tt class="docutils literal"><span class="pre">-B</span></tt>), the process on
 the remote nodes will be terminated.</p>
-<p>Any module other than <cite>copy</cite> or <cite>template</cite> can be
+<p>Any module other than <tt class="docutils literal"><span class="pre">copy</span></tt> or <tt class="docutils literal"><span class="pre">template</span></tt> can be
 backgrounded.  Typically you&#8217;ll be backgrounding long-running
 shell commands or software upgrades only.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> also support polling, and have
 a simplified syntax for this.</p>
