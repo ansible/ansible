@@ -175,7 +175,10 @@ def main():
                    (not installed and state == 'present'))
 
         if changed:
-            full_name = _get_full_name(name, version) if state == 'present' else name
+            if state == 'present':
+                full_name = _get_full_name(name, version) 
+            else: 
+                full_name = name
 
             cmd = '%s %s %s' % (PIP, command_map[state], full_name)
 
