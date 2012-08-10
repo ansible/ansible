@@ -10,11 +10,6 @@ import ansible.utils as utils
 import ansible.callbacks as ans_callbacks
 import os
 import shutil
-import time
-try:
-   import json
-except:
-   import simplejson as json
 
 EVENTS = []
 

@@ -2,8 +2,6 @@ import os
 import unittest
 
 from ansible.inventory import Inventory
-from ansible.runner import Runner
-# from nose.plugins.skip import SkipTest
 
 class TestInventory(unittest.TestCase):
 
@@ -236,4 +234,3 @@ class TestInventory(unittest.TestCase):
                         'group_names': ['norse'],
                         'inventory_hostname': 'thor',
                         'inventory_hostname_short': 'thor'}
-

@@ -24,12 +24,8 @@ import random
 import traceback
 import tempfile
 import time
-import base64
-import getpass
-import codecs
 import collections
 import socket
-import re
 
 import ansible.constants as C
 import ansible.inventory
@@ -38,7 +34,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
-from ansible.callbacks import DefaultRunnerCallbacks, vv, vvv
+from ansible.callbacks import DefaultRunnerCallbacks, vv
 
 HAS_ATFORK=True
 try:
@@ -803,4 +799,3 @@ class Runner(object):
         self.background = time_limit
         results = self.run()
         return results, poller.AsyncPoller(results, self)
-
