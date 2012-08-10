@@ -182,7 +182,7 @@ Example action from Ansible :doc:`playbooks`::
 
 
 
-.. _easy_install
+.. easy_install
 
 easy_install
 ````````````
@@ -938,7 +938,7 @@ See :doc:`moduledev`.
 
 .. seealso::
 
-   `Ansible Resources <https://github.com/ansible/ansible-resources>`_
+   `Ansible Resources (Contrib) <https://github.com/ansible/ansible-resources>`_
        User contributed playbooks, modules, and articles
    :doc:`examples`
        Examples of using modules in /usr/bin/ansible
