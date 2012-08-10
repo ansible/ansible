@@ -267,12 +267,19 @@ documentation.  The <cite>user</cite> is just the name of the user account:</p>
 <p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<cite>-K</cite>).
 If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
 Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p>
-<p>NOTE:  When using <cite>sudo_user</cite> to a user other than root, the module arguments are briefly written into
-a random tempfile in /tmp.  These are deleted immediately after the command is executed.  This only
-occurs when sudoing from a user like &#8216;bob&#8217; to &#8216;timmy&#8217;, not when going from &#8216;bob&#8217; to &#8216;root&#8217;, or
-logging in directly as &#8216;bob&#8217; or &#8216;root&#8217;.  If this concerns you that this data is briefly readable
-(not writeable), avoid transferring uncrypted passwords with <cite>sudo_user</cite> set.  In other cases, &#8216;/tmp&#8217; is not used and
-this does not come into play. Ansible also takes care to not log password parameters.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">When using <cite>sudo_user</cite> to a user other than root, the module
+arguments are briefly written into a random tempfile in /tmp.
+These are deleted immediately after the command is executed.  This
+only occurs when sudoing from a user like &#8216;bob&#8217; to &#8216;timmy&#8217;, not
+when going from &#8216;bob&#8217; to &#8216;root&#8217;, or logging in directly as &#8216;bob&#8217; or
+&#8216;root&#8217;.  If this concerns you that this data is briefly readable
+(not writeable), avoid transferring uncrypted passwords with
+<cite>sudo_user</cite> set.  In other cases, &#8216;/tmp&#8217; is not used and this does
+not come into play. Ansible also takes care to not log password
+parameters.</p>
+</div>
 </div>
 <div class="section" id="vars-section">
 <h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
@@ -459,12 +466,16 @@ of a play:</p>
   - include: handlers/handlers.yml</pre>
 </div>
 <p>You can mix in includes along with your regular non-included tasks and handlers.</p>
-<p>NOTE:: you can not conditionally path the location to an include file, like you can
-with &#8216;vars_files&#8217;.  If you find yourself needing to do this, consider how you can
-restructure your playbook to be more class/role oriented.  This is to say you cannot
-use a &#8216;fact&#8217; to decide what include file to use.  All hosts contained within the play
-are going to get the same tasks.  (&#8216;only_if&#8217; provides some ability for hosts to conditionally
-skip tasks).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can not conditionally path the location to an include file,
+like you can with &#8216;vars_files&#8217;.  If you find yourself needing to do
+this, consider how you can restructure your playbook to be more
+class/role oriented.  This is to say you cannot use a &#8216;fact&#8217; to
+decide what include file to use.  All hosts contained within the
+play are going to get the same tasks.  (&#8216;only_if&#8217; provides some
+ability for hosts to conditionally skip tasks).</p>
+</div>
 </div>
 <div class="section" id="executing-a-playbook">
 <h2>Executing A Playbook<a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
