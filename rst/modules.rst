@@ -253,7 +253,7 @@ module behind the scenes.
 
 Example from /usr/bin/ansible::
 
-    ansible foo.example.org -m ohai
+    ansible foo.example.org -m facter
 
 .. _fetch:
 
