@@ -129,7 +129,7 @@ class Play(object):
         return self._tasks
 
     def handlers(self):
-        ''' return handler objects for this play '''
+        ''' return handler objects for this play ''' 
         return self._handlers
 
     # *************************************************
@@ -159,14 +159,23 @@ class Play(object):
             for var in self.vars_prompt:
                 if not 'name' in var:
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
+
                 vname = var['name']
                 prompt = "%s: " % var.get("prompt", vname)
                 private = var.get("private", True)
-                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt)
+
+                confirm = var.get("confirm", False)
+                encrypt = var.get("encrypt", None)
+                salt_size = var.get("salt_size", None)
+                salt = var.get("salt", None)
+
+                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
+
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
-                prompt = "%s: " % prompt
-                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, False, prompt)
+                prompt_msg = "%s: " % prompt
+                vars[vname] = self.playbook.callbacks.on_vars_prompt(varname=vname, private=False, prompt=prompt_msg)
+
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
