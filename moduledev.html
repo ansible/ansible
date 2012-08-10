@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -335,7 +334,7 @@ a lot shorter than this:</p>
 </pre></div>
 </div>
 <p>Let&#8217;s test that module:</p>
-<div class="highlight-python"><pre>ansible/hacking/test-module ./time time=\"March 14 12:23\"</pre>
+<div class="highlight-python"><pre>ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"</pre>
 </div>
 <p>This should return something like:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;changed&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;2012-03-14 12:23:00.000307&quot;</span><span class="p">}</span>
