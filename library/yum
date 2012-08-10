@@ -141,8 +141,8 @@ def run(command):
 def install_no_repoq(module, items, yum_basecmd, latest=False):
     res = {'changed': False}
 
+    to_install = []
     if not latest:
-        to_install = []
         for item in items:
             rc, out, err = run([rpmbin, "-q",  "--whatprovides", item])
             if rc != 0:
@@ -150,7 +150,8 @@ def install_no_repoq(module, items, yum_basecmd, latest=False):
         if len(to_install) > 0:
             res['changed'] = True
     else:
-        rc, out, err = run(yum_basecmd + ["check-update"] + items)
+        cmd = yum_basecmd + ["check-update"] + items
+        rc, out, err = run(cmd)
         if rc == 100:
             res['changed'] = True
             to_install = items
