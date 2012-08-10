@@ -34,7 +34,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_is_script',
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_subset', '_is_script',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
@@ -55,6 +55,7 @@ class Inventory(object):
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
+        self._subset = None
 
         # whether the inventory file is a script
         self._is_script = False
@@ -103,7 +104,9 @@ class Inventory(object):
                 inverted = False
             for group in groups:
                 for host in group.get_hosts():
-                    if self._match(group.name, pat) or pat == 'all' or self._match(host.name, pat):
+                    if self._subset and host.name not in self._subset:
+                        continue
+                    if pat == 'all' or self._match(group.name, pat) or self._match(host.name, pat):
                         # must test explicitly for None because [] means no hosts allowed
                         if self._restriction==None or host.name in self._restriction:
                             if inverted:
@@ -187,11 +190,27 @@ class Inventory(object):
     def get_restriction(self):
         return self._restriction
 
-    def restrict_to(self, restriction, append_missing=False):
-        """ Restrict list operations to the hosts given in restriction """
+    def restrict_to(self, restriction):
+        """ 
+        Restrict list operations to the hosts given in restriction.  This is used
+        to exclude failed hosts in main playbook code, don't use this for other
+        reasons.
+        """
         if type(restriction) != list:
             restriction = [ restriction ]
         self._restriction = restriction
+
+    def subset(self, subset_pattern):
+        """ 
+        Limits inventory results to a subset of inventory that matches a given
+        pattern, such as to select a given geographic of numeric slice amongst
+        a previous 'hosts' selection that only select roles, or vice versa.  
+        Corresponds to --limit parameter to ansible-playbook
+        """        
+        if subset_pattern is None:
+            self._subset = None
+        else:
+            self._subset = self.list_hosts(subset_pattern)
 
     def lift_restriction(self):
         """ Do not restrict list operations """

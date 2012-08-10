@@ -52,7 +52,7 @@ def main(args):
 
     # create parser for CLI options
     usage = "%prog playbook.yml"
-    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True)
+    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True, subset_opts=True)
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -102,6 +102,7 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
+            subset=options.subset,
         )
         try:
 
