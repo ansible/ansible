@@ -70,6 +70,27 @@ Example action from Ansible :doc:`playbooks`::
     apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
     apt pkg=openjdk-6-jdk state=latest install-recommends=no
 
+
+.. _apt_repository:
+
+apt_repository
+```
+
+Manages apt repositores
+
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| parameter          | required | default | comments                                                                   |
++====================+==========+=========+============================================================================+
+| repo               | yes      |         | The repository name/value                                                  |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| state              | no       | present | 'absent' or 'present'                                                      |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+
+Example action from Ansible :doc:`playbooks`::
+
+    apt_repository repo=ppa:nginx/stable
+    apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'
+
 .. _assemble:
 
 assemble
