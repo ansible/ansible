@@ -105,7 +105,7 @@ class Play(object):
 
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
-                    task_vars[k]=v
+                    task_vars[k] = utils.template(v, task_vars)
                 include_file = utils.template(tokens[0], task_vars)
                 data = utils.parse_yaml_from_file(utils.path_dwim(self.playbook.basedir, include_file))
             elif type(x) == dict:
