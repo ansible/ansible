@@ -76,6 +76,8 @@ Example action from Ansible :doc:`playbooks`::
 apt_repository
 ``````````````
 
+.. versionadded:: 0.7
+
 Manages apt repositores
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
@@ -215,6 +217,8 @@ Example action from Ansible :doc:`playbooks`::
 
 easy_install
 ````````````
+
+.. versionadded:: 0.7
 
 The easy_install module installs Python libraries.
 
@@ -553,6 +557,8 @@ from /usr/bin/ansible::
 pip
 ```
 
+.. versionadded:: 0.7
+
 Manages Python library dependencies.
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
@@ -831,6 +837,8 @@ Example action from a playbook::
 
 supervisorctl
 `````````````
+
+.. versionadded:: 0.7
 
 Manage the state of a program or group of programs running via Supervisord
 
