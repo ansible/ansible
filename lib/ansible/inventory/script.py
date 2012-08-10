@@ -17,12 +17,10 @@
 
 #############################################
 
-import os
 import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible import errors
 from ansible import utils
 
 class InventoryScript(object):
@@ -53,4 +51,3 @@ class InventoryScript(object):
                 all.add_host(host)
             all.add_child_group(group)
         return groups
-
