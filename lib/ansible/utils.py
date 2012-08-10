@@ -42,6 +42,15 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
+# vars_prompt_encrypt
+PASSLIB_AVAILABLE = False
+
+try:
+    import passlib.hash
+    PASSLIB_AVAILABLE = True
+except:
+    pass
+
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
@@ -383,5 +392,21 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
 
     return parser
 
+def do_encrypt(result, encrypt, salt_size=None, salt=None):
+    if PASSLIB_AVAILABLE:
+        try:
+            crypt = getattr(passlib.hash, encrypt)
+        except:
+            raise errors.AnsibleError("passlib does not support '%s' algorithm" % encrypt)
 
+        if salt_size:
+            result = crypt.encrypt(result, salt_size=salt_size)
+        elif salt:
+            result = crypt.encrypt(result, salt=salt)
+        else:
+            result = crypt.encrypt(result)
+    else:
+        raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
+
+    return result
 
