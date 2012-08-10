@@ -148,9 +148,11 @@ Which could be executed just like this::
     ansible webserver -m setup
     ansible webserver -m template -a "src=/tmp/motd.j2 dest=/etc/motd"
 
-Note that the name 'webserver' came from cobbler, as did the variables for the config file.  You can still
-pass in your own variables like normal in Ansible, but variables from the external inventory script will
-override any that have the same name.
+.. note::
+   The name 'webserver' came from cobbler, as did the variables for
+   the config file.  You can still pass in your own variables like
+   normal in Ansible, but variables from the external inventory script
+   will override any that have the same name.
 
 So, with the template above (motd.j2), this would result in the following data being written to /etc/motd for system 'foo'::
 

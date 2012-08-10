@@ -95,12 +95,18 @@ If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-s
 If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
 Just `Control-C` to kill it and run it again with `-K`.
 
-NOTE:  When using `sudo_user` to a user other than root, the module arguments are briefly written into 
-a random tempfile in /tmp.  These are deleted immediately after the command is executed.  This only
-occurs when sudoing from a user like 'bob' to 'timmy', not when going from 'bob' to 'root', or
-logging in directly as 'bob' or 'root'.  If this concerns you that this data is briefly readable
-(not writeable), avoid transferring uncrypted passwords with `sudo_user` set.  In other cases, '/tmp' is not used and
-this does not come into play. Ansible also takes care to not log password parameters.
+.. important::
+
+   When using `sudo_user` to a user other than root, the module
+   arguments are briefly written into a random tempfile in /tmp.
+   These are deleted immediately after the command is executed.  This
+   only occurs when sudoing from a user like 'bob' to 'timmy', not
+   when going from 'bob' to 'root', or logging in directly as 'bob' or
+   'root'.  If this concerns you that this data is briefly readable
+   (not writeable), avoid transferring uncrypted passwords with
+   `sudo_user` set.  In other cases, '/tmp' is not used and this does
+   not come into play. Ansible also takes care to not log password
+   parameters.
 
 Vars section
 ++++++++++++
@@ -318,12 +324,15 @@ of a play::
 
 You can mix in includes along with your regular non-included tasks and handlers.
 
-NOTE:: you can not conditionally path the location to an include file, like you can
-with 'vars_files'.  If you find yourself needing to do this, consider how you can
-restructure your playbook to be more class/role oriented.  This is to say you cannot
-use a 'fact' to decide what include file to use.  All hosts contained within the play
-are going to get the same tasks.  ('only_if' provides some ability for hosts to conditionally
-skip tasks).
+.. note::
+
+   You can not conditionally path the location to an include file,
+   like you can with 'vars_files'.  If you find yourself needing to do
+   this, consider how you can restructure your playbook to be more
+   class/role oriented.  This is to say you cannot use a 'fact' to
+   decide what include file to use.  All hosts contained within the
+   play are going to get the same tasks.  ('only_if' provides some
+   ability for hosts to conditionally skip tasks).
 
 Executing A Playbook
 ````````````````````
