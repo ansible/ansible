@@ -27,7 +27,7 @@ Ansible Changes By Release
 * allow variables in parameterized task include parameters (regression)
 * make remote_md5 internal function work with non-bash shells
 * allow user to be passed in via --extra-vars (regression)
-* ${last_result} variable stores the last result for each host
+* add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
 
 0.6 "Cabo" -- August 6, 2012
 

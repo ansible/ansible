@@ -23,13 +23,13 @@ class Task(object):
     __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
-        'play', 'notified_by', 'tags', 'with_items', 'first_available_file', 'ignore_errors'
+        'play', 'notified_by', 'tags', 'register', 'with_items', 'first_available_file', 'ignore_errors'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 'first_available_file',
-         'include', 'tags', 'ignore_errors'
+         'include', 'tags', 'register', 'ignore_errors'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -46,6 +46,7 @@ class Task(object):
         self.name        = ds.get('name', None)
         self.action      = ds.get('action', '')
         self.tags        = [ 'all' ]
+        self.register    = ds.get('register', None)
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
