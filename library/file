@@ -321,7 +321,7 @@ def main():
         if os.path.isabs(src):
             abs_src = src
         else:
-            abs_src = os.path.join(os.path.dirname(dest), src)
+            module.fail_json(msg="absolute paths are required")
         if not os.path.exists(abs_src):
             module_fail_json(path=path, src=src, msg='src file does not exist')
 
