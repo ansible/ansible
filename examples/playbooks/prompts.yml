@@ -46,6 +46,13 @@
 # a package version to use with the yum module.
 
   tasks:
+
   - name: imagine this did something interesting with $release_version
     action: shell echo foo >> /tmp/$release_version-$alpha
+
+  - name: look we crypted a password
+    action: shell echo my password is $my_password2
+
+
+
 
