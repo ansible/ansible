@@ -74,7 +74,7 @@ Example action from Ansible :doc:`playbooks`::
 .. _apt_repository:
 
 apt_repository
-```
+``````````````
 
 Manages apt repositores
 
@@ -203,7 +203,7 @@ Example action from Ansible :doc:`playbooks`::
 
 
 
-.. easy_install
+.. _easyinstall:
 
 easy_install
 ````````````
