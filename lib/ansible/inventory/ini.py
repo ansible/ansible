@@ -17,17 +17,13 @@
 
 #############################################
 
-import fnmatch
-import os
-import subprocess
-
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
-from ansible import utils
+
 
 class InventoryParser(object):
     """
@@ -170,5 +166,3 @@ class InventoryParser(object):
                 else:
                     (k,v) = line.split("=",1)
                     group.set_variable(k,v)
-
-

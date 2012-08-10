@@ -16,15 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import warnings
-import traceback
 import os
-import re
-import shutil
-import subprocess
 import pipes
 import socket
 import random
-from ansible import utils
 from ansible.callbacks import vvv
 from ansible import errors
 
