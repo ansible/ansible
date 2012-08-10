@@ -101,7 +101,7 @@ class ParamikoConnection(object):
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
-            vvv("EXEC %s" % sudo_cmd, host=self.host)
+            vvv("EXEC %s" % sudocmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(sudocmd)
