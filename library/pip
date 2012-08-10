@@ -25,7 +25,11 @@ ENV = None
 
 
 def _get_full_name(name, version=None):
-    return name if version is None else name + '==' + version
+    if version is None:
+        resp = name
+    else:
+        resp = name + '==' + version
+    return resp
 
 
 def _find_pip():
