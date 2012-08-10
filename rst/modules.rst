@@ -680,7 +680,7 @@ for this module.
 
 Example from `/usr/bin/ansible` to bootstrap a legacy python 2.4 host::
 
-    ansible newhost.example.com raw -a "yum install python-simplejson"
+    ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
 
 .. _service:
 

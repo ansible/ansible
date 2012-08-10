@@ -1258,7 +1258,7 @@ using the &#8216;shell&#8217; or &#8216;command&#8217; module is much more appro
 only output is returned.  There is no error detection or change handler support
 for this module.</p>
 <p>Example from <cite>/usr/bin/ansible</cite> to bootstrap a legacy python 2.4 host:</p>
-<div class="highlight-python"><pre>ansible newhost.example.com raw -a "yum install python-simplejson"</pre>
+<div class="highlight-python"><pre>ansible newhost.example.com -m raw -a "yum -y install python-simplejson"</pre>
 </div>
 </div>
 <div class="section" id="service">
@@ -1771,7 +1771,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 09, 2012.<br/>
+      Last updated on Aug 10, 2012.<br/>
     </p>
   </div>
 </footer>
