@@ -336,7 +336,8 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+    async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -357,6 +358,11 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
+
+    if subset_opts:
+        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
+            help='further limit selected hosts to an additional pattern')
+
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
