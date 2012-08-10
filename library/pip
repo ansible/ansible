@@ -82,6 +82,11 @@ def _run(cmd):
 
 
 def main():
+    global PIP
+    global VIRTUALENV
+    global ENV
+    global module
+
     arg_spec = dict(
         state=dict(default='present', choices=['absent', 'present', 'latest']),
         name=dict(default=None, required=False),
