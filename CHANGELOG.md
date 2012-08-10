@@ -18,6 +18,15 @@ Ansible Changes By Release
 * use -vvv for extreme debug levels. -v gives more playbook output as before
 * -vv shows module arguments to all module calls (and maybe some other things later)
 * if you ctrl+c a playbook it won't traceback
+* backup option on copy (backup=yes)
+* --version shows git information if running from git
+* file module will not recurse on directory properties
+* vars_prompt now has encryption options (see examples/playbooks/prompts.yml)
+* yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
+* don't pass "--" to sudo to work on older EL5
+* allow variables in parameterized task include parameters (regression)
+* make remote_md5 internal function work with non-bash shells
+* allow user to be passed in via --extra-vars (regression)
 
 0.6 "Cabo" -- August 6, 2012
 
