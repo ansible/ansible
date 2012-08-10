@@ -20,6 +20,19 @@
 
 import os
 import shutil
+import time
+
+def backuplocal(fn):
+    """make a date-marked backup of the specified file, return True or False on success or failure"""
+    # backups named basename-YYYY-MM-DD@HH:MM~
+    ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+    backupdest = '%s.%s' % (fn, ext)
+    
+    try:
+        shutil.copy2(fn, backupdest)
+    except shutil.Error, e:
+        return False, 'Could not make backup of %s to %s: %s' % (fn, backupdest, e)
+    return True, backupdest
 
 def main():
 
@@ -28,13 +41,15 @@ def main():
         check_invalid_arguments = False,
         argument_spec = dict(
             src=dict(required=True),
-            dest=dict(required=True)
+            dest=dict(required=True),
+            backup=dict(default=False, choices=BOOLEANS),
         )
     )
 
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
-
+    backup = module.boolean(module.params.get('backup', False))
+    
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
     if not os.access(src, os.R_OK):
@@ -56,8 +71,16 @@ def main():
         if not os.access(os.path.dirname(dest), os.W_OK):
             module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
+    backup_file = None
     if md5sum_src != md5sum_dest:
         try:
+            if backup:
+                if os.path.exists(dest):
+                    success, msg = backuplocal(dest)
+                    if not success:
+                        module.fail_jason(msg=msg)
+                    else:
+                        backup_file = msg
             shutil.copyfile(src, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
@@ -67,7 +90,16 @@ def main():
     else:
         changed = False
 
-    module.exit_json(dest=dest, src=src, md5sum=md5sum_src, changed=changed)
+    res_args = {
+        'dest':dest,
+        'src':src,
+        'md5sum':md5sum_src,
+        'changed':changed
+    }
+    if backup_file:
+        res_args['backup_file'] = backup_file
+        
+    module.exit_json(**res_args)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
