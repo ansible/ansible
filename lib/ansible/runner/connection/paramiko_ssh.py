@@ -16,15 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import warnings
-import traceback
 import os
-import re
-import shutil
-import subprocess
 import pipes
 import socket
 import random
-from ansible import utils
 from ansible.callbacks import vvv
 from ansible import errors
 
@@ -99,12 +94,12 @@ class ParamikoConnection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+            sudo_cmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
             vvv("EXEC %s" % sudocmd, host=self.host)
             sudo_output = ''
             try:
-                chan.exec_command(sudocmd)
+                chan.exec_command(sudo_cmd)
                 if self.runner.sudo_pass:
                     while not sudo_output.endswith(prompt):
                         chunk = chan.recv(bufsize)
@@ -153,4 +148,3 @@ class ParamikoConnection(object):
     def close(self):
         ''' terminate the connection '''
         self.ssh.close()
-
