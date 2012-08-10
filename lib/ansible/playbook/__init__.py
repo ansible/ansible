@@ -224,6 +224,7 @@ class PlayBook(object):
         for host, result in results['contacted'].iteritems():
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
+            self.SETUP_CACHE[host]['last_result'] = result
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
