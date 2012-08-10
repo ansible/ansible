@@ -155,6 +155,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#authorized-key">authorized_key</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
+<li><a class="reference internal" href="#easy-install">easy_install</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#fetch">fetch</a></li>
 <li><a class="reference internal" href="#file">file</a></li>
@@ -172,10 +173,12 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#service">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
+<li><a class="reference internal" href="#supervisorctl">supervisorctl</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
 <li><a class="reference internal" href="#virt">virt</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
+<li><a class="reference internal" href="#additional-contrib-modules">Additional Contrib Modules</a></li>
 <li><a class="reference internal" href="#writing-your-own-modules">Writing your own modules</a></li>
 </ul>
 </li>
@@ -471,6 +474,43 @@ relative.</td>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
+</div>
+</div>
+<div class="section" id="easy-install">
+<h2>easy_install<a class="headerlink" href="#easy-install" title="Permalink to this headline">¶</a></h2>
+<p>The easy_install module installs Python libraries.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>a Python library name</td>
+</tr>
+<tr><td>virtualenv</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>an optional virtualenv directory path to install into, if the virtualenv
+does not exist it is created automatically</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>easy_install name=flask
+easy_install name=flask==0.8
+easy_install name=flask virtualenv=/srv/webapps/my_app/venv</pre>
 </div>
 </div>
 <div class="section" id="facter">
@@ -1287,8 +1327,42 @@ use your best judgement.</p>
 <div class="highlight-python"><pre>shell somescript.sh &gt;&gt; somelog.txt</pre>
 </div>
 </div>
+<div class="section" id="supervisorctl">
+<span id="id20"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<p>Manage the state of a program or group of programs running via Supervisord</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>The name of the supervisord program/process to manage</td>
+</tr>
+<tr><td>state</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>&#8216;started&#8217;, &#8216;stopped&#8217; or &#8216;restarted&#8217;</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from a playbook:</p>
+<div class="highlight-python"><pre>supervisorctl name=my_app state=started</pre>
+</div>
+</div>
 <div class="section" id="template">
-<span id="id20"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1328,7 +1402,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id21"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1427,7 +1501,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id22"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1487,7 +1561,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id23"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1528,9 +1602,9 @@ yum name=httpd state=removed
 yum name=httpd state=installed</pre>
 </div>
 </div>
-<div class="section" id="additional-modules">
-<h2>Additional Contrib Modules</h2>
-<p>In addition to the following built-in modules, community modules are available at <a href="http://github.com/ansible/ansible-resources">http://github.com/ansible/ansible-resources</a>.</p>
+<div class="section" id="additional-contrib-modules">
+<h2>Additional Contrib Modules<a class="headerlink" href="#additional-contrib-modules" title="Permalink to this headline">¶</a></h2>
+<p>In addition to the following built-in modules, community modules are available at <a class="reference external" href="http://github.com/ansible/ansible-resources">Ansible Resources</a>.</p>
 </div>
 <div class="section" id="writing-your-own-modules">
 <h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
@@ -1538,7 +1612,7 @@ yum name=httpd state=installed</pre>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference external" href="https://github.com/ansible/ansible-resources"><em>Ansible Resources</em></a></dt>
+<dt><a class="reference external" href="https://github.com/ansible/ansible-resources">Ansible Resources</a></dt>
 <dd>User contributed playbooks, modules, and articles</dd>
 <dt><a class="reference internal" href="examples.html"><em>Command Line</em></a></dt>
 <dd>Examples of using modules in /usr/bin/ansible</dd>
@@ -1585,7 +1659,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 08, 2012.<br/>
+      Last updated on Aug 09, 2012.<br/>
     </p>
   </div>
 </footer>
