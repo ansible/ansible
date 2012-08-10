@@ -167,6 +167,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#mysql-user">mysql_user</a></li>
 <li><a class="reference internal" href="#ohai">ohai</a></li>
 <li><a class="reference internal" href="#ping">ping</a></li>
+<li><a class="reference internal" href="#pip">pip</a></li>
 <li><a class="reference internal" href="#postgresql-db">postgresql_db</a></li>
 <li><a class="reference internal" href="#postgresql-user">postgresql_user</a></li>
 <li><a class="reference internal" href="#raw">raw</a></li>
@@ -1014,6 +1015,60 @@ from /usr/bin/ansible:</p>
 <div class="highlight-python"><pre>ansible webservers -m ping</pre>
 </div>
 </div>
+<div class="section" id="pip">
+<span id="id16"></span><h2>pip<a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
+<p>Manages Python library dependencies.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>name</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>The name of a Python library to install</td>
+</tr>
+<tr><td>version</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>The version number to install of the Python library specified in the
+&#8216;name&#8217; parameter</td>
+</tr>
+<tr><td>requirements</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>The path to a pip requirements file</td>
+</tr>
+<tr><td>virtualenv</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>An optional path to a virtualenv directory to install into</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>present</td>
+<td>&#8216;present&#8217;, &#8216;absent&#8217; or &#8216;latest&#8217;</td>
+</tr>
+</tbody>
+</table>
+<p>Examples:</p>
+<div class="highlight-python"><pre>pip name=flask
+pip name=flask version=0.8
+pip name=flask virtualenv=/srv/webapps/my_app/venv
+pip requirements=/srv/webapps/my_app/src/requirements.txt
+pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapps/my_app/venv</pre>
+</div>
+</div>
 <div class="section" id="postgresql-db">
 <h2>postgresql_db<a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
 <p>Add or remove PostgreSQL databases from a remote host.</p>
@@ -1140,7 +1195,7 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="raw">
-<span id="id16"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
 <p>Executes a low-down and dirty SSH command, not going through the module subsystem.</p>
 <p>This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
@@ -1155,7 +1210,7 @@ for this module.</p>
 </div>
 </div>
 <div class="section" id="service">
-<span id="id17"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1199,7 +1254,7 @@ service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id18"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -1281,7 +1336,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id19"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -1328,7 +1383,7 @@ use your best judgement.</p>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id20"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1362,7 +1417,7 @@ use your best judgement.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id21"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1402,7 +1457,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id22"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1501,7 +1556,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id23"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1561,7 +1616,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id24"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
