@@ -60,16 +60,15 @@ class SSHConnection(object):
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required. The "--"
-            # tells sudo that this is the end of sudo options and the command
-            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # sudo always ask for a password if one is required. 
+            # Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
             # output until we see the randomly-generated sudo prompt set with
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             ssh_cmd.append(sudocmd)
