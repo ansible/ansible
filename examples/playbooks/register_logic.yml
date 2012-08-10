@@ -1,0 +1,29 @@
+# here's a cool advanced topic about how to perform conditional logic in ansible without resorting
+# to writing your own module that defines facts.  You can do that too, and it's easy to do, but
+# often you just want to run a command and then decide whether to run some steps or not.  That's
+# easy to do, and here we'll show you how.
+
+- name: test playbook
+  user: root
+  hosts: all
+
+  tasks:
+
+      # it is possible to save the result of any command in a named register.  This variable will be made
+      # available to tasks and templates made further down in the execution flow.  Here we save the result
+      # of a simple 'cat' command in a variable called 'motd_contents'
+
+      - action: shell cat /etc/motd
+        register: motd_contents
+
+      # and here we access the register.  Note that motd_contents as a variable is structured data because
+      # it is a return from the command module.   The shell module makes available variables such as
+      # as 'stdout', 'stderr', and 'rc'.  Here's a rather trivial example that runs an arbitrary step
+      # if and only if the motd file contained the word 'hi'.   Remember that only_if statements are
+      # Python expressions.  This is as complicated as Ansible syntax is going to get, and the only
+      # time python really seeps into ansible's language.
+ 
+      - action: shell echo "motd contains the word hi"
+        only_if: "'${motd_contents.stdout}'.find('hi') != -1"
+
+
