@@ -25,7 +25,6 @@ import yaml
 import optparse
 import operator
 from ansible import errors
-from ansible import color
 from ansible import __version__
 import ansible.constants as C
 import time
