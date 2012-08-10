@@ -56,6 +56,9 @@ class ParamikoConnection(object):
             raise errors.AnsibleError("paramiko is not installed")
 
         user = self.runner.remote_user
+
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % user, host=self.host)
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
