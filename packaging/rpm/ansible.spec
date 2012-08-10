@@ -53,7 +53,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ansible*
 %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO
+%doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
 
 

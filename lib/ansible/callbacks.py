@@ -380,15 +380,32 @@ class PlaybookCallbacks(object):
             msg = "NOTIFIED: [%s]" % name
         print banner(msg)
 
-    def on_vars_prompt(self, varname, private=True, prompt=None):
+    def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
 
         if prompt:
             msg = prompt
         else:
             msg = 'input for %s: ' % varname
-        if private:
-            return getpass.getpass(msg)
-        return raw_input(msg)
+
+        def prompt(prompt, private):
+            if private:
+                return getpass.getpass(prompt)
+            return raw_input(prompt)
+
+
+        if confirm:
+            while True:
+                result = prompt(msg, private)
+                second = prompt("confirm " + msg, private)
+                if result == second: break
+                print "***** VALUES ENTERED DO NOT MATCH ****"
+        else:
+            result = prompt(msg, private)
+
+        if encrypt:
+            result = utils.do_encrypt(result,encrypt,salt_size,salt)
+
+        return result
 
     def on_setup(self):
 
