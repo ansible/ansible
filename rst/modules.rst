@@ -925,6 +925,12 @@ Example action from Ansible :doc:`playbooks`::
     yum name=httpd state=installed
 
 
+Additional Contrib Modules
+``````````````````````````
+
+In addition to the following built-in modules, community modules are available at `Ansible Resources <http://github.com/ansible/ansible-resources>`_.
+
+
 Writing your own modules
 ````````````````````````
 
@@ -932,6 +938,8 @@ See :doc:`moduledev`.
 
 .. seealso::
 
+   `Ansible Resources <https://github.com/ansible/ansible-resources>`_
+       User contributed playbooks, modules, and articles
    :doc:`examples`
        Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
