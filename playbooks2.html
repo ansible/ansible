@@ -202,8 +202,11 @@ relevant, feel free to skip it.  For many people, the features documented in <ci
 be 90% or more of what they use in Ansible.</p>
 <div class="section" id="tags">
 <h2>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
-<p>(New in 0.6) If you have a large playbook it may become useful to be able to run a specific
-part of the configuration.  Both plays and tasks support a &#8220;tags:&#8221; attribute for this reason.</p>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
+<p>If you have a large playbook it may become useful to be able to run a
+specific part of the configuration.  Both plays and tasks support a
+&#8220;tags:&#8221; attribute for this reason.</p>
 <p>Example:</p>
 <div class="highlight-python"><pre>tasks:
 
@@ -224,10 +227,13 @@ part of the configuration.  Both plays and tasks support a &#8220;tags:&#8221; a
 </div>
 <div class="section" id="playbooks-including-playbooks">
 <h2>Playbooks Including Playbooks<a class="headerlink" href="#playbooks-including-playbooks" title="Permalink to this headline">¶</a></h2>
-<p>(New in 0.6) To further advance the concept of include files, playbook files can include other playbook
-files.  Suppose you define the behavior of all your webservers in &#8220;webservers.yml&#8221; and
-all your database servers in &#8220;dbservers.yml&#8221;.  You can create a &#8220;site.yml&#8221; that would
-reconfigure all of your systems like this:</p>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
+<p>To further advance the concept of include files, playbook files can
+include other playbook files.  Suppose you define the behavior of all
+your webservers in &#8220;webservers.yml&#8221; and all your database servers in
+&#8220;dbservers.yml&#8221;.  You can create a &#8220;site.yml&#8221; that would reconfigure
+all of your systems like this:</p>
 <div class="highlight-python"><pre>----
 - include: playbooks/webservers.yml
 - include: playbooks/dbservers.yml</pre>
@@ -237,8 +243,11 @@ what parts of those plays.</p>
 </div>
 <div class="section" id="ignoring-failed-commands">
 <h2>Ignoring Failed Commands<a class="headerlink" href="#ignoring-failed-commands" title="Permalink to this headline">¶</a></h2>
-<p>(New in 0.6) Generally playbooks will stop executing any more steps on a host that has a failure.
-Sometimes, though, you want to continue on.  To do so, write a task that looks like this:</p>
+<p class="deprecated">
+<span class="versionmodified">Deprecated since version 0.6.</span></p>
+<p>Generally playbooks will stop executing any more steps on a host that
+has a failure.  Sometimes, though, you want to continue on.  To do so,
+write a task that looks like this:</p>
 <div class="highlight-python"><pre>- name: this will not be counted as a failure
   action: command /bin/false
   ignore_errors: True</pre>
