@@ -81,7 +81,13 @@ class ParamikoConnection(object):
         ''' run a command on the remote host '''
 
         bufsize = 4096
-        chan = self.ssh.get_transport().open_session()
+        try:
+            chan = self.ssh.get_transport().open_session()
+        except Exception, e:
+            msg = "Failed to open session"
+            if len(str(e)) > 0:
+                msg += ": %s" % str(e)
+            raise errors.AnsibleConnectionFailed(msg)
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
