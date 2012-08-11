@@ -58,7 +58,7 @@ def main():
             module_fail_json(ansible_job_id=jid, results_file=log_path,
                 msg="Could not parse job output: %s" % data)
 
-    if not data.has_key("started"):
+    if not 'started' in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
     module.exit_json(**data)

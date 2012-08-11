@@ -183,7 +183,7 @@ class Virt(object):
                 "nrVirtCpu" : data[3],
                 "cpuTime"   : str(data[4]),
             }
-            info[vm]["autostart"] =  self.conn.get_autostart(vm)
+            info[vm]["autostart"] = self.conn.get_autostart(vm)
 
         return info
 
