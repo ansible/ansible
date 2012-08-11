@@ -111,21 +111,6 @@ class TestInventory(unittest.TestCase):
         print expected_hosts
         assert sorted(hosts) == sorted(expected_hosts)
 
-    def test_simple_exclude(self):
-        inventory = self.simple_inventory()
-
-        hosts = inventory.list_hosts("all:!greek")
-        expected_hosts=['jupiter', 'saturn', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
-
-        hosts = inventory.list_hosts("all:!norse:!greek")
-        expected_hosts=['jupiter', 'saturn',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
-
     def test_simple_vars(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
@@ -168,11 +153,11 @@ class TestInventory(unittest.TestCase):
     def test_complex_exclude(self):
         inventory = self.complex_inventory()
 
-        hosts = inventory.list_hosts("nc:!triangle:florida:!orlando")
-        expected_hosts=['rtp_a', 'rtp_b', 'rtb_c', 'miami']
+        hosts = inventory.list_hosts("nc:florida:!triangle:!orlando")
+        expected_hosts = ['miami', 'rtb_c', 'rtp_a', 'rtp_b']
+        print "HOSTS=%s" % sorted(hosts)
+        print "EXPECTED=%s" % sorted(expected_hosts)
         assert sorted(hosts) == sorted(expected_hosts)
-
-
 
     ###################################################
     ### Inventory API tests
