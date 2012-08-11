@@ -62,7 +62,7 @@ def url_do_get(module, url, dest):
         actualdest = "%s/%s" % (dest, urlfilename)
         module.params['path'] = actualdest
     else:
-         actualdest = dest
+        actualdest = dest
     info['daisychain_args'] = module.params
     info['daisychain_args']['state'] = 'file'
     info['daisychain_args']['dest'] = actualdest

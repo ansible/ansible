@@ -91,8 +91,8 @@ class CommandModule(AnsibleModule):
         params['chdir'] = None
         params['shell'] = False
         if args.find("#USE_SHELL") != -1:
-             args = args.replace("#USE_SHELL", "")
-             params['shell'] = True
+            args = args.replace("#USE_SHELL", "")
+            params['shell'] = True
 
         check_args = shlex.split(args)
         for x in check_args:
