@@ -264,17 +264,9 @@ class TestUtils(unittest.TestCase):
     def test_last_non_blank_line_with_multiple_lines(self):
         assert (ansible.utils.last_non_blank_line("\na line\nonelineonly") == "onelineonly")
 
-    def test_is_valid_json_line_with_empty_line(self):
-        assert (not ansible.utils.is_valid_json_line(""))
-
-    def test_is_valid_json_line_with_json_line(self):
-        assert (ansible.utils.is_valid_json_line("""{"ping": "pong"}"""))
-        assert (ansible.utils.is_valid_json_line("""[1, 2, 3]"""))
-
-        assert (ansible.utils.is_valid_json_line("""rc=1"""))
-
     def test_filter_leading_non_json_lines(self):
         assert (ansible.utils.filter_leading_non_json_lines("{'ping': 'pong'}") == "{'ping': 'pong'}\n")
         assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\n{'ping': 'pong'}") == "{'ping': 'pong'}\n")
         assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\n{'ping': 'pong'}\ntrailing garbage") == "{'ping': 'pong'}\ntrailing garbage\n")
+        assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\nrc=1\ntrailing garbage") == "rc=1\ntrailing garbage\n")
 
