@@ -54,9 +54,9 @@ def main():
     delta = endd - startd
 
     if out is None:
-       out = ''
+        out = ''
     if err is None:
-       err = ''
+        err = ''
 
     module.exit_json(
         cmd     = args,

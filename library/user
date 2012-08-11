@@ -134,7 +134,7 @@ def user_mod(module, user, **kwargs):
                             cmd.append('-a')
                             groups_need_mod = True
                 else:
-                   groups_need_mod = True
+                    groups_need_mod = True
 
             if groups_need_mod:
                 cmd.append('-G')
