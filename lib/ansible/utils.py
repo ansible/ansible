@@ -424,7 +424,7 @@ def last_non_blank_line(lines):
         # line.
 
 def is_valid_json_line(line):
-    return line.startswith('=') or line.startswith('{') or line.startswith('[')
+    return ('=' in line) or line.startswith('{') or line.startswith('[')
 
 def filter_leading_non_json_lines(lines):
     ''' we need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
