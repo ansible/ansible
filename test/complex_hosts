@@ -38,7 +38,7 @@ d=10002
 [rtp]
 rtp_a
 rtp_b
-rtb_c
+rtp_c
 
 [rtp:vars]
 a=1

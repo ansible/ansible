@@ -18,13 +18,13 @@ class TestInventory(unittest.TestCase):
     def tearDown(self):
         os.chmod(self.inventory_script, 0644)
 
-    def compare(self, left, right):
-        left = sorted(left)
-        right = sorted(right)
+    def compare(self, left, right, sort=True):
+        if sort:
+            left = sorted(left)
+            right = sorted(right)
         print left
         print right
         assert left == right
-
 
     def simple_inventory(self):
         return Inventory(self.inventory_file)
@@ -152,12 +152,31 @@ class TestInventory(unittest.TestCase):
 
     def test_complex_exclude(self):
         inventory = self.complex_inventory()
-
         hosts = inventory.list_hosts("nc:florida:!triangle:!orlando")
-        expected_hosts = ['miami', 'rtb_c', 'rtp_a', 'rtp_b']
+        expected_hosts = ['miami', 'rtp_a', 'rtp_b', 'rtp_c']
         print "HOSTS=%s" % sorted(hosts)
         print "EXPECTED=%s" % sorted(expected_hosts)
         assert sorted(hosts) == sorted(expected_hosts)
+
+    def test_complex_enumeration(self):
+
+
+        expected1 = ['rtp_a', 'rtp_b']
+        expected2 = ['rtp_c', 'tri_a']
+        expected3 = ['rtp_b', 'rtp_c', 'tri_a', 'tri_b', 'tri_c']
+        expected4 = ['orlando', 'rtp_c', 'tri_a']
+
+        inventory = self.complex_inventory()
+        print "ALL NC=%s" % inventory.list_hosts("nc")
+        hosts = inventory.list_hosts("nc[0-1]")
+        self.compare(hosts, expected1, sort=False)
+        hosts = inventory.list_hosts("nc[2-3]")
+        self.compare(hosts, expected2, sort=False)
+        hosts = inventory.list_hosts("nc[1-99999]")
+        self.compare(hosts, expected3, sort=False)
+        hosts = inventory.list_hosts("nc[2-3]:florida[1-2]")
+        self.compare(hosts, expected4, sort=False)
+
 
     ###################################################
     ### Inventory API tests
