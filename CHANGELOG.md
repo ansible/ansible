@@ -4,7 +4,6 @@ Ansible Changes By Release
 0.7 "Panama" -- release pending
 
 * I can barely see the roadmap from the heat coming off of it.
-
 * login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
 * new modules -- pip, easy_install, apt_repository, supervisorctl
 * ansible --version will now give branch/SHA information if running from git
@@ -33,6 +32,7 @@ Ansible Changes By Release
 * new 'ansible_all_ipv4_addresses' and 'ansible_all_ipv6_addresses' facts -- which are simple lists
 * better handling of VM guest type detection in setup module
 * adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
+* -u and user: defaults to current user, rather than root, override as before
 
 0.6 "Cabo" -- August 6, 2012
 
