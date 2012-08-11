@@ -453,8 +453,13 @@ class LinuxNetwork(Network):
             ipv4_address = None, 
             ipv6_address = None
         )
-
-        output = subprocess.Popen(['/sbin/ip','addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
+        ipbin = '/sbin/ip'
+        if not os.path.exists(ipbin):
+            if os.path.exists('/usr/sbin/ip'):
+                ipbin = '/usr/sbin/ip'
+            else:
+                return interfaces, ips
+        output = subprocess.Popen([ipbin, 'addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
             if line:
                 words = line.split()
