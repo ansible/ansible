@@ -29,6 +29,9 @@ Ansible Changes By Release
 * allow user to be passed in via --extra-vars (regression)
 * add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
 * add --limit option, which can be used to further confine the pattern given in ansible-playbooks
+* setup module now detects interfaces with aliases
+* new 'ansible_all_ipv4_addresses' and 'ansible_all_ipv6_addresses' facts -- which are simple lists
+* better handling of VM guest type detection in setup module
 
 0.6 "Cabo" -- August 6, 2012
 
