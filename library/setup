@@ -454,7 +454,7 @@ class LinuxNetwork(Network):
             ipv6_address = None
         )
 
-        output = subprocess.Popen(['ip','addr'], stdout=subprocess.PIPE).communicate()[0]
+        output = subprocess.Popen(['/sbin/ip','addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
             if line:
                 words = line.split()
