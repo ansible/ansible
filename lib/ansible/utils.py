@@ -120,7 +120,7 @@ def json_loads(data):
 def parse_json(raw_data):
     ''' this version for module return data only '''
 
-    data = filter_leading_garbage(raw_data)
+    data = filter_leading_non_json_lines(raw_data)
 
     try:
         return json.loads(data)
@@ -420,11 +420,20 @@ def last_non_blank_line(lines):
 
     return ""  # we shouldn't come here (no lines?) but let's pretend nothing happend
         # We can't return all lines here because calling code expects only one
+        # line. And since we don't know which line to return we return an empty
         # line.
 
-def line_needs_filtering(line):
-    return line.startswith('#') or (len(line) == 0)
+def is_valid_json_line(line):
+    return line.startswith('=') or line.startswith('{') or line.startswith('[')
 
-def filter_leading_garbage(lines):
-    return lines
+def filter_leading_non_json_lines(lines):
+    ''' we need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
+        But we filter only leading lines since multiline JSON is valid. '''
+    filtered_lines = ''
+    no_more_filtering = False
+    for line in lines.splitlines():
+        if (no_more_filtering or is_valid_json_line(line)):
+            no_more_filtering = True
+            filtered_lines += line + '\n'
+    return filtered_lines
 
