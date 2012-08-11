@@ -35,7 +35,6 @@ def is_installed(repoq, pkgspec, qf=def_qf):
     rc,out,err = run(cmd)
     if rc == 0:
         return [ p for p in out.split('\n') if p.strip() ]
-
     return []
 
 def is_available(repoq, pkgspec, qf=def_qf):
@@ -43,9 +42,7 @@ def is_available(repoq, pkgspec, qf=def_qf):
     rc,out,err = run(cmd)
     if rc == 0:
         return [ p for p in out.split('\n') if p.strip() ]
-
     return []
-
 
 def is_update(repoq, pkgspec, qf=def_qf):
     cmd = repoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
@@ -55,16 +52,13 @@ def is_update(repoq, pkgspec, qf=def_qf):
 
     return []
 
-
 def what_provides(repoq, req_spec, qf=def_qf):
     cmd = repoq + ["--qf", qf, "--whatprovides", req_spec]
     rc,out,err = run(cmd)
     ret = []
     if rc == 0:
         ret = set([ p for p in out.split('\n') if p.strip() ])
-
     return ret
-
 
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
@@ -80,7 +74,7 @@ def pkg_to_dict(pkgstr):
         'version':v,
         'repo':repo,
         'nevra': '%s:%s-%s-%s.%s' % (e,n,v,r,a)
-        }
+    }
 
     if repo == 'installed':
         d['yumstate'] = 'installed'
@@ -95,7 +89,6 @@ def repolist(repoq, qf="%{repoid}"):
     ret = []
     if rc == 0:
         ret = set([ p for p in out.split('\n') if p.strip() ])
-
     return ret
 
 def list_stuff(conf_file, stuff):
@@ -128,7 +121,6 @@ def run(command):
         rc = 1
         err = traceback.format_exc()
         out = ''
-
         if out is None:
             out = ''
         if err is None:
@@ -429,14 +421,12 @@ def main():
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(),
             conf_file=dict(default=None),
-        )
+        ),
+        required_one_of = [['pkg','list']],
+        mutually_exclusive = [['pkg','list']]
     )
 
     params = module.params
-
-
-    if params['list'] and params['pkg']:
-        module.fail_json(msg="expected 'list=' or 'name=', but not both")
 
     if params['list']:
         if not os.path.exists(repoquery):
@@ -446,12 +436,9 @@ def main():
 
     else:
         pkg = params['pkg']
-        if pkg is None:
-            module.fail_json(msg="expected 'list=' or 'name='")
-        else:
-            state = params['state']
-            res = ensure(module, state, pkg, params['conf_file'])
-            module.fail_json(msg="we should never get here unless this all failed", **res)
+        state = params['state']
+        res = ensure(module, state, pkg, params['conf_file'])
+        module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

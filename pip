@@ -90,7 +90,11 @@ def main():
         virtualenv=dict(default=None, required=False)
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        required_one_of=[['name','requirements']],
+        mutually_exclusive=[['name','requirements']],
+    )
 
     rc = 0
     err = ''
@@ -115,38 +119,19 @@ def main():
     command_map = dict(present='install', absent='uninstall', latest='install')
 
     if state == 'latest' and version is not None:
-        module.fail_json(msg='If `state` is set to `latest` the `version` '
-                             'parameter must not be specified.')
+        module.fail_json(msg='version is incompatible with state=latest')
 
     if state == 'latest' and requirements is not None:
-        module.fail_json(msg='If `state` is set to `latest` the `requirements` '
-                             'parameter must not be specified.')
+        module.fail_json(msg='requirements is incompatible with state=latest')
 
-    if name is not None and '==' in name:
-        module.fail_json(msg='It looks like you specified the version number '
-                             'in the library name. Use the `version` parameter '
-                             'to specify version instead')
-
-    if version is not None and name is None:
-        module.fail_json(msg='The `version` parameter must be used with the '
-                             '`name` parameter and not with the `requirements` '
-                             'paramter')
-
-    if name is None and requirements is None:
-        module.fail_json(msg='You must specify a python library name via '
-                             'the `name` parameter or a requirements file via '
-                             'the `requirements` paramter')
-
-    if name and requirements:
-        module.fail_json(msg='Both `name` and `requirements` were specified. '
-                             'Specify only the python library name via the '
-                             '`name` parameter or a requirements file via the '
-                             '`requirements` parameter')
+    if name is not None and '=' in name:
+        module.fail_json(msg='versions must be specified in the version= parameter')
 
     cmd = None
     installed = None
 
     if requirements:
+
         cmd = '%s %s -r %s --use-mirrors' % (pip, command_map[state], requirements)
         rc_pip, out_pip, err_pip = _run(cmd)
 
@@ -158,8 +143,8 @@ def main():
                    (not _did_install(out) and state == 'absent'))
 
     if name and state == 'latest':
-        cmd = '%s %s %s --upgrade' % (pip, command_map[state], name)
 
+        cmd = '%s %s %s --upgrade' % (pip, command_map[state], name)
         rc_pip, out_pip, err_pip = _run(cmd)
 
         rc += rc_pip
@@ -169,8 +154,8 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     elif name:
+        
         installed = _is_package_installed(name, pip, version)
-
         changed = ((installed and state == 'absent') or
                    (not installed and state == 'present'))
 
@@ -188,8 +173,7 @@ def main():
                 cmd = cmd + ' --use-mirrors'
 
             rc_pip, out_pip, err_pip = _run(cmd)
-
-            rc += rc_pip
+            rc  += rc_pip
             out += out_pip
             err += err_pip
 
