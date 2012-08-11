@@ -121,7 +121,7 @@ class Inventory(object):
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
-           hosts = [ h for h in hosts if h.name in self._restriction ]
+            hosts = [ h for h in hosts if h.name in self._restriction ]
 
         return hosts
 

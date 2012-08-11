@@ -397,7 +397,8 @@ class PlaybookCallbacks(object):
             while True:
                 result = prompt(msg, private)
                 second = prompt("confirm " + msg, private)
-                if result == second: break
+                if result == second: 
+                    break
                 print "***** VALUES ENTERED DO NOT MATCH ****"
         else:
             result = prompt(msg, private)
