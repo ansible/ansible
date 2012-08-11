@@ -10,10 +10,6 @@ import os
 import shutil
 import time
 import tempfile
-try:
-    import json
-except:
-    import simplejson as json
 
 from nose.plugins.skip import SkipTest
 
