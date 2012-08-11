@@ -60,7 +60,7 @@ class SSHConnection(object):
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required. 
+            # sudo always ask for a password if one is required.
             # Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
@@ -98,16 +98,12 @@ class SSHConnection(object):
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        p.stdin.close()
         stdout = ''
         while p.poll() is None:
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
                 stdout += os.read(p.stdout.fileno(), 1024)
-        # older versions of ssh generate this error which we ignore
-        stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
-        # suppress Ubuntu 10.04/12.04 error on -tt option
-        stdout=stdout.replace("tcgetattr: Inappropriate ioctl for device\n","")
+        p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
