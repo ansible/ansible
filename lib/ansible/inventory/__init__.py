@@ -123,7 +123,7 @@ class Inventory(object):
         if self._restriction is not None:
             hosts = [ h for h in hosts if h.name in self._restriction ]
 
-        return hosts
+        return sorted(hosts, key=lambda x: x.name)
 
     def _get_hosts(self, patterns):
         """ 
@@ -134,7 +134,9 @@ class Inventory(object):
         by_pattern = {}
         for p in patterns:
             (name, enumeration_details) = self._enumeration_info(p)
-            by_pattern[p] = self._hosts_in_unenumerated_pattern(name)
+            hpat = self._hosts_in_unenumerated_pattern(name)
+            hpat = sorted(hpat, key=lambda x: x.name)
+            by_pattern[p] = hpat
 
         ranged = {}
         for (pat, hosts) in by_pattern.iteritems():
@@ -156,17 +158,32 @@ class Inventory(object):
         if not "[" in pattern:
             return (pattern, None)
         (first, rest) = pattern.split("[")
-        rest.replace("]","")
+        rest = rest.replace("]","")
         if not "-" in rest:
             raise errors.AnsibleError("invalid pattern: %s" % pattern)
         (left, right) = rest.split("-",1)
         return (first, (left, right))
 
     def _apply_ranges(self, pat, hosts):
+        """
+        given a pattern like foo, that matches hosts, return all of hosts
+        given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
+        """ 
+
         (loose_pattern, limits) = self._enumeration_info(pat)
         if not limits:
             return hosts
-        raise Exception("ranges are not yet supported")
+
+        (left, right) = limits
+        enumerated = enumerate(hosts)
+        if left == '':
+            left = 0
+        if right == '':
+            right = 0
+        left=int(left)
+        right=int(right)
+        enumerated = [ h for (i,h) in enumerated if i>=left and i<=right ]
+        return enumerated
 
     # TODO: cache this logic so if called a second time the result is not recalculated
     def _hosts_in_unenumerated_pattern(self, pattern):
@@ -252,7 +269,7 @@ class Inventory(object):
         return [ h.name for h in self.get_hosts(pattern) ]
 
     def list_groups(self):
-        return [ g.name for g in self.groups ]
+        return sorted([ g.name for g in self.groups ], key=lambda x: x.name)
 
     def get_restriction(self):
         return self._restriction

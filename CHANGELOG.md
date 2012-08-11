@@ -32,6 +32,7 @@ Ansible Changes By Release
 * setup module now detects interfaces with aliases
 * new 'ansible_all_ipv4_addresses' and 'ansible_all_ipv6_addresses' facts -- which are simple lists
 * better handling of VM guest type detection in setup module
+* adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
 
 0.6 "Cabo" -- August 6, 2012
 
