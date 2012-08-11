@@ -57,7 +57,8 @@ class PlayBook(object):
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
-        only_tags        = None):
+        only_tags        = None,
+        subset           = C.DEFAULT_SUBSET):
 
         """
         playbook:         path to a playbook file
@@ -104,7 +105,8 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
-        self.inventory   = ansible.inventory.Inventory(host_list)
+        self.inventory        = ansible.inventory.Inventory(host_list)
+        self.inventory.subset(subset)
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))

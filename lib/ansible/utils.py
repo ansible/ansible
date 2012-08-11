@@ -28,6 +28,7 @@ from ansible import errors
 from ansible import __version__
 import ansible.constants as C
 import time
+import StringIO
 
 VERBOSITY=0
 
@@ -120,6 +121,7 @@ def json_loads(data):
 def parse_json(raw_data):
     ''' this version for module return data only '''
 
+    # ignore stuff like tcgetattr spewage or other warnings
     data = filter_leading_non_json_lines(raw_data)
 
     try:
@@ -338,7 +340,8 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+    async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -359,6 +362,11 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
+
+    if subset_opts:
+        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
+            help='further limit selected hosts to an additional pattern')
+
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
@@ -411,29 +419,30 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
 
     return result
 
-def last_non_blank_line(lines):
-    all_lines = lines.splitlines()
+def last_non_blank_line(buf):
+
+    all_lines = buf.splitlines()
     all_lines.reverse()
     for line in all_lines:
         if (len(line) > 0):
             return line
+    # shouldn't occur unless there's no output
+    return ""  
 
-    return ""  # we shouldn't come here (no lines?) but let's pretend nothing happend
-        # We can't return all lines here because calling code expects only one
-        # line. And since we don't know which line to return we return an empty
-        # line.
+def filter_leading_non_json_lines(buf):
+    ''' 
+    used to avoid random output from SSH at the top of JSON output, like messages from
+    tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
+    
+    need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
+    filter only leading lines since multiline JSON is valid. 
+    '''
 
-def is_valid_json_line(line):
-    return ('=' in line) or line.startswith('{') or line.startswith('[')
-
-def filter_leading_non_json_lines(lines):
-    ''' we need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-        But we filter only leading lines since multiline JSON is valid. '''
-    filtered_lines = ''
-    no_more_filtering = False
-    for line in lines.splitlines():
-        if (no_more_filtering or is_valid_json_line(line)):
-            no_more_filtering = True
-            filtered_lines += line + '\n'
-    return filtered_lines
+    filtered_lines = StringIO.StringIO()
+    stop_filtering = False
+    for line in buf.splitlines():
+        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+            stop_filtering = True
+            filtered_lines.write(line + '\n')
+    return filtered_lines.getvalue()
 

@@ -34,7 +34,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_is_script',
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_subset', '_is_script',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
@@ -55,6 +55,7 @@ class Inventory(object):
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
+        self._subset = None
 
         # whether the inventory file is a script
         self._is_script = False
@@ -88,29 +89,98 @@ class Inventory(object):
     def _match(self, str, pattern_str):
         return fnmatch.fnmatch(str, pattern_str)
 
-    # TODO: cache this logic so if called a second time the result is not recalculated
     def get_hosts(self, pattern="all"):
-        """ Get all host objects matching the pattern """
-        hosts = {}
+        """ 
+        find all host names matching a pattern string, taking into account any inventory restrictions or
+        applied subsets.
+        """
+
+        # process patterns        
         patterns = pattern.replace(";",":").split(":")
+        positive_patterns = [ p for p in patterns if not p.startswith("!") ]
+        negative_patterns = [ p for p in patterns if p.startswith("!") ]
+
+        # find hosts matching positive patterns
+        hosts = self._get_hosts(positive_patterns)
+
+        # exclude hosts mentioned in a negative pattern
+        if len(negative_patterns):
+            exclude_hosts = self._get_hosts(negative_patterns)
+            hosts = [ h for h in hosts if h not in exclude_hosts ]
+
+        # exclude hosts not in a subset, if defined
+        if self._subset:
+            positive_subsetp = [ p for p in self._subset if not p.startswith("!") ]
+            negative_subsetp = [ p for p in self._subset if p.startswith("!") ]
+            if len(positive_subsetp):
+                positive_subset = self._get_hosts(positive_subsetp)
+                hosts = [ h for h in hosts if (h in positive_subset) ]
+            if len(negative_subsetp):
+                negative_subset = self._get_hosts(negative_subsetp)
+                hosts = [ h for h in hosts if (h not in negative_subset)]
+
+        # exclude hosts mentioned in any restriction (ex: failed hosts)
+        if self._restriction is not None:
+            hosts = [ h for h in hosts if h.name in self._restriction ]
+
+        return hosts
+
+    def _get_hosts(self, patterns):
+        """ 
+        finds hosts that postively match a particular list of patterns.  Does not
+        take into account negative matches.
+        """
+
+        by_pattern = {}
+        for p in patterns:
+            (name, enumeration_details) = self._enumeration_info(p)
+            by_pattern[p] = self._hosts_in_unenumerated_pattern(name)
+
+        ranged = {}
+        for (pat, hosts) in by_pattern.iteritems():
+            ranged[pat] = self._apply_ranges(pat, hosts)
+
+        results = []
+        for (pat, hosts) in ranged.iteritems():
+            results.extend(hosts)
+
+        return list(set(results))
+
+    def _enumeration_info(self, pattern):
+        """
+        returns (pattern, limits) taking a regular pattern and finding out
+        which parts of it correspond to start/stop offsets.  limits is
+        a tuple of (start, stop) or None
+        """
+
+        if not "[" in pattern:
+            return (pattern, None)
+        (first, rest) = pattern.split("[")
+        rest.replace("]","")
+        if not "-" in rest:
+            raise errors.AnsibleError("invalid pattern: %s" % pattern)
+        (left, right) = rest.split("-",1)
+        return (first, (left, right))
+
+    def _apply_ranges(self, pat, hosts):
+        (loose_pattern, limits) = self._enumeration_info(pat)
+        if not limits:
+            return hosts
+        raise Exception("ranges are not yet supported")
+
+    # TODO: cache this logic so if called a second time the result is not recalculated
+    def _hosts_in_unenumerated_pattern(self, pattern):
+        """ Get all host names matching the pattern """
+
+        hosts = {}
+        # ignore any negative checks here, this is handled elsewhere
+        pattern = pattern.replace("!","")
 
         groups = self.get_groups()
-        for pat in patterns:
-            if pat.startswith("!"):
-                pat = pat[1:]
-                inverted = True
-            else:
-                inverted = False
-            for group in groups:
-                for host in group.get_hosts():
-                    if self._match(group.name, pat) or pat == 'all' or self._match(host.name, pat):
-                        # must test explicitly for None because [] means no hosts allowed
-                        if self._restriction==None or host.name in self._restriction:
-                            if inverted:
-                                if host.name in hosts:
-                                    del hosts[host.name]
-                            else:
-                                hosts[host.name] = host
+        for group in groups:
+            for host in group.get_hosts():
+                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
+                    hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
     def get_groups(self):
@@ -187,11 +257,27 @@ class Inventory(object):
     def get_restriction(self):
         return self._restriction
 
-    def restrict_to(self, restriction, append_missing=False):
-        """ Restrict list operations to the hosts given in restriction """
+    def restrict_to(self, restriction):
+        """ 
+        Restrict list operations to the hosts given in restriction.  This is used
+        to exclude failed hosts in main playbook code, don't use this for other
+        reasons.
+        """
         if type(restriction) != list:
             restriction = [ restriction ]
         self._restriction = restriction
+
+    def subset(self, subset_pattern):
+        """ 
+        Limits inventory results to a subset of inventory that matches a given
+        pattern, such as to select a given geographic of numeric slice amongst
+        a previous 'hosts' selection that only select roles, or vice versa.  
+        Corresponds to --limit parameter to ansible-playbook
+        """        
+        if subset_pattern is None:
+            self._subset = None
+        else:
+            self._subset = subset_pattern.replace(";",":").split(":")
 
     def lift_restriction(self):
         """ Do not restrict list operations """

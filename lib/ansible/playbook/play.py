@@ -46,8 +46,8 @@ class Play(object):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
-             if not x in Play.VALID_KEYS:
-                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
+            if not x in Play.VALID_KEYS:
+                raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
 
         # TODO: more error handling
 
