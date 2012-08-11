@@ -249,3 +249,27 @@ class TestUtils(unittest.TestCase):
     def test_parse_kv_basic(self):
         assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
+
+    #####################################
+    ### non [Baby] JSON line filtering
+
+    def test_last_non_blank_line_with_empty_line(self):
+        assert (ansible.utils.last_non_blank_line("") == "")
+
+    def test_last_non_blank_line_with_one_line(self):
+        assert (ansible.utils.last_non_blank_line("onelineonly") == "onelineonly")
+
+    def test_last_non_blank_line_with_one_line_with_empty_lines(self):
+        assert (ansible.utils.last_non_blank_line("\nonelineonly") == "onelineonly")
+        assert (ansible.utils.last_non_blank_line("onelineonly\n\n") == "onelineonly")
+        assert (ansible.utils.last_non_blank_line("\n\nonelineonly\n\n") == "onelineonly")
+
+    def test_last_non_blank_line_with_multiple_lines(self):
+        assert (ansible.utils.last_non_blank_line("\na line\nonelineonly") == "onelineonly")
+
+    def test_filter_leading_non_json_lines(self):
+        assert (ansible.utils.filter_leading_non_json_lines("{'ping': 'pong'}") == "{'ping': 'pong'}\n")
+        assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\n{'ping': 'pong'}") == "{'ping': 'pong'}\n")
+        assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\n{'ping': 'pong'}\ntrailing garbage") == "{'ping': 'pong'}\ntrailing garbage\n")
+        assert (ansible.utils.filter_leading_non_json_lines("some garbage\n\nrc=1\ntrailing garbage") == "rc=1\ntrailing garbage\n")
+
