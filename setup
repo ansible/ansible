@@ -563,10 +563,31 @@ class LinuxVirtual(Virtual):
     def get_virtual_facts(self):
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
-            self.facts['virtualization_role'] = 'guest'
-            if os.path.exists("/proc/xen/capabilities"):
+            if os.path.exists('/proc/xen/capabilities'):
                 self.facts['virtualization_role'] = 'host'
-        if os.path.exists("/proc/modules"):
+            else:
+                self.facts['virtualization_role'] = 'guest'
+
+        elif os.path.exists('/proc/vz'):
+            self.facts['virtualization_type'] = 'openvz'
+            if os.path.exists('/proc/vz/version'):
+                self.facts['virtualization_role'] = 'host'
+            else:
+                self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/product_name') in ['KVM','Bochs']:
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'VMware, Inc.':
+            self.facts['virtualization_type'] = 'VMware'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'Microsoft Corporation':
+            self.facts['virtualization_type'] = 'VirtualPC'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif os.path.exists("/proc/modules"):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
@@ -579,22 +600,6 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'host'
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
-                self.facts['virtualization_role'] = 'guest'
-        data = get_file_content('/proc/cpuinfo')
-        if 'QEMU' in data:
-            self.facts['virtualization_type'] = 'kvm'
-            self.facts['virtualization_role'] = 'guest'
-        if 'distribution' in self.facts and self.facts['distribution'] == 'VMwareESX':
-            self.facts['virtualization_type'] = 'VMware'
-            self.facts['virtualization_role'] = 'host'
-        # You can spawn a dmidecode process and parse that or infer from devices
-        for dev_model in glob.glob('/sys/block/?da/device/vendor'):
-            info = open(dev_model).read()
-            if 'VMware' in info:
-                self.facts['virtualization_type'] = 'VMware'
-                self.facts['virtualization_role'] = 'guest'
-            elif 'Virtual HD' in info or 'Virtual CD' in info:
-                self.facts['virtualization_type'] = 'VirtualPC'
                 self.facts['virtualization_role'] = 'guest'
 
 def get_file_content(path):
