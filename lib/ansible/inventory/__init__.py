@@ -106,7 +106,6 @@ class Inventory(object):
         # exclude hosts mentioned in a negative pattern
         if len(negative_patterns):
             exclude_hosts = self._get_hosts(negative_patterns)
-            print "EXCLUDING HOSTS: %s" % exclude_hosts
             hosts = [ h for h in hosts if h not in exclude_hosts ]
 
         # exclude hosts not in a subset, if defined
