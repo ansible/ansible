@@ -655,7 +655,7 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        return utils.last_non_blank_line(self._low_level_exec_command(conn, cmd, tmp, sudoable=False)).split()[0]
+        return utils.last_non_blank_line(self._low_level_exec_command(conn, cmd, tmp, sudoable=False))
 
     # *****************************************************
 
@@ -675,7 +675,7 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        return utils.last_non_blank_line(result.split("\n"))[0].strip() + '/'
+        return utils.last_non_blank_line(result).strip() + '/'
 
     # *****************************************************
 

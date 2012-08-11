@@ -412,7 +412,18 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     return result
 
 def last_non_blank_line(lines):
-    return lines
+    all_lines = lines.splitlines()
+    all_lines.reverse()
+    for line in all_lines:
+        if (len(line) > 0):
+            return line
+
+    return ""  # we shouldn't come here (no lines?) but let's pretend nothing happend
+        # We can't return all lines here because calling code expects only one
+        # line.
+
+def line_needs_filtering(line):
+    return line.startswith('#') or (len(line) == 0)
 
 def filter_leading_garbage(lines):
     return lines
