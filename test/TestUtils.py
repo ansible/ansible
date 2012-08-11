@@ -250,6 +250,9 @@ class TestUtils(unittest.TestCase):
         assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
 
+    #####################################
+    ### non [Baby] JSON line filtering
+
     def test_last_non_blank_line_with_empty_line(self):
         assert (ansible.utils.last_non_blank_line("") == "")
 
