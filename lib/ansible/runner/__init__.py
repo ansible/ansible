@@ -568,7 +568,9 @@ class Runner(object):
 
         module_name = utils.template(self.module_name, inject)
 
-        tmp = self._make_tmp_path(conn)
+        tmp = ''
+        if self.module_name != 'raw':
+            tmp = self._make_tmp_path(conn)
         result = None
 
         handler = getattr(self, "_execute_%s" % self.module_name, None)
@@ -595,7 +597,8 @@ class Runner(object):
 
             del result.result['daisychain']
 
-        self._delete_remote_files(conn, tmp)
+        if self.module_name != 'raw':
+            self._delete_remote_files(conn, tmp)
         conn.close()
 
         if not result.comm_ok:
