@@ -130,9 +130,9 @@ def run(command):
         out = ''
 
         if out is None:
-           out = ''
+            out = ''
         if err is None:
-           err = ''
+            err = ''
     else:
         rc = cmd.returncode
 
@@ -144,7 +144,7 @@ def install_no_repoq(module, items, yum_basecmd, latest=False):
     to_install = []
     if not latest:
         for item in items:
-            rc, out, err = run([rpmbin, "-q",  "--whatprovides", item])
+            rc, out, err = run([rpmbin, "-q", "--whatprovides", item])
             if rc != 0:
                 to_install.append(item)
         if len(to_install) > 0:
@@ -163,7 +163,7 @@ def install_no_repoq(module, items, yum_basecmd, latest=False):
         if rc != 0:
             module.fail_json(msg=err)
         for item in to_install:
-            rc, out, err = run([rpmbin, "-q",  "--whatprovides", item])
+            rc, out, err = run([rpmbin, "-q", "--whatprovides", item])
             if rc != 0:
                 module.fail_json(msg="%s could not be installed" % item)
 
@@ -174,7 +174,7 @@ def remove_no_repoq(module, items, yum_basecmd):
 
     to_remove = []
     for item in items:
-        rc, out, err = run([rpmbin, "-q",  "--whatprovides", "--qf", "%{NAME}\n", item])
+        rc, out, err = run([rpmbin, "-q", "--whatprovides", "--qf", "%{NAME}\n", item])
         if rc == 0:
             to_remove.append(out.strip())
     if len(to_remove) > 0:
