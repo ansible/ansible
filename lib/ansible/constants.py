@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pwd
 
 DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS', '/etc/ansible/hosts')
 DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY', '/usr/share/ansible')
@@ -27,7 +28,11 @@ DEFAULT_FORKS          = os.environ.get('ANSIBLE_FORKS',5)
 DEFAULT_MODULE_ARGS    = os.environ.get('ANSIBLE_MODULE_ARGS','')
 DEFAULT_TIMEOUT        = os.environ.get('ANSIBLE_TIMEOUT',10)
 DEFAULT_POLL_INTERVAL  = os.environ.get('ANSIBLE_POLL_INTERVAL',15)
-DEFAULT_REMOTE_USER    = os.environ.get('ANSIBLE_REMOTE_USER','root')
+DEFAULT_REMOTE_USER    = os.environ.get('ANSIBLE_REMOTE_USER', None)
+
+if DEFAULT_REMOTE_USER is None:
+    DEFAULT_REMOTE_USER = pwd.getpwuid(os.geteuid())[0]
+
 DEFAULT_REMOTE_PASS    = None
 DEFAULT_PRIVATE_KEY_FILE    = os.environ.get('ANSIBLE_PRIVATE_KEY_FILE',None)
 DEFAULT_SUDO_PASS      = None

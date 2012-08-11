@@ -37,6 +37,8 @@ class SSHConnection(object):
     def connect(self):
         ''' connect to the remote host '''
 
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
+
         self.common_args = []
         extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
         if extra_args is not None:
