@@ -161,8 +161,13 @@ def set_owner_if_different(path, owner, changed):
        return changed
    user, group = user_and_group(path)
    if owner != user:
-       rc = os.system("/bin/chown -R %s %s 2>/dev/null" % (owner, path))
-       if rc != 0:
+       try:
+           uid = pwd.getpwnam(owner).pw_uid
+       except KeyError:
+           module_fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
+       try:
+           os.chown(path, uid, -1)
+       except OSError:
            module_fail_json(path=path, msg='chown failed')
        return True
 
@@ -173,8 +178,13 @@ def set_group_if_different(path, group, changed):
        return changed
    old_user, old_group = user_and_group(path)
    if old_group != group:
-       rc = os.system("/bin/chgrp -R %s %s" % (group, path))
-       if rc != 0:
+       try:
+           gid = grp.getgrnam(group).gr_gid
+       except KeyError:
+           module_fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+       try:
+           os.chown(path, -1, gid)
+       except OSError:
            module_fail_json(path=path, msg='chgrp failed')
        return True
    return changed
