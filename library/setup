@@ -426,6 +426,8 @@ class LinuxNetwork(Network):
     This is a Linux-specific subclass of Network.  It defines
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
+    - ipv4_address and ipv6_address: the first non-local address for each family.
     """
     platform = 'Linux'
 
@@ -433,93 +435,87 @@ class LinuxNetwork(Network):
         Network.__init__(self)
 
     def populate(self):
-        self.facts['interfaces'] = self.get_interfaces()
-        self.get_interface_facts()
-        self.get_ipv4_facts()
-        self.get_ipv6_facts()
+        interfaces, ips = self.parse_ip_addr()
+
+        self.facts['interfaces'] = interfaces.keys()
+        for iface in interfaces:
+            self.facts[iface] = interfaces[iface]
+
+        for key in ips:
+            self.facts[key] = ips[key]
+
         return self.facts
 
-    # get list of interfaces
-    def get_interfaces(self):
-        names = []
-        data = get_file_content('/proc/net/dev')
-        # Format of /proc/net/dev is:
-        # Inter-|   Receive  ...
-        #  face |bytes       ...
-        #     lo:  595059
-        for line in data.split('\n'):
-            if ':' in line:
-                names.append(line.split(':')[0].strip())
-        return names
+    def parse_ip_addr(self):
+        interfaces = {}
+        ips = {'all_ipv4_addresses': [], 'all_ipv6_addresses': [],
+               'ipv4_address': None, 'ipv6_address': None}
 
-    def get_iface_hwaddr(self, iface):
-        data = get_file_content('/sys/class/net/%s/address' % iface)
-        if data is None:
-            return 'unknown'
-        else:
-            return data.strip()
+        output = subprocess.Popen(['ip','addr'], stdout=subprocess.PIPE).communicate()[0]
+        for line in output.split('\n'):
+            if line:
+                words = line.split()
+                if not line.startswith(' '):
+                    device = words[1][0:-1]
+                    mtu = words[4]
+                elif words[0].startswith('link/'):
+                    iface_type = words[0].split('/')[1]
+                    if iface_type == 'void':
+                        macaddress = 'unknown'
+                    else:
+                        macaddress = words[1]
+                elif words[0] == 'inet':
+                    address, netmask_length = words[1].split('/')
+                    address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
 
-    def get_interface_facts(self):
-        for iface in self.facts['interfaces']:
-            if iface not in self.facts:
-                self.facts[iface] = {}
-            self.facts[iface] = { 'macaddress': self.get_iface_hwaddr(iface) }
-            if os.path.exists('/sys/class/net/%s/mtu' % iface):
-                mtu = get_file_content('/sys/class/net/%s/mtu' % iface)
-                self.facts[iface]['mtu'] = mtu.strip()
+                    netmask_bin = (1<<32) - (1<<32>>int(netmask_length))
+                    netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
 
-    def get_ipv4_facts(self):
-        for iface in self.facts['interfaces']:
-            # This is lame, but there doesn't appear to be a good way
-            # to get all addresses for both IPv4 and IPv6.
-            cmd = subprocess.Popen("env LANG=\"\" /sbin/ifconfig %s" % iface, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = cmd.communicate()
-            for line in out.split('\n'):
-                is_ipv4 = False
-                data = line.split()
-                if 'inet addr' in line:
-                    if 'ipv4' not in self.facts[iface]:
-                        self.facts[iface]['ipv4'] = {}
-                    is_ipv4 = True
-                    self.facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
-                                                  'netmask': data[-1].split(':')[1] }
-                # Slightly different output in net-tools-1.60-134.20120127git
-                # Looks like
-                # inet 192.168.1.2  netmask 255.255.255.0  broadcast 192.168.1.255
-                elif 'inet ' in line:
-                    is_ipv4 = True
-                    if 'ipv4' not in self.facts[iface]:
-                        self.facts[iface]['ipv4'] = {}
-                    self.facts[iface]['ipv4'] = { 'address': data[1],
-                                                  'netmask': data[3] }
-                if is_ipv4:
-                    ip = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['address']))[0]
-                    mask = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['netmask']))[0]
-                    self.facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
+                    network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
 
-    def get_ipv6_facts(self):
-        if not socket.has_ipv6:
-            return
-        data = get_file_content('/proc/net/if_inet6')
-        if data is None:
-            return
-        for line in data.split('\n'):
-            l = line.split()
-            iface = l[5]
-            if 'ipv6' not in self.facts[iface]:
-                self.facts[iface]['ipv6'] = []
-            scope = l[3]
-            if Network.IPV6_SCOPE.has_key(l[3]):
-                scope = Network.IPV6_SCOPE[l[3]]
-            prefix = int(l[2], 16)
-            str_addr = ':'.join( [ l[0][i:i+4] for i in range(0, len(l[0]), 4) ] )
-            # Normalize ipv6 address from format in /proc/net/if_inet6
-            addr = socket.inet_ntop(socket.AF_INET6,
-                                    socket.inet_pton(socket.AF_INET6, str_addr))
-            self.facts[iface]['ipv6'].append( { 'address': addr,
-                                                'prefix': prefix,
-                                                'scope': scope } )
+                    iface = words[-1]
+                    # If an interface has multiple IPv4 addresses, make up an
+                    # interface name for each address
+                    if iface in interfaces:
+                        i = 0
+                        while '{0}:{1}'.format(iface, i) in interfaces:
+                            i += 1
+                        iface = '{0}:{1}'.format(iface, i)
+
+                    interfaces[iface] = {}
+                    interfaces[iface]['macaddress'] = macaddress
+                    interfaces[iface]['mtu'] = mtu
+                    interfaces[iface]['device'] = device
+                    interfaces[iface]['ipv4'] = {'address': address,
+                                                 'netmask': netmask,
+                                                 'network': network}
+
+                    ips['all_ipv4_addresses'].append(address)
+                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127'):
+                        ips['ipv4_address'] = address
+
+                elif words[0] == 'inet6':
+                    address, prefix = words[1].split('/')
+                    scope = words[3]
+
+                    iface = device
+                    if iface not in interfaces:
+                        interfaces[iface] = {}
+                        interfaces[iface]['macaddress'] = macaddress
+                        interfaces[iface]['mtu'] = mtu
+                        interfaces[iface]['device'] = device
+                    if 'ipv6' not in interfaces[iface]:
+                        interfaces[iface]['ipv6'] = []
+                    interfaces[iface]['ipv6'].append( {
+                        'address': address,
+                        'prefix': prefix,
+                        'scope': scope} )
+
+                    ips['all_ipv6_addresses'].append(address)
+                    if not ips['ipv6_address'] or ips['ipv6_address'] == '::1':
+                        ips['ipv6_address'] = address
+
+        return interfaces, ips
 
 class Virtual(Facts):
     """
