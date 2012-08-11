@@ -178,34 +178,6 @@ class TestRunner(unittest.TestCase):
         assert os.path.exists(output)
         assert open(input_).read() == open(output).read()
 
-    def test_yum(self):
-        if not get_binary("yum"):
-            raise SkipTest
-        result = self._run('yum', [ "list=repos" ])
-        assert 'failed' not in result
-
-    def test_git(self):
-        if not get_binary("yum"):
-            raise SkipTest
-        repo = 'http://github.com/ansible/ansible.git'
-        dest = tempfile.mkdtemp()
-        result = self._run('git', ['repo=%s' % repo, 'dest=%s' % dest])
-        assert 'failed' not in result
-        result = self._run('git', [
-            'repo=%s' % repo,
-            'dest=%s' % dest,
-            'version=master'
-        ])
-        assert 'false' not in result
-        try:
-            shutil.rmtree(dest)
-        except OSError, e:
-            print "Failed to remove temp dir %s" % dest
-
-    def test_service(self):
-        # TODO: tests for the service module
-        pass
-
     def test_assemble(self):
         input = self._get_test_file('assemble.d')
         output = self._get_stage_file('sample.out')
