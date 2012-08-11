@@ -426,6 +426,8 @@ class LinuxNetwork(Network):
     This is a Linux-specific subclass of Network.  It defines
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
+    - ipv4_address and ipv6_address: the first non-local address for each family.
     """
     platform = 'Linux'
 
@@ -438,17 +440,16 @@ class LinuxNetwork(Network):
         self.facts['interfaces'] = interfaces.keys()
         for iface in interfaces:
             self.facts[iface] = interfaces[iface]
-        self.facts['all_ipv4_addresses'] = ips['all_ipv4']
-        self.facts['all_ipv6_addresses'] = ips['all_ipv6']
-        self.facts['ipv4_address'] = ips['ipv4']
-        self.facts['ipv6_address'] = ips['ipv6']
+
+        for key in ips:
+            self.facts[key] = ips[key]
 
         return self.facts
 
-
     def parse_ip_addr(self):
         interfaces = {}
-        ips = {'all_ipv4': [], 'all_ipv6': [], 'ipv4': None, 'ipv6': None}
+        ips = {'all_ipv4_addresses': [], 'all_ipv6_addresses': [],
+               'ipv4_address': None, 'ipv6_address': None}
 
         output = subprocess.Popen(['ip','addr'], stdout=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
@@ -489,9 +490,9 @@ class LinuxNetwork(Network):
                                                  'netmask': netmask,
                                                  'network': network}
 
-                    ips['all_ipv4'].append(address)
-                    if not ips['ipv4'] or ips['ipv4'].startswith('127'):
-                        ips['ipv4'] = address
+                    ips['all_ipv4_addresses'].append(address)
+                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127'):
+                        ips['ipv4_address'] = address
 
                 elif words[0] == 'inet6':
                     address, prefix = words[1].split('/')
@@ -510,9 +511,9 @@ class LinuxNetwork(Network):
                         'prefix': prefix,
                         'scope': scope} )
 
-                    ips['all_ipv6'].append(address)
-                    if not ips['ipv6'] or ips['ipv6'] == '::1':
-                        ips['ipv6'] = address
+                    ips['all_ipv6_addresses'].append(address)
+                    if not ips['ipv6_address'] or ips['ipv6_address'] == '::1':
+                        ips['ipv6_address'] = address
 
         return interfaces, ips
 
