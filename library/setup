@@ -448,8 +448,12 @@ class LinuxNetwork(Network):
 
     def parse_ip_addr(self):
         interfaces = {}
-        ips = {'all_ipv4_addresses': [], 'all_ipv6_addresses': [],
-               'ipv4_address': None, 'ipv6_address': None}
+        ips = dict( 
+            all_ipv4_addresses = [], 
+            all_ipv6_addresses = [],
+            ipv4_address = None, 
+            ipv6_address = None
+        )
 
         output = subprocess.Popen(['ip','addr'], stdout=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
@@ -490,8 +494,9 @@ class LinuxNetwork(Network):
                                                  'netmask': netmask,
                                                  'network': network}
 
-                    ips['all_ipv4_addresses'].append(address)
-                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127'):
+                    if not address.startswith('127.'):
+                        ips['all_ipv4_addresses'].append(address)
+                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127.'):
                         ips['ipv4_address'] = address
 
                 elif words[0] == 'inet6':
@@ -511,7 +516,8 @@ class LinuxNetwork(Network):
                         'prefix': prefix,
                         'scope': scope} )
 
-                    ips['all_ipv6_addresses'].append(address)
+                    if not address == '::1':
+                        ips['all_ipv6_addresses'].append(address)
                     if not ips['ipv6_address'] or ips['ipv6_address'] == '::1':
                         ips['ipv6_address'] = address
 
