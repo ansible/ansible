@@ -117,8 +117,10 @@ def json_loads(data):
 
     return json.loads(data)
 
-def parse_json(data):
+def parse_json(raw_data):
     ''' this version for module return data only '''
+
+    data = filter_leading_non_json_lines(raw_data)
 
     try:
         return json.loads(data)
@@ -307,10 +309,10 @@ def _gitinfo():
             branch = f.readline().split('/')[-1].rstrip("\n")
         branch_path = os.path.join(repo_path, "refs", "heads", branch)
         with open(branch_path) as f:
-            commit = f.readline()[:10] 
+            commit = f.readline()[:10]
         date = time.localtime(os.stat(branch_path).st_mtime)
         offset = time.timezone if (time.daylight == 0) else time.altzone
-        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, 
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
             time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     return result
 
@@ -414,4 +416,30 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
     return result
+
+def last_non_blank_line(lines):
+    all_lines = lines.splitlines()
+    all_lines.reverse()
+    for line in all_lines:
+        if (len(line) > 0):
+            return line
+
+    return ""  # we shouldn't come here (no lines?) but let's pretend nothing happend
+        # We can't return all lines here because calling code expects only one
+        # line. And since we don't know which line to return we return an empty
+        # line.
+
+def is_valid_json_line(line):
+    return line.startswith('=') or line.startswith('{') or line.startswith('[')
+
+def filter_leading_non_json_lines(lines):
+    ''' we need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
+        But we filter only leading lines since multiline JSON is valid. '''
+    filtered_lines = ''
+    no_more_filtering = False
+    for line in lines.splitlines():
+        if (no_more_filtering or is_valid_json_line(line)):
+            no_more_filtering = True
+            filtered_lines += line + '\n'
+    return filtered_lines
 
