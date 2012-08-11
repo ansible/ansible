@@ -130,18 +130,15 @@ class Facts(object):
                 self.facts['selinux']['policyvers'] = 'unknown'
             try:
                 (rc, configmode) = selinux.selinux_getenforcemode()
-                if rc == 0 and configmode in Facts.SELINUX_MODE_DICT:
-                    self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT[configmode]
+                if rc == 0:
+                    self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT.get(configmode, 'unknown')
                 else:
                     self.facts['selinux']['config_mode'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['config_mode'] = 'unknown'
             try:
                 mode = selinux.security_getenforce()
-                if mode in Facts.SELINUX_MODE_DICT:
-                    self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT[mode]
-                else:
-                    self.facts['selinux']['mode'] = 'unknown'
+                self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT.get(mode, 'unknown')
             except OSError, e:
                 self.facts['selinux']['mode'] = 'unknown'
             try:
