@@ -200,7 +200,7 @@ def set_mode_if_different(path, mode, changed):
         try:
             os.chmod(path, mode)
         except Exception, e:
-           module_fail_json(path=path, msg='chmod failed', details=str(e))
+            module_fail_json(path=path, msg='chmod failed', details=str(e))
  
         st = os.stat(path)
         new_mode = stat.S_IMODE(st[stat.ST_MODE])
