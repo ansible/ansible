@@ -117,8 +117,10 @@ def json_loads(data):
 
     return json.loads(data)
 
-def parse_json(data):
+def parse_json(raw_data):
     ''' this version for module return data only '''
+
+    data = filter_leading_garbage(raw_data)
 
     try:
         return json.loads(data)
@@ -408,4 +410,10 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
     return result
+
+def last_non_blank_line(lines):
+    return lines
+
+def filter_leading_garbage(lines):
+    return lines
 
