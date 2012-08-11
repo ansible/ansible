@@ -123,7 +123,8 @@ class Runner(object):
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
-        inventory=None                      # reference to Inventory object
+        inventory=None,                     # reference to Inventory object
+        subset=None                         # subset pattern
         ):
 
         # storage & defaults
@@ -133,6 +134,7 @@ class Runner(object):
         self.generated_jid    = str(random.randint(0, 999999999999))
         self.transport        = transport
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
@@ -153,6 +155,10 @@ class Runner(object):
         self.is_playbook      = is_playbook
 
         # misc housekeeping
+        if subset and self.inventory._subset is None:
+            # don't override subset when passed from playbook
+            self.inventory.subset(subset)
+
         if self.transport == 'ssh' and remote_pass:
             raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
         if self.transport == 'local':
