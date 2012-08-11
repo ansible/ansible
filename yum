@@ -403,9 +403,9 @@ def ensure(module, state, pkgspec, conf_file):
     return dict(changed=False, failed=True, results='', errors='unexpected state')
 
 def main():
-    # state=installed pkg=pkgspec
-    # state=removed pkg=pkgspec
-    # state=latest pkg=pkgspec
+    # state=installed name=pkgspec
+    # state=removed name=pkgspec
+    # state=latest name=pkgspec
     #
     # informational commands:
     #   list=installed
@@ -416,14 +416,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            pkg=dict(aliases=['name']),
+            name=dict(aliases=['name']),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(),
             conf_file=dict(default=None),
         ),
-        required_one_of = [['pkg','list']],
-        mutually_exclusive = [['pkg','list']]
+        required_one_of = [['name','list']],
+        mutually_exclusive = [['name','list']]
     )
 
     params = module.params
@@ -435,7 +435,7 @@ def main():
         module.exit_json(**results)
 
     else:
-        pkg = params['pkg']
+        pkg = params['name']
         state = params['state']
         res = ensure(module, state, pkg, params['conf_file'])
         module.fail_json(msg="we should never get here unless this all failed", **res)
