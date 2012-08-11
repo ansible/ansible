@@ -33,6 +33,7 @@ Ansible Changes By Release
 * better handling of VM guest type detection in setup module
 * adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
 * -u and user: defaults to current user, rather than root, override as before
+* new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
 
 0.6 "Cabo" -- August 6, 2012
 
@@ -205,8 +206,7 @@ in the playbook file
 in kickstarts
 * better module debugging with -D
 * fetch module for pulling in files from remote hosts
-* command task supports creates=foo for idempotent semantics, won't
-run if file foo already exists
+* command task supports creates=foo for idempotent semantics, won't run if file foo already exists
 
 0.0.2 and 0.0.1
 
