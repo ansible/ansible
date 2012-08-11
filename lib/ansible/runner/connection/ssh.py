@@ -98,12 +98,12 @@ class SSHConnection(object):
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        p.stdin.close()
         stdout = ''
         while p.poll() is None:
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
                 stdout += os.read(p.stdout.fileno(), 1024)
+        p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
         # older versions of ssh generate this error which we ignore
         stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
         # suppress Ubuntu 10.04/12.04 error on -tt option
