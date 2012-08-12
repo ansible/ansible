@@ -442,7 +442,31 @@ class LinuxNetwork(Network):
 
         for key in ips:
             self.facts[key] = ips[key]
-
+        # parse_ip_addr() does not put the loopback address in either
+        # all_ipv4_addresses or all_ipv6_addresses.
+        # Take the first in the sorted list in case
+        # socket.getaddrinfo() returns an address for socket.getfqdn()
+        # that isn't in the list (for each address family) returned
+        # by parse_ip_addr().
+        try:
+            defipv4 = socket.getaddrinfo(socket.getfqdn(), 0,
+                                         socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
+        except socket.gaierror:
+            defipv4 = ''
+        if defipv4 in ips['all_ipv4_addresses'] and not defipv4.startswith('127.'):
+            self.facts['ipv4_address'] = defipv4
+        else:
+            self.facts['ipv4_address'] = sorted(ips['all_ipv4_addresses'])[0]
+        if socket.has_ipv6:
+            try:
+                defipv6 = socket.getaddrinfo(socket.getfqdn(), 0,
+                                             socket.AF_INET6, socket.SOCK_STREAM)[0][4][0]
+            except socket.gaierror:
+                defipv6 = ''
+            if defipv6 in ips['all_ipv6_addresses'] and not defipv6 == '::1':
+                self.facts['ipv6_address'] = defipv6
+            else:
+                self.facts['ipv6_address'] = sorted(ips['all_ipv6_addresses'])[0]
         return self.facts
 
     def parse_ip_addr(self):
@@ -500,8 +524,6 @@ class LinuxNetwork(Network):
 
                     if not address.startswith('127.'):
                         ips['all_ipv4_addresses'].append(address)
-                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127.'):
-                        ips['ipv4_address'] = address
 
                 elif words[0] == 'inet6':
                     address, prefix = words[1].split('/')
@@ -522,8 +544,6 @@ class LinuxNetwork(Network):
 
                     if not address == '::1':
                         ips['all_ipv6_addresses'].append(address)
-                    if not ips['ipv6_address'] or ips['ipv6_address'] == '::1':
-                        ips['ipv6_address'] = address
 
         return interfaces, ips
 
