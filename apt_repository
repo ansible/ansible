@@ -26,10 +26,9 @@
 import platform
 
 APT = "/usr/bin/apt-get"
-ADD_APT_REPOSITORY = None
 
 
-def _find_binary():
+def _find_binary(module):
     binaries = ['/usr/bin/add-apt-repository']
 
     for e in binaries:
@@ -48,6 +47,8 @@ def _run(cmd):
 
 
 def main():
+    add_apt_repository = None
+
     arg_spec = dict(
         repo=dict(required=True),
         state=dict(default='present', choices=['present', 'absent'])
@@ -55,12 +56,12 @@ def main():
 
     module = AnsibleModule(argument_spec=arg_spec)
 
-    ADD_APT_REPOSITORY = _find_binary()
+    add_apt_repository = _find_binary(module)
 
     repo = module.params['repo']
     state = module.params['state']
 
-    rc, out, err = _run('%s %s --remove' % (ADD_APT_REPOSITORY, repo))
+    rc, out, err = _run('%s %s --remove' % (add_apt_repository, repo))
     existed = 'Error' not in out
 
     if state == 'absent':
@@ -69,7 +70,7 @@ def main():
         else:
             module.exit_json(changed=True, repo=repo, state=state)
 
-    cmd = '%s %s' % (ADD_APT_REPOSITORY, repo)
+    cmd = '%s %s' % (add_apt_repository, repo)
 
     if float(platform.dist()[1]) >= 11.10:
         cmd = cmd + ' -y'
