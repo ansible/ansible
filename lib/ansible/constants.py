@@ -17,28 +17,84 @@
 
 import os
 import pwd
+import ConfigParser
+import traceback
 
-DEFAULT_HOST_LIST      = os.environ.get('ANSIBLE_HOSTS', '/etc/ansible/hosts')
-DEFAULT_MODULE_PATH    = os.environ.get('ANSIBLE_LIBRARY', '/usr/share/ansible')
-DEFAULT_REMOTE_TMP     = os.environ.get('ANSIBLE_REMOTE_TMP', '$HOME/.ansible/tmp')
+def get_config(p, section, key, env_var, default):
+    if p is not None:
+        try:
+            return p.get(section, key)
+        except:
+            if env_var is not None:
+                return os.environ.get(env_var, default)
+            return default
+    else:
+        if env_var is not None:
+            return os.environ.get(env_var, default)
+        return default
 
-DEFAULT_MODULE_NAME    = 'command'
-DEFAULT_PATTERN        = '*'
-DEFAULT_FORKS          = os.environ.get('ANSIBLE_FORKS',5)
-DEFAULT_MODULE_ARGS    = os.environ.get('ANSIBLE_MODULE_ARGS','')
-DEFAULT_TIMEOUT        = os.environ.get('ANSIBLE_TIMEOUT',10)
-DEFAULT_POLL_INTERVAL  = os.environ.get('ANSIBLE_POLL_INTERVAL',15)
-DEFAULT_REMOTE_USER    = os.environ.get('ANSIBLE_REMOTE_USER', None)
 
-if DEFAULT_REMOTE_USER is None:
-    DEFAULT_REMOTE_USER = pwd.getpwuid(os.geteuid())[0]
+def load_config_file():
+    p = ConfigParser.ConfigParser()
+    path1 = os.path.expanduser("~/.ansible.cfg")
+    path2 = "/etc/ansible/ansible.cfg"
+    if os.path.exists(path1):
+        print "A1"
+        p.read(path1)
+    elif os.path.exists(path2):
+        print "A2"
+        p.read(path2)
+    else:
+        return None
+    return p
 
-DEFAULT_REMOTE_PASS    = None
-DEFAULT_PRIVATE_KEY_FILE    = os.environ.get('ANSIBLE_PRIVATE_KEY_FILE',None)
-DEFAULT_SUDO_PASS      = None
-DEFAULT_SUDO_USER      = os.environ.get('ANSIBLE_SUDO_USER','root')
-DEFAULT_REMOTE_PORT    = 22
-DEFAULT_TRANSPORT      = os.environ.get('ANSIBLE_TRANSPORT','paramiko')
-DEFAULT_TRANSPORT_OPTS = ['local', 'paramiko', 'ssh']
-DEFAULT_SUBSET         = None
+p = load_config_file()
 
+active_user   = pwd.getpwuid(os.geteuid())[0]
+
+# sections in config file
+DEFAULTS='defaults'
+
+# configurable things
+DEFAULT_HOST_LIST         = get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts')
+DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          '/usr/share/ansible')
+DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
+DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
+DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
+DEFAULT_FORKS             = get_config(p, DEFAULTS, 'fork_count',       'ANSIBLE_FORKS',            5)
+DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
+DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10)
+DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15)
+DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
+DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None)
+DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
+DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22)
+DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'paramiko')
+
+# non-configurable things
+DEFAULT_REMOTE_PASS       = None
+DEFAULT_TRANSPORT_OPTS    = ['local', 'paramiko', 'ssh']
+DEFAULT_SUDO_PASS         = None
+DEFAULT_SUBSET            = None
+
+def get_config(parser, section, key, env_var, default):
+    try:
+        return parser.get(section, key) 
+    except:
+        if env_var is not None:
+            return os.environ.get(env_var, default)
+        return default
+
+def load_config_file():
+    config = ConfigParser.ConfigParser()
+    path1 = os.path.expanduser("~/.ansible.cfg")
+    path2 = "/etc/ansible/ansible.cfg"
+    if os.path.exists(path1):
+        config.read(path1)
+    elif os.path.exists(path2):
+        config.read(path2)
+    else: 
+        return None
+    return config
+
+print "MODULE PATH=%s" % DEFAULT_MODULE_PATH
