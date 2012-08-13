@@ -72,7 +72,7 @@ def main():
 
     cmd = '%s %s' % (add_apt_repository, repo)
 
-    if float(platform.dist()[1]) >= 11.10:
+    if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
         cmd = cmd + ' -y'
 
     rc, out, err = _run(cmd)
