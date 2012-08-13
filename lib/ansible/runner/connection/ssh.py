@@ -25,6 +25,7 @@ import select
 import fcntl
 from ansible.callbacks import vvv
 from ansible import errors
+import ansible.constants as C
 
 class SSHConnection(object):
     ''' ssh based connections '''
@@ -48,7 +49,7 @@ class SSHConnection(object):
                                  "-o", "ControlPersist=60s",
                                  "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
         self.common_args += ["-o", "StrictHostKeyChecking=no"]
-        if self.port is not None:
+        if self.port is not None and self.port != C.DEFAULT_REMOTE_PORT:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
