@@ -83,7 +83,7 @@ def main():
         # Enable autocommit so we can create databases
         db_connection.autocommit = True
         cursor = db_connection.cursor()
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     try:
@@ -93,7 +93,7 @@ def main():
         else:
             if state == "present":
                 changed = db_create(cursor, db, owner, template, encoding)
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
     module.exit_json(changed=changed, db=db)
