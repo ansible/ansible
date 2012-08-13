@@ -215,13 +215,13 @@ def main():
             if os.path.ismount(name):
                 res,msg  = umount(**args)
                 if res:
-                    fail_json(msg="Error unmounting %s: %s" % (name, msg))
+                    module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
 
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
                 except (OSError, IOError), e:
-                    fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
 
         module.exit_json(changed=changed, **args)
 
@@ -229,7 +229,7 @@ def main():
         if os.path.ismount(name):
             res,msg  = umount(**args)
             if res:
-                fail_json(msg="Error unmounting %s: %s" % (name, msg))
+                module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
 
         module.exit_json(changed=changed, **args)
@@ -241,7 +241,7 @@ def main():
                 try:
                     os.makedirs(name)
                 except (OSError, IOError), e:
-                    fail_json(msg="Error making dir %s: %s" % (name, str(e)))
+                    module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
 
             res = 0
             if os.path.ismount(name):
@@ -252,7 +252,7 @@ def main():
                 res,msg = mount(**args)
 
             if res:
-                fail_json(msg="Error mounting %s: %s" % (name, msg))
+                module.fail_json(msg="Error mounting %s: %s" % (name, msg))
 
 
         module.exit_json(changed=changed, **args)
