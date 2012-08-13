@@ -34,6 +34,7 @@ Ansible Changes By Release
 * adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
 * -u and user: defaults to current user, rather than root, override as before
 * new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
+* /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
 
 0.6 "Cabo" -- August 6, 2012
 
