@@ -447,10 +447,10 @@ class LinuxNetwork(Network):
 
     def parse_ip_addr(self):
         interfaces = {}
-        ips = dict( 
-            all_ipv4_addresses = [], 
+        ips = dict(
+            all_ipv4_addresses = [],
             all_ipv6_addresses = [],
-            ipv4_address = None, 
+            ipv4_address = None,
             ipv6_address = None
         )
         ipbin = '/sbin/ip'
