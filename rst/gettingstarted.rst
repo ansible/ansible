@@ -21,15 +21,25 @@ also need:
 
 * ``python-simplejson`` 
 
-(Note that even that's not quite true.  Ansible's "raw" module (for executing commands in a quick and dirty way) and the copy module -- some of the most basic features in ansible don't even need that.  So technically, you can use Ansible to install python-simplejson using the raw module, which then allows you to use everything else.  That's jumping ahead though.)
+.. note::
+
+   Ansible's "raw" module (for executing commands in a quick and dirty
+   way) and the copy module -- some of the most basic features in
+   ansible -- don't even need that.  So technically, you can use
+   Ansible to install python-simplejson using the raw module, which
+   then allows you to use everything else.  (That's jumping ahead
+   though.)
 
 Python 2.6 EPEL instructions for RHEL and CentOS 5
 ``````````````````````````````````````````````````
 
-These distributions don't have Python 2.6 by default, but it is easily installable.
+These distributions don't have Python 2.6 by default, but it is easily
+installable. If you have not already done so, `configure EPEL
+<http://fedoraproject.org/wiki/EPEL>`_
 
-* If you have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-* yum install python26 python26-PyYAML python26-paramiko python26-jinja2
+.. code-block:: bash
+
+   $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
 
 Getting Ansible
 ```````````````
@@ -53,18 +63,24 @@ Running From Checkout
 +++++++++++++++++++++
 
 Ansible is trivially easy to run from a checkout, root permissions are not required
-to use it::
+to use it:
+
+.. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ source ./hacking/env-setup
 
-You can optionally specify an inventory file (see :doc:`patterns`) other than /etc/ansible/hosts::
+You can optionally specify an inventory file (see :doc:`patterns`) other than /etc/ansible/hosts:
+
+.. code-block:: bash
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_HOSTS=~/ansible_hosts
 
-Now let's test things::
+Now let's test things:
+
+.. code-block:: bash
 
     $ ansible all -m ping --ask-pass
 
@@ -73,7 +89,9 @@ Make Install
 ++++++++++++
 
 If you are not working from a distribution where Ansible is packaged yet, you can install Ansible 
-using "make install".  This is done through `python-distutils`::
+using "make install".  This is done through `python-distutils`:
+
+.. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
@@ -83,14 +101,20 @@ using "make install".  This is done through `python-distutils`::
 Via RPM
 +++++++
 
-RPMs for the last Ansible release are available for `EPEL <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
-Fedora distributions.  Ansible itself can manage earlier operating systems that contain python 2.4 or higher.
+RPMs for the last Ansible release are available for `EPEL
+<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
+Fedora distributions.  Ansible itself can manage earlier operating
+systems that contain python 2.4 or higher.
+
+.. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also use the ``make rpm`` command to
-build an RPM you can distribute and install::
+You can also use the ``make rpm`` command to build an RPM you can
+distribute and install:
+
+.. code-block:: bash
 
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
@@ -102,16 +126,20 @@ Debian, Gentoo, Arch, Others
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_
 
-Debian/Ubuntu package recipes can also be built from the source checkout, run::
+Debian/Ubuntu package recipes can also be built from the source checkout, run:
 
-    make debian
+.. code-block:: bash
+
+    $ make debian
 
 Gentoo eBuilds are available `on github here <https://github.com/uu/ubuilds>`_
 
 An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
-If you have python3 installed on Arch, you probably want to symlink python to python2::
+If you have python3 installed on Arch, you probably want to symlink python to python2:
 
-    sudo ln -sf /usr/bin/python2 /usr/bin/python
+.. code-block:: bash
+
+    $ sudo ln -sf /usr/bin/python2 /usr/bin/python
 
 If you would like to package Ansible for Homebrew, BSD, or others,
 please stop by the mailing list and say hi!
@@ -158,32 +186,39 @@ which you have your SSH key in ``authorized_keys``::
     aserver.example.org
     bserver.example.org
 
-Set up SSH agent to avoid retyping passwords::
+Set up SSH agent to avoid retyping passwords:
 
-    ssh-agent bash
-    ssh-add ~/.ssh/id_rsa
+.. code-block:: bash
+
+    $ ssh-agent bash
+    $ ssh-add ~/.ssh/id_rsa
 
 (Depending on your setup, you may wish to ansible's --private-key-file option to specify a pem file instead)
 
-Now ping all your nodes::
+Now ping all your nodes:
 
-    ansible all -m ping
+.. code-block:: bash
 
-If you want to access machines remotely as a different user than root, you will want to 
-specify the '-u' option to ansible.  If you would like to access sudo mode, there are also flags to do that::
+   $ ansible all -m ping
+
+If you want to access machines remotely as a different user than root,
+you will want to specify the '-u' option to ansible.  If you would
+like to access sudo mode, there are also flags to do that:
+
+.. code-block:: bash
 
     # as bruce
-    ansible all -m ping -u bruce
-
+    $ ansible all -m ping -u bruce
     # as bruce, sudoing to root
-    ansible all -m ping -u bruce --sudo 
-  
+    $ ansible all -m ping -u bruce --sudo 
     # as bruce, sudoing to batman
-    ansible all -m ping -u bruce --sudo --sudo-user batman
+    $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
-Now run a live command on all of your nodes::
+Now run a live command on all of your nodes:
   
-    ansible all -a "/bin/echo hello"
+.. code-block:: bash
+
+   $ ansible all -a "/bin/echo hello"
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's
 now time to read some of the more real-world :doc:`examples`, and explore
