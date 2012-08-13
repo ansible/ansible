@@ -61,7 +61,7 @@ def main():
     repo = module.params['repo']
     state = module.params['state']
 
-    rc, out, err = _run('%s %s --remove' % (add_apt_repository, repo))
+    rc, out, err = _run('%s "%s" --remove' % (add_apt_repository, repo))
     existed = 'Error' not in out
 
     if state == 'absent':
@@ -70,7 +70,7 @@ def main():
         else:
             module.exit_json(changed=True, repo=repo, state=state)
 
-    cmd = '%s %s' % (add_apt_repository, repo)
+    cmd = '%s "%s"' % (add_apt_repository, repo)
 
     if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
         cmd = cmd + ' -y'
