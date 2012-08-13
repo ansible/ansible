@@ -23,7 +23,6 @@
 
 import traceback
 import os
-import subprocess
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 repoquery='/usr/bin/repoquery'
