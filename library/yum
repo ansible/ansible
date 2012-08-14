@@ -60,6 +60,16 @@ def what_provides(repoq, req_spec, qf=def_qf):
         ret = set([ p for p in out.split('\n') if p.strip() ])
     return ret
 
+def local_nvra(path):
+    """return nvra of a local rpm passed in"""
+    
+    cmd = "/bin/rpm -qp --qf='%%{name}-%%{version}-%%{release}.%%{arch}\n' %s'" % path
+    rc, out, err = run(cmd)
+    if rc != 0:
+        return None
+    nvra = out.split('\n')[0]
+    return nvra
+
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
         n,e,v,r,a,repo = pkgstr.split('|')
