@@ -226,7 +226,8 @@ class Play(object):
         if (host is not None):
             inventory = self.playbook.inventory
             hostrec = inventory.get_host(host)
-            groups = [ g.name for g in hostrec.groups ]
+            groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)
+            groups = [ g.name for g in groupz ]
             basedir = inventory.basedir()
             if basedir is not None:
                 for x in groups:

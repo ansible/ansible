@@ -200,6 +200,16 @@ class Inventory(object):
                     hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
+    def groups_for_host(self, host):
+        results = []
+        groups = self.get_groups()
+        for group in groups:
+            for hostn in group.get_hosts():
+                if host == hostn.name:
+                    results.append(group)
+                    continue
+        return results
+
     def get_groups(self):
         return self.groups
 
