@@ -33,16 +33,13 @@ def get_config(p, section, key, env_var, default):
             return os.environ.get(env_var, default)
         return default
 
-
 def load_config_file():
     p = ConfigParser.ConfigParser()
     path1 = os.path.expanduser("~/.ansible.cfg")
     path2 = "/etc/ansible/ansible.cfg"
     if os.path.exists(path1):
-        print "A1"
         p.read(path1)
     elif os.path.exists(path2):
-        print "A2"
         p.read(path2)
     else:
         return None
@@ -77,24 +74,3 @@ DEFAULT_TRANSPORT_OPTS    = ['local', 'paramiko', 'ssh']
 DEFAULT_SUDO_PASS         = None
 DEFAULT_SUBSET            = None
 
-def get_config(parser, section, key, env_var, default):
-    try:
-        return parser.get(section, key) 
-    except:
-        if env_var is not None:
-            return os.environ.get(env_var, default)
-        return default
-
-def load_config_file():
-    config = ConfigParser.ConfigParser()
-    path1 = os.path.expanduser("~/.ansible.cfg")
-    path2 = "/etc/ansible/ansible.cfg"
-    if os.path.exists(path1):
-        config.read(path1)
-    elif os.path.exists(path2):
-        config.read(path2)
-    else: 
-        return None
-    return config
-
-print "MODULE PATH=%s" % DEFAULT_MODULE_PATH
