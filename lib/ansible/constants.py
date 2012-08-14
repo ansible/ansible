@@ -35,7 +35,8 @@ def get_config(p, section, key, env_var, default):
 
 def load_config_file():
     p = ConfigParser.ConfigParser()
-    path1 = os.path.expanduser("~/.ansible.cfg")
+    path1 = os.path.expanduser(
+        os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
     path2 = "/etc/ansible/ansible.cfg"
     if os.path.exists(path1):
         p.read(path1)
@@ -45,6 +46,13 @@ def load_config_file():
         return None
     return p
 
+def shell_expand_path(path):
+    ''' shell_expand_path is needed as os.path.expanduser does not work 
+        when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE '''
+    if path:
+        path = os.path.expanduser(path)
+    return path
+
 p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
@@ -53,19 +61,19 @@ active_user   = pwd.getpwuid(os.geteuid())[0]
 DEFAULTS='defaults'
 
 # configurable things
-DEFAULT_HOST_LIST         = get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts')
-DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          '/usr/share/ansible')
-DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
+DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts'))
+DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          '/usr/share/ansible'))
+DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
-DEFAULT_FORKS             = get_config(p, DEFAULTS, 'fork_count',       'ANSIBLE_FORKS',            5)
+DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5)
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10)
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15)
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
-DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None)
+DEFAULT_PRIVATE_KEY_FILE  = shell_expand_path(get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None))
 DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
-DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22)
+DEFAULT_REMOTE_PORT       = int(get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22))
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'paramiko')
 
 # non-configurable things
