@@ -168,6 +168,17 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf):
             
     return []
 
+def local_nvra(path):
+    """return nvra of a local rpm passed in"""
+    
+    cmd = ['/bin/rpm', '-qp' ,'--qf', 
+            '%%{name}-%%{version}-%%{release}.%%{arch}\n', path ]
+    rc, out, err = run(cmd)
+    if rc != 0:
+        return None
+    nvra = out.split('\n')[0]
+    return nvra
+    
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
         n,e,v,r,a,repo = pkgstr.split('|')
