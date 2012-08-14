@@ -75,11 +75,19 @@ def main():
     encoding = module.params["encoding"]
     state = module.params["state"]
     changed = False
+
+    # To use defaults values, keyword arguments must be absent, so 
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    params_map =  {
+        "login_host":"host",
+        "login_user":"user",
+        "login_password":"password"
+    }
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+              if k in params_map and v != '' )
     try:
-        db_connection = psycopg2.connect(host=module.params["login_host"],
-                                         user=module.params["login_user"],
-                                         password=module.params["login_password"],
-                                         database="template1")
+        db_connection = psycopg2.connect(database="template1", **kw)
         # Enable autocommit so we can create databases
         db_connection.autocommit = True
         cursor = db_connection.cursor()
