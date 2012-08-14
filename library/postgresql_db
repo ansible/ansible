@@ -89,7 +89,12 @@ def main():
     try:
         db_connection = psycopg2.connect(database="template1", **kw)
         # Enable autocommit so we can create databases
-        db_connection.autocommit = True
+        if psycopg2.__version__ >= '2.4.2':
+            db_connection.autocommit = True
+        else:
+            db_connection.set_isolation_level(psycopg2
+                                              .extensions
+                                              .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
