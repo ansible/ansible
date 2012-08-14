@@ -18,10 +18,11 @@
 class Group(object):
     ''' a group of ansible hosts '''
 
-    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups' ]
+    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth' ]
 
     def __init__(self, name=None):
 
+        self.depth = 0
         self.name = name
         self.hosts = []
         self.vars = {}
@@ -35,6 +36,7 @@ class Group(object):
         if self == group:
             raise Exception("can't add group to itself")
         self.child_groups.append(group)
+        group.depth = group.depth + 1
         group.parent_groups.append(self)
 
     def add_host(self, host):
