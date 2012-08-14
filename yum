@@ -281,8 +281,7 @@ def install(module, items, repoq, yum_basecmd, conf_file):
             pkglist = what_provides(module, repoq, spec, conf_file)
             if not pkglist:
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
-                res['failed'] = True
-                module.exit_json(**res)
+                module.fail_json(**res)
 
             # if any of them are installed
             # then nothing to do
@@ -320,8 +319,6 @@ def install(module, items, repoq, yum_basecmd, conf_file):
 
 
 def remove(module, items, repoq, yum_basecmd, conf_file):
-
-    print "DEBUG: %s/%s/%s/%s/%s" % (module,items,repoq,yum_basecmd,conf_file)
 
     res = {}
     res['results'] = []
