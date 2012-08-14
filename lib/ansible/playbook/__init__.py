@@ -284,7 +284,6 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host] = result.get('ansible_facts', {})
         return setup_results
 
@@ -299,14 +298,12 @@ class PlayBook(object):
         self.callbacks.on_play_start(play.name)
 
         # get facts from system
-        rc = self._do_setup_step(play)
+        self._do_setup_step(play)
 
         # now with that data, handle contentional variable file imports!
-        if play.vars_files and len(play.vars_files) > 0:
-            play.update_vars_files(self.inventory.list_hosts(play.hosts))
+        play.update_vars_files(self.inventory.list_hosts(play.hosts))
 
         for task in play.tasks():
-
             # only run the task if the requested tags match
             should_run = False
             for x in self.only_tags:
@@ -323,4 +320,3 @@ class PlayBook(object):
                 self.inventory.restrict_to(handler.notified_by)
                 self._run_task(play, handler, True)
                 self.inventory.lift_restriction()
-
