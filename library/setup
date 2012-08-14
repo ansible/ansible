@@ -434,32 +434,58 @@ class LinuxNetwork(Network):
         Network.__init__(self)
 
     def populate(self):
-        interfaces, ips = self.parse_ip_addr()
-
+        ip_path = self.get_ip_path()
+        default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
+        interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
         self.facts['interfaces'] = interfaces.keys()
         for iface in interfaces:
             self.facts[iface] = interfaces[iface]
-
-        for key in ips:
-            self.facts[key] = ips[key]
-
+        self.facts['default_ipv4'] = default_ipv4
+        self.facts['default_ipv6'] = default_ipv6
+        self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
+        self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
         return self.facts
 
-    def parse_ip_addr(self):
-        interfaces = {}
-        ips = dict( 
-            all_ipv4_addresses = [], 
-            all_ipv6_addresses = [],
-            ipv4_address = None, 
-            ipv6_address = None
+    def get_ip_path(self):
+        paths = ['/sbin/ip', '/usr/sbin/ip']
+        ip_path = None
+        for path in paths:
+            if os.path.exists(path):
+                ip_path = path
+                break
+        return ip_path
+
+    def get_default_interfaces(self, ip_path):
+        # Use the commands:
+        #     ip -4 route get 8.8.8.8                     -> Google public DNS
+        #     ip -6 route get 2404:6800:400a:800::1012    -> ipv6.google.com
+        # to find out the default outgoing interface, address, and gateway
+        command = dict(
+            v4 = [ip_path, '-4', 'route', 'get', '8.8.8.8'],
+            v6 = [ip_path, '-6', 'route', 'get', '2404:6800:400a:800::1012']
         )
-        ipbin = '/sbin/ip'
-        if not os.path.exists(ipbin):
-            if os.path.exists('/usr/sbin/ip'):
-                ipbin = '/usr/sbin/ip'
-            else:
-                return interfaces, ips
-        output = subprocess.Popen([ipbin, 'addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
+        interface = dict(v4 = {}, v6 = {})
+        for v in 'v4', 'v6':
+            output = subprocess.Popen(command[v], stdout=subprocess.PIPE).communicate()[0]
+            words = output.split('\n')[0].split()
+            # A valid output starts with the queried address on the first line
+            if words[0] == command[v][-1]:
+                for i in range(len(words) - 1):
+                    if words[i] == 'dev':
+                        interface[v]['interface'] = words[i+1]
+                    elif words[i] == 'src':
+                        interface[v]['address'] = words[i+1]
+                    elif words[i] == 'via' and words[i+1] != command[v][-1]:
+                        interface[v]['gateway'] = words[i+1]
+        return interface['v4'], interface['v6']
+
+    def get_interfaces_info(self, ip_path, default_ipv4, default_ipv6):
+        interfaces = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        output = subprocess.Popen([ip_path, 'addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
             if line:
                 words = line.split()
@@ -486,22 +512,30 @@ class LinuxNetwork(Network):
                     # interface name for each address
                     if iface in interfaces:
                         i = 0
-                        while '{0}:{1}'.format(iface, i) in interfaces:
+                        while '{0}_{1}'.format(iface, i) in interfaces:
                             i += 1
-                        iface = '{0}:{1}'.format(iface, i)
+                        iface = '{0}_{1}'.format(iface, i)
 
                     interfaces[iface] = {}
                     interfaces[iface]['macaddress'] = macaddress
                     interfaces[iface]['mtu'] = mtu
+                    interfaces[iface]['type'] = iface_type
                     interfaces[iface]['device'] = device
                     interfaces[iface]['ipv4'] = {'address': address,
                                                  'netmask': netmask,
                                                  'network': network}
 
+                    # If this is the default address, update default_ipv4
+                    if 'address' in default_ipv4 and default_ipv4['address'] == address:
+                        default_ipv4['netmask'] = netmask
+                        default_ipv4['network'] = network
+                        default_ipv4['macaddress'] = macaddress
+                        default_ipv4['mtu'] = mtu
+                        default_ipv4['type'] = iface_type
+                        default_ipv4['alias'] = words[-1]
+
                     if not address.startswith('127.'):
                         ips['all_ipv4_addresses'].append(address)
-                    if not ips['ipv4_address'] or ips['ipv4_address'].startswith('127.'):
-                        ips['ipv4_address'] = address
 
                 elif words[0] == 'inet6':
                     address, prefix = words[1].split('/')
@@ -520,10 +554,16 @@ class LinuxNetwork(Network):
                         'prefix': prefix,
                         'scope': scope} )
 
+                    # If this is the default address, update default_ipv6
+                    if 'address' in default_ipv6 and default_ipv6['address'] == address:
+                        default_ipv6['prefix'] = prefix
+                        default_ipv6['scope'] = scope
+                        default_ipv6['macaddress'] = macaddress
+                        default_ipv6['mtu'] = mtu
+                        default_ipv6['type'] = iface_type
+
                     if not address == '::1':
                         ips['all_ipv6_addresses'].append(address)
-                    if not ips['ipv6_address'] or ips['ipv6_address'] == '::1':
-                        ips['ipv6_address'] = address
 
         return interfaces, ips
 
