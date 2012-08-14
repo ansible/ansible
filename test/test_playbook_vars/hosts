@@ -1,0 +1,6 @@
+host1
+host2
+
+[group]
+host1
+host2
