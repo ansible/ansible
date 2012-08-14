@@ -56,7 +56,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-
+%doc examples/playbooks
 
 %changelog
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
