@@ -320,6 +320,9 @@ def install(module, items, repoq, yum_basecmd, conf_file):
 
 
 def remove(module, items, repoq, yum_basecmd, conf_file):
+
+    print "DEBUG: %s/%s/%s/%s/%s" % (module,items,repoq,yum_basecmd,conf_file)
+
     res = {}
     res['results'] = []
     res['msg'] = ''
@@ -337,7 +340,6 @@ def remove(module, items, repoq, yum_basecmd, conf_file):
             pkglist = is_installed(module, repoq, spec, conf_file)
             if not pkglist:
                 res['msg'] += "No Package matching '%s' found installed" % spec
-                res['failed']=True
                 module.exit_json(**res)
 
             found = False
@@ -479,7 +481,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(aliases=['name']),
+            name=dict(aliases=['pkg']),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(),
