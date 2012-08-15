@@ -224,6 +224,8 @@ class Play(object):
             self.vars_files = [ self.vars_files ]
 
         if (host is not None):
+            self.playbook.SETUP_CACHE[host].update(self.vars)
+
             inventory = self.playbook.inventory
             hostrec = inventory.get_host(host)
             groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)

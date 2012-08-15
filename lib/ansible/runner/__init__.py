@@ -703,6 +703,7 @@ class Runner(object):
 
         module_data = ""
         is_new_style=False
+
         with open(in_path) as f:
             module_data = f.read()
             if module_common.REPLACER in module_data:
