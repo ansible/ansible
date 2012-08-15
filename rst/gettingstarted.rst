@@ -119,7 +119,7 @@ distribute and install:
     $ git clone git://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ~/rpmbuild/RPMS/noarch/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
 
 Debian, Gentoo, Arch, Others
 ++++++++++++++++++++++++++++
