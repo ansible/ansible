@@ -207,12 +207,15 @@ it&#8217;s much better to just use ssh-agent.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/sbin/reboot&quot;</span> -f 10
 </pre></div>
 </div>
-<p>If you want to run commands as a different user than root, it looks like this:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname
+<p>In 0.7 and later, this will default to running from your user account.  If you do not like this
+behavior, pass in &#8220;-u username&#8221;.  (In 0.6 and before, it defaulted to root.  Most folks prefered
+defaulting to the current user, so we changed it).</p>
+<p>If you want to run commands as a different user, it looks like this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u username
 </pre></div>
 </div>
 <p>If you want to run commands through sudo:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname --sudo <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u username --sudo <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
 </pre></div>
 </div>
 <p>Use <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<tt class="docutils literal"><span class="pre">-K</span></tt>) if you are not using passwordless
@@ -221,7 +224,7 @@ Use of passwordless sudo makes things easier to automate, but it&#8217;s not
 required.</p>
 <p>It is also possible to sudo to a user other than root using
 <tt class="docutils literal"><span class="pre">--sudo-user</span></tt> (<tt class="docutils literal"><span class="pre">-U</span></tt>):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u yourname -U otheruser <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -a <span class="s2">&quot;/usr/bin/foo&quot;</span> -u username -U otheruser <span class="o">[</span>--ask-sudo-pass<span class="o">]</span>
 </pre></div>
 </div>
 <p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.</p>
