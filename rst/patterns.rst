@@ -33,6 +33,13 @@ after the hostname with a colon.
 
     four.example.com:5309
 
+In 0.6 and later, if you have a lot of hosts following similar patterns you can do this::
+
+    [webservers]
+    www[01-50].example.com
+
+Leading zeros can be included or removed, as desired, and the ranges are inclusive.
+
 Selecting Targets
 +++++++++++++++++
 
@@ -80,7 +87,6 @@ wildcards::
 It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
-
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 

@@ -209,6 +209,12 @@ but they are useful.</p>
 after the hostname with a colon.</p>
 <blockquote>
 <div>four.example.com:5309</div></blockquote>
+<p>In 0.6 and later, if you have a lot of hosts following similar patterns you can do this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
+<span class="n">www</span><span class="p">[</span><span class="mo">01</span><span class="o">-</span><span class="mi">50</span><span class="p">]</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<p>Leading zeros can be included or removed, as desired, and the ranges are inclusive.</p>
 </div>
 <div class="section" id="selecting-targets">
 <h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
