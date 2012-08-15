@@ -161,7 +161,6 @@ Documentation
    api
    moduledev
    faq
-   glossary
    who_uses_ansible
 
 

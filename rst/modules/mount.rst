@@ -3,6 +3,8 @@
 mount
 `````
 
+.. versionadded:: 0.6
+
 The mount module controls active and configured mount points (fstab).
 
 +--------------------+----------+---------+----------------------------------------------------------------------------+
