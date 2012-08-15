@@ -59,8 +59,8 @@ def set_mount(**kwargs):
     changed = False
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
-             to_write.append(line)
-             continue
+            to_write.append(line)
+            continue
         if line.strip().startswith('#'):
             to_write.append(line)
             continue
@@ -85,9 +85,9 @@ def set_mount(**kwargs):
                 ld[t] = args[t]
 
         if changed:
-             to_write.append(new_line % ld)
+            to_write.append(new_line % ld)
         else:
-             to_write.append(line)
+            to_write.append(line)
 
     if not exists:
         to_write.append(new_line % args)
@@ -115,8 +115,8 @@ def unset_mount(**kwargs):
     changed = False
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
-             to_write.append(line)
-             continue
+            to_write.append(line)
+            continue
         if line.strip().startswith('#'):
             to_write.append(line)
             continue
@@ -147,9 +147,9 @@ def mount(**kwargs):
 
     name = kwargs['name']
     if os.path.ismount(name):
-        cmd = ['/bin/mount', '-o', 'remount', name]
+        cmd = [ '/bin/mount', '-o', 'remount', name ]
     else:
-        cmd = ['/bin/mount', name ]
+        cmd = [ '/bin/mount', name ]
 
     call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = call.communicate()
@@ -215,13 +215,13 @@ def main():
             if os.path.ismount(name):
                 res,msg  = umount(**args)
                 if res:
-                    fail_json(msg="Error unmounting %s: %s" % (name, msg))
+                    module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
 
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
                 except (OSError, IOError), e:
-                    fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
 
         module.exit_json(changed=changed, **args)
 
@@ -229,7 +229,7 @@ def main():
         if os.path.ismount(name):
             res,msg  = umount(**args)
             if res:
-                fail_json(msg="Error unmounting %s: %s" % (name, msg))
+                module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
 
         module.exit_json(changed=changed, **args)
@@ -241,7 +241,7 @@ def main():
                 try:
                     os.makedirs(name)
                 except (OSError, IOError), e:
-                    fail_json(msg="Error making dir %s: %s" % (name, str(e)))
+                    module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
 
             res = 0
             if os.path.ismount(name):
@@ -252,7 +252,7 @@ def main():
                 res,msg = mount(**args)
 
             if res:
-                fail_json(msg="Error mounting %s: %s" % (name, msg))
+                module.fail_json(msg="Error mounting %s: %s" % (name, msg))
 
 
         module.exit_json(changed=changed, **args)

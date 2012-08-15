@@ -35,6 +35,7 @@ def main():
     chdir = module.params['chdir']
     args  = module.params['args']
 
+
     if chdir:
         os.chdir(chdir)
 
@@ -54,9 +55,9 @@ def main():
     delta = endd - startd
 
     if out is None:
-       out = ''
+        out = ''
     if err is None:
-       err = ''
+        err = ''
 
     module.exit_json(
         cmd     = args,
@@ -91,8 +92,8 @@ class CommandModule(AnsibleModule):
         params['chdir'] = None
         params['shell'] = False
         if args.find("#USE_SHELL") != -1:
-             args = args.replace("#USE_SHELL", "")
-             params['shell'] = True
+            args = args.replace("#USE_SHELL", "")
+            params['shell'] = True
 
         check_args = shlex.split(args)
         for x in check_args:

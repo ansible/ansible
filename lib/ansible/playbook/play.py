@@ -46,8 +46,8 @@ class Play(object):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
-             if not x in Play.VALID_KEYS:
-                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
+            if not x in Play.VALID_KEYS:
+                raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
 
         # TODO: more error handling
 
@@ -224,9 +224,12 @@ class Play(object):
             self.vars_files = [ self.vars_files ]
 
         if (host is not None):
+            self.playbook.SETUP_CACHE[host].update(self.vars)
+
             inventory = self.playbook.inventory
             hostrec = inventory.get_host(host)
-            groups = [ g.name for g in hostrec.groups ]
+            groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)
+            groups = [ g.name for g in groupz ]
             basedir = inventory.basedir()
             if basedir is not None:
                 for x in groups:

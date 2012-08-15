@@ -24,12 +24,8 @@ import random
 import traceback
 import tempfile
 import time
-import base64
-import getpass
-import codecs
 import collections
 import socket
-import re
 
 import ansible.constants as C
 import ansible.inventory
@@ -38,7 +34,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
-from ansible.callbacks import DefaultRunnerCallbacks, vv, vvv
+from ansible.callbacks import DefaultRunnerCallbacks, vv
 
 HAS_ATFORK=True
 try:
@@ -127,7 +123,8 @@ class Runner(object):
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
-        inventory=None                      # reference to Inventory object
+        inventory=None,                     # reference to Inventory object
+        subset=None                         # subset pattern
         ):
 
         # storage & defaults
@@ -137,6 +134,7 @@ class Runner(object):
         self.generated_jid    = str(random.randint(0, 999999999999))
         self.transport        = transport
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
@@ -157,6 +155,10 @@ class Runner(object):
         self.is_playbook      = is_playbook
 
         # misc housekeeping
+        if subset and self.inventory._subset is None:
+            # don't override subset when passed from playbook
+            self.inventory.subset(subset)
+
         if self.transport == 'ssh' and remote_pass:
             raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
         if self.transport == 'local':
@@ -568,7 +570,9 @@ class Runner(object):
 
         module_name = utils.template(self.module_name, inject)
 
-        tmp = self._make_tmp_path(conn)
+        tmp = ''
+        if self.module_name != 'raw':
+            tmp = self._make_tmp_path(conn)
         result = None
 
         handler = getattr(self, "_execute_%s" % self.module_name, None)
@@ -595,7 +599,8 @@ class Runner(object):
 
             del result.result['daisychain']
 
-        self._delete_remote_files(conn, tmp)
+        if self.module_name != 'raw':
+            self._delete_remote_files(conn, tmp)
         conn.close()
 
         if not result.comm_ok:
@@ -647,7 +652,7 @@ class Runner(object):
     def _remote_md5(self, conn, tmp, path):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
-        test = "rc=0; [[ -r \"%s\" ]] || rc=2; [[ -f \"%s\" ]] || rc=1" % (path,path)
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1" % (path,path)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,
@@ -656,7 +661,7 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        return self._low_level_exec_command(conn, cmd, tmp, sudoable=False).split()[0]
+        return utils.last_non_blank_line(self._low_level_exec_command(conn, cmd, tmp, sudoable=False))
 
     # *****************************************************
 
@@ -676,7 +681,7 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        return result.split("\n")[0].strip() + '/'
+        return utils.last_non_blank_line(result).strip() + '/'
 
     # *****************************************************
 
@@ -698,6 +703,7 @@ class Runner(object):
 
         module_data = ""
         is_new_style=False
+
         with open(in_path) as f:
             module_data = f.read()
             if module_common.REPLACER in module_data:
@@ -800,4 +806,3 @@ class Runner(object):
         self.background = time_limit
         results = self.run()
         return results, poller.AsyncPoller(results, self)
-

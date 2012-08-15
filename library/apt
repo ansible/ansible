@@ -21,7 +21,7 @@
 
 import traceback
 # added to stave off future warnings about apt api
-import warnings;
+import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 # APT related constants
@@ -30,8 +30,7 @@ APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
 
 def run_apt(command):
     try:
-        cmd = subprocess.Popen(command, shell=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
         rc = 1
@@ -131,7 +130,8 @@ def main():
     )
 
     try:
-        import apt, apt_pkg
+        import apt
+        import apt_pkg
     except:
         module.fail_json("Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 

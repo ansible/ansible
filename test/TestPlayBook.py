@@ -10,11 +10,6 @@ import ansible.utils as utils
 import ansible.callbacks as ans_callbacks
 import os
 import shutil
-import time
-try:
-   import json
-except:
-   import simplejson as json
 
 EVENTS = []
 
@@ -29,9 +24,6 @@ class TestCallbacks(object):
 
     def on_start(self):
         EVENTS.append('start')
-
-    def on_setup(self):
-        EVENTS.append([ 'primary_setup' ])
 
     def on_skipped(self, host, item=None):
         EVENTS.append([ 'skipped', [ host ]])
@@ -50,9 +42,6 @@ class TestCallbacks(object):
 
     def on_task_start(self, name, is_conditional):
         EVENTS.append([ 'task start', [ name, is_conditional ]])
-
-    def on_unreachable(self, host, msg):
-        EVENTS.append([ 'unreachable', [ host, msg ]])
 
     def on_failed(self, host, results, ignore_errors):
         EVENTS.append([ 'failed', [ host, results, ignore_errors ]])
@@ -165,6 +154,19 @@ class TestPlaybook(unittest.TestCase):
        data = file('/tmp/ansible_test_data_template.out').read()
        print data
        assert data.find("ears") != -1, "template success"
+
+   def test_playbook_vars(self): 
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'test_playbook_vars', 'playbook.yml'),
+           host_list='test/test_playbook_vars/hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       playbook.run()
+       assert playbook.SETUP_CACHE['host1'] == {'attr2': 2, 'attr1': 1}
+       assert playbook.SETUP_CACHE['host2'] == {'attr2': 2}
 
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]

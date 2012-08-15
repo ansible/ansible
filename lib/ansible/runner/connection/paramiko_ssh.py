@@ -16,15 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import warnings
-import traceback
 import os
-import re
-import shutil
-import subprocess
 import pipes
 import socket
 import random
-from ansible import utils
 from ansible.callbacks import vvv
 from ansible import errors
 
@@ -84,7 +79,13 @@ class ParamikoConnection(object):
         ''' run a command on the remote host '''
 
         bufsize = 4096
-        chan = self.ssh.get_transport().open_session()
+        try:
+            chan = self.ssh.get_transport().open_session()
+        except Exception, e:
+            msg = "Failed to open session"
+            if len(str(e)) > 0:
+                msg += ": %s" % str(e)
+            raise errors.AnsibleConnectionFailed(msg)
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
@@ -93,16 +94,15 @@ class ParamikoConnection(object):
             chan.exec_command(quoted_command)
         else:
             # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required. The "--"
-            # tells sudo that this is the end of sudo options and the command
-            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # sudo always ask for a password if one is required. 
+            # Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
             # output until we see the randomly-generated sudo prompt set with
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
             vvv("EXEC %s" % sudocmd, host=self.host)
             sudo_output = ''

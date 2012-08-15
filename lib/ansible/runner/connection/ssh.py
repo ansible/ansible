@@ -23,6 +23,7 @@ import pipes
 import random
 import select
 import fcntl
+import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
 
@@ -37,8 +38,10 @@ class SSHConnection(object):
     def connect(self):
         ''' connect to the remote host '''
 
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
+
         self.common_args = []
-        extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
+        extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
         else:
@@ -60,16 +63,15 @@ class SSHConnection(object):
         ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required. The "--"
-            # tells sudo that this is the end of sudo options and the command
-            # follows.  Passing a quoted compound command to sudo (or sudo -s)
+            # sudo always ask for a password if one is required.
+            # Passing a quoted compound command to sudo (or sudo -s)
             # directly doesn't work, so we shellquote it with pipes.quote()
             # and pass the quoted string to the user's shell.  We loop reading
             # output until we see the randomly-generated sudo prompt set with
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s -- "$SHELL" -c %s' % (
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s "$SHELL" -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             ssh_cmd.append(sudocmd)
@@ -99,19 +101,15 @@ class SSHConnection(object):
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        p.stdin.close()
         stdout = ''
         while p.poll() is None:
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
                 stdout += os.read(p.stdout.fileno(), 1024)
-        # older versions of ssh generate this error which we ignore
-        stdout=stdout.replace("tcgetattr: Invalid argument\n", "")
-        # suppress Ubuntu 10.04/12.04 error on -tt option
-        stdout=stdout.replace("tcgetattr: Inappropriate ioctl for device\n","")
+        p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in the config file) before running again')
 
         return ('', stdout, '')
 

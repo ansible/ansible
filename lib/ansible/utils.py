@@ -25,10 +25,10 @@ import yaml
 import optparse
 import operator
 from ansible import errors
-from ansible import color
 from ansible import __version__
 import ansible.constants as C
 import time
+import StringIO
 
 VERBOSITY=0
 
@@ -118,8 +118,11 @@ def json_loads(data):
 
     return json.loads(data)
 
-def parse_json(data):
+def parse_json(raw_data):
     ''' this version for module return data only '''
+
+    # ignore stuff like tcgetattr spewage or other warnings
+    data = filter_leading_non_json_lines(raw_data)
 
     try:
         return json.loads(data)
@@ -308,10 +311,10 @@ def _gitinfo():
             branch = f.readline().split('/')[-1].rstrip("\n")
         branch_path = os.path.join(repo_path, "refs", "heads", branch)
         with open(branch_path) as f:
-            commit = f.readline()[:10] 
+            commit = f.readline()[:10]
         date = time.localtime(os.stat(branch_path).st_mtime)
         offset = time.timezone if (time.daylight == 0) else time.altzone
-        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, 
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
             time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     return result
 
@@ -337,7 +340,8 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, async_opts=False, connect_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+    async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -358,6 +362,11 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, asyn
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
+
+    if subset_opts:
+        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
+            help='further limit selected hosts to an additional pattern')
+
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
@@ -409,4 +418,31 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
     return result
+
+def last_non_blank_line(buf):
+
+    all_lines = buf.splitlines()
+    all_lines.reverse()
+    for line in all_lines:
+        if (len(line) > 0):
+            return line
+    # shouldn't occur unless there's no output
+    return ""  
+
+def filter_leading_non_json_lines(buf):
+    ''' 
+    used to avoid random output from SSH at the top of JSON output, like messages from
+    tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
+    
+    need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
+    filter only leading lines since multiline JSON is valid. 
+    '''
+
+    filtered_lines = StringIO.StringIO()
+    stop_filtering = False
+    for line in buf.splitlines():
+        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+            stop_filtering = True
+            filtered_lines.write(line + '\n')
+    return filtered_lines.getvalue()
 

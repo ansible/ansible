@@ -19,10 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-PIP = None
-VIRTUALENV = None
-ENV = None
-
 
 def _get_full_name(name, version=None):
     if version is None:
@@ -32,11 +28,11 @@ def _get_full_name(name, version=None):
     return resp
 
 
-def _find_pip():
+def _find_pip(module, env):
     paths = ['/usr/local/bin', '/usr/bin']
 
-    if ENV:
-        paths = [os.path.join(ENV, 'bin')] + paths
+    if env:
+        paths = [os.path.join(env, 'bin')] + paths
 
     for p in paths:
         pe = p + '/pip'
@@ -46,7 +42,7 @@ def _find_pip():
     module.fail_json(msg='pip is not installed')
 
 
-def _find_virtualenv():
+def _find_virtualenv(module):
     paths = ['/usr/local/bin', '/usr/bin']
 
     for p in paths:
@@ -57,15 +53,15 @@ def _find_virtualenv():
     module.fail_json(msg='virtualenv is not installed')
 
 
-def _ensure_virtualenv():
-    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
+def _ensure_virtualenv(module, env, virtualenv):
+    if os.path.exists(os.path.join(env, 'bin', 'activate')):
         return 0, '', ''
     else:
-        return _run('%s %s' % (VIRTUALENV, ENV))
+        return _run('%s %s' % (virtualenv, env))
 
 
-def _is_package_installed(name, version=None):
-    rc, status_stdout, status_stderr = _run('%s freeze' % PIP)
+def _is_package_installed(name, pip, version=None):
+    rc, status_stdout, status_stderr = _run('%s freeze' % pip)
     return _get_full_name(name, version).lower() in status_stdout.lower()
 
 
@@ -82,6 +78,10 @@ def _run(cmd):
 
 
 def main():
+    pip = None
+    virtualenv = None
+    env = None
+
     arg_spec = dict(
         state=dict(default='present', choices=['absent', 'present', 'latest']),
         name=dict(default=None, required=False),
@@ -90,19 +90,23 @@ def main():
         virtualenv=dict(default=None, required=False)
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        required_one_of=[['name','requirements']],
+        mutually_exclusive=[['name','requirements']],
+    )
 
     rc = 0
     err = ''
     out = ''
 
-    ENV = module.params['virtualenv']
-    PIP = _find_pip()
+    env = module.params['virtualenv']
+    pip = _find_pip(module, env)
 
-    if ENV:
-        VIRTUALENV = _find_virtualenv()
+    if env:
+        virtualenv = _find_virtualenv(module)
 
-        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+        rc_venv, out_venv, err_venv = _ensure_virtualenv(module, env, virtualenv)
 
         rc += rc_venv
         out += out_venv
@@ -115,39 +119,20 @@ def main():
     command_map = dict(present='install', absent='uninstall', latest='install')
 
     if state == 'latest' and version is not None:
-        module.fail_json(msg='If `state` is set to `latest` the `version` '
-                             'parameter must not be specified.')
+        module.fail_json(msg='version is incompatible with state=latest')
 
     if state == 'latest' and requirements is not None:
-        module.fail_json(msg='If `state` is set to `latest` the `requirements` '
-                             'parameter must not be specified.')
+        module.fail_json(msg='requirements is incompatible with state=latest')
 
-    if name is not None and '==' in name:
-        module.fail_json(msg='It looks like you specified the version number '
-                             'in the library name. Use the `version` parameter '
-                             'to specify version instead')
-
-    if version is not None and name is None:
-        module.fail_json(msg='The `version` parameter must be used with the '
-                             '`name` parameter and not with the `requirements` '
-                             'paramter')
-
-    if name is None and requirements is None:
-        module.fail_json(msg='You must specify a python library name via '
-                             'the `name` parameter or a requirements file via '
-                             'the `requirements` paramter')
-
-    if name and requirements:
-        module.fail_json(msg='Both `name` and `requirements` were specified. '
-                             'Specify only the python library name via the '
-                             '`name` parameter or a requirements file via the '
-                             '`requirements` parameter')
+    if name is not None and '=' in name:
+        module.fail_json(msg='versions must be specified in the version= parameter')
 
     cmd = None
     installed = None
 
     if requirements:
-        cmd = '%s %s -r %s --use-mirrors' % (PIP, command_map[state], requirements)
+
+        cmd = '%s %s -r %s --use-mirrors' % (pip, command_map[state], requirements)
         rc_pip, out_pip, err_pip = _run(cmd)
 
         rc += rc_pip
@@ -158,8 +143,8 @@ def main():
                    (not _did_install(out) and state == 'absent'))
 
     if name and state == 'latest':
-        cmd = '%s %s %s --upgrade' % (PIP, command_map[state], name)
 
+        cmd = '%s %s %s --upgrade' % (pip, command_map[state], name)
         rc_pip, out_pip, err_pip = _run(cmd)
 
         rc += rc_pip
@@ -169,8 +154,8 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     elif name:
-        installed = _is_package_installed(name, version)
-
+        
+        installed = _is_package_installed(name, pip, version)
         changed = ((installed and state == 'absent') or
                    (not installed and state == 'present'))
 
@@ -180,7 +165,7 @@ def main():
             else: 
                 full_name = name
 
-            cmd = '%s %s %s' % (PIP, command_map[state], full_name)
+            cmd = '%s %s %s' % (pip, command_map[state], full_name)
 
             if state == 'absent':
                 cmd = cmd + ' -y'
@@ -188,8 +173,7 @@ def main():
                 cmd = cmd + ' --use-mirrors'
 
             rc_pip, out_pip, err_pip = _run(cmd)
-
-            rc += rc_pip
+            rc  += rc_pip
             out += out_pip
             err += err_pip
 
@@ -197,7 +181,7 @@ def main():
         module.fail_json(msg=err, cmd=cmd)
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=ENV)
+                     state=state, requirements=requirements, virtualenv=env)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

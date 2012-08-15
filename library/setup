@@ -78,7 +78,7 @@ class Facts(object):
         elif Facts._I386RE.search(self.facts['machine']):
             self.facts['architecture'] = 'i386'
         else:
-            self.facts['archtecture'] = self.facts['machine']
+            self.facts['architecture'] = self.facts['machine']
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
 
@@ -130,18 +130,15 @@ class Facts(object):
                 self.facts['selinux']['policyvers'] = 'unknown'
             try:
                 (rc, configmode) = selinux.selinux_getenforcemode()
-                if rc == 0 and Facts.SELINUX_MODE_DICT.has_key(configmode):
-                    self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT[configmode]
+                if rc == 0:
+                    self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT.get(configmode, 'unknown')
                 else:
                     self.facts['selinux']['config_mode'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['config_mode'] = 'unknown'
             try:
                 mode = selinux.security_getenforce()
-                if Facts.SELINUX_MODE_DICT.has_key(mode):
-                    self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT[mode]
-                else:
-                    self.facts['selinux']['mode'] = 'unknown'
+                self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT.get(mode, 'unknown')
             except OSError, e:
                 self.facts['selinux']['mode'] = 'unknown'
             try:
@@ -196,19 +193,21 @@ class LinuxHardware(Hardware):
 
     In addition, it also defines number of DMI facts.
     """
+
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
     # DMI bits
-    DMI_DICT = { 'form_factor':  '/sys/devices/virtual/dmi/id/chassis_type',
-                 'product_name': '/sys/devices/virtual/dmi/id/product_name',
-                 'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
-                 'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
-                 'product_version': '/sys/devices/virtual/dmi/id/product_version',
-                 'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
-                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
-                 'bios_version': '/sys/devices/virtual/dmi/id/bios_version' }
-    # From smolt and DMI spec
-    # See http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
+    DMI_DICT = dict(
+        form_factor     =  '/sys/devices/virtual/dmi/id/chassis_type',
+        product_name    = '/sys/devices/virtual/dmi/id/product_name',
+        product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
+        product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
+        product_version = '/sys/devices/virtual/dmi/id/product_version',
+        system_vendor   = '/sys/devices/virtual/dmi/id/sys_vendor',
+        bios_date       = '/sys/devices/virtual/dmi/id/bios_date',
+        bios_version    = '/sys/devices/virtual/dmi/id/bios_version'
+    )
+    # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
     FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
                     "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
                     "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
@@ -426,6 +425,8 @@ class LinuxNetwork(Network):
     This is a Linux-specific subclass of Network.  It defines
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
+    - ipv4_address and ipv6_address: the first non-local address for each family.
     """
     platform = 'Linux'
 
@@ -433,93 +434,138 @@ class LinuxNetwork(Network):
         Network.__init__(self)
 
     def populate(self):
-        self.facts['interfaces'] = self.get_interfaces()
-        self.get_interface_facts()
-        self.get_ipv4_facts()
-        self.get_ipv6_facts()
+        ip_path = self.get_ip_path()
+        default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
+        interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
+        self.facts['interfaces'] = interfaces.keys()
+        for iface in interfaces:
+            self.facts[iface] = interfaces[iface]
+        self.facts['default_ipv4'] = default_ipv4
+        self.facts['default_ipv6'] = default_ipv6
+        self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
+        self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
         return self.facts
 
-    # get list of interfaces
-    def get_interfaces(self):
-        names = []
-        data = get_file_content('/proc/net/dev')
-        # Format of /proc/net/dev is:
-        # Inter-|   Receive  ...
-        #  face |bytes       ...
-        #     lo:  595059
-        for line in data.split('\n'):
-            if ':' in line:
-                names.append(line.split(':')[0].strip())
-        return names
+    def get_ip_path(self):
+        paths = ['/sbin/ip', '/usr/sbin/ip']
+        ip_path = None
+        for path in paths:
+            if os.path.exists(path):
+                ip_path = path
+                break
+        return ip_path
 
-    def get_iface_hwaddr(self, iface):
-        data = get_file_content('/sys/class/net/%s/address' % iface)
-        if data is None:
-            return 'unknown'
-        else:
-            return data.strip()
+    def get_default_interfaces(self, ip_path):
+        # Use the commands:
+        #     ip -4 route get 8.8.8.8                     -> Google public DNS
+        #     ip -6 route get 2404:6800:400a:800::1012    -> ipv6.google.com
+        # to find out the default outgoing interface, address, and gateway
+        command = dict(
+            v4 = [ip_path, '-4', 'route', 'get', '8.8.8.8'],
+            v6 = [ip_path, '-6', 'route', 'get', '2404:6800:400a:800::1012']
+        )
+        interface = dict(v4 = {}, v6 = {})
+        for v in 'v4', 'v6':
+            output = subprocess.Popen(command[v], stdout=subprocess.PIPE).communicate()[0]
+            words = output.split('\n')[0].split()
+            # A valid output starts with the queried address on the first line
+            if words[0] == command[v][-1]:
+                for i in range(len(words) - 1):
+                    if words[i] == 'dev':
+                        interface[v]['interface'] = words[i+1]
+                    elif words[i] == 'src':
+                        interface[v]['address'] = words[i+1]
+                    elif words[i] == 'via' and words[i+1] != command[v][-1]:
+                        interface[v]['gateway'] = words[i+1]
+        return interface['v4'], interface['v6']
 
-    def get_interface_facts(self):
-        for iface in self.facts['interfaces']:
-            if iface not in self.facts:
-                self.facts[iface] = {}
-            self.facts[iface] = { 'macaddress': self.get_iface_hwaddr(iface) }
-            if os.path.exists('/sys/class/net/%s/mtu' % iface):
-                mtu = get_file_content('/sys/class/net/%s/mtu' % iface)
-                self.facts[iface]['mtu'] = mtu.strip()
+    def get_interfaces_info(self, ip_path, default_ipv4, default_ipv6):
+        interfaces = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        output = subprocess.Popen([ip_path, 'addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
+        for line in output.split('\n'):
+            if line:
+                words = line.split()
+                if not line.startswith(' '):
+                    device = words[1][0:-1]
+                    mtu = words[4]
+                elif words[0].startswith('link/'):
+                    iface_type = words[0].split('/')[1]
+                    if iface_type == 'void':
+                        macaddress = 'unknown'
+                    else:
+                        macaddress = words[1]
+                elif words[0] == 'inet':
+                    address, netmask_length = words[1].split('/')
+                    address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
 
-    def get_ipv4_facts(self):
-        for iface in self.facts['interfaces']:
-            # This is lame, but there doesn't appear to be a good way
-            # to get all addresses for both IPv4 and IPv6.
-            cmd = subprocess.Popen("env LANG=\"\" /sbin/ifconfig %s" % iface, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = cmd.communicate()
-            for line in out.split('\n'):
-                is_ipv4 = False
-                data = line.split()
-                if 'inet addr' in line:
-                    if 'ipv4' not in self.facts[iface]:
-                        self.facts[iface]['ipv4'] = {}
-                    is_ipv4 = True
-                    self.facts[iface]['ipv4'] = { 'address': data[1].split(':')[1],
-                                                  'netmask': data[-1].split(':')[1] }
-                # Slightly different output in net-tools-1.60-134.20120127git
-                # Looks like
-                # inet 192.168.1.2  netmask 255.255.255.0  broadcast 192.168.1.255
-                elif 'inet ' in line:
-                    is_ipv4 = True
-                    if 'ipv4' not in self.facts[iface]:
-                        self.facts[iface]['ipv4'] = {}
-                    self.facts[iface]['ipv4'] = { 'address': data[1],
-                                                  'netmask': data[3] }
-                if is_ipv4:
-                    ip = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['address']))[0]
-                    mask = struct.unpack("!L", socket.inet_aton(self.facts[iface]['ipv4']['netmask']))[0]
-                    self.facts[iface]['ipv4']['network'] = socket.inet_ntoa(struct.pack("!L", ip & mask))
+                    netmask_bin = (1<<32) - (1<<32>>int(netmask_length))
+                    netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
 
-    def get_ipv6_facts(self):
-        if not socket.has_ipv6:
-            return
-        data = get_file_content('/proc/net/if_inet6')
-        if data is None:
-            return
-        for line in data.split('\n'):
-            l = line.split()
-            iface = l[5]
-            if 'ipv6' not in self.facts[iface]:
-                self.facts[iface]['ipv6'] = []
-            scope = l[3]
-            if Network.IPV6_SCOPE.has_key(l[3]):
-                scope = Network.IPV6_SCOPE[l[3]]
-            prefix = int(l[2], 16)
-            str_addr = ':'.join( [ l[0][i:i+4] for i in range(0, len(l[0]), 4) ] )
-            # Normalize ipv6 address from format in /proc/net/if_inet6
-            addr = socket.inet_ntop(socket.AF_INET6,
-                                    socket.inet_pton(socket.AF_INET6, str_addr))
-            self.facts[iface]['ipv6'].append( { 'address': addr,
-                                                'prefix': prefix,
-                                                'scope': scope } )
+                    network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
+
+                    iface = words[-1]
+                    # If an interface has multiple IPv4 addresses, make up an
+                    # interface name for each address
+                    if iface in interfaces:
+                        i = 0
+                        while '{0}_{1}'.format(iface, i) in interfaces:
+                            i += 1
+                        iface = '{0}_{1}'.format(iface, i)
+
+                    interfaces[iface] = {}
+                    interfaces[iface]['macaddress'] = macaddress
+                    interfaces[iface]['mtu'] = mtu
+                    interfaces[iface]['type'] = iface_type
+                    interfaces[iface]['device'] = device
+                    interfaces[iface]['ipv4'] = {'address': address,
+                                                 'netmask': netmask,
+                                                 'network': network}
+
+                    # If this is the default address, update default_ipv4
+                    if 'address' in default_ipv4 and default_ipv4['address'] == address:
+                        default_ipv4['netmask'] = netmask
+                        default_ipv4['network'] = network
+                        default_ipv4['macaddress'] = macaddress
+                        default_ipv4['mtu'] = mtu
+                        default_ipv4['type'] = iface_type
+                        default_ipv4['alias'] = words[-1]
+
+                    if not address.startswith('127.'):
+                        ips['all_ipv4_addresses'].append(address)
+
+                elif words[0] == 'inet6':
+                    address, prefix = words[1].split('/')
+                    scope = words[3]
+
+                    iface = device
+                    if iface not in interfaces:
+                        interfaces[iface] = {}
+                        interfaces[iface]['macaddress'] = macaddress
+                        interfaces[iface]['mtu'] = mtu
+                        interfaces[iface]['device'] = device
+                    if 'ipv6' not in interfaces[iface]:
+                        interfaces[iface]['ipv6'] = []
+                    interfaces[iface]['ipv6'].append( {
+                        'address': address,
+                        'prefix': prefix,
+                        'scope': scope} )
+
+                    # If this is the default address, update default_ipv6
+                    if 'address' in default_ipv6 and default_ipv6['address'] == address:
+                        default_ipv6['prefix'] = prefix
+                        default_ipv6['scope'] = scope
+                        default_ipv6['macaddress'] = macaddress
+                        default_ipv6['mtu'] = mtu
+                        default_ipv6['type'] = iface_type
+
+                    if not address == '::1':
+                        ips['all_ipv6_addresses'].append(address)
+
+        return interfaces, ips
 
 class Virtual(Facts):
     """
@@ -563,10 +609,31 @@ class LinuxVirtual(Virtual):
     def get_virtual_facts(self):
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
-            self.facts['virtualization_role'] = 'guest'
-            if os.path.exists("/proc/xen/capabilities"):
+            if os.path.exists('/proc/xen/capabilities'):
                 self.facts['virtualization_role'] = 'host'
-        if os.path.exists("/proc/modules"):
+            else:
+                self.facts['virtualization_role'] = 'guest'
+
+        elif os.path.exists('/proc/vz'):
+            self.facts['virtualization_type'] = 'openvz'
+            if os.path.exists('/proc/vz/version'):
+                self.facts['virtualization_role'] = 'host'
+            else:
+                self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/product_name') in ['KVM','Bochs']:
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'VMware, Inc.':
+            self.facts['virtualization_type'] = 'VMware'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'Microsoft Corporation':
+            self.facts['virtualization_type'] = 'VirtualPC'
+            self.facts['virtualization_role'] = 'guest'
+
+        elif os.path.exists("/proc/modules"):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
@@ -579,22 +646,6 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'host'
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
-                self.facts['virtualization_role'] = 'guest'
-        data = get_file_content('/proc/cpuinfo')
-        if 'QEMU' in data:
-            self.facts['virtualization_type'] = 'kvm'
-            self.facts['virtualization_role'] = 'guest'
-        if 'distribution' in self.facts and self.facts['distribution'] == 'VMwareESX':
-            self.facts['virtualization_type'] = 'VMware'
-            self.facts['virtualization_role'] = 'host'
-        # You can spawn a dmidecode process and parse that or infer from devices
-        for dev_model in glob.glob('/sys/block/?da/device/vendor'):
-            info = open(dev_model).read()
-            if 'VMware' in info:
-                self.facts['virtualization_type'] = 'VMware'
-                self.facts['virtualization_role'] = 'guest'
-            elif 'Virtual HD' in info or 'Virtual CD' in info:
-                self.facts['virtualization_type'] = 'VirtualPC'
                 self.facts['virtualization_role'] = 'guest'
 
 def get_file_content(path):
@@ -627,36 +678,36 @@ def run_setup(module):
     # ruby-json is ALSO installed, include facter data in the JSON
 
     if os.path.exists("/usr/bin/facter"):
-       cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
-           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       out, err = cmd.communicate()
-       facter = True
-       try:
-           facter_ds = json.loads(out)
-       except:
-           facter = False
-       if facter:
-           for (k,v) in facter_ds.items():
-               setup_options["facter_%s" % k] = v
+        cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        facter = True
+        try:
+            facter_ds = json.loads(out)
+        except:
+            facter = False
+        if facter:
+            for (k,v) in facter_ds.items():
+                setup_options["facter_%s" % k] = v
 
     # ditto for ohai, but just top level string keys
     # because it contains a lot of nested stuff we can't use for
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       out, err = cmd.communicate()
-       ohai = True
-       try:
-           ohai_ds = json.loads(out)
-       except:
-           ohai = False
-       if ohai:
-           for (k,v) in ohai_ds.items():
-               if type(v) == str or type(v) == unicode:
-                   k2 = "ohai_%s" % k
-                   setup_options[k2] = v
+        cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        ohai = True
+        try:
+            ohai_ds = json.loads(out)
+        except:
+            ohai = False
+        if ohai:
+            for (k,v) in ohai_ds.items():
+                if type(v) == str or type(v) == unicode:
+                    k2 = "ohai_%s" % k
+                    setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options
@@ -676,4 +727,3 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
-

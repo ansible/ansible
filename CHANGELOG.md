@@ -4,7 +4,6 @@ Ansible Changes By Release
 0.7 "Panama" -- release pending
 
 * I can barely see the roadmap from the heat coming off of it.
-
 * login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
 * new modules -- pip, easy_install, apt_repository, supervisorctl
 * ansible --version will now give branch/SHA information if running from git
@@ -18,6 +17,24 @@ Ansible Changes By Release
 * use -vvv for extreme debug levels. -v gives more playbook output as before
 * -vv shows module arguments to all module calls (and maybe some other things later)
 * if you ctrl+c a playbook it won't traceback
+* backup option on copy (backup=yes)
+* --version shows git information if running from git
+* file module will not recurse on directory properties
+* vars_prompt now has encryption options (see examples/playbooks/prompts.yml)
+* yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
+* don't pass "--" to sudo to work on older EL5
+* allow variables in parameterized task include parameters (regression)
+* make remote_md5 internal function work with non-bash shells
+* allow user to be passed in via --extra-vars (regression)
+* add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
+* add --limit option, which can be used to further confine the pattern given in ansible-playbooks
+* setup module now detects interfaces with aliases
+* new 'ansible_all_ipv4_addresses' and 'ansible_all_ipv6_addresses' facts -- which are simple lists
+* better handling of VM guest type detection in setup module
+* adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
+* -u and user: defaults to current user, rather than root, override as before
+* new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
+* /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
 
 0.6 "Cabo" -- August 6, 2012
 
@@ -190,8 +207,7 @@ in the playbook file
 in kickstarts
 * better module debugging with -D
 * fetch module for pulling in files from remote hosts
-* command task supports creates=foo for idempotent semantics, won't
-run if file foo already exists
+* command task supports creates=foo for idempotent semantics, won't run if file foo already exists
 
 0.0.2 and 0.0.1
 

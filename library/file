@@ -113,13 +113,6 @@ def selinux_context(path):
     return context
 
 # ===========================================
-
-
-
-
-
-
-# ===========================================
 # support functions
 
 def user_and_group(filename):
@@ -157,54 +150,64 @@ def set_context_if_different(path, context, changed):
     return changed
 
 def set_owner_if_different(path, owner, changed):
-   if owner is None:
-       return changed
-   user, group = user_and_group(path)
-   if owner != user:
-       rc = os.system("/bin/chown -R %s %s 2>/dev/null" % (owner, path))
-       if rc != 0:
-           module_fail_json(path=path, msg='chown failed')
-       return True
+    if owner is None:
+        return changed
+    user, group = user_and_group(path)
+    if owner != user:
+        try:
+            uid = pwd.getpwnam(owner).pw_uid
+        except KeyError:
+            module_fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
+        try:
+            os.chown(path, uid, -1)
+        except OSError:
+            module_fail_json(path=path, msg='chown failed')
+        return True
 
-   return changed
+    return changed
 
 def set_group_if_different(path, group, changed):
-   if group is None:
-       return changed
-   old_user, old_group = user_and_group(path)
-   if old_group != group:
-       rc = os.system("/bin/chgrp -R %s %s" % (group, path))
-       if rc != 0:
-           module_fail_json(path=path, msg='chgrp failed')
-       return True
-   return changed
+    if group is None:
+        return changed
+    old_user, old_group = user_and_group(path)
+    if old_group != group:
+        try:
+            gid = grp.getgrnam(group).gr_gid
+        except KeyError:
+            module_fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+        try:
+            os.chown(path, -1, gid)
+        except OSError:
+            module_fail_json(path=path, msg='chgrp failed')
+        return True
+    return changed
 
 def set_mode_if_different(path, mode, changed):
-   if mode is None:
-       return changed
-   try:
-       # FIXME: support English modes
-       mode = int(mode, 8)
-   except Exception, e:
-       module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
+    if mode is None:
+        return changed
+    try:
+        # FIXME: support English modes
+        mode = int(mode, 8)
+    except Exception, e:
+        module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
-   st = os.stat(path)
-   prev_mode = stat.S_IMODE(st[stat.ST_MODE])
+    st = os.stat(path)
+    prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
-   if prev_mode != mode:
-       # FIXME: comparison against string above will cause this to be executed
-       # every time
-       try:
-           os.chmod(path, mode)
-       except Exception, e:
-           module_fail_json(path=path, msg='chmod failed', details=str(e))
+    if prev_mode != mode:
+        # FIXME: comparison against string above will cause this to be executed
+        # every time
+        try:
+            os.chmod(path, mode)
+        except Exception, e:
+            module_fail_json(path=path, msg='chmod failed', details=str(e))
+ 
+        st = os.stat(path)
+        new_mode = stat.S_IMODE(st[stat.ST_MODE])
 
-       st = os.stat(path)
-       new_mode = stat.S_IMODE(st[stat.ST_MODE])
-
-       if new_mode != prev_mode:
-           return True
-   return changed
+        if new_mode != prev_mode:
+            return True
+    return changed
 
 
 def rmtree_error(func, path, exc_info):
@@ -212,7 +215,9 @@ def rmtree_error(func, path, exc_info):
 
 def main():
 
+    # FIXME: pass this around, should not use global
     global module
+
     module = AnsibleModule(
         check_invalid_arguments = False,
         argument_spec = dict(
