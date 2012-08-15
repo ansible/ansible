@@ -19,14 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-EASY_INSTALL = None
-VIRTUALENV = '/usr/local/bin/virtualenv'
-ENV = None
-
-
-def _find_easy_install():
-    if ENV:
-        return os.path.join(ENV, 'bin', 'easy_install')
+def _find_easy_install(env):
+    if env:
+        return os.path.join(env, 'bin', 'easy_install')
 
     paths = ['/usr/local/bin', '/usr/bin']
 
@@ -36,15 +31,15 @@ def _find_easy_install():
             return e
 
 
-def _ensure_virtualenv():
-    if os.path.exists(os.path.join(ENV, 'bin', 'activate')):
+def _ensure_virtualenv(env, virtualenv):
+    if os.path.exists(os.path.join(env, 'bin', 'activate')):
         return 0, '', ''
     else:
-        return _run('%s %s' % (VIRTUALENV, ENV))
+        return _run('%s %s' % (virtualenv, env))
 
 
-def _is_package_installed(name):
-    cmd = '%s --dry-run %s' % (EASY_INSTALL, name)
+def _is_package_installed(name, easy_install):
+    cmd = '%s --dry-run %s' % (easy_install, name)
     rc, status_stdout, status_stderr = _run(cmd)
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
 
@@ -66,15 +61,15 @@ def main():
     module = AnsibleModule(argument_spec=arg_spec)
 
     name = module.params['name']
-    ENV = module.params['virtualenv']
-    EASY_INSTALL = _find_easy_install()
+    env = module.params['virtualenv']
+    easy_install = _find_easy_install(env)
 
     rc = 0
     err = ''
     out = ''
 
-    if ENV:
-        rc_venv, out_venv, err_venv = _ensure_virtualenv()
+    if env:
+        rc_venv, out_venv, err_venv = _ensure_virtualenv(env, '/usr/local/bin/virtualenv')
 
         rc += rc_venv
         out += out_venv
@@ -82,10 +77,10 @@ def main():
 
     cmd = None
     changed = False
-    installed = _is_package_installed(name)
+    installed = _is_package_installed(name, easy_install)
 
     if not installed:
-        cmd = '%s %s' % (EASY_INSTALL, name)
+        cmd = '%s %s' % (easy_install, name)
         rc_pip, out_pip, err_pip = _run(cmd)
 
         rc += rc_pip
@@ -97,8 +92,8 @@ def main():
     if rc != 0:
         module.fail_json(msg=err, cmd=cmd)
 
-    module.exit_json(changed=changed, binary=EASY_INSTALL,
-                     name=name, virtualenv=ENV)
+    module.exit_json(changed=changed, binary=easy_install,
+                     name=name, virtualenv=env)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
