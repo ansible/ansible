@@ -3,20 +3,22 @@ Who Uses Ansible
 
 Ansible is used by all sorts of organizations from hosted web applications, media companies, universities, consultancies, and ISVs -- all over the world. Some of these users include:
 
-============================================================  ===================================================
+============================================================  =====================================================
 Who They Are                                                  What They Do
-============================================================  ===================================================
+============================================================  =====================================================
+`Alta Language Services <http://www.altalang.com>`            Language testing, solutions, and translation services
 `Basho <http://basho.com>`_                                   Makers of NoSQL key-value store Riak
 `Cygate AB <http://cygate.se>`_                               IT solutions from Malmö, Sweden
 `Dag IT Solutions <http://dagit.net>`_                        "Enterprise Linux and Beyond"
 `Fedora Project <http://fedoraproject.org>`_                  Produces the popular Linux distribution
 `Four Kitchens <http://fourkitchens.com>`_                    "The Drupal Experts"
+`Lizenzfrei <http://lizenzfrei.at/>`_                         Open source consulting and development, Austria
 `Schmooze Com <http://www.schmoozecom.com/>`_                 Creators of Industry-Leading PBX Platforms
 `Skyline.es <http://skylin.es>`_                              Realtime Photo Search Engine
 `Steelhouse <http://steelhouse.com>`_                         Behavioral Commerce
 `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_   Running some of the biggest web sites in Europe
 `123i.com.br <http://123i.com.br>`_                           Find real estate in Brazil
-============================================================  ===================================================
+============================================================  =====================================================
 
 and lots of other people (you should see our Google Analytics data).  Tweet at `Michael DeHaan <http://twitter.com/laserllama>`_ or `email him <mailto:michael.dehaan@gmail.com>`_ to get your company or project listed here.  (It's free!)
 
