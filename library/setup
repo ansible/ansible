@@ -467,6 +467,10 @@ class LinuxNetwork(Network):
         interface = dict(v4 = {}, v6 = {})
         for v in 'v4', 'v6':
             output = subprocess.Popen(command[v], stdout=subprocess.PIPE).communicate()[0]
+            if not output:
+                # v6 routing may result in 
+                #   RTNETLINK answers: Invalid argument
+                continue
             words = output.split('\n')[0].split()
             # A valid output starts with the queried address on the first line
             if words[0] == command[v][-1]:
