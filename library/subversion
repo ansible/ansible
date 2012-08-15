@@ -1,0 +1,146 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# I wanted to keep this simple at first, so for now this checks out
+# from the given branch of a repo at a particular SHA or
+# tag.  Latest is not supported, you should not be doing
+# that. Contribs welcome! -- MPD
+
+# requires subversion on the client.
+
+import re
+import logging
+logger = logging.getLogger('subversion')
+#hdlr = logging.FileHandler('/tmp/subversion.log')
+#hdlr.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+#logger.addHandler(hdlr)
+logger.setLevel(logging.DEBUG)
+
+def get_version(dest):
+    ''' samples the version of the git repo '''
+    logger.debug('get_version')
+    os.chdir(dest)
+    cmd = "svn info | grep Revision"
+    logger.debug(cmd)
+    return os.popen(cmd).read()
+
+def checkout(repo, dest):
+    ''' makes a new svn repo if it does not already exist '''
+    logger.debug('checkout')
+    try:
+        os.makedirs(os.path.dirname(dest))
+    except:
+        pass
+    cmd = "svn co %s %s" % (repo, dest)
+    logger.debug(cmd)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    logger.debug('rc, error: %s, %s ' % (rc,err))
+    return (rc, out, err)
+
+def reset(dest):
+    '''
+    throw away any changes?
+    TODO doesn't seem like a good idea to me...
+    TODO throw away non-tracked files?
+      -- svn st | grep '?' | awk '{print $2}' | xargs rm -rf
+    '''
+    logger.debug('reset')
+    os.chdir(dest)
+    cmd = "svn revert -R ."
+    logger.debug(cmd)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+def update(module, dest, version):
+    ''' update an existing svn repo '''
+    logger.debug('update')
+    os.chdir(dest)
+    cmd = ''
+    if version != 'HEAD':
+        cmd = "svn up -r %s" % version
+    else:
+        cmd = "svn up"
+    logger.debug(cmd)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            dest=dict(required=True),
+            repo=dict(required=True, aliases=['name']),
+            revision=dict(default='HEAD')
+        )
+    )
+
+    dest    = module.params['dest']
+    repo    = module.params['repo']
+    revision = module.params['revision']
+
+    rc, out, err, status = (0, None, None, None)
+
+    # if there is no .svn folder, do a checkout
+    # else update.
+    before = None
+    if not os.path.exists("%s/.svn" % (dest)):
+        logger.debug('.svn exists')
+        (rc, out, err) = checkout(repo, dest)
+        if rc != 0:
+            logger.debug('checkout failure')
+            module.fail_json(msg=err)
+    else:
+        # else do an update
+        before = get_version(dest)
+        (rc, out, err) = reset(dest)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+    # handle errors from checkout or pull
+    logger.debug('ERROR: %s' % (err.find('ERROR') != -1))
+    if err.find('ERROR') != -1:
+        logger.debug('err:\n%s' % (err))
+        module.fail_json(msg=err)
+
+    # switch to version specified regardless of whether
+    # we cloned or pulled
+    (rc, out, err) = update(module, dest, revision)
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    # determine if we changed anything
+    after = get_version(dest)
+    changed = False
+
+    if before != after:
+        changed = True
+
+    module.exit_json(changed=changed, before=before, after=after, msg="fell thru the bag")
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
