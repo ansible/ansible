@@ -437,6 +437,29 @@ the cron frequency, logging locations, and parameters to ansible-pull.
 This is useful both for extreme scale-out as well as periodic remediation.  Usage of the 'fetch' module to retrieve
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.
 
+Register Variables
+``````````````````
+
+.. versionadded:: 0.7
+
+Often in a playbook it may be useful to store the result of a given command in a variable and access
+it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
+instance, you could test for the existance of a particular program.  
+
+The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
+
+    - name: test playbook
+      hosts: all
+
+      tasks:
+
+          - action: shell cat /etc/motd
+            register: motd_contents
+
+          - action: shell echo "motd contains the word hi"
+            only_if: "'${motd_contents.stdout}'.find('hi') != -1"
+
+
 Style Points
 ````````````
 
