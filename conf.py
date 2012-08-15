@@ -76,7 +76,7 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-#exclude_patterns = ['elements', 'tasks', 'tests.rst']
+exclude_patterns = ['modules']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
