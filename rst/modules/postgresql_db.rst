@@ -3,6 +3,8 @@
 postgresql_db
 `````````````
 
+.. versionadded:: 0.6
+
 Add or remove PostgreSQL databases from a remote host.
 
 The default authentication assumes that you are either logging in as or

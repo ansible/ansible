@@ -89,35 +89,8 @@ To transfer a file directly to many different servers::
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
-To use templating, first run the setup module to put the template
-variables you would like to use on the remote host. Then use the
-template module to write the files using those templates.
-
-Templates are written in `Jinja2 <http://jinja.pocoo.org/docs/>`_
-format.  :doc:`playbooks` will run the setup module for you, making
-this even simpler::
-
-    $ ansible webservers -m setup    -a "favcolor=red ntp_server=192.168.1.1"
-    $ ansible webservers -m template -a "src=/srv/motd.j2 dest=/etc/motd"
-    $ ansible webservers -m template -a "src=/srv/ntp.j2 dest=/etc/ntp.conf"
-
-Ansible variables are used in templates by using the name surrounded
-by double curly-braces.  Ansible provides some *facts* about the
-system being managed automatically in playbooks or when the setup
-module is run manually.  If facter or ohai were installed on the
-remote machine, variables from those programs can be accessed too,
-using the appropriate prefix:
-
-.. code-block:: django
-
-    This is an Ansible variable: {{ favcolor }}
-    This is an Ansible fact: {{ ansible_hostname }}
-    This is a facter fact: {{ facter_hostname }}
-    This is an ohai fact: {{ ohai_foo }}
-
-Using the Ansible facts is generally preferred as that way you can avoid a dependency
-on ruby.  If you want to use facter instead, you will also need rubygem-json because
-the facter packages may forget this as a dependency.
+If you use playbooks, you can also take advantage of the template module,
+which takes this another step further.
 
 The ``file`` module allows changing ownership and permissions on files.  These
 same options can be passed directly to the ``copy`` or ``template`` modules as well::
@@ -233,6 +206,34 @@ Any module other than ``copy`` or ``template`` can be
 backgrounded.  Typically you'll be backgrounding long-running
 shell commands or software upgrades only.  :doc:`playbooks` also support polling, and have
 a simplified syntax for this.
+
+Limiting Selected Hosts
+```````````````````````
+
+.. versionadded:: 0.7
+
+What hosts you select to manage can be additionally constrained by using the '--limit' parameter or
+by using 'batch' (or 'range') selectors.
+
+As mentioned above, patterns can be strung together to select hosts in more than one group::
+
+    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" 
+
+This is an "or" condition.  If you want to further constrain the selection, use --limit, which
+also works with ``ansible-playbook``::
+
+    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" region
+
+Now let's talk about range selection.   Suppose you have 1000 servers in group 'datacenter', but only want to target one at a time.  This is also easy::
+
+    $ ansible webservers[0-99] -m command -a "/bin/foo xyz"
+    $ ansible webservers[100-199] -m command -a "/bin/foo xyz"
+
+This will select the first 100, then the second 100, host entries in the webservers group.  (It does not matter
+what their names or IP addresses are).
+
+Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.  
+
 
 .. seealso::
 

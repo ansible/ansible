@@ -140,7 +140,6 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 <li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </span>
@@ -157,6 +156,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#deploying-from-source-control">Deploying From Source Control</a></li>
 <li><a class="reference internal" href="#managing-services">Managing Services</a></li>
 <li><a class="reference internal" href="#time-limited-background-operations">Time Limited Background Operations</a></li>
+<li><a class="reference internal" href="#limiting-selected-hosts">Limiting Selected Hosts</a></li>
 </ul>
 </li>
 </ul>
@@ -261,32 +261,8 @@ optionally use them as template sources.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -m copy -a <span class="s2">&quot;src=/etc/hosts dest=/tmp/hosts&quot;</span>
 </pre></div>
 </div>
-<p>To use templating, first run the setup module to put the template
-variables you would like to use on the remote host. Then use the
-template module to write the files using those templates.</p>
-<p>Templates are written in <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2</a>
-format.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> will run the setup module for you, making
-this even simpler:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m setup    -a <span class="s2">&quot;favcolor=red ntp_server=192.168.1.1&quot;</span>
-<span class="nv">$ </span>ansible webservers -m template -a <span class="s2">&quot;src=/srv/motd.j2 dest=/etc/motd&quot;</span>
-<span class="nv">$ </span>ansible webservers -m template -a <span class="s2">&quot;src=/srv/ntp.j2 dest=/etc/ntp.conf&quot;</span>
-</pre></div>
-</div>
-<p>Ansible variables are used in templates by using the name surrounded
-by double curly-braces.  Ansible provides some <em>facts</em> about the
-system being managed automatically in playbooks or when the setup
-module is run manually.  If facter or ohai were installed on the
-remote machine, variables from those programs can be accessed too,
-using the appropriate prefix:</p>
-<div class="highlight-django"><div class="highlight"><pre><span class="x">This is an Ansible variable: </span><span class="cp">{{</span> <span class="nv">favcolor</span> <span class="cp">}}</span><span class="x"></span>
-<span class="x">This is an Ansible fact: </span><span class="cp">{{</span> <span class="nv">ansible_hostname</span> <span class="cp">}}</span><span class="x"></span>
-<span class="x">This is a facter fact: </span><span class="cp">{{</span> <span class="nv">facter_hostname</span> <span class="cp">}}</span><span class="x"></span>
-<span class="x">This is an ohai fact: </span><span class="cp">{{</span> <span class="nv">ohai_foo</span> <span class="cp">}}</span><span class="x"></span>
-</pre></div>
-</div>
-<p>Using the Ansible facts is generally preferred as that way you can avoid a dependency
-on ruby.  If you want to use facter instead, you will also need rubygem-json because
-the facter packages may forget this as a dependency.</p>
+<p>If you use playbooks, you can also take advantage of the template module,
+which takes this another step further.</p>
 <p>The <tt class="docutils literal"><span class="pre">file</span></tt> module allows changing ownership and permissions on files.  These
 same options can be passed directly to the <tt class="docutils literal"><span class="pre">copy</span></tt> or <tt class="docutils literal"><span class="pre">template</span></tt> modules as well:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m file -a <span class="s2">&quot;dest=/srv/foo/a.txt mode=600&quot;</span>
@@ -393,6 +369,28 @@ the remote nodes will be terminated.</p>
 backgrounded.  Typically you&#8217;ll be backgrounding long-running
 shell commands or software upgrades only.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> also support polling, and have
 a simplified syntax for this.</p>
+</div>
+<div class="section" id="limiting-selected-hosts">
+<h2>Limiting Selected Hosts<a class="headerlink" href="#limiting-selected-hosts" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>What hosts you select to manage can be additionally constrained by using the &#8216;&#8211;limit&#8217; parameter or
+by using &#8216;batch&#8217; (or &#8216;range&#8217;) selectors.</p>
+<p>As mentioned above, patterns can be strung together to select hosts in more than one group:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers:dbservers -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
+</pre></div>
+</div>
+<p>This is an &#8220;or&#8221; condition.  If you want to further constrain the selection, use &#8211;limit, which
+also works with <tt class="docutils literal"><span class="pre">ansible-playbook</span></tt>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers:dbservers -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span> region
+</pre></div>
+</div>
+<p>Now let&#8217;s talk about range selection.   Suppose you have 1000 servers in group &#8216;datacenter&#8217;, but only want to target one at a time.  This is also easy:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers<span class="o">[</span>0-100<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
+<span class="nv">$ </span>ansible webservers<span class="o">[</span>101-200<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
+</pre></div>
+</div>
+<p>Both of these methods can be used at the same time, and ranges can also be passed to the &#8211;limit parameter.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -437,7 +435,7 @@ a simplified syntax for this.</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 10, 2012.<br/>
+      Last updated on Aug 14, 2012.<br/>
     </p>
   </div>
 </footer>

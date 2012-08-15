@@ -3,6 +3,8 @@
 postgresql_user
 ```````````````
 
+.. versionadded:: 0.6
+
 Add or remove PostgreSQL users (roles) from a remote host, and grant the users
 access to an existing database.
 

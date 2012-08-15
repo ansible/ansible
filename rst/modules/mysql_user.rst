@@ -1,6 +1,8 @@
 mysql_user
 ``````````
 
+.. versionadded:: 0.6
+
 Adds or removes a user from a MySQL database.
 
 Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as

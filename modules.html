@@ -140,7 +140,6 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 <li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </span>
@@ -150,8 +149,8 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#apt">apt</a></li>
 <li><a class="reference internal" href="#apt-repository">apt_repository</a></li>
+<li><a class="reference internal" href="#apt">apt</a></li>
 <li><a class="reference internal" href="#assemble">assemble</a></li>
 <li><a class="reference internal" href="#authorized-key">authorized_key</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
@@ -236,8 +235,45 @@ not have to write modules in any particular language &#8211; you get to choose.<
 playbooks, these modules can trigger &#8216;change events&#8217; in the form of notifying &#8216;handlers&#8217;
 to run additional tasks.</p>
 <p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
+<div class="section" id="apt-repository">
+<span id="id1"></span><h2>apt_repository<a class="headerlink" href="#apt-repository" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Manages apt repositores</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>repo</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>The repository name/value</td>
+</tr>
+<tr><td>state</td>
+<td>no</td>
+<td>present</td>
+<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>apt_repository repo=ppa:nginx/stable
+apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'</pre>
+</div>
+</div>
 <div class="section" id="apt">
-<span id="id1"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -301,43 +337,6 @@ apt pkg=foo state=installed
 apt pkg=foo=1.00 state=installed
 apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
 apt pkg=openjdk-6-jdk state=latest install-recommends=no</pre>
-</div>
-</div>
-<div class="section" id="apt-repository">
-<span id="id2"></span><h2>apt_repository<a class="headerlink" href="#apt-repository" title="Permalink to this headline">¶</a></h2>
-<p class="versionadded">
-<span class="versionmodified">New in version 0.7.</span></p>
-<p>Manages apt repositores</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="17%" />
-<col width="9%" />
-<col width="8%" />
-<col width="66%" />
-</colgroup>
-<thead valign="bottom">
-<tr><th class="head">parameter</th>
-<th class="head">required</th>
-<th class="head">default</th>
-<th class="head">comments</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr><td>repo</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>The repository name/value</td>
-</tr>
-<tr><td>state</td>
-<td>no</td>
-<td>present</td>
-<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
-</tr>
-</tbody>
-</table>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>apt_repository repo=ppa:nginx/stable
-apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'</pre>
 </div>
 </div>
 <div class="section" id="assemble">
@@ -912,6 +911,8 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 </div>
 <div class="section" id="mysql-db">
 <span id="id15"></span><h2>mysql_db<a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove MySQL databases from a remote host.</p>
 <p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
 apt-get install python-mysqldb.</p>
@@ -977,6 +978,8 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 </div>
 <div class="section" id="mysql-user">
 <h2>mysql_user<a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
 <p>Adds or removes a user from a MySQL database.</p>
 <p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
 apt-get install python-mysqldb.</p>
@@ -1129,7 +1132,9 @@ pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapp
 </div>
 </div>
 <div class="section" id="postgresql-db">
-<h2>postgresql_db<a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2>postgresql_db<a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL databases from a remote host.</p>
 <p>The default authentication assumes that you are either logging in as or
 sudo&#8217;ing to the postgres account on the host.</p>
@@ -1186,7 +1191,9 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="postgresql-user">
-<h2>postgresql_user<a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2>postgresql_user<a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL users (roles) from a remote host, and grant the users
 access to an existing database.</p>
 <p>The default authentication assumes that you are either logging in as or
@@ -1254,7 +1261,7 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="raw">
-<span id="id20"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
 <p>Executes a low-down and dirty SSH command, not going through the module subsystem.</p>
 <p>This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
@@ -1269,7 +1276,7 @@ for this module.</p>
 </div>
 </div>
 <div class="section" id="service">
-<span id="id21"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1313,7 +1320,7 @@ service name=httpd state=reloaded</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id22"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -1395,7 +1402,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id23"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -1445,7 +1452,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id24"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id26"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -1481,7 +1488,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id25"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1521,7 +1528,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id26"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1620,7 +1627,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id27"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1680,7 +1687,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id28"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1778,7 +1785,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 10, 2012.<br/>
+      Last updated on Aug 14, 2012.<br/>
     </p>
   </div>
 </footer>

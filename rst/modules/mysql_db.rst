@@ -3,6 +3,8 @@
 mysql_db
 ````````
 
+.. versionadded:: 0.6
+
 Add or remove MySQL databases from a remote host.
 
 Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as
