@@ -28,13 +28,17 @@ Now to run the command on all servers in a group, in this case,
 
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
-If you want to run commands as a different user than root, it looks like this::
+In 0.7 and later, this will default to running from your user account.  If you do not like this
+behavior, pass in "-u username".  (In 0.6 and before, it defaulted to root.  Most folks prefered
+defaulting to the current user, so we changed it).
 
-    $ ansible atlanta -a "/usr/bin/foo" -u yourname
+If you want to run commands as a different user, it looks like this::
+
+    $ ansible atlanta -a "/usr/bin/foo" -u username
 
 If you want to run commands through sudo::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u yourname --sudo [--ask-sudo-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username --sudo [--ask-sudo-pass]
 
 Use ``--ask-sudo-pass`` (``-K``) if you are not using passwordless
 sudo.  This will interactively prompt you for the password to use.
@@ -44,7 +48,7 @@ required.
 It is also possible to sudo to a user other than root using
 ``--sudo-user`` (``-U``)::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u yourname -U otheruser [--ask-sudo-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username -U otheruser [--ask-sudo-pass]
 
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
 
