@@ -165,6 +165,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
 <li><a class="reference internal" href="#turning-off-facts">Turning Off Facts</a></li>
 <li><a class="reference internal" href="#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
+<li><a class="reference internal" href="#register-variables">Register Variables</a></li>
 <li><a class="reference internal" href="#style-points">Style Points</a></li>
 </ul>
 </li>
@@ -577,6 +578,26 @@ architecture, which has near-limitless scaling potential.  The setup playbook ca
 the cron frequency, logging locations, and parameters to ansible-pull.</p>
 <p>This is useful both for extreme scale-out as well as periodic remediation.  Usage of the &#8216;fetch&#8217; module to retrieve
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.</p>
+</div>
+<div class="section" id="register-variables">
+<h2>Register Variables<a class="headerlink" href="#register-variables" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Often in a playbook it may be useful to store the result of a given command in a variable and access
+it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
+instance, you could test for the existance of a particular program.</p>
+<p>The &#8216;register&#8217; keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example):</p>
+<div class="highlight-python"><pre>- name: test playbook
+  hosts: all
+
+  tasks:
+
+      - action: shell cat /etc/motd
+        register: motd_contents
+
+      - action: shell echo "motd contains the word hi"
+        only_if: "'${motd_contents.stdout}'.find('hi') != -1"</pre>
+</div>
 </div>
 <div class="section" id="style-points">
 <h2>Style Points<a class="headerlink" href="#style-points" title="Permalink to this headline">¶</a></h2>

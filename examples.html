@@ -386,10 +386,12 @@ also works with <tt class="docutils literal"><span class="pre">ansible-playbook<
 </pre></div>
 </div>
 <p>Now let&#8217;s talk about range selection.   Suppose you have 1000 servers in group &#8216;datacenter&#8217;, but only want to target one at a time.  This is also easy:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers<span class="o">[</span>0-100<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
-<span class="nv">$ </span>ansible webservers<span class="o">[</span>101-200<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers<span class="o">[</span>0-99<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
+<span class="nv">$ </span>ansible webservers<span class="o">[</span>100-199<span class="o">]</span> -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span>
 </pre></div>
 </div>
+<p>This will select the first 100, then the second 100, host entries in the webservers group.  (It does not matter
+what their names or IP addresses are).</p>
 <p>Both of these methods can be used at the same time, and ranges can also be passed to the &#8211;limit parameter.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
