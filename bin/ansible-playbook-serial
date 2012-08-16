@@ -1,0 +1,154 @@
+#!/usr/bin/env python
+# (C) 2012, Jeremy Smitherman, <jeremysmitherman@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+#######################################################
+
+import os
+import sys
+import getpass
+
+import ansible.playbook
+import ansible.constants as C
+from ansible import errors
+from ansible import callbacks
+from ansible import utils
+from ansible.color import ANSIBLE_COLOR, stringc
+from ansible.inventory.ini import InventoryParser
+from ansible.inventory import Inventory
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
+
+def colorize(lead, num, color):
+    """ Print 'lead' = 'num' in 'color' """
+    if num != 0 and ANSIBLE_COLOR:
+        return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
+    else:
+        return "%s=%-4s" % (lead, str(num))
+
+def hostcolor(host, stats):
+    if ANSIBLE_COLOR:
+        if stats['failures'] != 0 or stats['unreachable'] != 0:
+            return "%-41s" % stringc(host, 'red')
+        elif stats['changed'] != 0:
+            return "%-41s" % stringc(host, 'yellow')
+        else:
+            return "%-41s" % stringc(host, 'green')
+    return "%-30s" % host
+
+
+def main(args):
+    ''' run ansible-playbook operations '''
+
+    # create parser for CLI options
+    usage = "%prog playbook.yml"
+    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True)
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
+        help="set additional key=value variables from the CLI")
+    parser.add_option('-t', '--tags', dest='tags', default='all',
+        help="only run plays and tasks tagged with these values")
+
+    options, args = parser.parse_args(args)
+
+    if len(args) == 0:
+        parser.print_help(file=sys.stderr)
+        return 1
+
+    sshpass = None
+    sudopass = None
+    if options.ask_pass:
+        sshpass = getpass.getpass(prompt="SSH password: ")
+    if options.ask_sudo_pass:
+        sudopass = getpass.getpass(prompt="sudo password: ")
+        options.sudo = True
+    if options.sudo_user:
+        options.sudo = True
+    options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+    extra_vars = utils.parse_kv(options.extra_vars)
+    only_tags = options.tags.split(",")
+
+    # run all playbooks specified on the command line
+    for playbook in args:
+
+        stats = callbacks.AggregateStats()
+        playbook_cb = callbacks.PlaybookCallbacks(verbose=options.verbose)
+        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=options.verbose)
+
+        parser = InventoryParser(filename=options.inventory)
+        inventories  = []
+        for name,group in parser.groups.iteritems():
+            for h in group.hosts:
+                g = Group(name)
+                g.add_host(h)
+                i = Inventory()
+                i.groups = [ g ]
+                
+                inventories.append(i)
+
+        for i in inventories:
+            pb = ansible.playbook.PlayBook(
+                playbook=playbook,
+                module_path=options.module_path,
+                host_list=options.inventory,
+                forks=options.forks,
+                verbose=options.verbose,
+                remote_user=options.remote_user,
+                remote_pass=sshpass,
+                callbacks=playbook_cb,
+                runner_callbacks=runner_cb,
+                stats=stats,
+                timeout=options.timeout,
+                transport=options.connection,
+                sudo=options.sudo,
+                sudo_user=options.sudo_user,
+                sudo_pass=sudopass,
+                extra_vars=extra_vars,
+                private_key_file=options.private_key_file,
+                only_tags=only_tags,
+            )
+
+            pb.inventory = i
+
+            try:
+                pb.run()
+                hosts = sorted(pb.stats.processed.keys())
+                print callbacks.banner("PLAY RECAP")
+                for h in hosts:
+                    t = pb.stats.summarize(h)
+    		print "%-30s : %s %s %s %s " % (
+    			hostcolor(h, t),
+    			colorize('ok', t['ok'], 'green'),
+    			colorize('changed', t['changed'], 'yellow'),
+    			colorize('unreachable', t['unreachable'], 'red'),
+    			colorize('failed', t['failures'], 'red'))
+
+                print "\n"
+
+            except errors.AnsibleError, e:
+                print >>sys.stderr, "ERROR: %s" % e
+                return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except errors.AnsibleError, e:
+        print >>sys.stderr, "ERROR: %s" % e
+        sys.exit(1)
+
