@@ -101,8 +101,6 @@ python:
 	python setup.py build
 
 install:
-	mkdir -p /usr/share/ansible
-	cp ./library/* /usr/share/ansible/
 	python setup.py install
 
 sdist: clean
