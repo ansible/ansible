@@ -126,6 +126,10 @@ Architecture
 | "I swear, I have gotten more done with Ansible in three days than I did in not getting chef installed     |
 | in three weeks."                                                                                          |
 +-----------------------------------------------------------------------------------------------------------+
+| "Puppet was hell... gave up on Chef... found ansible and couldn't be happier."                            |
++-----------------------------------------------------------------------------------------------------------+
+| "Really impressed with Ansible. Up and running in ¼ of the time it took to get going with Puppet."        |
++-----------------------------------------------------------------------------------------------------------+
 
 +--------------------------------------------------------------------------------------------------+
 | Presented By...                                                                                  |
