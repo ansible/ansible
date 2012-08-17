@@ -101,7 +101,6 @@ def main():
     out = ''
 
     env = module.params['virtualenv']
-    pip = _find_pip(module, env)
 
     if env:
         virtualenv = _find_virtualenv(module)
@@ -111,6 +110,8 @@ def main():
         rc += rc_venv
         out += out_venv
         err += err_venv
+
+    pip = _find_pip(module, env)
 
     state = module.params['state']
     name = module.params['name']
@@ -154,15 +155,15 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     elif name:
-        
+
         installed = _is_package_installed(name, pip, version)
         changed = ((installed and state == 'absent') or
                    (not installed and state == 'present'))
 
         if changed:
             if state == 'present':
-                full_name = _get_full_name(name, version) 
-            else: 
+                full_name = _get_full_name(name, version)
+            else:
                 full_name = name
 
             cmd = '%s %s %s' % (pip, command_map[state], full_name)
