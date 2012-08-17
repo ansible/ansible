@@ -540,6 +540,10 @@ class Runner(object):
     def _executor_internal_inner(self, host, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
+        # FIXME: temporary, need to refactor to pass as parameters versus reassigning
+        prev_module_name = self.module_name
+        prev_module_args = self.module_args
+
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
         # 'hostvars' variable contains variables for each host name
@@ -594,6 +598,11 @@ class Runner(object):
             if 'daisychain_args' in result.result:
                 self.module_args = result.result['daisychain_args']
             result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
+
+            # FIXME: remove this hack
+            self.module_name = prev_module_name
+            self.module_args = prev_module_args
+
             result2.result['module'] = self.module_name
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
@@ -665,7 +674,9 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        return utils.last_non_blank_line(self._low_level_exec_command(conn, cmd, tmp, sudoable=False))
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
+        data = utils.last_non_blank_line(data)
+        return data.split()[0]
 
     # *****************************************************
 
