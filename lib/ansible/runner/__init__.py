@@ -540,6 +540,10 @@ class Runner(object):
     def _executor_internal_inner(self, host, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
+        # store module_name and module_args for next run 
+        preserve_module_name = self.module_name
+        preserve_module_args = self.module_args        
+
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
         # 'hostvars' variable contains variables for each host name
@@ -595,6 +599,9 @@ class Runner(object):
                 self.module_args = result.result['daisychain_args']
             result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
             result2.result['module'] = self.module_name
+            # restore module_name and module_args after daisychaining!
+            self.module_name = preserve_module_name
+            self.module_args = preserve_module_args
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
@@ -658,7 +665,7 @@ class Runner(object):
 
         test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1" % (path,path)
         md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,
+            "(/usr/bin/md5sum %s | cut -c1-32 2>/dev/null)" % path,
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,
             "(/usr/bin/digest -a md5 -v %s 2>/dev/null)" % path
         ]
