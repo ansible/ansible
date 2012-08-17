@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 08/14/2012
+.\"      Date: 08/15/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.7
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "08/14/2012" "Ansible 0\&.7" "System administration commands"
+.TH "ANSIBLE" "1" "08/15/2012" "Ansible 0\&.7" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -42,6 +42,11 @@ ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 A name of a group in the inventory file, a shell\-like glob selecting hosts in inventory file, or any combination of the two separated by semicolons\&.
 .RE
 .SH "OPTIONS"
+.PP
+\fB\-v\fR, \fB\-\-verbose\fR
+.RS 4
+Verbose mode, more output from successful actions will be shown\&. Give up to three times for more output\&.
+.RE
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
 .RS 4
