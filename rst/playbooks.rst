@@ -2,7 +2,7 @@ Playbooks
 =========
 
 Playbooks are a completely different way to use ansible than in task execution mode, and are
-particularly awesome.   Simply put, playbooks are the basis for a really simple 
+particularly powerful. Simply put, playbooks are the basis for a really simple 
 configuration management and multi-machine deployment system, 
 unlike any that already exist, and one that is very well suited to deploying complex applications.
 
@@ -127,7 +127,7 @@ These variables can be used later in the playbook like this::
 
 The later is useful in the event you need to do something like ${other}_some_string.
 
-The full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_ templating language is also available, which looks like this::
+Inside templates, the full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_ templating language is also available, which looks like this::
 
     {{ varname }}
 

@@ -1,5 +1,5 @@
-Command Line
-============
+Command Line Examples And Next Steps
+====================================
 
 .. highlight:: bash
 
@@ -81,23 +81,20 @@ get it there.  This is commonly referred to as 'idempotence', and is a core desi
 However, we also recognize that running *ad hoc* commands is equally important, so Ansible easily supports both.
 
 
-File Transfer & Templating
-``````````````````````````
+File Transfer
+`````````````
 
-Here's another use case for the `/usr/bin/ansible` command line.
-
-Ansible can SCP lots of files to multiple machines in parallel, and
-optionally use them as template sources.
+Here's another use case for the `/usr/bin/ansible` command line.  Ansible can SCP lots of files to multiple machines in parallel.
 
 To transfer a file directly to many different servers::
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
-If you use playbooks, you can also take advantage of the template module,
-which takes this another step further.
+If you use playbooks, you can also take advantage of the ``template`` module,
+which takes this another step further.  (See module and playbook documentation).
 
 The ``file`` module allows changing ownership and permissions on files.  These
-same options can be passed directly to the ``copy`` or ``template`` modules as well::
+same options can be passed directly to the ``copy`` module as well::
 
     $ ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
     $ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"
@@ -109,8 +106,6 @@ The ``file`` module can also create directories, similar to ``mkdir -p``::
 As well as delete directories (recursively) and delete files::
 
     $ ansible webservers -m file -a "dest=/path/to/c state=absent"
-
-The mode, owner, and group arguments can also be used on the copy or template lines.
 
 
 Managing Packages
@@ -206,10 +201,8 @@ Be sure to use a high enough ``--forks`` value if you want to get all of your jo
 very quickly. After the time limit (in seconds) runs out (``-B``), the process on
 the remote nodes will be terminated.
 
-Any module other than ``copy`` or ``template`` can be
-backgrounded.  Typically you'll be backgrounding long-running
-shell commands or software upgrades only.  :doc:`playbooks` also support polling, and have
-a simplified syntax for this.
+Typically you'll be only be backgrounding long-running
+shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
 
 Limiting Selected Hosts
 ```````````````````````
@@ -221,7 +214,7 @@ by using 'batch' (or 'range') selectors.
 
 As mentioned above, patterns can be strung together to select hosts in more than one group::
 
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" 
+    $ ansible webservers:dbservers -m command -a "/bin/foo xyz"
 
 This is an "or" condition.  If you want to further constrain the selection, use --limit, which
 also works with ``ansible-playbook``::
@@ -236,8 +229,14 @@ Now let's talk about range selection.   Suppose you have 1000 servers in group '
 This will select the first 100, then the second 100, host entries in the webservers group.  (It does not matter
 what their names or IP addresses are).
 
-Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.  
+Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.
 
+Configuration & Defaults
+````````````````````````
+
+.. versionadded:: 0.7
+
+Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags.   The config file location is controlled by the ANSIBLE_CONFIG environment variable, if set, otherwise ~/ansible.cfg or /etc/ansible/ansible.cfg will be loaded, whichever comes first.  For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
 
 .. seealso::
 
