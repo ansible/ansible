@@ -355,6 +355,11 @@ use the '--verbose' flag.  This is available in Ansible 0.5 and later.
 Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay 
 package is installed.  Try it!
 
+In version 0.7 and later, to see what hosts would be affected by a playbook before you run it, you
+can do this::
+
+    ansible-playbook playbook.yml --list-hosts.
+
 .. seealso::
 
    :doc:`YAMLSyntax`
