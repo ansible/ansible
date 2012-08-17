@@ -57,6 +57,8 @@ def main(args):
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
+    parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+        help="dump out a list of hosts, each play will run against, does not run playbook!")
 
     options, args = parser.parse_args(args)
 
@@ -66,14 +68,15 @@ def main(args):
 
     sshpass = None
     sudopass = None
-    if options.ask_pass:
-        sshpass = getpass.getpass(prompt="SSH password: ")
-    if options.ask_sudo_pass:
-        sudopass = getpass.getpass(prompt="sudo password: ")
-        options.sudo = True
-    if options.sudo_user:
-        options.sudo = True
-    options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+    if not options.listhosts:
+        if options.ask_pass:
+            sshpass = getpass.getpass(prompt="SSH password: ")
+        if options.ask_sudo_pass:
+            sudopass = getpass.getpass(prompt="sudo password: ")
+            options.sudo = True
+        if options.sudo_user:
+            options.sudo = True
+        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
 
@@ -104,6 +107,21 @@ def main(args):
             only_tags=only_tags,
             subset=options.subset,
         )
+        
+        if options.listhosts:
+            playnum = 0
+            for play in pb.playbook:
+                playnum += 1
+                if 'hosts' in play:
+                    label = 'unnamed'
+                    if 'name' in play:
+                        label = play['name']
+                    print 'hosts in play %s: %s' % (playnum, label)
+                    for host in pb.inventory.list_hosts(play['hosts']):
+                        print '  %s' % host
+                    print '\n'
+            return 0
+            
         try:
 
             pb.run()
@@ -111,12 +129,12 @@ def main(args):
             print callbacks.banner("PLAY RECAP")
             for h in hosts:
                 t = pb.stats.summarize(h)
-		print "%-30s : %s %s %s %s " % (
-			hostcolor(h, t),
-			colorize('ok', t['ok'], 'green'),
-			colorize('changed', t['changed'], 'yellow'),
-			colorize('unreachable', t['unreachable'], 'red'),
-			colorize('failed', t['failures'], 'red'))
+                print "%-30s : %s %s %s %s " % (
+                    hostcolor(h, t),
+                    colorize('ok', t['ok'], 'green'),
+                    colorize('changed', t['changed'], 'yellow'),
+                    colorize('unreachable', t['unreachable'], 'red'),
+                    colorize('failed', t['failures'], 'red'))
 
             print "\n"
 
