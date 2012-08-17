@@ -138,7 +138,7 @@ def parse_json(raw_data):
 
         for t in tokens:
             if t.find("=") == -1:
-                raise errors.AnsibleError("failed to parse: %s" % data)
+                raise errors.AnsibleError("failed to parse: %s" % raw_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ]:
@@ -149,7 +149,7 @@ def parse_json(raw_data):
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : data }
+            return { "failed" : True, "parsed" : False, "msg" : raw_data }
         return results
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
