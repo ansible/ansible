@@ -140,7 +140,7 @@ def host_report_msg(hostname, module_name, result, oneline):
 
     failed = utils.is_failed(result)
     msg = ''
-    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result:
+    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result and result.get('parsed',True) != False:
         if not failed:
             msg = command_generic_msg(hostname, result, oneline, 'success')
         else:
