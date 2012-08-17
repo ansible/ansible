@@ -154,15 +154,15 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     elif name:
-        
+
         installed = _is_package_installed(name, pip, version)
         changed = ((installed and state == 'absent') or
                    (not installed and state == 'present'))
 
         if changed:
             if state == 'present':
-                full_name = _get_full_name(name, version) 
-            else: 
+                full_name = _get_full_name(name, version)
+            else:
                 full_name = name
 
             cmd = '%s %s %s' % (pip, command_map[state], full_name)
@@ -178,7 +178,13 @@ def main():
             err += err_pip
 
     if rc != 0:
-        module.fail_json(msg=err, cmd=cmd)
+        if not out:
+            msg = err
+        elif not err:
+            msg = out
+        else:
+            msg = "stdout: %s\n:stderr: %s" % (out, err)
+        module.fail_json(msg=msg, cmd=cmd)
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                      state=state, requirements=requirements, virtualenv=env)
