@@ -492,6 +492,10 @@ kept seperate in the counts.</p>
 use the &#8216;&#8211;verbose&#8217; flag.  This is available in Ansible 0.5 and later.</p>
 <p>Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay
 package is installed.  Try it!</p>
+<p>In version 0.7 and later, to see what hosts would be affected by a playbook before you run it, you
+can do this:</p>
+<div class="highlight-python"><pre>$ ansible-playbook playbook.yml --list-hosts.</pre>
+</div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
