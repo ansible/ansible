@@ -172,6 +172,10 @@ class Runner(object):
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
 
+        if os.getenv("ANSIBLE_KEEP_REMOTE_FILES","0") == "1":
+            # ability to turn off temp file deletion for debug purposes
+            return
+
         if type(files) == str:
             files = [ files ]
         for filename in files:

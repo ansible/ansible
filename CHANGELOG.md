@@ -35,6 +35,8 @@ Ansible Changes By Release
 * -u and user: defaults to current user, rather than root, override as before
 * new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
 * /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
+* --list-hosts to show what hosts are included in each play of a playbook
+* ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
 
 0.6 "Cabo" -- August 6, 2012
 
