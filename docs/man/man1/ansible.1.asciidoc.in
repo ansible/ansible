@@ -34,6 +34,10 @@ semicolons.
 OPTIONS
 -------
 
+*-v*, *--verbose*::
+
+Verbose mode, more output from successful actions will be shown. Give
+up to three times for more output.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
