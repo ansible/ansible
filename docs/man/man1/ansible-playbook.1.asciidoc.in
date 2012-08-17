@@ -34,9 +34,10 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
-*-v*, *--verbose*
+*-v*, *--verbose*::
 
-Verbose mode, more output from successful actions will be shown.
+Verbose mode, more output from successful actions will be shown. Give
+up to three times for more output.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
