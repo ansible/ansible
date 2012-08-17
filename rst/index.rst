@@ -136,7 +136,7 @@ Architecture
 +==================================================================================================+
 | Ansible was created and is run by `Michael DeHaan <http://michaeldehaan.net>`_                   |
 | (`@laserllama <http://twitter.com/#!/laserllama>`_), a Raleigh, NC                               |
-| based software developer and architect, who also created the popular                             |
+| based software developer and architect, who also created the popular open-source                 |
 | DevOps install server `Cobbler <http://cobbler.github.com/>`_.                                   |
 | Cobbler is used to deploy mission critical systems all over the                                  |
 | planet, in industries ranging from massively multiplayer gaming, core                            |
