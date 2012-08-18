@@ -101,7 +101,6 @@ def main():
     out = ''
 
     env = module.params['virtualenv']
-    pip = _find_pip(module, env)
 
     if env:
         virtualenv = _find_virtualenv(module)
@@ -111,6 +110,8 @@ def main():
         rc += rc_venv
         out += out_venv
         err += err_venv
+
+    pip = _find_pip(module, env)
 
     state = module.params['state']
     name = module.params['name']
