@@ -34,6 +34,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
+from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 
 HAS_ATFORK=True
@@ -62,48 +63,6 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
-
-################################################
-
-class ReturnData(object):
-    ''' internal return class for execute methods, not part of API signature '''
-
-    __slots__ = [ 'result', 'comm_ok', 'host' ]
-
-    def __init__(self, conn=None, host=None, result=None, comm_ok=True):
-
-        # which host is this ReturnData about?
-        if conn is not None:
-            delegate_for = getattr(conn, '_delegate_for', None)
-            if delegate_for:
-                self.host = delegate_for
-            else:
-                self.host = conn.host
-        else:
-            self.host = host
-
-        self.result = result
-        self.comm_ok = comm_ok
-
-        if type(self.result) in [ str, unicode ]:
-            self.result = utils.parse_json(self.result)
-
-        if self.host is None:
-            raise Exception("host not set")
-        if type(self.result) != dict:
-            raise Exception("dictionary result expected")
-
-    def communicated_ok(self):
-        return self.comm_ok
-
-    def is_successful(self):
-        return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
-
-    def daisychain(self, module_name):
-        ''' request a module call follow this one '''
-        if self.is_successful():
-            self.result['daisychain'] = module_name
-        return self
 
 class Runner(object):
     ''' core API interface to ansible '''
