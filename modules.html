@@ -1307,6 +1307,14 @@ for this module.</p>
 idempotent actions that will not run commands unless neccessary.
 &#8216;restarted&#8217; will always bounce the service, &#8216;reloaded&#8217; will always reload.</td>
 </tr>
+<tr><td>pattern</td>
+<td>no</td>
+<td>&nbsp;</td>
+<td>(new in 0.7) if the service does not respond to the status command,
+name a substring to look for as would be found in the output of the &#8216;ps&#8217;
+command as a stand-in for a status result.  If the string is found, the
+service will be assumed to be running.</td>
+</tr>
 <tr><td>enabled</td>
 <td>no</td>
 <td>&nbsp;</td>
@@ -1314,11 +1322,12 @@ idempotent actions that will not run commands unless neccessary.
 </tr>
 </tbody>
 </table>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Example actions from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>service name=httpd state=started
 service name=httpd state=stopped
 service name=httpd state=restarted
-service name=httpd state=reloaded</pre>
+service name=httpd state=reloaded
+service name=foo pattern=/usr/bin/foo state=started</pre>
 </div>
 </div>
 <div class="section" id="setup">
@@ -1787,7 +1796,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 16, 2012.<br/>
+      Last updated on Aug 17, 2012.<br/>
     </p>
   </div>
 </footer>
