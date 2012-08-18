@@ -133,7 +133,7 @@ def main():
         import apt
         import apt_pkg
     except:
-        module.fail_json("Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     if not os.path.exists(APT_PATH):
         module.fail_json(msg="Cannot find apt-get")
