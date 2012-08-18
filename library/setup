@@ -498,12 +498,18 @@ class LinuxNetwork(Network):
                     mtu = words[4]
                 elif words[0].startswith('link/'):
                     iface_type = words[0].split('/')[1]
-                    if iface_type == 'void':
+                    # tun interfaces can have any interface type, but won't have an address
+                    if iface_type in ('void', 'none') or len(words) == 1:
                         macaddress = 'unknown'
                     else:
                         macaddress = words[1]
                 elif words[0] == 'inet':
-                    address, netmask_length = words[1].split('/')
+                    if '/' in words[1]:
+                        address, netmask_length = words[1].split('/')
+                    else:
+                        # pointopoint interfaces do not have a prefix
+                        address = words[1]
+                        netmask_length = "32"
                     address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
 
                     netmask_bin = (1<<32) - (1<<32>>int(netmask_length))
