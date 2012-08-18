@@ -37,6 +37,8 @@ Ansible Changes By Release
 * /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
 * --list-hosts to show what hosts are included in each play of a playbook
 * ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
+* add pattern= as a paramter to the service module
+* various fixes to mysql & postresql modules
 
 0.6 "Cabo" -- August 6, 2012
 
