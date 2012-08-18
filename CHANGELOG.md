@@ -41,6 +41,8 @@ Ansible Changes By Release
 * various fixes to mysql & postresql modules
 * adds 'delegate_to' for a task, which can be used to signal outage windows and load balancers on behalf of hosts
 * adds 'serial' to playbook, allowing you to specify how many hosts can be processing a playbook at one time (default 0=all)
+* fix a variable ordering issue that could affect vars_files with selective file source lists
+* callbacks can now be extended via plugins 
 
 0.6 "Cabo" -- August 6, 2012
 
