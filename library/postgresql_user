@@ -120,14 +120,21 @@ def main():
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
-
+    
+    # To use defaults values, keyword arguments must be absent, so 
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    params_map =  {
+        "login_host":"host",
+        "login_user":"user",
+        "login_password":"password"
+    }
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+              if k in params_map and v != "" )
     try:
-        db_connection = psycopg2.connect(host=module.params["login_host"],
-                                         user=module.params["login_user"],
-                                         password=module.params["login_password"],
-                                         database=db)
+        db_connection = psycopg2.connect(database=db, **kw)
         cursor = db_connection.cursor()
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     if state == "present":
