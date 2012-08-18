@@ -22,12 +22,14 @@ import subprocess
 from ansible import errors
 from ansible.callbacks import vvv
 
-class LocalConnection(object):
+class Connection(object):
     ''' Local based connections '''
 
-    def __init__(self, runner, host):
+    def __init__(self, runner, host, port):
         self.runner = runner
         self.host = host
+        # port is unused, since this is local
+        self.port = port 
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''

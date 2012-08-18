@@ -18,9 +18,16 @@
 
 ################################################
 
-import local
-import paramiko_ssh
-import ssh
+from ansible import utils
+from ansible.errors import AnsibleError
+
+import os.path
+dirname = os.path.dirname(__file__)
+modules = utils.import_plugins(os.path.join(dirname, 'connections'))
+
+# rename this module
+modules['paramiko'] = modules['paramiko_ssh']
+del modules['paramiko_ssh']
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
@@ -31,13 +38,9 @@ class Connection(object):
     def connect(self, host, port=None):
         conn = None
         transport = self.runner.transport
-        if transport == 'local':
-            conn = local.LocalConnection(self.runner, host)
-        elif transport == 'paramiko':
-            conn = paramiko_ssh.ParamikoConnection(self.runner, host, port)
-        elif transport == 'ssh':
-            conn = ssh.SSHConnection(self.runner, host, port)
-        if conn is None:
-            raise Exception("unsupported connection type")
+        module = modules.get(transport, None)
+        if module is None:
+            raise AnsibleError("unsupported connection type: %s" % transport)
+        conn = module.Connection(self.runner, host, port)
         return conn.connect()
 

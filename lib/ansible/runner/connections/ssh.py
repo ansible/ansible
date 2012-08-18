@@ -27,7 +27,7 @@ import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
 
-class SSHConnection(object):
+class Connection(object):
     ''' ssh based connections '''
 
     def __init__(self, runner, host, port):
