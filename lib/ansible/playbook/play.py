@@ -29,7 +29,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', '_ds', '_handlers', '_tasks'
+       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -37,7 +37,7 @@ class Play(object):
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts'
+       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial'
     ]
 
     # *************************************************
@@ -75,6 +75,7 @@ class Play(object):
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', True)
+        self.serial       = ds.get('serial', 0)
 
         self._update_vars_files_for_host(None)
 
