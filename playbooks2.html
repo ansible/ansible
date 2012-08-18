@@ -166,6 +166,8 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#turning-off-facts">Turning Off Facts</a></li>
 <li><a class="reference internal" href="#pull-mode-playbooks">Pull-Mode Playbooks</a></li>
 <li><a class="reference internal" href="#register-variables">Register Variables</a></li>
+<li><a class="reference internal" href="#rolling-updates">Rolling Updates</a></li>
+<li><a class="reference internal" href="#delegation">Delegation</a></li>
 <li><a class="reference internal" href="#style-points">Style Points</a></li>
 </ul>
 </li>
@@ -587,7 +589,7 @@ logs from ansible-pull runs would be an excellent way to gather and analyze remo
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existance of a particular program.</p>
 <p>The &#8216;register&#8217; keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example):</p>
-<div class="highlight-python"><pre>- name: test playbook
+<div class="highlight-python"><pre>- name: test play
   hosts: all
 
   tasks:
@@ -597,6 +599,45 @@ instance, you could test for the existance of a particular program.</p>
 
       - action: shell echo "motd contains the word hi"
         only_if: "'${motd_contents.stdout}'.find('hi') != -1"</pre>
+</div>
+</div>
+<div class="section" id="rolling-updates">
+<h2>Rolling Updates<a class="headerlink" href="#rolling-updates" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
+use case, you can define how many hosts ansible should manage at a single time by using the &#8216;&#8217;serial&#8217;&#8217; keyword:</p>
+<div class="highlight-python"><pre>- name: test play
+  hosts: webservers
+  serial: 3</pre>
+</div>
+<p>In the above example, if we had 100 hosts, 3 hosts in the group &#8216;webservers&#8217;
+would complete the play completely before moving on to the next 3 hosts.</p>
+</div>
+<div class="section" id="delegation">
+<h2>Delegation<a class="headerlink" href="#delegation" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>If you want to perform a task on one host with reference to other hosts, use the &#8216;delegate_to&#8217; keyword on a task.
+This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling
+outage windows.  Using this with the &#8216;serial&#8217; keyword to control the number of hosts executing at one time is also
+a good idea:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  serial: 5
+
+  tasks:
+
+  - name: take out of load balancer pool
+    action: command /usr/bin/take_out_of_pool $inventory_hostname
+    delegate_to: 127.0.0.1
+
+  - name: actual steps would go here
+    action: yum name=acme-web-stack state=latest
+
+  - name: add back to load balancer pool
+    action: command /usr/bin/add_back_to_pool $inventory_hostname
+    delegate_to: 127.0.0.1</pre>
 </div>
 </div>
 <div class="section" id="style-points">
@@ -655,7 +696,7 @@ instance, you could test for the existance of a particular program.</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 17, 2012.<br/>
+      Last updated on Aug 18, 2012.<br/>
     </p>
   </div>
 </footer>

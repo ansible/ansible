@@ -448,7 +448,7 @@ instance, you could test for the existance of a particular program.
 
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
 
-    - name: test playbook
+    - name: test play
       hosts: all
 
       tasks:
@@ -459,6 +459,49 @@ The 'register' keyword decides what variable to save a result in.  The resulting
           - action: shell echo "motd contains the word hi"
             only_if: "'${motd_contents.stdout}'.find('hi') != -1"
 
+
+Rolling Updates
+```````````````
+
+.. versionadded:: 0.7
+
+By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
+use case, you can define how many hosts ansible should manage at a single time by using the ''serial'' keyword::
+    
+
+    - name: test play
+      hosts: webservers
+      serial: 3
+
+In the above example, if we had 100 hosts, 3 hosts in the group 'webservers' 
+would complete the play completely before moving on to the next 3 hosts. 
+
+Delegation
+``````````
+
+.. versionadded:: 0.7
+
+If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task.
+This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling
+outage windows.  Using this with the 'serial' keyword to control the number of hosts executing at one time is also
+a good idea::
+
+    ---
+    - hosts: webservers
+      serial: 5
+
+      tasks:
+      
+      - name: take out of load balancer pool
+        action: command /usr/bin/take_out_of_pool $inventory_hostname
+        delegate_to: 127.0.0.1
+
+      - name: actual steps would go here
+        action: yum name=acme-web-stack state=latest
+
+      - name: add back to load balancer pool
+        action: command /usr/bin/add_back_to_pool $inventory_hostname
+        delegate_to: 127.0.0.1
 
 Style Points
 ````````````
