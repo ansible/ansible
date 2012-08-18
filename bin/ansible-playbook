@@ -127,6 +127,7 @@ def main(args):
             pb.run()
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
+            playbook_cb.on_stats(pb.stats)
             for h in hosts:
                 t = pb.stats.summarize(h)
                 print "%-30s : %s %s %s %s " % (
