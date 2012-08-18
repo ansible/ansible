@@ -236,7 +236,7 @@ Configuration & Defaults
 
 .. versionadded:: 0.7
 
-Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags.   The config file location is controlled by the ANSIBLE_CONFIG environment variable, if set, otherwise ~/ansible.cfg or /etc/ansible/ansible.cfg will be loaded, whichever comes first.  For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
+Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags.   The config file location is controlled by the ANSIBLE_CONFIG environment variable, if set, otherwise ~/.ansible.cfg or /etc/ansible/ansible.cfg will be loaded, whichever comes first.  For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
 
 .. seealso::
 
