@@ -39,6 +39,7 @@ Ansible Changes By Release
 * ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
 * add pattern= as a paramter to the service module
 * various fixes to mysql & postresql modules
+* adds 'delegate_to' for a task, which can be used to signal outage windows and load balancers on behalf of hosts
 
 0.6 "Cabo" -- August 6, 2012
 

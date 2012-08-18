@@ -23,13 +23,15 @@ class Task(object):
     __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
-        'play', 'notified_by', 'tags', 'register', 'with_items', 'first_available_file', 'ignore_errors'
+        'play', 'notified_by', 'tags', 'register', 'with_items', 
+        'delegate_to', 'first_available_file', 'ignore_errors'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 'first_available_file',
-         'include', 'tags', 'register', 'ignore_errors'
+         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
+         'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
+         'delegate_to'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -63,6 +65,8 @@ class Task(object):
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
         self.with_items = ds.get('with_items', None)
+        self.delegate_to = ds.get('delegate_to', None)
+
         self.ignore_errors = ds.get('ignore_errors', False)
 
         # notify can be a string or a list, store as a list
@@ -98,6 +102,9 @@ class Task(object):
         if self.with_items is None:
             self.with_items = [ ]
         self.module_vars['items'] = self.with_items
+
+        # allow runner to see delegate_to option
+        self.module_vars['delegate_to'] = self.delegate_to
 
         # make ignore_errors accessable to Runner code
         self.module_vars['ignore_errors'] = self.ignore_errors
