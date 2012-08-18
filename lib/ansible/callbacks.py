@@ -20,13 +20,29 @@ import sys
 import getpass
 import os
 import subprocess
+import os.path
 from ansible.color import stringc
+
+dirname = os.path.dirname(__file__)
+callbacks = utils.import_plugins(os.path.join(dirname, 'callbacks'))
+callbacks = [ c.CallbackModule() for c in callbacks.values() ]
 
 cowsay = None
 if os.path.exists("/usr/bin/cowsay"):
     cowsay = "/usr/bin/cowsay"
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
+
+def call_callback_module(method_name, *args, **kwargs):
+   
+    for callback_plugin in callbacks:
+        methods = [ 
+            getattr(callback_plugin, method_name, None), 
+            getattr(callback_plugin, 'on_any', None)
+        ]
+        for method in methods:
+            if method is not None:
+                method(*args, **kwargs)
 
 def vv(msg, host=None):
     return verbose(msg, host=host, caplevel=1)
@@ -161,31 +177,31 @@ class DefaultRunnerCallbacks(object):
         pass
 
     def on_failed(self, host, res, ignore_errors=False):
-        pass
+        call_callback_module('runner_on_failed', host, res, ignore_errors=ignore_errors)
 
     def on_ok(self, host, res):
-        pass
+        call_callback_module('runner_on_ok', host, res)
 
     def on_error(self, host, msg):
-        pass
+        call_callback_module('runner_on_error', host, msg)
 
-    def on_skipped(self, host):
-        pass
+    def on_skipped(self, host, item=None):
+        call_callback_module('runner_on_skipped', host, item=item)
 
     def on_unreachable(self, host, res):
-        pass
+        call_callback_module('runner_on_unreachable', host, res)
 
     def on_no_hosts(self):
-        pass
+        call_callback_module('runner_on_no_hosts')
 
     def on_async_poll(self, host, res, jid, clock):
-        pass
+        call_callback_module('runner_on_async_poll', host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        pass
+        call_callback_module('runner_on_async_ok', host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        pass
+        call_callback_module('runner_on_async_failed', host, res, jid)
 
 ########################################################################
 
@@ -193,21 +209,19 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks for use by /usr/bin/ansible '''
 
     def __init__(self):
-
         # set by /usr/bin/ansible later
         self.options = None
         self._async_notified = {}
 
     def on_failed(self, host, res, ignore_errors=False):
-
         self._on_any(host,res)
+        super(CliRunnerCallbacks, self).on_failed(host, res, ignore_errors=ignore_errors)
 
     def on_ok(self, host, res):
-
         self._on_any(host,res)
+        super(CliRunnerCallbacks, self).on_ok(host, res)
 
     def on_unreachable(self, host, res):
-
         if type(res) == dict:
             res = res.get('msg','')
         print "%s | FAILED => %s" % (host, res)
@@ -216,36 +230,36 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
                 self.options.tree, host,
                 utils.jsonify(dict(failed=True, msg=res),format=True)
             )
+        super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
     def on_skipped(self, host):
-        pass
+        super(CliRunnerCallbacks, self).on_skipped(host, res)
 
     def on_error(self, host, err):
-
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
+        super(CliRunnerCallbacks, self).on_error(host, err)
 
     def on_no_hosts(self):
-
         print >>sys.stderr, "no hosts matched\n"
+        super(CliRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
-
         if jid not in self._async_notified:
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
             print "<job %s> polling, %ss remaining"%(jid, clock)
+        super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-
         print "<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True))
+        super(CliRunnerCallbacks, self).on_async_poll(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-
         print "<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True))
+        super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def _on_any(self, host, result):
-
         print host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result,format=True))
@@ -256,37 +270,32 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
     def __init__(self, stats, verbose=utils.VERBOSITY):
-
         self.verbose = verbose
         self.stats = stats
         self._async_notified = {}
 
     def on_unreachable(self, host, msg):
-
         item = None
         if type(msg) == dict:
             item = msg.get('item', None)
-
         if item:
             print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)
         else:
             print "fatal: [%s] => %s" % (host, msg)
+        super(PlaybookRunnerCallbacks, self).on_unreachable(host, msg)
 
     def on_failed(self, host, results, ignore_errors=False):
-
         item = results.get('item', None)
-
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results))
-
         print stringc(msg, 'red')
         if ignore_errors:
             print stringc("...ignoring", 'yellow')
+        super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
-
         item = host_result.get('item', None)
 
         # show verbose output for non-setup module results if --verbose is used
@@ -310,6 +319,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 print stringc(msg, 'green')
             else:
                 print stringc(msg, 'yellow')
+        super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_error(self, host, err):
 
@@ -322,38 +332,39 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         msg = stringc(msg, 'red')
         print >>sys.stderr, msg
+        super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
-
         msg = ''
         if item:
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
             msg = "skipping: [%s]" % host
         print stringc(msg, 'yellow')
+        super(PlaybookRunnerCallbacks, self).on_skipped(host, item=None)
 
     def on_no_hosts(self):
-
         print stringc("no hosts matched or remaining\n", 'red')
+        super(PlaybookRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
-
         if jid not in self._async_notified:
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
             msg = "<job %s> polling, %ss remaining"%(jid, clock)
             print stringc(msg, 'cyan')
+        super(PlaybookRunnerCallbacks, self).on_async_poll(host,res,jid,clock)
 
     def on_async_ok(self, host, res, jid):
-
         msg = "<job %s> finished on %s"%(jid, host)
         print stringc(msg, 'cyan')
+        super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-
         msg = "<job %s> FAILED on %s"%(jid, host)
         print stringc(msg, 'red')
+        super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
 
 ########################################################################
@@ -366,19 +377,17 @@ class PlaybookCallbacks(object):
         self.verbose = verbose
 
     def on_start(self):
-
-        pass
+        call_callback_module('playbook_on_start')
 
     def on_notify(self, host, handler):
-
-        pass
+        call_callback_module('playbook_on_notify', host, handler)
 
     def on_task_start(self, name, is_conditional):
-
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
         print banner(msg)
+        call_callback_module('playbook_on_task_start', name, is_conditional)
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
 
@@ -406,24 +415,29 @@ class PlaybookCallbacks(object):
         if encrypt:
             result = utils.do_encrypt(result,encrypt,salt_size,salt)
 
+        call_callback_module('playbook_on_vars_prompt', varname, private=private, prompt=prompt, encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None)
+
         return result
 
     def on_setup(self):
-
         print banner("GATHERING FACTS")
+        call_callback_module('playbook_on_setup')
 
     def on_import_for_host(self, host, imported_file):
-
         msg = "%s: importing %s" % (host, imported_file)
         print stringc(msg, 'cyan')
+        call_callback_module('playbook_on_import_for_host', host, imported_file)
 
     def on_not_import_for_host(self, host, missing_file):
-
         msg = "%s: not importing file: %s" % (host, missing_file)
         print stringc(msg, 'cyan')
+        call_callback_module('playbook_on_not_import_for_host', host, missing_file)
 
     def on_play_start(self, pattern):
-
         print banner("PLAY [%s]" % pattern)
+        call_callback_module('playbook_on_play_start', pattern)
+
+    def on_stats(self, stats):
+        call_callback_module('playbook_on_stats', stats)
 
 
