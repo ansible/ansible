@@ -1,0 +1,19 @@
+# ordinarily, without the 'serial' keyword set, ansible will control all of your machines in a play at once, in parallel.
+# if you want to perform a rolling update, so that each play completes all the way through on a certain number of hosts
+# before moving on to the remaining hosts, use the 'serial' keyword like so:
+
+---
+- hosts: all
+  serial: 3
+
+# now each of the tasks below will complete on 3 hosts before moving on to the next 3, regardless of how many
+# hosts are selected by the "hosts:" line
+
+  tasks:
+
+  - name: ping
+    action: ping
+  - name: ping2
+    action: ping
+
+
