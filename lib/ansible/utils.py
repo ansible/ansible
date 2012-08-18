@@ -307,13 +307,18 @@ def _gitinfo():
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
     if os.path.exists(repo_path):
-        with open(os.path.join(repo_path, "HEAD")) as f:
-            branch = f.readline().split('/')[-1].rstrip("\n")
+        f = open(os.path.join(repo_path, "HEAD"))
+        branch = f.readline().split('/')[-1].rstrip("\n")
+        f.close()
         branch_path = os.path.join(repo_path, "refs", "heads", branch)
-        with open(branch_path) as f:
-            commit = f.readline()[:10]
+        f = open(branch_path)
+        commit = f.readline()[:10]
+        f.close()
         date = time.localtime(os.stat(branch_path).st_mtime)
-        offset = time.timezone if (time.daylight == 0) else time.altzone
+        if time.daylight == 0:  
+            offset = time.timezone
+        else:
+            offset = time.altzone
         result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
             time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     return result
