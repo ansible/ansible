@@ -29,6 +29,7 @@ setup(name='ansible',
          'ansible.playbook',
          'ansible.runner',
          'ansible.runner.connections',
+         'ansible.callbacks',
       ],
       scripts=[
          'bin/ansible',
