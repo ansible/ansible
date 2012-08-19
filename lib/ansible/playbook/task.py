@@ -18,20 +18,22 @@
 from ansible import errors
 from ansible import utils
 
+
 class Task(object):
 
     __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register', 'with_items', 
-        'delegate_to', 'first_available_file', 'ignore_errors'
+        'delegate_to', 'first_available_file', 'ignore_errors',
+        'local_action'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to'
+         'delegate_to', 'local_action'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -45,10 +47,23 @@ class Task(object):
         self.play        = play
 
         # load various attributes
-        self.name        = ds.get('name', None)
-        self.action      = ds.get('action', '')
-        self.tags        = [ 'all' ]
-        self.register    = ds.get('register', None)
+        self.name         = ds.get('name', None)
+        self.tags         = [ 'all' ]
+        self.register     = ds.get('register', None)
+
+        # Both are defined
+        if ('action' in ds) and ('local_action' in ds):
+            raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
+        # Both are NOT defined
+        elif (not 'action' in ds) and (not 'local_action' in ds):
+            raise errors.AnsibleError("task missing an 'action' attribute")
+        # Only one of them is defined
+        elif 'local_action' in ds:
+            self.action      = ds.get('local_action', '')
+            self.delegate_to = '127.0.0.1'
+        else:
+            self.action      = ds.get('action', '')
+            self.delegate_to = ds.get('delegate_to', None)
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
@@ -65,7 +80,6 @@ class Task(object):
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
         self.with_items = ds.get('with_items', None)
-        self.delegate_to = ds.get('delegate_to', None)
 
         self.ignore_errors = ds.get('ignore_errors', False)
 
