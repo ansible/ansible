@@ -1,0 +1,68 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# Written by Steve Loveless <steve.loveless@gmail.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+#
+# rvm
+#		state= installed|removed (default: installed)
+#		install_type= single|multi (default: single)
+
+import traceback
+import os
+
+def get_rvm_path():
+	if os.environ.has_key('rvm_path'):
+		return os.environ["rvm_path"]
+
+	rvm = "~/.rvm"
+
+	if os.path.exists(rvm):
+		return os.path.abspath(rvm)
+
+	rvm = "/usr/local/rvm"
+
+	if os.path.exists(rvm):
+		return rvm
+
+
+def main():
+	module = AnsibleModule(
+		argument_spec = dict(
+			state = dict(choices=['installed', 'removed']),
+			install_type= dict(choices=['single', 'multi'])
+		)
+    )
+
+	state = module.params['state']
+	install_type = module.params['install_type']
+	
+	result = {}
+	result['state'] = state
+	result['install_type'] = install_type
+
+	rc = None
+	out = ''
+	err = ''
+
+	if get_rvm_path():
+		result['changed'] = False
+
+	module.exit_json(**result)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
