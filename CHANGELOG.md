@@ -1,48 +1,54 @@
 Ansible Changes By Release
 ==========================
 
-0.7 "Panama" -- release pending
+0.7 "Panama" -- release pending -- I can barely see the roadmap from the heat coming off of it.
 
-* I can barely see the roadmap from the heat coming off of it.
+Module changes:
+
 * login_unix_socket option for mysql user and database modules (see PR #781 for doc notes)
 * new modules -- pip, easy_install, apt_repository, supervisorctl
-* ansible --version will now give branch/SHA information if running from git
 * error handling for setup module when SELinux is in a weird state
 * misc yum module fixes
-* better sudo permissions when encountering different umasks
-* YAML syntax errors detected and show where the problem is
 * better changed=True/False detection in user module on older Linux distros
-* when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
 * nicer errors from modules when arguments are not key=value
+* backup option on copy (backup=yes)
+* file module will not recurse on directory properties
+* yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
+* setup module now detects interfaces with aliases
+* better handling of VM guest type detection in setup module
+* new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
+* add pattern= as a paramter to the service module (for init scripts that don't do status, or do poor status)
+* various fixes to mysql & postresql modules
+
+Core changes:
+
+* ansible --version will now give branch/SHA information if running from git
+* better sudo permissions when encountering different umasks
+* when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
 * use -vvv for extreme debug levels. -v gives more playbook output as before
 * -vv shows module arguments to all module calls (and maybe some other things later)
-* if you ctrl+c a playbook it won't traceback
-* backup option on copy (backup=yes)
-* --version shows git information if running from git
-* file module will not recurse on directory properties
-* vars_prompt now has encryption options (see examples/playbooks/prompts.yml)
-* yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
 * don't pass "--" to sudo to work on older EL5
-* allow variables in parameterized task include parameters (regression)
 * make remote_md5 internal function work with non-bash shells
 * allow user to be passed in via --extra-vars (regression)
-* add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
 * add --limit option, which can be used to further confine the pattern given in ansible-playbooks
-* setup module now detects interfaces with aliases
-* new 'ansible_all_ipv4_addresses' and 'ansible_all_ipv6_addresses' facts -- which are simple lists
-* better handling of VM guest type detection in setup module
 * adds ranged patterns like dbservers[0-49] for usage with patterns or --limit
 * -u and user: defaults to current user, rather than root, override as before
-* new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
 * /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
+* (developers) ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
+* (developers) connection types are now plugins
+* (developers) callbacks can now be extended via plugins 
+
+Playbooks:
+
+* YAML syntax errors detected and show where the problem is
+* if you ctrl+c a playbook it won't traceback (usually)
+* vars_prompt now has encryption options (see examples/playbooks/prompts.yml)
+* allow variables in parameterized task include parameters (regression)
+* add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
 * --list-hosts to show what hosts are included in each play of a playbook
-* ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
-* add pattern= as a paramter to the service module
-* various fixes to mysql & postresql modules
+* fix a variable ordering issue that could affect vars_files with selective file source lists
 * adds 'delegate_to' for a task, which can be used to signal outage windows and load balancers on behalf of hosts
 * adds 'serial' to playbook, allowing you to specify how many hosts can be processing a playbook at one time (default 0=all)
-* fix a variable ordering issue that could affect vars_files with selective file source lists
-* callbacks can now be extended via plugins 
 
 0.6 "Cabo" -- August 6, 2012
 
