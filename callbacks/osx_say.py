@@ -27,13 +27,8 @@ def say(msg, voice):
     subprocess.call(["/usr/bin/say", msg, "--voice=%s" % (voice)])
 
 class CallbackModule(object):
-
     """
-    this is an example ansible callback file that does nothing.  You can drop
-    other classes in the same directory to define your own handlers.  Methods
-    you do not use can be omitted.
-
-    example uses include: logging, emailing, storing info, etc
+    makes Ansible much more exciting on OS X.
     """
 
     def on_any(self, *args, **kwargs):
