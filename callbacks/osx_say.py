@@ -21,6 +21,7 @@ import subprocess
 FAILED_VOICE="Zarvox"
 REGULAR_VOICE="Trinoids"
 HAPPY_VOICE="Cellos"
+LASER_VOICE="Princess"
 
 def say(msg, voice):
     subprocess.call(["/usr/bin/say", msg, "--voice=%s" % (voice)])
@@ -42,13 +43,13 @@ class CallbackModule(object):
         say("Failure on host %s" % host, FAILED_VOICE)
 
     def runner_on_ok(self, host, res):
-        say("pew", "Princess")
+        say("pew", LASER_VOICE)
 
     def runner_on_error(self, host, msg):
         pass
 
     def runner_on_skipped(self, host, item=None):
-        say("pew", "Princess")
+        say("pew", LASER_VOICE)
 
     def runner_on_unreachable(self, host, res):
         say("Failure on host %s" % host, FAILED_VOICE)
@@ -60,7 +61,7 @@ class CallbackModule(object):
         pass
 
     def runner_on_async_ok(self, host, res, jid):
-        say("pew", "Princess")
+        say("pew", LASER_VOICE)
 
     def runner_on_async_failed(self, host, res, jid):
         say("Failure on host %s" % host, FAILED_VOICE)
@@ -69,10 +70,13 @@ class CallbackModule(object):
         say("Running Playbook", REGULAR_VOICE)
 
     def playbook_on_notify(self, host, handler):
-        say("pew", "Princess")
+        say("pew", LASER_VOICE)
 
     def playbook_on_task_start(self, name, is_conditional):
-        say("Starting task: %s" % name, REGULAR_VOICE)
+        if not is_conditional:
+            say("Starting task: %s" % name, REGULAR_VOICE)
+        else:
+            say("Notifying task: %s" % name, REGULAR_VOICE)
 
     def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
         pass
