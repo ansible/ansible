@@ -452,9 +452,6 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
-    import glob, imp
-    from os.path import join, basename, splitext
-    
 def import_plugins(directory):
     modules = {}
     for path in glob.glob(os.path.join(directory, '*.py')): 
