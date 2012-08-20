@@ -136,11 +136,20 @@ def main():
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
+            thirsty = dict(default='no', choices=BOOLEANS)
         )
     )
 
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
+    thirsty = module.boolean(module.params['thirsty'])
+
+    if not thirsty:
+        if os.path.exists(dest):
+            module.exit_json(msg="file already exists", changed=False)
+        if os.path.isdir(dest):
+            module.fail_json(msg="non-thirsty mode needs a filename for a destination, not a directory")
+
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest)
