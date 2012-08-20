@@ -127,11 +127,6 @@ def main():
 
 	rvm_path = get_rvm_path()
 
-	if rvm_path:
-		result['changed'] = False
-
-	#rvm_bin = get_rvm_bin(rvm_path)
-
 	if state == 'absent':
 		(rc, out, err) = remove()
 		if rc > 0:
@@ -142,9 +137,7 @@ def main():
 
 			if err:
 				module.fail_json(rc=rc, msg=err, out=out)
-			else:
-				module.exit_json(**result)
-
+	
 	if rc is None:
 		result['changed'] = False
 	else:
