@@ -45,9 +45,9 @@ def get_rvm_path():
 		return rvm
 
 
-def get_rvm_bin(rvm_path):
-	return rvm_path + "/bin/rvm"
-
+def get_rvm_bin():
+	if os.environ.has_key('rvm_bin_path'):
+		return os.environ["rvm_bin_path"]
 
 
 def install_multi():
