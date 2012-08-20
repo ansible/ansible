@@ -136,6 +136,9 @@ def command_generic_msg(hostname, result, oneline, caption):
     stderr = result.get('stderr', '')
     msg    = result.get('msg', '')
 
+    hostname = hostname.encode('utf-8')
+    caption  = caption.encode('utf-8')
+
     if not oneline:
         buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
         if stdout:
