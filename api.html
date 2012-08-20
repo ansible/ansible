@@ -267,9 +267,8 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 <p>Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.</p>
-<p>If you have a data store system where an Ansible external inventory script doesn&#8217;t already exist, this may require a little coding, but we have a <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py">Cobbler example</a> in the main source tree &#8211; but it&#8217;s pretty simple, as we&#8217;ll explain below &#8211; that would provide a good starting point.  Like with modules, it&#8217;s possible to build an external inventory script in any language, as long as it returns JSON.</p>
-<p>If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
+of these options via an external inventory system.  The <a class="reference external" href="http://github.com/ansible/ansible-plugins">ansible-plugins</a> repo contains some of these already.</p>
+<p>It&#8217;s possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>
 <p>When the external node script is called with the single argument &#8216;&#8211;list&#8217;, the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so:</p>
@@ -297,7 +296,7 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a &#8216;lightweight CMDB&#8217; by some admins.   This particular script will communicate with Cobbler
 using Cobbler&#8217;s XMLRPC API.</p>
-<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <cite>this script &lt;https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py&gt;</cite> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
+<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <a class="reference external" href="https://github.com/ansible/ansible-plugins/blob/master/inventory/cobbler.py">this script</a> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
 to be running when you are using Ansible.</p>
 <p>Test the file by running <cite>./etc/ansible/hosts</cite> directly.   You should see some JSON data output, but it may not have
 anything in it just yet.</p>
@@ -338,10 +337,10 @@ a conf.d file appropriately or something similar.  Who knows?</p>
 </div>
 <div class="section" id="example-aws-ec2-external-inventory-script">
 <h3>Example: AWS EC2 External Inventory Script<a class="headerlink" href="#example-aws-ec2-external-inventory-script" title="Permalink to this headline">¶</a></h3>
-<p>If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py">EC2 external inventory</a> script.</p>
+<p>If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the <a class="reference external" href="https://github.com/ansible/ansible-plugins/blob/master/inventory/ec2.py">EC2 external inventory</a> script.</p>
 <p>You can use this script in one of two ways. The easiest is to use Ansible&#8217;s <tt class="docutils literal"><span class="pre">-i</span></tt> command line option and specify the path to the script.</p>
 <blockquote>
-<div>ansible -i examples/scripts/ec2_external_inventory.py -u ubuntu us-east-1d -m ping</div></blockquote>
+<div>ansible -i ec2.py -u ubuntu us-east-1d -m ping</div></blockquote>
 <p>The second option is to copy the script to <cite>/etc/ansible/hosts</cite> and <cite>chmod +x</cite> it. You will also need to copy the <tt class="docutils literal"><span class="pre">ec2.ini</span></tt> file to <cite>/etc/ansible/ec2.ini</cite>. Then you can run ansible as you would normally.</p>
 <p>To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a <a class="reference external" href="http://docs.pythonboto.org/en/latest/boto_config_tut.html">variety of methods</a> available, but the simplest is just to export two environment variables:</p>
 <blockquote>
