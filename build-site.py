@@ -93,5 +93,5 @@ if __name__ == '__main__':
 
     if "view" in sys.argv:
         import webbrowser
-        if not webbrowser.open('html/index.html'):
+        if not webbrowser.open('index.html'):
             print >> sys.stderr, "Could not open on your webbrowser."
