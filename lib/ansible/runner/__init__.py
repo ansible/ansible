@@ -212,7 +212,7 @@ class Runner(object):
     def _execute_raw(self, conn, tmp, inject=None):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
         return ReturnData(conn=conn, result=dict(
-            stdout=self._low_level_exec_command(conn, self.module_args, tmp, sudoable = True)
+            stdout=self._low_level_exec_command(conn, self.module_args.encode('utf-8'), tmp, sudoable = True)
         ))
 
     # ***************************************************
