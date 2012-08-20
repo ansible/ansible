@@ -19,6 +19,7 @@ Module changes:
 * new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
 * add pattern= as a paramter to the service module (for init scripts that don't do status, or do poor status)
 * various fixes to mysql & postresql modules
+* added a thirsty= option (boolean, default no) to the get_url module to decide to download the file every time or not
 
 Core changes:
 
