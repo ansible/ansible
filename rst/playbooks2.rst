@@ -491,7 +491,6 @@ a good idea::
       serial: 5
 
       tasks:
-      
       - name: take out of load balancer pool
         action: command /usr/bin/take_out_of_pool $inventory_hostname
         delegate_to: 127.0.0.1
@@ -502,6 +501,22 @@ a good idea::
       - name: add back to load balancer pool
         action: command /usr/bin/add_back_to_pool $inventory_hostname
         delegate_to: 127.0.0.1
+
+
+Here is the same playbook as above, but using the shorthand syntax,
+'local_action', for delegating to 127.0.0.1::
+
+    ---
+    # ...
+      tasks:
+      - name: take out of load balancer pool
+        local_action: command /usr/bin/take_out_of_pool $inventory_hostname
+
+    # ...
+
+      - name: add back to load balancer pool
+        local_action: command /usr/bin/add_back_to_pool $inventory_hostname
+
 
 Style Points
 ````````````
