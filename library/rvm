@@ -50,11 +50,6 @@ def get_rvm_bin(rvm_path):
 	return rvm_path + "/bin/rvm"
 
 
-def create_rvm_group():
-	cmd = ['/usr/bin/sudo', '/usr/sbin/groupadd', 'rvm']
-	(rc, out, err) = run_command(cmd)
-	return (rc, out, err)
-
 
 def install_multi():
 	cmd1 = ['/usr/bin/curl', '--silent', '-L', 'https://get.rvm.io']
