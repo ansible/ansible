@@ -6,7 +6,7 @@ Ansible is used by all sorts of organizations from hosted web applications, medi
 ============================================================  =====================================================
 Who They Are                                                  What They Do
 ============================================================  =====================================================
-`Alta Language Services <http://www.altalang.com>`            Language testing, solutions, and translation services
+`Alta Language Services <http://www.altalang.com>`_           Language testing, solutions, and translation services
 `Basho <http://basho.com>`_                                   Makers of NoSQL key-value store Riak
 `Cygate AB <http://cygate.se>`_                               IT solutions from Malmö, Sweden
 `Dag IT Solutions <http://dagit.net>`_                        "Enterprise Linux and Beyond"
