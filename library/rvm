@@ -69,6 +69,19 @@ def install_multi():
 	return (rc, out, err)
 
 
+def install_single():
+	cmd1 = ['/usr/bin/curl', '--silent', '-L', 'https://get.rvm.io']
+	cmd2 = ['/bin/bash', '-s', 'stable']
+	p1 = subprocess.Popen(cmd1, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+
+	p1.stdout.close()
+	(out, err) = p2.communicate()
+	rc = p2.returncode
+
+	return (rc, out, err)
+
+
 def remove():
 	cmd = ['/usr/bin/sudo', 'rm', '-rf', '$HOME/.rvm $HOME/.rvmrc', '/etc/rvmrc', '/etc/profile.d/rvm.sh', '/usr/local/rvm', '/usr/local/bin/rvm']
 	(rc, out, err) = run_command(cmd)
@@ -91,8 +104,12 @@ def remove_rvm_group():
 def install(install_type):
 	if install_type == 'multi':
 		(rc, out, err) = install_multi()
+	elif install_type == 'single':
+		(rc, out, err) = install_single()
+
 
 	return (rc, out, err)
+
 
 def main():
 	module = AnsibleModule(
