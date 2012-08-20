@@ -743,7 +743,16 @@ access to the remote resource.</p>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>absolute path of where to download the file to.  If dest is a directory,
-the basename of the file on the remote server will be used.</td>
+the basename of the file on the remote server will be used.  If a
+directory, thirsty=yes must also be set.</td>
+</tr>
+<tr><td>thirsty</td>
+<td>no</td>
+<td>&#8216;no&#8217;</td>
+<td>(new in 0.7) if yes, will download the file every time and replace the
+file if the contents change.  if no, the file will only be downloaded
+if the destination does not exist.  Generally should be &#8216;yes&#8217; only for
+small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 </tr>
 <tr><td>OTHERS</td>
 <td>no</td>
@@ -753,12 +762,7 @@ the basename of the file on the remote server will be used.</td>
 </tbody>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>- name: Grab a bunch of jQuery stuff
-   action: get_url url=http://code.jquery.com/$item  dest=${jquery_directory} mode=0444
-   with_items:
-   - jquery.min.js
-   - mobile/latest/jquery.mobile.min.js
-   - ui/jquery-ui-git.css</pre>
+<div class="highlight-python"><pre>- action: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0444</pre>
 </div>
 </div>
 <div class="section" id="git">

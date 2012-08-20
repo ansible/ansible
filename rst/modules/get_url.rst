@@ -12,16 +12,18 @@ access to the remote resource.
 | url                | yes      |         | http, https, or ftp URL                                                    |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | dest               | yes      |         | absolute path of where to download the file to.  If dest is a directory,   |
-|                    |          |         | the basename of the file on the remote server will be used.                |
+|                    |          |         | the basename of the file on the remote server will be used.  If a          |
+|                    |          |         | directory, thirsty=yes must also be set.                                   |
++--------------------+----------+---------+----------------------------------------------------------------------------+
+| thirsty            | no       | 'no'    | (new in 0.7) if yes, will download the file every time and replace the     |
+|                    |          |         | file if the contents change.  if no, the file will only be downloaded      |
+|                    |          |         | if the destination does not exist.  Generally should be 'yes' only for     |
+|                    |          |         | small local files.  prior to 0.6, acts if 'yes' by default.                |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | OTHERS             | no       |         | all arguments accepted by the file module also work here                   |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
-    - name: Grab a bunch of jQuery stuff
-       action: get_url url=http://code.jquery.com/$item  dest=${jquery_directory} mode=0444
-       with_items:
-       - jquery.min.js
-       - mobile/latest/jquery.mobile.min.js
-       - ui/jquery-ui-git.css
+    - action: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0444
+
