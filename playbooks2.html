@@ -627,7 +627,6 @@ a good idea:</p>
   serial: 5
 
   tasks:
-
   - name: take out of load balancer pool
     action: command /usr/bin/take_out_of_pool $inventory_hostname
     delegate_to: 127.0.0.1
@@ -638,6 +637,19 @@ a good idea:</p>
   - name: add back to load balancer pool
     action: command /usr/bin/add_back_to_pool $inventory_hostname
     delegate_to: 127.0.0.1</pre>
+</div>
+<p>Here is the same playbook as above, but using the shorthand syntax,
+&#8216;local_action&#8217;, for delegating to 127.0.0.1:</p>
+<div class="highlight-python"><pre>---
+# ...
+  tasks:
+  - name: take out of load balancer pool
+    local_action: command /usr/bin/take_out_of_pool $inventory_hostname
+
+# ...
+
+  - name: add back to load balancer pool
+    local_action: command /usr/bin/add_back_to_pool $inventory_hostname</pre>
 </div>
 </div>
 <div class="section" id="style-points">
