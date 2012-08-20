@@ -87,12 +87,9 @@ External Inventory
 Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_, 
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.
+of these options via an external inventory system.  The `ansible-plugins <http://github.com/ansible/ansible-plugins>`_ repo contains some of these already.
 
-If you have a data store system where an Ansible external inventory script doesn't already exist, this may require a little coding, but we have a `Cobbler example <https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py>`_ in the main source tree -- but it's pretty simple, as we'll explain below -- that would provide a good starting point.  Like with modules, it's possible to build an external inventory script in any language, as long as it returns JSON.
-
-If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
-
+It's possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
 
 Script Conventions
 ``````````````````
@@ -123,7 +120,7 @@ layer that allows it to represent data for multiple configuration management sys
 been referred to as a 'lightweight CMDB' by some admins.   This particular script will communicate with Cobbler
 using Cobbler's XMLRPC API.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py>` to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://github.com/ansible/ansible-plugins/blob/master/inventory/cobbler.py>`_ to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible.
 
 Test the file by running `./etc/ansible/hosts` directly.   You should see some JSON data output, but it may not have
@@ -174,11 +171,11 @@ So that's the Cobbler integration support -- using the cobbler script as an exam
 Example: AWS EC2 External Inventory Script
 ``````````````````````````````````````````
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the `EC2 external inventory  <https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the `EC2 external inventory  <https://github.com/ansible/ansible-plugins/blob/master/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script.
 
-    ansible -i examples/scripts/ec2_external_inventory.py -u ubuntu us-east-1d -m ping
+    ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
 The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the ``ec2.ini`` file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
