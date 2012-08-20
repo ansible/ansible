@@ -215,6 +215,10 @@ def template(text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
+    try:
+        text = text.decode('utf-8')
+    except UnicodeEncodeError:
+        pass # already unicode
     depth = 0
     while prev_text != text:
         depth = depth + 1
