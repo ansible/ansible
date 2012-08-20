@@ -22,7 +22,6 @@
 
 import traceback
 import os
-import sys
 
 def run_command(cmd):
 	p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
