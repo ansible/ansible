@@ -19,6 +19,10 @@
 # rvm
 #		state= present|absent (default: present)
 #		install_type= single|multi (default: single)
+#
+# Note: When using multi-user (aka system-wide) installs, make sure to add your
+#		user to the rvm group.
+#
 
 import traceback
 import os
