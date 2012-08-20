@@ -57,10 +57,6 @@ def create_rvm_group():
 
 
 def install_multi():
-	#(rc, out, err) = create_rvm_group()
-	#if rc != 0:
-	#	return (rc, out, err)
-
 	cmd1 = "/usr/bin/curl -L https://get.rvm.io"
 	cmd2 = "/usr/bin/sudo /bin/bash -s stable"
 	p = subprocess.Popen(['-c', cmd2], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
