@@ -57,11 +57,14 @@ def create_rvm_group():
 
 
 def install_multi():
-	cmd1 = "/usr/bin/curl -L https://get.rvm.io"
-	cmd2 = "/usr/bin/sudo /bin/bash -s stable"
-	p = subprocess.Popen(['-c', cmd2], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	(out, err) = p.communicate(cmd1)
-	rc = p.returncode
+	cmd1 = ['/usr/bin/curl', '--silent', '-L', 'https://get.rvm.io']
+	cmd2 = ['/usr/bin/sudo', '/bin/bash', '-s', 'stable']
+	p1 = subprocess.Popen(cmd1, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+
+	p1.stdout.close()
+	(out, err) = p2.communicate()
+	rc = p2.returncode
 
 	return (rc, out, err)
 
@@ -84,6 +87,12 @@ def remove_rvm_group():
 		cmd = ['/usr/bin/sudo', '/usr/sbin/groupdel', 'rvm']
 		(rc, out, err) = run_command(cmd)
 
+
+def install(install_type):
+	if install_type == 'multi':
+		(rc, out, err) = install_multi()
+
+	return (rc, out, err)
 
 def main():
 	module = AnsibleModule(
@@ -113,14 +122,16 @@ def main():
 
 	if state == 'absent':
 		(rc, out, err) = remove()
-		if rc != 0:
+		if rc > 0:
 			module.fail_json(msg=err)
 	elif state == 'present':
-		if install_type == 'multi':
-			(rc, out, err) = install_multi()
-			
-			if rc != 0:
-				module.fail_json(msg=err)
+		if not rvm_path:
+			(rc, out, err) = install(install_type)
+
+			if err:
+				module.fail_json(rc=rc, msg=err, out=out)
+			else:
+				module.exit_json(**result)
 
 	if rc is None:
 		result['changed'] = False
