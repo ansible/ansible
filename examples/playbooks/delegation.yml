@@ -25,6 +25,11 @@
     action: command echo taking out of rotation $inventory_hostname
     delegate_to: 127.0.0.1
 
+# here's an alternate notation if you are delegating to 127.0.0.1, you can use 'local_action' 
+# instead of 'action' and leave off the 'delegate_to' part.
+#
+# - local_action: command echo taking out of rotation $inventory_hostname
+
   - name: do several things on the actual host
     action: command echo hi mom $inventory_hostname
   
