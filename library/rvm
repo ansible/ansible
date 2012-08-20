@@ -109,8 +109,8 @@ def install(install_type):
 def main():
 	module = AnsibleModule(
 		argument_spec = dict(
-			state = dict(choices=['present', 'absent']),
-			install_type= dict(choices=['single', 'multi'])
+			state = dict(default='present', choices=['present', 'absent']),
+			install_type = dict(default='single', choices=['single', 'multi'])
 		)
     )
 
