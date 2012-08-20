@@ -135,7 +135,7 @@ def main():
 	if state == 'absent':
 		(rc, out, err) = remove()
 		if rc > 0:
-			module.fail_json(msg=err)
+			module.fail_json(msg=err, rc=rc)
 	elif state == 'present':
 		if not rvm_path:
 			(rc, out, err) = install(install_type)
