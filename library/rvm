@@ -47,17 +47,29 @@ def get_rvm_path():
 def get_rvm_bin(rvm_path):
 	return rvm_path + "/bin/rvm"
 
+def install_multi():
+	cmd = ['curl', '-L', 'https://get.rvm.io', '|', '/usr/bin/sudo', 'bash', '-s', 'stable']
+	(rc, out, err) = run_command(cmd)
+	return (rc, out, err)
+
 def remove():
 	cmd = ['/usr/bin/sudo', 'rm', '-rf', '$HOME/.rvm $HOME/.rvmrc', '/etc/rvmrc', '/etc/profile.d/rvm.sh', '/usr/local/rvm', '/usr/local/bin/rvm']
 	(rc, out, err) = run_command(cmd)
+	if rc != 0:
+		return (rc, out, err)
 
-	cmd = ['/usr/bin/sudo', '/usr/sbin/groupdel', 'rvm']
-	(rc, out, err) = run_command(cmd)
-
-	cmd = ['/bin/echo', "RVM is removed. Please check all .bashrc|.bash_profile|.profile|.zshrc for RVM source lines and delete or comment out if this was a Per-User installation."]
-	(rc, out, err) = run_command(cmd)
+	remove_rvm_group()
 
 	return (rc, out, err)
+
+def remove_rvm_group():
+	cmd = ['/usr/bin/id', 'rvm']
+	(rc, out, err) = run_command(cmd)
+
+	if rc == 0:
+		cmd = ['/usr/bin/sudo', '/usr/sbin/groupdel', 'rvm']
+		(rc, out, err) = run_command(cmd)
+
 
 def main():
 	module = AnsibleModule(
@@ -83,10 +95,16 @@ def main():
 	if rvm_path:
 		result['changed'] = False
 
-	rvm_bin = get_rvm_bin(rvm_path)
+	#rvm_bin = get_rvm_bin(rvm_path)
 
 	if state == 'absent':
 		(rc, out, err) = remove()
+		if rc != 0:
+			module.fail_json(msg=err)
+	elif state == 'installed':
+		if install_type == 'multi':
+			(rc, out, err) = install_multi()
+			
 		if rc != 0:
 			module.fail_json(msg=err)
 
