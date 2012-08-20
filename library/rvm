@@ -77,7 +77,8 @@ def install_single():
 
 
 def remove():
-	cmd = ['/usr/bin/sudo', 'rm', '-rf', '$HOME/.rvm $HOME/.rvmrc', '/etc/rvmrc', '/etc/profile.d/rvm.sh', '/usr/local/rvm', '/usr/local/bin/rvm']
+	cmd = ['/usr/bin/sudo', 'rm', '-rf', '$HOME/.rvm $HOME/.rvmrc', '/etc/rvmrc',
+			'/etc/profile.d/rvm.sh', '/usr/local/rvm', '/usr/local/bin/rvm']
 	(rc, out, err) = run_command(cmd)
 	if rc != 0:
 		return (rc, out, err)
@@ -85,6 +86,7 @@ def remove():
 	remove_rvm_group()
 
 	return (rc, out, err)
+
 
 def remove_rvm_group():
 	cmd = ['/usr/bin/id', 'rvm']
@@ -100,7 +102,6 @@ def install(install_type):
 		(rc, out, err) = install_multi()
 	elif install_type == 'single':
 		(rc, out, err) = install_single()
-
 
 	return (rc, out, err)
 
