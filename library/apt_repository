@@ -26,17 +26,7 @@
 import platform
 
 APT = "/usr/bin/apt-get"
-
-
-def _find_binary(module):
-    binaries = ['/usr/bin/add-apt-repository']
-
-    for e in binaries:
-        if os.path.exists(e):
-            return e
-
-    module.fail_json(msg='Unabled to find any of the following executables '
-                         '%s' % binaries)
+ADD_APT_REPO = 'add-apt-repository'
 
 def _run(cmd):
     # returns (rc, stdout, stderr) from shell command
@@ -56,7 +46,10 @@ def main():
 
     module = AnsibleModule(argument_spec=arg_spec)
 
-    add_apt_repository = _find_binary(module)
+    add_apt_repository = module.get_bin_path(ADD_APT_REPO)
+    if add_apt_repository is None:
+        module.fail_json(msg='Unabled to find any of the following executables '
+                             '%s' % binaries)
 
     repo = module.params['repo']
     state = module.params['state']
