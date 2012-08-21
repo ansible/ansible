@@ -194,13 +194,13 @@ def main():
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             db=dict(default=''),
-            fail_on_user=dict(default=True)
+            fail_on_user=dict(default='yes')
         )
     )
     user = module.params["user"]
     password = module.params["password"]
     state = module.params["state"]
-    fail_on_user = module.params["fail_on_user"]
+    fail_on_user = module.params["fail_on_user"] == 'yes'
     db = module.params["db"]
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
@@ -221,12 +221,14 @@ def main():
     kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
               if k in params_map and v != "" )
     try:
-        db_connection = psycopg2.connect(database=db, **kw)
+        db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
     
+    kw = dict(user=user)
     changed = False
+    user_removed = False
     if state == "present":
         if user_exists(cursor, user):
             changed = user_chpass(cursor, user, password)
@@ -241,14 +243,16 @@ def main():
             changed = revoke_privileges(cursor, user, privs)
             user_removed = user_delete(cursor, user)
             changed = changed or user_removed
-
-    if fail_on_user and not user_removed:
-        msg = "unabel to remove user"
-        module.fail_json(msg=msg)
+            if fail_on_user and not user_removed:
+                msg = "unabel to remove user"
+                module.fail_json(msg=msg)
+            kw['user_removed'] = user_removed
 
     if changed:
         db_connection.commit()
-    module.exit_json(changed=changed, user=user, user_removed=user_removed)
+
+    kw['changed'] = changed
+    module.exit_json(**kw)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
