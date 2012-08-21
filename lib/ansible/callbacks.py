@@ -263,6 +263,8 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def _on_any(self, host, result):
+        result2 = result.copy()
+        result2.pop('invocation', None)
         print host_report_msg(host, self.options.module_name, result, self.options.one_line)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result,format=True))
@@ -288,6 +290,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, msg)
 
     def on_failed(self, host, results, ignore_errors=False):
+
+        results = results.copy()
+        results.pop('invocation', None)
+
         item = results.get('item', None)
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
@@ -300,6 +306,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_ok(self, host, host_result):
         item = host_result.get('item', None)
+
+        host_result = host_result.copy()
+        host_result.pop('invocation', None)
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
