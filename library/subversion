@@ -33,6 +33,21 @@ logger = logging.getLogger('subversion')
 #logger.addHandler(hdlr)
 logger.setLevel(logging.DEBUG)
 
+# TODO test scenarios:
+# hacking/test-module -m library/subversion ; cat /tmp/subversion.log
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\"" ; cat /tmp/subversion.log
+# hacking/test-module -m library/subversion -a "dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+# when /tmp/gnconf doesn't exist:
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+# when /tmp/gnconf is a folder, but its not an svn repo
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+# when /tmp/gnconf is a folder, but its a file (not a folder)
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+# when /tmp/gnconf is a folder, when its a different svn URL
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+# when /tmp/gnconf is a folder, when its a different revision
+# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
+
 def get_version(dest):
     ''' samples the version of the git repo '''
     logger.debug('get_version')
