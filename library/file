@@ -39,10 +39,10 @@ def add_path_info(kwargs):
         # secontext not yet supported
         if os.path.islink(path):
             kwargs['state'] = 'link'
-        elif os.path.isfile(path):
-            kwargs['state'] = 'file'
-        else:
+        elif os.path.isdir(path):
             kwargs['state'] = 'directory'
+        else:
+            kwargs['state'] = 'file'
         if HAVE_SELINUX and selinux_enabled():
             kwargs['secontext'] = ':'.join(selinux_context(path))
     else:
@@ -270,10 +270,10 @@ def main():
     if os.path.lexists(path):
         if os.path.islink(path):
             prev_state = 'link'
-        elif os.path.isfile(path):
-            prev_state = 'file'
-        else:
+        elif os.path.isdir(path):
             prev_state = 'directory'
+        else:
+            prev_state = 'file'
 
     if prev_state != 'absent' and state == 'absent':
         try:
