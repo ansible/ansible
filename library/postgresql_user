@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 try:
     import psycopg2
 except ImportError:
@@ -75,42 +77,70 @@ def user_delete(cursor, user):
 
 def has_table_privilege(cursor, user, table, priv):
     query = 'SELECT has_table_privilege(%s, %s, %s)'
-    cursor.execute(query, user, table, priv)
+    cursor.execute(query, (user, table, priv))
     return cursor.fetchone()[0]
 
+def get_table_privileges(cursor, user, table):
+    if '.' in table:
+        schema, table = table.split('.', 1)
+    else:
+        schema = 'public'
+    query = '''SELECT privilege_type FROM information_schema.role_table_grants
+    WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
+    cursor.execute(query, (user, table, schema))
+    return set([x[0] for x in cursor.fetchall()])
+    
+
 def grant_table_privilege(cursor, user, table, priv):
-    if has_table_privilege(cursor, user, table, priv):
-        return False
+    prev_priv = get_table_privileges(cursor, user, table)
     query = 'GRANT %s ON TABLE %s TO %s' % (priv, table, user)
     cursor.execute(query)
-    return True
+    curr_priv = get_table_privileges(cursor, user, table)
+    return len(curr_priv) > len(prev_priv)
 
 def revoke_table_privilege(cursor, user, table, priv):
-    if not has_table_privilege(cursor, user, table, priv):
-        return False
+    prev_priv = get_table_privileges(cursor, user, table)
     query = 'REVOKE %s ON TABLE %s FROM %s' % (priv, table, user)
     cursor.execute(query)
-    return True
+    curr_priv = get_table_privileges(cursor, user, table)
+    return len(curr_priv) < len(prev_priv)
 
+
+def get_database_privileges(cursor, user, db):
+    priv_map = {
+        'C':'CREATE',
+        'T':'TEMPORARY',
+        'c':'CONNECT',
+    }
+    query = 'SELECT datacl FROM pg_database WHERE datname = %s'
+    cursor.execute(query, (db,))
+    datacl = cursor.fetchone()[0]
+    r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
+    if r is None:
+        return []
+    o = []
+    for v in r.group(1):
+        o.append(priv_map[v])
+    return o
 
 def has_database_privilege(cursor, user, db, priv):
     query = 'SELECT has_database_privilege(%s, %s, %s)'
-    cursor.execute(query, user, db, priv)
+    cursor.execute(query, (user, db, priv))
     return cursor.fetchone()[0]
 
 def grant_database_privilege(cursor, user, db, priv):
-    if has_database_privilege(cursor, user, db, priv):
-        return False
+    prev_priv = get_database_privileges(cursor, user, db)
     query = 'GRANT %s ON DATABASE %s TO %s' % (priv, db, user)
     cursor.execute(query)
-    return True
+    curr_priv = get_database_privileges(cursor, user, db)
+    return len(curr_priv) > len(prev_priv)
 
 def revoke_database_privilege(cursor, user, db, priv):
-    if not has_database_privilege(cursor, user, db, priv):
-        return False
+    prev_priv = get_database_privileges(cursor, user, db)
     query = 'REVOKE %s ON DATABASE %s FROM %s' % (priv, db, user)
     cursor.execute(query)
-    return True
+    curr_priv = get_database_privileges(cursor, user, db)
+    return len(curr_priv) < len(prev_priv)
 
 def revoke_privileges(cursor, user, privs):
     if privs is None:
@@ -122,7 +152,7 @@ def revoke_privileges(cursor, user, privs):
             'table':revoke_table_privilege,
             'database':revoke_database_privilege
         }[type_]
-        for name, privileges in privs[type_].iteritem():
+        for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = revoke_func(cursor, user, name, privilege)\
                         or changed
@@ -139,7 +169,7 @@ def grant_privileges(cursor, user, privs):
             'table':grant_table_privilege,
             'database':grant_database_privilege
         }[type_]
-        for name, privileges in privs[type_].iteritem():
+        for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = grant_func(cursor, user, name, privilege)\
                         or changed
@@ -161,7 +191,7 @@ def parse_privs(privs, db):
     if privs is None:
         return privs
 
-    privs = {
+    o_privs = {
         'database':{},
         'table':{}
     }
@@ -169,15 +199,15 @@ def parse_privs(privs, db):
         if ':' not in token:
             type_ = 'database'
             name = db
-            privileges = token
+            priv_set = set(x.strip() for x in token.split(','))
         else:
             type_ = 'table'
             name, privileges = token.split(':', 1)
-        privileges = privileges.split(',')
+            priv_set = set(x.strip() for x in privileges.split(','))
         
-        privs[type_][name] = privileges
+        o_privs[type_][name] = priv_set
     
-    return privs
+    return o_privs
 
 # ===========================================
 # Module execution.
