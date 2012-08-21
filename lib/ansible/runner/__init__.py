@@ -573,7 +573,6 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
-        result.result['module'] = self.module_name
         if result.is_successful() and 'daisychain' in result.result:
             self.module_name = result.result['daisychain']
             if 'daisychain_args' in result.result:
@@ -584,7 +583,6 @@ class Runner(object):
             self.module_name = prev_module_name
             self.module_args = prev_module_args
 
-            result2.result['module'] = self.module_name
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
@@ -604,6 +602,12 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
+
+            result.result['invocation'] = dict(
+                module_args=self.module_args,
+                module_name=self.module_name
+            )
+
             if is_chained:
                 # no callbacks
                 return result
