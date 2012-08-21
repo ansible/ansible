@@ -52,7 +52,9 @@ def main():
     name = module.params['name']
     state = module.params['state']
 
-    SUPERVISORCTL = _find_supervisorctl()
+    SUPERVISORCTL = module.get_bin_path('supervisorctl')
+    if SUPERVISORCTL is None:
+        module.fail_json(msg='supervisorctl is not installed')
 
     if SUPERVISORCTL is None:
         module.fail_json(msg='supervisorctl is not installed')

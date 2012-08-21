@@ -21,12 +21,11 @@
 import grp
 
 def get_bin_path(module, arg):
-    if os.path.exists('/usr/sbin/%s' % arg):
-        return '/usr/sbin/%s' % arg
-    elif os.path.exists('/sbin/%s' % arg):
-        return '/sbin/%s' % arg
-    else:
+    bin = module.get_bin_path(arg)
+    if bin is None:
         module.fail_json(msg="Cannot find %s" % arg)
+    else:
+        return bin
 
 def group_del(module, group):
     cmd = [get_bin_path(module, 'groupdel'), group]
