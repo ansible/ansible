@@ -26,12 +26,6 @@
 # requires subversion on the client.
 
 import re
-import logging
-logger = logging.getLogger('subversion')
-#hdlr = logging.FileHandler('/tmp/subversion.log')
-#hdlr.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-#logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
 
 # TODO test scenarios:
 # hacking/test-module -m library/subversion ; cat /tmp/subversion.log
@@ -50,25 +44,16 @@ logger.setLevel(logging.DEBUG)
 
 def get_version(dest):
     ''' samples the version of the git repo '''
-    logger.debug('get_version')
     os.chdir(dest)
     cmd = "svn info | grep Revision"
-    logger.debug(cmd)
     return os.popen(cmd).read()
 
 def checkout(repo, dest):
     ''' makes a new svn repo if it does not already exist '''
-    logger.debug('checkout')
-    try:
-        os.makedirs(os.path.dirname(dest))
-    except:
-        pass
     cmd = "svn co %s %s" % (repo, dest)
-    logger.debug(cmd)
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     rc = cmd.returncode
-    logger.debug('rc, error: %s, %s ' % (rc,err))
     return (rc, out, err)
 
 def reset(dest):
@@ -78,10 +63,8 @@ def reset(dest):
     TODO throw away non-tracked files?
       -- svn st | grep '?' | awk '{print $2}' | xargs rm -rf
     '''
-    logger.debug('reset')
     os.chdir(dest)
     cmd = "svn revert -R ."
-    logger.debug(cmd)
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     rc = cmd.returncode
@@ -89,14 +72,12 @@ def reset(dest):
 
 def update(module, dest, version):
     ''' update an existing svn repo '''
-    logger.debug('update')
     os.chdir(dest)
     cmd = ''
     if version != 'HEAD':
         cmd = "svn up -r %s" % version
     else:
         cmd = "svn up"
-    logger.debug(cmd)
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     rc = cmd.returncode
@@ -123,10 +104,8 @@ def main():
     # else update.
     before = None
     if not os.path.exists("%s/.svn" % (dest)):
-        logger.debug('.svn exists')
         (rc, out, err) = checkout(repo, dest)
         if rc != 0:
-            logger.debug('checkout failure')
             module.fail_json(msg=err)
     else:
         # else do an update
@@ -136,9 +115,7 @@ def main():
             module.fail_json(msg=err)
 
     # handle errors from checkout or pull
-    logger.debug('ERROR: %s' % (err.find('ERROR') != -1))
     if err.find('ERROR') != -1:
-        logger.debug('err:\n%s' % (err))
         module.fail_json(msg=err)
 
     # switch to version specified regardless of whether
@@ -154,7 +131,7 @@ def main():
     if before != after:
         changed = True
 
-    module.exit_json(changed=changed, before=before, after=after, msg="fell thru the bag")
+    module.exit_json(changed=changed, before=before, after=after, msg="")
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
