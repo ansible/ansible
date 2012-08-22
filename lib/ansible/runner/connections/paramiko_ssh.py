@@ -20,7 +20,7 @@ import os
 import pipes
 import socket
 import random
-from ansible.callbacks import vvv
+from ansible.callback import vvv
 from ansible import errors
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/

@@ -25,8 +25,9 @@ import getpass
 import ansible.playbook
 import ansible.constants as C
 from ansible import errors
-from ansible import callbacks
 from ansible import utils
+from ansible import callback
+from ansible.callback import AggregateStats, PlaybookCallbacks, PlaybookRunnerCallbacks
 from ansible.color import ANSIBLE_COLOR, stringc
 
 def colorize(lead, num, color):
@@ -83,9 +84,9 @@ def main(args):
     # run all playbooks specified on the command line
     for playbook in args:
 
-        stats = callbacks.AggregateStats()
-        playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
-        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+        stats = AggregateStats()
+        playbook_cb = PlaybookCallbacks(verbose=utils.VERBOSITY)
+        runner_cb = PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
 
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
@@ -126,7 +127,7 @@ def main(args):
 
             pb.run()
             hosts = sorted(pb.stats.processed.keys())
-            print callbacks.banner("PLAY RECAP")
+            print callback.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
             for h in hosts:
                 t = pb.stats.summarize(h)

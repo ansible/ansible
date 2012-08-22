@@ -20,7 +20,7 @@ import os
 import shutil
 import subprocess
 from ansible import errors
-from ansible.callbacks import vvv
+from ansible.callback import vvv
 
 class Connection(object):
     ''' Local based connections '''

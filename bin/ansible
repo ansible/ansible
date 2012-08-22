@@ -26,8 +26,8 @@ from ansible.runner import Runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import callbacks
 from ansible import inventory
+from ansible.callback import AggregateStats, CliRunnerCallbacks
 
 ########################################################
 
@@ -37,8 +37,8 @@ class Cli(object):
     # ----------------------------------------------
 
     def __init__(self):
-        self.stats = callbacks.AggregateStats()
-        self.callbacks = callbacks.CliRunnerCallbacks()
+        self.stats = AggregateStats()
+        self.callbacks = CliRunnerCallbacks()
 
     # ----------------------------------------------
 

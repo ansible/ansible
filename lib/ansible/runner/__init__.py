@@ -35,7 +35,7 @@ from ansible import module_common
 import poller
 import connection
 from return_data import ReturnData
-from ansible.callbacks import DefaultRunnerCallbacks, vv
+from ansible.callback import DefaultRunnerCallbacks, vv
 
 HAS_ATFORK=True
 try:
