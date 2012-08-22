@@ -168,6 +168,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#register-variables">Register Variables</a></li>
 <li><a class="reference internal" href="#rolling-updates">Rolling Updates</a></li>
 <li><a class="reference internal" href="#delegation">Delegation</a></li>
+<li><a class="reference internal" href="#understanding-variable-precedence">Understanding Variable Precedence</a></li>
 <li><a class="reference internal" href="#style-points">Style Points</a></li>
 </ul>
 </li>
@@ -652,6 +653,22 @@ a good idea:</p>
     local_action: command /usr/bin/add_back_to_pool $inventory_hostname</pre>
 </div>
 </div>
+<div class="section" id="understanding-variable-precedence">
+<h2>Understanding Variable Precedence<a class="headerlink" href="#understanding-variable-precedence" title="Permalink to this headline">¶</a></h2>
+<p>You have already learned about inventory host and group variables, &#8216;vars&#8217;, and &#8216;vars_files&#8217;.</p>
+<p>If a variable name is defined in more than one place with the same name, priority is as follows
+to determine which place sets the value of the variable.</p>
+<ol class="arabic simple">
+<li>Variables loaded from YAML files mentioned in &#8216;vars_files&#8217; in a playbook.</li>
+<li>&#8216;vars&#8217; as defined in the playbook.</li>
+<li>facts, whether built in or custom, or variables assigned from the &#8216;register&#8217; keyword.</li>
+<li>variables passed to parameterized task include statements.</li>
+<li>Host variables from inventory.</li>
+<li>Group variables from inventory, in order of least specific group to most specific.</li>
+</ol>
+<p>Therefore, if you want to set a default value for something you wish to override somewhere else, the best
+place to set such a default is in a group variable.</p>
+</div>
 <div class="section" id="style-points">
 <h2>Style Points<a class="headerlink" href="#style-points" title="Permalink to this headline">¶</a></h2>
 <p>Ansible playbooks are colorized.  If you do not like this, set the ANSIBLE_NOCOLOR=1 environment variable.</p>
@@ -708,7 +725,7 @@ a good idea:</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 20, 2012.<br/>
+      Last updated on Aug 21, 2012.<br/>
     </p>
   </div>
 </footer>
