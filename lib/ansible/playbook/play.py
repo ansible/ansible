@@ -103,7 +103,6 @@ class Play(object):
             task_vars = self.vars.copy()
             if 'include' in x:
                 tokens = shlex.split(x['include'])
-
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
                     task_vars[k] = utils.template(v, task_vars)
@@ -113,6 +112,7 @@ class Play(object):
                 data = [x]
             else:
                 raise Exception("unexpected task type")
+
             for y in data:
                 mv = task_vars.copy()
                 results.append(Task(self,y,module_vars=mv))
@@ -151,6 +151,8 @@ class Play(object):
         # translate a list of vars into a dict
         if type(self.vars) == list:
             for item in self.vars:
+                if getattr(item, 'items', None) is None:
+                    raise errors.AnsibleError("expecting a key-value pair in 'vars' section")
                 k, v = item.items()[0]
                 vars[k] = v
         else:
