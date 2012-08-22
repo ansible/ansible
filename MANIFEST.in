@@ -1,7 +1,9 @@
-include README.md packaging/rpm/ansible.spec COPYING
+include CHANGELOG.md COPYING README.md RELEASES.txt
+include packaging/rpm/ansible.spec
 include examples/hosts
 include examples/ansible.cfg
 graft examples/playbooks
+graft examples/scripts
 include packaging/distutils/setup.py
 recursive-include docs *
 recursive-include library *

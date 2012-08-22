@@ -49,14 +49,14 @@ cp -v library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%defattr(-,root,root)
-%{python_sitelib}/ansible*
-%{_bindir}/ansible*
-%{_datadir}/ansible
-%config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING
+%defattr(-, root, root, 0755)
+%doc CHANGELOG.md COPYING PKG-INFO README.md RELEASES.txt
+%doc examples/playbooks/ examples/scripts/
 %doc %{_mandir}/man1/ansible*
-%doc examples/playbooks
+%config(noreplace) %{_sysconfdir}/ansible/
+%{_bindir}/ansible*
+%{_datadir}/ansible/
+%{python_sitelib}/ansible*
 
 %changelog
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
