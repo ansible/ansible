@@ -1,0 +1,7 @@
+# example of how to get the ipaddress of every machine in the webservers group
+# for use in a template
+
+{% for host in groups['webservers'] %}
+  HOST: {{ host }} IP: {{ hostvars[host]['ansible_all_ipv4_addresses'][0] }}
+{% endfor %}
+
