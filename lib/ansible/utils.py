@@ -317,6 +317,7 @@ def _gitinfo():
         branch = f.readline().split('/')[-1].rstrip("\n")
         f.close()
         branch_path = os.path.join(repo_path, "refs", "heads", branch)
+    if os.path.exists(branch_path):
         f = open(branch_path)
         commit = f.readline()[:10]
         f.close()
@@ -327,6 +328,8 @@ def _gitinfo():
             offset = time.altzone
         result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
             time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+    else:
+        result = 'n/a'
     return result
 
 def version(prog):
