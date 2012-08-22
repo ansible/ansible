@@ -33,7 +33,7 @@ def set_owner(cursor, db, owner):
     return True
 
 def db_owned_by(cursor, db, user):
-    query = """SELECT count(*) FROM pg_database JOIN pg_user ON datdba = usesysid
+    query = """SELECT * FROM pg_database JOIN pg_user ON datdba = usesysid
     WHERE usename = %(user)s and datname = %(db)s"""
     cursor.execute(query, {'db':db, 'user':user})
     return cursor.rowcount == 1
