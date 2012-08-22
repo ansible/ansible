@@ -9,14 +9,14 @@ callbacks
 Callbacks can be used to add logging or monitoring capability, or just make
 interesting sound effects.
 
-Drop callback plugins in your ansible/lib/callbacks/ directory.
+Drop callback plugins in your ansible/lib/callback_plugins/ directory.
 
 connections
 ===========
 
 Connection plugins allow ansible to talk over different protocols.
 
-Drop connection plugins in your ansible/lib/runner/connections/ directory.
+Drop connection plugins in your ansible/lib/runner/connection_plugins/ directory.
 
 inventory
 =========
