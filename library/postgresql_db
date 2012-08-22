@@ -27,26 +27,45 @@ else:
 # PostgreSQL module specific support methods.
 #
 
+def set_owner(cursor, db, owner):
+    query = "ALTER DATABASE %s OWNER TO %s" % (db, owner)
+    cursor.execute(query)
+    return True
+
+def db_owned_by(cursor, db, user):
+    query = """SELECT count(*) FROM pg_database JOIN pg_user ON datdba = usesysid
+    WHERE usename = %(user)s and datname = %(db)s"""
+    cursor.execute(query, {'db':db, 'user':user})
+    return cursor.rowcount == 1
+
 def db_exists(cursor, db):
     query = "SELECT * FROM pg_database WHERE datname=%(db)s"
     cursor.execute(query, {'db': db})
     return cursor.rowcount == 1
 
 def db_delete(cursor, db):
-    query = "DROP DATABASE %s" % db
-    cursor.execute(query)
-    return True
+    if db_exists(cursor, db):
+        query = "DROP DATABASE %s" % db
+        cursor.execute(query)
+        return True
+    else:
+        return False
 
 def db_create(cursor, db, owner, template, encoding):
-    if owner:
-        owner = " OWNER %s" % owner
-    if template:
-        template = " TEMPLATE %s" % template
-    if encoding:
-        encoding = " ENCODING '%s'" % encoding
-    query = "CREATE DATABASE %s%s%s%s" % (db, owner, template, encoding)
-    cursor.execute(query)
-    return True
+    if not db_exists(cursor, db):
+        if owner:
+            owner = " OWNER %s" % owner
+        if template:
+            template = " TEMPLATE %s" % template
+        if encoding:
+            encoding = " ENCODING '%s'" % encoding
+        query = "CREATE DATABASE %s%s%s%s" % (db, owner, template, encoding)
+        cursor.execute(query)
+        return True
+    elif owner and not db_owned_by(cursor, db, owner):
+        return set_owner(cursor, db, owner)
+    else:
+        return False
 
 # ===========================================
 # Module execution.
@@ -100,12 +119,10 @@ def main():
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     try:
-        if db_exists(cursor, db):
-            if state == "absent":
-                changed = db_delete(cursor, db)
-        else:
-            if state == "present":
-                changed = db_create(cursor, db, owner, template, encoding)
+        if state == "absent":
+            changed = db_delete(cursor, db)
+        elif state == "present":
+            changed = db_create(cursor, db, owner, template, encoding)
     except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
