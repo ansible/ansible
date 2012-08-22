@@ -23,7 +23,7 @@ from ansible.errors import AnsibleError
 
 import os.path
 dirname = os.path.dirname(__file__)
-modules = utils.import_plugins(os.path.join(dirname, 'connections'))
+modules = utils.import_plugins(os.path.join(dirname, 'connection_plugins'))
 
 # rename this module
 modules['paramiko'] = modules['paramiko_ssh']

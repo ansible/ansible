@@ -24,7 +24,7 @@ import os.path
 from ansible.color import stringc
 
 dirname = os.path.dirname(__file__)
-callbacks = utils.import_plugins(os.path.join(dirname, 'callbacks'))
+callbacks = utils.import_plugins(os.path.join(dirname, 'callback_plugins'))
 callbacks = [ c.CallbackModule() for c in callbacks.values() ]
 
 cowsay = None
