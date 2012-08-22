@@ -274,7 +274,7 @@ def main():
             user_removed = user_delete(cursor, user)
             changed = changed or user_removed
             if fail_on_user and not user_removed:
-                msg = "unabel to remove user"
+                msg = "unable to remove user"
                 module.fail_json(msg=msg)
             kw['user_removed'] = user_removed
 
