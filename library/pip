@@ -29,14 +29,14 @@ def _get_full_name(name, version=None):
 
 
 def _find_pip(module, env):
-    paths = ['/usr/local/bin', '/usr/bin']
+    paths = os.environ["PATH"].split(os.pathsep)
 
     if env:
         paths = [os.path.join(env, 'bin')] + paths
 
     for p in paths:
         pe = p + '/pip'
-        if os.path.exists(pe):
+        if os.access(pe, os.X_OK):
             return pe
 
     module.fail_json(msg='pip is not installed')
