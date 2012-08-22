@@ -7,7 +7,7 @@ import unittest
 import getpass
 import ansible.playbook
 import ansible.utils as utils
-import ansible.callbacks as ans_callbacks
+import ansible.callback as ans_callbacks
 import os
 import shutil
 

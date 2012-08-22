@@ -24,7 +24,7 @@ import random
 import select
 import fcntl
 import ansible.constants as C
-from ansible.callbacks import vvv
+from ansible.callback import vvv
 from ansible import errors
 
 class Connection(object):
