@@ -45,13 +45,23 @@ def clone(repo, dest):
     rc = cmd.returncode
     return (rc, out, err)
 
-def reset(dest):
+
+def has_local_mods(dest):
+    os.chdir(dest)
+    cmd = "git status -s"
+    lines = os.popen(cmd).read().splitlines()
+    lines = filter(lambda c: re.search('^\\?\\?.*$',c) == None,lines)
+    return len(lines) > 0
+
+def reset(module,dest,force):
     '''
     Resets the index and working tree to HEAD.
     Discards any changes to tracked files in working
     tree since that commit.
     '''
     os.chdir(dest)
+    if not force and has_local_mods(dest):
+        module.fail_json(msg="Local modifications exist in repository (force=no).")
     cmd = "git reset --hard HEAD"
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
@@ -140,7 +150,8 @@ def main():
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
-            remote=dict(default='origin')
+            remote=dict(default='origin'),
+            force=dict(default='yes', choices=['yes', 'no'], aliases=['force'])
         )
     )
 
@@ -148,6 +159,7 @@ def main():
     repo    = module.params['repo']
     version = module.params['version']
     remote  = module.params['remote']
+    force   = module.boolean(module.params['force'])
 
     gitconfig = os.path.join(dest, '.git', 'config')
 
@@ -156,14 +168,16 @@ def main():
     # if there is no git configuration, do a clone operation
     # else pull and switch the version
     before = None
+    local_mods = False
     if not os.path.exists(gitconfig):
         (rc, out, err) = clone(repo, dest)
         if rc != 0:
             module.fail_json(msg=err)
     else:
         # else do a pull
+        local_mods = has_local_mods(dest)
         before = get_version(dest)
-        (rc, out, err) = reset(dest)
+        (rc, out, err) = reset(module,dest,force)
         if rc != 0:
             module.fail_json(msg=err)
         (rc, out, err) = pull(module, repo, dest, version)
@@ -182,7 +196,7 @@ def main():
     after = get_version(dest)
     changed = False
 
-    if before != after:
+    if before != after or local_mods:
         changed = True
 
     module.exit_json(changed=changed, before=before, after=after)
