@@ -202,20 +202,24 @@ class AnsibleModule(object):
         log_args = re.sub(r'login_password=.+ (.*)', r"login_password=NOT_LOGGING_PASSWORD \1", log_args)
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
-    def get_bin_path(self, arg):
+    def get_bin_path(self, arg, opt_dirs=[]):
         '''
         find system executable in PATH.
         if found return full path; otherwise return None
         '''
         sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        paths = os.environ.get('PATH').split(':')
+        paths = []
+        for d in opt_dirs:
+            if d is not None and os.path.exists(d):
+                paths.append(d)
+        paths += os.environ.get('PATH').split(':')
         bin_path = None
         # mangle PATH to include /sbin dirs
         for p in sbin_paths:
             if p not in paths and os.path.exists(p):
                 paths.append(p)
         for d in paths:
-            path = '%s/%s' % (d, arg)
+            path = os.path.join(d, arg)
             if os.path.exists(path) and os.access(path, os.X_OK):
                 bin_path = path
                 break
