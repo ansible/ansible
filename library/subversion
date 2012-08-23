@@ -54,9 +54,8 @@ def switch(repo, dest):
 def has_local_mods(dest):
     os.chdir(dest)
     cmd = "svn status"
-    words = os.popen(cmd).read()
-    splitup = words.splitlines()
-    filtered = filter(lambda c: re.search('^\\?.*$',c) == None,splitup)
+    lines = os.popen(cmd).read().splitlines()
+    filtered = filter(lambda c: re.search('^\\?.*$',c) == None,lines)
     return len(filtered) > 0
 
 def reset(dest,force):
@@ -96,7 +95,7 @@ def main():
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name']),
             revision=dict(default='HEAD'),
-            force=dict(default='no', choices=['yes', 'no'], aliases=['force'])
+            force=dict(default='yes', choices=['yes', 'no'], aliases=['force'])
         )
     )
 
