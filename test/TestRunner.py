@@ -28,7 +28,8 @@ class TestRunner(unittest.TestCase):
             module_name='ping',
             module_path='library/',
             module_args='',
-            remote_user=self.user,
+            remote_user='vagrant',
+            private_key_file='/Users/danesummers/.vagrant.d/insecure_private_key',
             remote_pass=None,
             host_list='test/ansible_hosts',
             timeout=5,
@@ -71,16 +72,14 @@ class TestRunner(unittest.TestCase):
         # when using nosetests this will only show up on failure
         # which is pretty useful
         print "RESULTS=%s" % results
-        assert "127.0.0.2" in results['contacted']
-        return results['contacted']['127.0.0.2']
+        assert "127.0.0.1" in results['contacted']
+        return results['contacted']['127.0.0.1']
 
     def test_ping(self):
         result = self._run('ping', [])
         assert "ping" in result
 
     def test_facter(self):
-        if not get_binary("facter"):
-            raise SkipTest
         result = self._run('facter', [])
         assert "hostname" in result
 
@@ -160,6 +159,7 @@ class TestRunner(unittest.TestCase):
 
     def test_subversion(self):
         # TODO make an svn repo locally so as to avoid tests failing on network calls
+        # TODO test that it fails if subversion isn't in the path
         self._run('file',['path=/tmp/meetings','state=absent'])
         # hacking/test-module -m library/subversion
         result = self._run('subversion', [ ])
@@ -252,7 +252,7 @@ class TestRunner(unittest.TestCase):
 
     def test_fetch(self):
         input_ = self._get_test_file('sample.j2')
-        output = os.path.join(self.stage_dir, '127.0.0.2', input_)
+        output = os.path.join(self.stage_dir, '127.0.0.1', input_)
         result = self._run('fetch', [ "src=%s" % input_, "dest=%s" % self.stage_dir ])
         assert os.path.exists(output)
         assert open(input_).read() == open(output).read()

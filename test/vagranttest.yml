@@ -1,0 +1,14 @@
+---
+- hosts: devboxes
+  user: vagrant
+  sudo: True
+  gather_facts: False
+  tasks:
+  - name: subversion
+    action: apt name=subversion
+  - name: git
+    action: apt name=git-core
+  #- name: get package for puppet
+  #  action: command wget http://apt.puppetlabs.com/puppetlabs-release-precise.deb chdir=/root creates=/root/puppetlabs-release-precise.deb
+  #- name: puppet
+  #  action: command dpkg -i puppetlabs-release-precise.deb creates=/root/puppetlabs-release-precise.deb
