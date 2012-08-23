@@ -23,30 +23,17 @@
 # tag.  Latest is not supported, you should not be doing
 # that. Contribs welcome! -- MPD
 
-# requires subversion on the client.
+# requires subversion and grep on the client.
 
 import re
-
-# TODO test scenarios:
-# hacking/test-module -m library/subversion ; cat /tmp/subversion.log
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\"" ; cat /tmp/subversion.log
-# hacking/test-module -m library/subversion -a "dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
-# when /tmp/gnconf doesn't exist:
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
-# when /tmp/gnconf is a folder, but its not an svn repo
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
-# when /tmp/gnconf is a folder, but its a file (not a folder)
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
-# when /tmp/gnconf is a folder, when its a different svn URL
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
-# when /tmp/gnconf is a folder, when its a different revision
-# hacking/test-module -m library/subversion -a "repo=\"svn+ssh://pen.syskey.com/opt/subversion/gnconf\" dest=\"/tmp/gnconf\"" ; cat /tmp/subversion.log
 
 def get_version(dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "svn info | grep Revision"
-    return os.popen(cmd).read()
+    cmd = "svn info"
+    revision = filter(lambda l: re.search('Revision',l) != None,os.popen(cmd).read().splitlines())
+    url = filter(lambda l: re.search('^URL',l) != None,os.popen(cmd).read().splitlines())
+    return [revision[0],url[0]]
 
 def checkout(repo, dest):
     ''' makes a new svn repo if it does not already exist '''
@@ -56,19 +43,37 @@ def checkout(repo, dest):
     rc = cmd.returncode
     return (rc, out, err)
 
-def reset(dest):
-    '''
-    throw away any changes?
-    TODO doesn't seem like a good idea to me...
-    TODO throw away non-tracked files?
-      -- svn st | grep '?' | awk '{print $2}' | xargs rm -rf
-    '''
-    os.chdir(dest)
-    cmd = "svn revert -R ."
+def switch(repo, dest):
+    ''' makes a new svn repo if it does not already exist '''
+    cmd = "svn sw %s %s" % (repo, dest)
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     rc = cmd.returncode
     return (rc, out, err)
+
+def has_local_mods(dest):
+    os.chdir(dest)
+    cmd = "svn status"
+    words = os.popen(cmd).read()
+    splitup = words.splitlines()
+    filtered = filter(lambda c: re.search('^\\?.*$',c) == None,splitup)
+    return len(filtered) > 0
+
+def reset(dest,force):
+    '''
+    Reset the repo:
+     force: if true, then remove any local modifications. Else, fail if there are local modifications
+    '''
+    if has_local_mods(dest):
+        if force:
+            cmd = "svn revert -R ."
+            cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate()
+            rc = cmd.returncode
+            return (rc, out, err)
+        else:
+            return (-1,"ERROR: modified files exist in the repository.","")
+    return (0,"","")
 
 def update(module, dest, version):
     ''' update an existing svn repo '''
@@ -90,31 +95,41 @@ def main():
         argument_spec = dict(
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name']),
-            revision=dict(default='HEAD')
+            revision=dict(default='HEAD'),
+            force=dict(default='no', choices=['yes', 'no'], aliases=['force'])
         )
     )
 
-    dest    = module.params['dest']
-    repo    = module.params['repo']
+    dest     = module.params['dest']
+    repo     = module.params['repo']
     revision = module.params['revision']
+    force    = module.boolean(module.params['force'])
 
     rc, out, err, status = (0, None, None, None)
 
     # if there is no .svn folder, do a checkout
     # else update.
     before = None
+    local_mods = False
     if not os.path.exists("%s/.svn" % (dest)):
-        (rc, out, err) = checkout(repo, dest)
-        if rc != 0:
-            module.fail_json(msg=err)
+        if os.path.exists(dest):
+            module.fail_json(msg="%s folder already exists, but its not a subversion repository." % (dest))
+        else:
+            (rc, out, err) = checkout(repo, dest)
+            if rc != 0:
+                module.fail_json(msg=err)
     else:
+        local_mods = has_local_mods(dest)
         # else do an update
         before = get_version(dest)
-        (rc, out, err) = reset(dest)
+        (rc, out, err) = reset(dest,force)
+        if rc != 0:
+            module.fail_json(msg=err)
+        (rc, out, err) = switch(repo, dest)
         if rc != 0:
             module.fail_json(msg=err)
 
-    # handle errors from checkout or pull
+    # handle errors from switch or pull
     if err.find('ERROR') != -1:
         module.fail_json(msg=err)
 
@@ -128,10 +143,10 @@ def main():
     after = get_version(dest)
     changed = False
 
-    if before != after:
+    if before != after or local_mods:
         changed = True
 
-    module.exit_json(changed=changed, before=before, after=after, msg="")
+    module.exit_json(changed=changed, before=before, after=after)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
