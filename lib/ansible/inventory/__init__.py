@@ -34,7 +34,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_subset', '_is_script',
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
@@ -55,6 +55,7 @@ class Inventory(object):
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
+        self._also_restriction = None
         self._subset = None
 
         # whether the inventory file is a script
@@ -122,6 +123,8 @@ class Inventory(object):
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
             hosts = [ h for h in hosts if h.name in self._restriction ]
+        if self._also_restriction is not None:
+            hosts = [ h for h in hosts if h.name in self._also_restriction ]
 
         return sorted(hosts, key=lambda x: x.name)
 
@@ -200,6 +203,16 @@ class Inventory(object):
                     hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
+    def groups_for_host(self, host):
+        results = []
+        groups = self.get_groups()
+        for group in groups:
+            for hostn in group.get_hosts():
+                if host == hostn.name:
+                    results.append(group)
+                    continue
+        return results
+
     def get_groups(self):
         return self.groups
 
@@ -271,6 +284,7 @@ class Inventory(object):
     def list_groups(self):
         return sorted([ g.name for g in self.groups ], key=lambda x: x.name)
 
+    # TODO: remove this function
     def get_restriction(self):
         return self._restriction
 
@@ -284,6 +298,15 @@ class Inventory(object):
             restriction = [ restriction ]
         self._restriction = restriction
 
+    def also_restrict_to(self, restriction):
+        """
+        Works like restict_to but offers an additional restriction.  Playbooks use this
+        to implement serial behavior.
+        """
+        if type(restriction) != list:
+            restriction = [ restriction ]
+        self._also_restriction = restriction
+    
     def subset(self, subset_pattern):
         """ 
         Limits inventory results to a subset of inventory that matches a given
@@ -298,8 +321,11 @@ class Inventory(object):
 
     def lift_restriction(self):
         """ Do not restrict list operations """
-
         self._restriction = None
+    
+    def lift_also_restriction(self):
+        """ Clears the also restriction """
+        self._also_restriction = None
 
     def is_file(self):
         """ did inventory come from a file? """

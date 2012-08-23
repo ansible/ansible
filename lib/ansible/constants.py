@@ -78,7 +78,7 @@ DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE
 
 # non-configurable things
 DEFAULT_REMOTE_PASS       = None
-DEFAULT_TRANSPORT_OPTS    = ['local', 'paramiko', 'ssh']
 DEFAULT_SUDO_PASS         = None
 DEFAULT_SUBSET            = None
 
+ANSIBLE_SSH_ARGS          = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)

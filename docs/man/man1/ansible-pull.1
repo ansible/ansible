@@ -1,0 +1,73 @@
+'\" t
+.\"     Title: ansible
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 08/14/2012
+.\"    Manual: System administration commands
+.\"    Source: Ansible 0.7
+.\"  Language: English
+.\"
+.TH "ANSIBLE" "1" "08/14/2012" "Ansible 0\&.7" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ansible-pull \- set up a remote copy of ansible on each managed node
+.SH "SYNOPSIS"
+.sp
+ansible \-d DEST \-U URL [ \-C CHECKOUT ]
+.SH "DESCRIPTION"
+.sp
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+.sp
+Use ansible\-pull to set up a remote copy of ansible on each managed node, each set to run via cron and update playbook source via git\&. This inverts the default \fBpush\fR architecture of ansible into a \fBpull\fR architecture, which has near\-limitless scaling potential\&.
+.sp
+The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible\-pull\&.
+.sp
+This is useful both for extreme scale\-out as well as periodic remediation\&. Usage of the \fIfetch\fR module to retrieve logs from ansible\-pull runs would be an excellent way to gather and analyze remote logs from ansible\-pull\&.
+.SH "OPTIONS"
+.PP
+\fB\-d\fR \fIDEST\fR, \fB\-\-directory=\fR\fIDEST\fR
+.RS 4
+Directory to checkout git repository into\&.
+.RE
+.PP
+\fB\-U\fR \fIURL\fR, \fB\-\-url=\fR\fIURL\fR
+.RS 4
+URL of git repository to clone\&.
+.RE
+.PP
+\fB\-C\fR \fICHECKOUT\fR, \fB\-\-checkout=\fR\fICHECKOUT\fR
+.RS 4
+Branch/Tag/Commit to checkout\&. Defaults to
+\fIHEAD\fR\&.
+.RE
+.SH "AUTHOR"
+.sp
+Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
+.SH "COPYRIGHT"
+.sp
+Copyright \(co 2012, Michael DeHaan
+.sp
+Ansible is released under the terms of the GPLv3 License\&.
+.SH "SEE ALSO"
+.sp
+\fBansible\fR(1), \fBansible\-playbook\fR(1)
+.sp
+Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/

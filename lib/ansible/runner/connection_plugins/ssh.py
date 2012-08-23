@@ -23,10 +23,11 @@ import pipes
 import random
 import select
 import fcntl
+import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
 
-class SSHConnection(object):
+class Connection(object):
     ''' ssh based connections '''
 
     def __init__(self, runner, host, port):
@@ -40,7 +41,7 @@ class SSHConnection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
 
         self.common_args = []
-        extra_args = os.getenv("ANSIBLE_SSH_ARGS", None)
+        extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
         else:
@@ -108,7 +109,7 @@ class SSHConnection(object):
         p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" before running again')
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in the config file) before running again')
 
         return ('', stdout, '')
 

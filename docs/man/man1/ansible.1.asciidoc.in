@@ -34,6 +34,10 @@ semicolons.
 OPTIONS
 -------
 
+*-v*, *--verbose*::
+
+Verbose mode, more output from successful actions will be shown. Give
+up to three times for more output.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
@@ -160,7 +164,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible-playbook*(1)
+*ansible-playbook*(1), *ansible-pull*(1)
 
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>

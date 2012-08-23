@@ -1,0 +1,76 @@
+ansible(1)
+=========
+:doctype:manpage
+:man source:   Ansible
+:man version:  %VERSION%
+:man manual:   System administration commands
+
+NAME
+----
+ansible-pull - set up a remote copy of ansible on each managed node
+
+
+SYNOPSIS
+--------
+ansible -d DEST -U URL [ -C CHECKOUT ]
+
+
+DESCRIPTION
+-----------
+
+*Ansible* is an extra-simple tool/framework/API for doing \'remote things' over
+SSH.
+
+Use ansible-pull to set up a remote copy of ansible on each managed
+node, each set to run via cron and update playbook source via
+git. This inverts the default *push* architecture of ansible into a
+*pull* architecture, which has near-limitless scaling potential.
+
+The setup playbook can be tuned to change the cron frequency, logging
+locations, and parameters to ansible-pull.
+
+This is useful both for extreme scale-out as well as periodic
+remediation. Usage of the 'fetch' module to retrieve logs from
+ansible-pull runs would be an excellent way to gather and analyze
+remote logs from ansible-pull.
+
+
+OPTIONS
+-------
+
+*-d* 'DEST', *--directory=*'DEST'::
+
+Directory to checkout git repository into.
+
+*-U* 'URL', *--url=*'URL'::
+
+URL of git repository to clone.
+
+*-C* 'CHECKOUT', *--checkout=*'CHECKOUT'::
+
+Branch/Tag/Commit to checkout.  Defaults to 'HEAD'.
+
+
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan. See the AUTHORS file
+for a complete list of contributors.
+
+
+COPYRIGHT
+---------
+
+Copyright © 2012, Michael DeHaan
+
+Ansible is released under the terms of the GPLv3 License.
+
+
+SEE ALSO
+--------
+
+*ansible*(1), *ansible-playbook*(1)
+
+Extensive documentation as well as IRC and mailing list info
+is available on the ansible home page: <https://ansible.github.com/>

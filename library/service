@@ -18,9 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
+
 SERVICE = None
 CHKCONFIG = None
 INITCTL = None
+PS_OPTIONS = 'auxww'
 
 def _find_binaries(m):
     # list of possible paths for service/chkconfig binaries
@@ -56,14 +59,38 @@ def _find_binaries(m):
     else:
         INITCTL = None
 
-def _get_service_status(name):
+def _get_service_status(name, pattern):
     rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
 
     # set the running state to None because we don't know it yet
     running = None
 
+    # If pattern is provided, search for that
+    # before checking initctl, service output, and other tricks
+    if pattern is not None:
+
+        psbin = '/bin/ps'
+        if not os.path.exists(psbin):
+            if os.path.exists('/usr/bin/ps'):
+                psbin = '/usr/bin/ps'
+            else:
+                psbin = None
+
+        if psbin is not None:
+            (rc, psout, pserr) = _run('%s %s' % (psbin, PS_OPTIONS))
+            # If rc is 0, set running as appropriate
+            # If ps command fails, fall back to other means.
+            if rc == 0:
+                running = False
+                lines = psout.split("\n")
+                for line in lines:
+                    if pattern in line and not "pattern=" in line:
+                        # so as to not confuse ./hacking/test-module
+                        running = True
+                        break
+
     # Check if we got upstart on the system and then the job state
-    if INITCTL != None:
+    if INITCTL != None and running is None:
         # check the job status by upstart response
         initctl_rc, initctl_status_stdout, initctl_status_stderr = _run("%s status %s" % (INITCTL, name))
         if initctl_status_stdout.find("stop/waiting") != -1:
@@ -134,13 +161,21 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS)
         )
     )
 
     name = module.params['name']
     state = module.params['state']
+    pattern = module.params['pattern']
     enable = module.boolean(module.params.get('enabled', None))
+
+    # Set PS options here if 'ps auxww' will not work on
+    # target platform
+    if platform.system() == 'SunOS':
+        global PS_OPTIONS
+        PS_OPTIONS = '-ef'
 
     # ===========================================
     # find binaries locations on minion
@@ -148,7 +183,7 @@ def main():
 
     # ===========================================
     # get service status
-    running = _get_service_status(name)
+    running = _get_service_status(name, pattern)
 
     # ===========================================
     # Some common variables

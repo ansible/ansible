@@ -33,10 +33,11 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
-class ParamikoConnection(object):
+class Connection(object):
     ''' SSH based connections with Paramiko '''
 
     def __init__(self, runner, host, port=None):
+
         self.ssh = None
         self.runner = runner
         self.host = host

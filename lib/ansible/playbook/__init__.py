@@ -150,8 +150,8 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for play_ds in self.playbook:
-            self._run_play(Play(self,play_ds))
-
+            play = Play(self,play_ds)
+            self._run_play(play)
         # summarize the results
         results = {}
         for host in self.stats.processed.keys():
@@ -301,22 +301,43 @@ class PlayBook(object):
         self._do_setup_step(play)
 
         # now with that data, handle contentional variable file imports!
-        play.update_vars_files(self.inventory.list_hosts(play.hosts))
 
-        for task in play.tasks():
-            # only run the task if the requested tags match
-            should_run = False
-            for x in self.only_tags:
-                for y in task.tags:
-                    if (x==y):
-                        should_run = True
-                        break
-            if should_run:
-                self._run_task(play, task, False)
+        all_hosts = self.inventory.list_hosts(play.hosts)
+        play.update_vars_files(all_hosts)
 
-        # run notify actions
-        for handler in play.handlers():
-            if len(handler.notified_by) > 0:
-                self.inventory.restrict_to(handler.notified_by)
-                self._run_task(play, handler, True)
-                self.inventory.lift_restriction()
+        serialized_batch = []
+        if play.serial <= 0:
+            serialized_batch = [all_hosts]
+        else:
+            # do N forks all the way through before moving to next
+            while len(all_hosts) > 0:
+                play_hosts = []
+                for x in range(play.serial):
+                    if len(all_hosts) > 0:
+                        play_hosts.append(all_hosts.pop())
+                serialized_batch.append(play_hosts)                        
+
+        for on_hosts in serialized_batch:
+
+            self.inventory.also_restrict_to(on_hosts)
+
+            for task in play.tasks():
+                # only run the task if the requested tags match
+                should_run = False
+                for x in self.only_tags:
+                    for y in task.tags:
+                        if (x==y):
+                            should_run = True
+                            break
+                if should_run:
+                    self._run_task(play, task, False)
+
+            # run notify actions
+            for handler in play.handlers():
+                if len(handler.notified_by) > 0:
+                    self.inventory.restrict_to(handler.notified_by)
+                    self._run_task(play, handler, True)
+                    self.inventory.lift_restriction()
+        
+            self.inventory.lift_also_restriction()
+

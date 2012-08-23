@@ -119,7 +119,7 @@ def remove(m, pkgspec, cache, purge=False):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='installed', choices=['installed', 'latest', 'removed']),
+            state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
             update_cache = dict(default='no', choices=['yes', 'no'], aliases=['update-cache']),
             purge = dict(default='no', choices=['yes', 'no']),
             package = dict(default=None, aliases=['pkg', 'name']),
@@ -133,7 +133,7 @@ def main():
         import apt
         import apt_pkg
     except:
-        module.fail_json("Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     if not os.path.exists(APT_PATH):
         module.fail_json(msg="Cannot find apt-get")
@@ -171,10 +171,10 @@ def main():
                 default_release=p['default_release'],
                 install_recommends=install_recommends,
                 force=force_yes)
-    elif p['state'] == 'installed':
+    elif p['state'] in [ 'installed', 'present' ]:
         install(module, packages, cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
-    elif p['state'] == 'removed':
+    elif p['state'] in [ 'removed', 'absent' ]:
         remove(module, packages, cache, purge = module.boolean(p['purge']))
 
 # this is magic, see lib/ansible/module_common.py

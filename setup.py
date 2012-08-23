@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
-# NOTE: setup.py does NOT install the contents of the library dir
-# for you, you should go through "make install" or "make RPMs"
-# for that, or manually copy modules over.
-
 import os
 import sys
+from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
 from distutils.core import setup
+
+# find library modules
+from ansible.constants import DEFAULT_MODULE_PATH
+data_files = [ (DEFAULT_MODULE_PATH, glob('./library/*')) ]
+
+print "DATA FILES=%s" % data_files
 
 setup(name='ansible',
       version=__version__,
@@ -25,11 +28,13 @@ setup(name='ansible',
          'ansible.inventory',
          'ansible.playbook',
          'ansible.runner',
-         'ansible.runner.connection',
+         'ansible.runner.connection_plugins',
+         'ansible.callback_plugins',
       ],
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull'
-      ]
+      ],
+      data_files=data_files
 )

@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-playbook
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/06/2012
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 08/15/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.7
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "08/06/2012" "Ansible 0\&.7" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "08/15/2012" "Ansible 0\&.7" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -33,10 +42,11 @@ ansible\-playbook <filename\&.yml> \&... [options]
 The names of one or more YAML format files to run as ansible playbooks\&.
 .RE
 .SH "OPTIONS"
-.sp
+.PP
 \fB\-v\fR, \fB\-\-verbose\fR
-.sp
-Verbose mode, more output from successful actions will be shown
+.RS 4
+Verbose mode, more output from successful actions will be shown\&. Give up to three times for more output\&.
+.RE
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
 .RS 4
@@ -73,7 +83,12 @@ Prompt for the SSH password instead of assuming key\-based authentication with s
 .PP
 \fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
 .RS 4
-Prompt for the password to use for playbook plays that request sudo access, if any
+Prompt for the password to use for playbook plays that request sudo access, if any\&.
+.RE
+.PP
+\fB\-U\fR, \fISUDO_USER\fR, \fB\-\-sudo\-user=\fR\fISUDO_USER\fR
+.RS 4
+Desired sudo user (default=root)\&.
 .RE
 .PP
 \fB\-T\fR \fISECONDS\fR, \fB\-\-timeout=\fR\fISECONDS\fR
@@ -90,6 +105,17 @@ Force all plays to use sudo, even if not marked as such\&.
 \fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
 .RS 4
 Use this remote user name on playbook steps that do not indicate a user name to run as\&.
+.RE
+.PP
+\fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
+.RS 4
+Connection type to use\&. Possible options are
+\fIparamiko\fR
+(SSH),
+\fIssh\fR, and
+\fIlocal\fR\&.
+\fIlocal\fR
+is mostly useful for crontab or kickstarts\&.
 .RE
 .SH "ENVIRONMENT"
 .sp
@@ -108,6 +134,6 @@ Copyright \(co 2012, Michael DeHaan
 Ansible is released under the terms of the GPLv3 License\&.
 .SH "SEE ALSO"
 .sp
-\fBansible\fR(1)
+\fBansible\fR(1), \fBansible\-pull\fR(1)
 .sp
 Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/

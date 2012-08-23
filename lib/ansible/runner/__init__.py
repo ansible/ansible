@@ -34,6 +34,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
+from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 
 HAS_ATFORK=True
@@ -62,38 +63,6 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
-
-################################################
-
-class ReturnData(object):
-    ''' internal return class for execute methods, not part of API signature '''
-
-    __slots__ = [ 'result', 'comm_ok', 'host' ]
-
-    def __init__(self, host=None, result=None, comm_ok=True):
-        self.host = host
-        self.result = result
-        self.comm_ok = comm_ok
-
-        if type(self.result) in [ str, unicode ]:
-            self.result = utils.parse_json(self.result)
-
-        if host is None:
-            raise Exception("host not set")
-        if type(self.result) != dict:
-            raise Exception("dictionary result expected")
-
-    def communicated_ok(self):
-        return self.comm_ok
-
-    def is_successful(self):
-        return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
-
-    def daisychain(self, module_name):
-        ''' request a module call follow this one '''
-        if self.is_successful():
-            self.result['daisychain'] = module_name
-        return self
 
 class Runner(object):
     ''' core API interface to ansible '''
@@ -172,6 +141,10 @@ class Runner(object):
     def _delete_remote_files(self, conn, files):
         ''' deletes one or more remote files '''
 
+        if os.getenv("ANSIBLE_KEEP_REMOTE_FILES","0") == "1":
+            # ability to turn off temp file deletion for debug purposes
+            return
+
         if type(files) == str:
             files = [ files ]
         for filename in files:
@@ -232,14 +205,14 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        return ReturnData(host=conn.host, result=res)
+        return ReturnData(conn=conn, result=res)
 
     # *****************************************************
 
     def _execute_raw(self, conn, tmp, inject=None):
         ''' execute a non-module command for bootstrapping, or if there's no python on a device '''
-        return ReturnData(host=conn.host, result=dict(
-            stdout=self._low_level_exec_command(conn, self.module_args, tmp, sudoable = True)
+        return ReturnData(conn=conn, result=dict(
+            stdout=self._low_level_exec_command(conn, self.module_args.encode('utf-8'), tmp, sudoable = True)
         ))
 
     # ***************************************************
@@ -288,7 +261,7 @@ class Runner(object):
         dest    = options.get('dest', None)
         if (source is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src and dest are required")
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -302,7 +275,7 @@ class Runner(object):
                     break
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
-                return ReturnData(host=conn.host, results=results)
+                return ReturnData(conn=conn, results=results)
 
         source = utils.template(source, inject)
         source = utils.path_dwim(self.basedir, source)
@@ -310,7 +283,7 @@ class Runner(object):
         local_md5 = utils.md5(source)
         if local_md5 is None:
             result=dict(failed=True, msg="could not find src=%s" % source)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
 
         remote_md5 = self._remote_md5(conn, tmp, dest)
 
@@ -330,7 +303,7 @@ class Runner(object):
         else:
             # no need to transfer the file, already correct md5
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
-            return ReturnData(host=conn.host, result=result).daisychain('file')
+            return ReturnData(conn=conn, result=result).daisychain('file')
 
     # *****************************************************
 
@@ -343,7 +316,7 @@ class Runner(object):
         dest = options.get('dest', None)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
-            return ReturnData(host=conn.host, result=results)
+            return ReturnData(conn=conn, result=results)
 
         # apply templating to source argument
         source = utils.template(source, inject)
@@ -361,13 +334,13 @@ class Runner(object):
         # but keep going to fetch other log files
         if remote_md5 == '0':
             result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
         if remote_md5 == '1':
             result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
         if remote_md5 == '2':
             result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
 
         # calculate md5 sum for the local file
         local_md5 = utils.md5(dest)
@@ -382,12 +355,12 @@ class Runner(object):
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source)
-                return ReturnData(host=conn.host, result=result)
+                return ReturnData(conn=conn, result=result)
             result = dict(changed=True, md5sum=new_md5)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
         else:
             result = dict(changed=False, md5sum=local_md5, file=source)
-            return ReturnData(host=conn.host, result=result)
+            return ReturnData(conn=conn, result=result)
 
     # *****************************************************
 
@@ -403,7 +376,7 @@ class Runner(object):
         dest     = options.get('dest', None)
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
-            return ReturnData(host=conn.host, comm_ok=False, result=result)
+            return ReturnData(conn=conn, comm_ok=False, result=result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -417,7 +390,7 @@ class Runner(object):
                     break
             if not found:
                 result = dict(failed=True, msg="could not find src in first_available_file list")
-                return ReturnData(host=conn.host, comm_ok=False, result=result)
+                return ReturnData(conn=conn, comm_ok=False, result=result)
 
         source = utils.template(source, inject)
 
@@ -426,7 +399,8 @@ class Runner(object):
             resultant = utils.template_from_file(self.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
-            return ReturnData(host=conn.host, comm_ok=False, result=result)
+            return ReturnData(conn=conn, comm_ok=False, result=result)
+
         xfered = self._transfer_str(conn, tmp, 'source', resultant)
 
         # run the copy module, queue the file module
@@ -474,13 +448,16 @@ class Runner(object):
         host_variables = self.inventory.get_variables(host)
         port = host_variables.get('ansible_ssh_port', self.remote_port)
 
-        inject = self.setup_cache[host].copy()
+        inject = {}
         inject.update(host_variables)
         inject.update(self.module_vars)
+        inject.update(self.setup_cache[host])
         inject['hostvars'] = self.setup_cache
 
-        items = self.module_vars.get('items', [])
+        # allow with_items to work in playbooks...
+        # apt and yum are converted into a single call, others run in a loop
 
+        items = self.module_vars.get('items', [])
         if isinstance(items, basestring) and items.startswith("$"):
             items = items.replace("$","")
             if items in inject:
@@ -494,6 +471,8 @@ class Runner(object):
             # hack for apt and soon yum, with_items maps back into a single module call
             inject['item'] = ",".join(items)
             items = []
+
+        # logic to decide how to run things depends on whether with_items is used
 
         if len(items) == 0:
             return self._executor_internal_inner(host, inject, port)
@@ -536,6 +515,10 @@ class Runner(object):
     def _executor_internal_inner(self, host, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
+        # FIXME: temporary, need to refactor to pass as parameters versus reassigning
+        prev_module_name = self.module_name
+        prev_module_args = self.module_args
+
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
         # 'hostvars' variable contains variables for each host name
@@ -562,8 +545,14 @@ class Runner(object):
             return ReturnData(host=host, result=result)
 
         conn = None
+        actual_host = host
         try:
-            conn = self.connector.connect(host, port)
+            delegate_to = inject.get('delegate_to', None)
+            if delegate_to is not None:
+                actual_host = delegate_to    
+            conn = self.connector.connect(actual_host, port)
+            if delegate_to is not None:
+                conn._delegate_for = host
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
@@ -584,13 +573,16 @@ class Runner(object):
             else:
                 result = self._execute_async_module(conn, tmp, module_name, inject=inject)
 
-        result.result['module'] = self.module_name
         if result.is_successful() and 'daisychain' in result.result:
             self.module_name = result.result['daisychain']
             if 'daisychain_args' in result.result:
                 self.module_args = result.result['daisychain_args']
             result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
-            result2.result['module'] = self.module_name
+
+            # FIXME: remove this hack
+            self.module_name = prev_module_name
+            self.module_args = prev_module_args
+
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
                 changed = True
@@ -610,21 +602,27 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
+
+            result.result['invocation'] = dict(
+                module_args=self.module_args,
+                module_name=self.module_name
+            )
+
             if is_chained:
                 # no callbacks
                 return result
             if 'skipped' in data:
-                self.callbacks.on_skipped(result.host)
+                self.callbacks.on_skipped(host)
             elif not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
-                self.callbacks.on_failed(result.host, data, ignore_errors)
+                self.callbacks.on_failed(host, data, ignore_errors)
                 if ignore_errors:
                     if 'failed' in result.result:
                         result.result['failed'] = False
                     if 'rc' in result.result:
                         result.result['rc'] = 0
             else:
-                self.callbacks.on_ok(result.host, data)
+                self.callbacks.on_ok(host, data)
         return result
 
     # *****************************************************
@@ -661,7 +659,9 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        return utils.last_non_blank_line(self._low_level_exec_command(conn, cmd, tmp, sudoable=False))
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
+        data = utils.last_non_blank_line(data)
+        return data.split()[0]
 
     # *****************************************************
 
@@ -703,6 +703,7 @@ class Runner(object):
 
         module_data = ""
         is_new_style=False
+
         with open(in_path) as f:
             module_data = f.read()
             if module_common.REPLACER in module_data:

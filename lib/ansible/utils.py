@@ -29,6 +29,8 @@ from ansible import __version__
 import ansible.constants as C
 import time
 import StringIO
+import imp
+import glob
 
 VERBOSITY=0
 
@@ -138,7 +140,7 @@ def parse_json(raw_data):
 
         for t in tokens:
             if t.find("=") == -1:
-                raise errors.AnsibleError("failed to parse: %s" % data)
+                raise errors.AnsibleError("failed to parse: %s" % raw_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ]:
@@ -149,7 +151,7 @@ def parse_json(raw_data):
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : data }
+            return { "failed" : True, "parsed" : False, "msg" : raw_data }
         return results
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
@@ -213,6 +215,10 @@ def template(text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
+    try:
+        text = text.decode('utf-8')
+    except UnicodeEncodeError:
+        pass # already unicode
     depth = 0
     while prev_text != text:
         depth = depth + 1
@@ -307,15 +313,23 @@ def _gitinfo():
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
     if os.path.exists(repo_path):
-        with open(os.path.join(repo_path, "HEAD")) as f:
-            branch = f.readline().split('/')[-1].rstrip("\n")
+        f = open(os.path.join(repo_path, "HEAD"))
+        branch = f.readline().split('/')[-1].rstrip("\n")
+        f.close()
         branch_path = os.path.join(repo_path, "refs", "heads", branch)
-        with open(branch_path) as f:
-            commit = f.readline()[:10]
+    if os.path.exists(branch_path):
+        f = open(branch_path)
+        commit = f.readline()[:10]
+        f.close()
         date = time.localtime(os.stat(branch_path).st_mtime)
-        offset = time.timezone if (time.daylight == 0) else time.altzone
+        if time.daylight == 0:  
+            offset = time.timezone
+        else:
+            offset = time.altzone
         result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
             time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+    else:
+        result = 'n/a'
     return result
 
 def version(prog):
@@ -388,7 +402,6 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
-                          choices=C.DEFAULT_TRANSPORT_OPTS,
                           default=C.DEFAULT_TRANSPORT,
                           help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
 
@@ -445,4 +458,12 @@ def filter_leading_non_json_lines(buf):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
+
+def import_plugins(directory):
+    modules = {}
+    for path in glob.glob(os.path.join(directory, '*.py')): 
+        name, ext = os.path.splitext(os.path.basename(path))
+        modules[name] = imp.load_source(name, path)
+    return modules
+
 
