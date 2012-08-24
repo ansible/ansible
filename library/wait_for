@@ -27,21 +27,26 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True),
+            host=dict(default='127.0.0.1'),
             timeout=dict(default=300),
-            port=dict(default=22),
-            state=dict(default='started', choices=['started', 'stopped', 'restarted']),
+            delay=dict(default=0),
+            port=dict(required=True),
+            state=dict(default='started', choices=['started', 'stopped']),
         ),
     )
 
     params = module.params
 
-    host = params['name']
+    host = params['host']
     timeout = int(params['timeout'])
+    delay = int(params['delay'])
     port = int(params['port'])
     state = params['state']
 
-    if state in [ 'stopped', 'restarted']:
+    if delay:
+        time.sleep(delay)
+
+    if state is 'stopped':
         ### first wait for the host to go down
         end = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
 
@@ -57,7 +62,7 @@ def main():
         else:
             module.fail_json(msg="Timeout when waiting for %s to stop."%(host))
 
-    if state in [ 'started', 'restarted' ]:
+    if state is 'started':
         ### wait for the host to come up
         end = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
 
