@@ -56,7 +56,7 @@ The following script prints out the uptime information for all hosts::
     # construct the ansible runner and execute on all hosts
     results = ansible.runner.Runner(
         pattern='*', forks=10,
-        module_name='command', module_args=['/usr/bin/uptime'],
+        module_name='command', module_args='/usr/bin/uptime',
     ).run()
 
     if results is None:
