@@ -72,7 +72,7 @@ def main():
         else:
             module.fail_json(msg="Timeout when waiting for %s"%(host))
 
-    module.exit_json(msg="State of %s on %s is %s."%(host, port, state))
+    module.exit_json(state=state, port=port)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
