@@ -1,0 +1,152 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# I wanted to keep this simple at first, so for now this checks out
+# from the given branch of a repo at a particular SHA or
+# tag.  Latest is not supported, you should not be doing
+# that. Contribs welcome! -- MPD
+
+# requires subversion and grep on the client.
+
+import re
+
+def get_version(dest):
+    ''' samples the version of the git repo '''
+    os.chdir(dest)
+    cmd = "svn info"
+    revision = filter(lambda l: re.search('Revision',l) != None,os.popen(cmd).read().splitlines())
+    url = filter(lambda l: re.search('^URL',l) != None,os.popen(cmd).read().splitlines())
+    return [revision[0],url[0]]
+
+def checkout(repo, dest):
+    ''' makes a new svn repo if it does not already exist '''
+    cmd = "svn co %s %s" % (repo, dest)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+def switch(repo, dest):
+    ''' makes a new svn repo if it does not already exist '''
+    cmd = "svn sw %s %s" % (repo, dest)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+def has_local_mods(dest):
+    os.chdir(dest)
+    cmd = "svn status"
+    lines = os.popen(cmd).read().splitlines()
+    filtered = filter(lambda c: re.search('^\\?.*$',c) == None,lines)
+    return len(filtered) > 0
+
+def reset(dest,force):
+    '''
+    Reset the repo:
+     force: if true, then remove any local modifications. Else, fail if there are local modifications
+    '''
+    if has_local_mods(dest):
+        if force:
+            cmd = "svn revert -R ."
+            cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate()
+            rc = cmd.returncode
+            return (rc, out, err)
+        else:
+            return (-1,"ERROR: modified files exist in the repository.","")
+    return (0,"","")
+
+def update(module, dest, version):
+    ''' update an existing svn repo '''
+    os.chdir(dest)
+    cmd = ''
+    if version != 'HEAD':
+        cmd = "svn up -r %s" % version
+    else:
+        cmd = "svn up"
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            dest=dict(required=True),
+            repo=dict(required=True, aliases=['name']),
+            revision=dict(default='HEAD'),
+            force=dict(default='yes', choices=['yes', 'no'], aliases=['force'])
+        )
+    )
+
+    dest     = module.params['dest']
+    repo     = module.params['repo']
+    revision = module.params['revision']
+    force    = module.boolean(module.params['force'])
+
+    rc, out, err, status = (0, None, None, None)
+
+    # if there is no .svn folder, do a checkout
+    # else update.
+    before = None
+    local_mods = False
+    if not os.path.exists("%s/.svn" % (dest)):
+        if os.path.exists(dest):
+            module.fail_json(msg="%s folder already exists, but its not a subversion repository." % (dest))
+        else:
+            (rc, out, err) = checkout(repo, dest)
+            if rc != 0:
+                module.fail_json(msg=err)
+    else:
+        local_mods = has_local_mods(dest)
+        # else do an update
+        before = get_version(dest)
+        (rc, out, err) = reset(dest,force)
+        if rc != 0:
+            module.fail_json(msg=err)
+        (rc, out, err) = switch(repo, dest)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+    # handle errors from switch or pull
+    if err.find('ERROR') != -1:
+        module.fail_json(msg=err)
+
+    # switch to version specified regardless of whether
+    # we cloned or pulled
+    (rc, out, err) = update(module, dest, revision)
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    # determine if we changed anything
+    after = get_version(dest)
+    changed = False
+
+    if before != after or local_mods:
+        changed = True
+
+    module.exit_json(changed=changed, before=before, after=after)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
