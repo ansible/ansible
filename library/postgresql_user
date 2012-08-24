@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 try:
     import psycopg2
 except ImportError:
@@ -34,35 +36,14 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, db):
+def user_add(cursor, user, password):
     """Create a new user with write access to the database"""
     query = "CREATE USER %(user)s with PASSWORD '%(password)s'"
     cursor.execute(query % {"user": user, "password": password})
-    grant_privileges(cursor, user, db)
     return True
 
-
-def has_privileges(cursor, user, db):
-    """Check if the user has create privileges on the database"""
-    query = "SELECT has_database_privilege(%(user)s, %(db)s, 'CREATE')"
-    cursor.execute(query, {'user': user, 'db': db})
-    return cursor.fetchone()[0]
-
-
-def grant_privileges(cursor, user, db):
-    """Grant all privileges on the database"""
-    query = "GRANT ALL PRIVILEGES ON DATABASE %(db)s TO %(user)s"
-    cursor.execute(query % {'user': user, 'db': db})
-
-
-def revoke_privileges(cursor, user, db):
-    """Revoke all privileges on the database"""
-    query = "REVOKE ALL PRIVILEGES ON DATABASE %(db)s FROM %(user)s"
-    cursor.execute(query % {'user': user, 'db': db})
-
-
-def user_mod(cursor, user, password, db):
-    """Update password and permissions"""
+def user_chpass(cursor, user, password):
+    """Change user password"""
     changed = False
 
     # Handle passwords.
@@ -79,27 +60,158 @@ def user_mod(cursor, user, password, db):
         if current_pass_hash != new_pass_hash:
             changed = True
 
-    # Handle privileges.
-    # For now, we just check if the user has access to the database
-    if not has_privileges(cursor, user, db):
-        grant_privileges(cursor, user, db)
-        changed = True
+    return changed
+
+def user_delete(cursor, user):
+    """Try to remove a user. Returns True if successful otherwise False"""
+    cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
+    try:
+        cursor.execute("DROP USER %s" % user)
+    except:
+        cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
+        cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
+        return False
+    
+    cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
+    return True
+
+def has_table_privilege(cursor, user, table, priv):
+    query = 'SELECT has_table_privilege(%s, %s, %s)'
+    cursor.execute(query, (user, table, priv))
+    return cursor.fetchone()[0]
+
+def get_table_privileges(cursor, user, table):
+    if '.' in table:
+        schema, table = table.split('.', 1)
+    else:
+        schema = 'public'
+    query = '''SELECT privilege_type FROM information_schema.role_table_grants
+    WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
+    cursor.execute(query, (user, table, schema))
+    return set([x[0] for x in cursor.fetchall()])
+    
+
+def grant_table_privilege(cursor, user, table, priv):
+    prev_priv = get_table_privileges(cursor, user, table)
+    query = 'GRANT %s ON TABLE %s TO %s' % (priv, table, user)
+    cursor.execute(query)
+    curr_priv = get_table_privileges(cursor, user, table)
+    return len(curr_priv) > len(prev_priv)
+
+def revoke_table_privilege(cursor, user, table, priv):
+    prev_priv = get_table_privileges(cursor, user, table)
+    query = 'REVOKE %s ON TABLE %s FROM %s' % (priv, table, user)
+    cursor.execute(query)
+    curr_priv = get_table_privileges(cursor, user, table)
+    return len(curr_priv) < len(prev_priv)
+
+
+def get_database_privileges(cursor, user, db):
+    priv_map = {
+        'C':'CREATE',
+        'T':'TEMPORARY',
+        'c':'CONNECT',
+    }
+    query = 'SELECT datacl FROM pg_database WHERE datname = %s'
+    cursor.execute(query, (db,))
+    datacl = cursor.fetchone()[0]
+    r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
+    if r is None:
+        return []
+    o = []
+    for v in r.group(1):
+        o.append(priv_map[v])
+    return o
+
+def has_database_privilege(cursor, user, db, priv):
+    query = 'SELECT has_database_privilege(%s, %s, %s)'
+    cursor.execute(query, (user, db, priv))
+    return cursor.fetchone()[0]
+
+def grant_database_privilege(cursor, user, db, priv):
+    prev_priv = get_database_privileges(cursor, user, db)
+    query = 'GRANT %s ON DATABASE %s TO %s' % (priv, db, user)
+    cursor.execute(query)
+    curr_priv = get_database_privileges(cursor, user, db)
+    return len(curr_priv) > len(prev_priv)
+
+def revoke_database_privilege(cursor, user, db, priv):
+    prev_priv = get_database_privileges(cursor, user, db)
+    query = 'REVOKE %s ON DATABASE %s FROM %s' % (priv, db, user)
+    cursor.execute(query)
+    curr_priv = get_database_privileges(cursor, user, db)
+    return len(curr_priv) < len(prev_priv)
+
+def revoke_privileges(cursor, user, privs):
+    if privs is None:
+        return False
+
+    changed = False
+    for type_ in privs:
+        revoke_func = {
+            'table':revoke_table_privilege,
+            'database':revoke_database_privilege
+        }[type_]
+        for name, privileges in privs[type_].iteritems():
+            for privilege in privileges:
+                changed = revoke_func(cursor, user, name, privilege)\
+                        or changed
 
     return changed
 
+def grant_privileges(cursor, user, privs):
+    if privs is None:
+        return False
 
-def user_delete(cursor, user, db):
-    """Delete a user, first revoking privileges"""
-    revoke_privileges(cursor, user, db)
-    cursor.execute("DROP USER %(user)s" % {'user': user})
-    return True
+    changed = False
+    for type_ in privs:
+        grant_func = {
+            'table':grant_table_privilege,
+            'database':grant_database_privilege
+        }[type_]
+        for name, privileges in privs[type_].iteritems():
+            for privilege in privileges:
+                changed = grant_func(cursor, user, name, privilege)\
+                        or changed
 
+    return changed
 
+def parse_privs(privs, db):
+    """
+    Parse privilege string to determine permissions for database db.
+    Format:
+
+        privileges[/privileges/...]
+
+    Where:
+
+        privileges := DATABASE_PRIVILEGES[,DATABASE_PRIVILEGES,...] |
+            TABLE_NAME:TABLE_PRIVILEGES[,TABLE_PRIVILEGES,...]
+    """
+    if privs is None:
+        return privs
+
+    o_privs = {
+        'database':{},
+        'table':{}
+    }
+    for token in privs.split('/'):
+        if ':' not in token:
+            type_ = 'database'
+            name = db
+            priv_set = set(x.strip() for x in token.split(','))
+        else:
+            type_ = 'table'
+            name, privileges = token.split(':', 1)
+            priv_set = set(x.strip() for x in privileges.split(','))
+        
+        o_privs[type_][name] = priv_set
+    
+    return o_privs
 
 # ===========================================
 # Module execution.
 #
-
 
 def main():
     module = AnsibleModule(
@@ -110,13 +222,19 @@ def main():
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             state=dict(default="present", choices=["absent", "present"]),
-            db=dict(required=True),
+            priv=dict(default=None),
+            db=dict(default=''),
+            fail_on_user=dict(default='yes')
         )
     )
     user = module.params["user"]
     password = module.params["password"]
     state = module.params["state"]
+    fail_on_user = module.params["fail_on_user"] == 'yes'
     db = module.params["db"]
+    if db == '' and module.params["priv"] is not None:
+        module.fail_json(msg="privileges require a database to be specified")
+    privs = parse_privs(module.params["priv"], db)
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -127,33 +245,44 @@ def main():
     params_map =  {
         "login_host":"host",
         "login_user":"user",
-        "login_password":"password"
+        "login_password":"password",
+        "db":"database" 
     }
     kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
               if k in params_map and v != "" )
     try:
-        db_connection = psycopg2.connect(database=db, **kw)
+        db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
-
+    
+    kw = dict(user=user)
+    changed = False
+    user_removed = False
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_mod(cursor, user, password, db)
+            changed = user_chpass(cursor, user, password)
         else:
             if password is None:
                 msg = "password parameter required when adding a user"
                 module.fail_json(msg=msg)
-            changed = user_add(cursor, user, password, db)
-
-    elif state == "absent":
+            changed = user_add(cursor, user, password)
+        changed = grant_privileges(cursor, user, privs) or changed
+    else:
         if user_exists(cursor, user):
-            changed = user_delete(cursor, user, db)
-        else:
-            changed = False
-    # Commit the database changes
-    db_connection.commit()
-    module.exit_json(changed=changed, user=user)
+            changed = revoke_privileges(cursor, user, privs)
+            user_removed = user_delete(cursor, user)
+            changed = changed or user_removed
+            if fail_on_user and not user_removed:
+                msg = "unable to remove user"
+                module.fail_json(msg=msg)
+            kw['user_removed'] = user_removed
+
+    if changed:
+        db_connection.commit()
+
+    kw['changed'] = changed
+    module.exit_json(**kw)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
