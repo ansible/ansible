@@ -804,6 +804,11 @@ small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 <td>origin</td>
 <td>name of the remote branch</td>
 </tr>
+<tr><td>force</td>
+<td>no</td>
+<td>yes</td>
+<td>(New in 0.8) If yes, any modified files in the working repository will be thrown out. If no, this module will fail if it encounters modified files.</td>
+</tr>
 </tbody>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
@@ -1464,6 +1469,47 @@ your best judgement.</p>
 </div>
 <p>Example action from a playbook:</p>
 <div class="highlight-python"><pre>shell somescript.sh &gt;&gt; somelog.txt</pre>
+</div>
+</div>
+<div class="section" id="subversion">
+<span id="id26"></span><h2>subversion<a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.8.</span></p>
+<p>Deploys a subversion repository</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="8%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>repo</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>The subversion URL to the subversion repository.</td>
+</tr>
+<tr><td>dest</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>The absolute path where the repository should be deployed.</td>
+</tr>
+<tr><td>force</td>
+<td>no</td>
+<td>yes</td>
+<td>If yes, any modified files in the working repository will be thrown out. If no, then this module will fail if it encounters modified files.</td>
+</tr>
+</tbody>
+</table>
+<p>Example action from a playbook:</p>
+<div class="highlight-python"><pre>subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout</pre>
 </div>
 </div>
 <div class="section" id="supervisorctl">
