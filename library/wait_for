@@ -30,6 +30,7 @@ def main():
             name=dict(required=True),
             timeout=dict(default=300),
             port=dict(default=22),
+            state=dict(default='started', choices=['started', 'stopped', 'restarted']),
         ),
     )
 
@@ -38,21 +39,40 @@ def main():
     host = params['name']
     timeout = int(params['timeout'])
     port = int(params['port'])
+    state = params['state']
 
-    end = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+    if state in [ 'stopped', 'restarted']:
+        ### first wait for the host to go down
+        end = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
 
-    while datetime.datetime.now() < end:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect( (host, port) )
-            s.close()
-            break
-        except:
-            time.sleep(1)
-    else:
-        module.fail_json(msg="Timeout when waiting for %s"%(host))
+        while datetime.datetime.now() < end:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(5)
+            try:
+                s.connect( (host, port) )
+                s.close()
+                time.sleep(1)
+            except:
+                break
+        else:
+            module.fail_json(msg="Timeout when waiting for %s to stop."%(host))
 
-    module.exit_json(msg="%s responds on %s"%(host, port))
+    if state in [ 'started', 'restarted' ]:
+        ### wait for the host to come up
+        end = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+
+        while datetime.datetime.now() < end:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                s.connect( (host, port) )
+                s.close()
+                break
+            except:
+                time.sleep(1)
+        else:
+            module.fail_json(msg="Timeout when waiting for %s"%(host))
+
+    module.exit_json(msg="State of %s on %s is %s."%(host, port, state))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
