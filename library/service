@@ -145,12 +145,19 @@ def _do_enable(name, enable):
     # update-rc.d wants enable/disable while
     # chkconfig wants on/off
     # also, systemctl needs the arguments reversed
-    if CHKCONFIG.endswith("update-rc.d"):
-        args = (CHKCONFIG, name, "enable" if enable else "disable")
-    elif CHKCONFIG.endswith("systemctl"):
-        args = (CHKCONFIG, "enable" if enable else "disable", name + ".service")
+    if enable:
+        on_off = "on"
+        enable_disable = "enable"
     else:
-        args = (CHKCONFIG, name, "on" if enable else "off")
+        on_off = "off"
+        enable_disable = "disable"
+
+    if CHKCONFIG.endswith("update-rc.d"):
+        args = (CHKCONFIG, name, enable_disable)
+    elif CHKCONFIG.endswith("systemctl"):
+        args = (CHKCONFIG, enable_disable, name + ".service")
+    else:
+        args = (CHKCONFIG, name, on_off)
 
     if enable is not None:
         rc, stdout, stderr = _run("%s %s %s" % args)
