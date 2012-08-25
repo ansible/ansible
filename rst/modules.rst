@@ -74,6 +74,7 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/service.rst
 .. include:: modules/setup.rst
 .. include:: modules/shell.rst
+.. include:: modules/subversion.rst
 .. include:: modules/supervisorctl.rst
 .. include:: modules/template.rst
 .. include:: modules/user.rst
