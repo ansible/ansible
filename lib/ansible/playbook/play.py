@@ -130,7 +130,7 @@ class Play(object):
         return self._tasks
 
     def handlers(self):
-        ''' return handler objects for this play ''' 
+        ''' return handler objects for this play '''
         return self._handlers
 
     # *************************************************
@@ -197,22 +197,25 @@ class Play(object):
 
     # *************************************************
 
-    def should_run(self, tags):
-        ''' does the play match any of the tags? '''
+    def compare_tags(self, tags):
+        ''' given a list of tags that the user has specified, return two lists:
+        matched_tags:   tags were found within the current play and match those given
+                        by the user
+        unmatched_tags: tags that were found within the current play but do not match
+                        any provided by the user '''
 
-        tags_counted = 0
+        # gather all the tags in all the tasks into one list
+        all_tags = []
         for task in self._tasks:
-            for task_tag in task.tags:
-                tags_counted = tags_counted + 1
-                if task_tag in tags:
-                    return True
+            all_tags.extend(task.tags)
 
-        if tags_counted > 0:
-            return False
+        # compare the lists of tags using sets and return the matched and unmatched
+        all_tags_set = set(all_tags)
+        tags_set = set(tags)
+        matched_tags = all_tags_set & tags_set
+        unmatched_tags = all_tags_set - tags_set
 
-        # didn't tag the play, and the play contains no steps
-        # so assume we just want to gather facts
-        return True
+        return matched_tags, unmatched_tags
 
     # *************************************************
 
