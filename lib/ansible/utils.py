@@ -156,6 +156,9 @@ def parse_json(raw_data):
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
+class VarNotFoundException(Exception):
+    pass
+
 def _varLookup(name, vars):
     ''' find the contents of a possibly complex variable in vars. '''
 
@@ -167,13 +170,13 @@ def _varLookup(name, vars):
         elif "[" in part:
             m = _LISTRE.search(part)
             if not m:
-                return
+                raise VarNotFoundException()
             try:
                 space = space[m.group(1)][int(m.group(2))]
             except (KeyError, IndexError):
-                return
+                raise VarNotFoundException()
         else:
-            return
+            raise VarNotFoundException()
     return space
 
 _KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
@@ -184,7 +187,10 @@ def varLookup(varname, vars):
     m = _KEYCRE.search(varname)
     if not m:
         return None
-    return _varLookup(m.group(2), vars)
+    try:
+        return _varLookup(m.group(2), vars)
+    except VarNotFoundException:
+        return None
 
 def varReplace(raw, vars):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
@@ -202,7 +208,10 @@ def varReplace(raw, vars):
         # original)
         varname = m.group(2)
 
-        replacement = unicode(_varLookup(varname, vars) or m.group())
+        try:
+            replacement = unicode(_varLookup(varname, vars))
+        except VarNotFoundException:
+            replacement = m.group()
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
