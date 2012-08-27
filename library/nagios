@@ -15,6 +15,26 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
+Action Summaries (all must be delegate_to'd a nagios server):
+
+* Set 30 minutes of downtime for a single service:
+  action: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
+
+* Set 30 minutes of downtime for a few services:
+  action: nagios action=downtime minutes=30 services=httpd,git,nfs host=$inventory_hostname
+
+* (Un)Silence all alerts from a host/service:
+  action: nagios action=silence host=$inventory_hostname
+  action: nagios action=unsilence host=$inventory_hostname
+
+* Enable/Disable alerts for a host or service(s):
+  action: nagios action=enable_alerts service=host host=$inventory_hostname
+  action: nagios action=disable_alerts services=httpd,git,nfs host=$inventory_hostname
+
+
+Note: 'service' is an alias for 'services'.
+Separate multiple services with commas.
+
 
 Configuration:
 
