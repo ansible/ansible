@@ -50,6 +50,7 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/mount.rst
 .. include:: modules/mysql_db.rst
 .. include:: modules/mysql_user.rst
+.. include:: modules/nagios.rst
 .. include:: modules/ohai.rst
 .. include:: modules/ping.rst
 .. include:: modules/pip.rst
