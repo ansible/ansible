@@ -32,7 +32,7 @@ The following parameters may be used with the **downtime** action:
 | minutes       | no       | 30                               | minutes to schedule downtime for                                 |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 | services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
-|               |          |                                  | with commas. use 'host' to manage the host itself.               |
+|               |          |                                  | with commas.                                                     |
 |               |          |                                  | **service** is as an alias for **services**                      |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 
@@ -42,7 +42,7 @@ The following parameter must be used with the **enable_alerts** and **disable_al
 | parameter     | required |           default                | comments                                                         |
 +===============+==========+==================================+==================================================================+
 | services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
-|               |          |                                  | with commas. use 'host' to manage the host itself.               |
+|               |          |                                  | with commas.                                                     |
 |               |          |                                  | **service** is as an alias for **services**                      |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 
@@ -73,25 +73,25 @@ Examples of Scheduling Downtime in :doc:`playbooks`::
       tasks:
         - name: set 30 minutes of apache downtime
           action: nagios action=downtime minutes=15 service=httpd host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
         - name: schedule an hour of HOST downtime
           action: nagios action=downtime minutes=60 service=host host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
         # Use the default of 30 minutes
         # Schedule downtime for three services at once
         - name: schedule downtime for a few services
           action: nagios action=downtime services=frob,foobar,qeuz host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
 And from the command line:
 
 .. code-block:: bash
 
-   $ ansible nagios.com -m nagios -a "action=downtime minutes=15 service=httpd host=server01.example.com"
-   $ ansible nagios.com -m nagios -a "action=downtime minutes=60 service=host host=server01.example.com"
-   $ ansible nagios.com -m nagios -a "action=downtime services=frob,foobar,qeuz host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=downtime minutes=15 service=httpd host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=downtime minutes=60 service=host host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=downtime services=frob,foobar,qeuz host=server01.example.com"
 
 Examples of handling specific host/service alerts in :doc:`playbooks`::
 
@@ -101,25 +101,25 @@ Examples of handling specific host/service alerts in :doc:`playbooks`::
       tasks:
         - name: enable SMART disk alerts
           action: nagios action=enable_alerts service=smart host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
         # Note that you can disable multiple at once
         - name: disable httpd alerts
           action: nagios action=disable_alerts service=httpd,nfs host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
         # And disabling HOST alerts
         - name: disable HOST alerts
           action: nagios action=disable_alerts service=host host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
 And from the command line:
 
 .. code-block:: bash
 
-   $ ansible nagios.com -m nagios -a "action=enable_alerts service=smart host=server01.example.com"
-   $ ansible nagios.com -m nagios -a "action=disable_alerts service=httpd,nfs host=server01.example.com"
-   $ ansible nagios.com -m nagios -a "action=disable_alerts service=host host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=enable_alerts service=smart host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=disable_alerts service=httpd,nfs host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=disable_alerts service=host host=server01.example.com"
 
 Examples of Silencing all host/service alerts in :doc:`playbooks`::
 
@@ -129,18 +129,18 @@ Examples of Silencing all host/service alerts in :doc:`playbooks`::
       tasks:
         - name: silence ALL alerts
           action: nagios action=silence host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
         - name: unsilence all alerts
           action: nagios action=unsilence host=$inventory_hostname
-          delegate_to: nagios.com
+          delegate_to: nagios.example.com
 
 And from the command line:
 
 .. code-block:: bash
 
-   $ ansible nagios.com -m nagios -a "action=silence host=server01.example.com"
-   $ ansible nagios.com -m nagios -a "action=unsilence host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=silence host=server01.example.com"
+   $ ansible nagios.example.com -m nagios -a "action=unsilence host=server01.example.com"
 
 
 **Optional Configuration**
