@@ -33,7 +33,7 @@ The following parameters may be used with the **downtime** action:
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 | services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
 |               |          |                                  | with commas.                                                     |
-|               |          |                                  | **service** is as an alias for **services**                      |
+|               |          |                                  | **service** is an alias for **services**                         |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 
 The following parameter must be used with the **enable_alerts** and **disable_alerts** actions:
@@ -43,7 +43,7 @@ The following parameter must be used with the **enable_alerts** and **disable_al
 +===============+==========+==================================+==================================================================+
 | services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
 |               |          |                                  | with commas.                                                     |
-|               |          |                                  | **service** is as an alias for **services**                      |
+|               |          |                                  | **service** is an alias for **services**                         |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 
 .. note::
