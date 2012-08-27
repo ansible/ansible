@@ -14,19 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 """
-remaining tasks:
 
-- figure out why services=foo1,foo2,...fooN doesn't show output for each
-fooX
+Configuration:
 
-- cleanup each methods return statements so they're not doing strange thigs.
+If your nagios cmdfile is not /var/spool/nagios/cmd/nagios.cmd you
+can configure ansible (on your nagios server) to use the correct
+one by making a file called /etc/ansible/modules/nagios.conf that
+looks like this:
 
--> really, we only need to exit 'couldnt' write to command file' in ONE place
+    [main]
+    cmdfile = /path/to/your/nagios.cmd
 
-
-- finish up reading from a config file
+When calling this module via ansible, use the 'cmdfile' parameter to
+set it explicitly.
 """
 
 
@@ -34,7 +35,82 @@ import ConfigParser
 import types
 import time
 
+MODULE_CONFIG = '/etc/ansible/modules/nagios.conf'
+DEFAULT_CMDFILE = '/var/spool/nagios/cmd/nagios.cmd'
 
+######################################################################
+
+
+def which_cmdfile():
+    try:
+        config = ConfigParser.SafeConfigParser({'cmdfile': DEFAULT_CMDFILE})
+        config.read(MODULE_CONFIG)
+        return config.get('main', 'cmdfile')
+    except:
+        return DEFAULT_CMDFILE
+
+
+######################################################################
+
+
+def main():
+    ACTION_CHOICES = [
+        'downtime',
+        'silence',
+        'unsilence',
+        'enable_alerts',
+        'disable_alerts'
+        ]
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            action=dict(required=True, default=None, choices=ACTION_CHOICES),
+            author=dict(default='Ansible'),
+            host=dict(required=True, default=None),
+            minutes=dict(default=30),
+            cmdfile=dict(default=which_cmdfile()),
+            services=dict(default=None, aliases=['service']),
+            )
+        )
+
+    action = module.params['action']
+    minutes = module.params['minutes']
+    services = module.params['services']
+
+    ##################################################################
+    # Required args per action:
+    # downtime = (minutes, service, host)
+    # (un)silence = (host)
+    # (enable/disable)_alerts = (service, host)
+    #
+    # AnsibleModule will verify most stuff, we need to verify
+    # 'minutes' and 'service' manually.
+
+    ##################################################################
+    if action == 'downtime':
+        # Make sure there's an actual service selected
+        if not services:
+            module.fail_json(msg='no service selected to set downtime for')
+        # Make sure minutes is a number
+        try:
+            m = int(minutes)
+            if not isinstance(m, types.IntType):
+                module.fail_json(msg='minutes must be a number')
+        except:
+            module.fail_json(msg='invalid entry for minutes')
+
+    ##################################################################
+    if action in ['enable_alerts', 'disable_alerts']:
+        if not services:
+            module.fail_json(msg='a service is required when setting alerts')
+
+    ##################################################################
+    ansible_nagios = Nagios(module, **module.params)
+    ansible_nagios.act()
+    ##################################################################
+
+
+######################################################################
 class Nagios(object):
     """
     Perform common tasks in Nagios related to downtime and
@@ -48,16 +124,6 @@ class Nagios(object):
     Note that in the case of `schedule_svc_downtime`,
     `enable_svc_notifications`, and `disable_svc_notifications`, the
     service argument should be passed as a list.
-
-    Configuration:
-
-    If your nagios cmdfile is not /var/spool/nagios/cmd/nagios.cmd you
-    can configure this by creating a file called
-    /etc/ansible/modules/nagios.conf that looks like this:
-
-        [main]
-        cmdfile = /path/to/your/nagios.cmd
-
     """
 
     def __init__(self, module, **kwargs):
@@ -88,13 +154,14 @@ class Nagios(object):
         """
 
         try:
-            fp = open(self.cmdfile, 'a')
+            fp = open(self.cmdfile, 'w')
             fp.write(cmd)
             fp.flush()
             fp.close()
             self.command_results.append(cmd.strip())
         except IOError:
-            self.module.fail_json(msg='unable to write to nagios command file', cmdfile=self.cmdfile)
+            self.module.fail_json(msg='unable to write to nagios command file',
+                                  cmdfile=self.cmdfile)
 
     def _fmt_dt_str(self, cmd, host, duration, author=None,
                     comment="Scheduling downtime", start=None,
@@ -613,76 +680,6 @@ class Nagios(object):
                               changed=True)
 
 ######################################################################
-# Ansible module configuration
-
-
-def which_cmdfile():
-    CFG = '/etc/ansible/modules/nagios.conf'
-    default_cmdfile = '/var/spool/nagios/cmd/nagios.cmd'
-
-    try:
-        c = ConfigParser.read(CFG)
-        return c.get('main', 'cmdfile', default_cmdfile)
-    except:
-        return default_cmdfile
-
-
-######################################################################
-def main():
-    ACTION_CHOICES = [
-        'downtime',
-        'silence',
-        'unsilence',
-        'enable_alerts',
-        'disable_alerts'
-        ]
-
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(required=True, default=None, choices=ACTION_CHOICES),
-            author=dict(default='Ansible'),
-            host=dict(required=True, default=None),
-            minutes=dict(default=30),
-            cmdfile=dict(default='/var/spool/nagios/cmd/nagios.cmd'),
-            services=dict(default=None, aliases=['service']),
-            )
-        )
-
-    action = module.params['action']
-    minutes = module.params['minutes']
-    services = module.params['services']
-
-    ##################################################################
-    # Required args per action:
-    # downtime = (minutes, service, host)
-    # (un)silence = (host)
-    # (enable/disable)_alerts = (service, host)
-    #
-    # AnsibleModule will verify most stuff, we need to verify
-    # 'minutes' and 'service' manually.
-
-    ##################################################################
-    if action == 'downtime':
-        # Make sure there's an actual service selected
-        if not services:
-            module.fail_json(msg='no service selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
-        except:
-            module.fail_json(msg='invalid entry for minutes')
-
-    ##################################################################
-    if action in ['enable_alerts', 'disable_alerts']:
-        if not services:
-            module.fail_json(msg='a service is required when setting alerts')
-
-    ##################################################################
-    ansible_nagios = Nagios(module, **module.params)
-    ansible_nagios.act()
-
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
