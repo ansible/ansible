@@ -5,7 +5,7 @@
 # Func project. Original copyright follows:
 #
 # func-nagios - Schedule downtime and enables/disable notifications
-# Copyright © 2011, Red Hat, Inc.
+# Copyright 2011, Red Hat, Inc.
 # Tim Bielawa <tbielawa@redhat.com>
 #
 # This software may be freely redistributed under the terms of the GNU
