@@ -35,4 +35,4 @@
     action: postgresql_db db=$dbname
 
   - name: ensure user has access to database
-    action: postgresql_user db=$dbname user=$dbuser password=$dbpassword privs=ALL
+    action: postgresql_user db=$dbname user=$dbuser password=$dbpassword priv=ALL
