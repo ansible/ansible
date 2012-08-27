@@ -16,14 +16,10 @@
 
 
 """
-
-
 remaining tasks:
-
 
 - figure out why services=foo1,foo2,...fooN doesn't show output for each
 fooX
-
 
 - cleanup each methods return statements so they're not doing strange thigs.
 
@@ -31,10 +27,6 @@ fooX
 
 
 - finish up reading from a config file
-
-
-
-
 """
 
 
@@ -96,7 +88,7 @@ class Nagios(object):
         """
 
         try:
-            fp = open(self.cmdfile, 'w')
+            fp = open(self.cmdfile, 'a')
             fp.write(cmd)
             fp.flush()
             fp.close()
@@ -186,17 +178,9 @@ class Nagios(object):
         """
 
         cmd = "SCHEDULE_SVC_DOWNTIME"
-        nagios_return = True
-        return_str_list = []
         for service in services:
             dt_cmd_str = self._fmt_dt_str(cmd, host, minutes, svc=service)
-            nagios_return = nagios_return and self._write_command(dt_cmd_str)
-            return_str_list.append(dt_cmd_str)
-
-        if nagios_return:
-            return return_str_list
-        else:
-            return "Fail: could not write to the command file"
+            self._write_command(dt_cmd_str)
 
     def schedule_host_downtime(self, host, minutes=30):
         """
@@ -212,12 +196,7 @@ class Nagios(object):
 
         cmd = "SCHEDULE_HOST_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, host, minutes)
-        nagios_return = self._write_command(dt_cmd_str)
-
-        if nagios_return:
-            return dt_cmd_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(dt_cmd_str)
 
     def schedule_hostgroup_host_downtime(self, hostgroup, minutes=30):
         """
@@ -233,12 +212,7 @@ class Nagios(object):
 
         cmd = "SCHEDULE_HOSTGROUP_HOST_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, hostgroup, minutes)
-        nagios_return = self._write_command(dt_cmd_str)
-
-        if nagios_return:
-            return dt_cmd_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(dt_cmd_str)
 
     def schedule_hostgroup_svc_downtime(self, hostgroup, minutes=30):
         """
@@ -258,12 +232,7 @@ class Nagios(object):
 
         cmd = "SCHEDULE_HOSTGROUP_SVC_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, hostgroup, minutes)
-        nagios_return = self._write_command(dt_cmd_str)
-
-        if nagios_return:
-            return dt_cmd_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(dt_cmd_str)
 
     def schedule_servicegroup_host_downtime(self, servicegroup, minutes=30):
         """
@@ -280,12 +249,7 @@ class Nagios(object):
 
         cmd = "SCHEDULE_SERVICEGROUP_HOST_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, servicegroup, minutes)
-        nagios_return = self._write_command(dt_cmd_str)
-
-        if nagios_return:
-            return dt_cmd_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(dt_cmd_str)
 
     def schedule_servicegroup_svc_downtime(self, servicegroup, minutes=30):
         """
@@ -306,12 +270,7 @@ class Nagios(object):
 
         cmd = "SCHEDULE_SERVICEGROUP_SVC_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, servicegroup, minutes)
-        nagios_return = self._write_command(dt_cmd_str)
-
-        if nagios_return:
-            return dt_cmd_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(dt_cmd_str)
 
     def disable_host_svc_notifications(self, host):
         """
@@ -326,12 +285,7 @@ class Nagios(object):
 
         cmd = "DISABLE_HOST_SVC_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, host)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def disable_host_notifications(self, host):
         """
@@ -346,12 +300,7 @@ class Nagios(object):
 
         cmd = "DISABLE_HOST_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, host)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def disable_svc_notifications(self, host, services=[]):
         """
@@ -365,17 +314,9 @@ class Nagios(object):
         """
 
         cmd = "DISABLE_SVC_NOTIFICATIONS"
-        nagios_return = True
-        return_str_list = []
         for service in services:
             notif_str = self._fmt_notif_str(cmd, host, svc=service)
-            nagios_return = nagios_return and self._write_command(notif_str)
-            return_str_list.append(notif_str)
-
-        if nagios_return:
-            return return_str_list
-        else:
-            return "Fail: could not write to the command file"
+            self._write_command(notif_str)
 
     def disable_servicegroup_host_notifications(self, servicegroup):
         """
@@ -390,12 +331,7 @@ class Nagios(object):
 
         cmd = "DISABLE_SERVICEGROUP_HOST_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, servicegroup)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def disable_servicegroup_svc_notifications(self, servicegroup):
         """
@@ -410,12 +346,7 @@ class Nagios(object):
 
         cmd = "DISABLE_SERVICEGROUP_SVC_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, servicegroup)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def disable_hostgroup_host_notifications(self, hostgroup):
         """
@@ -431,12 +362,7 @@ class Nagios(object):
 
         cmd = "DISABLE_HOSTGROUP_HOST_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, hostgroup)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def disable_hostgroup_svc_notifications(self, hostgroup):
         """
@@ -452,12 +378,7 @@ class Nagios(object):
 
         cmd = "DISABLE_HOSTGROUP_SVC_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, hostgroup)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def enable_host_notifications(self, host):
         """
@@ -471,12 +392,7 @@ class Nagios(object):
 
         cmd = "ENABLE_HOST_NOTIFICATIONS"
         notif_str = self._fmt_notif_str(cmd, host)
-        nagios_return = self._write_command(notif_str)
-
-        if nagios_return:
-            return notif_str
-        else:
-            return "Fail: could not write to the command file"
+        self._write_command(notif_str)
 
     def enable_host_svc_notifications(self, host):
         """
@@ -510,7 +426,7 @@ class Nagios(object):
         return_str_list = []
         for service in services:
             notif_str = self._fmt_notif_str(cmd, host, svc=service)
-            nagios_return = nagios_return and self._write_command(notif_str)
+            nagios_return = self._write_command(notif_str) and nagios_return
             return_str_list.append(notif_str)
 
         if nagios_return:
@@ -617,7 +533,7 @@ class Nagios(object):
         return_str_list = []
         for c in cmd:
             notif_str = self._fmt_notif_str(c, host)
-            nagios_return = nagios_return and self._write_command(notif_str)
+            nagios_return = self._write_command(notif_str) and nagios_return
             return_str_list.append(notif_str)
 
         if nagios_return:
@@ -645,7 +561,7 @@ class Nagios(object):
         return_str_list = []
         for c in cmd:
             notif_str = self._fmt_notif_str(c, host)
-            nagios_return = nagios_return and self._write_command(notif_str)
+            nagios_return = self._write_command(notif_str) and nagios_return
             return_str_list.append(notif_str)
 
         if nagios_return:
