@@ -71,8 +71,8 @@ class TestRunner(unittest.TestCase):
         # when using nosetests this will only show up on failure
         # which is pretty useful
         print "RESULTS=%s" % results
-        assert "127.0.0.2" in results['contacted']
-        return results['contacted']['127.0.0.2']
+        assert "localhost" in results['contacted']
+        return results['contacted']['localhost']
 
     def test_ping(self):
         result = self._run('ping', [])
@@ -252,7 +252,7 @@ class TestRunner(unittest.TestCase):
 
     def test_fetch(self):
         input_ = self._get_test_file('sample.j2')
-        output = os.path.join(self.stage_dir, '127.0.0.2', input_)
+        output = os.path.join(self.stage_dir, 'localhost', input_)
         result = self._run('fetch', [ "src=%s" % input_, "dest=%s" % self.stage_dir ])
         assert os.path.exists(output)
         assert open(input_).read() == open(output).read()

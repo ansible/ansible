@@ -1,5 +1,5 @@
 #!/usr/bin/make
-
+# WARN: gmake syntax
 ########################################################
 # Makefile for Ansible
 #
@@ -15,6 +15,7 @@
 # variable section
 
 NAME = "ansible"
+OS = $(shell uname -s)
 
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
@@ -32,7 +33,12 @@ VERSION := $(shell cat VERSION)
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 endif
+
+ifeq ($(OS), FreeBSD)
+DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%s"  "$(GIT_DATE)" +%Y%m%d%H%M)
+else
 DATE := $(shell date --date="$(GIT_DATE)" +%Y%m%d%H%M)
+endif
 
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
