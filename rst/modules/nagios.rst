@@ -106,21 +106,6 @@ Examples from :doc:`playbooks`::
           action: nagios action=unsilence host=$inventory_hostname
           delegate_to: nagios.example.com
 
-**Optional Configuration**
-
-If your nagios **cmdfile** is not ``/var/spool/nagios/cmd/nagios.cmd``
-you can configure ansible (on your nagios server) to use the correct
-one by making a file called ``/etc/ansible/modules/nagios.conf`` that
-looks like this:
-
-.. code-block:: ini
-
-    [main]
-    cmdfile = /path/to/your/nagios.cmd
-
-Or, use the **cmdfile** parameter to set it explicitly.
-
-
 **Troubleshooting Tips**
 
 The nagios module may not operate for you out of the box. The most
