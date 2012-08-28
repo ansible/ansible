@@ -58,21 +58,20 @@ the host the playbook is currently running on.
 You can specify multiple services at once by separating them with
 commas, .e.g., ``services=httpd,nfs,puppet``.
 
-When specifying what service to handle there is a special keyword,
+When specifying what service to handle there is a special service value,
 **host**, which will handle alerts/downtime for the **host itself**,
 e.g., ``service=host``. This keyword may *not* be given with other
 services at the same time. *Handling alerts/downtime for a host does
 not affect alerts/downtime for any of the services running on it.*
 
-
-Examples of Scheduling Downtime in :doc:`playbooks`::
+Examples from :doc:`playbooks`::
 
     ---
     - hosts: webservers
       user: root
       tasks:
         - name: set 30 minutes of apache downtime
-          action: nagios action=downtime minutes=15 service=httpd host=$inventory_hostname
+          action: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
           delegate_to: nagios.example.com
 
         - name: schedule an hour of HOST downtime
@@ -85,48 +84,20 @@ Examples of Scheduling Downtime in :doc:`playbooks`::
           action: nagios action=downtime services=frob,foobar,qeuz host=$inventory_hostname
           delegate_to: nagios.example.com
 
-And from the command line:
-
-.. code-block:: bash
-
-   $ ansible nagios.example.com -m nagios -a "action=downtime minutes=15 service=httpd host=server01.example.com"
-   $ ansible nagios.example.com -m nagios -a "action=downtime minutes=60 service=host host=server01.example.com"
-   $ ansible nagios.example.com -m nagios -a "action=downtime services=frob,foobar,qeuz host=server01.example.com"
-
-Examples of handling specific host/service alerts in :doc:`playbooks`::
-
-    ---
-    - hosts: webservers
-      user: root
-      tasks:
         - name: enable SMART disk alerts
           action: nagios action=enable_alerts service=smart host=$inventory_hostname
           delegate_to: nagios.example.com
 
-        # Note that you can disable multiple at once
+        # you can disable multiple at once
         - name: disable httpd alerts
           action: nagios action=disable_alerts service=httpd,nfs host=$inventory_hostname
           delegate_to: nagios.example.com
 
-        # And disabling HOST alerts
+        # host alerts must be disabled as a seperate action
         - name: disable HOST alerts
           action: nagios action=disable_alerts service=host host=$inventory_hostname
           delegate_to: nagios.example.com
 
-And from the command line:
-
-.. code-block:: bash
-
-   $ ansible nagios.example.com -m nagios -a "action=enable_alerts service=smart host=server01.example.com"
-   $ ansible nagios.example.com -m nagios -a "action=disable_alerts service=httpd,nfs host=server01.example.com"
-   $ ansible nagios.example.com -m nagios -a "action=disable_alerts service=host host=server01.example.com"
-
-Examples of Silencing all host/service alerts in :doc:`playbooks`::
-
-    ---
-    - hosts: webservers
-      user: root
-      tasks:
         - name: silence ALL alerts
           action: nagios action=silence host=$inventory_hostname
           delegate_to: nagios.example.com
@@ -134,14 +105,6 @@ Examples of Silencing all host/service alerts in :doc:`playbooks`::
         - name: unsilence all alerts
           action: nagios action=unsilence host=$inventory_hostname
           delegate_to: nagios.example.com
-
-And from the command line:
-
-.. code-block:: bash
-
-   $ ansible nagios.example.com -m nagios -a "action=silence host=server01.example.com"
-   $ ansible nagios.example.com -m nagios -a "action=unsilence host=server01.example.com"
-
 
 **Optional Configuration**
 
