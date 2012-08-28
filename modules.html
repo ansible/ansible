@@ -174,6 +174,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#service">service</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
+<li><a class="reference internal" href="#subversion">subversion</a></li>
 <li><a class="reference internal" href="#supervisorctl">supervisorctl</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
@@ -807,7 +808,8 @@ small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 <tr><td>force</td>
 <td>no</td>
 <td>yes</td>
-<td>(New in 0.8) If yes, any modified files in the working repository will be thrown out. If no, this module will fail if it encounters modified files.</td>
+<td>(new in 0.7) If yes, any modified files in the working repository will be
+discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be disabled.</td>
 </tr>
 </tbody>
 </table>
@@ -1474,8 +1476,8 @@ your best judgement.</p>
 <div class="section" id="subversion">
 <span id="id26"></span><h2>subversion<a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
-<span class="versionmodified">New in version 0.8.</span></p>
-<p>Deploys a subversion repository</p>
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Deploys a subversion repository.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
@@ -1494,26 +1496,27 @@ your best judgement.</p>
 <tr><td>repo</td>
 <td>yes</td>
 <td>&nbsp;</td>
-<td>The subversion URL to the subversion repository.</td>
+<td>The subversion URL to the repository.</td>
 </tr>
 <tr><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
-<td>The absolute path where the repository should be deployed.</td>
+<td>Absolute path where the repository should be deployed.</td>
 </tr>
 <tr><td>force</td>
 <td>no</td>
 <td>yes</td>
-<td>If yes, any modified files in the working repository will be thrown out. If no, then this module will fail if it encounters modified files.</td>
+<td>If yes, any modified files in the working repository will be
+discarded.  If no, this module will fail if it encounters modified files.</td>
 </tr>
 </tbody>
 </table>
-<p>Example action from a playbook:</p>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout</pre>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id26"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -1549,7 +1552,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id27"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1589,7 +1592,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id28"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1688,7 +1691,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id29"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -1748,7 +1751,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id30"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1846,7 +1849,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 24, 2012.<br/>
+      Last updated on Aug 27, 2012.<br/>
     </p>
   </div>
 </footer>
