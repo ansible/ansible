@@ -1,6 +1,14 @@
 Ansible Modules
 ===============
 
+.. contents::
+   :depth: 2
+   :backlinks: top
+
+Introduction
+````````````
+
+
 Ansible ships with a number of modules (called the 'module library')
 that can be executed directly on remote hosts or through :doc:`playbooks`.
 Users can also write their own modules.   These modules can control system
@@ -33,20 +41,6 @@ to run additional tasks.
 
 Let's see what's available in the Ansible module library, out of the box:
 
-
-======================= ======================= ======================= 
-:ref:`apt_repository`   :ref:`apt`              :ref:`assemble`
-:ref:`authorized_key`   :ref:`command`          :ref:`copy`
-:ref:`easy_install`     :ref:`facter`           :ref:`fetch`
-:ref:`file` 		:ref:`get_url` 		:ref:`git`
-:ref:`group` 		:ref:`mount` 		:ref:`mysql_db`
-:ref:`mysql_user` 	:ref:`nagios` 		:ref:`ohai`
-:ref:`ping` 		:ref:`pip` 		:ref:`postgresql_db`
-:ref:`postgresql_user` 	:ref:`raw` 		:ref:`service`
-:ref:`setup` 		:ref:`shell` 		:ref:`supervisorctl`
-:ref:`template` 	:ref:`user` 		:ref:`virt`
-:ref:`yum`
-======================= ======================= ======================= 
 
 .. include:: modules/apt_repository.rst
 .. include:: modules/apt.rst

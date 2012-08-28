@@ -9,6 +9,10 @@ Also covered here, Ansible's
 list of hosts, groups, and variables assigned to each host can be driven from
 external sources.   We'll start with the Python API.
 
+.. contents:: `Table of contents`
+   :depth: 2
+   :backlinks: top
+
 Python API
 ----------
 
@@ -268,7 +272,7 @@ When the Ansible is interacting with a specific server, the EC2 inventory script
 
 Both ``ec2_security_group_ids`` and ``ec2_security_group_names`` are comma-separated lists of all security groups. Each EC2 tag is a variable in the format ``ec2_tag_KEY``.
 
-To see the complete list of variables available for an instance, run the script by itself:
+To see the complete list of variables available for an instance, run the script by itself::
 
     cd examples/scripts
     ./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com

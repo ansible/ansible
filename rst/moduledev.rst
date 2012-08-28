@@ -7,6 +7,11 @@ or by the `ansible` or `ansible-playbook` programs.
 Modules can be written in any language and are found in the path specified 
 by `ANSIBLE_LIBRARY_PATH` or the ``--module-path`` command line option.
 
+.. contents::
+   :depth: 2
+   :backlinks: top
+
+
 Tutorial 
 ````````
 Let's build a module to get and set the system time.  For starters, let's build
