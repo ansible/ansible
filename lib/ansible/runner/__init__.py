@@ -712,13 +712,19 @@ class Runner(object):
             encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
 
-        # use the correct python interpreter for the host
-        if 'ansible_python_interpreter' in inject:
-            interpreter = inject['ansible_python_interpreter']
+        # use the correct interpreter for the host
+        interpreters = []
+        for configkey in inject:
+            interpreters.append(re.match('ansible_(\w)_interpreter',configkey))
+
+        if interpreters.count() > 0:
             module_lines = module_data.split('\n')
-            if '#!' and 'python' in module_lines[0]:
-                module_lines[0] = "#!%s" % interpreter
-            module_data = "\n".join(module_lines)
+            shebang = re.match('#!(/\S+)\s', modules_lines[0])
+            if shebang:
+                interpreter = os.path.basename(shebang)
+                if interpreter in interpreters:
+                    module_lines[0] = "#!%s" % inject['ansible_%s_interpreter' % interpreter ]
+                    module_data = "\n".join(module_lines)
 
         self._transfer_str(conn, tmp, module, module_data)
         return (out_path, is_new_style)
