@@ -1,9 +1,9 @@
 .. _subversion:
 
 subversion
-```
+``````````
 
-.. versionadded:: 0.8
+.. versionadded:: 0.7
 
 Deploys a subversion repository.
 
@@ -15,7 +15,7 @@ Deploys a subversion repository.
 | dest               | yes      |         | Absolute path where the repository should be deployed.                     |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | force              | no       | yes     | If yes, any modified files in the working repository will be               |
-|                    |          |         | thrown out. If no, this module will fail if it encounters modified files.  |
+|                    |          |         | discarded.  If no, this module will fail if it encounters modified files.  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::

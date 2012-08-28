@@ -17,8 +17,8 @@ Deploys software (or files) from git checkouts.
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | remote             | no       | origin  | name of the remote branch                                                  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| force              | no       | yes     | (New in 0.8) If yes, any modified files in the working repository will be  |
-|                    |          |         | thrown out. If no, this module will fail if it encounters modified files.  |
+| force              | no       | yes     | (new in 0.7) If yes, any modified files in the working repository will be  |
+|                    |          |         | discarded.  Prior to 0.7, this was always 'yes' and could not be disabled. |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
