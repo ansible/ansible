@@ -10,6 +10,11 @@ For configuration management and deployments, you'll want to pick up on
 using `/usr/bin/ansible-playbook` -- the concepts port over directly.
 (See :doc:`playbooks` for more information about those)
 
+.. contents::
+   :depth: 2
+   :backlinks: top
+
+
 Parallelism and Shell Commands
 ``````````````````````````````
 

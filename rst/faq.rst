@@ -1,6 +1,9 @@
 FAQ
 ===
 
+.. contents::
+   :backlinks: top
+
 Why Is It Called Ansible?
 -------------------------
 

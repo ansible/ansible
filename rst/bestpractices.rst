@@ -3,6 +3,10 @@ Best Practices
 
 Here are some tips for making the most of Ansible.
 
+.. contents::
+   :depth: 2
+   :backlinks: top
+
 Always Mention State
 ++++++++++++++++++++
 
