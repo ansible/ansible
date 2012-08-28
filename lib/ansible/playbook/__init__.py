@@ -166,10 +166,13 @@ class PlayBook(object):
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
         # then we need to raise an error so that the user can correct the arguments.
         unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
+        
         if len(unknown_tags) > 0:
             unmatched_tags_all.discard('all')
-            msg = 'tags "%s" given as argument but not found in playbooks, did you mean one of "%s"?'
-            raise errors.AnsibleError(msg % (', '.join(unknown_tags),', '.join(unmatched_tags_all)))
+            msg = 'tag(s) not found in playbook: %s.  possible values: %s'
+            unknown = ','.join(sorted(unknown_tags))
+            unmatched = ','.join(sorted(unmatched_tags_all))
+            raise errors.AnsibleError(msg % (unknown, unmatched))
 
         for play in plays:
             self._run_play(play)
