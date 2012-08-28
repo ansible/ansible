@@ -31,44 +31,50 @@ Action Summaries (all must be delegate_to'd a nagios server):
   action: nagios action=enable_alerts service=host host=$inventory_hostname
   action: nagios action=disable_alerts services=httpd,git,nfs host=$inventory_hostname
 
+Note: 'service' is an alias for 'services'. Separate multiple services
+with commas.
 
-Note: 'service' is an alias for 'services'.
-Separate multiple services with commas.
-
-
-Configuration:
-
-If your nagios cmdfile is not /var/spool/nagios/cmd/nagios.cmd you
-can configure ansible (on your nagios server) to use the correct
-one by making a file called /etc/ansible/modules/nagios.conf that
-looks like this:
-
-    [main]
-    cmdfile = /path/to/your/nagios.cmd
-
-When calling this module via ansible, use the 'cmdfile' parameter to
-set it explicitly.
+Set the path to the command file explicitly with the 'cmdfile'
+parameter.
 """
 
 
 import ConfigParser
 import types
 import time
-
-MODULE_CONFIG = '/etc/ansible/modules/nagios.conf'
-DEFAULT_CMDFILE = '/var/spool/nagios/cmd/nagios.cmd'
+import os.path
 
 ######################################################################
 
 
 def which_cmdfile():
-    try:
-        config = ConfigParser.SafeConfigParser({'cmdfile': DEFAULT_CMDFILE})
-        config.read(MODULE_CONFIG)
-        return config.get('main', 'cmdfile')
-    except:
-        return DEFAULT_CMDFILE
+    locations = [
+        # rhel
+        '/etc/nagios/nagios.cfg',
+        # debian
+        '/etc/nagios3/nagios.cfg',
+        # older debian
+        '/etc/nagios2/nagios.cfg',
+        # bsd, solaris
+        '/usr/local/etc/nagios/nagios.cfg',
+        # groundwork it monitoring
+        '/usr/local/groundwork/nagios/etc/nagios.cfg',
+        # open monitoring distribution
+        '/omd/sites/oppy/tmp/nagios/nagios.cfg',
+        # ???
+        '/usr/local/nagios/etc/nagios.cfg',
+        '/usr/local/nagios/nagios.cfg',
+        '/opt/nagios/etc/nagios.cfg',
+        '/opt/nagios/nagios.cfg'
+        ]
 
+    for path in locations:
+        if os.path.exists(path):
+            for line in open(path):
+                if line.startswith('command_file'):
+                    return line.partition('=')[2].strip()
+
+    return None
 
 ######################################################################
 
@@ -96,6 +102,7 @@ def main():
     action = module.params['action']
     minutes = module.params['minutes']
     services = module.params['services']
+    cmdfile = module.params['cmdfile']
 
     ##################################################################
     # Required args per action:
@@ -123,6 +130,10 @@ def main():
     if action in ['enable_alerts', 'disable_alerts']:
         if not services:
             module.fail_json(msg='a service is required when setting alerts')
+
+    ##################################################################
+    if not cmdfile:
+        module.fail_json('unable to locate nagios.cfg')
 
     ##################################################################
     ansible_nagios = Nagios(module, **module.params)
