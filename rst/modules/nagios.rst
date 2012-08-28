@@ -21,7 +21,7 @@ module:
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 | host          | yes      |                                  | host to operate on in nagios                                     |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
-| cmdfile       | no       | /var/spool/nagios/cmd/nagios.cmd | path to the nagios *command file* (FIFO pipe)                    |
+| cmdfile       | no       | auto-detected                    | path to the nagios *command file* (FIFO pipe)                    |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 
 The following parameters may be used with the **downtime** action:
