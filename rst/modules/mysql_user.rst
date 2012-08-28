@@ -1,3 +1,5 @@
+.. _mysql_user:
+
 mysql_user
 ``````````
 
