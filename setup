@@ -598,7 +598,7 @@ def run_setup(module):
     facts = ansible_facts()
  
     for (k, v) in facts.items():
-        setup_options["ansible_%s" % k] = v
+        setup_options["ansible_%s" % k.replace('-', '_')] = v
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
@@ -614,7 +614,7 @@ def run_setup(module):
            facter = False
        if facter:
            for (k,v) in facter_ds.items():
-               setup_options["facter_%s" % k] = v
+               setup_options["facter_%s" % k.replace('-', '_')] = v
 
     # ditto for ohai, but just top level string keys
     # because it contains a lot of nested stuff we can't use for
@@ -632,7 +632,7 @@ def run_setup(module):
        if ohai:
            for (k,v) in ohai_ds.items():
                if type(v) == str or type(v) == unicode:
-                   k2 = "ohai_%s" % k
+                   k2 = "ohai_%s" % k.replace('-', '_')
                    setup_options[k2] = v
 
     setup_result = {}
