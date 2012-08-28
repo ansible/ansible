@@ -19,8 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-SUPERVISORCTL = None
-
 def _find_supervisorctl():
     paths = ['/usr/local/bin', '/usr/bin']
 
@@ -29,11 +27,9 @@ def _find_supervisorctl():
         if os.path.exists(e):
             return e
 
-    module.fail_json(msg='supervisorctl is not installed')
-
 
 def _is_running(name):
-    rc, out, err = _run('%s status %s' % (SUPERVISORCTL, name))
+    rc, out, err = _run('%s status %s' % (_find_supervisorctl(), name))
     return 'RUNNING' in out
 
 
@@ -57,6 +53,9 @@ def main():
     state = module.params['state']
 
     SUPERVISORCTL = _find_supervisorctl()
+
+    if SUPERVISORCTL is None:
+        module.fail_json(msg='supervisorctl is not installed')
 
     running = _is_running(name)
 
