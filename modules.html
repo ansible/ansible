@@ -1231,18 +1231,18 @@ playbooks you can use the <tt class="docutils literal"><span class="pre">$invent
 the host the playbook is currently running on.</p>
 <p>You can specify multiple services at once by separating them with
 commas, .e.g., <tt class="docutils literal"><span class="pre">services=httpd,nfs,puppet</span></tt>.</p>
-<p>When specifying what service to handle there is a special keyword,
+<p>When specifying what service to handle there is a special service value,
 <strong>host</strong>, which will handle alerts/downtime for the <strong>host itself</strong>,
 e.g., <tt class="docutils literal"><span class="pre">service=host</span></tt>. This keyword may <em>not</em> be given with other
 services at the same time. <em>Handling alerts/downtime for a host does
 not affect alerts/downtime for any of the services running on it.</em></p>
-<p>Examples of Scheduling Downtime in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<p>Examples from <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>---
 - hosts: webservers
   user: root
   tasks:
     - name: set 30 minutes of apache downtime
-      action: nagios action=downtime minutes=15 service=httpd host=$inventory_hostname
+      action: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
       delegate_to: nagios.example.com
 
     - name: schedule an hour of HOST downtime
@@ -1253,44 +1253,22 @@ not affect alerts/downtime for any of the services running on it.</em></p>
     # Schedule downtime for three services at once
     - name: schedule downtime for a few services
       action: nagios action=downtime services=frob,foobar,qeuz host=$inventory_hostname
-      delegate_to: nagios.example.com</pre>
-</div>
-<p>And from the command line:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=downtime minutes=15 service=httpd host=server01.example.com&quot;</span>
-<span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=downtime minutes=60 service=host host=server01.example.com&quot;</span>
-<span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=downtime services=frob,foobar,qeuz host=server01.example.com&quot;</span>
-</pre></div>
-</div>
-<p>Examples of handling specific host/service alerts in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>---
-- hosts: webservers
-  user: root
-  tasks:
+      delegate_to: nagios.example.com
+
     - name: enable SMART disk alerts
       action: nagios action=enable_alerts service=smart host=$inventory_hostname
       delegate_to: nagios.example.com
 
-    # Note that you can disable multiple at once
+    # you can disable multiple at once
     - name: disable httpd alerts
       action: nagios action=disable_alerts service=httpd,nfs host=$inventory_hostname
       delegate_to: nagios.example.com
 
-    # And disabling HOST alerts
+    # host alerts must be disabled as a seperate action
     - name: disable HOST alerts
       action: nagios action=disable_alerts service=host host=$inventory_hostname
-      delegate_to: nagios.example.com</pre>
-</div>
-<p>And from the command line:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=enable_alerts service=smart host=server01.example.com&quot;</span>
-<span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=disable_alerts service=httpd,nfs host=server01.example.com&quot;</span>
-<span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=disable_alerts service=host host=server01.example.com&quot;</span>
-</pre></div>
-</div>
-<p>Examples of Silencing all host/service alerts in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>---
-- hosts: webservers
-  user: root
-  tasks:
+      delegate_to: nagios.example.com
+
     - name: silence ALL alerts
       action: nagios action=silence host=$inventory_hostname
       delegate_to: nagios.example.com
@@ -1299,21 +1277,6 @@ not affect alerts/downtime for any of the services running on it.</em></p>
       action: nagios action=unsilence host=$inventory_hostname
       delegate_to: nagios.example.com</pre>
 </div>
-<p>And from the command line:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=silence host=server01.example.com&quot;</span>
-<span class="nv">$ </span>ansible nagios.example.com -m nagios -a <span class="s2">&quot;action=unsilence host=server01.example.com&quot;</span>
-</pre></div>
-</div>
-<p><strong>Optional Configuration</strong></p>
-<p>If your nagios <strong>cmdfile</strong> is not <tt class="docutils literal"><span class="pre">/var/spool/nagios/cmd/nagios.cmd</span></tt>
-you can configure ansible (on your nagios server) to use the correct
-one by making a file called <tt class="docutils literal"><span class="pre">/etc/ansible/modules/nagios.conf</span></tt> that
-looks like this:</p>
-<div class="highlight-ini"><div class="highlight"><pre><span class="k">[main]</span>
-<span class="na">cmdfile</span> <span class="o">=</span> <span class="s">/path/to/your/nagios.cmd</span>
-</pre></div>
-</div>
-<p>Or, use the <strong>cmdfile</strong> parameter to set it explicitly.</p>
 <p><strong>Troubleshooting Tips</strong></p>
 <p>The nagios module may not operate for you out of the box. The most
 likely problem is with your <strong>cmdfile</strong> permissions/paths. You will
