@@ -146,12 +146,34 @@ class PlayBook(object):
 
     def run(self):
         ''' run all patterns in the playbook '''
+        plays = []
+        matched_tags_all = set()
+        unmatched_tags_all = set()
 
         # loop through all patterns and run them
         self.callbacks.on_start()
         for play_ds in self.playbook:
             play = Play(self,play_ds)
+            matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
+            matched_tags_all = matched_tags_all | matched_tags
+            unmatched_tags_all = unmatched_tags_all | unmatched_tags
+
+            # if we have matched_tags, the play must be run.
+            # if the play contains no tasks, assume we just want to gather facts
+            if (len(matched_tags) > 0 or len(play.tasks()) == 0):
+                plays.append(play)
+
+        # if the playbook is invoked with --tags that don't exist at all in the playbooks
+        # then we need to raise an error so that the user can correct the arguments.
+        unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
+        if len(unknown_tags) > 0:
+            unmatched_tags_all.discard('all')
+            msg = 'tags "%s" given as argument but not found in playbooks, did you mean one of "%s"?'
+            raise errors.AnsibleError(msg % (', '.join(unknown_tags),', '.join(unmatched_tags_all)))
+
+        for play in plays:
             self._run_play(play)
+
         # summarize the results
         results = {}
         for host in self.stats.processed.keys():
@@ -292,9 +314,6 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
-        if not play.should_run(self.only_tags):
-            return
-
         self.callbacks.on_play_start(play.name)
 
         # get facts from system
@@ -315,7 +334,7 @@ class PlayBook(object):
                 for x in range(play.serial):
                     if len(all_hosts) > 0:
                         play_hosts.append(all_hosts.pop())
-                serialized_batch.append(play_hosts)                        
+                serialized_batch.append(play_hosts)
 
         for on_hosts in serialized_batch:
 
@@ -338,6 +357,6 @@ class PlayBook(object):
                     self.inventory.restrict_to(handler.notified_by)
                     self._run_task(play, handler, True)
                     self.inventory.lift_restriction()
-        
+
             self.inventory.lift_also_restriction()
 
