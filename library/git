@@ -24,6 +24,7 @@
 # that. Contribs welcome! -- MPD
 
 import re
+import tempfile
 
 def get_version(dest):
     ''' samples the version of the git repo '''
@@ -40,7 +41,7 @@ def clone(repo, dest):
     except:
         pass
     cmd = "git clone %s %s" % (repo, dest)
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempfile.gettempdir())
     (out, err) = cmd.communicate()
     rc = cmd.returncode
     return (rc, out, err)
