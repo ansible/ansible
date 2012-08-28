@@ -13,11 +13,6 @@ on the documentation project.
 If you are using ansible at your company or software project, additions to the "Who Uses
 Ansible" page are welcome.  Email Michael at the address below to be added.
 
-Dependencies
-============
-
-Jinja2 and Sphinx are required to build this site.
-
 Author
 ======
 
