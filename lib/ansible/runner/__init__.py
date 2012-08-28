@@ -715,7 +715,9 @@ class Runner(object):
         # use the correct interpreter for the host
         interpreters = []
         for configkey in inject:
-            interpreters.append(re.match('ansible_(\w)_interpreter',configkey))
+            newone = re.match('ansible_(\w)_interpreter',configkey)
+            if newone:
+                interpreters.append(newone)
 
         if interpreters.count() > 0:
             module_lines = module_data.split('\n')
