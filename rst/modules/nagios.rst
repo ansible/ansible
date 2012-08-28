@@ -3,6 +3,8 @@
 nagios
 ``````
 
+.. versionadded:: 0.7
+
 Perform common tasks in Nagios related to downtime and notifications.
 
 The Nagios module has two basic functions: scheduling downtime and
