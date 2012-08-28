@@ -18,11 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# I wanted to keep this simple at first, so for now this checks out
-# from the given branch of a repo at a particular SHA or
-# tag.  Latest is not supported, you should not be doing
-# that. Contribs welcome! -- MPD
-
 import re
 import tempfile
 
