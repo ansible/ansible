@@ -17,8 +17,7 @@
     action: shell echo "hi..."
 
 # and this is how we include another playbook, be careful and
-# don't recurse infinitely or anything.  Note you can't use
-# any variables here.
+# don't recurse infinitely or anything. 
 
 - include: intro_example.yml
 
