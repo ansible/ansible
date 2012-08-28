@@ -114,11 +114,11 @@ class Inventory(object):
             positive_subsetp = [ p for p in self._subset if not p.startswith("!") ]
             negative_subsetp = [ p for p in self._subset if p.startswith("!") ]
             if len(positive_subsetp):
-                positive_subset = self._get_hosts(positive_subsetp)
-                hosts = [ h for h in hosts if (h in positive_subset) ]
+                positive_subset = [ h.name for h in self._get_hosts(positive_subsetp) ]
+                hosts = [ h for h in hosts if (h.name in positive_subset) ]
             if len(negative_subsetp):
-                negative_subset = self._get_hosts(negative_subsetp)
-                hosts = [ h for h in hosts if (h not in negative_subset)]
+                negative_subset = [ h.name for h in self._get_hosts(negative_subsetp) ]
+                hosts = [ h for h in hosts if (h.name not in negative_subset)]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
