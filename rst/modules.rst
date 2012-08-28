@@ -34,6 +34,20 @@ to run additional tasks.
 Let's see what's available in the Ansible module library, out of the box:
 
 
+======================= ======================= ======================= 
+:ref:`apt_repository`   :ref:`apt`              :ref:`assemble`
+:ref:`authorized_key`   :ref:`command`          :ref:`copy`
+:ref:`easy_install`     :ref:`facter`           :ref:`fetch`
+:ref:`file` 		:ref:`get_url` 		:ref:`git`
+:ref:`group` 		:ref:`mount` 		:ref:`mysql_db`
+:ref:`mysql_user` 	:ref:`nagios` 		:ref:`ohai`
+:ref:`ping` 		:ref:`pip` 		:ref:`postgresql_db`
+:ref:`postgresql_user` 	:ref:`raw` 		:ref:`service`
+:ref:`setup` 		:ref:`shell` 		:ref:`supervisorctl`
+:ref:`template` 	:ref:`user` 		:ref:`virt`
+:ref:`yum`
+======================= ======================= ======================= 
+
 .. include:: modules/apt_repository.rst
 .. include:: modules/apt.rst
 .. include:: modules/assemble.rst
@@ -50,6 +64,7 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/mount.rst
 .. include:: modules/mysql_db.rst
 .. include:: modules/mysql_user.rst
+.. include:: modules/nagios.rst
 .. include:: modules/ohai.rst
 .. include:: modules/ping.rst
 .. include:: modules/pip.rst
