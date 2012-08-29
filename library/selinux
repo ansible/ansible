@@ -19,6 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 
 try:
     import selinux
@@ -35,23 +36,40 @@ def get_config_policy(configfile):
     pass
 
 # setter subroutines
-def set_config_state(state):
+def set_config_state(state, configfile):
+    #SELINUX=permissive
     # edit config file with state value
-    pass
+    stateline='SELINUX=%s' % state
+    with open(configfile, "r") as FILE:
+        lines = FILE.readlines()
+    with open(configfile, "w") as FILE:
+        for line in lines:
+            FILE.write(re.sub(r'^SELINUX=.*', stateline, line))
 
 def set_state(state):
-    # turn on with python
-    # change config file to do enforcing
-    pass
+    if ( state == 'enforcing' ):
+        selinux.security_setenforce(1)
+    elif ( state == 'permissive' ):
+        selinux.security_setenforce(0)
+    elif ( state == 'disabled' ):
+        pass
+    else:
+        msg = 'trying to set invalid runtime state %s' % state
+        fail_json(msg=msg)
 
-def set_config_policy(policy):
+def set_config_policy(policy, configfile):
     # edit config file with state value
-    pass
+    #SELINUXTYPE=targeted 
+    policyline='SELINUXTYPE=%s' % policy
+    with open(configfile, "r") as FILE:
+        lines = FILE.readlines()
+    with open(configfile, "w") as FILE:
+        for line in lines:
+            FILE.write(re.sub(r'^SELINUXTYPE=.*', policyline, line))
 
 def set_policy(policy):
-    # turn on with python
-    # change config file to do enforcing
-    pass
+    # TODO figure out how to change the policy using selinux
+    return('reboot to change the loaded policy')
 
 def main():
     module = AnsibleModule(
@@ -82,12 +100,11 @@ def main():
 
     # check changed values and run changes
     if ( policy != runtime_policy ):
-        msgs.append('runtime policy changed from \'%s\' to \'%s\'' % ( runtime_policy, policy ))
-        set_policy(policy)
+        msgs.append(set_policy(policy))
         CHANGED=True 
     if ( policy != config_policy ):
         msgs.append('config policy changed from \'%s\' to \'%s\'' % ( config_policy, policy ))
-        set_config_policy(policy)
+        set_config_policy(policy, configfile)
         CHANGED=True 
     if ( state != runtime_state ):
         msgs.append('runtime state changed from \'%s\' to \'%s\'' % ( runtime_state, state ))
@@ -95,7 +112,7 @@ def main():
         CHANGED=True 
     if ( state != config_state ):
         msgs.append('config state changed from \'%s\' to \'%s\'' % ( config_state, state ))
-        set_config_state(state)
+        set_config_state(state, configfile)
         CHANGED=True 
  
     module.exit_json(changed=CHANGED, msg=', '.join(msgs),
