@@ -27,35 +27,45 @@ except ImportError:
     HAVE_SELINUX=False
     fail_json(msg='python-selinux required for this module')
 
+# getter subroutines
+def get_config_state(configfile):
+    pass
+
+def get_config_policy(configfile):
+    pass
+
+# setter subroutines
 def set_config_state(state):
     # edit config file with state value
-    print('setting config state to %s' % state)
+    pass
 
 def set_state(state):
     # turn on with python
     # change config file to do enforcing
-    print('setting state to %s' % state)
+    pass
 
 def set_config_policy(policy):
     # edit config file with state value
-    print('setting config policy to %s' % policy)
+    pass
 
 def set_policy(policy):
     # turn on with python
     # change config file to do enforcing
-    print('setting policy to %s' % policy)
+    pass
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             policy=dict(choices=['targeted','mls','strict','minimum'], default='targeted'),
             state=dict(choices=['enforcing', 'permissive', 'disabled'], default='enforcing'),
+            configfile=dict(aliases=['conf','file'], default='/etc/selinux/config')
         )
     )
 
     # global vars
     CHANGED=False
-    msg                   = ''
+    msgs                  = []
+    configfile            = module.params['configfile']
     policy                = module.params['policy']
     state                 = module.params['state']
     runtime_enabled       = selinux.is_selinux_enabled()
@@ -67,28 +77,29 @@ def main():
             runtime_state = 'enforcing'
         else:
             runtime_state = 'permissive'
-    config_policy         = '' #TODO get from file
-    config_state          = '' #TODO get from file
+    config_policy         = get_config_policy(configfile)
+    config_state          = get_config_state(configfile)
 
     # check changed values and run changes
     if ( policy != runtime_policy ):
-        msg = msg + ' runtime policy changed from %s to %s,' % ( runtime_policy, policy )
+        msgs.append('runtime policy changed from \'%s\' to \'%s\'' % ( runtime_policy, policy ))
         set_policy(policy)
         CHANGED=True 
     if ( policy != config_policy ):
-        msg = msg + ' config policy changed from %s to %s,' % ( config_policy, policy )
+        msgs.append('config policy changed from \'%s\' to \'%s\'' % ( config_policy, policy ))
         set_config_policy(policy)
         CHANGED=True 
     if ( state != runtime_state ):
-        msg = msg + ' runtime state changed from %s to %s,' % ( runtime_state, state )
+        msgs.append('runtime state changed from \'%s\' to \'%s\'' % ( runtime_state, state ))
         set_state(state)
         CHANGED=True 
     if ( state != config_state ):
-        msg = msg + ' config state changed from %s to %s,' % ( config_state, state )
+        msgs.append('config state changed from \'%s\' to \'%s\'' % ( config_state, state ))
         set_config_state(state)
         CHANGED=True 
  
-    module.exit_json(changed=CHANGED, msg=msg,
+    module.exit_json(changed=CHANGED, msg=', '.join(msgs),
+        configfile=configfile,
         policy=policy, state=state)
 
 #################################################
