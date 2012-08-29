@@ -6,16 +6,13 @@
 - hosts: all
   user: root
 
-  vars:
-    mysql_root_password: 'password'
-
   tasks:
 
     - name: Create database user
-      action: mysql_user loginpass=$mysql_root_password user=bob passwd=12345 priv=*.*:ALL state=present
+      action: mysql_user user=bob password=12345 priv=*.*:ALL state=present
 
     - name: Create database
-      action: mysql_db loginpass=$mysql_root_password db=bobdata state=present
+      action: mysql_db db=bobdata state=present
 
-    - name: Ensure no user named 'sally' exists
-      action: mysql_user loginpass=$mysql_root_password user=sally state=absent
+    - name: Ensure no user named 'sally' exists and delete if found.
+      action: mysql_user user=sally state=absent
