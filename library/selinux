@@ -19,58 +19,67 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import grp
 
 try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
     HAVE_SELINUX=False
+    fail_json(msg='python-selinux required for this module')
 
-def selinux_enabled():
-    if not HAVE_SELINUX:
-        return False
-    if selinux.is_selinux_enabled() == 1:
-        return True
-    else:
-        return False
+def config_change(state='enforcing'):
+    # edit config file with state value
+    pass
+
+def enforce_selinux():
+    # turn on with python
+    # change config file to do enforcing
+    config_change('enforcing')
+    pass
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            enabled=dict(choices=BOOLEANS, default=True),
-            policy=dict(default='targeted', choices=['targeted','mls','strict','minimum']),
-            enforcing=dict(choices=BOOLEANS, default=True),
+            policy=dict(choices=['targeted','mls','strict','minimum'], default='targeted'),
+            state=dict(choices=['enforcing', 'permissive', 'disabled'], default='enforcing'),
         )
     )
+
+    # global vars
     CHANGED=False
-    #global vars
-    msg=''
-    enabled   = module.params['enabled']
-    policy    = module.params['policy']
-    enforcing = module.params['enforcing']
+    msg                   = ''
+    policy                = module.params['policy']
+    state                 = module.params['state']
+    runtime_enabled       = selinux.is_selinux_enabled()
+    runtime_policy        = selinux.selinux_getpolicytype()[1]
+    runtime_state         = 'disabled'
+    if ( runtime_enabled ):
+        # enabled means 'enforcing' or 'permissive'
+        if ( selinux.security_getenforce() ):
+            runtime_state = 'enforcing'
+        else:
+            runtime_state = 'permissive'
+    config_policy         = '' #TODO get from file
+    config_state          = '' #TODO get from file
 
-    current_enabled = selinux_enabled()
-    current_policy = selinux.selinux_getpolicytype()[1]
-    current_enforcing = selinux.security_getenforce()
-
-    # check changed valuse
-    print ( module.boolean(enabled), bool(current_enabled) )
-    if ( module.boolean(enabled) != bool(current_enabled) ):
-        msg = msg + ' enabled changed,'
-        CHANGED=True
-    if ( policy != current_policy ):
-        msg = msg = msg + ' policy changed,'
-        CHANGED=True
-    if ( module.boolean(enforcing) != bool(current_enforcing) ):
-        msg = msg +' enforcing changed,'
-        CHANGED=True
-
+    # check changed values
+    if ( policy != runtime_policy ):
+        msg = msg + ' runtime policy changed from %s to %s,' % ( runtime_policy, policy )
+        CHANGED=True 
+    if ( policy != config_policy ):
+        msg = msg + ' config policy changed from %s to %s,' % ( config_policy, policy )
+        CHANGED=True 
+    # runtime_state change
+    if ( state != runtime_state ):
+        msg = msg + ' runtime state changed from %s to %s,' % ( runtime_state, state )
+        CHANGED=True 
+    # config_state change
+    if ( state != config_state ):
+        msg = msg + ' config state changed from %s to %s,' % ( config_state, state )
+        CHANGED=True 
+ 
     module.exit_json(changed=CHANGED, msg=msg,
-        enabled=enabled, original_enabled=current_enabled,
-        policy=policy, original_policy=current_policy,
-        enforcing=enforcing, original_enforcing=current_enforcing)
+        policy=policy, state=state)
 
 #################################################
 # include magic from lib/ansible/module_common.py
