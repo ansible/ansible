@@ -1,0 +1,58 @@
+# Pause task example.
+#
+# A typical reason to use a pause task is to verify updates to a
+# critical service before putting it back into a production
+# environment.
+---
+- hosts: EnterpriseyCustomerAppServers
+  # In this environment we verify each server individually to ensure
+  # updates are applied smoothly.
+  serial: 1
+  tasks:
+      # Take the host out of a load balancer before applying updates to it
+      - name: Out Of Rotation
+        action: command /usr/bin/myrotate --disable $inventory_hostname
+        delegate_to: $production_load_balancer
+
+      - name: shutdown the frobnicator
+        action: service name=frobnicator state=stopped
+
+      - name: update the customer frobnication service
+        action: yum name=customer-frobnicator state=latest
+
+      - name: start something up
+        action: service name=frobnicator ensure=started
+
+      - name: verify application
+        pause: prompt=Verify frobnicator application functionality
+
+      # Using the 'prompt' parameter without a value will give you a
+      # default prompt message. "Press enter to continue"
+      - name: verify application
+        pause: prompt
+
+      - name: In Rotation
+        action: command /usr/bin/myrotate --enable $inventory_hostname
+        delegate_to: $production_load_balancer
+
+# Pause accepts 'minutes' and 'seconds' parameters as well. Their
+# syntax is obvious. They do not have defaults.
+- hosts: EnterpriseyDocumentSharingServers
+  tasks:
+      # Typical out of rotation, update, etc, here
+      # ...
+
+      - name: start FrobSpaceDocs
+        action: service name=frobspacedocs ensure=started
+
+      # This java documentation server application is incredibly slow
+      # until it has loaded most of it's documents into cache. We
+      # don't want to start it and immediately put it into rotation,
+      # users will start complaining about the slowness.
+      - name: app loading cache
+        pause: minutes=15
+      # pause: seconds=900
+
+
+      # Typical in rotation steps here
+      # ...

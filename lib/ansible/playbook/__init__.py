@@ -166,8 +166,8 @@ class PlayBook(object):
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
         # then we need to raise an error so that the user can correct the arguments.
         unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
-        unknown_tags.discard('all')       
- 
+        unknown_tags.discard('all')
+
         if len(unknown_tags) > 0:
             unmatched_tags_all.discard('all')
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
@@ -221,7 +221,14 @@ class PlayBook(object):
             transport=task.play.transport, sudo_pass=self.sudo_pass, is_playbook=True
         )
 
-        if task.async_seconds == 0:
+        if not task.task_type == 'action':
+            try:
+                action = __import__("ansible.playbook.%s" % task.task_type, fromlist=[task.task_type])
+                action_class = getattr(action, task.task_type)
+                results = runner.run_other_action(action_class)
+            except ImportError:
+                raise errors.AnsibleError("unable to locate and load %s" % task.task_type)
+        elif task.async_seconds == 0:
             results = runner.run()
         else:
             results, poller = runner.run_async(task.async_seconds)
@@ -363,4 +370,3 @@ class PlayBook(object):
                     self.inventory.lift_restriction()
 
             self.inventory.lift_also_restriction()
-

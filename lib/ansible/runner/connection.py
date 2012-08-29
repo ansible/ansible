@@ -35,9 +35,10 @@ class Connection(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port=None):
+    def connect(self, host, port=None, transport=None):
         conn = None
-        transport = self.runner.transport
+        if not transport:
+            transport = self.runner.transport
         module = modules.get(transport, None)
         if module is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
