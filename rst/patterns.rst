@@ -7,6 +7,10 @@ Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
+.. contents:: `Table of contents`
+   :depth: 2
+   :backlinks: top
+
 .. _inventoryformat:
 
 Hosts and Groups
