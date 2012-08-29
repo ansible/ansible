@@ -30,10 +30,20 @@ except ImportError:
 
 # getter subroutines
 def get_config_state(configfile):
-    pass
+    with open(configfile, "r") as FILE:
+        lines = FILE.readlines()
+        for line in lines:
+            stateline = re.match('^SELINUX=.*$', line)
+            if (stateline):
+                return(line.split('=')[1].strip())
 
 def get_config_policy(configfile):
-    pass
+    with open(configfile, "r") as FILE:
+        lines = FILE.readlines()
+        for line in lines:
+            stateline = re.match('^SELINUXTYPE=.*$', line)
+            if (stateline):
+                return(line.split('=')[1].strip())
 
 # setter subroutines
 def set_config_state(state, configfile):
@@ -107,7 +117,10 @@ def main():
         set_config_policy(policy, configfile)
         CHANGED=True 
     if ( state != runtime_state ):
-        msgs.append('runtime state changed from \'%s\' to \'%s\'' % ( runtime_state, state ))
+        if ( state == 'disabled'):
+            msgs.append('disabled state will take effect next reboot')
+        else:
+            msgs.append('runtime state changed from \'%s\' to \'%s\'' % ( runtime_state, state ))
         set_state(state)
         CHANGED=True 
     if ( state != config_state ):
