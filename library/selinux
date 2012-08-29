@@ -27,15 +27,23 @@ except ImportError:
     HAVE_SELINUX=False
     fail_json(msg='python-selinux required for this module')
 
-def config_change(state='enforcing'):
+def set_config_state(state):
     # edit config file with state value
-    pass
+    print('setting config state to %s' % state)
 
-def enforce_selinux():
+def set_state(state):
     # turn on with python
     # change config file to do enforcing
-    config_change('enforcing')
-    pass
+    print('setting state to %s' % state)
+
+def set_config_policy(policy):
+    # edit config file with state value
+    print('setting config policy to %s' % policy)
+
+def set_policy(policy):
+    # turn on with python
+    # change config file to do enforcing
+    print('setting policy to %s' % policy)
 
 def main():
     module = AnsibleModule(
@@ -62,20 +70,22 @@ def main():
     config_policy         = '' #TODO get from file
     config_state          = '' #TODO get from file
 
-    # check changed values
+    # check changed values and run changes
     if ( policy != runtime_policy ):
         msg = msg + ' runtime policy changed from %s to %s,' % ( runtime_policy, policy )
+        set_policy(policy)
         CHANGED=True 
     if ( policy != config_policy ):
         msg = msg + ' config policy changed from %s to %s,' % ( config_policy, policy )
+        set_config_policy(policy)
         CHANGED=True 
-    # runtime_state change
     if ( state != runtime_state ):
         msg = msg + ' runtime state changed from %s to %s,' % ( runtime_state, state )
+        set_state(state)
         CHANGED=True 
-    # config_state change
     if ( state != config_state ):
         msg = msg + ' config state changed from %s to %s,' % ( config_state, state )
+        set_config_state(state)
         CHANGED=True 
  
     module.exit_json(changed=CHANGED, msg=msg,
