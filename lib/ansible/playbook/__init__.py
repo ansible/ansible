@@ -166,7 +166,8 @@ class PlayBook(object):
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
         # then we need to raise an error so that the user can correct the arguments.
         unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
-        
+        unknown_tags.discard('all')       
+ 
         if len(unknown_tags) > 0:
             unmatched_tags_all.discard('all')
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
