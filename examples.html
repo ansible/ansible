@@ -186,14 +186,31 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="command-line-examples-and-next-steps">
-<h1>Command Line Examples And Next Steps<a class="headerlink" href="#command-line-examples-and-next-steps" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Command Line Examples And Next Steps</a><a class="headerlink" href="#command-line-examples-and-next-steps" title="Permalink to this headline">¶</a></h1>
 <p>The following examples show how to use <cite>/usr/bin/ansible</cite> for running
 ad hoc tasks.  Start here.</p>
 <p>For configuration management and deployments, you&#8217;ll want to pick up on
 using <cite>/usr/bin/ansible-playbook</cite> &#8211; the concepts port over directly.
 (See <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for more information about those)</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#command-line-examples-and-next-steps" id="id1">Command Line Examples And Next Steps</a><ul>
+<li><a class="reference internal" href="#parallelism-and-shell-commands" id="id2">Parallelism and Shell Commands</a></li>
+<li><a class="reference internal" href="#file-transfer" id="id3">File Transfer</a></li>
+<li><a class="reference internal" href="#managing-packages" id="id4">Managing Packages</a></li>
+<li><a class="reference internal" href="#users-and-groups" id="id5">Users and Groups</a></li>
+<li><a class="reference internal" href="#deploying-from-source-control" id="id6">Deploying From Source Control</a></li>
+<li><a class="reference internal" href="#managing-services" id="id7">Managing Services</a></li>
+<li><a class="reference internal" href="#time-limited-background-operations" id="id8">Time Limited Background Operations</a></li>
+<li><a class="reference internal" href="#limiting-selected-hosts" id="id9">Limiting Selected Hosts</a></li>
+<li><a class="reference internal" href="#configuration-defaults" id="id10">Configuration &amp; Defaults</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="parallelism-and-shell-commands">
-<h2>Parallelism and Shell Commands<a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Parallelism and Shell Commands</a><a class="headerlink" href="#parallelism-and-shell-commands" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s use ansible&#8217;s command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let&#8217;s
 set up SSH-agent so it can remember our credentials:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ssh-agent bash
@@ -257,7 +274,7 @@ get it there.  This is commonly referred to as &#8216;idempotence&#8217;, and is
 However, we also recognize that running <em>ad hoc</em> commands is equally important, so Ansible easily supports both.</p>
 </div>
 <div class="section" id="file-transfer">
-<h2>File Transfer<a class="headerlink" href="#file-transfer" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">File Transfer</a><a class="headerlink" href="#file-transfer" title="Permalink to this headline">¶</a></h2>
 <p>Here&#8217;s another use case for the <cite>/usr/bin/ansible</cite> command line.  Ansible can SCP lots of files to multiple machines in parallel.</p>
 <p>To transfer a file directly to many different servers:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible atlanta -m copy -a <span class="s2">&quot;src=/etc/hosts dest=/tmp/hosts&quot;</span>
@@ -281,7 +298,7 @@ same options can be passed directly to the <tt class="docutils literal"><span cl
 </div>
 </div>
 <div class="section" id="managing-packages">
-<h2>Managing Packages<a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Managing Packages</a><a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
 <p>There are modules available for yum and apt.  Here are some examples
 with <a class="reference internal" href="modules.html#yum"><em>yum</em></a>.</p>
 <p>Ensure a package is installed, but don&#8217;t update it:</p>
@@ -305,7 +322,7 @@ for other packages for now using the command module or (better!) contribute a mo
 for other package managers.  Stop by the mailing list for info/details.</p>
 </div>
 <div class="section" id="users-and-groups">
-<h2>Users and Groups<a class="headerlink" href="#users-and-groups" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Users and Groups</a><a class="headerlink" href="#users-and-groups" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="modules.html#user"><em>user</em></a> module allows easy creation and manipulation of
 existing user accounts, as well as removal of user accounts that may
 exist:</p>
@@ -318,7 +335,7 @@ exist:</p>
 how to manipulate groups and group membership.</p>
 </div>
 <div class="section" id="deploying-from-source-control">
-<h2>Deploying From Source Control<a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Deploying From Source Control</a><a class="headerlink" href="#deploying-from-source-control" title="Permalink to this headline">¶</a></h2>
 <p>Deploy your webapp straight from git:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m git -a <span class="s2">&quot;repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD&quot;</span>
 </pre></div>
@@ -329,7 +346,7 @@ deploying Perl/Python/PHP/Ruby directly from git and then restarting
 apache.</p>
 </div>
 <div class="section" id="managing-services">
-<h2>Managing Services<a class="headerlink" href="#managing-services" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Managing Services</a><a class="headerlink" href="#managing-services" title="Permalink to this headline">¶</a></h2>
 <p>Ensure a service is started on all webservers:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m service -a <span class="s2">&quot;name=httpd state=started&quot;</span>
 </pre></div>
@@ -344,7 +361,7 @@ apache.</p>
 </div>
 </div>
 <div class="section" id="time-limited-background-operations">
-<h2>Time Limited Background Operations<a class="headerlink" href="#time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Time Limited Background Operations</a><a class="headerlink" href="#time-limited-background-operations" title="Permalink to this headline">¶</a></h2>
 <p>Long running operations can be backgrounded, and their status can be
 checked on later. The same job ID is given to the same task on all
 hosts, so you won&#8217;t lose track.  If you kick hosts and don&#8217;t want
@@ -370,7 +387,7 @@ the remote nodes will be terminated.</p>
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> also support polling, and have a simplified syntax for this.</p>
 </div>
 <div class="section" id="limiting-selected-hosts">
-<h2>Limiting Selected Hosts<a class="headerlink" href="#limiting-selected-hosts" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Limiting Selected Hosts</a><a class="headerlink" href="#limiting-selected-hosts" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>What hosts you select to manage can be additionally constrained by using the &#8216;&#8211;limit&#8217; parameter or
@@ -394,7 +411,7 @@ what their names or IP addresses are).</p>
 <p>Both of these methods can be used at the same time, and ranges can also be passed to the &#8211;limit parameter.</p>
 </div>
 <div class="section" id="configuration-defaults">
-<h2>Configuration &amp; Defaults<a class="headerlink" href="#configuration-defaults" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Configuration &amp; Defaults</a><a class="headerlink" href="#configuration-defaults" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags.   The config file location is controlled by the ANSIBLE_CONFIG environment variable, if set, otherwise ~/.ansible.cfg or /etc/ansible/ansible.cfg will be loaded, whichever comes first.  For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.</p>

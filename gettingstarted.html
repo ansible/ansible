@@ -189,9 +189,22 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="getting-started">
-<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#getting-started" id="id1">Getting Started</a><ul>
+<li><a class="reference internal" href="#requirements" id="id2">Requirements</a></li>
+<li><a class="reference internal" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" id="id3">Python 2.6 EPEL instructions for RHEL and CentOS 5</a></li>
+<li><a class="reference internal" href="#getting-ansible" id="id4">Getting Ansible</a></li>
+<li><a class="reference internal" href="#choosing-between-paramiko-and-native-ssh" id="id5">Choosing Between Paramiko and Native SSH</a></li>
+<li><a class="reference internal" href="#your-first-commands" id="id6">Your first commands</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Requirements</a><a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>Requirements for Ansible are extremely minimal.</p>
 <p>Ansible is written for Python 2.6.  If you are running Python 2.5 on an &#8220;Enterprise Linux&#8221; variant,
 your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
@@ -218,7 +231,7 @@ though.)</p>
 </div>
 </div>
 <div class="section" id="python-2-6-epel-instructions-for-rhel-and-centos-5">
-<h2>Python 2.6 EPEL instructions for RHEL and CentOS 5<a class="headerlink" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Python 2.6 EPEL instructions for RHEL and CentOS 5</a><a class="headerlink" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" title="Permalink to this headline">¶</a></h2>
 <p>These distributions don&#8217;t have Python 2.6 by default, but it is easily
 installable. If you have not already done so, <a class="reference external" href="http://fedoraproject.org/wiki/EPEL">configure EPEL</a></p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>yum install python26 python26-PyYAML python26-paramiko python26-jinja2
@@ -226,7 +239,7 @@ installable. If you have not already done so, <a class="reference external" href
 </div>
 </div>
 <div class="section" id="getting-ansible">
-<h2>Getting Ansible<a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Getting Ansible</a><a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
 <p>If you are interested in using all the latest features, you may wish to keep up to date
 with the development branch of the git checkout.  This also makes it easiest to contribute
 back to the project.</p>
@@ -310,7 +323,7 @@ project page:</p>
 </div>
 </div>
 <div class="section" id="choosing-between-paramiko-and-native-ssh">
-<h2>Choosing Between Paramiko and Native SSH<a class="headerlink" href="#choosing-between-paramiko-and-native-ssh" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Choosing Between Paramiko and Native SSH</a><a class="headerlink" href="#choosing-between-paramiko-and-native-ssh" title="Permalink to this headline">¶</a></h2>
 <p>By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko is fast, works
 very transparently, requires no configuration, and is a good choice for most users.
 However, it does not support some advanced SSH features that folks will want to use.</p>
@@ -327,7 +340,7 @@ are roughly the same speed.  Without CM, the binary ssh transport is signficantl
 <p>If none of this makes sense to you, the default paramiko option is probably fine.</p>
 </div>
 <div class="section" id="your-first-commands">
-<h2>Your first commands<a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Your first commands</a><a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
 <p>Now that you&#8217;ve installed Ansible, it&#8217;s time to test it.</p>
 <p>Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>

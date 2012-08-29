@@ -184,12 +184,27 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="inventory-patterns">
-<span id="patterns"></span><h1>Inventory &amp; Patterns<a class="headerlink" href="#inventory-patterns" title="Permalink to this headline">¶</a></h1>
+<span id="patterns"></span><h1><a class="toc-backref" href="#table-of-contents">Inventory &amp; Patterns</a><a class="headerlink" href="#inventory-patterns" title="Permalink to this headline">¶</a></h1>
 <p>Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first"><cite>Table of contents</cite></p>
+<ul class="simple">
+<li><a class="reference internal" href="#inventory-patterns" id="id1">Inventory &amp; Patterns</a><ul>
+<li><a class="reference internal" href="#hosts-and-groups" id="id2">Hosts and Groups</a></li>
+<li><a class="reference internal" href="#selecting-targets" id="id3">Selecting Targets</a></li>
+<li><a class="reference internal" href="#host-variables" id="id4">Host Variables</a></li>
+<li><a class="reference internal" href="#group-variables" id="id5">Group Variables</a></li>
+<li><a class="reference internal" href="#groups-of-groups-and-group-variables" id="id6">Groups of Groups, and Group Variables</a></li>
+<li><a class="reference internal" href="#splitting-out-host-and-group-specific-data" id="id7">Splitting Out Host and Group Specific Data</a></li>
+<li><a class="reference internal" href="#yaml-inventory" id="id8">YAML Inventory</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="hosts-and-groups">
-<span id="inventoryformat"></span><h2>Hosts and Groups<a class="headerlink" href="#hosts-and-groups" title="Permalink to this headline">¶</a></h2>
+<span id="inventoryformat"></span><h2><a class="toc-backref" href="#table-of-contents">Hosts and Groups</a><a class="headerlink" href="#hosts-and-groups" title="Permalink to this headline">¶</a></h2>
 <p>The format for /etc/ansible/hosts is an INI format and looks like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 
@@ -217,7 +232,7 @@ after the hostname with a colon.</p>
 <p>Leading zeros can be included or removed, as desired, and the ranges are inclusive.</p>
 </div>
 <div class="section" id="selecting-targets">
-<h2>Selecting Targets<a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Selecting Targets</a><a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
 <p>We&#8217;ll go over how to use the command line in <a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a> section, however, basically it looks like this:</p>
 <div class="highlight-python"><pre>ansible &lt;pattern_goes_here&gt; -m &lt;module_name&gt; -a &lt;arguments&gt;</pre>
 </div>
@@ -256,7 +271,7 @@ wildcards:</p>
 <p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
 </div>
 <div class="section" id="host-variables">
-<h2>Host Variables<a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Host Variables</a><a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
 <p>It is easy to assign variables to hosts that will be used later in playbooks:</p>
 <div class="highlight-python"><pre>[atlanta]
 host1 http_port=80 maxRequestsPerChild=808
@@ -264,7 +279,7 @@ host2 http_port=303 maxRequestsPerChild=909</pre>
 </div>
 </div>
 <div class="section" id="group-variables">
-<h2>Group Variables<a class="headerlink" href="#group-variables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Group Variables</a><a class="headerlink" href="#group-variables" title="Permalink to this headline">¶</a></h2>
 <p>Variables can also be applied to an entire group at once:</p>
 <div class="highlight-python"><pre>[atlanta]
 host1
@@ -276,7 +291,7 @@ proxy=proxy.atlanta.example.com</pre>
 </div>
 </div>
 <div class="section" id="groups-of-groups-and-group-variables">
-<h2>Groups of Groups, and Group Variables<a class="headerlink" href="#groups-of-groups-and-group-variables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Groups of Groups, and Group Variables</a><a class="headerlink" href="#groups-of-groups-and-group-variables" title="Permalink to this headline">¶</a></h2>
 <p>It is also possible to make groups of groups and assign
 variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
 /usr/bin/ansible:</p>
@@ -308,7 +323,7 @@ southeast</pre>
 seperate from the inventory file, see the next section.</p>
 </div>
 <div class="section" id="splitting-out-host-and-group-specific-data">
-<h2>Splitting Out Host and Group Specific Data<a class="headerlink" href="#splitting-out-host-and-group-specific-data" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Splitting Out Host and Group Specific Data</a><a class="headerlink" href="#splitting-out-host-and-group-specific-data" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>In addition to the storing variables directly in the INI file, host
@@ -339,7 +354,7 @@ variable called &#8216;ansible_python_interpreter&#8217; to the Python
 interpreter path you would like to use.</p>
 </div>
 <div class="section" id="yaml-inventory">
-<h2>YAML Inventory<a class="headerlink" href="#yaml-inventory" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">YAML Inventory</a><a class="headerlink" href="#yaml-inventory" title="Permalink to this headline">¶</a></h2>
 <p class="deprecated">
 <span class="versionmodified">Deprecated since version 0.7.</span></p>
 <p>Ansible&#8217;s YAML inventory format is deprecated and will be removed in

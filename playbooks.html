@@ -149,6 +149,7 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Playbooks</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#playbook-language-example">Playbook Language Example</a></li>
 <li><a class="reference internal" href="#basics">Basics</a><ul>
 <li><a class="reference internal" href="#hosts-and-users">Hosts and Users</a></li>
@@ -188,7 +189,24 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="playbooks">
-<h1>Playbooks<a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Playbooks</a><a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#playbooks" id="id2">Playbooks</a><ul>
+<li><a class="reference internal" href="#introduction" id="id3">Introduction</a></li>
+<li><a class="reference internal" href="#playbook-language-example" id="id4">Playbook Language Example</a></li>
+<li><a class="reference internal" href="#basics" id="id5">Basics</a></li>
+<li><a class="reference internal" href="#running-operations-on-change" id="id6">Running Operations On Change</a></li>
+<li><a class="reference internal" href="#include-files-and-encouraging-reuse" id="id7">Include Files And Encouraging Reuse</a></li>
+<li><a class="reference internal" href="#executing-a-playbook" id="id8">Executing A Playbook</a></li>
+<li><a class="reference internal" href="#tips-and-tricks" id="id9">Tips and Tricks</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#contents">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks are a completely different way to use ansible than in task execution mode, and are
 particularly powerful. Simply put, playbooks are the basis for a really simple
 configuration management and multi-machine deployment system,
@@ -204,8 +222,9 @@ remote systems are in spec.</p>
 <p>Let&#8217;s dive in and see how they work.  As you go, you may wish to open
 the <a class="reference external" href="https://github.com/ansible/ansible/tree/devel/examples/playbooks">github examples directory</a> in
 another tab, so you can apply the theory to what things look like in practice.</p>
+</div>
 <div class="section" id="playbook-language-example">
-<h2>Playbook Language Example<a class="headerlink" href="#playbook-language-example" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Playbook Language Example</a><a class="headerlink" href="#playbook-language-example" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks are expressed in YAML format and have a minimum of syntax.
 Each playbook is composed of one or more &#8216;plays&#8217; in a list.</p>
 <p>The goal of a play is map a group of hosts to some well defined roles, represented by
@@ -238,7 +257,7 @@ server group, then more commands back on the webservers group, etc.</p>
 <p>Below, we&#8217;ll break down what the various features of the playbook language are.</p>
 </div>
 <div class="section" id="basics">
-<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Basics</a><a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="hosts-and-users">
 <h3>Hosts and Users<a class="headerlink" href="#hosts-and-users" title="Permalink to this headline">¶</a></h3>
 <p>For each play in a playbook, you get to choose which machines in your infrastructure
@@ -378,7 +397,7 @@ make more sense to break up tasks using the &#8216;include:&#8217; directive.  W
 </div>
 </div>
 <div class="section" id="running-operations-on-change">
-<h2>Running Operations On Change<a class="headerlink" href="#running-operations-on-change" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Running Operations On Change</a><a class="headerlink" href="#running-operations-on-change" title="Permalink to this headline">¶</a></h2>
 <p>As we&#8217;ve mentioned, modules are written to be &#8216;idempotent&#8217; and can relay  when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.</p>
@@ -415,7 +434,7 @@ won&#8217;t need them for much else.</p>
 </div>
 </div>
 <div class="section" id="include-files-and-encouraging-reuse">
-<h2>Include Files And Encouraging Reuse<a class="headerlink" href="#include-files-and-encouraging-reuse" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Include Files And Encouraging Reuse</a><a class="headerlink" href="#include-files-and-encouraging-reuse" title="Permalink to this headline">¶</a></h2>
 <p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.  Use of included task lists is a great way to define a role
 that system is going to fulfill.  Remember, the goal of a play in a playbook is to map
@@ -477,14 +496,14 @@ ability for hosts to conditionally skip tasks).</p>
 </div>
 </div>
 <div class="section" id="executing-a-playbook">
-<h2>Executing A Playbook<a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Executing A Playbook</a><a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
 <p>Now that you&#8217;ve learned playbook syntax, how do you run a playbook?  It&#8217;s simple.
 Let&#8217;s run a playbook using a parallelism level of 10:</p>
 <div class="highlight-python"><pre>ansible-playbook playbook.yml -f 10</pre>
 </div>
 </div>
 <div class="section" id="tips-and-tricks">
-<h2>Tips and Tricks<a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Tips and Tricks</a><a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h2>
 <p>Look at the bottom of the playbook execution for a summary of the nodes that were executed
 and how they performed.   General failures and fatal &#8220;unreachable&#8221; communication attempts are
 kept seperate in the counts.</p>

@@ -187,13 +187,31 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="module-development">
-<h1>Module Development<a class="headerlink" href="#module-development" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Module Development</a><a class="headerlink" href="#module-development" title="Permalink to this headline">¶</a></h1>
 <p>Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the <cite>ansible</cite> or <cite>ansible-playbook</cite> programs.</p>
 <p>Modules can be written in any language and are found in the path specified
 by <cite>ANSIBLE_LIBRARY_PATH</cite> or the <tt class="docutils literal"><span class="pre">--module-path</span></tt> command line option.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#module-development" id="id2">Module Development</a><ul>
+<li><a class="reference internal" href="#tutorial" id="id3">Tutorial</a></li>
+<li><a class="reference internal" href="#testing-modules" id="id4">Testing Modules</a></li>
+<li><a class="reference internal" href="#reading-input" id="id5">Reading Input</a></li>
+<li><a class="reference internal" href="#module-provided-facts" id="id6">Module Provided &#8216;Facts&#8217;</a></li>
+<li><a class="reference internal" href="#common-module-boilerplate" id="id7">Common Module Boilerplate</a></li>
+<li><a class="reference internal" href="#common-pitfalls" id="id8">Common Pitfalls</a></li>
+<li><a class="reference internal" href="#conventions-recomendations" id="id9">Conventions/Recomendations</a></li>
+<li><a class="reference internal" href="#shorthand-vs-json" id="id10">Shorthand Vs JSON</a></li>
+<li><a class="reference internal" href="#sharing-your-module" id="id11">Sharing Your Module</a></li>
+<li><a class="reference internal" href="#getting-your-module-into-core" id="id12">Getting Your Module Into Core</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="tutorial">
-<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Tutorial</a><a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s build a module to get and set the system time.  For starters, let&#8217;s build
 a module that just outputs the current time.</p>
 <p>We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
@@ -223,7 +241,7 @@ you&#8217;ll turn to stone.  Nobody ever executes async_wrapper directly.</p>
 </div>
 </div>
 <div class="section" id="testing-modules">
-<h2>Testing Modules<a class="headerlink" href="#testing-modules" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Testing Modules</a><a class="headerlink" href="#testing-modules" title="Permalink to this headline">¶</a></h2>
 <p>There&#8217;s a useful test script in the source checkout for ansible:</p>
 <div class="highlight-python"><pre>git clone git@github.com:ansible/ansible.git
 chmod +x ansible/hacking/test-module</pre>
@@ -238,7 +256,7 @@ chmod +x ansible/hacking/test-module</pre>
 <p>If you did not, you might have a typo in your module, so recheck it and try again.</p>
 </div>
 <div class="section" id="reading-input">
-<h2>Reading Input<a class="headerlink" href="#reading-input" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Reading Input</a><a class="headerlink" href="#reading-input" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s modify the module to allow setting the current time.  We&#8217;ll do this by seeing
 if a key value pair in the form <cite>time=&lt;string&gt;</cite> is passed in to the module.</p>
 <p>Ansible internally saves arguments to an arguments file.  So we must read the file
@@ -342,7 +360,7 @@ a lot shorter than this:</p>
 </div>
 </div>
 <div class="section" id="module-provided-facts">
-<h2>Module Provided &#8216;Facts&#8217;<a class="headerlink" href="#module-provided-facts" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Module Provided &#8216;Facts&#8217;</a><a class="headerlink" href="#module-provided-facts" title="Permalink to this headline">¶</a></h2>
 <p>The &#8216;setup&#8217; module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it&#8217;s possible to also add your own facts without modifying the system module.  To do
 this, just have the module return a <cite>ansible_facts</cite> key, like so, along with other return data:</p>
@@ -363,7 +381,7 @@ A good idea might be make a module called &#8216;site_facts&#8217; and always ca
 we&#8217;re always open to improving the selection of core facts in Ansible as well.</p>
 </div>
 <div class="section" id="common-module-boilerplate">
-<h2>Common Module Boilerplate<a class="headerlink" href="#common-module-boilerplate" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Common Module Boilerplate</a><a class="headerlink" href="#common-module-boilerplate" title="Permalink to this headline">¶</a></h2>
 <p>As mentioned, if you are writing a module in Python, there are some very powerful shortcuts you can use.
 Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
 only shorter in terms of code, they are actually FASTER in terms of execution time.</p>
@@ -405,7 +423,7 @@ can function outside of Ansible.</p>
 class is required.</p>
 </div>
 <div class="section" id="common-pitfalls">
-<h2>Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Common Pitfalls</a><a class="headerlink" href="#common-pitfalls" title="Permalink to this headline">¶</a></h2>
 <p>You should also never do this in a module:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">print</span> <span class="s">&quot;some status message&quot;</span>
 </pre></div>
@@ -422,7 +440,7 @@ will still be shown in Ansible, but the command will not succeed.</p>
 you about these kind of things.</p>
 </div>
 <div class="section" id="conventions-recomendations">
-<h2>Conventions/Recomendations<a class="headerlink" href="#conventions-recomendations" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Conventions/Recomendations</a><a class="headerlink" href="#conventions-recomendations" title="Permalink to this headline">¶</a></h2>
 <p>As a reminder from the example code above, here are some basic conventions
 and guidelines:</p>
 <ul class="simple">
@@ -439,7 +457,7 @@ and guidelines:</p>
 </ul>
 </div>
 <div class="section" id="shorthand-vs-json">
-<h2>Shorthand Vs JSON<a class="headerlink" href="#shorthand-vs-json" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Shorthand Vs JSON</a><a class="headerlink" href="#shorthand-vs-json" title="Permalink to this headline">¶</a></h2>
 <p>To make it easier to write modules in bash and in cases where a JSON
 module might not be available, it is acceptable for a module to return
 key=value output all on one line, like this.   The Ansible parser
@@ -450,7 +468,7 @@ will know what to do:</p>
 JSON is probably the simplest way to go.</p>
 </div>
 <div class="section" id="sharing-your-module">
-<h2>Sharing Your Module<a class="headerlink" href="#sharing-your-module" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Sharing Your Module</a><a class="headerlink" href="#sharing-your-module" title="Permalink to this headline">¶</a></h2>
 <p>If you think your module is generally useful to others, a good place to share it
 is in <a class="reference external" href="https://github.com/ansible/ansible-resources">Ansible Resources</a>.  This is maintained
 as a simple repo with pointers to other github projects.</p>
@@ -459,7 +477,7 @@ We would like to build up as many of these as possible in as many languages as p
 <p><a class="reference external" href="http://groups.google.com/group/ansible-project">Ansible Mailing List</a></p>
 </div>
 <div class="section" id="getting-your-module-into-core">
-<h2>Getting Your Module Into Core<a class="headerlink" href="#getting-your-module-into-core" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Getting Your Module Into Core</a><a class="headerlink" href="#getting-your-module-into-core" title="Permalink to this headline">¶</a></h2>
 <p>High-quality modules with minimal dependencies
 can be included in the core, but core modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use

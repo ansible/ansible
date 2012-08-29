@@ -149,6 +149,7 @@ s.parentNode.insertBefore(ga, s);
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
 <li><a class="reference internal" href="#">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#apt-repository">apt_repository</a></li>
 <li><a class="reference internal" href="#apt">apt</a></li>
 <li><a class="reference internal" href="#assemble">assemble</a></li>
@@ -211,7 +212,52 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="ansible-modules">
-<h1>Ansible Modules<a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Ansible Modules</a><a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#ansible-modules" id="id34">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#introduction" id="id35">Introduction</a></li>
+<li><a class="reference internal" href="#apt-repository" id="id36">apt_repository</a></li>
+<li><a class="reference internal" href="#apt" id="id37">apt</a></li>
+<li><a class="reference internal" href="#assemble" id="id38">assemble</a></li>
+<li><a class="reference internal" href="#authorized-key" id="id39">authorized_key</a></li>
+<li><a class="reference internal" href="#command" id="id40">command</a></li>
+<li><a class="reference internal" href="#copy" id="id41">copy</a></li>
+<li><a class="reference internal" href="#easy-install" id="id42">easy_install</a></li>
+<li><a class="reference internal" href="#facter" id="id43">facter</a></li>
+<li><a class="reference internal" href="#fetch" id="id44">fetch</a></li>
+<li><a class="reference internal" href="#file" id="id45">file</a></li>
+<li><a class="reference internal" href="#get-url" id="id46">get_url</a></li>
+<li><a class="reference internal" href="#git" id="id47">git</a></li>
+<li><a class="reference internal" href="#group" id="id48">group</a></li>
+<li><a class="reference internal" href="#mount" id="id49">mount</a></li>
+<li><a class="reference internal" href="#mysql-db" id="id50">mysql_db</a></li>
+<li><a class="reference internal" href="#mysql-user" id="id51">mysql_user</a></li>
+<li><a class="reference internal" href="#nagios" id="id52">nagios</a></li>
+<li><a class="reference internal" href="#ohai" id="id53">ohai</a></li>
+<li><a class="reference internal" href="#ping" id="id54">ping</a></li>
+<li><a class="reference internal" href="#pip" id="id55">pip</a></li>
+<li><a class="reference internal" href="#postgresql-db" id="id56">postgresql_db</a></li>
+<li><a class="reference internal" href="#postgresql-user" id="id57">postgresql_user</a></li>
+<li><a class="reference internal" href="#raw" id="id58">raw</a></li>
+<li><a class="reference internal" href="#service" id="id59">service</a></li>
+<li><a class="reference internal" href="#setup" id="id60">setup</a></li>
+<li><a class="reference internal" href="#shell" id="id61">shell</a></li>
+<li><a class="reference internal" href="#subversion" id="id62">subversion</a></li>
+<li><a class="reference internal" href="#supervisorctl" id="id63">supervisorctl</a></li>
+<li><a class="reference internal" href="#template" id="id64">template</a></li>
+<li><a class="reference internal" href="#user" id="id65">user</a></li>
+<li><a class="reference internal" href="#virt" id="id66">virt</a></li>
+<li><a class="reference internal" href="#yum" id="id67">yum</a></li>
+<li><a class="reference internal" href="#additional-contrib-modules" id="id68">Additional Contrib Modules</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules" id="id69">Writing your own modules</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#contents">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>Ansible ships with a number of modules (called the &#8216;module library&#8217;)
 that can be executed directly on remote hosts or through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.
 Users can also write their own modules.   These modules can control system
@@ -237,61 +283,9 @@ not have to write modules in any particular language &#8211; you get to choose.<
 playbooks, these modules can trigger &#8216;change events&#8217; in the form of notifying &#8216;handlers&#8217;
 to run additional tasks.</p>
 <p>Let&#8217;s see what&#8217;s available in the Ansible module library, out of the box:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<tbody valign="top">
-<tr><td><a class="reference internal" href="#apt-repository"><em>apt_repository</em></a></td>
-<td><a class="reference internal" href="#apt"><em>apt</em></a></td>
-<td><a class="reference internal" href="#assemble"><em>assemble</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#authorized-key"><em>authorized_key</em></a></td>
-<td><a class="reference internal" href="#command"><em>command</em></a></td>
-<td><a class="reference internal" href="#copy"><em>copy</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#easy-install"><em>easy_install</em></a></td>
-<td><a class="reference internal" href="#facter"><em>facter</em></a></td>
-<td><a class="reference internal" href="#fetch"><em>fetch</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#file"><em>file</em></a></td>
-<td><a class="reference internal" href="#get-url"><em>get_url</em></a></td>
-<td><a class="reference internal" href="#git"><em>git</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#group"><em>group</em></a></td>
-<td><a class="reference internal" href="#mount"><em>mount</em></a></td>
-<td><a class="reference internal" href="#mysql-db"><em>mysql_db</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#mysql-user"><em>mysql_user</em></a></td>
-<td><a class="reference internal" href="#nagios"><em>nagios</em></a></td>
-<td><a class="reference internal" href="#ohai"><em>ohai</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#ping"><em>ping</em></a></td>
-<td><a class="reference internal" href="#pip"><em>pip</em></a></td>
-<td><a class="reference internal" href="#postgresql-db"><em>postgresql_db</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#postgresql-user"><em>postgresql_user</em></a></td>
-<td><a class="reference internal" href="#raw"><em>raw</em></a></td>
-<td><a class="reference internal" href="#service"><em>service</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#setup"><em>setup</em></a></td>
-<td><a class="reference internal" href="#shell"><em>shell</em></a></td>
-<td><a class="reference internal" href="#supervisorctl"><em>supervisorctl</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#template"><em>template</em></a></td>
-<td><a class="reference internal" href="#user"><em>user</em></a></td>
-<td><a class="reference internal" href="#virt"><em>virt</em></a></td>
-</tr>
-<tr><td><a class="reference internal" href="#yum"><em>yum</em></a></td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-</tr>
-</tbody>
-</table>
+</div>
 <div class="section" id="apt-repository">
-<span id="id1"></span><h2>apt_repository<a class="headerlink" href="#apt-repository" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2><a class="toc-backref" href="#contents">apt_repository</a><a class="headerlink" href="#apt-repository" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manages apt repositores</p>
@@ -328,7 +322,7 @@ apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'</pre
 </div>
 </div>
 <div class="section" id="apt">
-<span id="id2"></span><h2>apt<a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2><a class="toc-backref" href="#contents">apt</a><a class="headerlink" href="#apt" title="Permalink to this headline">¶</a></h2>
 <p>Manages apt-packages (such as for Debian/Ubuntu).</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -395,7 +389,7 @@ apt pkg=openjdk-6-jdk state=latest install-recommends=no</pre>
 </div>
 </div>
 <div class="section" id="assemble">
-<span id="id3"></span><h2>assemble<a class="headerlink" href="#assemble" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2><a class="toc-backref" href="#contents">assemble</a><a class="headerlink" href="#assemble" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.5.</span></p>
 <p>Assembles a configuration file from fragments.  Often a particular
@@ -442,7 +436,7 @@ sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
 </div>
 </div>
 <div class="section" id="authorized-key">
-<span id="id4"></span><h2>authorized_key<a class="headerlink" href="#authorized-key" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2><a class="toc-backref" href="#contents">authorized_key</a><a class="headerlink" href="#authorized-key" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.5.</span></p>
 <p>Adds or removes an authorized key for a user from a remote host.</p>
@@ -483,7 +477,7 @@ sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
 </div>
 </div>
 <div class="section" id="command">
-<span id="id5"></span><h2>command<a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2><a class="toc-backref" href="#contents">command</a><a class="headerlink" href="#command" title="Permalink to this headline">¶</a></h2>
 <p>The command module takes the command name followed by a list of
 arguments, space delimited.</p>
 <table border="1" class="docutils">
@@ -538,7 +532,7 @@ the user&#8217;s environment.</p>
 <p>The <cite>creates=</cite> and <cite>chdir</cite> options will not be passed to the actual executable.</p>
 </div>
 <div class="section" id="copy">
-<span id="id6"></span><h2>copy<a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2><a class="toc-backref" href="#contents">copy</a><a class="headerlink" href="#copy" title="Permalink to this headline">¶</a></h2>
 <p>The copy module moves a file on the local box to remote locations.  In addition to the options
 listed below, the arguments available to the <cite>file</cite> module can also be passed to the copy
 module.</p>
@@ -580,7 +574,7 @@ relative.</td>
 </div>
 </div>
 <div class="section" id="easy-install">
-<span id="id7"></span><h2>easy_install<a class="headerlink" href="#easy-install" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2><a class="toc-backref" href="#contents">easy_install</a><a class="headerlink" href="#easy-install" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>The easy_install module installs Python libraries.</p>
@@ -624,7 +618,7 @@ easy_install name=flask virtualenv=/srv/webapps/my_app/venv</pre>
 </div>
 </div>
 <div class="section" id="facter">
-<span id="id8"></span><h2>facter<a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2><a class="toc-backref" href="#contents">facter</a><a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
 <p>Runs the discovery program &#8216;facter&#8217; on the remote system, returning
 JSON data that can be useful for inventory purposes.</p>
 <p>Requires that &#8216;facter&#8217; and &#8216;ruby-json&#8217; be installed on the remote end.</p>
@@ -635,7 +629,7 @@ module behind the scenes.</p>
 </div>
 </div>
 <div class="section" id="fetch">
-<span id="id9"></span><h2>fetch<a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2><a class="toc-backref" href="#contents">fetch</a><a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
 <p>This module works like &#8216;copy&#8217;, but in reverse.  It is used for fetching files
 from remote machines and storing them locally in a file tree, organized by hostname.</p>
 <table border="1" class="docutils">
@@ -673,7 +667,7 @@ be saved into &#8216;/foo/host.example.com/tmp/bar&#8217;</td>
 </div>
 </div>
 <div class="section" id="file">
-<span id="id10"></span><h2>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2><a class="toc-backref" href="#contents">file</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
 <p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
 support the same options as the file module &#8211; including &#8216;copy&#8217;, &#8216;template&#8217;, and &#8216;assmeble&#8217;.</p>
 <table border="1" class="docutils">
@@ -771,7 +765,7 @@ file path=/some/path state=directory context=default</pre>
 </div>
 </div>
 <div class="section" id="get-url">
-<span id="id11"></span><h2>get_url<a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2><a class="toc-backref" href="#contents">get_url</a><a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
 <p>Downloads files from http, https, or ftp to the remote server.  The remote server must have direct
 access to the remote resource.</p>
 <table border="1" class="docutils">
@@ -821,7 +815,7 @@ small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 </div>
 </div>
 <div class="section" id="git">
-<span id="id12"></span><h2>git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2><a class="toc-backref" href="#contents">git</a><a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -872,7 +866,7 @@ discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be dis
 </div>
 </div>
 <div class="section" id="group">
-<span id="id13"></span><h2>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2><a class="toc-backref" href="#contents">group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p>Adds or removes groups.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -917,7 +911,7 @@ discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be dis
 </div>
 </div>
 <div class="section" id="mount">
-<span id="id14"></span><h2>mount<a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2><a class="toc-backref" href="#contents">mount</a><a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>The mount module controls active and configured mount points (fstab).</p>
@@ -977,7 +971,7 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 </table>
 </div>
 <div class="section" id="mysql-db">
-<span id="id15"></span><h2>mysql_db<a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2><a class="toc-backref" href="#contents">mysql_db</a><a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove MySQL databases from a remote host.</p>
@@ -1044,7 +1038,7 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 </div>
 </div>
 <div class="section" id="mysql-user">
-<span id="id16"></span><h2>mysql_user<a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2><a class="toc-backref" href="#contents">mysql_user</a><a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Adds or removes a user from a MySQL database.</p>
@@ -1122,7 +1116,7 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 </div>
 </div>
 <div class="section" id="nagios">
-<span id="id17"></span><h2>nagios<a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2><a class="toc-backref" href="#contents">nagios</a><a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Perform common tasks in Nagios related to downtime and notifications.</p>
@@ -1294,7 +1288,7 @@ receive this error if that is the case:</p>
 </ol>
 </div>
 <div class="section" id="ohai">
-<span id="id18"></span><h2>ohai<a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2><a class="toc-backref" href="#contents">ohai</a><a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -1305,7 +1299,7 @@ Ohai data is a bit more verbose and nested than facter.</p>
 </div>
 </div>
 <div class="section" id="ping">
-<span id="id19"></span><h2>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2><a class="toc-backref" href="#contents">ping</a><a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns &#8216;pong&#8217; on
 successful contact.  It does not make sense in playbooks, but is useful
 from /usr/bin/ansible:</p>
@@ -1313,7 +1307,7 @@ from /usr/bin/ansible:</p>
 </div>
 </div>
 <div class="section" id="pip">
-<span id="id20"></span><h2>pip<a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2><a class="toc-backref" href="#contents">pip</a><a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manages Python library dependencies.</p>
@@ -1371,7 +1365,7 @@ pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapp
 </div>
 </div>
 <div class="section" id="postgresql-db">
-<span id="id22"></span><h2>postgresql_db<a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2><a class="toc-backref" href="#contents">postgresql_db</a><a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL databases from a remote host.</p>
@@ -1435,7 +1429,7 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="postgresql-user">
-<span id="id23"></span><h2>postgresql_user<a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2><a class="toc-backref" href="#contents">postgresql_user</a><a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL users (roles) from a remote host and, optionally, grant the users
@@ -1532,7 +1526,7 @@ happened and separately if the user was removed or not.</p>
 </div>
 </div>
 <div class="section" id="raw">
-<span id="id24"></span><h2>raw<a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2><a class="toc-backref" href="#contents">raw</a><a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
 <p>Executes a low-down and dirty SSH command, not going through the module subsystem.</p>
 <p>This is useful and should only be done in two cases.  The first case is installing
 python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
@@ -1547,7 +1541,7 @@ for this module.</p>
 </div>
 </div>
 <div class="section" id="service">
-<span id="id25"></span><h2>service<a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2><a class="toc-backref" href="#contents">service</a><a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1600,7 +1594,7 @@ service name=foo pattern=/usr/bin/foo state=started</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id26"></span><h2>setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id26"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -1682,7 +1676,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id27"></span><h2>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -1732,7 +1726,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="subversion">
-<span id="id28"></span><h2>subversion<a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Deploys a subversion repository.</p>
@@ -1774,7 +1768,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id29"></span><h2>supervisorctl<a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -1810,7 +1804,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id30"></span><h2>template<a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1850,7 +1844,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id31"></span><h2>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1949,7 +1943,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id32"></span><h2>virt<a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id32"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -2009,7 +2003,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id33"></span><h2>yum<a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id33"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -2051,11 +2045,11 @@ yum name=httpd state=installed</pre>
 </div>
 </div>
 <div class="section" id="additional-contrib-modules">
-<h2>Additional Contrib Modules<a class="headerlink" href="#additional-contrib-modules" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Additional Contrib Modules</a><a class="headerlink" href="#additional-contrib-modules" title="Permalink to this headline">¶</a></h2>
 <p>In addition to the following built-in modules, community modules are available at <a class="reference external" href="http://github.com/ansible/ansible-resources">Ansible Resources</a>.</p>
 </div>
 <div class="section" id="writing-your-own-modules">
-<h2>Writing your own modules<a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Writing your own modules</a><a class="headerlink" href="#writing-your-own-modules" title="Permalink to this headline">¶</a></h2>
 <p>See <a class="reference internal" href="moduledev.html"><em>Module Development</em></a>.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>

@@ -193,14 +193,38 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="faq">
-<h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">FAQ</a><a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#faq" id="id1">FAQ</a><ul>
+<li><a class="reference internal" href="#why-is-it-called-ansible" id="id2">Why Is It Called Ansible?</a></li>
+<li><a class="reference internal" href="#what-inspired-ansible" id="id3">What inspired Ansible?</a></li>
+<li><a class="reference internal" href="#comparisons" id="id4">Comparisons</a><ul>
+<li><a class="reference internal" href="#vs-func" id="id5">vs Func?</a></li>
+<li><a class="reference internal" href="#vs-puppet" id="id6">vs Puppet?</a></li>
+<li><a class="reference internal" href="#vs-chef" id="id7">vs Chef?</a></li>
+<li><a class="reference internal" href="#vs-capistrano-fabric" id="id8">vs Capistrano/Fabric?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-questions" id="id9">Other Questions</a><ul>
+<li><a class="reference internal" href="#what-is-ansible-s-approach-to-security" id="id10">What is Ansible&#8217;s approach to security?</a></li>
+<li><a class="reference internal" href="#how-does-ansible-scale" id="id11">How does Ansible scale?</a></li>
+<li><a class="reference internal" href="#are-transports-other-than-ssh-supported" id="id12">Are transports other than SSH supported?</a></li>
+<li><a class="reference internal" href="#what-are-some-ideal-uses-for-ansible" id="id13">What are some ideal uses for Ansible?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="why-is-it-called-ansible">
-<h2>Why Is It Called Ansible?<a class="headerlink" href="#why-is-it-called-ansible" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Why Is It Called Ansible?</a><a class="headerlink" href="#why-is-it-called-ansible" title="Permalink to this headline">¶</a></h2>
 <p>One of my favorite books is Orson Scott Card&#8217;s &#8220;Ender&#8217;s Game&#8221;.  In the book, the Ansible is a method of instantaneous
 long distance &#8220;hyperspace&#8221; communication with a large number of space ships.  You should read it!</p>
 </div>
 <div class="section" id="what-inspired-ansible">
-<h2>What inspired Ansible?<a class="headerlink" href="#what-inspired-ansible" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">What inspired Ansible?</a><a class="headerlink" href="#what-inspired-ansible" title="Permalink to this headline">¶</a></h2>
 <p>Back when I worked for Red Hat and working on <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>, several of us identified a gap between
 provisioning (Cobbler) and configuration management solutions (cfengine, Puppet, etc).
 There was a need for a way to do ad-hoc tasks efficiently, and various parallel
@@ -232,9 +256,9 @@ best&#8217;, and distills all of the ideas behind all of these other tools to th
 <p>I&#8217;d like to know what you think of it.  Hop by the mailing list and say hi.</p>
 </div>
 <div class="section" id="comparisons">
-<h2>Comparisons<a class="headerlink" href="#comparisons" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Comparisons</a><a class="headerlink" href="#comparisons" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="vs-func">
-<h3>vs Func?<a class="headerlink" href="#vs-func" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">vs Func?</a><a class="headerlink" href="#vs-func" title="Permalink to this headline">¶</a></h3>
 <p>Ansible uses SSH by default instead of SSL and custom daemons, and requires
 no extra software to run on managed machines.  You can also write modules
 in any language as long as they return JSON.  Ansible&#8217;s API, of course, is
@@ -243,7 +267,7 @@ a configuration management and multinode orchestration layer (<a class="referenc
 that Func didn&#8217;t have.</p>
 </div>
 <div class="section" id="vs-puppet">
-<h3>vs Puppet?<a class="headerlink" href="#vs-puppet" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">vs Puppet?</a><a class="headerlink" href="#vs-puppet" title="Permalink to this headline">¶</a></h3>
 <p>First off, Ansible wouldn&#8217;t have happened without Puppet.  Puppet took configuration
 management ideas from cfengine and made them sane.  However, I still think they can
 be much simpler.</p>
@@ -271,7 +295,7 @@ in jinja2 in a way just like Puppet does with erb.  Ansible also has it&#8217;s 
 so usage of facter is not required to get variables about the system.</p>
 </div>
 <div class="section" id="vs-chef">
-<h3>vs Chef?<a class="headerlink" href="#vs-chef" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">vs Chef?</a><a class="headerlink" href="#vs-chef" title="Permalink to this headline">¶</a></h3>
 <p>Much in the ways Ansible is different from Puppet.  Chef is notoriously hard
 to set up on the server, and requires that you know how to program in Ruby to
 use the language.  As such, it seems to have a pretty good following mainly
@@ -292,7 +316,7 @@ submit a patch or module.</p>
 has it&#8217;s own facts so you do not need to use ohai unless you want to.</p>
 </div>
 <div class="section" id="vs-capistrano-fabric">
-<h3>vs Capistrano/Fabric?<a class="headerlink" href="#vs-capistrano-fabric" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">vs Capistrano/Fabric?</a><a class="headerlink" href="#vs-capistrano-fabric" title="Permalink to this headline">¶</a></h3>
 <p>These tools aren&#8217;t really well suited to doing idempotent configuration and are
 typically about pushing software out for web deployment and automating steps.</p>
 <p>Meanwhile Ansible is designed for other types of configuration management, and contains some
@@ -303,9 +327,9 @@ useful for sysadmins (not just web developers), and can also be used for firing 
 </div>
 </div>
 <div class="section" id="other-questions">
-<h2>Other Questions<a class="headerlink" href="#other-questions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Other Questions</a><a class="headerlink" href="#other-questions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="what-is-ansible-s-approach-to-security">
-<h3>What is Ansible&#8217;s approach to security?<a class="headerlink" href="#what-is-ansible-s-approach-to-security" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">What is Ansible&#8217;s approach to security?</a><a class="headerlink" href="#what-is-ansible-s-approach-to-security" title="Permalink to this headline">¶</a></h3>
 <p>Ansible aims to not develop custom daemon or PKI code but rely heavily on OpenSSH, which is extremely well
 peer reviewed and the most widely used security subsystem in the industry.  As a result, Ansible
 has a lower attack surface than any configuration management tool featuring daemons that run
@@ -320,7 +344,7 @@ free RAM and compute resources, which should be relevant to users wanting to max
 computing investments.</p>
 </div>
 <div class="section" id="how-does-ansible-scale">
-<h3>How does Ansible scale?<a class="headerlink" href="#how-does-ansible-scale" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">How does Ansible scale?</a><a class="headerlink" href="#how-does-ansible-scale" title="Permalink to this headline">¶</a></h3>
 <p>Whether in single-execution mode or using ansible playbooks, ansible can
 run multiple commands in seperate parallel forks, thanks to the magic behind
 Python&#8217;s multiprocessing module.</p>
@@ -345,7 +369,7 @@ model.</p>
 <p>If you&#8217;d like to discuss scaling strategies further, please hop on the mailing list.</p>
 </div>
 <div class="section" id="are-transports-other-than-ssh-supported">
-<h3>Are transports other than SSH supported?<a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">Are transports other than SSH supported?</a><a class="headerlink" href="#are-transports-other-than-ssh-supported" title="Permalink to this headline">¶</a></h3>
 <p>Currently SSH (you can choose between paramiko or the openssh binaries)
 and local connections are supported.  The interface is actually pluggable so a
 small patch could bring transport over message bus or XMPP as an option.</p>
@@ -353,7 +377,7 @@ small patch could bring transport over message bus or XMPP as an option.</p>
 are all abstracted away from the core implementation so it is very easy to extend.</p>
 </div>
 <div class="section" id="what-are-some-ideal-uses-for-ansible">
-<h3>What are some ideal uses for Ansible?<a class="headerlink" href="#what-are-some-ideal-uses-for-ansible" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#contents">What are some ideal uses for Ansible?</a><a class="headerlink" href="#what-are-some-ideal-uses-for-ansible" title="Permalink to this headline">¶</a></h3>
 <p>One of the best use cases? Complex multi-node cloud deployments using playbooks.  Another good
 example is for configuration management where you
 are starting from a clean OS with no extra software installed, adopting systems
