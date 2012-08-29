@@ -187,15 +187,25 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="api-integrations">
-<h1>API &amp; Integrations<a class="headerlink" href="#api-integrations" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#table-of-contents">API &amp; Integrations</a><a class="headerlink" href="#api-integrations" title="Permalink to this headline">¶</a></h1>
 <p>There are two major ways to use Ansible from an API perspective.   The primary way
 is to use the Ansible python API to control nodes.  Ansible is written in its own
 API so you have a considerable amount of power there.</p>
 <p>Also covered here, Ansible&#8217;s
 list of hosts, groups, and variables assigned to each host can be driven from
 external sources.   We&#8217;ll start with the Python API.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first"><cite>Table of contents</cite></p>
+<ul class="simple">
+<li><a class="reference internal" href="#api-integrations" id="id2">API &amp; Integrations</a><ul>
+<li><a class="reference internal" href="#python-api" id="id3">Python API</a></li>
+<li><a class="reference internal" href="#external-inventory" id="id4">External Inventory</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="python-api">
-<h2>Python API<a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">Python API</a><a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h2>
 <p>The Python API is very powerful, and is how the ansible CLI and ansible-playbook
 are implemented.</p>
 <p>It&#8217;s pretty simple:</p>
@@ -263,7 +273,7 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 </div>
 </div>
 <div class="section" id="external-inventory">
-<h2>External Inventory<a class="headerlink" href="#external-inventory" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#table-of-contents">External Inventory</a><a class="headerlink" href="#external-inventory" title="Permalink to this headline">¶</a></h2>
 <p>Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
@@ -422,9 +432,9 @@ e.g.
 </ul>
 <p>Both <tt class="docutils literal"><span class="pre">ec2_security_group_ids</span></tt> and <tt class="docutils literal"><span class="pre">ec2_security_group_names</span></tt> are comma-separated lists of all security groups. Each EC2 tag is a variable in the format <tt class="docutils literal"><span class="pre">ec2_tag_KEY</span></tt>.</p>
 <p>To see the complete list of variables available for an instance, run the script by itself:</p>
-<blockquote>
-<div>cd examples/scripts
-./ec2_external_inventory.py &#8211;host ec2-12-12-12-12.compute-1.amazonaws.com</div></blockquote>
+<div class="highlight-python"><pre>cd examples/scripts
+./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com</pre>
+</div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">

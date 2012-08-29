@@ -198,13 +198,42 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="advanced-playbooks">
-<h1>Advanced Playbooks<a class="headerlink" href="#advanced-playbooks" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Advanced Playbooks</a><a class="headerlink" href="#advanced-playbooks" title="Permalink to this headline">¶</a></h1>
 <p>Here are some advanced features of the playbooks language.  Using all of these features
 are not neccessary, but many of them will prove useful.  If a feature doesn&#8217;t seem immediately
 relevant, feel free to skip it.  For many people, the features documented in <cite>playbooks</cite> will
 be 90% or more of what they use in Ansible.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#advanced-playbooks" id="id1">Advanced Playbooks</a><ul>
+<li><a class="reference internal" href="#tags" id="id2">Tags</a></li>
+<li><a class="reference internal" href="#playbooks-including-playbooks" id="id3">Playbooks Including Playbooks</a></li>
+<li><a class="reference internal" href="#ignoring-failed-commands" id="id4">Ignoring Failed Commands</a></li>
+<li><a class="reference internal" href="#accessing-complex-variable-data" id="id5">Accessing Complex Variable Data</a></li>
+<li><a class="reference internal" href="#accessing-information-about-other-hosts" id="id6">Accessing Information About Other Hosts</a></li>
+<li><a class="reference internal" href="#variable-file-seperation" id="id7">Variable File Seperation</a></li>
+<li><a class="reference internal" href="#prompting-for-sensitive-data" id="id8">Prompting For Sensitive Data</a></li>
+<li><a class="reference internal" href="#passing-variables-on-the-command-line" id="id9">Passing Variables On The Command Line</a></li>
+<li><a class="reference internal" href="#conditional-execution" id="id10">Conditional Execution</a></li>
+<li><a class="reference internal" href="#conditional-imports" id="id11">Conditional Imports</a></li>
+<li><a class="reference internal" href="#loop-shorthand" id="id12">Loop Shorthand</a></li>
+<li><a class="reference internal" href="#selecting-files-and-templates-based-on-variables" id="id13">Selecting Files And Templates Based On Variables</a></li>
+<li><a class="reference internal" href="#asynchronous-actions-and-polling" id="id14">Asynchronous Actions and Polling</a></li>
+<li><a class="reference internal" href="#local-playbooks" id="id15">Local Playbooks</a></li>
+<li><a class="reference internal" href="#turning-off-facts" id="id16">Turning Off Facts</a></li>
+<li><a class="reference internal" href="#pull-mode-playbooks" id="id17">Pull-Mode Playbooks</a></li>
+<li><a class="reference internal" href="#register-variables" id="id18">Register Variables</a></li>
+<li><a class="reference internal" href="#rolling-updates" id="id19">Rolling Updates</a></li>
+<li><a class="reference internal" href="#delegation" id="id20">Delegation</a></li>
+<li><a class="reference internal" href="#understanding-variable-precedence" id="id21">Understanding Variable Precedence</a></li>
+<li><a class="reference internal" href="#style-points" id="id22">Style Points</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="tags">
-<h2>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Tags</a><a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>If you have a large playbook it may become useful to be able to run a
@@ -229,7 +258,7 @@ specific part of the configuration.  Both plays and tasks support a
 </div>
 </div>
 <div class="section" id="playbooks-including-playbooks">
-<h2>Playbooks Including Playbooks<a class="headerlink" href="#playbooks-including-playbooks" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Playbooks Including Playbooks</a><a class="headerlink" href="#playbooks-including-playbooks" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>To further advance the concept of include files, playbook files can
@@ -245,7 +274,7 @@ all of your systems like this:</p>
 what parts of those plays.</p>
 </div>
 <div class="section" id="ignoring-failed-commands">
-<h2>Ignoring Failed Commands<a class="headerlink" href="#ignoring-failed-commands" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Ignoring Failed Commands</a><a class="headerlink" href="#ignoring-failed-commands" title="Permalink to this headline">¶</a></h2>
 <p class="deprecated">
 <span class="versionmodified">Deprecated since version 0.6.</span></p>
 <p>Generally playbooks will stop executing any more steps on a host that
@@ -257,7 +286,7 @@ write a task that looks like this:</p>
 </div>
 </div>
 <div class="section" id="accessing-complex-variable-data">
-<h2>Accessing Complex Variable Data<a class="headerlink" href="#accessing-complex-variable-data" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Accessing Complex Variable Data</a><a class="headerlink" href="#accessing-complex-variable-data" title="Permalink to this headline">¶</a></h2>
 <p>Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple &#8216;$foo&#8217; is not sufficient, but it is still easy to do.   Here&#8217;s how we get an IP address:</p>
 <div class="highlight-python"><pre>${ansible_eth0.ipv4.address}</pre>
@@ -272,7 +301,7 @@ that is preferred:</p>
 </div>
 </div>
 <div class="section" id="accessing-information-about-other-hosts">
-<h2>Accessing Information About Other Hosts<a class="headerlink" href="#accessing-information-about-other-hosts" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Accessing Information About Other Hosts</a><a class="headerlink" href="#accessing-information-about-other-hosts" title="Permalink to this headline">¶</a></h2>
 <p>If your database server wants to check the value of a &#8216;fact&#8217; from another node, or an inventory variable
 assigned to another node, it&#8217;s easy to do so within a template or even an action line:</p>
 <div class="highlight-python"><pre>${hostvars.hostname.factname}</pre>
@@ -302,7 +331,7 @@ period.</p>
 <p>Don&#8217;t worry about any of this unless you think you need it.  You&#8217;ll know when you do.</p>
 </div>
 <div class="section" id="variable-file-seperation">
-<h2>Variable File Seperation<a class="headerlink" href="#variable-file-seperation" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Variable File Seperation</a><a class="headerlink" href="#variable-file-seperation" title="Permalink to this headline">¶</a></h2>
 <p>It&#8217;s a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
 important variables private.  Similarly, sometimes you may just
@@ -335,7 +364,7 @@ similar files, this is covered in <a class="reference internal" href="patterns.h
 </div>
 </div>
 <div class="section" id="prompting-for-sensitive-data">
-<h2>Prompting For Sensitive Data<a class="headerlink" href="#prompting-for-sensitive-data" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Prompting For Sensitive Data</a><a class="headerlink" href="#prompting-for-sensitive-data" title="Permalink to this headline">¶</a></h2>
 <p>You may wish to prompt the user for certain input, and can
 do so with the similarly named &#8216;vars_prompt&#8217; section.  This has uses
 beyond security, for instance, you may use the same playbook for all
@@ -364,7 +393,7 @@ some other options, but otherwise works equivalently:</p>
 </div>
 </div>
 <div class="section" id="passing-variables-on-the-command-line">
-<h2>Passing Variables On The Command Line<a class="headerlink" href="#passing-variables-on-the-command-line" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Passing Variables On The Command Line</a><a class="headerlink" href="#passing-variables-on-the-command-line" title="Permalink to this headline">¶</a></h2>
 <p>In addition to <cite>vars_prompt</cite> and <cite>vars_files</cite>, it is possible to send variables over
 the ansible command line.  This is particularly useful when writing a generic release playbook
 where you may want to pass in the version of the application to deploy:</p>
@@ -382,7 +411,7 @@ ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"</pre>
 </div>
 </div>
 <div class="section" id="conditional-execution">
-<h2>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Conditional Execution</a><a class="headerlink" href="#conditional-execution" title="Permalink to this headline">¶</a></h2>
 <p>Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.</p>
@@ -417,7 +446,7 @@ there will be accessible to future tasks:</p>
 </div>
 </div>
 <div class="section" id="conditional-imports">
-<h2>Conditional Imports<a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Conditional Imports</a><a class="headerlink" href="#conditional-imports" title="Permalink to this headline">¶</a></h2>
 <p>Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.</p>
 <p>As an example, the name of the Apache package may be different between CentOS and Debian,
@@ -463,7 +492,7 @@ in more streamlined &amp; auditable configuration rules &#8211; especially becau
 minimum of decision points to track.</p>
 </div>
 <div class="section" id="loop-shorthand">
-<h2>Loop Shorthand<a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Loop Shorthand</a><a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h2>
 <p>To save some typing, repeated tasks can be written in short-hand like so:</p>
 <div class="highlight-python"><pre>- name: add user $item
   action: user name=$item state=present groups=wheel
@@ -484,7 +513,7 @@ minimum of decision points to track.</p>
 manager transactions.</p>
 </div>
 <div class="section" id="selecting-files-and-templates-based-on-variables">
-<h2>Selecting Files And Templates Based On Variables<a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Selecting Files And Templates Based On Variables</a><a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h2>
 <p>Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
 The following construct selects the first available file appropriate for the variables of a given host,
 which is often much cleaner than putting a lot of if conditionals in a template.</p>
@@ -498,7 +527,7 @@ CentOS and Debian:</p>
 </div>
 </div>
 <div class="section" id="asynchronous-actions-and-polling">
-<h2>Asynchronous Actions and Polling<a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Asynchronous Actions and Polling</a><a class="headerlink" href="#asynchronous-actions-and-polling" title="Permalink to this headline">¶</a></h2>
 <p>By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
 a small parallelism value (aka <tt class="docutils literal"><span class="pre">--forks</span></tt>), you may wish that long
@@ -548,7 +577,7 @@ tasks even faster.  This also increases the efficiency of polling.</p>
 </div>
 </div>
 <div class="section" id="local-playbooks">
-<h2>Local Playbooks<a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Local Playbooks</a><a class="headerlink" href="#local-playbooks" title="Permalink to this headline">¶</a></h2>
 <p>It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
 to run a playbook inside a OS installer, such as an Anaconda kickstart.</p>
@@ -562,7 +591,7 @@ connection: local</pre>
 </div>
 </div>
 <div class="section" id="turning-off-facts">
-<h2>Turning Off Facts<a class="headerlink" href="#turning-off-facts" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Turning Off Facts</a><a class="headerlink" href="#turning-off-facts" title="Permalink to this headline">¶</a></h2>
 <p>If you know you don&#8217;t need any fact data about your hosts, and know everything about your systems centrally, you
 can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
 systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this:</p>
@@ -571,7 +600,7 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
 </div>
 </div>
 <div class="section" id="pull-mode-playbooks">
-<h2>Pull-Mode Playbooks<a class="headerlink" href="#pull-mode-playbooks" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Pull-Mode Playbooks</a><a class="headerlink" href="#pull-mode-playbooks" title="Permalink to this headline">¶</a></h2>
 <p>The use of playbooks in local mode (above) is made extremely powerful with the addition of <cite>ansible-pull</cite>.
 A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
 checkout.</p>
@@ -583,7 +612,7 @@ the cron frequency, logging locations, and parameters to ansible-pull.</p>
 logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull.</p>
 </div>
 <div class="section" id="register-variables">
-<h2>Register Variables<a class="headerlink" href="#register-variables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Register Variables</a><a class="headerlink" href="#register-variables" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Often in a playbook it may be useful to store the result of a given command in a variable and access
@@ -603,7 +632,7 @@ instance, you could test for the existance of a particular program.</p>
 </div>
 </div>
 <div class="section" id="rolling-updates">
-<h2>Rolling Updates<a class="headerlink" href="#rolling-updates" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Rolling Updates</a><a class="headerlink" href="#rolling-updates" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
@@ -616,7 +645,7 @@ use case, you can define how many hosts ansible should manage at a single time b
 would complete the play completely before moving on to the next 3 hosts.</p>
 </div>
 <div class="section" id="delegation">
-<h2>Delegation<a class="headerlink" href="#delegation" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Delegation</a><a class="headerlink" href="#delegation" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>If you want to perform a task on one host with reference to other hosts, use the &#8216;delegate_to&#8217; keyword on a task.
@@ -654,7 +683,7 @@ a good idea:</p>
 </div>
 </div>
 <div class="section" id="understanding-variable-precedence">
-<h2>Understanding Variable Precedence<a class="headerlink" href="#understanding-variable-precedence" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Understanding Variable Precedence</a><a class="headerlink" href="#understanding-variable-precedence" title="Permalink to this headline">¶</a></h2>
 <p>You have already learned about inventory host and group variables, &#8216;vars&#8217;, and &#8216;vars_files&#8217;.</p>
 <p>If a variable name is defined in more than one place with the same name, priority is as follows
 to determine which place sets the value of the variable.</p>
@@ -670,7 +699,7 @@ to determine which place sets the value of the variable.</p>
 place to set such a default is in a group variable.</p>
 </div>
 <div class="section" id="style-points">
-<h2>Style Points<a class="headerlink" href="#style-points" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Style Points</a><a class="headerlink" href="#style-points" title="Permalink to this headline">¶</a></h2>
 <p>Ansible playbooks are colorized.  If you do not like this, set the ANSIBLE_NOCOLOR=1 environment variable.</p>
 <p>Ansible playbooks also look more impressive with cowsay installed, and we encourage installing this package.</p>
 <div class="admonition-see-also admonition seealso">

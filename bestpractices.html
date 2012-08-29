@@ -182,24 +182,37 @@ s.parentNode.insertBefore(ga, s);
 <br/>
    
   <div class="section" id="best-practices">
-<h1>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#contents">Best Practices</a><a class="headerlink" href="#best-practices" title="Permalink to this headline">¶</a></h1>
 <p>Here are some tips for making the most of Ansible.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#best-practices" id="id1">Best Practices</a><ul>
+<li><a class="reference internal" href="#always-mention-state" id="id2">Always Mention State</a></li>
+<li><a class="reference internal" href="#group-by-roles" id="id3">Group By Roles</a></li>
+<li><a class="reference internal" href="#directory-organization" id="id4">Directory Organization</a></li>
+<li><a class="reference internal" href="#bundling-ansible-modules-with-playbooks" id="id5">Bundling Ansible Modules With Playbooks</a></li>
+<li><a class="reference internal" href="#miscellaneous-tips" id="id6">Miscellaneous Tips</a></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="always-mention-state">
-<h2>Always Mention State<a class="headerlink" href="#always-mention-state" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Always Mention State</a><a class="headerlink" href="#always-mention-state" title="Permalink to this headline">¶</a></h2>
 <p>The &#8216;state&#8217; parameter is optional to a lot of modules.  Whether
 &#8216;state=present&#8217; or &#8216;state=absent&#8217;, it&#8217;s always best to leave that
 parameter in your playbooks to make it clear, especially as some
 modules support additional states.</p>
 </div>
 <div class="section" id="group-by-roles">
-<h2>Group By Roles<a class="headerlink" href="#group-by-roles" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Group By Roles</a><a class="headerlink" href="#group-by-roles" title="Permalink to this headline">¶</a></h2>
 <p>A system can be in multiple groups.  See <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.   Having groups named after things like
 <em>webservers</em> and <em>dbservers</em> is repeated in the examples because it&#8217;s a very powerful concept.</p>
 <p>This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.</p>
 </div>
 <div class="section" id="directory-organization">
-<h2>Directory Organization<a class="headerlink" href="#directory-organization" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Directory Organization</a><a class="headerlink" href="#directory-organization" title="Permalink to this headline">¶</a></h2>
 <p>Playbooks should be organized like this:</p>
 <div class="highlight-python"><pre># root of source control repository
 ├── acme/
@@ -240,14 +253,9 @@ these sections do, see <a class="reference internal" href="playbooks.html"><em>P
 are contained in &#8216;acme/handlers/main.yml&#8217;.  As a reminder, handlers are mostly just used to notify services to restart
 when things change, and these are described in <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>.</p>
 <p>Including more than one setup file or more than one handlers file is of course legal.</p>
-<p>Having playbooks be able to include other playbooks is coming in a
-future release. See <a class="reference external" href="https://github.com/ansible/ansible/issues/538">Issue 538</a>.</p>
-<p>Until then, to manage your entire site, simply execute all of your playbooks together, in the order desired.
-You don&#8217;t have to do this though. It&#8217;s fine to select sections of your infrastructure to manage at a single time.
-You may wish to construct simple shell scripts to wrap calls to ansible-playbook.</p>
 </div>
 <div class="section" id="bundling-ansible-modules-with-playbooks">
-<h2>Bundling Ansible Modules With Playbooks<a class="headerlink" href="#bundling-ansible-modules-with-playbooks" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Bundling Ansible Modules With Playbooks</a><a class="headerlink" href="#bundling-ansible-modules-with-playbooks" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.5.</span></p>
 <p>If a playbook has a &#8221;./library&#8221; directory relative to it&#8217;s YAML file,
@@ -256,7 +264,7 @@ automatically be in the ansible module path.  This is a great way to
 keep modules that go with a playbook together.</p>
 </div>
 <div class="section" id="miscellaneous-tips">
-<h2>Miscellaneous Tips<a class="headerlink" href="#miscellaneous-tips" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#contents">Miscellaneous Tips</a><a class="headerlink" href="#miscellaneous-tips" title="Permalink to this headline">¶</a></h2>
 <p>When you can do something simply, do something simply.  Do not reach
 to use every feature of Ansible together, all at once.  Use what works
 for you.  For example, you should probably not need &#8216;vars&#8217;,
