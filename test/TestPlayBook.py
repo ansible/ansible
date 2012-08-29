@@ -137,7 +137,7 @@ class TestPlaybook(unittest.TestCase):
        print "**ACTUAL**"
        print utils.jsonify(actual, format=True)
        expected =  {
-            "127.0.0.2": {
+            "localhost": {
                 "changed": 9,
                 "failures": 0,
                 "ok": 11,
