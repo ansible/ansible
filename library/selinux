@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Derek Carter<goozbach@friocorte.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import pwd
+import grp
+
+try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
+
+def selinux_enabled():
+    if not HAVE_SELINUX:
+        return False
+    if selinux.is_selinux_enabled() == 1:
+        return True
+    else:
+        return False
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            enabled=dict(choices=BOOLEANS, default=True),
+            policy=dict(default='targeted', choices=['targeted','mls','strict','minimum']),
+            enforcing=dict(choices=BOOLEANS, default=True),
+        )
+    )
+    CHANGED=False
+    #global vars
+    msg=''
+    enabled   = module.params['enabled']
+    policy    = module.params['policy']
+    enforcing = module.params['enforcing']
+
+    current_enabled = selinux_enabled()
+    current_policy = selinux.selinux_getpolicytype()[1]
+    current_enforcing = selinux.security_getenforce()
+
+    # check changed valuse
+    print ( module.boolean(enabled), bool(current_enabled) )
+    if ( module.boolean(enabled) != bool(current_enabled) ):
+        msg = msg + ' enabled changed,'
+        CHANGED=True
+    if ( policy != current_policy ):
+        msg = msg = msg + ' policy changed,'
+        CHANGED=True
+    if ( module.boolean(enforcing) != bool(current_enforcing) ):
+        msg = msg +' enforcing changed,'
+        CHANGED=True
+
+    module.exit_json(changed=CHANGED, msg=msg,
+        enabled=enabled, original_enabled=current_enabled,
+        policy=policy, original_policy=current_policy,
+        enforcing=enforcing, original_enforcing=current_enforcing)
+
+#################################################
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
