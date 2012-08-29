@@ -1,0 +1,123 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import re
+import os
+
+def present(module, name, regexp, line, insertafter):
+    f = open(name, 'rb')
+    lines = f.readlines()
+    f.close()
+
+    mre = re.compile(regexp)
+    if not mre.match(line):
+        module.fail_json(msg="line= doesn't match regexp=")
+
+    if insertafter in ('BOF', 'EOF'):
+        iare = None
+    else:
+        iare = re.compile(insertafter)
+
+    index = [-1, -1]
+    for lineno in range(0, len(lines)):
+        if mre.match(lines[lineno]):
+            index[0] = lineno
+        elif iare is not None and iare.match(lines[lineno]):
+            # + 1 for the next line
+            index[1] = lineno + 1
+
+    # Regexp matched a line in the file
+    if index[0] != -1:
+        if lines[index[0]] == line + os.linesep:
+            msg = ''
+            changed = False
+        else:
+            lines[index[0]] = line + os.linesep
+            msg = 'line replaced'
+            changed = True
+    # Add it to the beginning of the file
+    elif insertafter == 'BOF':
+        lines.insert(0, line + os.linesep)
+        msg = 'line added'
+        changed = True
+    # Add it to the end of the file if requested or if insertafter= didn't match
+    elif insertafter == 'EOF' or index[1] == -1:
+        lines.append(line + os.linesep)
+        msg = 'line added'
+        changed = True
+    # insertafter= matched
+    else:
+        lines.insert(index[1], line + os.linesep)
+        msg = 'line added'
+        changed = True
+
+    if changed:
+        f = open(name, 'wb')
+        f.writelines(lines)
+        f.close()
+
+    module.exit_json(changed=changed, msg=msg)
+
+def absent(module, name, regexp):
+    f = open(name, 'rb')
+    lines = f.readlines()
+    f.close()
+    cre = re.compile(regexp)
+    found = []
+    def matcher(line):
+        if cre.match(line):
+            found.append(line)
+            return False
+        else:
+            return True
+    lines = filter(matcher, lines)
+    changed = len(found) > 0
+    if changed:
+        f = open(name, 'wb')
+        f.writelines(lines)
+        f.close()
+    module.exit_json(changed=changed, found=len(found))
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True, aliases=['dest', 'destfile']),
+            state=dict(default='present', choices=['absent', 'present']),
+            regexp=dict(required=True),
+            line=dict(aliases=['value']),
+            insertafter=dict(default='EOF'),
+        ),
+    )
+
+    params = module.params
+
+    if params['state'] == 'present':
+        if 'line' not in params:
+            module.fail_json(msg='line= is required with state=present')
+        present(module, params['name'], params['regexp'], params['line'],
+                params['insertafter'])
+    else:
+        absent(module, params['name'], params['regexp'])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
+
