@@ -39,6 +39,8 @@ def _find_binary(module):
                          '%s' % binaries)
 
 def _run(cmd):
+    if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
+        cmd = cmd + ' -y'
     # returns (rc, stdout, stderr) from shell command
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, shell=True)
@@ -71,9 +73,6 @@ def main():
             module.exit_json(changed=True, repo=repo, state=state)
 
     cmd = '%s "%s"' % (add_apt_repository, repo)
-
-    if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
-        cmd = cmd + ' -y'
 
     rc, out, err = _run(cmd)
 

@@ -27,6 +27,9 @@ def _find_supervisorctl():
         if os.path.exists(e):
             return e
 
+def _is_present(name):
+    rc, out, err = _run('%s status' % _find_supervisorctl())
+    return name in out
 
 def _is_running(name):
     rc, out, err = _run('%s status %s' % (_find_supervisorctl(), name))
@@ -44,7 +47,7 @@ def _run(cmd):
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        state=dict(required=True, choices=['started', 'restarted', 'stopped'])
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped'])
     )
 
     module = AnsibleModule(argument_spec=arg_spec)
@@ -56,6 +59,20 @@ def main():
 
     if SUPERVISORCTL is None:
         module.fail_json(msg='supervisorctl is not installed')
+
+    present = _is_present(name)
+
+    if state == 'present':
+        if not present:
+            _run('%s reread' % SUPERVISORCTL)
+            rc, out, err = _run('%s add %s' % (SUPERVISORCTL, name))
+
+            if '%s: added process group' % name in out:
+                module.exit_json(changed=True, name=name, state=state)
+            else:
+                module.fail_json(msg=out, name=name, state=state)
+
+        module.exit_json(changed=False, name=name, state=state)
 
     running = _is_running(name)
 
@@ -71,7 +88,7 @@ def main():
         module.fail_json(msg=out)
 
     elif running and state == 'restarted':
-        rc, out, err = _run('%s update' % SUPERVISORCTL)
+        rc, out, err = _run('%s update %s' % (SUPERVISORCTL, name))
         rc, out, err = _run('%s restart %s' % (SUPERVISORCTL, name))
 
         if '%s: stopped' % name in out and '%s: started' % name in out:
@@ -80,7 +97,6 @@ def main():
         module.fail_json(msg=out)
 
     elif not running and state == 'started':
-        rc, out, err = _run('%s update' % SUPERVISORCTL)
         rc, out, err = _run('%s start %s' % (SUPERVISORCTL, name))
 
         if '%s: started' % name in out:
