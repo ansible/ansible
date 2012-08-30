@@ -12,7 +12,6 @@ Ansible modules are a way of adding new client-side logic to ansible.  They can 
 * [Official "core" ansible modules](http://ansible.github.com/modules.html) - various
 * [mercurial](https://github.com/bradobro/ansible-module-mercurial) - bradobro
 * [zypper (bash module example)](https://github.com/jpmens/ansible-zypp) - jp_mens
-* [lineinfile](https://github.com/azemon/ansible/blob/lineinfile/library/lineinfile) - azemon
 * [homebrew](https://gist.github.com/3170079) - swehack
 
 Python modules using 0.6 and later can use the common "AnsibleModule" class to dramatically reduce
