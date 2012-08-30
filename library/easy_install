@@ -50,16 +50,14 @@ def main():
 
     name = module.params['name']
     env = module.params['virtualenv']
-    easy_install = module.get_bin_path('easy_install', ['%s/bin' % env])
-    if easy_install is None:
-        module.fail_json(msg='easy_install is not installed')
+    easy_install = module.get_bin_path('easy_install', True, ['%s/bin' % env])
 
     rc = 0
     err = ''
     out = ''
 
     if env:
-        virtualenv = module.get_bin_path('virtualenv')
+        virtualenv = module.get_bin_path('virtualenv', True)
         if virtualenv is None:
             module.fail_json(msg='virtualenv is not installed')
 
