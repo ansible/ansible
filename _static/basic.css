@@ -79,11 +79,11 @@ div.sphinxsidebar input {
     font-size: 1em;
 }
 
-div.sphinxsidebar input[type="text"] {
+div.sphinxsidebar #searchbox input[type="text"] {
     width: 170px;
 }
 
-div.sphinxsidebar input[type="submit"] {
+div.sphinxsidebar #searchbox input[type="submit"] {
     width: 30px;
 }
 
@@ -445,6 +445,11 @@ dl.glossary dt {
 
 .classifier {
     font-style: oblique;
+}
+
+abbr, acronym {
+    border-bottom: dotted 1px;
+    cursor: help;
 }
 
 /* -- code displays --------------------------------------------------------- */

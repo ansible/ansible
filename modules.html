@@ -2,15 +2,18 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Ansible Modules &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
@@ -297,19 +300,19 @@ to run additional tasks.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>repo</td>
+<tr class="row-even"><td>repo</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>The repository name/value</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
@@ -332,47 +335,47 @@ apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'</pre
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>A package name or package specifier with version, like <cite>foo</cite> or <cite>foo=1.0</cite></td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>&#8216;absent&#8217;, &#8216;present&#8217;, or &#8216;latest&#8217;.</td>
 </tr>
-<tr><td>update_cache</td>
+<tr class="row-even"><td>update_cache</td>
 <td>no</td>
 <td>no</td>
 <td>Run the equivalent of apt-get update before the operation.
 Can be run as part of the package installation or a seperate step</td>
 </tr>
-<tr><td>purge</td>
+<tr class="row-odd"><td>purge</td>
 <td>no</td>
 <td>no</td>
 <td>Will forge purge of configuration files if state is set to &#8216;absent&#8217;.</td>
 </tr>
-<tr><td>default_release</td>
+<tr class="row-even"><td>default_release</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>Corresponds to the -t option for apt and sets pin priorities</td>
 </tr>
-<tr><td>install_recommends</td>
+<tr class="row-odd"><td>install_recommends</td>
 <td>no</td>
 <td>yes</td>
 <td>Corresponds to the &#8211;no-install-recommends option for apt, default
 behavior works as apt&#8217;s default behavior, &#8216;no&#8217; does not install
 recommended packages.  Suggested packages are never installed.</td>
 </tr>
-<tr><td>force</td>
+<tr class="row-even"><td>force</td>
 <td>no</td>
 <td>no</td>
 <td>If &#8216;yes&#8217;, force installs/removes.</td>
@@ -407,24 +410,24 @@ sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>src</td>
+<tr class="row-even"><td>src</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>An already existing directory full of source files</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>A file to create using the concatenation of all of the source files</td>
 </tr>
-<tr><td>OTHERS</td>
+<tr class="row-even"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>All arguments that the file module takes may also be used</td>
@@ -448,24 +451,24 @@ sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>user</td>
+<tr class="row-even"><td>user</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Name of the user who should have access to the remote host</td>
 </tr>
-<tr><td>key</td>
+<tr class="row-odd"><td>key</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>the SSH public key, as a string</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>whether the given key should or should not be in the file</td>
@@ -488,24 +491,24 @@ arguments, space delimited.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>(free form)</td>
+<tr class="row-even"><td>(free form)</td>
 <td>N/A</td>
 <td>N/A</td>
 <td>the command module takes a free form command to run</td>
 </tr>
-<tr><td>creates</td>
+<tr class="row-odd"><td>creates</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>a filename, when it already exists, this step will NOT be run</td>
 </tr>
-<tr><td>chdir</td>
+<tr class="row-even"><td>chdir</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>cd into this directory before running the command (0.6 and later)</td>
@@ -544,25 +547,25 @@ module.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>src</td>
+<tr class="row-even"><td>src</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Local path to a file to copy to the remote server, can be absolute or
 relative.</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Remote absolute path where the file should end up</td>
 </tr>
-<tr><td>OTHERS</td>
+<tr class="row-even"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>All arguments the file module takes are also supported</td>
@@ -586,19 +589,19 @@ relative.</td>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>a Python library name</td>
 </tr>
-<tr><td>virtualenv</td>
+<tr class="row-odd"><td>virtualenv</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>an optional virtualenv directory path to install into, if the virtualenv
@@ -640,20 +643,20 @@ from remote machines and storing them locally in a file tree, organized by hostn
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>src</td>
+<tr class="row-even"><td>src</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>The file on the remote system to fetch.  This needs to be a file, not
 a directory.  Recursive fetching may be supported in a later release.</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>A directory to save the file into.  For example, if the &#8216;dest&#8217; directory
@@ -678,20 +681,20 @@ support the same options as the file module &#8211; including &#8216;copy&#8217;
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>dest</td>
+<tr class="row-even"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>defines the file being managed, unless when used with state=link, and
 then sets the destination to create a symbolic link to using &#8216;src&#8217;</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>&nbsp;</td>
 <td>file</td>
 <td>values are &#8216;file&#8217;, &#8216;link&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  If directory,
@@ -701,53 +704,53 @@ or &#8216;template&#8217; module if you want that behavior.  If &#8216;link&#821
 link will be created or changed.  If absent, directories will be
 recursively deleted, and files or symlinks will be unlinked.</td>
 </tr>
-<tr><td>mode</td>
+<tr class="row-even"><td>mode</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>mode the file or directory shoudl be, such as 0644 as would be fed to
 chmod.  English modes like &#8216;g+x&#8217; are not yet supported</td>
 </tr>
-<tr><td>owner</td>
+<tr class="row-odd"><td>owner</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>name of the user that should own the file/directory, as would be fed to
 chown</td>
 </tr>
-<tr><td>group</td>
+<tr class="row-even"><td>group</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>name of the group that should own the file/directory, as would be fed to
 group</td>
 </tr>
-<tr><td>src</td>
+<tr class="row-odd"><td>src</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>path of the file to link to (applies only to state=link)</td>
 </tr>
-<tr><td>seuser</td>
+<tr class="row-even"><td>seuser</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>user part of SELinux file context.  Will default to system policy, if
 applicable.  If set to &#8216;_default&#8217;, it will use the &#8216;user&#8217; portion of the
 the policy if available</td>
 </tr>
-<tr><td>serole</td>
+<tr class="row-odd"><td>serole</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>role part of SELinux file context, &#8216;_default&#8217; feature works as above.</td>
 </tr>
-<tr><td>setype</td>
+<tr class="row-even"><td>setype</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>type part of SELinux file context, &#8216;_default&#8217; feature works as above</td>
 </tr>
-<tr><td>selevel</td>
+<tr class="row-odd"><td>selevel</td>
 <td>&nbsp;</td>
 <td>s0</td>
 <td>level part of the SELinux file context.  This is the MLS/MCS attribute,
 sometimes known as the &#8216;range&#8217;.  &#8216;_default&#8217; feature works as above</td>
 </tr>
-<tr><td>context</td>
+<tr class="row-even"><td>context</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>accepts only &#8216;default&#8217; as a value.  This will restore a file&#8217;s selinux
@@ -776,26 +779,26 @@ access to the remote resource.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>url</td>
+<tr class="row-even"><td>url</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>http, https, or ftp URL</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>absolute path of where to download the file to.  If dest is a directory,
 the basename of the file on the remote server will be used.  If a
 directory, thirsty=yes must also be set.</td>
 </tr>
-<tr><td>thirsty</td>
+<tr class="row-even"><td>thirsty</td>
 <td>no</td>
 <td>&#8216;no&#8217;</td>
 <td>(new in 0.7) if yes, will download the file every time and replace the
@@ -803,7 +806,7 @@ file if the contents change.  if no, the file will only be downloaded
 if the destination does not exist.  Generally should be &#8216;yes&#8217; only for
 small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 </tr>
-<tr><td>OTHERS</td>
+<tr class="row-odd"><td>OTHERS</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>all arguments accepted by the file module also work here</td>
@@ -825,35 +828,35 @@ small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>repo</td>
+<tr class="row-even"><td>repo</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>git, ssh, or http protocol address of the git repo</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>absolute path of where the repo should be checked out to</td>
 </tr>
-<tr><td>version</td>
+<tr class="row-even"><td>version</td>
 <td>no</td>
 <td>HEAD</td>
 <td>what version to check out &#8211; either the git SHA, the literal string
 &#8216;HEAD&#8217;, branch name, or a tag name.</td>
 </tr>
-<tr><td>remote</td>
+<tr class="row-odd"><td>remote</td>
 <td>no</td>
 <td>origin</td>
 <td>name of the remote branch</td>
 </tr>
-<tr><td>force</td>
+<tr class="row-even"><td>force</td>
 <td>no</td>
 <td>yes</td>
 <td>(new in 0.7) If yes, any modified files in the working repository will be
@@ -876,29 +879,29 @@ discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be dis
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the group</td>
 </tr>
-<tr><td>gid</td>
+<tr class="row-odd"><td>gid</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optional git to set for the group</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>&nbsp;</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
 </tr>
-<tr><td>system</td>
+<tr class="row-odd"><td>system</td>
 <td>&nbsp;</td>
 <td>no</td>
 <td>if &#8216;yes&#8217;, indicates that the group being created is a system group.</td>
@@ -923,44 +926,44 @@ discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be dis
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>path to the mountpoint, ex: /mnt/foo</td>
 </tr>
-<tr><td>src</td>
+<tr class="row-odd"><td>src</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>device to be mounted</td>
 </tr>
-<tr><td>fstype</td>
+<tr class="row-even"><td>fstype</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>fstype</td>
 </tr>
-<tr><td>opts</td>
+<tr class="row-odd"><td>opts</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>mount options (see fstab docs)</td>
 </tr>
-<tr><td>dump</td>
+<tr class="row-even"><td>dump</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>dump (see fstab docs)</td>
 </tr>
-<tr><td>passno</td>
+<tr class="row-odd"><td>passno</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>passno (see fstab docs)</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>&#8216;present&#8217;, &#8216;absent&#8217;, &#8216;mounted&#8217;, or &#8216;unmounted&#8217;.  If mounted/unmounted,
@@ -985,44 +988,44 @@ apt-get install python-mysqldb.</p>
 <col width="65%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the database to add or remove</td>
 </tr>
-<tr><td>login_user</td>
+<tr class="row-odd"><td>login_user</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>user name used to authenticate with</td>
 </tr>
-<tr><td>login_password</td>
+<tr class="row-even"><td>login_password</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>password used to authenticate with</td>
 </tr>
-<tr><td>login_host</td>
+<tr class="row-odd"><td>login_host</td>
 <td>no</td>
 <td>localhost</td>
 <td>host running the database</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
 </tr>
-<tr><td>collation</td>
+<tr class="row-odd"><td>collation</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>collation mode</td>
 </tr>
-<tr><td>encoding</td>
+<tr class="row-even"><td>encoding</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>encoding mode</td>
@@ -1052,49 +1055,49 @@ apt-get install python-mysqldb.</p>
 <col width="64%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the user (role) to add or remove</td>
 </tr>
-<tr><td>password</td>
+<tr class="row-odd"><td>password</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>set the user&#8217;s password</td>
 </tr>
-<tr><td>host</td>
+<tr class="row-even"><td>host</td>
 <td>no</td>
 <td>localhost</td>
 <td>the &#8216;host&#8217; part of the MySQL username</td>
 </tr>
-<tr><td>login_user</td>
+<tr class="row-odd"><td>login_user</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>user name used to authenticate with</td>
 </tr>
-<tr><td>login_password</td>
+<tr class="row-even"><td>login_password</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>password used to authenticate with</td>
 </tr>
-<tr><td>login_host</td>
+<tr class="row-odd"><td>login_host</td>
 <td>no</td>
 <td>localhost</td>
 <td>host running MySQL.</td>
 </tr>
-<tr><td>priv</td>
+<tr class="row-even"><td>priv</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>MySQL privileges string in the format: db.table:priv1,priv2</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
@@ -1132,25 +1135,25 @@ module:</p>
 <col width="53%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>action</td>
+<tr class="row-even"><td>action</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>one of: &#8216;downtime&#8217;, &#8216;enable_alerts&#8217;/&#8217;disable_alerts&#8217;, or
 &#8216;silence&#8217;/&#8217;unsilence&#8217;</td>
 </tr>
-<tr><td>host</td>
+<tr class="row-odd"><td>host</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>host to operate on in nagios</td>
 </tr>
-<tr><td>cmdfile</td>
+<tr class="row-even"><td>cmdfile</td>
 <td>no</td>
 <td>auto-detected</td>
 <td>path to the nagios <em>command file</em> (FIFO pipe)</td>
@@ -1166,24 +1169,24 @@ module:</p>
 <col width="53%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>author</td>
+<tr class="row-even"><td>author</td>
 <td>no</td>
 <td>Ansible</td>
 <td>author to leave downtime comments as</td>
 </tr>
-<tr><td>minutes</td>
+<tr class="row-odd"><td>minutes</td>
 <td>no</td>
 <td>30</td>
 <td>minutes to schedule downtime for</td>
 </tr>
-<tr><td>services</td>
+<tr class="row-even"><td>services</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>what to manage downtime/alerts for. separate multiple services
@@ -1201,14 +1204,14 @@ with commas.
 <col width="53%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>services</td>
+<tr class="row-even"><td>services</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>what to manage downtime/alerts for. separate multiple services
@@ -1319,35 +1322,35 @@ from /usr/bin/ansible:</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>The name of a Python library to install</td>
 </tr>
-<tr><td>version</td>
+<tr class="row-odd"><td>version</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>The version number to install of the Python library specified in the
 &#8216;name&#8217; parameter</td>
 </tr>
-<tr><td>requirements</td>
+<tr class="row-even"><td>requirements</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>The path to a pip requirements file</td>
 </tr>
-<tr><td>virtualenv</td>
+<tr class="row-odd"><td>virtualenv</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>An optional path to a virtualenv directory to install into</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>no</td>
 <td>present</td>
 <td>&#8216;present&#8217;, &#8216;absent&#8217; or &#8216;latest&#8217;</td>
@@ -1385,39 +1388,39 @@ host before using this module.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the database to add or remove</td>
 </tr>
-<tr><td>login_user</td>
+<tr class="row-odd"><td>login_user</td>
 <td>no</td>
 <td>postgres</td>
 <td>user (role) used to authenticate with PostgreSQL</td>
 </tr>
-<tr><td>login_password</td>
+<tr class="row-even"><td>login_password</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>password used to authenticate with PostgreSQL</td>
 </tr>
-<tr><td>login_host</td>
+<tr class="row-odd"><td>login_host</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>host running PostgreSQL. Default (blank) implies localhost</td>
 </tr>
-<tr><td>owner</td>
+<tr class="row-even"><td>owner</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>name of the role to set as owner of the database</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>&nbsp;</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
@@ -1450,54 +1453,54 @@ host before using this module.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the user (role) to add or remove</td>
 </tr>
-<tr><td>password</td>
+<tr class="row-odd"><td>password</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>set the user&#8217;s password</td>
 </tr>
-<tr><td>db</td>
+<tr class="row-even"><td>db</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>name of database where permissions will be granted</td>
 </tr>
-<tr><td>priv</td>
+<tr class="row-odd"><td>priv</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>PostgreSQL privileges string in the format: table:priv1,priv2</td>
 </tr>
-<tr><td>fail_on_user</td>
+<tr class="row-even"><td>fail_on_user</td>
 <td>no</td>
 <td>yes</td>
 <td>if yes, fail when user can&#8217;t be removed. Otherwise just log and continue</td>
 </tr>
-<tr><td>login_user</td>
+<tr class="row-odd"><td>login_user</td>
 <td>no</td>
 <td>postgres</td>
 <td>user (role) used to authenticate with PostgreSQL</td>
 </tr>
-<tr><td>login_password</td>
+<tr class="row-even"><td>login_password</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>password used to authenticate with PostgreSQL</td>
 </tr>
-<tr><td>login_host</td>
+<tr class="row-odd"><td>login_host</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>host running PostgreSQL. Default (blank) implies localhost</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>&nbsp;</td>
 <td>present</td>
 <td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
@@ -1551,26 +1554,26 @@ for this module.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the service</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>no</td>
 <td>started</td>
 <td>&#8216;started&#8217;, &#8216;stopped&#8217;, &#8216;reloaded&#8217;, or &#8216;restarted&#8217;.  Started/stopped are
 idempotent actions that will not run commands unless neccessary.
 &#8216;restarted&#8217; will always bounce the service, &#8216;reloaded&#8217; will always reload.</td>
 </tr>
-<tr><td>pattern</td>
+<tr class="row-even"><td>pattern</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>(new in 0.7) if the service does not respond to the status command,
@@ -1578,7 +1581,7 @@ name a substring to look for as would be found in the output of the &#8216;ps&#8
 command as a stand-in for a status result.  If the string is found, the
 service will be assumed to be running.</td>
 </tr>
-<tr><td>enabled</td>
+<tr class="row-odd"><td>enabled</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>Whether the service should start on boot.  Either &#8216;yes&#8217; or &#8216;no&#8217;.</td>
@@ -1688,24 +1691,24 @@ but runs the command through the user&#8217;s configured shell on the remote nod
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>(free form)</td>
+<tr class="row-even"><td>(free form)</td>
 <td>N/A</td>
 <td>N/A</td>
 <td>the command module takes a free form command to run</td>
 </tr>
-<tr><td>creates</td>
+<tr class="row-odd"><td>creates</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>a filename, when it already exists, this step will NOT be run</td>
 </tr>
-<tr><td>chdir</td>
+<tr class="row-even"><td>chdir</td>
 <td>no</td>
 <td>&nbsp;</td>
 <td>cd into this directory before running the command (0.6 and later)</td>
@@ -1738,24 +1741,24 @@ your best judgement.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>repo</td>
+<tr class="row-even"><td>repo</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>The subversion URL to the repository.</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Absolute path where the repository should be deployed.</td>
 </tr>
-<tr><td>force</td>
+<tr class="row-even"><td>force</td>
 <td>no</td>
 <td>yes</td>
 <td>If yes, any modified files in the working repository will be
@@ -1780,19 +1783,19 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>The name of the supervisord program/process to manage</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>&#8216;started&#8217;, &#8216;stopped&#8217; or &#8216;restarted&#8217;</td>
@@ -1814,25 +1817,25 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>src</td>
+<tr class="row-even"><td>src</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Path of a Jinja2 formatted template on the local server.  This can be
 a relative or absolute path.</td>
 </tr>
-<tr><td>dest</td>
+<tr class="row-odd"><td>dest</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>Location to render the template on the remote server</td>
 </tr>
-<tr><td>OTHERS</td>
+<tr class="row-even"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>This module also supports all of the arguments to the file module</td>
@@ -1854,82 +1857,82 @@ a relative or absolute path.</td>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the user to create, remove, or edit</td>
 </tr>
-<tr><td>comment</td>
+<tr class="row-odd"><td>comment</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optionally sets the description of the user</td>
 </tr>
-<tr><td>uid</td>
+<tr class="row-even"><td>uid</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optionally sets the uid of the user</td>
 </tr>
-<tr><td>group</td>
+<tr class="row-odd"><td>group</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optionally sets the user&#8217;s primary group (takes a group name)</td>
 </tr>
-<tr><td>groups</td>
+<tr class="row-even"><td>groups</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>puts the user in this comma-delimited list of groups</td>
 </tr>
-<tr><td>append</td>
+<tr class="row-odd"><td>append</td>
 <td>&nbsp;</td>
 <td>no</td>
 <td>if &#8216;yes&#8217;, will only add groups, not set them to just the list in &#8216;groups&#8217;</td>
 </tr>
-<tr><td>shell</td>
+<tr class="row-even"><td>shell</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optionally set the user&#8217;s shell</td>
 </tr>
-<tr><td>createhome</td>
+<tr class="row-odd"><td>createhome</td>
 <td>&nbsp;</td>
 <td>yes</td>
 <td>unless &#8216;no&#8217;, a home directory will be made for the user</td>
 </tr>
-<tr><td>home</td>
+<tr class="row-even"><td>home</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>sets where the user&#8217;s homedir should be, if not the default</td>
 </tr>
-<tr><td>password</td>
+<tr class="row-odd"><td>password</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>optionally set the user&#8217;s password to this crypted value.  See the user&#8217;s
 example in the github examples directory for what this looks like in a
 playbook</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-even"><td>state</td>
 <td>&nbsp;</td>
 <td>present</td>
 <td>when &#8216;absent&#8217;, removes the user.</td>
 </tr>
-<tr><td>system</td>
+<tr class="row-odd"><td>system</td>
 <td>&nbsp;</td>
 <td>no</td>
 <td>only when initially creating, setting this to &#8216;yes&#8217; makes the user a
 system account.  This setting cannot be changed on existing users.</td>
 </tr>
-<tr><td>force</td>
+<tr class="row-even"><td>force</td>
 <td>&nbsp;</td>
 <td>no</td>
 <td>when used with state=absent, behavior is as with userdel &#8211;force</td>
 </tr>
-<tr><td>remove</td>
+<tr class="row-odd"><td>remove</td>
 <td>&nbsp;</td>
 <td>no</td>
 <td>when used with state=remove, behavior is as with userdel &#8211;remove</td>
@@ -1954,26 +1957,26 @@ on the managed machine.</p>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>name of the guest VM being managed</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&#8216;running&#8217;, &#8216;shutdown&#8217;, &#8216;destroyed&#8217;, or &#8216;undefined&#8217;.  Note that there may
 be some lag for state requests like &#8216;shutdown&#8217; since these refer only to
 VM states.  After starting a guest, it may not be immediately accessible.</td>
 </tr>
-<tr><td>command</td>
+<tr class="row-even"><td>command</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>in addition to state management, various non-idempotent commands are
@@ -2013,24 +2016,24 @@ ansible host -m virt -a "command=virttype"</pre>
 <col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">parameter</th>
+<tr class="row-odd"><th class="head">parameter</th>
 <th class="head">required</th>
 <th class="head">default</th>
 <th class="head">comments</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>name</td>
+<tr class="row-even"><td>name</td>
 <td>yes</td>
 <td>&nbsp;</td>
 <td>package name, or package specifier with version, like &#8216;name-1.0&#8217;</td>
 </tr>
-<tr><td>state</td>
+<tr class="row-odd"><td>state</td>
 <td>&nbsp;</td>
 <td>present</td>
 <td>&#8216;present&#8217;, &#8216;latest&#8217;, or &#8216;absent&#8217;.</td>
 </tr>
-<tr><td>list</td>
+<tr class="row-even"><td>list</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>various non-idempotent commands for usage with /usr/bin/ansible and not
@@ -2101,7 +2104,7 @@ yum name=httpd state=installed</pre>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 28, 2012.<br/>
+      Last updated on Aug 30, 2012.<br/>
     </p>
   </div>
 </footer>
