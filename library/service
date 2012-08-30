@@ -39,10 +39,7 @@ def _find_binaries(m):
         location[binary] = None
 
     for binary in binaries:
-        for path in paths:
-            if os.path.exists(path + '/' + binary):
-                location[binary] = path + '/' + binary
-                break
+        location[binary] = m.get_bin_path(binary)
 
     if location.get('systemctl', None):
         CHKCONFIG = location['systemctl']
