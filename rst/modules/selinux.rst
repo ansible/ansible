@@ -1,4 +1,4 @@
-.. _wait_for:
+.. _selinux:
 
 selinux
 ```````
