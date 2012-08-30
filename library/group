@@ -20,22 +20,15 @@
 
 import grp
 
-def get_bin_path(module, arg):
-    bin = module.get_bin_path(arg)
-    if bin is None:
-        module.fail_json(msg="Cannot find %s" % arg)
-    else:
-        return bin
-
 def group_del(module, group):
-    cmd = [get_bin_path(module, 'groupdel'), group]
+    cmd = [module.get_bin_path('groupdel', True), group]
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
     return (rc, out, err)
 
 def group_add(module, group, **kwargs):
-    cmd = [get_bin_path(module, 'groupadd')]
+    cmd = [module.get_bin_path('groupadd', True)]
     for key in kwargs:
         if key == 'gid' and kwargs[key] is not None:
             cmd.append('-g')
@@ -49,7 +42,7 @@ def group_add(module, group, **kwargs):
     return (rc, out, err)
 
 def group_mod(module, group, **kwargs):
-    cmd = [get_bin_path(module, 'groupmod')]
+    cmd = [module.get_bin_path('groupmod', True)]
     info = group_info(group)
     for key in kwargs:
         if key == 'gid':
