@@ -23,7 +23,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
-
+import shlex
 
 class InventoryParser(object):
     """
@@ -73,7 +73,7 @@ class InventoryParser(object):
             elif line.startswith("#") or line == '':
                 pass
             elif active_group_name:
-                tokens = line.split()
+                tokens = shlex.split(line)
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
