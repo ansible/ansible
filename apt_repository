@@ -48,8 +48,7 @@ def main():
 
     add_apt_repository = module.get_bin_path(ADD_APT_REPO)
     if add_apt_repository is None:
-        module.fail_json(msg='Unabled to find any of the following executables '
-                             '%s' % binaries)
+        module.fail_json(msg='Unable to find executable %s' % ADD_APT_REPO)
 
     repo = module.params['repo']
     state = module.params['state']
