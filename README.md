@@ -32,6 +32,14 @@ done for reference.
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
 * [OpenStack](http://github.com/lorin/openstack-ansible) - lorin
 
+Callbacks and Plugins
+=====================
+
+The Ansible project has a whole repo devoted to extending ansible with new connection types, logging/event callbacks, and
+inventory data storage:
+
+* [Ansible-Resources](https://github.com/ansible/ansible-plugins)
+
 Scripts
 =======
 
@@ -39,7 +47,6 @@ Ansible isn't just a program, it's also an API.  Here's some examples of some cl
 also Playbook APIs, and integrations with other interesting pieces of software.
 
 * [Ansible w/ Vagrant](https://github.com/dsander/vagrant-ansible) - dsander
-* [EC2 external inventory](https://github.com/ansible/ansible/blob/devel/examples/scripts/ec2_external_inventory.py) - pas256
 * [virt-install](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
 * [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
 * [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py) - mpdehaan
