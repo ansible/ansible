@@ -73,6 +73,7 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/supervisorctl.rst
 .. include:: modules/template.rst
 .. include:: modules/user.rst
+.. include:: modules/wait_for.rst
 .. include:: modules/virt.rst
 .. include:: modules/yum.rst
 

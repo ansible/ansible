@@ -31,7 +31,7 @@ For other cases, see the copy or template modules.
 |                    |          |         | line at the end of the file.                                               |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
-Example::
+Example action from Ansible :doc:`playbooks`::
 
     lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
     lineinfile name=/etc/sudoers regexp="^#includedir" line="#includedir /etc/sudoers.d"
