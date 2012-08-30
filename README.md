@@ -36,9 +36,9 @@ Callbacks and Plugins
 =====================
 
 The Ansible project has a whole repo devoted to extending ansible with new connection types, logging/event callbacks, and
-inventory data storage:
+inventory data storage.  Talk to Cobbler and EC2, tweak the way things are logged, or even add sound effects.
 
-* [Ansible-Resources](https://github.com/ansible/ansible-plugins)
+* [Ansible-Plugins](https://github.com/ansible/ansible-plugins)
 
 Scripts
 =======
