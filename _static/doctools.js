@@ -2,7 +2,7 @@
  * doctools.js
  * ~~~~~~~~~~~
  *
- * Sphinx JavaScript utilties for all documentation.
+ * Sphinx JavaScript utilities for all documentation.
  *
  * :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
@@ -185,9 +185,9 @@ var Documentation = {
           body.highlightText(this.toLowerCase(), 'highlighted');
         });
       }, 10);
-      $('<li class="highlight-link"><a href="javascript:Documentation.' +
-        'hideSearchWords()">' + _('Hide Search Matches') + '</a></li>')
-          .appendTo($('.sidebar .this-page-menu'));
+      $('<p class="highlight-link"><a href="javascript:Documentation.' +
+        'hideSearchWords()">' + _('Hide Search Matches') + '</a></p>')
+          .appendTo($('#searchbox'));
     }
   },
 
@@ -213,7 +213,7 @@ var Documentation = {
    * helper function to hide the search marks again
    */
   hideSearchWords : function() {
-    $('.sidebar .this-page-menu li.highlight-link').fadeOut(300);
+    $('#searchbox .highlight-link').fadeOut(300);
     $('span.highlighted').removeClass('highlighted');
   },
 

@@ -2,15 +2,18 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Introducing Ansible &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
@@ -191,55 +194,55 @@ Infrastructure should be easy and powerful to command, but it should not look li
 <col width="100%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">Key Features</th>
+<tr class="row-odd"><th class="head">Key Features</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>Dead simple setup</td>
+<tr class="row-even"><td>Dead simple setup</td>
 </tr>
-<tr><td>Can be easily run from a checkout, no installation required</td>
+<tr class="row-odd"><td>Can be easily run from a checkout, no installation required</td>
 </tr>
-<tr><td>No agents or software to install on managed machines</td>
+<tr class="row-even"><td>No agents or software to install on managed machines</td>
 </tr>
-<tr><td>Ultra-secure; uses existing SSHd out of the box</td>
+<tr class="row-odd"><td>Ultra-secure; uses existing SSHd out of the box</td>
 </tr>
-<tr><td>Connect as any user, not just root, and sudo as needed</td>
+<tr class="row-even"><td>Connect as any user, not just root, and sudo as needed</td>
 </tr>
-<tr><td>Super fast &amp; parallel by default</td>
+<tr class="row-odd"><td>Super fast &amp; parallel by default</td>
 </tr>
-<tr><td>Supports Kerberized SSH, jump hosts, forwarding, etc</td>
+<tr class="row-even"><td>Supports Kerberized SSH, jump hosts, forwarding, etc</td>
 </tr>
-<tr><td>Modules are idempotent, but you can also easily use shell commands</td>
+<tr class="row-odd"><td>Modules are idempotent, but you can also easily use shell commands</td>
 </tr>
-<tr><td>Modules can be written in ANY language</td>
+<tr class="row-even"><td>Modules can be written in ANY language</td>
 </tr>
-<tr><td>Orchestrates load balancer rotations and outage windows</td>
+<tr class="row-odd"><td>Orchestrates load balancer rotations and outage windows</td>
 </tr>
-<tr><td>Awesome API for creating very powerful distributed applications</td>
+<tr class="row-even"><td>Awesome API for creating very powerful distributed applications</td>
 </tr>
-<tr><td>Pluggable transports (SSH is just the default)</td>
+<tr class="row-odd"><td>Pluggable transports (SSH is just the default)</td>
 </tr>
-<tr><td>Can draw inventory data from external sources like EC2 and Cobbler</td>
+<tr class="row-even"><td>Can draw inventory data from external sources like EC2 and Cobbler</td>
 </tr>
-<tr><td>The easiest config management system to use, ever.</td>
+<tr class="row-odd"><td>The easiest config management system to use, ever.</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
-<div align="center" class="align-center"><img alt="&quot;Architecture Diagram&quot;" class="align-center" src="http://ansible.github.com/ansible_arch2.jpg" style="width: 800px;" /></div>
+<img alt="&quot;Architecture Diagram&quot;" class="align-center" src="http://ansible.github.com/ansible_arch2.jpg" style="width: 800px;" />
 <table border="1" class="docutils">
 <colgroup>
 <col width="35%" />
 <col width="65%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head" colspan="2">Tell Me More</th>
+<tr class="row-odd"><th class="head" colspan="2">Tell Me More</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>Multi-node control &amp; orchestration</td>
+<tr class="row-even"><td>Multi-node control &amp; orchestration</td>
 <td>Ansible is especially strong at expressing complex multi-node
 deployment processes, executing ordered sequences on
 different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>. Performing
@@ -247,25 +250,25 @@ steps on all your webservers, then some steps on your database
 servers, and then some steps on monitoring servers &#8211; all the
 while sharing variables between them is trivial.</td>
 </tr>
-<tr><td>Doesn&#8217;t choose sides in the
+<tr class="row-odd"><td>Doesn&#8217;t choose sides in the
 language war</td>
 <td>Modules can be written in Bash, Perl, Python, Ruby, whatever.
 Playbooks are not a programming language, but a data format.</td>
 </tr>
-<tr><td>Infrastructure Is Not Code,
+<tr class="row-even"><td>Infrastructure Is Not Code,
 Infrastructure Is Data</td>
 <td>Playbooks are not a programming language, they are designed to be
 super-easy to write, and easy to audit by non-developers.  You
 will be able to skim and very quickly understand your entire
 configuration policy.</td>
 </tr>
-<tr><td>Three In One</td>
+<tr class="row-odd"><td>Three In One</td>
 <td>Ansible handles multiple command and control
 problems in one tool.  You don&#8217;t need to use  a config tool, a
 deployment tool, and yet another ad-hoc parallel task execution
 tool &#8211; Ansible will do all three.</td>
 </tr>
-<tr><td>Lower Attack Surface, No Agents</td>
+<tr class="row-even"><td>Lower Attack Surface, No Agents</td>
 <td>Ansible is very secure.  Ansible uses SSH as a transport,
 resulting in a much lower attack surface, and requires no agents
 to be running on managed machines.  If a central server
@@ -284,29 +287,29 @@ already using &#8211; openssh.</td>
 <col width="77%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head" colspan="2">Community</th>
+<tr class="row-odd"><th class="head" colspan="2">Community</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td colspan="2">Your ideas and contributions are welcome.  We&#8217;re also happy to help
+<tr class="row-even"><td colspan="2">Your ideas and contributions are welcome.  We&#8217;re also happy to help
 you with questions about Ansible.</td>
 </tr>
-<tr><td>Get the source</td>
+<tr class="row-odd"><td>Get the source</td>
 <td>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github</td>
 </tr>
-<tr><td>File a bug</td>
+<tr class="row-even"><td>File a bug</td>
 <td>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></td>
 </tr>
-<tr><td>Spread the word</td>
+<tr class="row-odd"><td>Spread the word</td>
 <td>Watch slides on <a class="reference external" href="http://speakerdeck.com/u/mpdehaan/p/ansible">Speakerdeck</a></td>
 </tr>
-<tr><td>Join the mailing list</td>
+<tr class="row-even"><td>Join the mailing list</td>
 <td>Visit the <a class="reference external" href="http://groups.google.com/group/ansible-project">Google Group</a></td>
 </tr>
-<tr><td>Chat</td>
+<tr class="row-odd"><td>Chat</td>
 <td>Visit the channel on <a class="reference external" href="http://webchat.freenode.net/?channels=ansible">FreeNode</a></td>
 </tr>
-<tr><td>Share &amp; Learn</td>
+<tr class="row-even"><td>Share &amp; Learn</td>
 <td>Share <a class="reference external" href="http://bit.ly/NNwUgY">playbooks, modules, articles, and scripts</a></td>
 </tr>
 </tbody>
@@ -316,33 +319,33 @@ you with questions about Ansible.</td>
 <col width="100%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">What (Real) People Are Saying</th>
+<tr class="row-odd"><th class="head">What (Real) People Are Saying</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>&#8220;I&#8217;ve been trying to grok Chef these last weeks, and really, I don&#8217;t get it. I discovered ansible
+<tr class="row-even"><td>&#8220;I&#8217;ve been trying to grok Chef these last weeks, and really, I don&#8217;t get it. I discovered ansible
 yesterday at noon, successfully ran it at 1pm, made my first playbook by 2pm, and pushed two small
 [contributions to the project] before the office closed... Do that with any other config management
 software!&#8221;</td>
 </tr>
-<tr><td>&#8220;Ansible is much more firewall-friendly.  I have a number of hosts that are only accessible via reverse
+<tr class="row-odd"><td>&#8220;Ansible is much more firewall-friendly.  I have a number of hosts that are only accessible via reverse
 SSH tunnels, and let me tell you getting puppet or chef to play nice with that is a nightmare.&#8221;</td>
 </tr>
-<tr><td>&#8220;This software has really changed my life as an network admin, the simplicity ansible comes with is
+<tr class="row-even"><td>&#8220;This software has really changed my life as an network admin, the simplicity ansible comes with is
 really childs-play and I really adore its design. No more hassle with SSL keys, DNS based &#8216;server
 entries&#8217; (e.g. puppet and what not). Just plain (secure!) SSH keys and one is good to go.&#8221;</td>
 </tr>
-<tr><td>&#8220;You may get a kick out of the fact that I&#8217;m using ansible to install puppetmaster(s).  I&#8217;m starting to
+<tr class="row-odd"><td>&#8220;You may get a kick out of the fact that I&#8217;m using ansible to install puppetmaster(s).  I&#8217;m starting to
 migrate all my stuff to the much more sensical ansible. Nice work.&#8221;</td>
 </tr>
-<tr><td>&#8220;Simple as hell&#8221;</td>
+<tr class="row-even"><td>&#8220;Simple as hell&#8221;</td>
 </tr>
-<tr><td>&#8220;I swear, I have gotten more done with Ansible in three days than I did in not getting chef installed
+<tr class="row-odd"><td>&#8220;I swear, I have gotten more done with Ansible in three days than I did in not getting chef installed
 in three weeks.&#8221;</td>
 </tr>
-<tr><td>&#8220;Puppet was hell... gave up on Chef... found ansible and couldn&#8217;t be happier.&#8221;</td>
+<tr class="row-even"><td>&#8220;Puppet was hell... gave up on Chef... found ansible and couldn&#8217;t be happier.&#8221;</td>
 </tr>
-<tr><td>&#8220;Really impressed with Ansible. Up and running in ¼ of the time it took to get going with Puppet.&#8221;</td>
+<tr class="row-odd"><td>&#8220;Really impressed with Ansible. Up and running in ¼ of the time it took to get going with Puppet.&#8221;</td>
 </tr>
 </tbody>
 </table>
@@ -351,11 +354,11 @@ in three weeks.&#8221;</td>
 <col width="100%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">Presented By...</th>
+<tr class="row-odd"><th class="head">Presented By...</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>Ansible was created and is run by <a class="reference external" href="http://michaeldehaan.net">Michael DeHaan</a>
+<tr class="row-even"><td>Ansible was created and is run by <a class="reference external" href="http://michaeldehaan.net">Michael DeHaan</a>
 (<a class="reference external" href="http://twitter.com/#!/laserllama">&#64;laserllama</a>), a Raleigh, NC
 based software developer and architect, who also created the popular open-source
 DevOps install server <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>.
@@ -419,7 +422,7 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Aug 28, 2012.<br/>
+      Last updated on Aug 30, 2012.<br/>
     </p>
   </div>
 </footer>

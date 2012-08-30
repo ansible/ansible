@@ -77,7 +77,6 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/yum.rst
 
 
-
 Additional Contrib Modules
 ``````````````````````````
 

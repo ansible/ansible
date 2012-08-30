@@ -1,3 +1,10 @@
+// Underscore.js 0.5.5
+// (c) 2009 Jeremy Ashkenas, DocumentCloud Inc.
+// Underscore is freely distributable under the terms of the MIT license.
+// Portions of Underscore are inspired by or borrowed from Prototype.js,
+// Oliver Steele's Functional, and John Resig's Micro-Templating.
+// For all details and documentation:
+// http://documentcloud.github.com/underscore/
 (function(){var j=this,n=j._,i=function(a){this._wrapped=a},m=typeof StopIteration!=="undefined"?StopIteration:"__break__",b=j._=function(a){return new i(a)};if(typeof exports!=="undefined")exports._=b;var k=Array.prototype.slice,o=Array.prototype.unshift,p=Object.prototype.toString,q=Object.prototype.hasOwnProperty,r=Object.prototype.propertyIsEnumerable;b.VERSION="0.5.5";b.each=function(a,c,d){try{if(a.forEach)a.forEach(c,d);else if(b.isArray(a)||b.isArguments(a))for(var e=0,f=a.length;e<f;e++)c.call(d,
 a[e],e,a);else{var g=b.keys(a);f=g.length;for(e=0;e<f;e++)c.call(d,a[g[e]],g[e],a)}}catch(h){if(h!=m)throw h;}return a};b.map=function(a,c,d){if(a&&b.isFunction(a.map))return a.map(c,d);var e=[];b.each(a,function(f,g,h){e.push(c.call(d,f,g,h))});return e};b.reduce=function(a,c,d,e){if(a&&b.isFunction(a.reduce))return a.reduce(b.bind(d,e),c);b.each(a,function(f,g,h){c=d.call(e,c,f,g,h)});return c};b.reduceRight=function(a,c,d,e){if(a&&b.isFunction(a.reduceRight))return a.reduceRight(b.bind(d,e),c);
 var f=b.clone(b.toArray(a)).reverse();b.each(f,function(g,h){c=d.call(e,c,g,h,a)});return c};b.detect=function(a,c,d){var e;b.each(a,function(f,g,h){if(c.call(d,f,g,h)){e=f;b.breakLoop()}});return e};b.select=function(a,c,d){if(a&&b.isFunction(a.filter))return a.filter(c,d);var e=[];b.each(a,function(f,g,h){c.call(d,f,g,h)&&e.push(f)});return e};b.reject=function(a,c,d){var e=[];b.each(a,function(f,g,h){!c.call(d,f,g,h)&&e.push(f)});return e};b.all=function(a,c,d){c=c||b.identity;if(a&&b.isFunction(a.every))return a.every(c,
