@@ -20,6 +20,16 @@ Module changes:
 * add pattern= as a paramter to the service module (for init scripts that don't do status, or do poor status)
 * various fixes to mysql & postresql modules
 * added a thirsty= option (boolean, default no) to the get_url module to decide to download the file every time or not
+* added a wait_for module to poll for ports being open
+* added a nagios module for controlling outage windows and alert statuses
+* added a seboolean module for getsebool/setsebool type operations
+* added a selinux module for controlling overall SELinux policy
+* added a subversion module
+* added lineinfile for adding and removing lines from basic files
+* added facts for ARM-based CPUs
+* support for systemd in the service module
+* git moduleforce reset behavior is now controllable
+* file module can now operate on special files (block devices, etc)
 
 Core changes:
 
@@ -28,7 +38,7 @@ Core changes:
 * when using paramiko and SFTP is not accessible, do not traceback, but return a nice human readable msg
 * use -vvv for extreme debug levels. -v gives more playbook output as before
 * -vv shows module arguments to all module calls (and maybe some other things later)
-* don't pass "--" to sudo to work on older EL5
+* don not pass "--" to sudo to work on older EL5
 * make remote_md5 internal function work with non-bash shells
 * allow user to be passed in via --extra-vars (regression)
 * add --limit option, which can be used to further confine the pattern given in ansible-playbooks
@@ -37,12 +47,15 @@ Core changes:
 * /etc/ansible/ansible.cfg and ~/ansible.cfg now available to set default values and other things
 * (developers) ANSIBLE_KEEP_REMOTE_FILES=1 can be used in debugging (envrionment variable)
 * (developers) connection types are now plugins
-* (developers) callbacks can now be extended via plugins 
+* (developers) callbacks can now be extended via plugins
+* added FreeBSD ports packaging scripts
+* check for terminal properties prior to engaging color modes
+* explicitly disable password auth with -c ssh, as it is not used anyway
 
 Playbooks:
 
 * YAML syntax errors detected and show where the problem is
-* if you ctrl+c a playbook it won't traceback (usually)
+* if you ctrl+c a playbook it will not traceback (usually)
 * vars_prompt now has encryption options (see examples/playbooks/prompts.yml)
 * allow variables in parameterized task include parameters (regression)
 * add ability to store the result of any command in a register (see examples/playbooks/register_logic.yml)
@@ -50,6 +63,7 @@ Playbooks:
 * fix a variable ordering issue that could affect vars_files with selective file source lists
 * adds 'delegate_to' for a task, which can be used to signal outage windows and load balancers on behalf of hosts
 * adds 'serial' to playbook, allowing you to specify how many hosts can be processing a playbook at one time (default 0=all)
+* adds 'local_action: <action parameters>' as an alias to 'delegate_to: 127.0.0.1'
 
 0.6 "Cabo" -- August 6, 2012
 
