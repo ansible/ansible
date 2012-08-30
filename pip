@@ -27,32 +27,6 @@ def _get_full_name(name, version=None):
         resp = name + '==' + version
     return resp
 
-
-def _find_pip(module, env):
-    paths = ['/usr/local/bin', '/usr/bin']
-
-    if env:
-        paths = [os.path.join(env, 'bin')] + paths
-
-    for p in paths:
-        pe = p + '/pip'
-        if os.path.exists(pe):
-            return pe
-
-    module.fail_json(msg='pip is not installed')
-
-
-def _find_virtualenv(module):
-    paths = ['/usr/local/bin', '/usr/bin']
-
-    for p in paths:
-        ve = p + '/virtualenv'
-        if os.path.exists(ve):
-            return ve
-
-    module.fail_json(msg='virtualenv is not installed')
-
-
 def _ensure_virtualenv(module, env, virtualenv):
     if os.path.exists(os.path.join(env, 'bin', 'activate')):
         return 0, '', ''
@@ -103,7 +77,7 @@ def main():
     env = module.params['virtualenv']
 
     if env:
-        virtualenv = _find_virtualenv(module)
+        virtualenv = module.get_bin_path('virtualenv', True)
 
         rc_venv, out_venv, err_venv = _ensure_virtualenv(module, env, virtualenv)
 
@@ -111,7 +85,7 @@ def main():
         out += out_venv
         err += err_venv
 
-    pip = _find_pip(module, env)
+    pip = module.get_bin_path('pip', True, ['%s/bin' % env])
 
     state = module.params['state']
     name = module.params['name']
