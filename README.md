@@ -31,7 +31,7 @@ done for reference.
 * [Ganglia (demo)](https://github.com/mpdehaan/ansible-examples) - mpdehaan
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
 * [OpenStack](http://github.com/lorin/openstack-ansible) - lorin
-* [General Systems](https://github.com/cegeddin/ansible-contrib) - cegeddin
+* [Systems Configuration](https://github.com/cegeddin/ansible-contrib) - cegeddin
 
 Scripts
 =======
