@@ -18,6 +18,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# selinux module - change policy and state of SELinux
+# usage:
+#
+# selinux policy=<SELINUX_POLICY> state=[enforcing|permissive|disabled] configfile=[SELINUX_CONFIG_FILE]
+#
+#    configfile defaults to /etc/selinux/config
+#    policy files should be installed via the yum/apt modules
+#
+# bugs:
+# 
+# Not tested on any debian based system
+
 import os
 import re
 
@@ -26,42 +38,45 @@ try:
     HAVE_SELINUX=True
 except ImportError:
     HAVE_SELINUX=False
-    fail_json(msg='python-selinux required for this module')
 
 # getter subroutines
 def get_config_state(configfile):
-    with open(configfile, "r") as FILE:
-        lines = FILE.readlines()
-        for line in lines:
-            stateline = re.match('^SELINUX=.*$', line)
-            if (stateline):
-                return(line.split('=')[1].strip())
+    myfile = open(configfile, "r")
+    lines = myfile.readlines()
+    myfile.close()
+    for line in lines:
+        stateline = re.match('^SELINUX=.*$', line)
+        if (stateline):
+            return(line.split('=')[1].strip())
 
 def get_config_policy(configfile):
-    with open(configfile, "r") as FILE:
-        lines = FILE.readlines()
-        for line in lines:
-            stateline = re.match('^SELINUXTYPE=.*$', line)
-            if (stateline):
-                return(line.split('=')[1].strip())
+    myfile = open(configfile, "r")
+    lines = myfile.readlines()
+    myfile.close()
+    for line in lines:
+        stateline = re.match('^SELINUXTYPE=.*$', line)
+        if (stateline):
+            return(line.split('=')[1].strip())
 
 # setter subroutines
 def set_config_state(state, configfile):
     #SELINUX=permissive
     # edit config file with state value
     stateline='SELINUX=%s' % state
-    with open(configfile, "r") as FILE:
-        lines = FILE.readlines()
-    with open(configfile, "w") as FILE:
-        for line in lines:
-            FILE.write(re.sub(r'^SELINUX=.*', stateline, line))
+    myfile = open(configfile, "r")
+    lines = myfile.readlines()
+    myfile.close()
+    myfile = open(configfile, "w")
+    for line in lines:
+        myfile.write(re.sub(r'^SELINUX=.*', stateline, line))
+    myfile.close()
 
 def set_state(state):
-    if ( state == 'enforcing' ):
+    if (state == 'enforcing'):
         selinux.security_setenforce(1)
-    elif ( state == 'permissive' ):
+    elif (state == 'permissive'):
         selinux.security_setenforce(0)
-    elif ( state == 'disabled' ):
+    elif (state == 'disabled'):
         pass
     else:
         msg = 'trying to set invalid runtime state %s' % state
@@ -71,27 +86,28 @@ def set_config_policy(policy, configfile):
     # edit config file with state value
     #SELINUXTYPE=targeted 
     policyline='SELINUXTYPE=%s' % policy
-    with open(configfile, "r") as FILE:
-        lines = FILE.readlines()
-    with open(configfile, "w") as FILE:
-        for line in lines:
-            FILE.write(re.sub(r'^SELINUXTYPE=.*', policyline, line))
-
-def set_policy(policy):
-    # TODO figure out how to change the policy using selinux
-    return('reboot to change the loaded policy')
+    myfile = open(configfile, "r")
+    lines = myfile.readlines()
+    myfile.close()
+    myfile = open(configfile, "w")
+    for line in lines:
+        myfile.write(re.sub(r'^SELINUXTYPE=.*', policyline, line))
+    myfile.close()
 
 def main():
+    if (not HAVE_SELINUX):
+        fail_json(msg='python-selinux required for this module')
+
     module = AnsibleModule(
         argument_spec = dict(
-            policy=dict(choices=['targeted','mls','strict','minimum'], default='targeted'),
+            policy=dict(required=True),
             state=dict(choices=['enforcing', 'permissive', 'disabled'], default='enforcing'),
             configfile=dict(aliases=['conf','file'], default='/etc/selinux/config')
         )
     )
 
     # global vars
-    CHANGED=False
+    changed=False
     msgs                  = []
     configfile            = module.params['configfile']
     policy                = module.params['policy']
@@ -99,9 +115,9 @@ def main():
     runtime_enabled       = selinux.is_selinux_enabled()
     runtime_policy        = selinux.selinux_getpolicytype()[1]
     runtime_state         = 'disabled'
-    if ( runtime_enabled ):
+    if (runtime_enabled):
         # enabled means 'enforcing' or 'permissive'
-        if ( selinux.security_getenforce() ):
+        if (selinux.security_getenforce()):
             runtime_state = 'enforcing'
         else:
             runtime_state = 'permissive'
@@ -109,26 +125,30 @@ def main():
     config_state          = get_config_state(configfile)
 
     # check changed values and run changes
-    if ( policy != runtime_policy ):
-        msgs.append(set_policy(policy))
-        CHANGED=True 
-    if ( policy != config_policy ):
-        msgs.append('config policy changed from \'%s\' to \'%s\'' % ( config_policy, policy ))
+    if (policy != runtime_policy):
+        # cannot change runtime policy
+        msgs.append('reboot to change the loaded policy')
+        changed=True 
+
+    if (policy != config_policy):
+        msgs.append('config policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
         set_config_policy(policy, configfile)
-        CHANGED=True 
-    if ( state != runtime_state ):
-        if ( state == 'disabled'):
+        changed=True 
+
+    if (state != runtime_state):
+        if (state == 'disabled'):
             msgs.append('disabled state will take effect next reboot')
         else:
-            msgs.append('runtime state changed from \'%s\' to \'%s\'' % ( runtime_state, state ))
+            msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
         set_state(state)
-        CHANGED=True 
-    if ( state != config_state ):
-        msgs.append('config state changed from \'%s\' to \'%s\'' % ( config_state, state ))
+        changed=True 
+
+    if (state != config_state):
+        msgs.append('config state changed from \'%s\' to \'%s\'' % (config_state, state))
         set_config_state(state, configfile)
-        CHANGED=True 
+        changed=True 
  
-    module.exit_json(changed=CHANGED, msg=', '.join(msgs),
+    module.exit_json(changed=changed, msg=', '.join(msgs),
         configfile=configfile,
         policy=policy, state=state)
 
