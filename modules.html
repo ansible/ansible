@@ -178,12 +178,15 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#postgresql-user">postgresql_user</a></li>
 <li><a class="reference internal" href="#raw">raw</a></li>
 <li><a class="reference internal" href="#service">service</a></li>
+<li><a class="reference internal" href="#seboolean">seboolean</a></li>
+<li><a class="reference internal" href="#selinux">selinux</a></li>
 <li><a class="reference internal" href="#setup">setup</a></li>
 <li><a class="reference internal" href="#shell">shell</a></li>
 <li><a class="reference internal" href="#subversion">subversion</a></li>
 <li><a class="reference internal" href="#supervisorctl">supervisorctl</a></li>
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
+<li><a class="reference internal" href="#wait-for">wait_for</a></li>
 <li><a class="reference internal" href="#virt">virt</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#additional-contrib-modules">Additional Contrib Modules</a></li>
@@ -220,43 +223,46 @@ s.parentNode.insertBefore(ga, s);
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#ansible-modules" id="id35">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#introduction" id="id36">Introduction</a></li>
-<li><a class="reference internal" href="#apt-repository" id="id37">apt_repository</a></li>
-<li><a class="reference internal" href="#apt" id="id38">apt</a></li>
-<li><a class="reference internal" href="#assemble" id="id39">assemble</a></li>
-<li><a class="reference internal" href="#authorized-key" id="id40">authorized_key</a></li>
-<li><a class="reference internal" href="#command" id="id41">command</a></li>
-<li><a class="reference internal" href="#copy" id="id42">copy</a></li>
-<li><a class="reference internal" href="#easy-install" id="id43">easy_install</a></li>
-<li><a class="reference internal" href="#facter" id="id44">facter</a></li>
-<li><a class="reference internal" href="#fetch" id="id45">fetch</a></li>
-<li><a class="reference internal" href="#file" id="id46">file</a></li>
-<li><a class="reference internal" href="#get-url" id="id47">get_url</a></li>
-<li><a class="reference internal" href="#git" id="id48">git</a></li>
-<li><a class="reference internal" href="#group" id="id49">group</a></li>
-<li><a class="reference internal" href="#lineinfile" id="id50">lineinfile</a></li>
-<li><a class="reference internal" href="#mount" id="id51">mount</a></li>
-<li><a class="reference internal" href="#mysql-db" id="id52">mysql_db</a></li>
-<li><a class="reference internal" href="#mysql-user" id="id53">mysql_user</a></li>
-<li><a class="reference internal" href="#nagios" id="id54">nagios</a></li>
-<li><a class="reference internal" href="#ohai" id="id55">ohai</a></li>
-<li><a class="reference internal" href="#ping" id="id56">ping</a></li>
-<li><a class="reference internal" href="#pip" id="id57">pip</a></li>
-<li><a class="reference internal" href="#postgresql-db" id="id58">postgresql_db</a></li>
-<li><a class="reference internal" href="#postgresql-user" id="id59">postgresql_user</a></li>
-<li><a class="reference internal" href="#raw" id="id60">raw</a></li>
-<li><a class="reference internal" href="#service" id="id61">service</a></li>
-<li><a class="reference internal" href="#setup" id="id62">setup</a></li>
-<li><a class="reference internal" href="#shell" id="id63">shell</a></li>
-<li><a class="reference internal" href="#subversion" id="id64">subversion</a></li>
-<li><a class="reference internal" href="#supervisorctl" id="id65">supervisorctl</a></li>
-<li><a class="reference internal" href="#template" id="id66">template</a></li>
-<li><a class="reference internal" href="#user" id="id67">user</a></li>
-<li><a class="reference internal" href="#virt" id="id68">virt</a></li>
-<li><a class="reference internal" href="#yum" id="id69">yum</a></li>
-<li><a class="reference internal" href="#additional-contrib-modules" id="id70">Additional Contrib Modules</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules" id="id71">Writing your own modules</a></li>
+<li><a class="reference internal" href="#ansible-modules" id="id38">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#introduction" id="id39">Introduction</a></li>
+<li><a class="reference internal" href="#apt-repository" id="id40">apt_repository</a></li>
+<li><a class="reference internal" href="#apt" id="id41">apt</a></li>
+<li><a class="reference internal" href="#assemble" id="id42">assemble</a></li>
+<li><a class="reference internal" href="#authorized-key" id="id43">authorized_key</a></li>
+<li><a class="reference internal" href="#command" id="id44">command</a></li>
+<li><a class="reference internal" href="#copy" id="id45">copy</a></li>
+<li><a class="reference internal" href="#easy-install" id="id46">easy_install</a></li>
+<li><a class="reference internal" href="#facter" id="id47">facter</a></li>
+<li><a class="reference internal" href="#fetch" id="id48">fetch</a></li>
+<li><a class="reference internal" href="#file" id="id49">file</a></li>
+<li><a class="reference internal" href="#get-url" id="id50">get_url</a></li>
+<li><a class="reference internal" href="#git" id="id51">git</a></li>
+<li><a class="reference internal" href="#group" id="id52">group</a></li>
+<li><a class="reference internal" href="#lineinfile" id="id53">lineinfile</a></li>
+<li><a class="reference internal" href="#mount" id="id54">mount</a></li>
+<li><a class="reference internal" href="#mysql-db" id="id55">mysql_db</a></li>
+<li><a class="reference internal" href="#mysql-user" id="id56">mysql_user</a></li>
+<li><a class="reference internal" href="#nagios" id="id57">nagios</a></li>
+<li><a class="reference internal" href="#ohai" id="id58">ohai</a></li>
+<li><a class="reference internal" href="#ping" id="id59">ping</a></li>
+<li><a class="reference internal" href="#pip" id="id60">pip</a></li>
+<li><a class="reference internal" href="#postgresql-db" id="id61">postgresql_db</a></li>
+<li><a class="reference internal" href="#postgresql-user" id="id62">postgresql_user</a></li>
+<li><a class="reference internal" href="#raw" id="id63">raw</a></li>
+<li><a class="reference internal" href="#service" id="id64">service</a></li>
+<li><a class="reference internal" href="#seboolean" id="id65">seboolean</a></li>
+<li><a class="reference internal" href="#selinux" id="id66">selinux</a></li>
+<li><a class="reference internal" href="#setup" id="id67">setup</a></li>
+<li><a class="reference internal" href="#shell" id="id68">shell</a></li>
+<li><a class="reference internal" href="#subversion" id="id69">subversion</a></li>
+<li><a class="reference internal" href="#supervisorctl" id="id70">supervisorctl</a></li>
+<li><a class="reference internal" href="#template" id="id71">template</a></li>
+<li><a class="reference internal" href="#user" id="id72">user</a></li>
+<li><a class="reference internal" href="#wait-for" id="id73">wait_for</a></li>
+<li><a class="reference internal" href="#virt" id="id74">virt</a></li>
+<li><a class="reference internal" href="#yum" id="id75">yum</a></li>
+<li><a class="reference internal" href="#additional-contrib-modules" id="id76">Additional Contrib Modules</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules" id="id77">Writing your own modules</a></li>
 </ul>
 </li>
 </ul>
@@ -971,7 +977,7 @@ line at the end of the file.</td>
 </tr>
 </tbody>
 </table>
-<p>Example:</p>
+<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
 lineinfile name=/etc/sudoers regexp="^#includedir" line="#includedir /etc/sudoers.d"
 lineinfile name=/etc/httpd/conf/httpd.conf regexp="^ServerName " insertafter="^#ServerName " line="ServerName ansible.example.com"
@@ -1661,8 +1667,92 @@ service name=httpd state=reloaded
 service name=foo pattern=/usr/bin/foo state=started</pre>
 </div>
 </div>
+<div class="section" id="seboolean">
+<span id="id27"></span><h2><a class="toc-backref" href="#contents">seboolean</a><a class="headerlink" href="#seboolean" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Toggles SELinux booleans.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="8%" />
+<col width="17%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>name</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the boolean to configure</td>
+</tr>
+<tr class="row-odd"><td>persistent</td>
+<td>no</td>
+<td>no</td>
+<td>set to &#8216;yes&#8217; if the boolean setting should survive a reboot</td>
+</tr>
+<tr class="row-even"><td>state</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>desired boolean value.  &#8216;true&#8217; or &#8216;false&#8217;.</td>
+</tr>
+</tbody>
+</table>
+<p>Example from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>seboolean name=httpd_can_network_connect state=true persistent=yes</pre>
+</div>
+</div>
+<div class="section" id="selinux">
+<span id="id28"></span><h2><a class="toc-backref" href="#contents">selinux</a><a class="headerlink" href="#selinux" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Configures the SELinux mode and policy.  A reboot may be required after usage.  Ansible will not issue this reboot but
+will let you know when it is required.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="8%" />
+<col width="17%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>policy</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>name of the SELinux policy to use (example: &#8216;targetted&#8217;)</td>
+</tr>
+<tr class="row-odd"><td>state</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>the SELinux mode.  &#8216;enforcing&#8217;, &#8216;permissive&#8217;, or &#8216;disabled&#8217;</td>
+</tr>
+<tr class="row-even"><td>conf</td>
+<td>no</td>
+<td>/etc/selinux/config</td>
+<td>path to the SELinux configuration file, if non-standard</td>
+</tr>
+</tbody>
+</table>
+<p>Example from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>selinux policy=targetted state=enforcing
+selinux policy=targetted state=disabled</pre>
+</div>
+</div>
 <div class="section" id="setup">
-<span id="id27"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
 in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
 to a host.</p>
@@ -1744,7 +1834,7 @@ on your remote systems.</p>
 </div>
 </div>
 <div class="section" id="shell">
-<span id="id28"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -1794,7 +1884,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="subversion">
-<span id="id29"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Deploys a subversion repository.</p>
@@ -1836,7 +1926,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id30"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id32"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -1872,7 +1962,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id31"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id33"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1912,7 +2002,7 @@ a relative or absolute path.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id32"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id34"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -2010,8 +2100,63 @@ user name=mdehaan groups=wheel,skynet
 user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
+<div class="section" id="wait-for">
+<span id="id35"></span><h2><a class="toc-backref" href="#contents">wait_for</a><a class="headerlink" href="#wait-for" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.7.</span></p>
+<p>Waits for a given port to become accessible (or inaccessible) on a local or remote server.</p>
+<p>This is useful for when services are not immediately available after their init scripts return &#8211; which is true of certain
+Java application servers.  It is also useful when starting guests with the virt module and
+needing to pause until they are ready.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="9%" />
+<col width="65%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">comments</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>host</td>
+<td>no</td>
+<td>127.0.0.1</td>
+<td>hostname or IP to wait for</td>
+</tr>
+<tr class="row-odd"><td>timeout</td>
+<td>no</td>
+<td>300</td>
+<td>maximum number of seconds to wait</td>
+</tr>
+<tr class="row-even"><td>delay</td>
+<td>no</td>
+<td>0</td>
+<td>number of seconds to wait before starting to poll</td>
+</tr>
+<tr class="row-odd"><td>port</td>
+<td>yes</td>
+<td>&nbsp;</td>
+<td>port to poll for openness or closedness</td>
+</tr>
+<tr class="row-even"><td>state</td>
+<td>no</td>
+<td>started</td>
+<td>either &#8216;started&#8217;, or &#8216;stopped&#8217; depending on whether the module should poll
+for the port being open or closed.</td>
+</tr>
+</tbody>
+</table>
+<p>Example from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
+<div class="highlight-python"><pre>wait_for port=8080 delay=10</pre>
+</div>
+</div>
 <div class="section" id="virt">
-<span id="id33"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id36"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -2071,7 +2216,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id34"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id37"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
