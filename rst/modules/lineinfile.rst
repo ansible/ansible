@@ -3,6 +3,8 @@
 lineinfile
 ``````````
 
+.. versionadded:: 0.7
+
 This module will search a file for a line, and ensure that it is present or
 absent.
 
