@@ -40,16 +40,16 @@ inventory data storage.  Talk to Cobbler and EC2, tweak the way things are logge
 
 * [Ansible-Plugins](https://github.com/ansible/ansible-plugins)
 
-Scripts
-=======
+Scripts And Misc
+================
 
 Ansible isn't just a program, it's also an API.  Here's some examples of some clever integrations with the "Runner" and
 also Playbook APIs, and integrations with other interesting pieces of software.
 
-* [Ansible w/ Vagrant](https://github.com/dsander/vagrant-ansible) - dsander
+* [Ansible Vagrant plugin](https://github.com/dsander/vagrant-ansible) - dsander
+* [Ansible+Vagrant Tutorial](https://github.com/mattupstate/vagrant-ansible-tutorial) - mattupstate                                          - 
 * [virt-install](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py) - skvidal
 * [rebooting hosts](http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot) - skvidal
-* [Cobbler external inventory (demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/cobbler_external_inventory.py) - mpdehaan
 * [uptime (API demo)](https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py) - mpdehaan                                                                                                                     
 
 Blogs & Articles
