@@ -67,6 +67,8 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/postgresql_user.rst
 .. include:: modules/raw.rst
 .. include:: modules/service.rst
+.. include:: modules/seboolean.rst
+.. include:: modules/selinux.rst
 .. include:: modules/setup.rst
 .. include:: modules/shell.rst
 .. include:: modules/subversion.rst
