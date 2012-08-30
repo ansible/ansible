@@ -21,7 +21,7 @@ For other cases, see the copy or template modules.
 |                    |          |         | remove.                                                                    |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | line               | maybe    |         | Required for state=present. The line to insert/replace into the file. Must |
-|                    |          |         | match regexp=.
+|                    |          |         | match the value given to 'regexp'.                                         |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | insertafter        | no       | EOF     | Used with state=present. If specified, the line will be inserted after the |
 |                    |          |         | specified regular expression. Two special values are available: BOF for    |
@@ -35,3 +35,4 @@ Example::
     lineinfile name=/etc/sudoers regexp="^#includedir" line="#includedir /etc/sudoers.d"
     lineinfile name=/etc/httpd/conf/httpd.conf regexp="^ServerName " insertafter="^#ServerName " line="ServerName ansible.example.com"
     lineinfile name=/etc/sudoers state=absent regexp="^%wheel" 
+
