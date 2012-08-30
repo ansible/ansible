@@ -436,7 +436,9 @@ class LinuxNetwork(Network):
         Network.__init__(self)
 
     def populate(self):
-        ip_path = self.get_ip_path()
+        ip_path = module.get_bin_path('ip')
+        if ip_path is None:
+            return self.facts
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
         interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
         self.facts['interfaces'] = interfaces.keys()
@@ -447,15 +449,6 @@ class LinuxNetwork(Network):
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
         return self.facts
-
-    def get_ip_path(self):
-        paths = ['/sbin/ip', '/usr/sbin/ip']
-        ip_path = None
-        for path in paths:
-            if os.path.exists(path):
-                ip_path = path
-                break
-        return ip_path
 
     def get_default_interfaces(self, ip_path):
         # Use the commands:
@@ -730,6 +723,7 @@ def run_setup(module):
     return setup_result
 
 def main():
+    global module
     module = AnsibleModule(
         argument_spec = dict()
     )
