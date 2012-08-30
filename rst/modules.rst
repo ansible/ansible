@@ -55,6 +55,7 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/get_url.rst
 .. include:: modules/git.rst
 .. include:: modules/group.rst
+.. include:: modules/lineinfile.rst
 .. include:: modules/mount.rst
 .. include:: modules/mysql_db.rst
 .. include:: modules/mysql_user.rst
