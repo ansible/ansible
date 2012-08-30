@@ -101,7 +101,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             policy=dict(required=True),
-            state=dict(choices=['enforcing', 'permissive', 'disabled'], default='enforcing'),
+            state=dict(choices=['enforcing', 'permissive', 'disabled'], required=True),
             configfile=dict(aliases=['conf','file'], default='/etc/selinux/config')
         )
     )
