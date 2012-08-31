@@ -78,7 +78,7 @@ Architecture
 | Lower Attack Surface, No Agents    | Ansible is very secure.  Ansible uses SSH as a transport,         |
 |                                    | resulting in a much lower attack surface, and requires no agents  |
 |                                    | to be running on managed machines.  If a central server           |
-|                                    | containing your playbooks are comprimised, your nodes are not --  |
+|                                    | containing your playbooks is compromised, your nodes are not --   |
 |                                    | which is NOT the case of most other tools, which can, more or     |
 |                                    | less, turn into a botnet. Our security approach is to avoid       |
 |                                    | writing custom crypto code altogether, and rely on the most       |
