@@ -211,6 +211,7 @@ def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
+    environment.filters['to_json'] = json.dumps
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
     vars = vars.copy()
