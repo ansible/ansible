@@ -1,13 +1,10 @@
 API & Integrations
 ==================
 
-There are two major ways to use Ansible from an API perspective.   The primary way
-is to use the Ansible python API to control nodes.  Ansible is written in its own
-API so you have a considerable amount of power there.  
-
-Also covered here, Ansible's
-list of hosts, groups, and variables assigned to each host can be driven from
-external sources.   We'll start with the Python API.
+There are several interesting ways to use Ansible from an API perspective.   You can use
+the Ansible python API to control nodes, you can extend Ansible to respond to various python events,
+and you can plug in inventory data from external data sources.  Ansible is written in its own
+API so you have a considerable amount of power across the board.
 
 .. contents:: `Table of contents`
    :depth: 2
@@ -85,13 +82,18 @@ Advanced programmers may also wish to read the source to ansible itself, for
 it uses the Runner() API (with all available options) to implement the
 command line tools ``ansible`` and ``ansible-playbook``.
 
-External Inventory
+Plugins Repository
 ------------------
+
+The remainder of features in the API docs have components available in the `ansible-plugins <http://github.com/ansible/ansible-plugins>`_ repository.  Please consult this repository for more information.  Send us a github pull request if you develop any interesting features.
+
+External Inventory Scripts
+--------------------------
 
 Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_, 
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.  The `ansible-plugins <http://github.com/ansible/ansible-plugins>`_ repo contains some of these already.
+of these options via an external inventory system.  The ansible-plugins repo contains some of these already -- including options for EC2/Eucalyptus and OpenStack, which will be detailed below.
 
 It's possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
 
@@ -277,6 +279,25 @@ To see the complete list of variables available for an instance, run the script 
     cd examples/scripts
     ./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
+Example: OpenStack
+``````````````````
+
+Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the ansible-plugins repository.  See the inline comments in the module source.
+
+Callback Plugins
+----------------
+
+Ansible can be configured via code to respond to external events.  This can include enhancing logging, signalling an external software
+system, or even (yes, really) making sound effects.  Some examples are contained in the ansible-plugins repository.
+
+Connection Type Plugins
+-----------------------
+
+By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection type, which can be used
+in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
+are covered in the 'getting started' section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
+Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
+directory.
 
 .. seealso::
 

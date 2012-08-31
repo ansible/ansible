@@ -156,12 +156,16 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#detailed-api-example">Detailed API Example</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#external-inventory">External Inventory</a><ul>
+<li><a class="reference internal" href="#plugins-repository">Plugins Repository</a></li>
+<li><a class="reference internal" href="#external-inventory-scripts">External Inventory Scripts</a><ul>
 <li><a class="reference internal" href="#script-conventions">Script Conventions</a></li>
 <li><a class="reference internal" href="#example-the-cobbler-external-inventory-script">Example: The Cobbler External Inventory Script</a></li>
 <li><a class="reference internal" href="#example-aws-ec2-external-inventory-script">Example: AWS EC2 External Inventory Script</a></li>
+<li><a class="reference internal" href="#example-openstack">Example: OpenStack</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#callback-plugins">Callback Plugins</a></li>
+<li><a class="reference internal" href="#connection-type-plugins">Connection Type Plugins</a></li>
 </ul>
 </li>
 </ul>
@@ -191,18 +195,19 @@ s.parentNode.insertBefore(ga, s);
    
   <div class="section" id="api-integrations">
 <h1><a class="toc-backref" href="#table-of-contents">API &amp; Integrations</a><a class="headerlink" href="#api-integrations" title="Permalink to this headline">¶</a></h1>
-<p>There are two major ways to use Ansible from an API perspective.   The primary way
-is to use the Ansible python API to control nodes.  Ansible is written in its own
-API so you have a considerable amount of power there.</p>
-<p>Also covered here, Ansible&#8217;s
-list of hosts, groups, and variables assigned to each host can be driven from
-external sources.   We&#8217;ll start with the Python API.</p>
+<p>There are several interesting ways to use Ansible from an API perspective.   You can use
+the Ansible python API to control nodes, you can extend Ansible to respond to various python events,
+and you can plug in inventory data from external data sources.  Ansible is written in its own
+API so you have a considerable amount of power across the board.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first"><cite>Table of contents</cite></p>
 <ul class="simple">
 <li><a class="reference internal" href="#api-integrations" id="id2">API &amp; Integrations</a><ul>
 <li><a class="reference internal" href="#python-api" id="id3">Python API</a></li>
-<li><a class="reference internal" href="#external-inventory" id="id4">External Inventory</a></li>
+<li><a class="reference internal" href="#plugins-repository" id="id4">Plugins Repository</a></li>
+<li><a class="reference internal" href="#external-inventory-scripts" id="id5">External Inventory Scripts</a></li>
+<li><a class="reference internal" href="#callback-plugins" id="id6">Callback Plugins</a></li>
+<li><a class="reference internal" href="#connection-type-plugins" id="id7">Connection Type Plugins</a></li>
 </ul>
 </li>
 </ul>
@@ -275,12 +280,16 @@ it uses the Runner() API (with all available options) to implement the
 command line tools <tt class="docutils literal"><span class="pre">ansible</span></tt> and <tt class="docutils literal"><span class="pre">ansible-playbook</span></tt>.</p>
 </div>
 </div>
-<div class="section" id="external-inventory">
-<h2><a class="toc-backref" href="#table-of-contents">External Inventory</a><a class="headerlink" href="#external-inventory" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="plugins-repository">
+<h2><a class="toc-backref" href="#table-of-contents">Plugins Repository</a><a class="headerlink" href="#plugins-repository" title="Permalink to this headline">¶</a></h2>
+<p>The remainder of features in the API docs have components available in the <a class="reference external" href="http://github.com/ansible/ansible-plugins">ansible-plugins</a> repository.  Please consult this repository for more information.  Send us a github pull request if you develop any interesting features.</p>
+</div>
+<div class="section" id="external-inventory-scripts">
+<h2><a class="toc-backref" href="#table-of-contents">External Inventory Scripts</a><a class="headerlink" href="#external-inventory-scripts" title="Permalink to this headline">¶</a></h2>
 <p>Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.  The <a class="reference external" href="http://github.com/ansible/ansible-plugins">ansible-plugins</a> repo contains some of these already.</p>
+of these options via an external inventory system.  The ansible-plugins repo contains some of these already &#8211; including options for EC2/Eucalyptus and OpenStack, which will be detailed below.</p>
 <p>It&#8217;s possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>
@@ -438,6 +447,24 @@ e.g.
 <div class="highlight-python"><pre>cd examples/scripts
 ./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com</pre>
 </div>
+</div>
+<div class="section" id="example-openstack">
+<h3>Example: OpenStack<a class="headerlink" href="#example-openstack" title="Permalink to this headline">¶</a></h3>
+<p>Though not detailed here in as much depth as the EC2 module, there&#8217;s also a OpenStack Nova external inventory source in the ansible-plugins repository.  See the inline comments in the module source.</p>
+</div>
+</div>
+<div class="section" id="callback-plugins">
+<h2><a class="toc-backref" href="#table-of-contents">Callback Plugins</a><a class="headerlink" href="#callback-plugins" title="Permalink to this headline">¶</a></h2>
+<p>Ansible can be configured via code to respond to external events.  This can include enhancing logging, signalling an external software
+system, or even (yes, really) making sound effects.  Some examples are contained in the ansible-plugins repository.</p>
+</div>
+<div class="section" id="connection-type-plugins">
+<h2><a class="toc-backref" href="#table-of-contents">Connection Type Plugins</a><a class="headerlink" href="#connection-type-plugins" title="Permalink to this headline">¶</a></h2>
+<p>By default, ansible ships with a &#8216;paramiko&#8217; SSH, native ssh (just called &#8216;ssh&#8217;), and &#8216;local&#8217; connection type, which can be used
+in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
+are covered in the &#8216;getting started&#8217; section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
+Carrier Pigeon?) it&#8217;s as simple as copying the format of one of the existing modules and dropping it into the connection plugins
+directory.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -448,7 +475,6 @@ e.g.
 <dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
 <dd>#ansible IRC chat channel</dd>
 </dl>
-</div>
 </div>
 </div>
 </div>
