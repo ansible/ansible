@@ -361,9 +361,10 @@ bserver.example.org</pre>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m ping
 </pre></div>
 </div>
-<p>If you want to access machines remotely as a different user than root,
-you will want to specify the &#8216;-u&#8217; option to ansible.  If you would
-like to access sudo mode, there are also flags to do that:</p>
+<p>In Ansible 0.7 and later, ansible will attempt to remote connect to the machines using your current
+user name, just like SSH would.  In 0.6 and before, this actually defaults to &#8216;root&#8217; (we liked the current
+user behavior better).  To override the remote user name, just use the &#8216;-u&#8217; parameter.</p>
+<p>If you would like to access sudo mode, there are also flags to do that:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="c"># as bruce</span>
 <span class="nv">$ </span>ansible all -m ping -u bruce
 <span class="c"># as bruce, sudoing to root</span>
