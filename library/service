@@ -32,7 +32,7 @@ def _find_binaries(m):
     global CHKCONFIG
     global INITCTL
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl']
+    binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl']
     location = dict()
 
     for binary in binaries:
@@ -44,7 +44,9 @@ def _find_binaries(m):
                 location[binary] = path + '/' + binary
                 break
 
-    if location.get('chkconfig', None):
+    if location.get('systemctl', None):
+        CHKCONFIG = location['systemctl']
+    elif location.get('chkconfig', None):
         CHKCONFIG = location['chkconfig']
     elif location.get('update-rc.d', None):
         CHKCONFIG = location['update-rc.d']
@@ -142,17 +144,23 @@ def _do_enable(name, enable):
     # we change argument depending on real binary used
     # update-rc.d wants enable/disable while
     # chkconfig wants on/off
-    valid_argument = dict({'on' : 'on', 'off' : 'off'})
+    # also, systemctl needs the arguments reversed
+    if enable:
+        on_off = "on"
+        enable_disable = "enable"
+    else:
+        on_off = "off"
+        enable_disable = "disable"
 
     if CHKCONFIG.endswith("update-rc.d"):
-        valid_argument['on'] = "enable"
-        valid_argument['off'] = "disable"
+        args = (CHKCONFIG, name, enable_disable)
+    elif CHKCONFIG.endswith("systemctl"):
+        args = (CHKCONFIG, enable_disable, name + ".service")
+    else:
+        args = (CHKCONFIG, name, on_off)
 
     if enable is not None:
-        if enable:
-            rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['on']))
-        else:
-            rc, stdout, stderr = _run("%s %s %s" % (CHKCONFIG, name, valid_argument['off']))
+        rc, stdout, stderr = _run("%s %s %s" % args)
 
     return rc, stdout, stderr
 

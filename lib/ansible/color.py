@@ -21,8 +21,20 @@ import sys
 ANSIBLE_COLOR=True
 if os.getenv("ANSIBLE_NOCOLOR") is not None:
     ANSIBLE_COLOR=False
-if not sys.stdout.isatty():
+elif not sys.stdout.isatty():
     ANSIBLE_COLOR=False
+else:
+    try:
+        import curses
+        curses.setupterm()
+        if curses.tigetnum('colors') < 0:
+            ANSIBLE_COLOR=False
+    except ImportError:
+        # curses library was not found
+        pass
+    except curses.error:
+        # curses returns an error (e.g. could not find terminal)
+        ANSIBLE_COLOR=False
 
 # --- begin "pretty"
 #

@@ -188,7 +188,7 @@ def local_nvra(path):
     """return nvra of a local rpm passed in"""
     
     cmd = ['/bin/rpm', '-qp' ,'--qf', 
-            '%%{name}-%%{version}-%%{release}.%%{arch}\n', path ]
+            '%{name}-%{version}-%{release}.%{arch}\n', path ]
     rc, out, err = run(cmd)
     if rc != 0:
         return None
@@ -285,6 +285,10 @@ def install(module, items, repoq, yum_basecmd, conf_file):
         # localpkg
         if spec.endswith('.rpm'):
             # get the pkg name-v-r.arch
+            if not os.path.exists(spec):
+                res['msg'] += "No Package file matching '%s' found on system" % spec
+                module.fail_json(**res)
+
             nvra = local_nvra(spec)
             # look for them in the rpmdb
             if is_installed(repoq, nvra, conf_file):
