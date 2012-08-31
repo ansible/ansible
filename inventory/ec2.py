@@ -12,6 +12,11 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
+If you're using eucalyptus you need to set the above variables and
+you need to define:
+
+    export EC2_URL=http://hostname_of_your_cc:port/services/Eucalyptus
+
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
 When run against a specific host, this script returns the following variables:
@@ -107,6 +112,7 @@ import os
 import argparse
 import re
 from time import time
+import boto
 from boto import ec2
 import ConfigParser
 
@@ -126,7 +132,7 @@ class Ec2Inventory(object):
 
         # Index of hostname (address) to instance ID
         self.index = {}
-
+        
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
@@ -170,12 +176,23 @@ class Ec2Inventory(object):
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
 
+        # is eucalyptus?
+        self.eucalyptus_host = None
+        self.eucalyptus = False
+        if config.has_option('ec2', 'eucalyptus'):
+           self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
+        if self.eucalyptus and config.has_option('ec2', 'eucalyptus_host'):
+           self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
+
         # Regions
         self.regions = []
         configRegions = config.get('ec2', 'regions')
         if (configRegions == 'all'):
-            for regionInfo in ec2.regions():
-                self.regions.append(regionInfo.name)
+            if self.eucalyptus_host:
+                self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name)
+            else:
+                for regionInfo in ec2.regions():
+                    self.regions.append(regionInfo.name)
         else:
             self.regions = configRegions.split(",")
 
@@ -188,6 +205,7 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_path + "/ansible-ec2.cache"
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
+        
 
 
     def parse_cli_args(self):
@@ -217,7 +235,12 @@ class Ec2Inventory(object):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
 
-        conn = ec2.connect_to_region(region)
+        if self.eucalyptus:
+            conn = boto.connect_euca(host=self.eucalyptus_host)
+            conn.APIVersion = '2010-08-31'
+        else:
+            conn = ec2.connect_to_region(region)
+
         reservations = conn.get_all_instances()
         for reservation in reservations:
             for instance in reservation.instances:
@@ -226,7 +249,12 @@ class Ec2Inventory(object):
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
-        conn = ec2.connect_to_region(region)
+        if self.eucalyptus:
+            conn = boto.connect_euca(self.eucalyptus_host)
+            conn.APIVersion = '2010-08-31'
+        else:
+            conn = ec2.connect_to_region(region)
+
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
             for instance in reservation.instances:
