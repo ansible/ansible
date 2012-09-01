@@ -18,7 +18,7 @@
 
 # and this is how we include another playbook, be careful and
 # don't recurse infinitely or anything.  Note you can't use
-# any variables here.
+# any variables in the include path here.
 
 - include: intro_example.yml
 

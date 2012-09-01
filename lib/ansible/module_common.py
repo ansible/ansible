@@ -202,6 +202,34 @@ class AnsibleModule(object):
         log_args = re.sub(r'login_password=.+ (.*)', r"login_password=NOT_LOGGING_PASSWORD \1", log_args)
         syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
 
+    def get_bin_path(self, arg, required=False, opt_dirs=[]):
+        '''
+        find system executable in PATH.
+        Optional arguments:
+           - required:  if executable is not found and required is true, fail_json
+           - opt_dirs:  optional list of directories to search in addition to PATH
+        if found return full path; otherwise return None
+        '''
+        sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        paths = []
+        for d in opt_dirs:
+            if d is not None and os.path.exists(d):
+                paths.append(d)
+        paths += os.environ.get('PATH').split(':')
+        bin_path = None
+        # mangle PATH to include /sbin dirs
+        for p in sbin_paths:
+            if p not in paths and os.path.exists(p):
+                paths.append(p)
+        for d in paths:
+            path = os.path.join(d, arg)
+            if os.path.exists(path) and os.access(path, os.X_OK):
+                bin_path = path
+                break
+        if required and bin_path is None:
+            self.fail_json(msg='Failed to find required executable %s' % arg)
+        return bin_path
+
     def boolean(self, arg):
         ''' return a bool for the arg '''
         if arg is None or type(arg) == bool:

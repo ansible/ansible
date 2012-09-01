@@ -436,7 +436,9 @@ class LinuxNetwork(Network):
         Network.__init__(self)
 
     def populate(self):
-        ip_path = self.get_ip_path()
+        ip_path = module.get_bin_path('ip')
+        if ip_path is None:
+            return self.facts
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
         interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
         self.facts['interfaces'] = interfaces.keys()
@@ -447,15 +449,6 @@ class LinuxNetwork(Network):
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
         return self.facts
-
-    def get_ip_path(self):
-        paths = ['/sbin/ip', '/usr/sbin/ip']
-        ip_path = None
-        for path in paths:
-            if os.path.exists(path):
-                ip_path = path
-                break
-        return ip_path
 
     def get_default_interfaces(self, ip_path):
         # Use the commands:
@@ -684,7 +677,7 @@ def run_setup(module):
     facts = ansible_facts()
 
     for (k, v) in facts.items():
-        setup_options["ansible_%s" % k] = v
+        setup_options["ansible_%s" % k.replace('-', '_')] = v
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
@@ -707,19 +700,19 @@ def run_setup(module):
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-        cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        ohai = True
-        try:
-            ohai_ds = json.loads(out)
-        except:
-            ohai = False
-        if ohai:
-            for (k,v) in ohai_ds.items():
-                if type(v) == str or type(v) == unicode:
-                    k2 = "ohai_%s" % k
-                    setup_options[k2] = v
+       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+       out, err = cmd.communicate()
+       ohai = True
+       try:
+           ohai_ds = json.loads(out)
+       except:
+           ohai = False
+       if ohai:
+           for (k,v) in ohai_ds.items():
+               if type(v) == str or type(v) == unicode:
+                   k2 = "ohai_%s" % k.replace('-', '_')
+                   setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options
@@ -730,6 +723,7 @@ def run_setup(module):
     return setup_result
 
 def main():
+    global module
     module = AnsibleModule(
         argument_spec = dict()
     )
