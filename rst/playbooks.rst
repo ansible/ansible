@@ -122,7 +122,7 @@ The `vars` section contains a list of variables and values that can be used in t
 
     ---
     - hosts: webservers
-      users: root
+      user: root
       vars:
          http_port: 80
          van_halen_port: 5150
