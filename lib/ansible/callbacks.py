@@ -256,7 +256,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_async_ok(self, host, res, jid):
         print "<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True))
-        super(CliRunnerCallbacks, self).on_async_poll(host, res, jid)
+        super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
         print "<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True))
