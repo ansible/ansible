@@ -21,7 +21,7 @@
 import re
 import os
 
-def present(module, name, regexp, line, insertafter):
+def present(module, name, regexp, line, insertafter, backup):
     f = open(name, 'rb')
     lines = f.readlines()
     f.close()
@@ -69,13 +69,15 @@ def present(module, name, regexp, line, insertafter):
         changed = True
 
     if changed:
+        if backup:
+            module.backuplocal(name)
         f = open(name, 'wb')
         f.writelines(lines)
         f.close()
 
     module.exit_json(changed=changed, msg=msg)
 
-def absent(module, name, regexp):
+def absent(module, name, regexp, backup):
     f = open(name, 'rb')
     lines = f.readlines()
     f.close()
@@ -90,6 +92,8 @@ def absent(module, name, regexp):
     lines = filter(matcher, lines)
     changed = len(found) > 0
     if changed:
+        if backup:
+            module.backuplocal(name)
         f = open(name, 'wb')
         f.writelines(lines)
         f.close()
@@ -103,18 +107,20 @@ def main():
             regexp=dict(required=True),
             line=dict(aliases=['value']),
             insertafter=dict(default='EOF'),
+            backup=dict(default=False, choices=BOOLEANS),
         ),
     )
 
     params = module.params
+    backup = module.boolean(module.params.get('backup', False))
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
         present(module, params['name'], params['regexp'], params['line'],
-                params['insertafter'])
+                params['insertafter'], backup)
     else:
-        absent(module, params['name'], params['regexp'])
+        absent(module, params['name'], params['regexp'], backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
