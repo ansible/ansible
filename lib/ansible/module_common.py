@@ -276,7 +276,7 @@ class AnsibleModule(object):
         infile.close()
         return digest.hexdigest()
 
-    def backuplocal(self, fn):
+    def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
         # backups named basename-YYYY-MM-DD@HH:MM~
         ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
