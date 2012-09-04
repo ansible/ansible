@@ -50,6 +50,7 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
+            backup=dict(default=False, choices=BOOLEANS),
         )
     )
 
@@ -58,6 +59,7 @@ def main():
     destmd5 = None
     src = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
+    backup = module.boolean(module.params.get('backup', False))
 
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
@@ -72,6 +74,8 @@ def main():
         destmd5 = module.md5(dest)
 
     if pathmd5 != destmd5:
+        if backup and destmd5 is not None:
+            module.backuplocal(dest)
         shutil.copy(path, dest)
         changed = True
 
