@@ -323,7 +323,7 @@ def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
-    ''' Check if the .git is a file. If it is a file, it means that we are in a submodule structure. '''
+    
     if os.path.exists(repo_path):
         ''' Check if the .git is a file. If it is a file, it means that we are in a submodule structure. '''
         if os.path.isfile(repo_path):
