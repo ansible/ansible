@@ -47,6 +47,8 @@ import subprocess
 import sys
 import syslog
 import types
+import time
+import shutil
 
 try:
     from hashlib import md5 as _md5
@@ -273,6 +275,18 @@ class AnsibleModule(object):
             block = infile.read(blocksize)
         infile.close()
         return digest.hexdigest()
+
+    def backuplocal(self, fn):
+        '''make a date-marked backup of the specified file, return True or False on success or failure'''
+        # backups named basename-YYYY-MM-DD@HH:MM~
+        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+        backupdest = '%s.%s' % (fn, ext)
+
+        try:
+            shutil.copy2(fn, backupdest)
+        except shutil.Error, e:
+            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        return backupdest
 
 
 # == END DYNAMICALLY INSERTED CODE ===
