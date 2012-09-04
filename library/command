@@ -39,7 +39,7 @@ def main():
         module.fail_json(msg="no command given")
 
     if chdir:
-        os.chdir(chdir)
+        os.chdir(os.path.expanduser(chdir))
 
     if not shell:
         args = shlex.split(args)
@@ -116,6 +116,7 @@ class CommandModule(AnsibleModule):
                 args = args.replace(x,'')
             elif x.startswith("chdir="):
                 (k,v) = x.split("=", 1)
+                v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
                     self.fail_json(msg="cannot change to directory '%s': path does not exist" % v)
                 elif v[0] != '/':
