@@ -75,7 +75,7 @@ def main():
 
     if pathmd5 != destmd5:
         if backup and destmd5 is not None:
-            module.backuplocal(dest)
+            module.backup_local(dest)
         shutil.copy(path, dest)
         changed = True
 

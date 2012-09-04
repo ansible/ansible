@@ -63,7 +63,7 @@ def main():
         try:
             if backup:
                 if os.path.exists(dest):
-                    backup_file = module.backuplocal(dest)
+                    backup_file = module.backup_local(dest)
             shutil.copyfile(src, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
