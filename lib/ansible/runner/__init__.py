@@ -616,11 +616,6 @@ class Runner(object):
             elif not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
-                if ignore_errors:
-                    if 'failed' in result.result:
-                        result.result['failed'] = False
-                    if 'rc' in result.result:
-                        result.result['rc'] = 0
             else:
                 self.callbacks.on_ok(host, data)
         return result
