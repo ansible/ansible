@@ -246,7 +246,7 @@ class PlayBook(object):
         if results is None:
             results = {}
 
-        self.stats.compute(results)
+        self.stats.compute(results, ignore_errors=task.ignore_errors)
 
         # add facts to the global setup cache
         for host, result in results['contacted'].iteritems():
