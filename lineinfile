@@ -70,7 +70,7 @@ def present(module, name, regexp, line, insertafter, backup):
 
     if changed:
         if backup:
-            module.backuplocal(name)
+            module.backup_local(name)
         f = open(name, 'wb')
         f.writelines(lines)
         f.close()
@@ -93,7 +93,7 @@ def absent(module, name, regexp, backup):
     changed = len(found) > 0
     if changed:
         if backup:
-            module.backuplocal(name)
+            module.backup_local(name)
         f = open(name, 'wb')
         f.writelines(lines)
         f.close()
