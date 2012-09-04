@@ -33,7 +33,7 @@ The following parameters may be used with the **downtime** action:
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 | minutes       | no       | 30                               | minutes to schedule downtime for                                 |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
-| services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
+| services      | yes      |                                  | what to manage downtime/alerts for. separate multiple services   |
 |               |          |                                  | with commas.                                                     |
 |               |          |                                  | **service** is an alias for **services**                         |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
@@ -43,7 +43,7 @@ The following parameter must be used with the **enable_alerts** and **disable_al
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
 | parameter     | required |           default                | comments                                                         |
 +===============+==========+==================================+==================================================================+
-| services      | no       |                                  | what to manage downtime/alerts for. separate multiple services   |
+| services      | yes      |                                  | what to manage downtime/alerts for. separate multiple services   |
 |               |          |                                  | with commas.                                                     |
 |               |          |                                  | **service** is an alias for **services**                         |
 +---------------+----------+----------------------------------+------------------------------------------------------------------+
