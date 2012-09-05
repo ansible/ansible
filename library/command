@@ -114,6 +114,21 @@ class CommandModule(AnsibleModule):
                         rc=0
                     )
                 args = args.replace(x,'')
+            elif x.startswith("removes="):
+                # do not run the command if the line contains removes=filename
+                # and the filename do not exists.  This allows idempotence
+                # of command executions.
+                (k,v) = x.split("=",1)
+                if not os.path.exists(v):
+                    self.exit_json(
+                        cmd=args,
+                        stdout="skipped, since %s do not exists" % v,
+                        skipped=True,
+                        changed=False,
+                        stderr=False,
+                        rc=0
+                    )
+                args = args.replace(x,'')
             elif x.startswith("chdir="):
                 (k,v) = x.split("=", 1)
                 v = os.path.expanduser(v)
