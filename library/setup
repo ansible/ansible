@@ -58,6 +58,7 @@ class Facts(object):
         self.facts = {}
         self.get_platform_facts()
         self.get_distribution_facts()
+        self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
 
@@ -102,6 +103,17 @@ class Facts(object):
                         self.facts['distribution'] = data.split()[0]
                 else:
                     self.facts['distribution'] = name
+
+    def get_cmdline(self):
+        data = get_file_content('/proc/cmdline')
+        if data:
+            self.facts['cmdline'] = {}
+            for piece in shlex.split(data):
+                item = piece.split('=', 1)
+                if len(item) == 1:
+                    self.facts['cmdline'][item[0]] = True
+                else:
+                    self.facts['cmdline'][item[0]] = item[1]
 
     def get_public_ssh_host_keys(self):
         dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
@@ -198,7 +210,7 @@ class LinuxHardware(Hardware):
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
     # DMI bits
     DMI_DICT = dict(
-        form_factor     =  '/sys/devices/virtual/dmi/id/chassis_type',
+        form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
         product_name    = '/sys/devices/virtual/dmi/id/product_name',
         product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
         product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
