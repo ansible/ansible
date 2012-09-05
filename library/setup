@@ -461,6 +461,8 @@ class LinuxNetwork(Network):
         )
         interface = dict(v4 = {}, v6 = {})
         for v in 'v4', 'v6':
+            if v == 'v6' and not socket.has_ipv6:
+                continue
             output = subprocess.Popen(command[v], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             if not output:
                 # v6 routing may result in 
