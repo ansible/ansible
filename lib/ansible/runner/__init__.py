@@ -538,8 +538,12 @@ class Runner(object):
             self.module_args = new_args
         self.module_args = utils.template(self.module_args, inject)
 
+        def _check_conditional(conditional):
+            def isset(var):
+                return not var.startswith("$")
+            return eval(conditional)
         conditional = utils.template(self.conditional, inject)
-        if not eval(conditional):
+        if not _check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
