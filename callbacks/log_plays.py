@@ -60,7 +60,7 @@ class CallbackModule(object):
         log(host, 'ERROR', msg)
 
     def runner_on_skipped(self, host, item=None):
-        log(host, 'SKIPPED')
+        log(host, 'SKIPPED', '...')
 
     def runner_on_unreachable(self, host, res):
         log(host, 'UNREACHABLE', res)
