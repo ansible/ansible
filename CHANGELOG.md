@@ -11,7 +11,7 @@ Module changes:
 * misc yum module fixes
 * better changed=True/False detection in user module on older Linux distros
 * nicer errors from modules when arguments are not key=value
-* backup option on copy (backup=yes)
+* backup option on copy (backup=yes), as well as template, assemble, and lineinfile
 * file module will not recurse on directory properties
 * yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
 * setup module now detects interfaces with aliases
