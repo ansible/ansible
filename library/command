@@ -114,6 +114,17 @@ class CommandModule(AnsibleModule):
                         rc=0
                     )
                 args = args.replace(x,'')
+            elif x.startswith("removes="):
+                (k,v) = x.split("=", 1)
+                if not os.path.exists(v):
+                    self.exit_json(
+                        cmd=args,
+                        stdout="skipped, since %s does not exist" % v,
+                        skipped=True,
+                        changed=False,
+                        stderr=False,
+                        rc=0
+                    )
             elif x.startswith("chdir="):
                 (k,v) = x.split("=", 1)
                 v = os.path.expanduser(v)
