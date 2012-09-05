@@ -333,7 +333,7 @@ def _gitinfo():
                 # There is a posibility the .git file to have an absolute path.
                 repo_path = os.path.join(repo_path, os.path.relpath(central_gitdir), '.git')
             except (IOError, AttributeError):
-                return 'n/a'
+                return ''
         f = open(os.path.join(repo_path, "HEAD"))
         branch = f.readline().split('/')[-1].rstrip("\n")
         f.close()
@@ -350,7 +350,7 @@ def _gitinfo():
             result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
                 time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
-        result = 'n/a'
+        result = ''
     return result
 
 def version(prog):
