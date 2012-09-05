@@ -266,9 +266,9 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def _on_any(self, host, result):
         result2 = result.copy()
         result2.pop('invocation', None)
-        print host_report_msg(host, self.options.module_name, result, self.options.one_line)
+        print host_report_msg(host, self.options.module_name, result2, self.options.one_line)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.jsonify(result,format=True))
+            utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
 
 ########################################################################
 
@@ -292,14 +292,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_failed(self, host, results, ignore_errors=False):
 
-        results = results.copy()
-        results.pop('invocation', None)
+        results2 = results.copy()
+        results2.pop('invocation', None)
 
-        item = results.get('item', None)
+        item = results2.get('item', None)
         if item:
-            msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results))
+            msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
-            msg = "failed: [%s] => %s" % (host, utils.jsonify(results))
+            msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
         print stringc(msg, 'red')
         if ignore_errors:
             print stringc("...ignoring", 'yellow')
@@ -308,12 +308,12 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     def on_ok(self, host, host_result):
         item = host_result.get('item', None)
 
-        host_result = host_result.copy()
-        host_result.pop('invocation', None)
+        host_result2 = host_result.copy()
+        host_result2.pop('invocation', None)
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
-        if not self.verbose or host_result.get("verbose_override",None) is not None:
+        if not self.verbose or host_result2.get("verbose_override",None) is not None:
             if item:
                 msg = "ok: [%s] => (item=%s)" % (host,item)
             else:
@@ -322,13 +322,13 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             # verbose ...
             if item:
-                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result))
+                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result2))
             else:
-                if 'ansible_job_id' not in host_result or 'finished' in host_result:
-                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result))
+                if 'ansible_job_id' not in host_result or 'finished' in host_result2:
+                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result2))
 
         if msg != '':
-            if not 'changed' in host_result or not host_result['changed']:
+            if not 'changed' in host_result2 or not host_result['changed']:
                 print stringc(msg, 'green')
             else:
                 print stringc(msg, 'yellow')
