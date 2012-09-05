@@ -236,8 +236,8 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             )
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
-    def on_skipped(self, host):
-        super(CliRunnerCallbacks, self).on_skipped(host, res)
+    def on_skipped(self, host, item=None):
+        super(CliRunnerCallbacks, self).on_skipped(host, item)
 
     def on_error(self, host, err):
         print >>sys.stderr, "err: [%s] => %s\n" % (host, err)
@@ -354,7 +354,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             msg = "skipping: [%s]" % host
         print stringc(msg, 'yellow')
-        super(PlaybookRunnerCallbacks, self).on_skipped(host, item=None)
+        super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
         print stringc("no hosts matched or remaining\n", 'red')
