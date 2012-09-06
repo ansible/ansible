@@ -243,6 +243,8 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     environment.filters['to_json'] = json.dumps
     environment.filters['from_json'] = json.loads
+    environment.filters['to_yaml'] = yaml.dump
+    environment.filters['from_yaml'] = yaml.load
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
     vars = vars.copy()
