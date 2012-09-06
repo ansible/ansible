@@ -79,6 +79,30 @@ class TestRunner(unittest.TestCase):
         result = self._run('ping', [])
         assert "ping" in result
 
+    def test_cron(self):
+        result = self._run('command', [ "touch empty.txt" ])
+        result = self._run('command', [ "crontab empty.txt" ])
+        assert "failed" not in result
+        result = self._run('cron', [ ])
+        assert result['failed']
+        assert "name" in result['msg']
+        assert "job" in result['msg']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"" ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"", "state=present" ])
+        assert not result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 * 2 * ls -alh > /dev/null\""  ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\""  ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1', 'job 2']
+        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\"", "state=absent" ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+
     def test_facter(self):
         result = self._run('facter', [])
         assert "hostname" in result
