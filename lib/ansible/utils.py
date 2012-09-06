@@ -328,10 +328,12 @@ def _gitinfo():
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                central_gitdir = yaml.load(open(repo_path)).get('gitdir').split('.git')[0]
-                repo_path = repo_path.split('.git')[0]
+                gitdir = yaml.load(open(repo_path)).get('gitdir')
                 # There is a posibility the .git file to have an absolute path.
-                repo_path = os.path.join(repo_path, os.path.relpath(central_gitdir), '.git')
+                if os.path.isabs(gitdir):
+                    repo_path = gitdir
+                else:
+                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
