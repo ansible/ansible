@@ -486,7 +486,8 @@ def import_plugins(directory):
     modules = {}
     for path in glob.glob(os.path.join(directory, '*.py')): 
         name, ext = os.path.splitext(os.path.basename(path))
-        modules[name] = imp.load_source(name, path)
+        if not name.startswith("_"):
+            modules[name] = imp.load_source(name, path)
     return modules
 
 
