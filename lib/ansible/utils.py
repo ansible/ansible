@@ -323,7 +323,17 @@ def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
+    
     if os.path.exists(repo_path):
+        # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+        if os.path.isfile(repo_path):
+            try:
+                central_gitdir = yaml.load(open(repo_path)).get('gitdir').split('.git')[0]
+                repo_path = repo_path.split('.git')[0]
+                # There is a posibility the .git file to have an absolute path.
+                repo_path = os.path.join(repo_path, os.path.relpath(central_gitdir), '.git')
+            except (IOError, AttributeError):
+                return ''
         f = open(os.path.join(repo_path, "HEAD"))
         branch = f.readline().split('/')[-1].rstrip("\n")
         f.close()
@@ -340,7 +350,7 @@ def _gitinfo():
             result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
                 time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
-        result = 'n/a'
+        result = ''
     return result
 
 def version(prog):
