@@ -485,6 +485,8 @@ def filter_leading_non_json_lines(buf):
 def import_plugins(directory):
     modules = {}
     for path in glob.glob(os.path.join(directory, '*.py')): 
+        if path.startswith("_"):
+            continue
         name, ext = os.path.splitext(os.path.basename(path))
         if not name.startswith("_"):
             modules[name] = imp.load_source(name, path)
