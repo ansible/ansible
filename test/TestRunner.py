@@ -78,6 +78,30 @@ class TestRunner(unittest.TestCase):
         result = self._run('ping', [])
         assert "ping" in result
 
+    def test_cron(self):
+        result = self._run('command', [ "touch empty.txt" ])
+        result = self._run('command', [ "crontab empty.txt" ])
+        assert "failed" not in result
+        result = self._run('cron', [ ])
+        assert result['failed']
+        assert "name" in result['msg']
+        assert "job" in result['msg']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"" ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"", "state=present" ])
+        assert not result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 * 2 * ls -alh > /dev/null\""  ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\""  ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1', 'job 2']
+        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\"", "state=absent" ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+
     def test_facter(self):
         if not get_binary("facter"):
             raise SkipTest
@@ -157,6 +181,66 @@ class TestRunner(unittest.TestCase):
         # test the force option when set
         result = self._run('git', [ "repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes" ])
         assert result['changed']
+
+    def test_subversion(self):
+        # TODO make an svn repo locally so as to avoid tests failing on network calls
+        # TODO test that it fails if subversion isn't in the path
+        self._run('file',['path=/tmp/meetings','state=absent'])
+        # hacking/test-module -m library/subversion
+        result = self._run('subversion', [ ])
+        assert result['failed']
+        assert "dest" in result['msg']
+        assert "repo" in result['msg']
+        # hacking/test-module -m library/subversion -a "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\""
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"" ])
+        assert result['failed']
+        assert "dest" in result['msg']
+        # hacking/test-module -m library/subversion -a "dest=\"/tmp/gnconf\""
+        result = self._run('subversion', [ "dest=\"/tmp/gnconf\"" ])
+        assert result['failed']
+        assert "repo" in result['msg']
+        # when /tmp/meetings doesn't exist:
+        # hacking/test-module -m library/subversion -a "repo=\"repo\" dest=\"/tmp/gnconf\""
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert result['changed']
+        # when /tmp/meetings exists, but nothing has changed.
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert not result['changed']
+        # when /tmp/meetings is a folder, but its not an svn repo
+        self._run('file',['path=/tmp/meetings','state=absent'])
+        self._run('file',['path=/tmp/meetings','state=directory'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert result['failed']
+        # when /tmp/meetings is a file
+        self._run('file',['path=/tmp/meetings','state=absent'])
+        self._run('command',['touch /tmp/meetings'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert result['failed']
+        # when /tmp/meetings is a folder, but its a different svn URL - should automatically switch
+        self._run('file',['path=/tmp/meetings','state=absent'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/api-errata\"","dest=\"/tmp/meetings\"" ])
+        assert result['changed']
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert result['changed']
+        assert result['after'][1] == 'URL: http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings'
+        # when /tmp/meetings is a folder, when its an older revision it should update
+        self._run('command',['svn up -r926415','chdir=/tmp/meetings'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert result['changed']
+        assert result['before'][0] == 'Revision: 926415'
+        assert result['after'][0] != 'Revision: 926415'
+        # when /tmp/meetings has dirty files in it, ignore them:
+        self._run('command',['touch /tmp/meetings/adirtyfile'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"" ])
+        assert not result['changed'] # no changes to the repo
+        # when /tmp/meetings has modified file in it, fail:
+        self._run('file',['path=/tmp/meetings/adirtyfile','state=absent'])
+        self._run('command',['cp /tmp/meetings/berlin-11-agenda /tmp/meetings/svn-vision-agenda'])
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"","force=no" ])
+        assert result['failed']
+        # when /tmp/meetings has a modified file but force is set to yes, then just override it.
+        result = self._run('subversion', [ "repo=\"http://svn.apache.org/repos/asf/subversion/trunk/notes/meetings\"","dest=\"/tmp/meetings\"","force=yes" ])
+        assert result['changed'] # no changes to the repo
 
     def test_large_output(self):
         large_path = "/usr/share/dict/words"
