@@ -1,22 +1,13 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 08/15/2012
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 09/06/2012
 .\"    Manual: System administration commands
 .\"    Source: Ansible 0.7
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "08/15/2012" "Ansible 0\&.7" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE" "1" "09/06/2012" "Ansible 0\&.7" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,7 +25,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -82,7 +73,7 @@ to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
+\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
 .RS 4
 The
 \fIARGUMENTS\fR
@@ -164,6 +155,11 @@ Connection type to use\&. Possible options are
 \fIlocal\fR\&.
 \fIlocal\fR
 is mostly useful for crontab or kickstarts\&.
+.RE
+.PP
+\fB\-l\fR \fISUBSET\fR, \fB\-\-limit=\fR\fISUBSET\fR
+.RS 4
+Further limits the selected host/group patterns\&.
 .RE
 .SH "INVENTORY"
 .sp
