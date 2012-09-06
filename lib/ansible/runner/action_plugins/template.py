@@ -72,7 +72,7 @@ class ActionModule(object):
         xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
         # run the copy module, queue the file module
-        self.module_args = "%s src=%s dest=%s" % (self.runner.module_args, xfered, dest)
-        return self._runner.execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')
+        self.runner.module_args = "%s src=%s dest=%s" % (self.runner.module_args, xfered, dest)
+        return self.runner._execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')
 
 
