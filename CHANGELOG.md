@@ -1,7 +1,9 @@
 Ansible Changes By Release
 ==========================
 
-0.7 "Panama" -- release pending -- I can barely see the roadmap from the heat coming off of it.
+0.8 "Cathedral" -- release pending 
+
+0.7 "Panama" -- Sept 6 2012
 
 Module changes:
 
