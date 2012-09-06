@@ -27,13 +27,6 @@
 import re
 import tempfile
 
-import logging
-logger = logging.getLogger('cron')
-hdlr = logging.FileHandler('/tmp/cron.log')
-hdlr.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
-
 def get_jobs_file(user,tmpfile):
     cmd = "crontab -l %s > %s" % (user,tmpfile)
     cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
