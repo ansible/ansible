@@ -224,6 +224,7 @@ def main():
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             db=dict(default=''),
+            port=dict(default='5432'),
             fail_on_user=dict(default='yes')
         )
     )
@@ -235,6 +236,7 @@ def main():
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
+    port = module.params["port"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -246,6 +248,7 @@ def main():
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
+        "port":"port",
         "db":"database" 
     }
     kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
