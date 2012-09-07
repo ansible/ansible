@@ -319,11 +319,7 @@ class Runner(object):
         # 'hostvars' variable contains variables for each host name
         #  ... and is set elsewhere
         # 'inventory_hostname' is also set elsewhere
-        group_hosts = {}
-        for g in self.inventory.groups:
-            group_hosts[g.name] = [ h.name for h in g.hosts ]
-        inject['groups'] = group_hosts
-
+        inject['groups'] = self.inventory.groups_list()
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
