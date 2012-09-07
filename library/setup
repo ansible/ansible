@@ -104,8 +104,14 @@ class Facts(object):
                     self.facts['distribution'] = name
 
     def get_public_ssh_host_keys(self):
-        dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
-        rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
+        dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
+        rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
+
+        if self.facts['system'] == 'Darwin':
+            dsa_filename = '/etc/ssh_host_dsa_key.pub'
+            rsa_filename = '/etc/ssh_host_rsa_key.pub'
+        dsa = get_file_content(dsa_filename)
+        rsa = get_file_content(rsa_filename)
         if dsa is None:
             dsa = 'NA'
         else:
