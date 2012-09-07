@@ -3,6 +3,15 @@ Ansible Changes By Release
 
 0.8 "Cathedral" -- release pending 
 
+Misc:
+* is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
+* removes= exists on command just like creates=
+* postgresql modules now take an optional port= parameter
+* /proc/cmdline info is now available in Linux facts
+* public host key detection for OS X
+* to_yaml and from_yaml are available as Jinja2 filters
+* server side action code (template, etc) are now fully pluggable
+
 0.7 "Panama" -- Sept 6 2012
 
 Module changes:
