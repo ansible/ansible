@@ -40,10 +40,10 @@ host before using this module.
 | state              |          | present  | 'absent' or 'present'                                                      |
 +--------------------+----------+----------+----------------------------------------------------------------------------+
 
-The fundamental function of the module is to create, or delete, roles from a PostgreSQL cluster. 
+The fundamental function of the module is to create, or delete, roles from a PostgreSQL cluster.
 Privilege assignment, or removal, is an optional step, which works on one database at a time.
-This allows for the module to be called several times in the same module to modify the permissions on 
-different databases, or to grant permissions to already existing users. 
+This allows for the module to be called several times in the same module to modify the permissions on
+different databases, or to grant permissions to already existing users.
 
 A user cannot be removed untill all the privileges have been stripped from the user. In such situation,
 if the module tries to remove the user it will fail. To avoid this from happening the *fail_on_user* option
@@ -51,15 +51,15 @@ signals the module to try to remove the user, but if not possible keep going; th
 happened and separately if the user was removed or not.
 
 Example privileges string format:
-    
+
     INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 Example action from Ansible :doc:`playbooks`::
 
     - name: Create django user and grant access to database and products table
-      postgresql_user db=acme user=django password=ceec4eif7ya privs=CONNECT/products:ALL
-    
+      postgresql_user db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL
+
     - name: Remove test user privileges from acme
-      postgresql_user db=acme user=test privs=ALL/products:ALL state=absent fail_on_user=no
+      postgresql_user db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no
     - name: Remove test user from test database and the cluster
-      postgresql_user db=test user=test privs=ALL state=absent
+      postgresql_user db=test user=test priv=ALL state=absent
