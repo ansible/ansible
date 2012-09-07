@@ -71,7 +71,7 @@ def user_delete(cursor, user):
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
         return False
-    
+
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
 
@@ -89,7 +89,7 @@ def get_table_privileges(cursor, user, table):
     WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
     cursor.execute(query, (user, table, schema))
     return set([x[0] for x in cursor.fetchall()])
-    
+
 
 def grant_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
@@ -115,6 +115,8 @@ def get_database_privileges(cursor, user, db):
     query = 'SELECT datacl FROM pg_database WHERE datname = %s'
     cursor.execute(query, (db,))
     datacl = cursor.fetchone()[0]
+    if datacl is None:
+        return []
     r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
     if r is None:
         return []
@@ -204,9 +206,9 @@ def parse_privs(privs, db):
             type_ = 'table'
             name, privileges = token.split(':', 1)
             priv_set = set(x.strip() for x in privileges.split(','))
-        
+
         o_privs[type_][name] = priv_set
-    
+
     return o_privs
 
 # ===========================================
@@ -240,8 +242,8 @@ def main():
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
-    
-    # To use defaults values, keyword arguments must be absent, so 
+
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map =  {
@@ -249,16 +251,16 @@ def main():
         "login_user":"user",
         "login_password":"password",
         "port":"port",
-        "db":"database" 
+        "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
               if k in params_map and v != "" )
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
-    
+
     kw = dict(user=user)
     changed = False
     user_removed = False
