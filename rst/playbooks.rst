@@ -9,13 +9,13 @@ Introduction
 ````````````
 
 Playbooks are a completely different way to use ansible than in task execution mode, and are
-particularly powerful. Simply put, playbooks are the basis for a really simple 
-configuration management and multi-machine deployment system, 
+particularly powerful. Simply put, playbooks are the basis for a really simple
+configuration management and multi-machine deployment system,
 unlike any that already exist, and one that is very well suited to deploying complex applications.
 
 Playbooks can declare configurations, but they can also orchestrate steps of
 any manual ordered process, even as different steps must bounce back and forth
-between sets of machines in particular orders.  They can launch tasks 
+between sets of machines in particular orders.  They can launch tasks
 synchronously or asynchronously.
 
 While you might run the main /usr/bin/ansible program for ad-hoc
@@ -23,7 +23,7 @@ tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.
 
-Let's dive in and see how they work.  As you go, you may wish to open 
+Let's dive in and see how they work.  As you go, you may wish to open
 the `github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_ in
 another tab, so you can apply the theory to what things look like in practice.
 
@@ -31,7 +31,7 @@ Playbook Language Example
 `````````````````````````
 
 Playbooks are expressed in YAML format and have a minimum of syntax.
-Each playbook is composed of one or more 'plays' in a list.  
+Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is map a group of hosts to some well defined roles, represented by
 things ansible called tasks.  At the basic level, a task is nothing more than a call
@@ -40,7 +40,7 @@ to an ansible module, which you should have learned about in earlier chapters.
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
-server group, then more commands back on the webservers group, etc. 
+server group, then more commands back on the webservers group, etc.
 
 For starters, here's a playbook that contains just one play::
 
@@ -84,7 +84,7 @@ documentation.  The `user` is just the name of the user account::
 
 
 Support for running things from sudo is also available::
-    
+
     ---
     - hosts: webservers
       user: yourname
@@ -126,7 +126,7 @@ The `vars` section contains a list of variables and values that can be used in t
       vars:
          http_port: 80
          van_halen_port: 5150
-         other: 'magic'       
+         other: 'magic'
 
 These variables can be used later in the playbook like this::
 
@@ -140,13 +140,13 @@ Inside templates, the full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_
 
 The Jinja2 documentation provides information about how to construct loops and conditionals for those
 who which to use more advanced templating.  This is optional and the $varname format still works in template
-files. 
+files.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', and are documented under :ref:`setup` in the module documentation.  Additionally,
 facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai
-variables are prefixed with ``ohai_``.  
+variables are prefixed with ``ohai_``.
 
 So for instance, if I wanted
 to write the hostname into the /etc/motd file, I could say::
@@ -169,7 +169,7 @@ before moving on to the next task.  It is important to understand that, within a
 all hosts are going to get the same task directives.  It is the purpose of a play to map
 a selection of hosts to tasks.
 
-When running the playbook, which runs top to bottom, hosts with failed tasks are 
+When running the playbook, which runs top to bottom, hosts with failed tasks are
 taken out of the rotation for the entire playbook.  If things fail, simply correct the playbook file and rerun.
 
 The goal of each task is to execute a module, with very specific arguments.
@@ -179,10 +179,10 @@ Modules are 'idempotent', meaning if you run them
 again, they will make the changes they are told to make to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
-unless they have to change things.  
+unless they have to change things.
 
-The `command` and `shell` modules will typically rerun the same command again, 
-which is totally ok if the command is something like 
+The `command` and `shell` modules will typically rerun the same command again,
+which is totally ok if the command is something like
 'chmod' or 'setsebool', etc.  Though there is a 'creates' flag available which can
 be used to make these modules also idempotent.
 
@@ -204,7 +204,7 @@ of arguments, and don't use the key=value form.  This makes
 them work just like you would expect. Simple::
 
    tasks:
-     - name: disable selinux 
+     - name: disable selinux
        action: command /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
@@ -247,13 +247,13 @@ change, but only if the file changes::
         - restart apache
 
 The things listed in the 'notify' section of a task are called
-handlers.  
+handlers.
 
 Handlers are lists of tasks, not really any different from regular
 tasks, that are referenced by name.  Handlers are what notifiers
 notify.  If nothing notifies a handler, it will not run.  Regardless
 of how many things notify a handler, it will run only once, after all
-of the tasks complete in a particular play.  
+of the tasks complete in a particular play.
 
 Here's an example handlers section::
 
@@ -298,12 +298,12 @@ For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
 
    tasks:
-     - include: wordpress.yml user=timmy 
+     - include: wordpress.yml user=timmy
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
 Variables passed in can then be used in the included files.  You can reference them like this::
-   
+
    $user
 
 (In addition to the explicitly passed in parameters, all variables from
@@ -331,6 +331,26 @@ of a play::
 
 You can mix in includes along with your regular non-included tasks and handlers.
 
+Includes can also be used to import one playbook file into another. This allows
+you to define a top-level playbook that is composed of other playbooks.
+
+For example::
+
+    - name: this is a play at the top level of a file
+      hosts: all
+      user: root
+      tasks:
+      - name: say hi
+        tags: foo
+        action: shell echo "hi..."
+
+    - include: load_balancers.yml
+    - include: webservers.yml
+    - include: dbservers.yml
+
+Note that you cannot do variable substitution when including one playbook
+inside another.
+
 .. note::
 
    You can not conditionally path the location to an include file,
@@ -353,13 +373,13 @@ Tips and Tricks
 ```````````````
 
 Look at the bottom of the playbook execution for a summary of the nodes that were executed
-and how they performed.   General failures and fatal "unreachable" communication attempts are 
+and how they performed.   General failures and fatal "unreachable" communication attempts are
 kept seperate in the counts.
 
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the '--verbose' flag.  This is available in Ansible 0.5 and later.
 
-Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay 
+Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay
 package is installed.  Try it!
 
 In version 0.7 and later, to see what hosts would be affected by a playbook before you run it, you
