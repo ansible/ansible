@@ -58,10 +58,13 @@ class Connection(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        scl = False
         homedir = os.path.expanduser('~')
         config = paramiko.SSHConfig()
-        config.parse(open(os.path.join(homedir,".ssh/config")))
-        scl = config.lookup(self.host)
+        configfile = os.path.join(homedir,".ssh/config")
+        if(os.path.exists(configfile)):
+                config.parse(open(configfile))
+                scl = config.lookup(self.host)
 
         try:
             if(scl):
