@@ -19,6 +19,8 @@ VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
 
+import sys
+
 try:
     import libvirt
 except ImportError:
