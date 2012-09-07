@@ -41,7 +41,7 @@ Example privileges string format:
 Example action from Ansible :doc:`playbooks`::
 
     - name: Create database user
-      action: mysql_user name=bob passwd=12345 priv=*.*:ALL state=present
+      action: mysql_user name=bob password=12345 priv=*.*:ALL state=present
 
     - name: Ensure no user named 'sally' exists, also passing in the auth credentials.
       action: mysql_user login_user=root login_password=123456 name=sally state=absent
