@@ -243,6 +243,8 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
     environment.filters['to_json'] = json.dumps
     environment.filters['from_json'] = json.loads
+    environment.filters['to_yaml'] = yaml.dump
+    environment.filters['from_yaml'] = yaml.load
     data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
     t = environment.from_string(data)
     vars = vars.copy()
@@ -328,10 +330,12 @@ def _gitinfo():
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                central_gitdir = yaml.load(open(repo_path)).get('gitdir').split('.git')[0]
-                repo_path = repo_path.split('.git')[0]
+                gitdir = yaml.load(open(repo_path)).get('gitdir')
                 # There is a posibility the .git file to have an absolute path.
-                repo_path = os.path.join(repo_path, os.path.relpath(central_gitdir), '.git')
+                if os.path.isabs(gitdir):
+                    repo_path = gitdir
+                else:
+                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
@@ -483,8 +487,11 @@ def filter_leading_non_json_lines(buf):
 def import_plugins(directory):
     modules = {}
     for path in glob.glob(os.path.join(directory, '*.py')): 
+        if path.startswith("_"):
+            continue
         name, ext = os.path.splitext(os.path.basename(path))
-        modules[name] = imp.load_source(name, path)
+        if not name.startswith("_"):
+            modules[name] = imp.load_source(name, path)
     return modules
 
 
