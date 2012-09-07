@@ -35,7 +35,7 @@ class Inventory(object):
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -49,6 +49,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
+        self._groups_list    = {} 
 
         # the inventory object holds a list of groups
         self.groups = []
@@ -212,6 +213,17 @@ class Inventory(object):
                     results.append(group)
                     continue
         return results
+
+    def groups_list(self):
+        if not self._groups_list:
+            groups = {}
+            for g in self.groups:
+                groups[g.name] = [h.name for h in g.get_hosts()]
+                ancestors = g.get_ancestors()
+                for a in ancestors:
+                    groups[a.name] = [h.name for h in a.get_hosts()]
+            self._groups_list = groups
+        return self._groups_list
 
     def get_groups(self):
         return self.groups

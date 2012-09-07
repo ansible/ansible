@@ -250,17 +250,15 @@ class Runner(object):
         inject.update(self.module_vars)
         inject.update(self.setup_cache[host])
         inject['hostvars'] = self.setup_cache
+        inject['group_names'] = host_variables.get('group_names', [])
+        inject['groups'] = self.inventory.groups_list()
 
         # allow with_items to work in playbooks...
         # apt and yum are converted into a single call, others run in a loop
 
         items = self.module_vars.get('items', [])
         if isinstance(items, basestring) and items.startswith("$"):
-            items = items.replace("$","")
-            if items in inject:
-                items = inject[items]
-            else:
-                raise errors.AnsibleError("unbound variable in with_items: %s" % items)
+            items = utils.varLookup(items, inject)
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
 
