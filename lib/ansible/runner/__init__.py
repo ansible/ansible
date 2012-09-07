@@ -336,7 +336,7 @@ class Runner(object):
         self.module_args = utils.template(self.module_args, inject)
 
         def _check_conditional(conditional):
-            def isset(var):
+            def is_set(var):
                 return not var.startswith("$")
             return eval(conditional)
         conditional = utils.template(self.conditional, inject)
