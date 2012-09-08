@@ -27,8 +27,8 @@ def present(module, name, regexp, line, insertafter, backup):
     f.close()
 
     mre = re.compile(regexp)
-    if not mre.match(line):
-        module.fail_json(msg="line= doesn't match regexp=")
+    if not mre.search(line):
+        module.fail_json(msg="usage error: line= doesn't match regexp (%s)" % regexp)
 
     if insertafter in ('BOF', 'EOF'):
         iare = None
