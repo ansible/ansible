@@ -59,11 +59,12 @@ class Connection(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         scl = False
+        sshconfigfile = C.DEFAULT_SSHCONFIGFILE
         homedir = os.path.expanduser('~')
+        sshconfigfile = (sshconfigfile).replace('~',homedir)
         config = paramiko.SSHConfig()
-        configfile = os.path.join(homedir,".ssh/config")
-        if(os.path.exists(configfile)):
-                config.parse(open(configfile))
+        if(os.path.exists(sshconfigfile)):
+                config.parse(open(sshconfigfile))
                 scl = config.lookup(self.host)
 
         try:

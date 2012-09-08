@@ -89,6 +89,7 @@ class Runner(object):
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
+        sshconfigfile=C.DEFAULT_SSHCONFIGFILE, # ssh default config file
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
         sudo=False,                         # whether to run sudo or not
