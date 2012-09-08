@@ -75,6 +75,7 @@ DEFAULT_PRIVATE_KEY_FILE  = shell_expand_path(get_config(p, DEFAULTS, 'private_k
 DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
 DEFAULT_REMOTE_PORT       = int(get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22))
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'paramiko')
+DEFAULT_SSHCONFIGFILE     = get_config(p, DEFAULTS, 'sshconfigfile',    'ANSIBLE_SSHCONFIGFILE',    '~/.ssh/config')
 
 # non-configurable things
 DEFAULT_REMOTE_PASS       = None

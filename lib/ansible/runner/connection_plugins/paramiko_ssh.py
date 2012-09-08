@@ -58,10 +58,25 @@ class Connection(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        scl = False
+        sshconfigfile = C.DEFAULT_SSHCONFIGFILE
+        homedir = os.path.expanduser('~')
+        sshconfigfile = (sshconfigfile).replace('~',homedir)
+        config = paramiko.SSHConfig()
+        if(os.path.exists(sshconfigfile)):
+                config.parse(open(sshconfigfile))
+                scl = config.lookup(self.host)
+
         try:
-            ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
-                key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.port)
+            if(scl):
+                keyfile = (scl['identityfile']).replace('~',homedir)
+                ssh.connect(scl['hostname'], username=scl['user'], allow_agent=True, look_for_keys=True,
+                    key_filename=keyfile, password=self.runner.remote_pass,
+                    timeout=self.runner.timeout, port=scl['port'])
+            else:
+                ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
+                    key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
+                    timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
