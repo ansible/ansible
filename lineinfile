@@ -37,9 +37,9 @@ def present(module, name, regexp, line, insertafter, backup):
 
     index = [-1, -1]
     for lineno in range(0, len(lines)):
-        if mre.match(lines[lineno]):
+        if mre.search(lines[lineno]):
             index[0] = lineno
-        elif iare is not None and iare.match(lines[lineno]):
+        elif iare is not None and iare.search(lines[lineno]):
             # + 1 for the next line
             index[1] = lineno + 1
 
@@ -84,7 +84,7 @@ def absent(module, name, regexp, backup):
     cre = re.compile(regexp)
     found = []
     def matcher(line):
-        if cre.match(line):
+        if cre.search(line):
             found.append(line)
             return False
         else:
