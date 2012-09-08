@@ -519,9 +519,9 @@ class LinuxNetwork(Network):
                     # interface name for each address
                     if iface in interfaces:
                         i = 0
-                        while '{0}_{1}'.format(iface, i) in interfaces:
+                        while str(iface) + "_" + str(i) in interfaces:
                             i += 1
-                        iface = '{0}_{1}'.format(iface, i)
+                        iface = str(iface) + "_" + str(i)
 
                     interfaces[iface] = {}
                     interfaces[iface]['macaddress'] = macaddress
