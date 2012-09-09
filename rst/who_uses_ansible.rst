@@ -8,6 +8,7 @@ Who They Are                                                                    
 ============================================================================================= =====================================================
 `Alta Language Services <http://www.altalang.com>`_                                           Language testing, solutions, and translation services
 `Basho <http://basho.com>`_                                                                   Makers of NoSQL key-value store Riak
+`CatN Hosting <http;//catn.com>`_                                                             Scalable Cloud Hosting
 `Cygate AB <http://cygate.se>`_                                                               IT solutions from Malmö, Sweden
 `Dag IT Solutions <http://dagit.net>`_                                                        "Enterprise Linux and Beyond"
 `Duke University Economics <http://duke.edu>`_                                                Research and Education
