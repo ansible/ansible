@@ -5,6 +5,11 @@ template
 
 Templates a file out to a remote server.
 
+Templates are processed by the 
+`Jinja2 templating language <http://jinja.pocoo.org/docs/>`_ - 
+documentation on the template formatting can be found in the 
+`Template Designer Documentation <http://jinja.pocoo.org/docs/templates/>`_
+
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | parameter          | required | default | comments                                                                   |
 +====================+==========+=========+============================================================================+
