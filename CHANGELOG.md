@@ -4,6 +4,7 @@ Ansible Changes By Release
 0.8 "Cathedral" -- release pending 
 
 Misc:
+
 * is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
 * removes= exists on command just like creates=
 * postgresql modules now take an optional port= parameter
@@ -11,6 +12,11 @@ Misc:
 * public host key detection for OS X
 * to_yaml and from_yaml are available as Jinja2 filters
 * server side action code (template, etc) are now fully pluggable
+* lineinfile module now uses 'search' not exact 'match' in regexes, making it much more intuitive and not needing regex syntax most of the time
+* $group and $group_names are now accessible in with_items
+* playbooks can import playbooks in other directories and then be able to import tasks relative to them
+* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
 
 0.7 "Panama" -- Sept 6 2012
 
