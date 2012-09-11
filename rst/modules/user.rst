@@ -37,7 +37,7 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | force              |          | no      | when used with state=absent, behavior is as with userdel --force           |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
-| remove             |          | no      | when used with state=remove, behavior is as with userdel --remove          |
+| remove             |          | no      | when used with state=absent, behavior is as with userdel --remove          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
