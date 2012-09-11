@@ -96,7 +96,9 @@ class Inventory(object):
         applied subsets.
         """
 
-        # process patterns        
+        # process patterns
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
         patterns = pattern.replace(";",":").split(":")
         positive_patterns = [ p for p in patterns if not p.startswith("!") ]
         negative_patterns = [ p for p in patterns if p.startswith("!") ]
