@@ -30,6 +30,9 @@ For other cases, see the copy or template modules.
 |                    |          |         | inserting the line at the beginning of the file, and EOF for inserting the |
 |                    |          |         | line at the end of the file.                                               |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
+| backup             | no       | no      | Create a backup file including the timestamp information so you can        |
+|                    |          |         | get the original file back if you somehow clobbered it incorrectly.        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 
 Example action from Ansible :doc:`playbooks`::
 
