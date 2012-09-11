@@ -6,7 +6,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Name: ansible
 Release: 1%{?dist}
 Summary: SSH-based configuration management, deployment, and task execution system
-Version: 0.7
+Version: 0.7.1
 
 Group: Development/Libraries
 License: GPLv3
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc examples/playbooks
 
 %changelog
+* Thu Sep 11 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7.1-0
+- Release of 0.7.1 (2.4 compat fix)
+
 * Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
 
