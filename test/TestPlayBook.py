@@ -179,5 +179,5 @@ class TestPlaybook(unittest.TestCase):
            callbacks=test_callbacks,
            runner_callbacks=test_callbacks
        )
-       play = ansible.playbook.Play(playbook, playbook.playbook[0])
+       play = ansible.playbook.Play(playbook, playbook.playbook[0], os.getcwd())
        assert play.hosts == ';'.join(('host1', 'host2', 'host3'))
