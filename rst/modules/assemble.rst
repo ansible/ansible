@@ -8,7 +8,7 @@ assemble
 Assembles a configuration file from fragments.  Often a particular
 program will take a single configuration file and does not support a
 conf.d style structure where it is easy to build up the configuration
-from multiple sources.  Assmeble will take a directory of files that
+from multiple sources.  Assemble will take a directory of files that
 have already been transferred to the system, and concatenate them
 together to produce a destination file.  Files are assembled in string
 sorting order.  Puppet calls this idea "fragments".

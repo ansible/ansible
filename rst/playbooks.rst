@@ -208,7 +208,7 @@ them work just like you would expect. Simple::
        action: command /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
-who's successful exit code is not zero, you may wish to do this:
+who's successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
