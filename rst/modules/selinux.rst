@@ -11,7 +11,7 @@ will let you know when it is required.
 +--------------------+----------+---------------------+----------------------------------------------------------------------------+
 | parameter          | required | default             | comments                                                                   |
 +====================+==========+=====================+============================================================================+
-| policy             | yes      |                     | name of the SELinux policy to use (example: 'targetted')                   |
+| policy             | yes      |                     | name of the SELinux policy to use (example: 'targeted')                   |
 +--------------------+----------+---------------------+----------------------------------------------------------------------------+
 | state              | yes      |                     | the SELinux mode.  'enforcing', 'permissive', or 'disabled'                |
 +--------------------+----------+---------------------+----------------------------------------------------------------------------+
@@ -20,6 +20,6 @@ will let you know when it is required.
 
 Example from Ansible :doc:`playbooks`::
 
-    selinux policy=targetted state=enforcing
-    selinux policy=targetted state=disabled
+    selinux policy=targeted state=enforcing
+    selinux policy=targeted state=disabled
 
