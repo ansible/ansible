@@ -406,7 +406,7 @@ apt pkg=openjdk-6-jdk state=latest install-recommends=no</pre>
 <p>Assembles a configuration file from fragments.  Often a particular
 program will take a single configuration file and does not support a
 conf.d style structure where it is easy to build up the configuration
-from multiple sources.  Assmeble will take a directory of files that
+from multiple sources.  Assemble will take a directory of files that
 have already been transferred to the system, and concatenate them
 together to produce a destination file.  Files are assembled in string
 sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
@@ -435,7 +435,13 @@ sorting order.  Puppet calls this idea &#8220;fragments&#8221;.</p>
 <td>&nbsp;</td>
 <td>A file to create using the concatenation of all of the source files</td>
 </tr>
-<tr class="row-even"><td>OTHERS</td>
+<tr class="row-even"><td>backup</td>
+<td>no</td>
+<td>no</td>
+<td>Create a backup file including the timestamp information so you can
+get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
+<tr class="row-odd"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>All arguments that the file module takes may also be used</td>
@@ -573,7 +579,13 @@ relative.</td>
 <td>&nbsp;</td>
 <td>Remote absolute path where the file should end up</td>
 </tr>
-<tr class="row-even"><td>OTHERS</td>
+<tr class="row-even"><td>backup</td>
+<td>no</td>
+<td>no</td>
+<td>Create a backup file including the timestamp information so you can
+get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
+<tr class="row-odd"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>All arguments the file module takes are also supported</td>
@@ -582,6 +594,9 @@ relative.</td>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644</pre>
+</div>
+<p>Copy a new ntp.conf file into place, backing up the original if it differs from the copied version:</p>
+<div class="highlight-python"><pre>copy src=/srv/myfiles/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes</pre>
 </div>
 </div>
 <div class="section" id="easy-install">
@@ -975,6 +990,12 @@ specified regular expression. Two special values are available: BOF for
 inserting the line at the beginning of the file, and EOF for inserting the
 line at the end of the file.</td>
 </tr>
+<tr class="row-odd"><td>backup</td>
+<td>no</td>
+<td>no</td>
+<td>Create a backup file including the timestamp information so you can
+get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
 </tbody>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
@@ -1183,7 +1204,7 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 <div>mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL</div></blockquote>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>- name: Create database user
-  action: mysql_user name=bob passwd=12345 priv=*.*:ALL state=present
+  action: mysql_user name=bob password=12345 priv=*.*:ALL state=present
 
 - name: Ensure no user named 'sally' exists, also passing in the auth credentials.
   action: mysql_user login_user=root login_password=123456 name=sally state=absent</pre>
@@ -1591,12 +1612,12 @@ happened and separately if the user was removed or not.</p>
 <div>INSERT,UPDATE/table:SELECT/anothertable:ALL</div></blockquote>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>- name: Create django user and grant access to database and products table
-  postgresql_user db=acme user=django password=ceec4eif7ya privs=CONNECT/products:ALL
+  postgresql_user db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL
 
 - name: Remove test user privileges from acme
-  postgresql_user db=acme user=test privs=ALL/products:ALL state=absent fail_on_user=no
+  postgresql_user db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no
 - name: Remove test user from test database and the cluster
-  postgresql_user db=test user=test privs=ALL state=absent</pre>
+  postgresql_user db=test user=test priv=ALL state=absent</pre>
 </div>
 </div>
 <div class="section" id="raw">
@@ -1714,38 +1735,6 @@ service name=foo pattern=/usr/bin/foo state=started</pre>
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Configures the SELinux mode and policy.  A reboot may be required after usage.  Ansible will not issue this reboot but
 will let you know when it is required.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="16%" />
-<col width="8%" />
-<col width="17%" />
-<col width="60%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">parameter</th>
-<th class="head">required</th>
-<th class="head">default</th>
-<th class="head">comments</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>policy</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>name of the SELinux policy to use (example: &#8216;targeted&#8217;)</td>
-</tr>
-<tr class="row-odd"><td>state</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>the SELinux mode.  &#8216;enforcing&#8217;, &#8216;permissive&#8217;, or &#8216;disabled&#8217;</td>
-</tr>
-<tr class="row-even"><td>conf</td>
-<td>no</td>
-<td>/etc/selinux/config</td>
-<td>path to the SELinux configuration file, if non-standard</td>
-</tr>
-</tbody>
-</table>
 <p>Example from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
 <div class="highlight-python"><pre>selinux policy=targeted state=enforcing
 selinux policy=targeted state=disabled</pre>
@@ -2013,6 +2002,10 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 <div class="section" id="template">
 <span id="id33"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
+<p>Templates are processed by the
+<a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2 templating language</a> -
+documentation on the template formatting can be found in the
+<a class="reference external" href="http://jinja.pocoo.org/docs/templates/">Template Designer Documentation</a></p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
@@ -2039,7 +2032,13 @@ a relative or absolute path.</td>
 <td>&nbsp;</td>
 <td>Location to render the template on the remote server</td>
 </tr>
-<tr class="row-even"><td>OTHERS</td>
+<tr class="row-even"><td>backup</td>
+<td>no</td>
+<td>no</td>
+<td>Create a backup file including the timestamp information so you can
+get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
+<tr class="row-odd"><td>OTHERS</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>This module also supports all of the arguments to the file module</td>
@@ -2139,12 +2138,12 @@ system account.  This setting cannot be changed on existing users.</td>
 <tr class="row-odd"><td>remove</td>
 <td>&nbsp;</td>
 <td>no</td>
-<td>when used with state=remove, behavior is as with userdel &#8211;remove</td>
+<td>when used with state=absent, behavior is as with userdel &#8211;remove</td>
 </tr>
 </tbody>
 </table>
 <p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
+<div class="highlight-python"><pre>user name=mdehaan comment=awesome password=awWxVV.JvmdHw createhome=yes
 user name=mdehaan groups=wheel,skynet
 user name=mdehaan state=absent force=yes</pre>
 </div>
