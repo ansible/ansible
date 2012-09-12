@@ -28,6 +28,7 @@
 import os
 import subprocess
 import sys
+import datetime
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -45,25 +46,49 @@ def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options]"
     parser = OptionParser()
-    parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to checkout git repository')
-    parser.add_option('-U', '--url', dest='url',
+    parser.add_option('-d',
+                      '--directory',
+                      dest='dest',
                       default=None,
-                      help='URL of git repository')
-    parser.add_option('-C', '--checkout', dest='checkout',
+                      help='REQUIRED.  Directory for git repo clone and playbook run root.')
+    parser.add_option('-U',
+                      '--url',
+                      dest='url',
+                      default=None,
+                      help='REQUIRED.  URL of git repo; if needed, specify credentials as https://<username>:<password>@github.com/...')
+    parser.add_option('-C',
+                      '--checkout',
+                      dest='checkout',
                       default="HEAD",
                       help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+    parser.add_option('-P',
+                      '--playbook',
+                      dest='playbook',
+                      default='%s' % DEFAULT_PLAYBOOK,
+                      help='Playbook to run.  Defaults to %s.' % DEFAULT_PLAYBOOK)
     options, args = parser.parse_args(args)
+
+    if not options.dest:
+      parser.error("directory for git clone and playbook run not specified, use -h for help")
+      return 1
+
+    if not options.url:
+      parser.error("URL for git repo not specified, use -h for help")
+      return 1
+
+    now = datetime.datetime.now()
+    print now.strftime("ansible-pull_started: %Y%m%d-%H%M"), "\n"
 
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
     cmd = 'ansible all -c local -m git -a "%s"' % git_opts
-    print "cmd=%s" % cmd
+    print "cmd=%s" % cmd, "\n"
     rc = _run(cmd)
     if rc != 0:
         return rc
 
+    cmd = 'ansible-playbook -c local %s' % options.playbook
+    print "cmd=%s" % cmd
     os.chdir(options.dest)
-    cmd = 'ansible-playbook -c local %s' % DEFAULT_PLAYBOOK
     rc = _run(cmd)
     return rc
 
