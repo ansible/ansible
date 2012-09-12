@@ -20,6 +20,9 @@ sorting order.  Puppet calls this idea "fragments".
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | dest               | yes      |         | A file to create using the concatenation of all of the source files        |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
+| backup             | no       | no      | Create a backup file including the timestamp information so you can        |
+|                    |          |         | get the original file back if you somehow clobbered it incorrectly.        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 | OTHERS             |          |         | All arguments that the file module takes may also be used                  |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
