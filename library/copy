@@ -20,6 +20,7 @@
 
 import os
 import shutil
+import time
 
 def main():
 
@@ -64,7 +65,11 @@ def main():
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            shutil.copyfile(src, dest)
+            #TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
+            # might be an issue with exceeding path length
+            dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
+            shutil.copyfile(src, dest_tmp)
+            shutil.move(dest_tmp, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
         except IOError:
