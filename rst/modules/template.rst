@@ -18,6 +18,9 @@ documentation on the template formatting can be found in the
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 | dest               | yes      |         | Location to render the template on the remote server                       |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
+| backup             | no       | no      | Create a backup file including the timestamp information so you can        |
+|                    |          |         | get the original file back if you somehow clobbered it incorrectly.        |
++--------------------+----------+---------+----------------------------------------------------------------------------+
 | OTHERS             |          |         | This module also supports all of the arguments to the file module          |
 +--------------------+----------+---------+----------------------------------------------------------------------------+
 
