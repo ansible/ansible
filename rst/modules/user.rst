@@ -42,6 +42,6 @@ Creates user accounts, manipulates existing user accounts, and removes user acco
 
 Example action from Ansible :doc:`playbooks`::
 
-    user name=mdehaan comment=awesome passwd=awWxVV.JvmdHw createhome=yes
+    user name=mdehaan comment=awesome password=awWxVV.JvmdHw createhome=yes
     user name=mdehaan groups=wheel,skynet
     user name=mdehaan state=absent force=yes
