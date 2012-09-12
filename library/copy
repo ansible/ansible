@@ -67,9 +67,9 @@ def main():
                     backup_file = module.backup_local(dest)
             #TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
             # might be an issue with exceeding path length
-            dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.gmtime)
+            dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.gmtime())
             shutil.copyfile(src, dest_tmp)
-            shutil.copyfile(dest_tmp, dest)
+            shutil.move(dest_tmp, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
         except IOError:
