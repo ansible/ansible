@@ -1,0 +1,17 @@
+---
+
+# this file should be named ${ansible_fqdn}.yml; the ansible-pull install playbook will show this off
+#
+# when ansible-pull runs with the -P option in the example cronjob, it does this:
+# 1. cmd=ansible all -c local -m git -a "repo=... dest=/var/lib/ansible version=HEAD"
+# 2. cd /var/lib/ansible
+# 3. ansible-playbook -c local nodes/$FQDN.yml
+
+- name: ansible-pull playbook launcher
+  hosts: 127.0.0.1
+  tasks:
+  - name: test output
+    action: shell echo "hello from nodes/${ansible_fqdn}.yml" > /var/log/ansible/output.txt
+
+  - name: test output again
+    action: shell pwd >> /var/log/ansible/output.txt
