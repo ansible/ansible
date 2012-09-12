@@ -344,7 +344,7 @@ class Runner(object):
         try:
             delegate_to = inject.get('delegate_to', None)
             if delegate_to is not None:
-                actual_host = delegate_to    
+                actual_host = delegate_to
             conn = self.connector.connect(actual_host, port)
             if delegate_to is not None:
                 conn._delegate_for = host
@@ -586,6 +586,46 @@ class Runner(object):
             results = self._parallel_exec(hosts)
         else:
             results = [ self._executor(h[1]) for h in hosts ]
+
+        return self._partition_results(results)
+
+    # *****************************************************
+
+    def run_other_action(self, action_class):
+        ''' run a raw python action '''
+
+        # find hosts that match the pattern
+        hosts = self.inventory.list_hosts(self.pattern)
+        if len(hosts) == 0:
+            self.callbacks.on_no_hosts()
+            return dict(contacted={}, dark={})
+
+        hosts = [ (self,x) for x in hosts ]
+        results = []
+
+        # Create a new connection and temporarily override the current
+        # transport. This works in a serial manner only for now.
+        for (self,host) in hosts:
+            conn = connection.Connection(self).connect(host, None, 'internal')
+            action = action_class(host, self.module_args)
+            result = conn.exec_command(action.run)
+            result = ReturnData(conn=conn, host=host, result=result, comm_ok=True)
+            data = result.result
+
+            if 'skipped' in data:
+                self.callbacks.on_skipped(host)
+            elif not result.is_successful():
+                ignore_errors = self.module_vars.get('ignore_errors', False)
+                self.callbacks.on_failed(host, data, ignore_errors)
+                if ignore_errors:
+                    if 'failed' in result.result:
+                        result.result['failed'] = False
+                    if 'rc' in result.result:
+                        result.result['rc'] = 0
+            else:
+                self.callbacks.on_ok(host, data)
+            results.append(result)
+
         return self._partition_results(results)
 
     # *****************************************************
