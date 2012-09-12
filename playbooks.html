@@ -378,16 +378,10 @@ them work just like you would expect. Simple:</p>
 </div>
 <p>The command and shell module care about return codes, so if you have a command
 who&#8217;s successful exit code is not zero, you may wish to do this:</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>tasks:</dt>
-<dd><ul class="first last simple">
-<li>name: run this command and ignore the result
-action: shell /usr/bin/somecommand &amp; /bin/true</li>
-</ul>
-</dd>
-</dl>
-</div></blockquote>
+<div class="highlight-python"><pre>tasks:
+  - name: run this command and ignore the result
+    action: shell /usr/bin/somecommand &amp; /bin/true</pre>
+</div>
 <p>Variables can be used in action lines.   Suppose you defined
 a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you could do this:</p>
 <div class="highlight-python"><pre>tasks:
@@ -487,6 +481,23 @@ of a play:</p>
   - include: handlers/handlers.yml</pre>
 </div>
 <p>You can mix in includes along with your regular non-included tasks and handlers.</p>
+<p>Includes can also be used to import one playbook file into another. This allows
+you to define a top-level playbook that is composed of other playbooks.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>- name: this is a play at the top level of a file
+  hosts: all
+  user: root
+  tasks:
+  - name: say hi
+    tags: foo
+    action: shell echo "hi..."
+
+- include: load_balancers.yml
+- include: webservers.yml
+- include: dbservers.yml</pre>
+</div>
+<p>Note that you cannot do variable substitution when including one playbook
+inside another.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">You can not conditionally path the location to an include file,
