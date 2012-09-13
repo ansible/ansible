@@ -36,21 +36,11 @@
     action: command apt-get -y autoremove
     only_if: '$is_ubuntu'
 
-  - name: remove ansible hosts file
-    action: file path=/etc/ansible state=absent
-
-  - name: remove $workdir directory
-    action: file path=$workdir state=absent
-
-  - name: remove $logdir directory
-    action: file path=$logdir state=absent
-
-  - name: remove logrotate config
-    action: file path=/etc/logrotate.d/ansible-pull state=absent
-    tags:
-    - logrotate
-
-  - name: remove cronjob
-    action: file path=/etc/cron.d/ansible-pull state=absent
-    tags:
-    - cronjob
+  - name: remove $item
+    action: file path=state=absent
+    with_items:
+    - /etc/ansible 
+    - /etc/cron.d/ansible-pull
+    - /etc/logrotate.d/ansible-pull
+    - $logdir
+    - $workdir
