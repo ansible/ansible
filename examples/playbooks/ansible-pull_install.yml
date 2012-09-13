@@ -39,7 +39,8 @@
     repo_url: SUPPLY_YOUR_OWN_GIT_URL_HERE
 
     # detect target system distribution
-    is_ubuntu:  "'$ansible_distribution' == 'Ubuntu'"
+    is_centos: "'$ansible_distribution' == 'CentOS'"
+    is_ubuntu: "'$ansible_distribution' == 'Ubuntu'"
 
   tasks:
    - name: add ansible personal package archive (ubuntu)
@@ -54,6 +55,23 @@
      - python-yaml
      - python-paramiko
      only_if: '$is_ubuntu'
+
+   - name: install extra packages for enterprise linux rpm (centos)
+     action: command rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-7.noarch.rpm creates=/etc/yum.repos.d/epel.repo
+     only_if: '$is_centos'
+
+   - name: install ansible and dependencies (centos)
+     action: yum name=$item state=latest
+     with_items:
+     - ansible
+     - PyYAML
+     - libyaml
+     - python-babel
+     - python-crypto
+     - python-jinja2
+     - python-paramiko
+     - cronie
+     only_if: '$is_centos'
 
    - name: replace ansible hosts file
      action: copy src=templates/etc_ansible_hosts.ansible-pull dest=/etc/ansible/hosts owner=root group=root mode=0644
