@@ -37,7 +37,7 @@
     only_if: '$is_ubuntu'
 
   - name: remove $item
-    action: file path=state=absent
+    action: file path=$item state=absent
     with_items:
     - /etc/ansible 
     - /etc/cron.d/ansible-pull
