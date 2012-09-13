@@ -39,7 +39,7 @@ import os
 import subprocess
 import sys
 import datetime
-import platform
+import socket
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -92,7 +92,7 @@ def main(args):
     if rc != 0:
         return rc
 
-    hostname = "%s.yml" % platform.node()
+    hostname = "%s.yml" % socket.getfqdn()
 
     if not args:
       try:
