@@ -340,6 +340,7 @@ def main():
             if old_src != src:
                 os.unlink(path)
                 os.symlink(src, path)
+                changed = True
         else:
             module_fail_json(dest=path, src=src, msg='unexpected position reached')
 
