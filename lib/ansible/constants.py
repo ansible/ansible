@@ -60,12 +60,20 @@ p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
+# Virtualenv support
+if os.environ.has_key("VIRTUAL_ENV"):
+	_default_library_path=os.path.join(os.environ["VIRTUAL_ENV"], 'local/share/ansible')
+	_default_host_list=os.path.join(os.environ["VIRTUAL_ENV"], 'local/etc/ansible/hosts')
+else:
+	_default_library_path='/usr/share/ansible'
+	_default_host_list='/etc/ansible/hosts'
+
 # sections in config file
 DEFAULTS='defaults'
 
 # configurable things
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts'))
-DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          '/usr/share/ansible'))
+DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            _default_host_list))
+DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          _default_library_path))
 DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
