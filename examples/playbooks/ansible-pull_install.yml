@@ -9,10 +9,6 @@
 # 1. massive scale out
 # 2. continual system remediation
 #
-# this example is built out for ubuntu 12.04; an equivalent build with rhel 6.2
-# had issues with rpm dependencies between shipping rpms and epel.  also, the
-# epel version of ansible lags -- it is 0.6-1 versus 0.7.2 for the ubuntu ppa.
-#
 # DO NOT RUN THIS AGAINST YOUR HOSTS WITHOUT CHANGING THE repo_url
 # TO SOMETHING YOU HAVE PERSONALLY VERIFIED
 #
