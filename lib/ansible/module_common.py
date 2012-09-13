@@ -47,15 +47,24 @@ import subprocess
 import sys
 import syslog
 import types
+import time
+import shutil
 
 try:
     from hashlib import md5 as _md5
 except ImportError:
     from md5 import md5 as _md5
 
+try:
+  from systemd import journal
+  has_journal = True
+except ImportError:
+  import syslog
+  has_journal = False
+
 class AnsibleModule(object):
 
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False, 
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
         required_one_of=None):
 
@@ -142,7 +151,7 @@ class AnsibleModule(object):
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % check) 
+                    self.fail_json(msg="parameters are required together: %s" % check)
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
@@ -196,11 +205,26 @@ class AnsibleModule(object):
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        # Sanitize possible password argument when logging
-        log_args = re.sub(r'password=.+ (.*)', r"password=NOT_LOGGING_PASSWORD \1", self.args)
-        log_args = re.sub(r'login_password=.+ (.*)', r"login_password=NOT_LOGGING_PASSWORD \1", log_args)
-        syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % log_args)
+        # Sanitize possible password argument when logging.
+        log_args = dict()
+        passwd_keys = ['password', 'login_password']
+        for param in self.params:
+            if param in passwd_keys:
+                log_args[param] = 'NOT_LOGGING_PASSWORD'
+            else:
+                log_args[param] = self.params[param]
+
+        if (has_journal):
+            journal_args = ["MESSAGE=Ansible module invoked", "MODULE=%s" % os.path.basename(__file__)]
+            for arg in log_args:
+                journal_args.append(arg.upper() + "=" + str(log_args[arg]))
+            journal.sendv(*journal_args)
+        else:
+            msg = ''
+            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            for arg in log_args:
+                msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -273,6 +297,18 @@ class AnsibleModule(object):
             block = infile.read(blocksize)
         infile.close()
         return digest.hexdigest()
+
+    def backup_local(self, fn):
+        '''make a date-marked backup of the specified file, return True or False on success or failure'''
+        # backups named basename-YYYY-MM-DD@HH:MM~
+        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+        backupdest = '%s.%s' % (fn, ext)
+
+        try:
+            shutil.copy2(fn, backupdest)
+        except shutil.Error, e:
+            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        return backupdest
 
 
 # == END DYNAMICALLY INSERTED CODE ===

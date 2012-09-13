@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=       ansible
-PORTVERSION=    0.6
+PORTVERSION=    0.8
 CATEGORIES=     devel www textproc python
 MASTER_SITES=   https://github.com/downloads/ansible/ansible/
 

@@ -291,7 +291,7 @@ def install(module, items, repoq, yum_basecmd, conf_file):
 
             nvra = local_nvra(spec)
             # look for them in the rpmdb
-            if is_installed(repoq, nvra, conf_file):
+            if is_installed(module, repoq, nvra, conf_file):
                 # if they are there, skip it
                 continue
             pkg = spec

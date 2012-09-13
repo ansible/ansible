@@ -1,7 +1,24 @@
 Ansible Changes By Release
 ==========================
 
-0.7 "Panama" -- release pending -- I can barely see the roadmap from the heat coming off of it.
+0.8 "Cathedral" -- release pending 
+
+Misc:
+
+* is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
+* removes= exists on command just like creates=
+* postgresql modules now take an optional port= parameter
+* /proc/cmdline info is now available in Linux facts
+* public host key detection for OS X
+* to_yaml and from_yaml are available as Jinja2 filters
+* server side action code (template, etc) are now fully pluggable
+* lineinfile module now uses 'search' not exact 'match' in regexes, making it much more intuitive and not needing regex syntax most of the time
+* $group and $group_names are now accessible in with_items
+* playbooks can import playbooks in other directories and then be able to import tasks relative to them
+* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
+
+0.7 "Panama" -- Sept 6 2012
 
 Module changes:
 
@@ -11,7 +28,7 @@ Module changes:
 * misc yum module fixes
 * better changed=True/False detection in user module on older Linux distros
 * nicer errors from modules when arguments are not key=value
-* backup option on copy (backup=yes)
+* backup option on copy (backup=yes), as well as template, assemble, and lineinfile
 * file module will not recurse on directory properties
 * yum module now workable without having repoquery installed, but doesn't support comparisons or list= if so
 * setup module now detects interfaces with aliases

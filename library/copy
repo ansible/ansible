@@ -20,19 +20,6 @@
 
 import os
 import shutil
-import time
-
-def backuplocal(fn):
-    """make a date-marked backup of the specified file, return True or False on success or failure"""
-    # backups named basename-YYYY-MM-DD@HH:MM~
-    ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
-    backupdest = '%s.%s' % (fn, ext)
-    
-    try:
-        shutil.copy2(fn, backupdest)
-    except shutil.Error, e:
-        return False, 'Could not make backup of %s to %s: %s' % (fn, backupdest, e)
-    return True, backupdest
 
 def main():
 
@@ -76,11 +63,7 @@ def main():
         try:
             if backup:
                 if os.path.exists(dest):
-                    success, msg = backuplocal(dest)
-                    if not success:
-                        module.fail_jason(msg=msg)
-                    else:
-                        backup_file = msg
+                    backup_file = module.backup_local(dest)
             shutil.copyfile(src, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))

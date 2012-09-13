@@ -14,5 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__version__ = '0.8'
-__author__ = 'Michael DeHaan'
+
+import os
+import pwd
+import random
+import traceback
+import tempfile
+
+import ansible.constants as C
+from ansible import utils
+from ansible import errors
+from ansible import module_common
+from ansible.runner.return_data import ReturnData
+
+class ActionModule(object):
+
+    def __init__(self, runner):
+        self.runner = runner
+
+    def run(self, conn, tmp, module_name, inject):
+        return ReturnData(conn=conn, result=dict(
+            stdout=self.runner._low_level_exec_command(conn, self.runner.module_args.encode('utf-8'), tmp, sudoable=True)
+        ))
+

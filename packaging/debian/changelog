@@ -1,12 +1,18 @@
+ansible (0.8) unstable; urgency=low
+  
+  * 0.8 release pending
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 06 Aug 2012 18:50:01 -0400
+
 ansible (0.7) unstable; urgency=low
   
-  * 0.6 not released yet
+  * 0.7 update
  
- -- Michael DeHaan <michael.dehaan@gmail.com>  Mon, 06 Aug 2012 19:50:01 -0400
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 06 Aug 2012 18:50:00 -0400
 
 ansible (0.6) unstable; urgency=low
   
-  * 0.5 update
+  * 0.6 update
  
  -- Michael DeHaan <michael.dehaan@gmail.com>  Mon, 06 Aug 2012 19:50:00 -0400
 

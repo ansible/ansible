@@ -99,7 +99,7 @@ def main():
         )
     )
 
-    dest     = module.params['dest']
+    dest     = os.path.expanduser(module.params['dest'])
     repo     = module.params['repo']
     revision = module.params['revision']
     force    = module.boolean(module.params['force'])

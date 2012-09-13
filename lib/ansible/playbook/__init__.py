@@ -112,7 +112,7 @@ class PlayBook(object):
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
         self.basedir     = os.path.dirname(playbook)
-        self.playbook    = self._load_playbook_from_file(playbook)
+        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
 
     # *****************************************************
@@ -124,6 +124,7 @@ class PlayBook(object):
 
         playbook_data  = utils.parse_yaml_from_file(path)
         accumulated_plays = []
+        play_basedirs = []
 
         if type(playbook_data) != list:
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
@@ -134,13 +135,17 @@ class PlayBook(object):
             if 'include' in play:
                 if len(play.keys()) == 1:
                     included_path = utils.path_dwim(self.basedir, play['include'])
-                    accumulated_plays.extend(self._load_playbook_from_file(included_path))
+                    (plays, basedirs) = self._load_playbook_from_file(included_path)
+                    accumulated_plays.extend(plays)
+                    play_basedirs.extend(basedirs)
+
                 else:
                     raise errors.AnsibleError("parse error: top level includes cannot be used with other directives: %s" % play)
             else:
                 accumulated_plays.append(play)
+                play_basedirs.append(os.path.dirname(path))
 
-        return accumulated_plays
+        return (accumulated_plays, play_basedirs)
 
     # *****************************************************
 
@@ -152,8 +157,8 @@ class PlayBook(object):
 
         # loop through all patterns and run them
         self.callbacks.on_start()
-        for play_ds in self.playbook:
-            play = Play(self,play_ds)
+        for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
+            play = Play(self, play_ds, play_basedir)
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
@@ -166,8 +171,8 @@ class PlayBook(object):
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
         # then we need to raise an error so that the user can correct the arguments.
         unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
-        unknown_tags.discard('all')       
- 
+        unknown_tags.discard('all')
+
         if len(unknown_tags) > 0:
             unmatched_tags_all.discard('all')
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
@@ -215,7 +220,7 @@ class PlayBook(object):
             timeout=self.timeout, remote_user=task.play.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
             private_key_file=self.private_key_file,
-            setup_cache=self.SETUP_CACHE, basedir=self.basedir,
+            setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.play.sudo, sudo_user=task.play.sudo_user,
             transport=task.play.transport, sudo_pass=self.sudo_pass, is_playbook=True
@@ -246,7 +251,7 @@ class PlayBook(object):
         if results is None:
             results = {}
 
-        self.stats.compute(results)
+        self.stats.compute(results, ignore_errors=task.ignore_errors)
 
         # add facts to the global setup cache
         for host, result in results['contacted'].iteritems():

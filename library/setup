@@ -58,6 +58,7 @@ class Facts(object):
         self.facts = {}
         self.get_platform_facts()
         self.get_distribution_facts()
+        self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
 
@@ -103,9 +104,26 @@ class Facts(object):
                 else:
                     self.facts['distribution'] = name
 
+    def get_cmdline(self):
+        data = get_file_content('/proc/cmdline')
+        if data:
+            self.facts['cmdline'] = {}
+            for piece in shlex.split(data):
+                item = piece.split('=', 1)
+                if len(item) == 1:
+                    self.facts['cmdline'][item[0]] = True
+                else:
+                    self.facts['cmdline'][item[0]] = item[1]
+
     def get_public_ssh_host_keys(self):
-        dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
-        rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
+        dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
+        rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
+
+        if self.facts['system'] == 'Darwin':
+            dsa_filename = '/etc/ssh_host_dsa_key.pub'
+            rsa_filename = '/etc/ssh_host_rsa_key.pub'
+        dsa = get_file_content(dsa_filename)
+        rsa = get_file_content(rsa_filename)
         if dsa is None:
             dsa = 'NA'
         else:
@@ -198,7 +216,7 @@ class LinuxHardware(Hardware):
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
     # DMI bits
     DMI_DICT = dict(
-        form_factor     =  '/sys/devices/virtual/dmi/id/chassis_type',
+        form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
         product_name    = '/sys/devices/virtual/dmi/id/product_name',
         product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
         product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
@@ -461,7 +479,9 @@ class LinuxNetwork(Network):
         )
         interface = dict(v4 = {}, v6 = {})
         for v in 'v4', 'v6':
-            output = subprocess.Popen(command[v], stdout=subprocess.PIPE).communicate()[0]
+            if v == 'v6' and not socket.has_ipv6:
+                continue
+            output = subprocess.Popen(command[v], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             if not output:
                 # v6 routing may result in 
                 #   RTNETLINK answers: Invalid argument
@@ -484,7 +504,7 @@ class LinuxNetwork(Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
-        output = subprocess.Popen([ip_path, 'addr', 'show'], stdout=subprocess.PIPE).communicate()[0]
+        output = subprocess.Popen([ip_path, 'addr', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
         for line in output.split('\n'):
             if line:
                 words = line.split()
@@ -517,9 +537,9 @@ class LinuxNetwork(Network):
                     # interface name for each address
                     if iface in interfaces:
                         i = 0
-                        while '{0}_{1}'.format(iface, i) in interfaces:
+                        while str(iface) + "_" + str(i) in interfaces:
                             i += 1
-                        iface = '{0}_{1}'.format(iface, i)
+                        iface = str(iface) + "_" + str(i)
 
                     interfaces[iface] = {}
                     interfaces[iface]['macaddress'] = macaddress
