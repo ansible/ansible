@@ -1,0 +1,79 @@
+# ansible-pull install
+#
+# on remote hosts, set up ansible-pull to run periodically using the latest
+# code from a particular git repo, in pull based fashion, inverting Ansible's
+# usual push-based operating mode.
+#
+# This particular pull based mode is ideal for:
+#
+# 1. massive scale out
+# 2. continual system remediation
+#
+# this example is built out for ubuntu 12.04; an equivalent build with rhel 6.2
+# had issues with rpm dependencies between shipping rpms and epel.  also, the
+# epel version of ansible lags -- it is 0.6-1 versus 0.7.2 for the ubuntu ppa.
+#
+# DO NOT RUN THIS AGAINST YOUR HOSTS WITHOUT CHANGING THE repo_url
+# TO SOMETHING YOU HAVE PERSONALLY VERIFIED
+#
+---
+
+- hosts: pull_mode_hosts
+  user: root
+
+  vars:
+    # schedule for cronjob; 30m interval is typical of other cm tools
+    schedule: '*/30 * * * *'
+
+    # user that runs ansible-pull from cron job
+    cron_user: root
+
+    # directory where playbook git repo will be cloned and where playbook runs will be started
+    workdir: /var/lib/ansible
+
+    # directory where the cronjob log file will be written
+    logdir: /var/log/ansible
+
+    # crobjob log file
+    logfile: ${logdir}/ansible-pull.log
+
+    # playbook git repo URL -- REQUIRED: YOU MUST CHANGE THIS
+    # Example 1: repo_url: git://github.com/<username>/<repo_name>.git
+    # Example 2: repo_url: https://github.com/<username>/<repo_name>.git
+    repo_url: SUPPLY_YOUR_OWN_GIT_URL_HERE
+
+    # detect target system distribution
+    is_ubuntu:  "'$ansible_distribution' == 'Ubuntu'"
+
+  tasks:
+   - name: add ansible personal package archive (ubuntu)
+     action: apt_repository repo=ppa:rquillo/ansible
+     only_if: '$is_ubuntu'
+
+   - name: install ansible and dependencies (ubuntu)
+     action: apt pkg=$item state=latest update_cache=yes
+     with_items:
+     - ansible
+     - python-jinja2
+     - python-yaml
+     - python-paramiko
+     only_if: '$is_ubuntu'
+
+   - name: replace ansible hosts file
+     action: copy src=templates/etc_ansible_hosts.ansible-pull dest=/etc/ansible/hosts owner=root group=root mode=0644
+
+   - name: create $workdir directory
+     action: file path=$workdir state=directory owner=root group=root mode=0751
+
+   - name: create $logdir directory
+     action: file path=$logdir owner=root group=root state=directory
+
+   - name: create logrotate config
+     action: template src=templates/etc_logrotate.d_ansible-pull.j2 dest=/etc/logrotate.d/ansible-pull owner=root group=root mode=0644
+     tags:
+     - logrotate
+
+   - name: create cronjob
+     action: template src=templates/etc_cron.d_ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
+     tags:
+     - cronjob

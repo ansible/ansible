@@ -1,6 +1,7 @@
 # cron job to git clone an ansible playbook repo and run locally
-ANSIBLE_LIBRARY={{ installdir }}/library
-PYTHONPATH={{ installdir }}/lib
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:{{ installdir }}/bin
 
-{{ schedule }} {{ cron_user }} ansible-pull -d {{ workdir }} -U {{ repo_url }} -P nodes/{{ ansible_fqdn }}.yml >>{{ logfile }} 2>&1
+# use either ${ansible_hostname}.yml or local.yml playbook
+{{ schedule }} {{ cron_user }} ansible-pull -d {{ workdir }} -U {{ repo_url }} >>{{ logfile }} 2>&1
+
+# use a custom group-based playbook
+#{{ schedule }} {{ cron_user }} ansible-pull -d {{ workdir }} -U {{ repo_url }} nodes/webservers.yml >>{{ logfile }} 2>&1

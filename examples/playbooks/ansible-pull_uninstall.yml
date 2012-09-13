@@ -1,0 +1,56 @@
+# ansible-pull uninstall
+#
+# on remote hosts, remove ansible-pull from the host, assuming that it
+# was previously installed by the ansible-pull_install.yml playbook.
+#
+---
+
+- hosts: pull_mode_hosts
+  user: root
+
+  vars:
+    # directory where playbook git repo will be cloned and where playbook runs will be started
+    workdir: /var/lib/ansible
+
+    # directory where the cronjob log file will be written
+    logdir: /var/log/ansible
+
+    # detect target system distribution
+    is_ubuntu:  "'$ansible_distribution' == 'Ubuntu'"
+
+  tasks:
+  - name: remove ansible personal package archive (ubuntu)
+    action: apt_repository repo=ppa:rquillo/ansible state=absent
+    only_if: '$is_ubuntu'
+
+  - name: remove ansible and dependencies (ubuntu)
+    action: apt pkg=$item state=absent
+    with_items:
+    - ansible
+    - python-jinja2
+    - python-yaml
+    - python-paramiko
+    only_if: '$is_ubuntu'
+
+  - name: apt-get autoremove (ubuntu)
+    action: command apt-get -y autoremove
+    only_if: '$is_ubuntu'
+
+  - name: remove ansible hosts file
+    action: file path=/etc/ansible state=absent
+
+  - name: remove $workdir directory
+    action: file path=$workdir state=absent
+
+  - name: remove $logdir directory
+    action: file path=$logdir state=absent
+
+  - name: remove logrotate config
+    action: file path=/etc/logrotate.d/ansible-pull state=absent
+    tags:
+    - logrotate
+
+  - name: remove cronjob
+    action: file path=/etc/cron.d/ansible-pull state=absent
+    tags:
+    - cronjob
