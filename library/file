@@ -224,6 +224,7 @@ def main():
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             src   = dict(),
+            force = dict(default='no', choices=['yes', 'no']),
             mode  = dict(),
             owner = dict(),
             group = dict(),
@@ -240,6 +241,7 @@ def main():
     src    = params.get('src', None)
     if src:
         src = os.path.expanduser(src)
+    force = module.boolean(params['force'])
 
     mode   = params.get('mode', None)
     owner  = params.get('owner', None)
@@ -288,7 +290,7 @@ def main():
             module_fail_json(path=path, msg=str(e))
         module_exit_json(path=path, changed=True)
 
-    if prev_state != 'absent' and prev_state != state:
+    if prev_state != 'absent' and prev_state != state and not force:
         module_fail_json(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
 
     if prev_state == 'absent' and state == 'absent':
@@ -296,7 +298,7 @@ def main():
 
     if state == 'file':
 
-        if prev_state == 'absent':
+        if prev_state != 'file':
             module_fail_json(path=path, msg='file does not exist, use copy or template module to create')
 
         # set modes owners and context as needed
@@ -310,6 +312,13 @@ def main():
     elif state == 'directory':
 
         if prev_state == 'absent':
+            os.makedirs(path)
+            changed = True
+        elif prev_state != 'directory' and force:
+            try:
+                os.unlink(path)
+            except Exception, e:
+                module_fail_json(path=path, msg=str(e))
             os.makedirs(path)
             changed = True
 
@@ -331,6 +340,16 @@ def main():
             module_fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
+            os.symlink(src, path)
+            changed = True
+        elif prev_state != 'link' and force:
+            try:
+                if os.path.isfile(path):
+                    os.unlink(path)
+                else:
+                    shutil.rmtree(path, ignore_errors=False, onerror=rmtree_error)
+            except Exception, e:
+                module_fail_json(path=path, msg=str(e))
             os.symlink(src, path)
             changed = True
         elif prev_state == 'link':
