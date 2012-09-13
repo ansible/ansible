@@ -34,10 +34,10 @@ elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
 
 def call_callback_module(method_name, *args, **kwargs):
-   
+
     for callback_plugin in callbacks:
-        methods = [ 
-            getattr(callback_plugin, method_name, None), 
+        methods = [
+            getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
         ]
         for method in methods:
@@ -280,6 +280,20 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self.stats = stats
         self._async_notified = {}
 
+    def format(self, results):
+        """Take a results dictionary and format for output"""
+        stdout = results.pop('stdout', '')
+        stderr = results.pop('stderr', '')
+
+        return """
+%s
+stdout:
+%s
+stderr:
+%s
+""" % (utils.jsonify(results, format=True), stdout, stderr)
+
+
     def on_unreachable(self, host, msg):
         item = None
         if type(msg) == dict:
@@ -297,9 +311,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         item = results2.get('item', None)
         if item:
-            msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
+            msg = "failed: [%s] => (item=%s) => %s" % (host, item, self.format(results2))
         else:
-            msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
+            msg = "failed: [%s] => %s" % (host, self.format(results2))
         print stringc(msg, 'red')
         if ignore_errors:
             print stringc("...ignoring", 'yellow')
@@ -322,10 +336,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             # verbose ...
             if item:
-                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result2))
+                msg = "ok: [%s] => (item=%s) => %s" % (host, item, self.format(host_result2))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result2))
+                    msg = "ok: [%s] => %s" % (host, self.format(host_result2))
 
         if msg != '':
             if not 'changed' in host_result2 or not host_result['changed']:
@@ -419,7 +433,7 @@ class PlaybookCallbacks(object):
             while True:
                 result = prompt(msg, private)
                 second = prompt("confirm " + msg, private)
-                if result == second: 
+                if result == second:
                     break
                 print "***** VALUES ENTERED DO NOT MATCH ****"
         else:
