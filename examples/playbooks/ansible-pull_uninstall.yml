@@ -48,10 +48,6 @@
     - python-crypto
     - python-jinja2
     - python-paramiko
-    - cronie
-    - cronie-anacron
-    - crontabs
-    - ssmtp
     only_if: '$is_centos'
 
   - name: remove $item
