@@ -20,11 +20,14 @@
 
   vars:
 
-    # schdule is fed directly to cron
+    # schedule is fed directly to cron
     schedule: '*/15 * * * *'
 
     # User to run ansible-pull as from cron
     cron_user: root
+
+    # File that ansible will use for logs
+    logfile: /var/log/ansible-pull.log
 
     # Directory to where repository will be cloned
     workdir: /var/lib/ansible/local
@@ -47,5 +50,7 @@
               owner=root group=root mode=0644
 
     - name: Create crontab entry to clone/pull git repository
-      action: template src=templates/ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
+      action: template src=templates/etc_cron.d_ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
 
+    - name: Create logrotate entry for ansible-pull.log
+      action: template src=templates/etc_logrotate.d_ansible-pull.j2 dest=/etc/logrorate.d/ansible-pull owner=root group=root mode=0644
