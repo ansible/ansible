@@ -54,6 +54,10 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
+    PKG_MGR_DICT = { '/usr/bin/yum' : 'yum',
+                     '/usr/bin/apt-get' : 'apt',
+                     '/usr/bin/zypper' : 'zypper' }
+
     def __init__(self):
         self.facts = {}
         self.get_platform_facts()
@@ -61,6 +65,7 @@ class Facts(object):
         self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
+        self.get_pkg_mgr_facts()
 
     def populate(self):
         return self.facts
@@ -132,6 +137,12 @@ class Facts(object):
             rsa = 'NA'
         else:
             self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+
+    def get_pkg_mgr_facts(self):
+        self.facts['pkg_mgr'] = 'unknown'
+        for (path, name) in Facts.PKG_MGR_DICT.items():
+            if os.path.exists(path):
+                self.facts['pkg_mgr'] = name
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
