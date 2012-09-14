@@ -11,14 +11,9 @@
 # the -d and -U arguments are required; the -C argument is optional.
 #
 # ansible-pull accepts an optional argument to specify a playbook
-# location underneath the workdir and then searches the git repo
-# for playbooks in the following order, stopping at the first match:
-#
-# 1. $workdir/path/playbook.yml, if specified
-# 2. $workdir/$hostname.yml
-# 3. $workdir/local.yml
-#
-# the git repo must contain at least one of these playbooks.
+# location underneath the workdir.  if no playbook is specified, it
+# will attempt to use $hostname.yml and then local.yml at the top
+# level of the workdir.
 #
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
 #
@@ -53,6 +48,22 @@ def _run(cmd):
         print err
     return cmd.returncode
 
+def auto_detect_playbook():
+  # method assumes that os.chdir(options.dest) call has occurred
+  playbook = "%s.yml" % socket.getfqdn()  # equivalent to ${ansible_fqdn}.yml
+  try:
+    with open(playbook) as f: pass
+    print "using playbook %s" % playbook
+    return playbook
+  except IOError as e:
+    try:
+      with open(DEFAULT_PLAYBOOK) as f: pass
+      print 'using playbook %s' % DEFAULT_PLAYBOOK
+      return DEFAULT_PLAYBOOK
+    except IOError as e:
+      print 'FAILED: playbook %s does not exist' % DEFAULT_PLAYBOOK
+      sys.exit(1)
+
 def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [path/playbook.yml]"
@@ -76,11 +87,11 @@ def main(args):
 
     if not options.dest:
       parser.error("directory for git clone and playbook run not specified, use -h for help")
-      return 1
+      sys.exit(1)
 
     if not options.url:
       parser.error("URL for git repo not specified, use -h for help")
-      return 1
+      sys.exit(1)
 
     now = datetime.datetime.now()
     print now.strftime("ansible-pull_started: %Y%m%d-%H%M-%S"), "\n"
@@ -92,48 +103,23 @@ def main(args):
     if rc != 0:
         return rc
 
-    hostname = "%s.yml" % socket.getfqdn()
+    os.chdir(options.dest)
 
-    if not args:
+    if args:
+      playbook = args[0]
       try:
-        with open('%s/%s' % (options.dest, hostname)) as f: pass
-        playbook = hostname
-        print 'using playbook %s/%s' % (options.dest, hostname)
+        with open(playbook) as f: pass
+        print "using playbook %s" % playbook
       except IOError as e:
-        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
-        try:
-          with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
-          playbook = DEFAULT_PLAYBOOK
-          print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
-        except IOError as e:
-          print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
-          return 1
+        print 'FAILED: playbook %s does not exist' % playbook
+        sys.exit(1)
     else:
-      try:
-        with open('%s/%s' % (options.dest, args[0])) as f: pass
-        playbook = args[0]
-        print 'using playbook %s/%s' % (options.dest, args[0])
-      except IOError as e:
-        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, args[0], hostname)
-        try:
-          with open('%s/%s' % (options.dest, hostname)) as f: pass
-          playbook = hostname
-          print 'using playbook %s/%s' % (options.dest, hostname)
-        except IOError as e:
-          print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
-          try:
-            with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
-            playbook = DEFAULT_PLAYBOOK
-            print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
-          except IOError as e:
-            print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
-            return 1
+      playbook = auto_detect_playbook()
 
     print
 
     cmd = 'ansible-playbook -c local %s' % playbook
     print "cmd=%s" % cmd
-    os.chdir(options.dest)
     rc = _run(cmd)
     return rc
 
