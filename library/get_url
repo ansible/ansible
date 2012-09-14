@@ -145,11 +145,10 @@ def main():
     thirsty = module.boolean(module.params['thirsty'])
 
     if not thirsty:
-        if os.path.exists(dest):
-            module.exit_json(msg="file already exists", changed=False)
         if os.path.isdir(dest):
             module.fail_json(msg="non-thirsty mode needs a filename for a destination, not a directory")
-
+        if os.path.exists(dest):
+            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest)
