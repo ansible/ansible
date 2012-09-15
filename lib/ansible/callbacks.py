@@ -46,6 +46,9 @@ def call_callback_module(method_name, *args, **kwargs):
             if method is not None:
                 method(*args, **kwargs)
 
+def load_more_callbacks(dirname):
+    callbacks.extend([c.CallbackModule() for c in utils.import_plugins(dirname).values()])
+
 def vv(msg, host=None):
     return verbose(msg, host=host, caplevel=1)
 
