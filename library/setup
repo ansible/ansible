@@ -26,6 +26,29 @@ import re
 import socket
 import struct
 
+DOCUMENTATION = '''
+---
+module: setup
+short_description: Gathers facts about remote hosts
+description: >
+     This module is automatically called by playbooks to gather useful
+     variables about remote hosts that can be used in playbooks. It can also be
+     executed directly by /usr/bin/ansible to check what variables are
+     available to a host. Ansible provides many 'facts' about the system,
+     automatically.
+notes: >
+    More ansible facts will be added with successive releases. If facter or
+    ohai are installed, variables from these programs will also be snapshotted
+    into the JSON file for usage in templating. These variables are prefixed
+    with facter_ and ohai_ so it's easy to tell their source. All variables are
+    bubbled up to the caller. Using the ansible facts and choosing to not
+    install facter and ohai means you can avoid ruby-dependencies on your
+    remote systems.
+examples:
+    - code: ansible all -m setup -tree /tmp/facts
+      description: Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.
+'''
+
 try:
     import selinux
     HAVE_SELINUX=True
