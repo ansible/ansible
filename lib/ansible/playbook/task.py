@@ -26,14 +26,14 @@ class Task(object):
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register', 'with_items', 
         'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action'
+        'local_action', 'transport'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action'
+         'delegate_to', 'local_action', 'transport'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -60,10 +60,11 @@ class Task(object):
         # Only one of them is defined
         elif 'local_action' in ds:
             self.action      = ds.get('local_action', '')
-            self.delegate_to = '127.0.0.1'
+            self.transport   = 'local'
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
+            self.transport   = ds.get('transport', play.transport)
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
