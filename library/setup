@@ -54,9 +54,12 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
-    PKG_MGR_DICT = { '/usr/bin/yum' : 'yum',
-                     '/usr/bin/apt-get' : 'apt',
-                     '/usr/bin/zypper' : 'zypper' }
+    # A list of dicts.  If there is a platform with more than one
+    # package manager, put the preferred one last.  If there is an
+    # ansible module, use that as the value for the 'name' key.
+    PKG_MGRS = [ { 'path' : '/usr/bin/yum',     'name' : 'yum' },
+                 { 'path' : '/usr/bin/apt-get', 'name' : 'apt' },
+                 { 'path' : '/usr/bin/zypper',  'name' : 'zypper' } ]
 
     def __init__(self):
         self.facts = {}
@@ -140,9 +143,9 @@ class Facts(object):
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
-        for (path, name) in Facts.PKG_MGR_DICT.items():
-            if os.path.exists(path):
-                self.facts['pkg_mgr'] = name
+        for pkg in Facts.PKG_MGRS:
+            if os.path.exists(pkg['path']):
+                self.facts['pkg_mgr'] = pkg['name']
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
