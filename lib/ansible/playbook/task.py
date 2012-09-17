@@ -60,6 +60,7 @@ class Task(object):
         # Only one of them is defined
         elif 'local_action' in ds:
             self.action      = ds.get('local_action', '')
+            self.delegate_to = '127.0.0.1'
             self.transport   = 'local'
         else:
             self.action      = ds.get('action', '')
