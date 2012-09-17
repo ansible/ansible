@@ -258,6 +258,8 @@ class PlayBook(object):
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
             if task.register:
+                if 'stdout' in result:
+                    result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
         # flag which notify handlers need to be run
