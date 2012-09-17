@@ -200,7 +200,7 @@ class Runner(object):
 
         cmd = ""
         if not is_new_style:
-            args = utils.template(args, inject)
+            args = utils.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
@@ -327,13 +327,13 @@ class Runner(object):
             for (k,v) in self.module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
             self.module_args = new_args
-        self.module_args = utils.template(self.module_args, inject)
+        self.module_args = utils.template(self.basedir, self.module_args, inject)
 
         def _check_conditional(conditional):
             def is_set(var):
                 return not var.startswith("$")
             return eval(conditional)
-        conditional = utils.template(self.conditional, inject)
+        conditional = utils.template(self.basedir, self.conditional, inject)
         if not _check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
@@ -352,7 +352,7 @@ class Runner(object):
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        module_name = utils.template(self.module_name, inject)
+        module_name = utils.template(self.basedir, self.module_name, inject)
 
         tmp = ''
         if self.module_name != 'raw':
@@ -499,7 +499,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
+            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.basedir, self.module_args, inject).replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
 
         # use the correct python interpreter for the host
