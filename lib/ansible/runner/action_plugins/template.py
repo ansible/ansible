@@ -51,7 +51,7 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject)
+                fn = utils.template(self.runner.basedir, fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -60,7 +60,7 @@ class ActionModule(object):
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        source = utils.template(source, inject)
+        source = utils.template(self.runner.basedir, source, inject)
 
         # template the source data locally & transfer
         try:
