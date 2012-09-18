@@ -613,6 +613,7 @@ class Virtual(Facts):
     you should define:
     - virtualization_type
     - virtualization_role
+    - container (e.g. solaris zones, freebsd jails, linux containers)
 
     All subclasses MUST define platform.
     """
@@ -686,6 +687,63 @@ class LinuxVirtual(Virtual):
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'guest'
+
+class SunOSVirtual(Virtual):
+    """
+    This is a SunOS-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    - container
+    """
+    platform = 'SunOS'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        cmd = subprocess.Popen("/usr/sbin/prtdiag", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        for line in out.split('\n'):
+            if 'VMware' in line:
+                self.facts['virtualization_type'] = 'vmware'
+                self.facts['virtualization_role'] = 'guest'
+            if 'Parallels' in line:
+                self.facts['virtualization_type'] = 'parallels'
+                self.facts['virtualization_role'] = 'guest'
+            if 'VirtualBox' in line:
+                self.facts['virtualization_type'] = 'virtualbox'
+                self.facts['virtualization_role'] = 'guest'
+            if 'HVM domU' in line:
+                self.facts['virtualization_type'] = 'xen'
+                self.facts['virtualization_role'] = 'guest'
+        # Check if it's a zone
+        if os.path.exists("/usr/bin/zonename"):
+            cmd = subprocess.Popen("/usr/bin/zonename", shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            if out.rstrip() != "global":
+                self.facts['container'] = 'zone'
+        # Check if it's a branded zone (i.e. Solaris 8/9 zone)
+        if os.path.isdir('/.SUNWnative'):
+            self.facts['container'] = 'zone'
+        # If it's a zone check if we can detect if our global zone is itself virtualized.
+        # Relies on the "guest tools" (e.g. vmware tools) to be installed
+        if 'container' in self.facts and self.facts['container'] == 'zone':
+            cmd = subprocess.Popen("/usr/sbin/modinfo", shell=True,
+                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            for line in out.split('\n'):
+                if 'VMware' in line:
+                    self.facts['virtualization_type'] = 'vmware'
+                    self.facts['virtualization_role'] = 'guest'
+                if 'VirtualBox' in line:
+                    self.facts['virtualization_type'] = 'virtualbox'
+                    self.facts['virtualization_role'] = 'guest'
 
 def get_file_content(path):
     data = None
