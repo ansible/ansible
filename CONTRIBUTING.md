@@ -1,10 +1,12 @@
 Contributing to Ansible
 =======================
 
-Please read the following information to learn how to contribute to this project.
+It is required that you read the following information to learn how to contribute to this project.
 
 Branch Info
 ===========
+
+Here's how to understand the branches.
 
    * The devel branch corresponds to the latest ongoing release
    * Various release-X.Y branches exist for previous releases
@@ -31,6 +33,27 @@ Contributions to the core and modules are greatly welcome.
        * Sending patches to the mailing list directly.
        * Sending feature pull requests to the 'release' branch instead of the devel branch
        * Sending pull requests to mpdehaan's personal ansible fork.
+       * Sending pull requests about more than one feature in the same pull request.
+       * Whitespace restructuring
+       * Large scale refactoring without a discussion on the list
+
+Coding Standards
+================
+
+We're not too strict on style considerations, but we require:
+
+   * python 2.6 compliant code, unless in ansible modules, then python *2.4* compliant code (no 'with', etc)
+   * 4-space indents, no tabs except in Makefiles
+   * under_scores for method names and variables, not camelCase
+   * GPLv3 license headers on all files, with copyright on new files with your name on it
+   * no single-line if statements, deeply nested list comprehensions, or clever use of metaclasses -- keep it simple
+   * comments where appropriate
+
+Contributors License Agreement
+==============================
+
+By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable
+copyright license to all users and developers of the project, present and future, persusant to the license of the project.
 
 
 
