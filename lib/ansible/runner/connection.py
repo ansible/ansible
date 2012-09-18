@@ -20,10 +20,14 @@
 
 from ansible import utils
 from ansible.errors import AnsibleError
+import ansible.constants as C
 
+import os
 import os.path
 dirname = os.path.dirname(__file__)
 modules = utils.import_plugins(os.path.join(dirname, 'connection_plugins'))
+for i in reversed(C.DEFAULT_CONNECTION_PLUGIN_PATH.split(os.pathsep)):
+    modules.update(utils.import_plugins(i))
 
 # rename this module
 modules['paramiko'] = modules['paramiko_ssh']

@@ -80,6 +80,10 @@ DEFAULT_REMOTE_PORT       = int(get_config(p, DEFAULTS, 'remote_port',      'ANS
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'paramiko')
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 
+DEFAULT_ACTION_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'action_plugins',     None, '/usr/share/ansible_plugins/action_plugins'))
+DEFAULT_CALLBACK_PLUGIN_PATH   = shell_expand_path(get_config(p, DEFAULTS, 'callback_plugins',   None, '/usr/share/ansible_plugins/callback_plugins'))
+DEFAULT_CONNECTION_PLUGIN_PATH = shell_expand_path(get_config(p, DEFAULTS, 'connection_plugins', None, '/usr/share/ansible_plugins/connection_plugins'))
+
 # non-configurable things
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUDO_PASS         = None
