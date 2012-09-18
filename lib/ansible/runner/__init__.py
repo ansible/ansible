@@ -144,6 +144,9 @@ class Runner(object):
         for (k,v) in action_plugins.iteritems():
             self.action_plugins[k] = v.ActionModule(self)
 
+        for (k,v) in utils.import_plugins(os.path.join(self.basedir, 'action_plugins')).iteritems():
+            self.action_plugins[k] = v.ActionModule(self)
+
     # *****************************************************
 
     def _delete_remote_files(self, conn, files):
