@@ -112,8 +112,7 @@ class PlayBook(object):
         self.inventory.subset(subset)
 
         self.modules_list        = utils.get_available_modules(self.module_path)
-        lookup_plugins_dir = os.path.join(plugins_dir, 'lookup_plugins')
-        self.lookup_plugins_list = utils.import_plugins(lookup_plugins_dir)
+        self.lookup_plugins_list = ansible.runner.lookup_plugin_list
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
