@@ -72,8 +72,7 @@ class ActionModule(object):
         xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
         # fix file permissions when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
-                tmp)
+            self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
         # run the copy module, queue the file module
         self.runner.module_args = "%s src=%s dest=%s" % (self.runner.module_args, xfered, dest)
         return self.runner._execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')

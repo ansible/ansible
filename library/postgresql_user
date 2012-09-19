@@ -157,7 +157,7 @@ def revoke_privileges(cursor, user, privs):
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = revoke_func(cursor, user, name, privilege)\
-                        or changed
+                    or changed
 
     return changed
 
@@ -174,7 +174,7 @@ def grant_privileges(cursor, user, privs):
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = grant_func(cursor, user, name, privilege)\
-                        or changed
+                    or changed
 
     return changed
 
@@ -246,15 +246,15 @@ def main():
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
-    params_map =  {
+    params_map = {
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
         "port":"port",
         "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
-              if k in params_map and v != "" )
+    kw = dict((params_map[k], v) for (k, v) in module.params.iteritems()
+              if k in params_map and v != "")
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()

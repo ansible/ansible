@@ -25,7 +25,7 @@ from ansible.color import stringc
 
 dirname = os.path.dirname(__file__)
 callbacks = utils.import_plugins(os.path.join(dirname, 'callback_plugins'))
-callbacks = [ c.CallbackModule() for c in callbacks.values() ]
+callbacks = [c.CallbackModule() for c in callbacks.values()]
 
 cowsay = None
 if os.path.exists("/usr/bin/cowsay"):
@@ -80,8 +80,10 @@ class AggregateStats(object):
         ''' walk through all results and increment stats '''
 
         for (host, value) in runner_results.get('contacted', {}).iteritems():
-            if not ignore_errors and (('failed' in value and bool(value['failed'])) or
-                ('rc' in value and value['rc'] != 0)):
+            if not ignore_errors and (
+                ('failed' in value and bool(value['failed'])) or
+                ('rc' in value and value['rc'] != 0)
+            ):
                 self._increment('failures', host)
             elif 'skipped' in value and bool(value['skipped']):
                 self._increment('skipped', host)
@@ -121,8 +123,9 @@ def regular_generic_msg(hostname, result, oneline, caption):
 
 def banner(msg):
 
-    if cowsay != None:
-        cmd = subprocess.Popen([cowsay, "-W", "60", msg],
+    if cowsay is not None:
+        cmd = subprocess.Popen(
+            [cowsay, "-W", "60", msg],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         return "%s\n" % out
@@ -160,7 +163,7 @@ def host_report_msg(hostname, module_name, result, oneline):
 
     failed = utils.is_failed(result)
     msg = ''
-    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result and result.get('parsed',True) != False:
+    if module_name in ['command', 'shell', 'raw'] and 'ansible_job_id' not in result and result.get('parsed',True) is not False:
         if not failed:
             msg = command_generic_msg(hostname, result, oneline, 'success')
         else:

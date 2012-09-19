@@ -39,7 +39,8 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def __init__(self,
+    def __init__(
+        self,
         playbook         = None,
         host_list        = C.DEFAULT_HOST_LIST,
         module_path      = C.DEFAULT_MODULE_PATH,
@@ -58,7 +59,8 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
-        subset           = C.DEFAULT_SUBSET):
+        subset           = C.DEFAULT_SUBSET
+    ):
 
         """
         playbook:         path to a playbook file
@@ -85,7 +87,7 @@ class PlayBook(object):
         if extra_vars is None:
             extra_vars = {}
         if only_tags is None:
-            only_tags = [ 'all' ]
+            only_tags = ['all']
 
         self.module_path      = module_path
         self.forks            = forks
@@ -199,7 +201,7 @@ class PlayBook(object):
         # mark any hosts that are still listed as started as failed
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
-            reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+            reason = {'failed' : 1, 'rc' : None, 'msg' : 'timed out'}
             self.runner_callbacks.on_failed(host, reason)
             results['contacted'][host] = reason
 
@@ -292,8 +294,10 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        host_list = [ h for h in self.inventory.list_hosts(play.hosts)
-            if not (h in self.stats.failures or h in self.stats.dark) ]
+        host_list = [
+            h for h in self.inventory.list_hosts(play.hosts)
+            if not (h in self.stats.failures or h in self.stats.dark)
+        ]
 
         if not play.gather_facts:
             return {}

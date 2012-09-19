@@ -97,7 +97,7 @@ if not os.path.exists(logdir):
 def _run_command(wrapped_cmd, jid, log_path):
 
     logfile = open(log_path, "w")
-    logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    logfile.write(json.dumps({"started" : 1, "ansible_job_id" : jid}))
     logfile.close()
     logfile = open(log_path, "w")
     result = {}
@@ -106,7 +106,7 @@ def _run_command(wrapped_cmd, jid, log_path):
     try:
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False,
-            stdin=None, stdout=logfile, stderr=logfile)
+                                  stdin=None, stdout=logfile, stderr=logfile)
         script.communicate()
         outdata = file(log_path).read()
         result = json.loads(outdata)
@@ -154,7 +154,7 @@ try:
         # the argsfile at the very first start of their execution anyway
         time.sleep(1)
         debug("Return async_wrapper task started.")
-        print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
+        print json.dumps({"started" : 1, "ansible_job_id" : jid, "results_file" : log_path})
         sys.stdout.flush()
         sys.exit(0)
     else:

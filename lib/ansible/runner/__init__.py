@@ -72,7 +72,8 @@ class Runner(object):
 
     # see bin/ansible for how this is used...
 
-    def __init__(self,
+    def __init__(
+        self,
         host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
         module_path=C.DEFAULT_MODULE_PATH,  # ex: /usr/share/ansible
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
@@ -97,7 +98,7 @@ class Runner(object):
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None                         # subset pattern
-        ):
+    ):
 
         # storage & defaults
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
@@ -154,7 +155,7 @@ class Runner(object):
             return
 
         if type(files) == str:
-            files = [ files ]
+            files = [files]
         for filename in files:
             if filename.find('/tmp/') == -1:
                 raise Exception("not going to happen")
@@ -183,8 +184,10 @@ class Runner(object):
 
     # *****************************************************
 
-    def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None):
+    def _execute_module(
+        self, conn, tmp, module_name, args,
+        async_jid=None, async_module=None, async_limit=None, inject=None
+    ):
 
         ''' runs a module that has already been transferred '''
 
@@ -262,7 +265,7 @@ class Runner(object):
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
 
-        if len(items) and self.module_name in [ 'apt', 'yum' ]:
+        if len(items) and self.module_name in ['apt', 'yum']:
             # hack for apt and soon yum, with_items maps back into a single module call
             inject['item'] = ",".join(items)
             items = []
@@ -288,13 +291,13 @@ class Runner(object):
                 inject['item'] = x
                 result = self._executor_internal_inner(host, inject, port)
                 results.append(result.result)
-                if result.comm_ok == False:
+                if result.comm_ok is False:
                     all_comm_ok = False
                     break
                 for x in results:
-                    if x.get('changed') == True:
+                    if x.get('changed') is True:
                         all_changed = True
-                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
+                    if (x.get('failed') is True) or (('rc' in x) and (x['rc'] != 0)):
                         all_failed = True
                         break
             msg = 'All items succeeded'
@@ -524,7 +527,8 @@ class Runner(object):
 
         workers = []
         for i in range(self.forks):
-            prc = multiprocessing.Process(target=_executor_hook,
+            prc = multiprocessing.Process(
+                target=_executor_hook,
                 args=(job_queue, result_queue))
             prc.start()
             workers.append(prc)
@@ -580,12 +584,12 @@ class Runner(object):
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
 
-        hosts = [ (self,x) for x in hosts ]
+        hosts = [(self,x) for x in hosts]
         results = None
         if self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
-            results = [ self._executor(h[1]) for h in hosts ]
+            results = [self._executor(h[1]) for h in hosts]
         return self._partition_results(results)
 
     # *****************************************************

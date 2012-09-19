@@ -50,16 +50,16 @@ class Facts(object):
     _I386RE = re.compile(r'i[3456]86')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
-    OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
-                    '/etc/vmware-release': 'VMwareESX' }
-    SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
+    OSDIST_DICT = {'/etc/redhat-release': 'RedHat',
+                   '/etc/vmware-release': 'VMwareESX'}
+    SELINUX_MODE_DICT = {1: 'enforcing', 0: 'permissive', -1: 'disabled'}
 
     # A list of dicts.  If there is a platform with more than one
     # package manager, put the preferred one last.  If there is an
     # ansible module, use that as the value for the 'name' key.
-    PKG_MGRS = [ { 'path' : '/usr/bin/yum',     'name' : 'yum' },
-                 { 'path' : '/usr/bin/apt-get', 'name' : 'apt' },
-                 { 'path' : '/usr/bin/zypper',  'name' : 'zypper' } ]
+    PKG_MGRS = [{'path' : '/usr/bin/yum',     'name' : 'yum'},
+                {'path' : '/usr/bin/apt-get', 'name' : 'apt'},
+                {'path' : '/usr/bin/zypper',  'name' : 'zypper'}]
 
     def __init__(self):
         self.facts = {}
@@ -240,14 +240,14 @@ class LinuxHardware(Hardware):
         bios_version    = '/sys/devices/virtual/dmi/id/bios_version'
     )
     # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
-    FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
-                    "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
-                    "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
-                    "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
-                    "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
-                    "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
-                    "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                    "CompactPCI", "AdvancedTCA", "Blade" ]
+    FORM_FACTOR = ["Unknown", "Other", "Unknown", "Desktop",
+                   "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
+                   "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
+                   "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
+                   "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
+                   "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
+                   "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
+                   "CompactPCI", "AdvancedTCA", "Blade"]
 
     def __init__(self):
         Hardware.__init__(self)
@@ -328,8 +328,9 @@ class SunOSHardware(Hardware):
         return self.facts
 
     def get_cpu_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/psrinfo -v", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/usr/sbin/psrinfo -v", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         self.facts['processor'] = []
         for line in out.split('\n'):
@@ -341,14 +342,16 @@ class SunOSHardware(Hardware):
         self.facts['processor_count'] = len(self.facts['processor'])
 
     def get_memory_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/prtconf", shell=False,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/usr/sbin/prtconf", shell=False,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         for line in out.split('\n'):
             if 'Memory size' in line:
                 self.facts['memtotal_mb'] = line.split()[2]
-        cmd = subprocess.Popen("/usr/sbin/swap -s", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/usr/sbin/swap -s", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         allocated = long(out.split()[1][:-1])
         reserved = long(out.split()[5][:-1])
@@ -383,8 +386,9 @@ class FreeBSDHardware(Hardware):
 
     def get_cpu_facts(self):
         self.facts['processor'] = []
-        cmd = subprocess.Popen("/sbin/sysctl -n hw.ncpu", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/sbin/sysctl -n hw.ncpu", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         self.facts['processor_count'] = out.strip()
         for line in open(FreeBSDHardware.DMESG_BOOT).readlines():
@@ -395,8 +399,9 @@ class FreeBSDHardware(Hardware):
                 self.facts['processor_cores'] = line.split()[4]
 
     def get_memory_facts(self):
-        cmd = subprocess.Popen("/sbin/sysctl vm.stats", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/sbin/sysctl vm.stats", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         for line in out.split('\n'):
             data = line.split()
@@ -412,8 +417,9 @@ class FreeBSDHardware(Hardware):
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
         #
-        cmd = subprocess.Popen("/usr/sbin/swapinfo -m", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/usr/sbin/swapinfo -m", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         lines = out.split('\n')
         if len(lines[-1]) == 0:
@@ -434,12 +440,12 @@ class Network(Facts):
     """
     platform = 'Generic'
 
-    IPV6_SCOPE = { '0' : 'global',
-                   '10' : 'host',
-                   '20' : 'link',
-                   '40' : 'admin',
-                   '50' : 'site',
-                   '80' : 'organization' }
+    IPV6_SCOPE = {'0' : 'global',
+                  '10' : 'host',
+                  '20' : 'link',
+                  '40' : 'admin',
+                  '50' : 'site',
+                  '80' : 'organization'}
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
@@ -588,10 +594,10 @@ class LinuxNetwork(Network):
                         interfaces[iface]['device'] = device
                     if 'ipv6' not in interfaces[iface]:
                         interfaces[iface]['ipv6'] = []
-                    interfaces[iface]['ipv6'].append( {
+                    interfaces[iface]['ipv6'].append({
                         'address': address,
                         'prefix': prefix,
-                        'scope': scope} )
+                        'scope': scope})
 
                     # If this is the default address, update default_ipv6
                     if 'address' in default_ipv6 and default_ipv6['address'] == address:
@@ -705,8 +711,9 @@ class SunOSVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/prtdiag", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            "/usr/sbin/prtdiag", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         for line in out.split('\n'):
             if 'VMware' in line:
@@ -723,7 +730,8 @@ class SunOSVirtual(Virtual):
                 self.facts['virtualization_role'] = 'guest'
         # Check if it's a zone
         if os.path.exists("/usr/bin/zonename"):
-            cmd = subprocess.Popen("/usr/bin/zonename", shell=True,
+            cmd = subprocess.Popen(
+                "/usr/bin/zonename", shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = cmd.communicate()
             if out.rstrip() != "global":
@@ -734,8 +742,9 @@ class SunOSVirtual(Virtual):
         # If it's a zone check if we can detect if our global zone is itself virtualized.
         # Relies on the "guest tools" (e.g. vmware tools) to be installed
         if 'container' in self.facts and self.facts['container'] == 'zone':
-            cmd = subprocess.Popen("/usr/sbin/modinfo", shell=True,
-                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cmd = subprocess.Popen(
+                "/usr/sbin/modinfo", shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = cmd.communicate()
             for line in out.split('\n'):
                 if 'VMware' in line:
@@ -775,7 +784,8 @@ def run_setup(module):
     # ruby-json is ALSO installed, include facter data in the JSON
 
     if os.path.exists("/usr/bin/facter"):
-        cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
+        cmd = subprocess.Popen(
+            "/usr/bin/facter --json", shell=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         facter = True
@@ -792,19 +802,20 @@ def run_setup(module):
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       out, err = cmd.communicate()
-       ohai = True
-       try:
-           ohai_ds = json.loads(out)
-       except:
-           ohai = False
-       if ohai:
-           for (k,v) in ohai_ds.items():
-               if type(v) == str or type(v) == unicode:
-                   k2 = "ohai_%s" % k.replace('-', '_')
-                   setup_options[k2] = v
+        cmd = subprocess.Popen(
+            "/usr/bin/ohai", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        ohai = True
+        try:
+            ohai_ds = json.loads(out)
+        except:
+            ohai = False
+        if ohai:
+            for (k,v) in ohai_ds.items():
+                if type(v) == str or type(v) == unicode:
+                    k2 = "ohai_%s" % k.replace('-', '_')
+                    setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options

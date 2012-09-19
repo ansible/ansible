@@ -66,7 +66,7 @@ def which_cmdfile():
         '/usr/local/nagios/nagios.cfg',
         '/opt/nagios/etc/nagios.cfg',
         '/opt/nagios/nagios.cfg'
-        ]
+    ]
 
     for path in locations:
         if os.path.exists(path):
@@ -86,7 +86,7 @@ def main():
         'unsilence',
         'enable_alerts',
         'disable_alerts'
-        ]
+    ]
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -96,8 +96,8 @@ def main():
             minutes=dict(default=30),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
-            )
         )
+    )
 
     action = module.params['action']
     minutes = module.params['minutes']
@@ -626,7 +626,7 @@ class Nagios(object):
         cmd = [
             "DISABLE_HOST_SVC_NOTIFICATIONS",
             "DISABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -654,7 +654,7 @@ class Nagios(object):
         cmd = [
             "ENABLE_HOST_SVC_NOTIFICATIONS",
             "ENABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -704,8 +704,8 @@ class Nagios(object):
                                                services=self.services)
         # wtf?
         else:
-            self.module.fail_json(msg="unknown action specified: '%s'" % \
-                                      self.action)
+            self.module.fail_json(msg="unknown action specified: '%s'" %
+                                  self.action)
 
         self.module.exit_json(nagios_commands=self.command_results,
                               changed=True)

@@ -149,8 +149,8 @@ def main():
         changed=True 
  
     module.exit_json(changed=changed, msg=', '.join(msgs),
-        configfile=configfile,
-        policy=policy, state=state)
+                     configfile=configfile,
+                     policy=policy, state=state)
 
 #################################################
 # include magic from lib/ansible/module_common.py

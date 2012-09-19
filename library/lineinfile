@@ -83,6 +83,7 @@ def absent(module, name, regexp, backup):
     f.close()
     cre = re.compile(regexp)
     found = []
+
     def matcher(line):
         if cre.search(line):
             found.append(line)

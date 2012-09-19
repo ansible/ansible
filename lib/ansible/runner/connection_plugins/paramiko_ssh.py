@@ -60,8 +60,8 @@ class Connection(object):
 
         try:
             ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
-                key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.port)
+                        key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
+                        timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
@@ -118,7 +118,7 @@ class Connection(object):
                                     'user %s does not exist' % sudo_user)
                             else:
                                 raise errors.AnsibleError('ssh connection ' +
-                                    'closed waiting for password prompt')
+                                                          'closed waiting for password prompt')
                         sudo_output += chunk
                     chan.sendall(self.runner.sudo_pass + '\n')
             except socket.timeout:

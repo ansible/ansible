@@ -29,19 +29,19 @@ except ImportError:
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
+               'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
 
 VIRT_STATE_NAME_MAP = {
-   0 : "running",
-   1 : "running",
-   2 : "running",
-   3 : "paused",
-   4 : "shutdown",
-   5 : "shutdown",
-   6 : "crashed"
+    0 : "running",
+    1 : "running",
+    2 : "running",
+    3 : "paused",
+    4 : "shutdown",
+    5 : "shutdown",
+    6 : "crashed"
 }
 
 class LibvirtConnection(object):
@@ -49,7 +49,7 @@ class LibvirtConnection(object):
     def __init__(self):
 
         cmd = subprocess.Popen("uname -r", shell=True, stdout=subprocess.PIPE,
-                                close_fds=True)
+                               close_fds=True)
         output = cmd.communicate()[0]
 
         if output.find("xen") != -1:
@@ -283,7 +283,7 @@ class Virt(object):
         """
 
         conn = libvirt.openReadOnly(None)
-        if conn == None:
+        if conn is None:
             return (-1,'Failed to open connection to the hypervisor')
         try:
             domV = conn.lookupByName(vmid)
@@ -341,13 +341,13 @@ def core(module):
                 module.fail_json(msg = "%s requires 1 argument: guest" % command)
             res = getattr(v, command)(guest)
             if type(res) != dict:
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
             if type(res) != dict:
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         else:
