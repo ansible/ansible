@@ -214,14 +214,14 @@ class TestUtils(unittest.TestCase):
         assert res == u'hello oh great one'
 
     def test_varReplace_include(self):
-        template = 'hello $FILE{world}'
+        template = 'hello $FILE(world)'
 
         res = ansible.utils.template("test", template, {})
 
         assert res == u'hello world\n'
 
     def test_varReplace_include_script(self):
-        template = 'hello $PIPE{echo world}'
+        template = 'hello $PIPE(echo world)'
 
         res = ansible.utils.template("test", template, {})
 
