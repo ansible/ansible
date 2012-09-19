@@ -21,6 +21,59 @@
 import re
 import os
 
+DOCUMENTATION = '''
+---
+module: lineinfile
+short_description: Ensure a particular line is in a file
+description:
+  - This module will search a file for a line, and ensure that it is present or absent.
+  - This is primarily useful when you want to change a single line in a
+    file only. For other cases, see the M(copy) or M(template) modules.
+version_added: "0.7"
+options:
+  - name:
+      required: true
+      description:
+        - The file to modify
+  - regexp:
+      required: true
+      description:
+        - The regular expression to look for in the file. For I(state=present),
+          the pattern to replace. For I(state=absent), the pattern of the line
+          to remove.
+  - state:
+      required: false
+      choices: [ present, absent ]
+      default: "present"
+      aliases: []
+      description:
+        - Whether the line should be there or not.
+  - line:
+      required: false
+      description:
+        - Required for I(state=present). The line to insert/replace into the
+          file. Must match the value given to C(regexp).
+  - insertafter:
+      required: false
+      default: EOF
+      description:
+        - Used with I(state=present). If specified, the line will be inserted
+          after the specified regular expression. Two special values are
+          available; C(BOF) for inserting the line at the beginning of the
+          file, and C(EOF) for inserting the line at the end of the file.
+      choices: [ BOF, EOF ]
+      default: EOF
+  - backup:
+       required: false
+       default: no
+       description:
+         - Create a backup file including the timestamp information so you can
+           get the original file back if you somehow clobbered it incorrectly.
+examples:
+   - code: lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+   - code: lineinfile name=/etc/sudoers state=absent regexp="^%wheel"
+'''
+
 def present(module, name, regexp, line, insertafter, backup):
     f = open(name, 'rb')
     lines = f.readlines()
