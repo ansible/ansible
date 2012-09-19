@@ -48,7 +48,7 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
-                fn = utils.template(self.runner.basedir, fn, inject)
+                fn = utils.template(fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -57,7 +57,7 @@ class ActionModule(object):
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, results=results)
 
-        source = utils.template(self.runner.basedir, source, inject)
+        source = utils.template(source, inject)
         source = utils.path_dwim(self.runner.basedir, source)
 
         local_md5 = utils.md5(source)
