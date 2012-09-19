@@ -37,7 +37,11 @@ endif
 ifeq ($(OS), FreeBSD)
 DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%s"  "$(GIT_DATE)" +%Y%m%d%H%M)
 else
+ifeq ($(OS), Darwin)
+DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%S"  "$(GIT_DATE)" +%Y%m%d%H%M)
+else
 DATE := $(shell date --date="$(GIT_DATE)" +%Y%m%d%H%M)
+endif
 endif
 
 # RPM build parameters
