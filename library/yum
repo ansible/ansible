@@ -71,7 +71,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf):
         except Exception, e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
-        return [ po_to_nevra(p) for p in pkgs ]
+        return [po_to_nevra(p) for p in pkgs]
 
     else:
 
@@ -81,7 +81,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf):
         rc2,out2,err2 = run(cmd)
         if rc == 0 and rc2 == 0:
             out += out2
-            return [ p for p in out.split('\n') if p.strip() ]
+            return [p for p in out.split('\n') if p.strip()]
         else:
             module.fail_json(msg='Error from repoquery: %s' % err + err2)
             
@@ -101,14 +101,14 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf):
         except Exception, e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
             
-        return [ po_to_nevra(p) for p in pkgs ]
+        return [po_to_nevra(p) for p in pkgs]
 
     else:
 
         cmd = repoq + ["--qf", qf, pkgspec]
         rc,out,err = run(cmd)
         if rc == 0:
-            return [ p for p in out.split('\n') if p.strip() ]
+            return [p for p in out.split('\n') if p.strip()]
         else:
             module.fail_json(msg='Error from repoquery: %s' % err)
             
@@ -136,7 +136,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf):
             if pkg in updates:
                 retpkgs.append(pkg)
             
-        return set([ po_to_nevra(p) for p in retpkgs ])
+        return set([po_to_nevra(p) for p in retpkgs])
 
     else:
 
@@ -144,7 +144,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf):
         rc,out,err = run(cmd)
         
         if rc == 0:
-            return set([ p for p in out.split('\n') if p.strip() ])
+            return set([p for p in out.split('\n') if p.strip()])
         else:
             module.fail_json(msg='Error from repoquery: %s' % err)
             
@@ -168,7 +168,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf):
         except Exception, e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
-        return set([ po_to_nevra(p) for p in pkgs ])
+        return set([po_to_nevra(p) for p in pkgs])
 
     else:
 
@@ -178,7 +178,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf):
         rc2,out2,err2 = run(cmd)
         if rc == 0 and rc2 == 0:
             out += out2
-            return set([ p for p in out.split('\n') if p.strip() ])
+            return set([p for p in out.split('\n') if p.strip()])
         else:
             module.fail_json(msg='Error from repoquery: %s' % err + err2)
             
@@ -188,7 +188,7 @@ def local_nvra(path):
     """return nvra of a local rpm passed in"""
     
     cmd = ['/bin/rpm', '-qp' ,'--qf', 
-            '%{name}-%{version}-%{release}.%{arch}\n', path ]
+           '%{name}-%{version}-%{release}.%{arch}\n', path]
     rc, out, err = run(cmd)
     if rc != 0:
         return None
@@ -225,7 +225,7 @@ def repolist(repoq, qf="%{repoid}"):
     rc,out,err = run(cmd)
     ret = []
     if rc == 0:
-        ret = set([ p for p in out.split('\n') if p.strip() ])
+        ret = set([p for p in out.split('\n') if p.strip()])
     return ret
 
 def list_stuff(module, conf_file, stuff):
@@ -236,21 +236,22 @@ def list_stuff(module, conf_file, stuff):
         repoq += ['-c', conf_file]
 
     if stuff == 'installed':
-        return [ pkg_to_dict(p) for p in is_installed(module, repoq, '-a', conf_file, qf=qf) if p.strip() ]
+        return [pkg_to_dict(p) for p in is_installed(module, repoq, '-a', conf_file, qf=qf) if p.strip()]
     elif stuff == 'updates':
-        return [ pkg_to_dict(p) for p in is_update(module, repoq, '-a', conf_file, qf=qf) if p.strip() ]
+        return [pkg_to_dict(p) for p in is_update(module, repoq, '-a', conf_file, qf=qf) if p.strip()]
     elif stuff == 'available':
-        return [ pkg_to_dict(p) for p in is_available(module, repoq, '-a', conf_file, qf=qf) if p.strip() ]
+        return [pkg_to_dict(p) for p in is_available(module, repoq, '-a', conf_file, qf=qf) if p.strip()]
     elif stuff == 'repos':
-        return [ dict(repoid=name, state='enabled') for name in repolist(repoq) if name.strip() ]
+        return [dict(repoid=name, state='enabled') for name in repolist(repoq) if name.strip()]
     else:
-        return [ pkg_to_dict(p) for p in is_installed(module, repoq, stuff, conf_file, qf=qf) + is_available(module, repoq, stuff, conf_file, qf=qf) if p.strip() ]
+        return [pkg_to_dict(p) for p in is_installed(module, repoq, stuff, conf_file, qf=qf) + is_available(module, repoq, stuff, conf_file, qf=qf) if p.strip()]
 
 def run(command):
 
     try:
         cmd = subprocess.Popen(command,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
         rc = 1

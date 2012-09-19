@@ -28,7 +28,7 @@ class InventoryScript(object):
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
-        cmd = [ filename, "--list" ]
+        cmd = [filename, "--list"]
         sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = sp.communicate()
         self.data = stdout

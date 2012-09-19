@@ -45,9 +45,9 @@ class ActionModule(object):
         self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,
-           async_module=module_path,
-           async_jid=self.runner.generated_jid,
-           async_limit=self.runner.background,
-           inject=inject
-        )
+                                           async_module=module_path,
+                                           async_jid=self.runner.generated_jid,
+                                           async_limit=self.runner.background,
+                                           inject=inject
+                                           )
 

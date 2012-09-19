@@ -31,8 +31,8 @@ def get_version(dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
     cmd = "svn info"
-    revision = filter(lambda l: re.search('Revision',l) != None,os.popen(cmd).read().splitlines())
-    url = filter(lambda l: re.search('^URL',l) != None,os.popen(cmd).read().splitlines())
+    revision = filter(lambda l: re.search('Revision', l) is not None, os.popen(cmd).read().splitlines())
+    url = filter(lambda l: re.search('^URL', l) is not None, os.popen(cmd).read().splitlines())
     return [revision[0],url[0]]
 
 def checkout(repo, dest):
@@ -55,7 +55,7 @@ def has_local_mods(dest):
     os.chdir(dest)
     cmd = "svn status"
     lines = os.popen(cmd).read().splitlines()
-    filtered = filter(lambda c: re.search('^\\?.*$',c) == None,lines)
+    filtered = filter(lambda c: re.search('^\\?.*$', c) is None, lines)
     return len(filtered) > 0
 
 def reset(dest,force):

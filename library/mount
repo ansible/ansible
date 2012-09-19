@@ -147,9 +147,9 @@ def mount(**kwargs):
 
     name = kwargs['name']
     if os.path.ismount(name):
-        cmd = [ '/bin/mount', '-o', 'remount', name ]
+        cmd = ['/bin/mount', '-o', 'remount', name]
     else:
-        cmd = [ '/bin/mount', name ]
+        cmd = ['/bin/mount', name]
 
     call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = call.communicate()

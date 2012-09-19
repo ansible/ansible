@@ -64,7 +64,7 @@ def keyfile(user, write=False):
 
     if not os.path.exists( keysfile):
         try:
-            f = open(keysfile, "w") #touches file so we can set ownership and perms
+            f = open(keysfile, "w") # touches file so we can set ownership and perms
         finally:
             f.close()
 
@@ -84,7 +84,7 @@ def readkeys(filename):
 def writekeys( filename, keys):
 
     f = open(filename,"w")
-    f.writelines( (key + "\n" for key in keys) )
+    f.writelines((key + "\n" for key in keys))
     f.close()
 
 def enforce_state(module, params):
@@ -121,9 +121,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-           user  = dict(required=True),
-           key   = dict(required=True),
-           state = dict(default='present', choices=['absent','present'])
+            user  = dict(required=True),
+            key   = dict(required=True),
+            state = dict(default='present', choices=['absent','present'])
         )
     )
 

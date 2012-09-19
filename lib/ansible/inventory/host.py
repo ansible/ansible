@@ -20,7 +20,7 @@ import ansible.constants as C
 class Host(object):
     ''' a single ansible host '''
 
-    __slots__ = [ 'name', 'vars', 'groups' ]
+    __slots__ = ['name', 'vars', 'groups']
 
     def __init__(self, name=None, port=None):
 

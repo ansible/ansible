@@ -153,7 +153,7 @@ def main():
     if module.boolean(p['update_cache']):
         cache.update()
         cache.open(progress=None)
-        if p['package'] == None:
+        if p['package'] is None:
             module.exit_json(changed=False)
 
     force_yes = module.boolean(p['force'])
@@ -171,10 +171,10 @@ def main():
                 default_release=p['default_release'],
                 install_recommends=install_recommends,
                 force=force_yes)
-    elif p['state'] in [ 'installed', 'present' ]:
+    elif p['state'] in ['installed', 'present']:
         install(module, packages, cache, default_release=p['default_release'],
-                  install_recommends=install_recommends,force=force_yes)
-    elif p['state'] in [ 'removed', 'absent' ]:
+                install_recommends=install_recommends,force=force_yes)
+    elif p['state'] in ['removed', 'absent']:
         remove(module, packages, cache, purge = module.boolean(p['purge']))
 
 # this is magic, see lib/ansible/module_common.py

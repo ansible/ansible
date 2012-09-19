@@ -26,19 +26,19 @@ import os
 class Play(object):
 
     __slots__ = [
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir'
+        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
+        'handlers', 'remote_user', 'remote_port',
+        'sudo', 'sudo_user', 'transport', 'playbook',
+        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
+        'basedir'
     ]
 
     # to catch typos and so forth -- these are userland names
     # and don't line up 1:1 with how they are stored
     VALID_KEYS = [
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'user', 'port', 'include',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial'
+        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
+        'tasks', 'handlers', 'user', 'port', 'include',
+        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial'
     ]
 
     # *************************************************
@@ -85,8 +85,8 @@ class Play(object):
 
         if self.tags is None:
             self.tags = []
-        elif type(self.tags) in [ str, unicode ]:
-            self.tags = [ self.tags ]
+        elif type(self.tags) in [str, unicode]:
+            self.tags = [self.tags]
         elif type(self.tags) != list:
             self.tags = []
 
@@ -228,7 +228,7 @@ class Play(object):
     def _update_vars_files_for_host(self, host):
 
         if type(self.vars_files) != list:
-            self.vars_files = [ self.vars_files ]
+            self.vars_files = [self.vars_files]
 
         if (host is not None):
             self.playbook.SETUP_CACHE[host].update(self.vars)
@@ -236,7 +236,7 @@ class Play(object):
             inventory = self.playbook.inventory
             hostrec = inventory.get_host(host)
             groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)
-            groups = [ g.name for g in groupz ]
+            groups = [g.name for g in groupz]
             basedir = inventory.basedir()
             if basedir is not None:
                 for x in groups:

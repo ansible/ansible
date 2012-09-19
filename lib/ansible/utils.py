@@ -144,15 +144,15 @@ def parse_json(raw_data):
                 raise errors.AnsibleError("failed to parse: %s" % raw_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ]:
+                if value.lower() in ['true', '1']:
                     value = True
-                elif value.lower() in [ 'false', '0' ]:
+                elif value.lower() in ['false', '0']:
                     value = False
             if key == 'rc':
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : raw_data }
+            return {"failed" : True, "parsed" : False, "msg" : raw_data}
         return results
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
@@ -387,7 +387,8 @@ def _gitinfo():
                 offset = time.timezone
             else:
                 offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(
+                branch, commit,
                 time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
@@ -415,62 +416,81 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
-    async_opts=False, connect_opts=False, subset_opts=False):
+def base_parser(
+    constants=C, usage="", output_opts=False, runas_opts=False, 
+    async_opts=False, connect_opts=False, subset_opts=False
+):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
-    parser.add_option('-v','--verbose', default=False, action="callback",
+    parser.add_option(
+        '-v','--verbose', default=False, action="callback",
         callback=increment_debug, help="verbose mode (-vvv for more)")
 
-    parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
+    parser.add_option(
+        '-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
-    parser.add_option('-i', '--inventory-file', dest='inventory',
+    parser.add_option(
+        '-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
-    parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
+    parser.add_option(
+        '-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
-    parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+    parser.add_option(
+        '--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
-    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+    parser.add_option(
+        '-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
-    parser.add_option('-M', '--module-path', dest='module_path',
+    parser.add_option(
+        '-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=constants.DEFAULT_MODULE_PATH)
 
     if subset_opts:
-        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
+        parser.add_option(
+            '-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
             help='further limit selected hosts to an additional pattern')
 
-    parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
+    parser.add_option(
+        '-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
 
     if output_opts:
-        parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
+        parser.add_option(
+            '-o', '--one-line', dest='one_line', action='store_true',
             help='condense output')
-        parser.add_option('-t', '--tree', dest='tree', default=None,
+        parser.add_option(
+            '-t', '--tree', dest='tree', default=None,
             help='log output to this directory')
 
     if runas_opts:
-        parser.add_option("-s", "--sudo", default=False, action="store_true",
+        parser.add_option(
+            "-s", "--sudo", default=False, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
-        parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
+        parser.add_option(
+            '-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
             default=None)   # Can't default to root because we need to detect when this option was given
-        parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
+        parser.add_option(
+            '-u', '--user', default=constants.DEFAULT_REMOTE_USER,
             dest='remote_user',
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
 
     if connect_opts:
-        parser.add_option('-c', '--connection', dest='connection',
-                          default=C.DEFAULT_TRANSPORT,
-                          help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+        parser.add_option(
+            '-c', '--connection', dest='connection',
+            default=C.DEFAULT_TRANSPORT,
+            help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
 
     if async_opts:
-        parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
+        parser.add_option(
+            '-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
             dest='poll_interval',
             help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
-        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
+        parser.add_option(
+            '-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds (default=N/A)')
 
     return parser

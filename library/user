@@ -304,7 +304,7 @@ def main():
         result['stderr'] = err
     if user_exists(name):
         info = user_info(name)
-        if info == False:
+        if info is False:
             result['msg'] = "failed to look up user name: %s" % name
             result['failed'] = True
         result['uid'] = info[2]

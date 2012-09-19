@@ -89,7 +89,7 @@ def _get_service_status(name, pattern):
                         break
 
     # Check if we got upstart on the system and then the job state
-    if INITCTL != None and running is None:
+    if INITCTL is not None and running is None:
         # check the job status by upstart response
         initctl_rc, initctl_status_stdout, initctl_status_stderr = _run("%s status %s" % (INITCTL, name))
         if initctl_status_stdout.find("stop/waiting") != -1:
@@ -98,14 +98,14 @@ def _get_service_status(name, pattern):
             running = True
 
     # if the job status is still not known check it by response code
-    if running == None:
+    if running is None:
         if rc == 3:
             running = False
         elif rc == 0:
             running = True
 
     # if the job status is still not known check it by status output keywords
-    if running == None:
+    if running is None:
         # first tranform the status output that could irritate keyword matching
         cleanout = status_stdout.lower().replace(name.lower(), '')
         if "stop" in cleanout:
@@ -122,7 +122,7 @@ def _get_service_status(name, pattern):
             running = False
 
     # if the job status is still not known check it by special conditions
-    if running == None:
+    if running is None:
         if name == 'iptables' and status_stdout.find("ACCEPT") != -1:
             # iptables status command output is lame
             # TODO: lookup if we can use a return code for this instead?
@@ -203,7 +203,7 @@ def main():
         out += out_enable
         err += err_enable
 
-    if state and running == None:
+    if state and running is None:
         module.fail_json(msg="failed determining the current service state => state stays unchanged", changed=False)
 
     elif state:

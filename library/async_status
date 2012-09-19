@@ -56,7 +56,7 @@ def main():
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1)
         else:
             module_fail_json(ansible_job_id=jid, results_file=log_path,
-                msg="Could not parse job output: %s" % data)
+                             msg="Could not parse job output: %s" % data)
 
     if not 'started' in data:
         data['finished'] = 1

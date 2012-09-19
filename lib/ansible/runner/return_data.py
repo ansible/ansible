@@ -20,7 +20,7 @@ from ansible import utils
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
-    __slots__ = [ 'result', 'comm_ok', 'host' ]
+    __slots__ = ['result', 'comm_ok', 'host']
 
     def __init__(self, conn=None, host=None, result=None, comm_ok=True):
 
@@ -37,7 +37,7 @@ class ReturnData(object):
         self.result = result
         self.comm_ok = comm_ok
 
-        if type(self.result) in [ str, unicode ]:
+        if type(self.result) in [str, unicode]:
             self.result = utils.parse_json(self.result)
 
         if self.host is None:

@@ -31,9 +31,9 @@ class Task(object):
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
-         'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action', 'transport'
+        'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
+        'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
+        'delegate_to', 'local_action', 'transport'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -48,7 +48,7 @@ class Task(object):
 
         # load various attributes
         self.name         = ds.get('name', None)
-        self.tags         = [ 'all' ]
+        self.tags         = ['all']
         self.register     = ds.get('register', None)
 
         # Both are defined
@@ -87,7 +87,7 @@ class Task(object):
 
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
-            self.notify = [ self.notify ]
+            self.notify = [self.notify]
 
         # split the action line into a module name + arguments
         tokens = self.action.split(None, 1)
@@ -128,7 +128,7 @@ class Task(object):
         # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)
         if apply_tags is not None:
-            if type(apply_tags) in [ str, unicode ]:
+            if type(apply_tags) in [str, unicode]:
                 self.tags.append(apply_tags)
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)

@@ -34,8 +34,8 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list' ]
+    __slots__ = ['host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
+                 'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -62,14 +62,14 @@ class Inventory(object):
         # whether the inventory file is a script
         self._is_script = False
 
-        if type(host_list) in [ str, unicode ]:
+        if type(host_list) in [str, unicode]:
             if host_list.find(",") != -1:
                 host_list = host_list.split(",")
-                host_list = [ h for h in host_list if h and h.strip() ]
+                host_list = [h for h in host_list if h and h.strip()]
 
         if type(host_list) == list:
             all = Group('all')
-            self.groups = [ all ]
+            self.groups = [all]
             for x in host_list:
                 if x.find(":") != -1:
                     tokens = x.split(":",1)
@@ -101,8 +101,8 @@ class Inventory(object):
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
         patterns = pattern.replace(";",":").split(":")
-        positive_patterns = [ p for p in patterns if not p.startswith("!") ]
-        negative_patterns = [ p for p in patterns if p.startswith("!") ]
+        positive_patterns = [p for p in patterns if not p.startswith("!")]
+        negative_patterns = [p for p in patterns if p.startswith("!")]
 
         # find hosts matching positive patterns
         hosts = self._get_hosts(positive_patterns)
@@ -110,24 +110,24 @@ class Inventory(object):
         # exclude hosts mentioned in a negative pattern
         if len(negative_patterns):
             exclude_hosts = self._get_hosts(negative_patterns)
-            hosts = [ h for h in hosts if h not in exclude_hosts ]
+            hosts = [h for h in hosts if h not in exclude_hosts]
 
         # exclude hosts not in a subset, if defined
         if self._subset:
-            positive_subsetp = [ p for p in self._subset if not p.startswith("!") ]
-            negative_subsetp = [ p for p in self._subset if p.startswith("!") ]
+            positive_subsetp = [p for p in self._subset if not p.startswith("!")]
+            negative_subsetp = [p for p in self._subset if p.startswith("!")]
             if len(positive_subsetp):
-                positive_subset = [ h.name for h in self._get_hosts(positive_subsetp) ]
-                hosts = [ h for h in hosts if (h.name in positive_subset) ]
+                positive_subset = [h.name for h in self._get_hosts(positive_subsetp)]
+                hosts = [h for h in hosts if (h.name in positive_subset)]
             if len(negative_subsetp):
-                negative_subset = [ h.name for h in self._get_hosts(negative_subsetp) ]
-                hosts = [ h for h in hosts if (h.name not in negative_subset)]
+                negative_subset = [h.name for h in self._get_hosts(negative_subsetp)]
+                hosts = [h for h in hosts if (h.name not in negative_subset)]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
-            hosts = [ h for h in hosts if h.name in self._restriction ]
+            hosts = [h for h in hosts if h.name in self._restriction]
         if self._also_restriction is not None:
-            hosts = [ h for h in hosts if h.name in self._also_restriction ]
+            hosts = [h for h in hosts if h.name in self._also_restriction]
 
         return sorted(hosts, key=lambda x: x.name)
 
@@ -188,7 +188,7 @@ class Inventory(object):
             right = 0
         left=int(left)
         right=int(right)
-        enumerated = [ h for (i,h) in enumerated if i>=left and i<=right ]
+        enumerated = [h for (i,h) in enumerated if i>=left and i<=right]
         return enumerated
 
     # TODO: cache this logic so if called a second time the result is not recalculated
@@ -279,7 +279,7 @@ class Inventory(object):
             # FIXME: this is a bit redundant with host.py and should share code
             results['inventory_hostname'] = hostname
             results['inventory_hostname_short'] = hostname.split('.')[0]
-            groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
+            groups = [g.name for g in host.get_groups() if g.name != 'all']
             results['group_names'] = sorted(groups)
 
             return results
@@ -293,10 +293,10 @@ class Inventory(object):
         self.groups.append(group)
 
     def list_hosts(self, pattern="all"):
-        return [ h.name for h in self.get_hosts(pattern) ]
+        return [h.name for h in self.get_hosts(pattern)]
 
     def list_groups(self):
-        return sorted([ g.name for g in self.groups ], key=lambda x: x.name)
+        return sorted([g.name for g in self.groups], key=lambda x: x.name)
 
     # TODO: remove this function
     def get_restriction(self):
@@ -309,7 +309,7 @@ class Inventory(object):
         reasons.
         """
         if type(restriction) != list:
-            restriction = [ restriction ]
+            restriction = [restriction]
         self._restriction = restriction
 
     def also_restrict_to(self, restriction):
@@ -318,7 +318,7 @@ class Inventory(object):
         to implement serial behavior.
         """
         if type(restriction) != list:
-            restriction = [ restriction ]
+            restriction = [restriction]
         self._also_restriction = restriction
     
     def subset(self, subset_pattern):

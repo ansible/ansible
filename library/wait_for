@@ -54,7 +54,7 @@ def main():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(5)
             try:
-                s.connect( (host, port) )
+                s.connect((host, port))
                 s.close()
                 time.sleep(1)
             except:
@@ -69,7 +69,7 @@ def main():
         while datetime.datetime.now() < end:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                s.connect( (host, port) )
+                s.connect((host, port))
                 s.close()
                 break
             except:

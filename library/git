@@ -46,7 +46,7 @@ def has_local_mods(dest):
     os.chdir(dest)
     cmd = "git status -s"
     lines = os.popen(cmd).read().splitlines()
-    lines = filter(lambda c: re.search('^\\?\\?.*$',c) == None,lines)
+    lines = filter(lambda c: re.search('^\\?\\?.*$',c) is None, lines)
     return len(lines) > 0
 
 def reset(module,dest,force):
