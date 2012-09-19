@@ -181,3 +181,20 @@ class TestPlaybook(unittest.TestCase):
        )
        play = ansible.playbook.Play(playbook, playbook.playbook[0], os.getcwd())
        assert play.hosts == ';'.join(('host1', 'host2', 'host3'))
+
+   def test_results_list(self):
+       # Test that we can iterate over the lines of a command's stdout in a register variable.
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'results_list.yml'),
+           host_list='test/ansible_hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       result = playbook.run()
+       self.assertIn('localhost', result)
+       self.assertIn('ok', result['localhost'])
+       self.assertEqual(result['localhost']['ok'], 6)
+       self.assertIn('failures', result['localhost'])
+       self.assertEqual(result['localhost']['failures'], 0)
