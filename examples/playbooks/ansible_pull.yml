@@ -53,4 +53,4 @@
       action: template src=templates/etc_cron.d_ansible-pull.j2 dest=/etc/cron.d/ansible-pull owner=root group=root mode=0644
 
     - name: Create logrotate entry for ansible-pull.log
-      action: template src=templates/etc_logrotate.d_ansible-pull.j2 dest=/etc/logrorate.d/ansible-pull owner=root group=root mode=0644
+      action: template src=templates/etc_logrotate.d_ansible-pull.j2 dest=/etc/logrotate.d/ansible-pull owner=root group=root mode=0644

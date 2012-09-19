@@ -193,8 +193,10 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks=test_callbacks
        )
        result = playbook.run()
-       self.assertIn('localhost', result)
-       self.assertIn('ok', result['localhost'])
-       self.assertEqual(result['localhost']['ok'], 6)
-       self.assertIn('failures', result['localhost'])
-       self.assertEqual(result['localhost']['failures'], 0)
+       assert 'localhost' in result
+       assert 'ok' in result['localhost']
+       assert result['localhost']['ok'] == 6
+       assert 'failures' in result['localhost']
+       assert result['localhost']['failures'] == 0
+
+
