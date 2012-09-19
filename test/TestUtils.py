@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        res = ansible.utils.varLookup('${data.who}', vars)
+        res = ansible.utils._varLookup('data.who', vars)
 
         assert sorted(res) == sorted(vars['data']['who'])
 
@@ -209,23 +209,9 @@ class TestUtils(unittest.TestCase):
             'person': 'one',
         }
 
-        res = ansible.utils.template(None, template, vars)
+        res = ansible.utils.template(template, vars)
 
         assert res == u'hello oh great one'
-
-    def test_varReplace_include(self):
-        template = 'hello $FILE(world)'
-
-        res = ansible.utils.template("test", template, {})
-
-        assert res == u'hello world\n'
-
-    def test_varReplace_include_script(self):
-        template = 'hello $PIPE(echo world)'
-
-        res = ansible.utils.template("test", template, {})
-
-        assert res == u'hello world\n'
 
     #####################################
     ### Template function tests
