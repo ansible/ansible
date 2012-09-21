@@ -32,12 +32,12 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject=None):
+    def run(self, conn, tmp, module_name, module_args, inject=None):
         ''' handler for assemble operations '''
 
         # FIXME: since assemble is ported over to the use the new common logic, this method
         # is actually unneccessary as it can decide to daisychain via it's own module returns.
         # make assemble return daisychain_args and this will go away.
 
-        return self.runner._execute_module(conn, tmp, 'assemble', self.runner.module_args, inject=inject).daisychain('file')
+        return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject).daisychain('file', module_args)
 

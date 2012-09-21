@@ -32,16 +32,15 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject):
+    def run(self, conn, tmp, module_name, module_args, inject):
         ''' transfer the given module name, plus the async module, then run it '''
 
         # shell and command module are the same
-        module_args = self.runner.module_args
         if module_name == 'shell':
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        (module_path, is_new_style) = self.runner._copy_module(conn, tmp, module_name, inject)
+        (module_path, is_new_style) = self.runner._copy_module(conn, tmp, module_name, module_args, inject)
         self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,

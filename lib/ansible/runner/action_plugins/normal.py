@@ -33,15 +33,15 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject):
+    def run(self, conn, tmp, module_name, module_args, inject):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
         # shell and command are the same module
         if module_name == 'shell':
             module_name = 'command'
-            self.runner.module_args += " #USE_SHELL"
+            module_args += " #USE_SHELL"
 
-        vv("REMOTE_MODULE %s %s" % (module_name, self.runner.module_args), host=conn.host)
-        return self.runner._execute_module(conn, tmp, module_name, self.runner.module_args, inject=inject)
+        vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
+        return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject)
 
 
