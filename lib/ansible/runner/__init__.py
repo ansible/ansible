@@ -344,7 +344,7 @@ class Runner(object):
         try:
             delegate_to = inject.get('delegate_to', None)
             if delegate_to is not None:
-                actual_host = delegate_to    
+                actual_host = delegate_to
             conn = self.connector.connect(actual_host, port)
             if delegate_to is not None:
                 conn._delegate_for = host
@@ -355,13 +355,19 @@ class Runner(object):
         module_name = utils.template(self.module_name, inject)
 
         tmp = ''
-        if self.module_name != 'raw':
+        if self.module_name != 'raw' and self.module_name not in self.action_plugins:
             tmp = self._make_tmp_path(conn)
         result = None
 
+        # Action plugins are executed differently than normal modules.
         handler = self.action_plugins.get(self.module_name, None)
+        # If this is an action plugin then we just run it because we
+        # don't care if it's async or not (essentially this is a hard
+        # override).
         if handler:
             result = handler.run(conn, tmp, module_name, inject)
+        # Otherwise we run the module THROUGH the normal or async
+        # action plugins.
         else:
             if self.background == 0:
                 result = self.action_plugins['normal'].run(conn, tmp, module_name, inject)
@@ -386,7 +392,7 @@ class Runner(object):
 
             del result.result['daisychain']
 
-        if self.module_name != 'raw':
+        if self.module_name != 'raw' and self.module_name not in self.action_plugins:
             self._delete_remote_files(conn, tmp)
         conn.close()
 
@@ -582,7 +588,26 @@ class Runner(object):
 
         hosts = [ (self,x) for x in hosts ]
         results = None
-        if self.forks > 1:
+
+        # Check if this is an action plugin. Some of them are designed
+        # to be ran once per group of hosts. Example module: pause,
+        # run once per hostgroup, rather than pausing once per each
+        # host.
+        p = self.action_plugins.get(self.module_name, None)
+        if p and p.BYPASS_HOST_LOOP:
+            # Expose the current hostgroup to the bypassing plugins
+            self.host_set = hosts
+            # We aren't iterating over all the hosts in this
+            # group. So, just pick the first host in our group to
+            # construct the conn object with.
+            result_data = self._executor(hosts[0][1]).result
+            # Create a ResultData item for each host in this group
+            # using the returned result. If we didn't do this we would
+            # get false reports of dark hosts.
+            results = [ ReturnData(host=h[1], result=result_data, comm_ok=True) \
+                           for h in hosts ]
+            del self.host_set
+        elif self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
             results = [ self._executor(h[1]) for h in hosts ]
