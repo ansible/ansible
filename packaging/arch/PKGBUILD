@@ -36,9 +36,7 @@ package() {
   cp ./library/* ${pkgdir}/usr/share/ansible/
   python setup.py install -O1 --root=${pkgdir}
 
-  install -D docs/man/man1/ansible.1 ${pkgdir}/usr/share/man/man1/ansible.1
-  install -D docs/man/man1/ansible-playbook.1 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
+  install docs/man/man1/*.1 ${pkgdir}/usr/share/man/man1/
 
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible.1
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
+  gzip -9 ${pkgdir}/usr/share/man/man1/*.1
 }
