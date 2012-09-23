@@ -31,6 +31,7 @@ import time
 import StringIO
 import imp
 import glob
+import subprocess
 
 VERBOSITY=0
 
@@ -182,7 +183,7 @@ def _varLookup(name, vars):
 _KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
 
 def varLookup(varname, vars):
-    ''' helper function used by varReplace '''
+    ''' helper function used by with_items '''
 
     m = _KEYCRE.search(varname)
     if not m:
@@ -206,10 +207,9 @@ def varReplace(raw, vars):
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(2)
 
         try:
-            replacement = unicode(_varLookup(varname, vars))
+            replacement = unicode(_varLookup(m.group(2), vars))
         except VarNotFoundException:
             replacement = m.group()
 
@@ -220,7 +220,42 @@ def varReplace(raw, vars):
 
     return ''.join(done)
 
-def template(text, vars):
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\}]+)\)")
+def varReplaceFilesAndPipes(basedir, raw):
+    done = [] # Completed chunks to return
+
+    while raw:
+        m = _FILEPIPECRE.search(raw)
+        if not m:
+            done.append(raw)
+            break
+
+        # Determine replacement value (if unknown variable then preserve
+        # original)
+
+        if m.group(1) == "FILE":
+            try:
+                f = open(path_dwim(basedir, m.group(2)), "r")
+            except IOError:
+                raise VarNotFoundException()
+            replacement = f.read()
+            f.close()
+        elif m.group(1) == "PIPE":
+            p = subprocess.Popen(m.group(2), shell=True, stdout=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if p.returncode != 0:
+                raise VarNotFoundException()
+            replacement = stdout
+
+        start, end = m.span()
+        done.append(raw[:start])    # Keep stuff leading up to token
+        done.append(replacement)    # Append replacement value
+        raw = raw[end:]             # Continue with remainder of string
+
+    return ''.join(done)
+
+
+def template(basedir, text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -235,6 +270,7 @@ def template(text, vars):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
         text = varReplace(unicode(text), vars)
+    text = varReplaceFilesAndPipes(basedir, text)
     return text
 
 def template_from_file(basedir, path, vars):
@@ -251,7 +287,7 @@ def template_from_file(basedir, path, vars):
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
-    return template(res, vars)
+    return template(basedir, res, vars)
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
