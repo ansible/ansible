@@ -343,10 +343,13 @@ class Runner(object):
         actual_host = host
         try:
             delegate_to = inject.get('delegate_to', None)
+            alternative_host = inject.get('ansible_ssh_host', None)
             if delegate_to is not None:
-                actual_host = delegate_to    
+                actual_host = delegate_to
+            elif alternative_host is not None:
+                actual_host = alternative_host
             conn = self.connector.connect(actual_host, port)
-            if delegate_to is not None:
+            if delegate_to is not None or alternative_host is not None:
                 conn._delegate_for = host
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
