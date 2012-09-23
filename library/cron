@@ -105,17 +105,25 @@ def _update_job(name,job,tmpfile,addlinesfunction):
 
 def main():
     # Options:
-    # name=name of cron job (added as comment)
-    # user=defaults to the user of your connection
-    # job=cron time and command
-    # state=absent|present (defaults to present)
+    # name    = name of cron job                        ( added as comment)
+    # user    = defaults to the user of your connection
+    # job     = cron time and command
+    # minute  = minute when the job would run           ( 0-59, *, */2, etc)
+    # hour    = hour when the job would run             ( 0-23, *, */2, etc)
+    # day     = day of the month                        ( 1-31, *, */2, etc)
+    # month   = month of the year                       ( 1-12, *, */2, etc)
+    # weekday = day of the week                         ( 0-7 Sunday thru Saturday, or 'mon', 'tue', etc)
+    # state   = absent|present                          ( defaults to present)
+    # backup  = make a backup of the cron before changing it.
+    #
+    # The minute/hour/day/month/weekday default to '*'.
     #
     # The following example playbooks:
-    # - action: cron name="check dirs" time="* * 5,2 * * ls -alh > /dev/null"
+    # - action: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
     # - name: do the job
-    #   action: name="do the job" cron job="* * 5,2 * * /some/dir/job.sh"
+    #   action: name="do the job" cron hour="5,2" job="/some/dir/job.sh"
     # - name: no job
-    #   action: name="an old job" cron job="* * 5,2 * * /some/dir/job.sh" state=absent
+    #   action: name="an old job" cron job="/some/dir/job.sh" state=absent
     #
     # Would produce:
     # # Ansible: check dirs
@@ -137,16 +145,29 @@ def main():
         argument_spec = dict(
             name=dict(required=True),
             user=dict(required=False),
-            job=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent'])
+            job=dict(required=False),
+            state=dict(default='present', choices=['present', 'absent']),
+            backup=dict(default=False, choices=BOOLEANS),
+            minute=dict(default='*'),
+            hour=dict(default='*'),
+            day=dict(default='*'),
+            month=dict(default='*'),
+            weekday=dict(default='*')
         )
     )
 
+    backup     = module.boolean(module.params.get('backup', False))
     name       = module.params['name']
     user       = module.params['user']
     job        = module.params['job']
+    minute     = module.params['minute']
+    hour       = module.params['hour']
+    day        = module.params['day']
+    month      = module.params['month']
+    weekday    = module.params['weekday']
     do_install = module.params['state'] == 'present'
     changed    = False
+    job = "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
 
     if not user:
         user = ""
@@ -155,11 +176,17 @@ def main():
 
     rc, out, err, status = (0, None, None, None)
 
+    if job is None and do_install:
+        module.fail_json(msg="You must specify 'job' to install a new cron job")
     tmpfile = tempfile.NamedTemporaryFile()
     (rc, out, err) = get_jobs_file(user,tmpfile.name)
     if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
         module.fail_json(msg=err)
-    old_job = find_job(name,tmpfile.name)
+    backupfile = tempfile.NamedTemporaryFile(prefix='crontab',delete=False)
+    (rc, out, err) = get_jobs_file(user,backupfile.name)
+    if rc != 0 and rc != 1:
+        module.fail_json(msg=err)
+    old_job = find_job(name,backupfile.name)
     if do_install:
         if len(old_job) == 0:
             (rc, out, err) = add_job(name,job,tmpfile.name)
@@ -174,6 +201,8 @@ def main():
     if (rc != 0):
         module.fail_json(msg=err)
     if changed:
+        if backup:
+            module.backup_local(backupfile.name)
         (rc, out, err) = install_jobs(user,tmpfile.name)
         if (rc != 0):
             module.fail_json(msg=err)
@@ -182,7 +211,11 @@ def main():
     for j in get_jobs(tmpfile.name):
         jobnames.append(j[0])
     tmpfile.close()
-    module.exit_json(changed=changed,jobs=jobnames)
+    backupfile.close()
+    if not backup:
+        module.exit_json(changed=changed,jobs=jobnames)
+    else:
+        module.exit_json(changed=changed,jobs=jobnames,backup=backupfile.name)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

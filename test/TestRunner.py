@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import tempfile
+import filecmp
 
 from nose.plugins.skip import SkipTest
 
@@ -39,6 +40,10 @@ class TestRunner(unittest.TestCase):
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
         self.stage_dir = self._prepare_stage_dir()
+        self._run('shell', [ "crontab -l > /tmp/backupcron.txt" ])
+
+    def tearDown(self):
+        result = self._run('shell', [ "crontab /tmp/backupcron.txt" ])
 
     def _prepare_stage_dir(self):
         stage_path = os.path.join(self.test_dir, 'test_data')
@@ -78,29 +83,54 @@ class TestRunner(unittest.TestCase):
         result = self._run('ping', [])
         assert "ping" in result
 
+    def verify_cron_state(self,newstate):
+        result = self._run('shell', [ "crontab -l > /tmp/remotecrontab.txt" ])
+        f = open('/tmp/localcrontab.txt','w')
+        f.write(newstate)
+        f.close()
+        assert filecmp.cmp('/tmp/localcrontab.txt','/tmp/remotecrontab.txt')
+        
     def test_cron(self):
-        result = self._run('command', [ "touch empty.txt" ])
+        result = self._run('shell', [ "echo '# some other line' > empty.txt" ])
         result = self._run('command', [ "crontab empty.txt" ])
         assert "failed" not in result
+        self.verify_cron_state("# some other line\n")
         result = self._run('cron', [ ])
         assert result['failed']
         assert "name" in result['msg']
-        assert "job" in result['msg']
-        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"" ])
+        result = self._run('cron', [ "name=\"job 1\"", "minute=1", "hour=1", "day=1", "job=\"ls -alh > /dev/null\"" ])
         assert result['changed']
         assert result['jobs'] == ['job 1']
-        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 1 * * ls -alh > /dev/null\"", "state=present" ])
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 1 * * ls -alh > /dev/null\n")
+        result = self._run('cron', [ "name=\"job 1\"", "minute=1", "hour=1", "day=1", "job=\"ls -alh > /dev/null\"", "state=present" ])
         assert not result['changed']
         assert result['jobs'] == ['job 1']
-        result = self._run('cron', [ "name=\"job 1\"", "job=\"1 1 * 2 * ls -alh > /dev/null\""  ])
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 1 * * ls -alh > /dev/null\n")
+        result = self._run('cron', [ "name=\"job 1\"", "minute=1", "hour=1", "month=2", "job=\"ls -alh > /dev/null\""  ])
         assert result['changed']
         assert result['jobs'] == ['job 1']
-        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\""  ])
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 * 2 * ls -alh > /dev/null\n")
+        result = self._run('cron', [ "name=\"job 2\"", "minute=1", "hour=1", "month=1", "job=\"ls -alh me > /dev/null\""  ])
         assert result['changed']
         assert result['jobs'] == ['job 1', 'job 2']
-        result = self._run('cron', [ "name=\"job 2\"", "job=\"1 1 * 1 * ls -alh me > /dev/null\"", "state=absent" ])
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 * 2 * ls -alh > /dev/null\n#Ansible: job 2\n1 1 * 1 * ls -alh me > /dev/null\n")
+        result = self._run('cron', [ "name=\"job 2\"", "job=\"ls -alh me > /dev/null\"", "state=absent" ])
         assert result['changed']
         assert result['jobs'] == ['job 1']
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 * 2 * ls -alh > /dev/null\n")
+        # ensure backup works
+        result = self._run('cron', [ "name=\"job 1\"", "minute=1", "hour=1", "day=1", "job=\"ls -alh > /dev/null\"", "backup=yes" ])
+        assert result['changed']
+        assert result['jobs'] == ['job 1']
+        self.verify_cron_state("# some other line\n#Ansible: job 1\n1 1 1 * * ls -alh > /dev/null\n")
+        result = self._run('cron', [ "name=\"job 1\"", "state=absent", "backup=yes" ])
+        assert result['changed']
+        assert result['jobs'] == []
+        self.verify_cron_state("# some other line\n")
+        f = open('/tmp/beforecron.txt','w')
+        f.write("# some other line\n#Ansible: job 1\n1 1 1 * * ls -alh > /dev/null\n")
+        f.close()
+        assert filecmp.cmp('/tmp/beforecron.txt',result['backup'])
 
     def test_facter(self):
         if not get_binary("facter"):
