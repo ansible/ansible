@@ -28,6 +28,39 @@ try:
 except ImportError:
     HAVE_SELINUX=False
 
+DOCUMENTATION = '''
+---
+module: file
+short_description: Sets attributes of files
+description: 
+     - Sets attributes of files, symlinks, and directories, or removes
+       files/symlinks/directories. Many other modules support the same options as
+       the file module - including M(copy), M(template), and M(assmeble).
+version_added: "0.1"
+options:
+  - dest:
+      description:
+        - defines the file being managed, unless when used with I(state=link), and then sets the destination to create a symbolic link to using I(src)
+      required: true
+      default: []
+      aliases: []
+  - state:
+      description:
+        - If directory, all immediate subdirectories will be created if they do not exist. If I(file), the file will NOT be created if it does not exist, see the M(copy) or M(template) module if you want that behavior. If I(link), the symbolic link will be created or changed. If absent, directories will be recursively deleted, and files or symlinks will be unlinked.
+      required: false
+      default: file
+      choices: [ file, link, directory, absent ]
+  - mode:
+      description:
+        - mode the file or directory should be, such as 0644 as would be fed to I(chmod). English modes like B(g+x) are not yet supported
+examples:
+   - code: file path=/etc/foo.conf owner=foo group=foo mode=0644
+     description: Example from Ansible Playbooks
+notes:
+    - See also M(copy), M(template), M(assemble)
+requirements: [ ]
+'''
+
 def add_path_info(kwargs):
     path = kwargs['path']
     if os.path.exists(path):
