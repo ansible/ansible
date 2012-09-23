@@ -1,7 +1,8 @@
 Ansible Releases at a Glance
 ============================
 
-0.7 "Panama" ---------- X-XX-2012
+0.8 "Cathedral" ------- pending
+0.7 "Panama" ---------- 9-06-2012
 0.6 "Cabo" ------------ 8-06-2012
 0.5 "Amsterdam" ------- 7-04-2012
 0.4 "Unchained" ------- 5-23-2012

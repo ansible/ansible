@@ -26,6 +26,29 @@ import re
 import socket
 import struct
 
+DOCUMENTATION = '''
+---
+module: setup
+short_description: Gathers facts about remote hosts
+description: 
+     - This module is automatically called by playbooks to gather useful
+       variables about remote hosts that can be used in playbooks. It can also be
+       executed directly by C(/usr/bin/ansible) to check what variables are
+       available to a host. Ansible provides many I(facts) about the system,
+       automatically.
+notes: 
+    - More ansible facts will be added with successive releases. If I(facter) or
+      I(ohai) are installed, variables from these programs will also be snapshotted
+      into the JSON file for usage in templating. These variables are prefixed
+      with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
+      bubbled up to the caller. Using the ansible facts and choosing to not
+      install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
+      remote systems.
+examples:
+    - code: ansible all -m setup -tree /tmp/facts
+      description: Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.
+'''
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -54,12 +77,21 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
+    # A list of dicts.  If there is a platform with more than one
+    # package manager, put the preferred one last.  If there is an
+    # ansible module, use that as the value for the 'name' key.
+    PKG_MGRS = [ { 'path' : '/usr/bin/yum',     'name' : 'yum' },
+                 { 'path' : '/usr/bin/apt-get', 'name' : 'apt' },
+                 { 'path' : '/usr/bin/zypper',  'name' : 'zypper' } ]
+
     def __init__(self):
         self.facts = {}
         self.get_platform_facts()
         self.get_distribution_facts()
+        self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
+        self.get_pkg_mgr_facts()
 
     def populate(self):
         return self.facts
@@ -103,9 +135,26 @@ class Facts(object):
                 else:
                     self.facts['distribution'] = name
 
+    def get_cmdline(self):
+        data = get_file_content('/proc/cmdline')
+        if data:
+            self.facts['cmdline'] = {}
+            for piece in shlex.split(data):
+                item = piece.split('=', 1)
+                if len(item) == 1:
+                    self.facts['cmdline'][item[0]] = True
+                else:
+                    self.facts['cmdline'][item[0]] = item[1]
+
     def get_public_ssh_host_keys(self):
-        dsa = get_file_content('/etc/ssh/ssh_host_dsa_key.pub')
-        rsa = get_file_content('/etc/ssh/ssh_host_rsa_key.pub')
+        dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
+        rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
+
+        if self.facts['system'] == 'Darwin':
+            dsa_filename = '/etc/ssh_host_dsa_key.pub'
+            rsa_filename = '/etc/ssh_host_rsa_key.pub'
+        dsa = get_file_content(dsa_filename)
+        rsa = get_file_content(rsa_filename)
         if dsa is None:
             dsa = 'NA'
         else:
@@ -114,6 +163,12 @@ class Facts(object):
             rsa = 'NA'
         else:
             self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+
+    def get_pkg_mgr_facts(self):
+        self.facts['pkg_mgr'] = 'unknown'
+        for pkg in Facts.PKG_MGRS:
+            if os.path.exists(pkg['path']):
+                self.facts['pkg_mgr'] = pkg['name']
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
@@ -198,7 +253,7 @@ class LinuxHardware(Hardware):
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
     # DMI bits
     DMI_DICT = dict(
-        form_factor     =  '/sys/devices/virtual/dmi/id/chassis_type',
+        form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
         product_name    = '/sys/devices/virtual/dmi/id/product_name',
         product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
         product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
@@ -519,9 +574,9 @@ class LinuxNetwork(Network):
                     # interface name for each address
                     if iface in interfaces:
                         i = 0
-                        while '{0}_{1}'.format(iface, i) in interfaces:
+                        while str(iface) + "_" + str(i) in interfaces:
                             i += 1
-                        iface = '{0}_{1}'.format(iface, i)
+                        iface = str(iface) + "_" + str(i)
 
                     interfaces[iface] = {}
                     interfaces[iface]['macaddress'] = macaddress
@@ -581,6 +636,7 @@ class Virtual(Facts):
     you should define:
     - virtualization_type
     - virtualization_role
+    - container (e.g. solaris zones, freebsd jails, linux containers)
 
     All subclasses MUST define platform.
     """
@@ -654,6 +710,63 @@ class LinuxVirtual(Virtual):
             elif 'vboxguest' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'guest'
+
+class SunOSVirtual(Virtual):
+    """
+    This is a SunOS-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    - container
+    """
+    platform = 'SunOS'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        cmd = subprocess.Popen("/usr/sbin/prtdiag", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        for line in out.split('\n'):
+            if 'VMware' in line:
+                self.facts['virtualization_type'] = 'vmware'
+                self.facts['virtualization_role'] = 'guest'
+            if 'Parallels' in line:
+                self.facts['virtualization_type'] = 'parallels'
+                self.facts['virtualization_role'] = 'guest'
+            if 'VirtualBox' in line:
+                self.facts['virtualization_type'] = 'virtualbox'
+                self.facts['virtualization_role'] = 'guest'
+            if 'HVM domU' in line:
+                self.facts['virtualization_type'] = 'xen'
+                self.facts['virtualization_role'] = 'guest'
+        # Check if it's a zone
+        if os.path.exists("/usr/bin/zonename"):
+            cmd = subprocess.Popen("/usr/bin/zonename", shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            if out.rstrip() != "global":
+                self.facts['container'] = 'zone'
+        # Check if it's a branded zone (i.e. Solaris 8/9 zone)
+        if os.path.isdir('/.SUNWnative'):
+            self.facts['container'] = 'zone'
+        # If it's a zone check if we can detect if our global zone is itself virtualized.
+        # Relies on the "guest tools" (e.g. vmware tools) to be installed
+        if 'container' in self.facts and self.facts['container'] == 'zone':
+            cmd = subprocess.Popen("/usr/sbin/modinfo", shell=True,
+                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            for line in out.split('\n'):
+                if 'VMware' in line:
+                    self.facts['virtualization_type'] = 'vmware'
+                    self.facts['virtualization_role'] = 'guest'
+                if 'VirtualBox' in line:
+                    self.facts['virtualization_type'] = 'virtualbox'
+                    self.facts['virtualization_role'] = 'guest'
 
 def get_file_content(path):
     data = None

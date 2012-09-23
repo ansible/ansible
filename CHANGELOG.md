@@ -1,7 +1,34 @@
 Ansible Changes By Release
 ==========================
 
-0.7 "Panama" -- release pending -- I can barely see the roadmap from the heat coming off of it.
+0.8 "Cathedral" -- release pending 
+
+Misc/Unsorted:
+
+* is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
+* removes= exists on command just like creates=
+* postgresql modules now take an optional port= parameter
+* /proc/cmdline info is now available in Linux facts
+* public host key detection for OS X
+* to_yaml and from_yaml are available as Jinja2 filters
+* server side action code (template, etc) are now fully pluggable
+* lineinfile module now uses 'search' not exact 'match' in regexes, making it much more intuitive and not needing regex syntax most of the time
+* $group and $group_names are now accessible in with_items
+* playbooks can import playbooks in other directories and then be able to import tasks relative to them
+* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
+* added force=yes|no (default no) option for file module, which allows transition between files to directories and so on
+* where 'stdout' is provided a new 'stdout_lines' variable (type == list) is now generated and usable with with_items
+* FILE($path) now allows access of contents of file in a path, very good for use with SSH keys
+* similarly PIPE($command) will run a local command and return the results of executing this command
+* additional facts for SunOS virtualization
+* when local_action is used the transport is automatically overridden to the local type
+* copy module is now atomic when used across volumes
+* ansible-pull example now sets up logrotate for the ansible-pull cron job log
+* url_get module now returns 'dest' with the location of the file saved
+* fix for yum module when using local RPMs vs downloading
+
+0.7 "Panama" -- Sept 6 2012
 
 Module changes:
 

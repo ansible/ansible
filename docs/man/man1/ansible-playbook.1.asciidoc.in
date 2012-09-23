@@ -93,6 +93,9 @@ user name to run as.
 Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
 and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
+*-l* 'SUBSET', *--limit=*'SUBSET'::
+
+Further limits the selected host/group patterns.
 
 
 ENVIRONMENT
