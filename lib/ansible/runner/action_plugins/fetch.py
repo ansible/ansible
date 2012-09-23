@@ -44,9 +44,9 @@ class ActionModule(object):
             return ReturnData(conn=conn, result=results)
 
         # apply templating to source argument
-        source = utils.template(source, inject)
+        source = utils.template(self.runner.basedir, source, inject)
         # apply templating to dest argument
-        dest = utils.template(dest, inject)
+        dest = utils.template(self.runner.basedir, dest, inject)
 
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
