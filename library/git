@@ -151,7 +151,7 @@ def main():
         )
     )
 
-    dest    = module.params['dest']
+    dest    = os.path.expanduser(module.params['dest'])
     repo    = module.params['repo']
     version = module.params['version']
     remote  = module.params['remote']
