@@ -10,7 +10,8 @@
         <!-- <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a> -->
         <ul class="nav">
           {% block sidebartoc %}
-            {% include "globaltoc.html" %}
+            <li><a href="/">Home</A>
+	    {% include "globaltoc.html" %}
             {% include "localtoc.html" %}
           {% endblock %}
         </ul>
@@ -24,6 +25,7 @@
   </div>
 <a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
 {% endmacro %}
+<p></p>
 
 {%- block extrahead %}
 <script type="text/javascript">

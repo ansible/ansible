@@ -128,7 +128,8 @@ s.parentNode.insertBefore(ga, s);
         <!-- <a class="brand" href="index.html">Ansible</a> -->
         <ul class="nav">
           
-            <li class="dropdown" data-dropdown="dropdown">
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
   <a href="index.html"
      class="dropdown-toggle">Chapter</a>
   <span class="globaltoc"><ul class="current">
@@ -142,7 +143,6 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </span>
@@ -417,7 +417,15 @@ what their names or IP addresses are).</p>
 <h2><a class="toc-backref" href="#contents">Configuration &amp; Defaults</a><a class="headerlink" href="#configuration-defaults" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
-<p>Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags.   The config file location is controlled by the ANSIBLE_CONFIG environment variable, if set, otherwise ~/.ansible.cfg or /etc/ansible/ansible.cfg will be loaded, whichever comes first.  For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.</p>
+<p>Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags. Ansible will look for the config file in the following order, using
+the first config file it finds present:</p>
+<ol class="arabic simple">
+<li>File specified by the <tt class="docutils literal"><span class="pre">ANSIBLE_CONFIG</span></tt> environment variable</li>
+<li><tt class="docutils literal"><span class="pre">ansible.cfg</span></tt> in the current working directory. (version 0.8 and up)</li>
+<li><tt class="docutils literal"><span class="pre">~/.ansible.cfg</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">/etc/ansible/ansible.cfg</span></tt></li>
+</ol>
+<p>For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -462,7 +470,7 @@ what their names or IP addresses are).</p>
 </p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Sep 11, 2012.<br/>
+      Last updated on Sep 23, 2012.<br/>
     </p>
   </div>
 </footer>
