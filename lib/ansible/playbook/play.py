@@ -165,7 +165,7 @@ class Play(object):
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
 
                 vname = var['name']
-                prompt = "%s: " % var.get("prompt", vname)
+                prompt = util.template(None, "%s: " % var.get("prompt", vname), self.vars)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
