@@ -310,25 +310,29 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
+        changed = 'changed' in host_result2 or host_result['changed']
+        ok_or_changed = 'ok'
+        if changed:
+            ok_or_changed = 'changed'
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
         if not self.verbose or host_result2.get("verbose_override",None) is not None:
             if item:
-                msg = "ok: [%s] => (item=%s)" % (host,item)
+                msg = "ok: [%s] => (item=%s)" % (host, item)
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result:
-                    msg = "ok: [%s]" % (host)
+                    msg = "%s: [%s]" % (ok_or_changed, host)
         else:
             # verbose ...
             if item:
-                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result2))
+                msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result2))
+                    msg = "%s: [%s] => %s" % (host, utils.jsonify(host_result2))
 
         if msg != '':
-            if not 'changed' in host_result2 or not host_result['changed']:
+            if not changed:
                 print stringc(msg, 'green')
             else:
                 print stringc(msg, 'yellow')
