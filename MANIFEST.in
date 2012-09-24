@@ -1,4 +1,4 @@
-include README.md packaging/rpm/ansible.spec COPYING
+include README.md packaging/rpm/ansible.spec COPYING CHANGELOG.md
 include examples/hosts
 include examples/ansible.cfg
 graft examples/playbooks
