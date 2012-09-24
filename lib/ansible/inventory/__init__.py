@@ -76,7 +76,7 @@ class Inventory(object):
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
-        elif os.access(host_list, os.X_OK):
+        elif utils.is_executable(host_list):
             self._is_script = True
             self.parser = InventoryScript(filename=host_list)
             self.groups = self.parser.groups.values()

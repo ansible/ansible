@@ -32,6 +32,7 @@ import StringIO
 import imp
 import glob
 import subprocess
+import stat
 
 VERBOSITY=0
 
@@ -99,6 +100,12 @@ def check_conditional(conditional):
     def is_unset(var):
         return var.startswith("$")
     return eval(conditional)
+
+def is_executable(path):
+    '''is the given path executable?'''
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] 
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] 
+            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
