@@ -283,7 +283,7 @@ class AnsibleModule(object):
         print self.jsonify(kwargs)
         sys.exit(1)
 
-    def is_executable(path):
+    def is_executable(self, path):
         '''is the given path executable?'''
         return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] 
                 or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] 
