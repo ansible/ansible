@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2012, Aleksey Zhukov <alex@izhukov.ru>
 # (c) 2012, Matt Wright <matt@nobien.net>
 #
 # This file is part of Ansible
@@ -18,43 +19,140 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Example:
-# - name: add nginx repo
-#   action: apt_repository repo=ppa:nginx/stable state=present
-#
 
+import glob
 import platform
 
-APT = "/usr/bin/apt-get"
-ADD_APT_REPO = 'add-apt-repository'
+try:
+    import apt
+    import apt_pkg
+except:
+    module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
-def _run(cmd):
-    if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
-        cmd = cmd + ' -y'
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
+
+DOCUMENTATION = '''
+---
+module: apt_repository
+short_description: Manages apt repositores
+version_added: "0.2"
+examples:
+    - code: apt_repository repo='deb http://fai-project.org/download squeeze koeln' state=present
+      description: Add repository
+    - code: apt_repository repo='ppa:chromium-daily/stable'
+      description: Add deb and deb-src type of the 'ppa' repository from launchpad.net
+notes:
+    - See also M(apt)
+requirements: [ python-apt ]
+'''
+
+def ubuntu_codename():
+    '''Map debian codename to ubuntu'''
+    # TODO: add more pairs
+    ubuntu = { 'squeeze': 'lucid' }
+
+    try:
+        codename = subprocess.Popen(['lsb_release', '-c', '-s'],
+                     stdout=subprocess.PIPE).communicate()[0].strip()
+    except OSError, exc:
+        if exc.errno != errno.ENOENT:
+            print 'WARNING: lsb_release failed, using defaults:', exc
+        codename = 'squeeze'
+
+    return ubuntu[codename]
+
+
+def remove_repo_by_uri(uri):
+    file_list = ["/etc/apt/sources.list"]
+    for file in glob.glob("/etc/apt/sources.list.d/*.list"):
+        file_list.append(file)
+
+    for file in file_list:
+        remove_line(file, uri)
+
+
+def remove_line(file_name, substring):
+    time_stamp = time.time()
+    tmp_name = '%s.%.7f.tmp' % (file_name, time_stamp)
+
+    tmp = open(tmp_name, 'w')
+    slist = open(file_name, 'r')
+    for line in slist:
+        if not substring in line:
+            tmp.write(line)
+    tmp.close()
+    slist.close()
+
+    shutil.copy(tmp_name, file_name)
+    os.remove(tmp_name)
+
+
+def add_repo(repo_list):
+    if type(repo_list) <> list:
+        repo_list = [ repo_list ]
+
+    try:
+        sources_list = open('/etc/apt/sources.list', 'a')
+        for repo in repo_list:
+            sources_list.write(repo + '\n')
+    except IOError, exc:
+        return 1, exc
+
+    return 0, ''
+
+
+def run(command):
+    try:
+        cmd = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+    except (OSError, IOError), e:
+        rc = 1
+        err = str(e)
+        out = ''
+    except:
+        rc = 1
+        err = traceback.format_exc()
+        out = ''
+    else:
+        rc = cmd.returncode
+        return rc, out, err
+
+
+def repo_update():
+    rc, out, err = run('apt-get update')
+
+    for line in err.splitlines():
+        if 'NO_PUBKEY' in line:
+            add_key(line.split()[-1])
+
+
+def add_key(key_id):
+    run('gpg --keyserver keys.gnupg.net --recv-key %s' % key_id)
+    run('gpg --export --armor %s | sudo apt-key add -' % key_id)
 
 
 def main():
-    add_apt_repository = None
-
-    arg_spec = dict(
-        repo=dict(required=True),
-        state=dict(default='present', choices=['present', 'absent'])
+    module = AnsibleModule(
+        argument_spec = dict(
+            repo=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent'])
+        )
     )
-
-    module = AnsibleModule(argument_spec=arg_spec)
-
-    add_apt_repository = module.get_bin_path(ADD_APT_REPO, True)
 
     repo = module.params['repo']
     state = module.params['state']
 
-    rc, out, err = _run('%s "%s" --remove' % (add_apt_repository, repo))
-    existed = 'Error' not in out
+    if repo.startswith( 'ppa:' ):
+        uri = 'http://ppa.launchpad.net/%s/ubuntu' % repo.split(':')[1]
+    else:
+        uri = repo.split()[1]
+
+    apt_pkg.init()
+    sources_list = apt_pkg.SourceList()
+    sources_list.read_main_list()
+
+    existed = uri in [str(el.uri) for el in sources_list.list]
+
+    remove_repo_by_uri(uri)
 
     if state == 'absent':
         if not existed:
@@ -62,9 +160,11 @@ def main():
         else:
             module.exit_json(changed=True, repo=repo, state=state)
 
-    cmd = '%s "%s"' % (add_apt_repository, repo)
-
-    rc, out, err = _run(cmd)
+    if repo.startswith( 'ppa:' ):
+        repo_set = '%s %s main' % (uri, ubuntu_codename())
+        rc, err = add_repo( ['deb %s' % (repo_set,), 'deb-src %s' % (repo_set,)] )
+    else:
+        rc, err = add_repo(repo)
 
     changed = rc == 0 and not existed
 
@@ -72,7 +172,7 @@ def main():
         module.fail_json(msg=err)
 
     if changed:
-        rc, out, err = _run('%s update' % APT)
+        repo_update()
 
     module.exit_json(changed=changed, repo=repo, state=state)
 
