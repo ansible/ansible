@@ -207,7 +207,7 @@ def varLookup(varname, vars):
     except VarNotFoundException:
         return None
 
-def varReplace(raw, vars):
+def varReplace(raw, vars, do_repr=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
@@ -228,6 +228,13 @@ def varReplace(raw, vars):
             replacement = m.group()
 
         start, end = m.span()
+        if do_repr:
+            replacement = repr(replacement)
+            if (start > 0 and
+                ((raw[start - 1] == "'" and raw[end] == "'") or
+                 (raw[start - 1] == '"' and raw[end] == '"'))):
+                start -= 1
+                end += 1
         done.append(raw[:start])    # Keep stuff leading up to token
         done.append(replacement)    # Append replacement value
         raw = raw[end:]             # Continue with remainder of string
@@ -269,7 +276,7 @@ def varReplaceFilesAndPipes(basedir, raw):
     return ''.join(done)
 
 
-def template(basedir, text, vars):
+def template(basedir, text, vars, do_repr=False):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -283,7 +290,7 @@ def template(basedir, text, vars):
         if (depth > 20):
             raise errors.AnsibleError("template recursion depth exceeded")
         prev_text = text
-        text = varReplace(unicode(text), vars)
+        text = varReplace(unicode(text), vars, do_repr)
     text = varReplaceFilesAndPipes(basedir, text)
     return text
 
