@@ -317,12 +317,8 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
-        def _check_conditional(conditional):
-            def is_set(var):
-                return not var.startswith("$")
-            return eval(conditional)
         conditional = utils.template(self.basedir, self.conditional, inject)
-        if not _check_conditional(conditional):
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
