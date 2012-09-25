@@ -51,9 +51,10 @@ class ReturnData(object):
     def is_successful(self):
         return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
 
-    def daisychain(self, module_name):
+    def daisychain(self, module_name, module_args):
         ''' request a module call follow this one '''
         if self.is_successful():
             self.result['daisychain'] = module_name
+            self.result['daisychain_args'] = module_args
         return self
 

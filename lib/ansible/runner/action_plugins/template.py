@@ -32,14 +32,14 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject):
+    def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for template operations '''
 
         if not self.runner.is_playbook:
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
 
         # load up options
-        options  = utils.parse_kv(self.runner.module_args)
+        options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         if (source is None and 'first_available_file' not in inject) or dest is None:
@@ -75,7 +75,7 @@ class ActionModule(object):
             self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
                 tmp)
         # run the copy module, queue the file module
-        self.runner.module_args = "%s src=%s dest=%s" % (self.runner.module_args, xfered, dest)
-        return self.runner._execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')
+        module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
+        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject).daisychain('file', module_args)
 
 
