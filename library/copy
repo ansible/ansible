@@ -56,6 +56,8 @@ def main():
             module.fail_json(msg="Destination %s cannot be a directory" % (dest))
         md5sum_dest = module.md5(dest)
     else:
+        if not os.path.exists(os.path.dirname(dest)):
+            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
         if not os.access(os.path.dirname(dest), os.W_OK):
             module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
