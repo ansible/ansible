@@ -310,7 +310,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
-        changed = 'changed' in host_result2 or host_result['changed']
+        changed = host_result.get('changed', False)
         ok_or_changed = 'ok'
         if changed:
             ok_or_changed = 'changed'
@@ -319,7 +319,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         msg = ''
         if not self.verbose or host_result2.get("verbose_override",None) is not None:
             if item:
-                msg = "ok: [%s] => (item=%s)" % (host, item)
+                msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result:
                     msg = "%s: [%s]" % (ok_or_changed, host)
@@ -329,7 +329,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "%s: [%s] => %s" % (host, utils.jsonify(host_result2))
+                    msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2))
 
         if msg != '':
             if not changed:
