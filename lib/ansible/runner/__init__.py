@@ -44,7 +44,7 @@ except ImportError:
     HAS_ATFORK=False
 
 dirname = os.path.dirname(__file__)
-action_plugins = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
+action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
 
 ################################################
 
@@ -141,7 +141,7 @@ class Runner(object):
 
         # instantiate plugin classes
         self.action_plugins = {}
-        for (k,v) in action_plugins.iteritems():
+        for (k,v) in action_plugin_list.iteritems():
             self.action_plugins[k] = v.ActionModule(self)
 
     # *****************************************************
