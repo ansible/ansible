@@ -94,6 +94,15 @@ def is_failed(result):
 
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
+def normalize_conditional(conditional):
+    if conditional.startswith("'"):
+        conditional = re.sub('(?!\")\${(?P<var>\w[\w\.]*)}(?!\")', '\"${\g<var>}\"', conditional)
+        conditional = re.sub('(?!\")\$(?P<var>\w[\w\.]*)(?!\")', '\"${\g<var>}\"', conditional)
+    else:
+        conditional = re.sub('(?!\')\${(?P<var>\w[\w\.]*)}(?!\')', '\'${\g<var>}\'', conditional)
+        conditional = re.sub('(?!\')\$(?P<var>\w[\w\.]*)(?!\')', '\'${\g<var>}\'', conditional)
+    return conditional
+
 def check_conditional(conditional):
     def is_set(var):
         return not var.startswith("$")
