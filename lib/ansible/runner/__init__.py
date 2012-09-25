@@ -188,10 +188,7 @@ class Runner(object):
 
         ''' runs a module that has already been transferred '''
 
-        if type(args) == dict:
-            args = utils.jsonify(args,format=True)
-
-        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
+        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, args, inject)
         cmd = "chmod u+x %s" % remote_module_path
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
@@ -270,7 +267,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
 
         if len(items) == 0:
-            return self._executor_internal_inner(host, inject, port)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
         else:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -279,14 +276,9 @@ class Runner(object):
             all_changed = False
             all_failed = False
             results = []
-            # Save module name and args since daisy-chaining can overwrite them
-            module_name = self.module_name
-            module_args = self.module_args
             for x in items:
-                self.module_name = module_name
-                self.module_args = module_args
                 inject['item'] = x
-                result = self._executor_internal_inner(host, inject, port)
+                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -307,12 +299,8 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, inject, port, is_chained=False):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
-
-        # FIXME: temporary, need to refactor to pass as parameters versus reassigning
-        prev_module_name = self.module_name
-        prev_module_args = self.module_args
 
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
@@ -320,21 +308,17 @@ class Runner(object):
         #  ... and is set elsewhere
         # 'inventory_hostname' is also set elsewhere
         inject['groups'] = self.inventory.groups_list()
+
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
-        if type(self.module_args) == dict:
-            for (k,v) in self.module_args.iteritems():
+        if type(module_args) == dict:
+            for (k,v) in module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
-            self.module_args = new_args
-        self.module_args = utils.template(self.basedir, self.module_args, inject)
+            module_args = new_args
 
-        def _check_conditional(conditional):
-            def is_set(var):
-                return not var.startswith("$")
-            return eval(conditional)
         conditional = utils.template(self.basedir, self.conditional, inject)
-        if not _check_conditional(conditional):
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
@@ -355,31 +339,25 @@ class Runner(object):
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        module_name = utils.template(self.basedir, self.module_name, inject)
+        module_name = utils.template(self.basedir, module_name, inject)
+        module_args = utils.template(self.basedir, module_args, inject)
 
         tmp = ''
         if self.module_name != 'raw':
             tmp = self._make_tmp_path(conn)
         result = None
 
-        handler = self.action_plugins.get(self.module_name, None)
+        handler = self.action_plugins.get(module_name, None)
         if handler:
-            result = handler.run(conn, tmp, module_name, inject)
+            result = handler.run(conn, tmp, module_name, module_args, inject)
         else:
             if self.background == 0:
-                result = self.action_plugins['normal'].run(conn, tmp, module_name, inject)
+                result = self.action_plugins['normal'].run(conn, tmp, module_name, module_args, inject)
             else:
-                result = self.action_plugins['async'].run(conn, tmp, module_name, inject)
+                result = self.action_plugins['async'].run(conn, tmp, module_name, module_args, inject)
 
         if result.is_successful() and 'daisychain' in result.result:
-            self.module_name = result.result['daisychain']
-            if 'daisychain_args' in result.result:
-                self.module_args = result.result['daisychain_args']
-            result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
-
-            # FIXME: remove this hack
-            self.module_name = prev_module_name
-            self.module_args = prev_module_args
+            result2 = self._executor_internal_inner(host, result.result['daisychain'], result.result.get('daisychain_args', {}), inject, port, is_chained=True)
 
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
@@ -402,8 +380,8 @@ class Runner(object):
                 result.result['item'] = inject['item']
 
             result.result['invocation'] = dict(
-                module_args=self.module_args,
-                module_name=self.module_name
+                module_args=module_args,
+                module_name=module_name
             )
 
             if is_chained:
@@ -478,21 +456,21 @@ class Runner(object):
 
     # *****************************************************
 
-    def _copy_module(self, conn, tmp, module, inject):
+    def _copy_module(self, conn, tmp, module_name, module_args, inject):
         ''' transfer a module over SFTP, does not run it '''
 
-        if module.startswith("/"):
-            raise errors.AnsibleFileNotFound("%s is not a module" % module)
+        if module_name.startswith("/"):
+            raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
 
         # Search module path(s) for named module.
         for module_path in self.module_path.split(os.pathsep):
-            in_path = os.path.expanduser(os.path.join(module_path, module))
+            in_path = os.path.expanduser(os.path.join(module_path, module_name))
             if os.path.exists(in_path):
                 break
         else:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module, self.module_path))
+            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, self.module_path))
 
-        out_path = os.path.join(tmp, module)
+        out_path = os.path.join(tmp, module_name)
 
         module_data = ""
         is_new_style=False
@@ -502,7 +480,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.basedir, self.module_args, inject).replace("\"","\\\"")
+            encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
 
         # use the correct python interpreter for the host
@@ -513,7 +491,7 @@ class Runner(object):
                 module_lines[0] = "#!%s" % interpreter
             module_data = "\n".join(module_lines)
 
-        self._transfer_str(conn, tmp, module, module_data)
+        self._transfer_str(conn, tmp, module_name, module_data)
         return (out_path, is_new_style)
 
     # *****************************************************

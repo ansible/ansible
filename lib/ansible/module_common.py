@@ -49,6 +49,7 @@ import syslog
 import types
 import time
 import shutil
+import stat
 
 try:
     from hashlib import md5 as _md5
@@ -247,7 +248,7 @@ class AnsibleModule(object):
                 paths.append(p)
         for d in paths:
             path = os.path.join(d, arg)
-            if os.path.exists(path) and os.access(path, os.X_OK):
+            if os.path.exists(path) and self.is_executable(path):
                 bin_path = path
                 break
         if required and bin_path is None:
@@ -281,6 +282,12 @@ class AnsibleModule(object):
         kwargs['failed'] = True
         print self.jsonify(kwargs)
         sys.exit(1)
+
+    def is_executable(self, path):
+        '''is the given path executable?'''
+        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] 
+                or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] 
+                or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
     def md5(self, filename):
         ''' Return MD5 hex digest of local file, or None if file is not present. '''
