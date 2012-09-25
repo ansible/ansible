@@ -202,6 +202,55 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_varReplace_repr_basic(self):
+        vars = {
+            'color': '$favorite_color',
+            'favorite_color': 'blue',
+        }
+
+        template = '$color == "blue"'
+        res = ansible.utils.varReplace(template, vars, do_repr=True)
+        assert eval(res)
+
+    def test_varReplace_repr_varinvar(self):
+        vars = {
+            'foo': 'foo',
+            'bar': 'bar',
+            'foobar': '$foo$bar',
+            'var': {
+                'foo': 'foo',
+                'foobar': '$foo$bar',
+            },
+        }
+
+        template = '$foobar == "foobar"'
+        res = ansible.utils.varReplace(template, vars, do_repr=True)
+        assert eval(res)
+
+    def test_varReplace_repr_varindex(self):
+        vars = {
+            'foo': 'foo',
+            'var': {
+                'foo': 'bar',
+            },
+        }
+
+        template = '${var.$foo} == "bar"'
+        res = ansible.utils.varReplace(template, vars, do_repr=True)
+        assert eval(res)
+
+    def test_varReplace_repr_varpartindex(self):
+        vars = {
+            'foo': 'foo',
+            'var': {
+                'foobar': 'foobar',
+            },
+        }
+
+        template = '${var.${foo}bar} == "foobar"'
+        res = ansible.utils.varReplace(template, vars, do_repr=True)
+        assert eval(res)
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
