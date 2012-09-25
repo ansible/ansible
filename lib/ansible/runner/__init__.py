@@ -110,7 +110,7 @@ class Runner(object):
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
-        self.conditional      = conditional
+        self.conditional      = utils.normalize_conditional(conditional)
         self.module_path      = module_path
         self.module_name      = module_name
         self.forks            = int(forks)

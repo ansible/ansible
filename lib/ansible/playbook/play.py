@@ -172,7 +172,7 @@ class Play(object):
                 encrypt = var.get("encrypt", None)
                 salt_size = var.get("salt_size", None)
                 salt = var.get("salt", None)
-                conditional = var.get("only_if", 'True')
+                conditional = utils.normalize_conditional(var.get("only_if", 'True'))
 
                 if utils.check_conditional(conditional):
                     vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
