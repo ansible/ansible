@@ -62,11 +62,6 @@ class Task(object):
             self.action      = ds.get('local_action', '')
             self.delegate_to = '127.0.0.1'
             self.transport   = 'local'
-        # delegate_to: localhost should use local transport
-        elif (ds.get('delegate_to', None) in ['127.0.0.1', 'localhost']):
-            self.action		 = ds.get('action', '')
-            self.delegate_to = '127.0.0.1'
-            self.transport   = 'local'
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
