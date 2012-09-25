@@ -174,12 +174,13 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 class VarNotFoundException(Exception):
     pass
 
-def _varLookup(name, vars):
+def _varLookup(name, vars, depth=0):
     ''' find the contents of a possibly complex variable in vars. '''
 
     path = name.split('.')
     space = vars
     for part in path:
+        part = varReplace(part, vars, depth=depth + 1)
         if part in space:
             space = space[part]
         elif "[" in part:
@@ -194,7 +195,7 @@ def _varLookup(name, vars):
             raise VarNotFoundException()
     return space
 
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
+_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]\$\{\}]+|\w+))(?(complex)\})")
 
 def varLookup(varname, vars):
     ''' helper function used by with_items '''
@@ -207,9 +208,12 @@ def varLookup(varname, vars):
     except VarNotFoundException:
         return None
 
-def varReplace(raw, vars, do_repr=False):
+def varReplace(raw, vars, do_repr=False, depth=0):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
+
+    if (depth > 20):
+        raise errors.AnsibleError("template recursion depth exceeded")
 
     done = [] # Completed chunks to return
 
@@ -223,7 +227,8 @@ def varReplace(raw, vars, do_repr=False):
         # original)
 
         try:
-            replacement = unicode(_varLookup(m.group(2), vars))
+            replacement = unicode(_varLookup(m.group(2), vars, depth))
+            replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
             replacement = m.group()
 
@@ -284,13 +289,7 @@ def template(basedir, text, vars, do_repr=False):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    depth = 0
-    while prev_text != text:
-        depth = depth + 1
-        if (depth > 20):
-            raise errors.AnsibleError("template recursion depth exceeded")
-        prev_text = text
-        text = varReplace(unicode(text), vars, do_repr)
+    text = varReplace(unicode(text), vars, do_repr)
     text = varReplaceFilesAndPipes(basedir, text)
     return text
 
