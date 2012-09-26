@@ -33,6 +33,8 @@ import imp
 import glob
 import subprocess
 import stat
+import termios
+import tty
 
 VERBOSITY=0
 
@@ -375,7 +377,7 @@ def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
-    
+
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -397,7 +399,7 @@ def _gitinfo():
             commit = f.readline()[:10]
             f.close()
             date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:  
+            if time.daylight == 0:
                 offset = time.timezone
             else:
                 offset = time.altzone
@@ -414,6 +416,17 @@ def version(prog):
         result = result + " {0}".format(gitinfo)
     return result
 
+def getch():
+    ''' read in a single character '''
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -429,7 +442,7 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
@@ -515,15 +528,15 @@ def last_non_blank_line(buf):
         if (len(line) > 0):
             return line
     # shouldn't occur unless there's no output
-    return ""  
+    return ""
 
 def filter_leading_non_json_lines(buf):
-    ''' 
+    '''
     used to avoid random output from SSH at the top of JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-    
+
     need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-    filter only leading lines since multiline JSON is valid. 
+    filter only leading lines since multiline JSON is valid.
     '''
 
     filtered_lines = StringIO.StringIO()
@@ -536,12 +549,10 @@ def filter_leading_non_json_lines(buf):
 
 def import_plugins(directory):
     modules = {}
-    for path in glob.glob(os.path.join(directory, '*.py')): 
+    for path in glob.glob(os.path.join(directory, '*.py')):
         if path.startswith("_"):
             continue
         name, ext = os.path.splitext(os.path.basename(path))
         if not name.startswith("_"):
             modules[name] = imp.load_source(name, path)
     return modules
-
-
