@@ -225,6 +225,7 @@ def main():
         # ===========================================
         # run change commands if we need to
         if changed:
+
             if state in ['started', 'running']:
                 rc_state, stdout, stderr = _run("%s %s start" % (SERVICE, name))
             elif state == 'stopped':
@@ -234,9 +235,14 @@ def main():
             elif state == 'restarted':
                 rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
                 rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
-                rc_state = rc + rc1 + rc2
-                stdout = stdout1 + stdout2
-                stderr = stderr1 + stderr2
+                if rc1 != 0 and rc2 == 0:
+                    rc_state = rc + rc2
+                    stdout = stdout2
+                    stderr = stderr2
+                else:
+                    rc_state = rc + rc1 + rc2
+                    stdout = stdout1 + stdout2
+                    stderr = stderr1 + stderr2
 
             out += stdout
             err += stderr
