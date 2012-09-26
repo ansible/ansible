@@ -50,7 +50,7 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
-
+        
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):
             raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
@@ -61,11 +61,17 @@ class Task(object):
         elif 'local_action' in ds:
             self.action      = ds.get('local_action', '')
             self.delegate_to = '127.0.0.1'
-            self.transport   = 'local'
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
             self.transport   = ds.get('transport', play.transport)
+
+        # delegate_to can use variables
+        if not (self.delegate_to is None):
+	        self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
+	        # delegate_to: localhost should use local transport
+	        if self.delegate_to in ['127.0.0.1', 'localhost']:
+	            self.transport   = 'local'
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
