@@ -296,11 +296,25 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         results2.pop('invocation', None)
 
         item = results2.get('item', None)
+        parsed = results2.get('parsed', True)
+        module_msg = ''
+        if not parsed:
+            module_msg  = results2.pop('msg', None)
+        stderr = results2.pop('stderr', None)
+        stdout = results2.pop('stdout', None)
+
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
         print stringc(msg, 'red')
+
+        if stderr:
+            print stringc("stderr: %s" % stderr, 'red')
+        if stdout:
+            print stringc("stdout: %s" % stdout, 'red')
+        if not parsed and module_msg:
+            print stringc("invalid output was: %s" % module_msg, 'red')
         if ignore_errors:
             print stringc("...ignoring", 'yellow')
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)

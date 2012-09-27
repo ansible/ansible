@@ -317,7 +317,7 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
-        conditional = utils.template(self.basedir, self.conditional, inject)
+        conditional = utils.template(self.basedir, self.conditional, inject, do_repr=True)
         if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
@@ -563,7 +563,26 @@ class Runner(object):
 
         hosts = [ (self,x) for x in hosts ]
         results = None
-        if self.forks > 1:
+
+        # Check if this is an action plugin. Some of them are designed
+        # to be ran once per group of hosts. Example module: pause,
+        # run once per hostgroup, rather than pausing once per each
+        # host.
+        p = self.action_plugins.get(self.module_name, None)
+        if p and getattr(p, 'BYPASS_HOST_LOOP', None):
+            # Expose the current hostgroup to the bypassing plugins
+            self.host_set = hosts
+            # We aren't iterating over all the hosts in this
+            # group. So, just pick the first host in our group to
+            # construct the conn object with.
+            result_data = self._executor(hosts[0][1]).result
+            # Create a ResultData item for each host in this group
+            # using the returned result. If we didn't do this we would
+            # get false reports of dark hosts.
+            results = [ ReturnData(host=h[1], result=result_data, comm_ok=True) \
+                           for h in hosts ]
+            del self.host_set
+        elif self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
             results = [ self._executor(h[1]) for h in hosts ]

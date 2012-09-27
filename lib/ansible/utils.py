@@ -33,6 +33,8 @@ import imp
 import glob
 import subprocess
 import stat
+import termios
+import tty
 
 VERBOSITY=0
 
@@ -174,12 +176,13 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 class VarNotFoundException(Exception):
     pass
 
-def _varLookup(name, vars):
+def _varLookup(name, vars, depth=0):
     ''' find the contents of a possibly complex variable in vars. '''
 
     path = name.split('.')
     space = vars
     for part in path:
+        part = varReplace(part, vars, depth=depth + 1)
         if part in space:
             space = space[part]
         elif "[" in part:
@@ -194,7 +197,7 @@ def _varLookup(name, vars):
             raise VarNotFoundException()
     return space
 
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
+_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]\$\{\}]+|\w+))(?(complex)\})")
 
 def varLookup(varname, vars):
     ''' helper function used by with_items '''
@@ -207,9 +210,12 @@ def varLookup(varname, vars):
     except VarNotFoundException:
         return None
 
-def varReplace(raw, vars):
+def varReplace(raw, vars, do_repr=False, depth=0):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
+
+    if (depth > 20):
+        raise errors.AnsibleError("template recursion depth exceeded")
 
     done = [] # Completed chunks to return
 
@@ -223,11 +229,19 @@ def varReplace(raw, vars):
         # original)
 
         try:
-            replacement = unicode(_varLookup(m.group(2), vars))
+            replacement = unicode(_varLookup(m.group(2), vars, depth))
+            replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
             replacement = m.group()
 
         start, end = m.span()
+        if do_repr:
+            replacement = repr(replacement)
+            if (start > 0 and
+                ((raw[start - 1] == "'" and raw[end] == "'") or
+                 (raw[start - 1] == '"' and raw[end] == '"'))):
+                start -= 1
+                end += 1
         done.append(raw[:start])    # Keep stuff leading up to token
         done.append(replacement)    # Append replacement value
         raw = raw[end:]             # Continue with remainder of string
@@ -269,7 +283,7 @@ def varReplaceFilesAndPipes(basedir, raw):
     return ''.join(done)
 
 
-def template(basedir, text, vars):
+def template(basedir, text, vars, do_repr=False):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -277,13 +291,7 @@ def template(basedir, text, vars):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    depth = 0
-    while prev_text != text:
-        depth = depth + 1
-        if (depth > 20):
-            raise errors.AnsibleError("template recursion depth exceeded")
-        prev_text = text
-        text = varReplace(unicode(text), vars)
+    text = varReplace(unicode(text), vars, do_repr)
     text = varReplaceFilesAndPipes(basedir, text)
     return text
 
@@ -375,7 +383,7 @@ def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
-    
+
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -397,7 +405,7 @@ def _gitinfo():
             commit = f.readline()[:10]
             f.close()
             date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:  
+            if time.daylight == 0:
                 offset = time.timezone
             else:
                 offset = time.altzone
@@ -414,6 +422,17 @@ def version(prog):
         result = result + " {0}".format(gitinfo)
     return result
 
+def getch():
+    ''' read in a single character '''
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -429,7 +448,7 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
@@ -515,15 +534,15 @@ def last_non_blank_line(buf):
         if (len(line) > 0):
             return line
     # shouldn't occur unless there's no output
-    return ""  
+    return ""
 
 def filter_leading_non_json_lines(buf):
-    ''' 
+    '''
     used to avoid random output from SSH at the top of JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-    
+
     need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-    filter only leading lines since multiline JSON is valid. 
+    filter only leading lines since multiline JSON is valid.
     '''
 
     filtered_lines = StringIO.StringIO()
@@ -536,12 +555,10 @@ def filter_leading_non_json_lines(buf):
 
 def import_plugins(directory):
     modules = {}
-    for path in glob.glob(os.path.join(directory, '*.py')): 
+    for path in glob.glob(os.path.join(directory, '*.py')):
         if path.startswith("_"):
             continue
         name, ext = os.path.splitext(os.path.basename(path))
         if not name.startswith("_"):
             modules[name] = imp.load_source(name, path)
     return modules
-
-
