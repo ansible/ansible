@@ -277,7 +277,7 @@ def varReplaceFilesAndPipes(basedir, raw):
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
-        done.append(replacement)    # Append replacement value
+        done.append(replacement.rstrip())    # Append replacement value
         raw = raw[end:]             # Continue with remainder of string
 
     return ''.join(done)
