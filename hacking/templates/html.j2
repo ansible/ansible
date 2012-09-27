@@ -1,0 +1,7 @@
+<!--  @{ module | upper }@  -->
+
+<h2>@{module}@</h2>
+
+		{% for desc in description -%}
+		@{ desc | jpfunc }@ 
+		{% endfor %}
