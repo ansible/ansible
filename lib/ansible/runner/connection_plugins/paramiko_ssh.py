@@ -58,8 +58,11 @@ class Connection(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        allow_agent = True
+        if self.runner.remote_pass is not None:
+            allow_agent = False
         try:
-            ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
+            ssh.connect(self.host, username=user, allow_agent=allow_agent, look_for_keys=True,
                 key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
                 timeout=self.runner.timeout, port=self.port)
         except Exception, e:
