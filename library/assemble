@@ -47,6 +47,8 @@ def write_temp_file(data):
 def main():
 
     module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        check_invalid_arguments = False,
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
