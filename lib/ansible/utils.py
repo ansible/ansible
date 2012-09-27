@@ -269,8 +269,9 @@ def varReplace(raw, vars, do_repr=False, depth=0):
         # original)
 
         try:
-            replacement = unicode(_varLookup(m.group(2), vars, depth))
-            replacement = varReplace(replacement, vars, depth=depth + 1)
+            replacement = _varLookup(m.group(2), vars, depth)
+            if isinstance(replacement, (str, unicode)):
+                replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
             replacement = m.group()
 
@@ -282,9 +283,9 @@ def varReplace(raw, vars, do_repr=False, depth=0):
                  (raw[start - 1] == '"' and raw[end] == '"'))):
                 start -= 1
                 end += 1
-        done.append(raw[:start])    # Keep stuff leading up to token
-        done.append(replacement)    # Append replacement value
-        raw = raw[end:]             # Continue with remainder of string
+        done.append(raw[:start])          # Keep stuff leading up to token
+        done.append(unicode(replacement)) # Append replacement value
+        raw = raw[end:]                   # Continue with remainder of string
 
     return ''.join(done)
 
