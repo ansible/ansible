@@ -26,6 +26,7 @@ import tempfile
 import time
 import collections
 import socket
+import base64
 
 import ansible.constants as C
 import ansible.inventory
@@ -45,7 +46,8 @@ except ImportError:
 
 dirname = os.path.dirname(__file__)
 action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
-
+    
+        
 ################################################
 
 def _executor_hook(job_queue, result_queue):
@@ -153,11 +155,11 @@ class Runner(object):
             # ability to turn off temp file deletion for debug purposes
             return
 
-        if type(files) == str:
+        if type(files) in [ str, unicode ]:
             files = [ files ]
         for filename in files:
             if filename.find('/tmp/') == -1:
-                raise Exception("not going to happen")
+                raise Exception("safeguard deletion, removal of %s is not going to happen" % filename)
             self._low_level_exec_command(conn, "rm -rf %s" % filename, None)
 
     # *****************************************************
@@ -187,6 +189,10 @@ class Runner(object):
         async_jid=None, async_module=None, async_limit=None, inject=None):
 
         ''' runs a module that has already been transferred '''
+
+        # hack to support fireball mode
+        if module_name == 'fireball':
+            args = "%s password=%s port=%s" % (args, base64.b64encode(str(utils.key_for_hostname(conn.host))), C.ZEROMQ_PORT)
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, args, inject)
         cmd = "chmod u+x %s" % remote_module_path
@@ -404,12 +410,12 @@ class Runner(object):
         sudo_user = self.sudo_user
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
 
-        if type(stdout) != str:
+        if type(stdout) not in [ str, unicode ]:
             out = "\n".join(stdout.readlines())
         else:
             out = stdout
 
-        if type(stderr) != str:
+        if type(stderr) not in [ str, unicode ]:
             err = "\n".join(stderr.readlines())
         else:
             err = stderr
@@ -452,7 +458,9 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        return utils.last_non_blank_line(result).strip() + '/'
+        rc = utils.last_non_blank_line(result).strip() + '/'
+        return rc
+
 
     # *****************************************************
 
@@ -499,9 +507,10 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        job_queue = multiprocessing.Manager().Queue()
+        manager = multiprocessing.Manager()
+        job_queue = manager.Queue()
         [job_queue.put(i) for i in hosts]
-        result_queue = multiprocessing.Manager().Queue()
+        result_queue = manager.Queue()
 
         workers = []
         for i in range(self.forks):

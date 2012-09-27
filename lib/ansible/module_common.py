@@ -206,6 +206,7 @@ class AnsibleModule(object):
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
+        # TODO: generalize a seperate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
         passwd_keys = ['password', 'login_password']

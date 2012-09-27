@@ -1,0 +1,216 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+import shutil
+import time
+import base64
+import syslog
+import signal
+import subprocess
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+PIDFILE = os.path.expanduser("~/.fireball.pid")
+
+def log(msg):
+   syslog.syslog(syslog.LOG_NOTICE, msg)
+
+if os.path.exists(PIDFILE):
+    try:
+        data = int(open(PIDFILE).read())
+        try:
+            os.kill(data, signal.SIGKILL)
+        except OSError:
+            pass
+    except ValueError:
+        pass
+    os.unlink(PIDFILE)
+
+HAS_ZMQ = False
+try:
+   import zmq
+   HAS_ZMQ = True
+except ImportError:
+   pass
+
+HAS_KEYCZAR = False
+try:
+   from keyczar.keys import AesKey
+   HAS_KEYCZAR = True
+except ImportError:
+   pass
+
+# NOTE: this shares a fair amount of code in common with async_wrapper, if async_wrapper were a new module we could move
+# this into utils.module_common and probably should anyway
+
+def daemonize_self(module, password, port, minutes):
+    # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
+    try:
+        pid = os.fork()
+        if pid > 0:
+            log("exiting pid %s" % pid)
+            # exit first parent
+            module.exit_json(msg="daemonzed fireball on port %s for %s minutes" % (port, minutes))
+    except OSError, e:
+        log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    # decouple from parent environment
+    os.chdir("/")
+    os.setsid()
+    os.umask(022)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            log("daemon pid %s, writing %s" % (pid, PIDFILE))
+            pid_file = open(PIDFILE, "w")
+            pid_file.write("%s" % pid)
+            pid_file.close()
+            log("pidfile written")
+            sys.exit(0)
+    except OSError, e:
+        log("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    dev_null = file('/dev/null','rw')
+    os.dup2(dev_null.fileno(), sys.stdin.fileno())
+    os.dup2(dev_null.fileno(), sys.stdout.fileno())
+    os.dup2(dev_null.fileno(), sys.stderr.fileno())
+    log("daemonizing successful (%s,%s)" % (password, port))
+
+def command(data):
+    if 'cmd' not in data:
+        return dict(failed=True, msg='internal error: cmd is required')
+    if 'tmp_path' not in data:
+        return dict(failed=True, msg='internal error: tmp_path is required')
+
+    log("executing: %s" % data['cmd'])
+    p = subprocess.Popen(data['cmd'], shell=True, stdout=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    if stdout is None:
+        stdout = ''
+    if stderr is None:
+        stderr = ''
+    log("got stdout: %s" % stdout)
+
+    return dict(stdout=stdout, stderr=stderr)
+  
+def fetch(data):
+    if 'data' not in data:
+       return dict(failed=True, msg='internal error: data is required')
+    if 'in_path' not in data:
+       return dict(failed=True, msg='internal error: out_path is required')
+
+    fh = open(data['in_path'])
+    data = fh.read()
+    return dict(data=data)
+
+def put(data):
+
+    if 'data' not in data:
+        return dict(failed=True, msg='internal error: data is required')
+    if 'out_path' not in data:
+        return dict(failed=True, msg='internal error: out_path is required')
+
+    fh = open(data['out_path'], 'w')
+    fh.write(data['data'])
+    fh.close()
+
+    return dict()
+
+def serve(module, password, port, minutes):
+
+    log("serving")
+    context = zmq.Context()
+    socket = context.socket(zmq.REP)
+    addr = "tcp://*:%s" % port
+    log("zmq serving on %s" % addr)
+    socket.bind(addr)
+
+    # password isn't so much a password but a serialized AesKey object that we xferred over SSH
+    # password as a variable in ansible is never logged though, so it serves well
+
+    key = AesKey.Read(password)
+    log("DEBUG KEY=%s" % key) # REALLY NEED TO REMOVE THIS, DEBUG/DEV ONLY!
+ 
+    while True:
+
+        log("DEBUG: waiting")
+        data = socket.recv()
+        data = key.Decrypt(data)
+        data = json.loads(data)
+        log("DEBUG: got data=%s" % data)
+
+        mode = data['mode']
+        response = {}
+
+        if mode == 'command':
+            response = command(data)
+        elif mode == 'put':
+            response = put(data)
+        elif mode == 'fetch':
+            response = fetch(data)
+
+        # FIXME: send back a useful response here
+        data2 = json.dumps(response)
+        log("DEBUG: returning data=%s" % data2)
+        data2 = key.Encrypt(data2)
+        socket.send(data2)
+
+def daemonize(module, password, port, minutes):
+
+    # FIXME: actually support the minutes killswitch here
+    # FIXME: /actually/ daemonize here
+    try:
+        daemonize_self(module, password, port, minutes)
+        serve(module, password, port, minutes)
+    except Exception, e:
+        log("exception caught, exiting fireball mode: %s" % e)
+        sys.exit(0)
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            port=dict(required=False, default=5099),
+            password=dict(required=True),
+            minutes=dict(required=False, default=30),
+        )
+    )
+
+    password  = base64.b64decode(module.params['password'])
+    log("DEBUG pass=%s" % password)
+    port      = module.params['port']
+    minutes   = module.params['minutes']
+
+    if not HAS_ZMQ:
+        module.fail_json(msg="zmq is not installed")
+    if not HAS_KEYCZAR:
+        module.fail_json(msg="keyczar is not installed")    
+
+    daemonize(module, password, port, minutes)
+   
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

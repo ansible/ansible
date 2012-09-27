@@ -35,6 +35,7 @@ import subprocess
 import stat
 import termios
 import tty
+from multiprocessing import Manager
 
 VERBOSITY=0
 
@@ -48,14 +49,53 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
-# vars_prompt_encrypt
 PASSLIB_AVAILABLE = False
-
 try:
     import passlib.hash
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+KEYCZAR_AVAILABLE=False
+try:
+    from keyczar.keys import AesKey
+    KEYCZAR_AVAILABLE=True
+except ImportError:
+    pass
+
+###############################################################
+# abtractions around keyczar
+
+def key_for_hostname(hostname):
+    # fireball mode is an implementation of ansible firing up zeromq via SSH
+    # to use no persistent daemons or key management
+
+    key_path = os.path.expanduser("~/.fireball.keys")
+    if not os.path.exists(key_path):
+        os.makedirs(key_path)
+    key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
+
+    # use new AES keys every 2 hours, which means fireball must not allow running for longer either
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+        key = AesKey.Generate()
+        fh = open(key_path, "w")
+        fh.write(str(key))
+        fh.close()
+        return key
+    else:
+        fh = open(key_path)
+        key = AesKey.Read(fh.read())  
+        fh.close()
+        return key
+
+def encrypt(key, msg):
+    return key.Encrypt(msg)
+
+def decrypt(key, msg):
+    try:
+        return key.Decrypt(msg)
+    except keyczar.errors.InvalidSignatureError:
+        raise errors.AnsibleError("decryption failed")
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
