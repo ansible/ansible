@@ -261,6 +261,29 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplace(template, vars, do_repr=True)
         assert res == 'True == 1L'
 
+    def test_varReplace_consecutive_vars(self):
+        vars = {
+            'foo': 'foo',
+            'bar': 'bar',
+        }
+
+        template = '${foo}${bar}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'foobar'
+
+    def test_varReplace_escape_dot(self):
+        vars = {
+            'hostvars': {
+                'test.example.com': {
+                    'foo': 'bar',
+                },
+            },
+        }
+
+        template = '${hostvars.{test.example.com}.foo}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'bar'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
