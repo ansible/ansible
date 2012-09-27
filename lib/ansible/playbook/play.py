@@ -165,17 +165,15 @@ class Play(object):
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
 
                 vname = var['name']
-                prompt = utils.template(None, "%s: " % var.get("prompt", vname), self.vars)
+                prompt = var.get("prompt", vname)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
                 encrypt = var.get("encrypt", None)
                 salt_size = var.get("salt_size", None)
                 salt = var.get("salt", None)
-                conditional = var.get("only_if", 'True')
 
-                if utils.check_conditional(conditional):
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
+                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
 
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
