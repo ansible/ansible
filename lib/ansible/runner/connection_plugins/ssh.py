@@ -102,10 +102,16 @@ class Connection(object):
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         stdout = ''
-        while p.poll() is None:
+        while True:
             rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
             if p.stdout in rfd:
-                stdout += os.read(p.stdout.fileno(), 1024)
+                dat = os.read(p.stdout.fileno(), 9000)
+                stdout += dat
+                if dat == '':
+                    p.wait()
+                    break
+            elif p.poll() is not None:
+                break
         p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
