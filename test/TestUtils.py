@@ -251,6 +251,16 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplace(template, vars, do_repr=True)
         assert eval(res)
 
+    def test_varReplace_repr_nonstr(self):
+        vars = {
+            'foo': True,
+            'bar': 1L,
+        }
+
+        template = '${foo} == $bar'
+        res = ansible.utils.varReplace(template, vars, do_repr=True)
+        assert res == 'True == 1L'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
