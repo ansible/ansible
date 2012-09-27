@@ -216,10 +216,9 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 class VarNotFoundException(Exception):
     pass
 
-def _varLookup(name, vars, depth=0):
+def _varLookup(path, vars, depth=0):
     ''' find the contents of a possibly complex variable in vars. '''
 
-    path = name.split('.')
     space = vars
     for part in path:
         part = varReplace(part, vars, depth=depth + 1)
@@ -237,16 +236,56 @@ def _varLookup(name, vars, depth=0):
             raise VarNotFoundException()
     return space
 
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]\$\{\}]+|\w+))(?(complex)\})")
+def _varFind(text):
+    start = text.find("$")
+    if start == -1:
+        return None
+    var_start = start + 1
+    if text[var_start] == '{':
+        is_complex = True
+        brace_level = 1
+        var_start += 1
+    else:
+        is_complex = False
+        brace_level = 0
+    end = var_start
+    path = []
+    part_start = (var_start, brace_level)
+    while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
+        if text[end].isalnum() or text[end] == '_':
+            pass
+        elif is_complex and text[end] == '{':
+            brace_level += 1
+        elif is_complex and text[end] == '}':
+            brace_level -= 1
+        elif is_complex and text[end] in ('$', '[', ']'):
+            pass
+        elif is_complex and text[end] == '.':
+            if brace_level == part_start[1]:
+                if text[part_start[0]] == '{':
+                    path.append(text[part_start[0] + 1:end - 1])
+                else:
+                    path.append(text[part_start[0]:end])
+                part_start = (end + 1, brace_level)
+        else:
+            break
+        end += 1
+    var_end = end
+    if is_complex:
+        var_end -= 1
+        if text[var_end] != '}' or brace_level != 0:
+            return None
+    path.append(text[part_start[0]:var_end])
+    return {'path': path, 'start': start, 'end': end}
 
 def varLookup(varname, vars):
     ''' helper function used by with_items '''
 
-    m = _KEYCRE.search(varname)
+    m = _varFind(varname)
     if not m:
         return None
     try:
-        return _varLookup(m.group(2), vars)
+        return _varLookup(m['path'], vars)
     except VarNotFoundException:
         return None
 
@@ -260,7 +299,7 @@ def varReplace(raw, vars, do_repr=False, depth=0):
     done = [] # Completed chunks to return
 
     while raw:
-        m = _KEYCRE.search(raw)
+        m = _varFind(raw)
         if not m:
             done.append(raw)
             break
@@ -269,13 +308,13 @@ def varReplace(raw, vars, do_repr=False, depth=0):
         # original)
 
         try:
-            replacement = _varLookup(m.group(2), vars, depth)
+            replacement = _varLookup(m['path'], vars, depth)
             if isinstance(replacement, (str, unicode)):
                 replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
-            replacement = m.group()
+            replacement = raw[m['start']:m['end']]
 
-        start, end = m.span()
+        start, end = m['start'], m['end']
         if do_repr:
             replacement = repr(replacement)
             if (start > 0 and
