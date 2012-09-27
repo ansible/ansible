@@ -1,0 +1,33 @@
+.. _@{ module }@:
+
+@{ module }@
+````````
+
+{# ------------------------------------------
+ #
+ # Please note: this looks like a core dump
+ # but it isn't one.
+ #
+ --------------------------------------------#}
+
+{% if version_added is defined -%}
+.. versionadded:: @{ version_added }@
+{% endif %}
+
+{% for desc in description -%}
+@{ desc | jpfunc }@ 
+{% endfor %}
+
+{% if options is defined -%}
+@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@
+@{ "parameter" | fmt('%-10s')}@  @{ "required" | fmt('%-10s')}@ @{ "default" | fmt('%-10s')}@ @{ "comments" | fmt('%-60s')}@
+@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@ {% for o in options -%}
+     {% for opt, v  in o.iteritems()  %}
+{% if v['required'] %}{% set required = 'yes' %}{% else %}{% set required = ' ' %}{% endif -%}
+@{opt |fmt("%-10s") }@  @{ required|fmt('%-10s') }@ @{ v['default']|fmt('%-10s') }@ {% for desc in v.description -%}@{ desc | jpfunc }@{% endfor -%}
+     {% endfor -%}
+  {% endfor %}
+@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@
+{% endif %}
+
+    FIXME: examples!
