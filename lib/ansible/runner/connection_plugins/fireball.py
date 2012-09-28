@@ -43,6 +43,7 @@ class Connection(object):
 
         self.host = host
         self.key = utils.key_for_hostname(host)
+        self.context = None
         self.socket = None
         # port passed in is the SSH port, which we ignore
         self.port = constants.ZEROMQ_PORT
@@ -54,8 +55,8 @@ class Connection(object):
             raise errors.AnsibleError("zmq is not installed")
         
         # this is rough/temporary and will likely be optimized later ...
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
+        self.context = zmq.Context()
+        socket = self.context.socket(zmq.REQ)
         addr = "tcp://%s:%s" % (self.host, self.port)
         socket.connect(addr)
         self.socket = socket    
@@ -125,5 +126,10 @@ class Connection(object):
 
     def close(self):
         ''' terminate the connection '''
-        # no need for this
+        # Be a good citizen
+        try:
+            self.socket.close()
+            self.context.term()
+        except:
+            pass
 
