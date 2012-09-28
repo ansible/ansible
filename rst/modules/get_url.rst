@@ -1,7 +1,7 @@
 .. _get_url:
 
 get_url
-````````
+``````````````````````````````
 
 .. versionadded:: 0.6
 
@@ -13,11 +13,11 @@ Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote server
 
     <table>
     <tr>
-    <td>parameter</td>
-    <td>required</td>
-    <td>default</td>
-    <td>choices</td>
-    <td>comments</td>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
     </tr>
     
     <tr>

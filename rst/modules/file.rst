@@ -1,7 +1,7 @@
 .. _file:
 
 file
-````````
+``````````````````````````````
 
 .. versionadded:: 0.1
 
@@ -13,11 +13,11 @@ Sets attributes of files, symlinks, and directories, or removes files/symlinks/d
 
     <table>
     <tr>
-    <td>parameter</td>
-    <td>required</td>
-    <td>default</td>
-    <td>choices</td>
-    <td>comments</td>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
     </tr>
     
     <tr>

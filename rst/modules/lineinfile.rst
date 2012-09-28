@@ -1,7 +1,7 @@
 .. _lineinfile:
 
 lineinfile
-````````
+``````````````````````````````
 
 .. versionadded:: 0.7
 
@@ -14,11 +14,11 @@ This is primarily useful when you want to change a single line in a file only. F
 
     <table>
     <tr>
-    <td>parameter</td>
-    <td>required</td>
-    <td>default</td>
-    <td>choices</td>
-    <td>comments</td>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
     </tr>
     
     <tr>

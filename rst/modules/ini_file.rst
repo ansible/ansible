@@ -1,7 +1,7 @@
 .. _ini_file:
 
 ini_file
-````````
+``````````````````````````````
 
 .. versionadded:: 0.9
 
@@ -13,11 +13,11 @@ Manage (add, remove, change) individual settings in an INI-style file without ha
 
     <table>
     <tr>
-    <td>parameter</td>
-    <td>required</td>
-    <td>default</td>
-    <td>choices</td>
-    <td>comments</td>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
     </tr>
     
     <tr>
