@@ -1,43 +1,87 @@
 .. _lineinfile:
 
 lineinfile
-``````````
+````````
 
 .. versionadded:: 0.7
 
-This module will search a file for a line, and ensure that it is present or
-absent.
 
-This is primarily useful when you only want to change a single line in a file.
-For other cases, see the copy or template modules.
+This module will search a file for a line, and ensure that it is present or absent. 
+This is primarily useful when you want to change a single line in a file only. For other cases, see the ``copy`` or ``template`` modules. 
 
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| parameter          | required | default | comments                                                                   |
-+====================+==========+=========+============================================================================+
-| state              | no       | present | 'absent' or 'present'                                                      |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| name               | yes      |         | The file to modify.                                                        |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| regexp             | yes      |         | The regular expression to look for in the file. For state=present, the     |
-|                    |          |         | pattern to replace. For state=absent, the pattern of the line to           |
-|                    |          |         | remove.                                                                    |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| line               | maybe    |         | Required for state=present. The line to insert/replace into the file. Must |
-|                    |          |         | match the value given to 'regexp'.                                         |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| insertafter        | no       | EOF     | Used with state=present. If specified, the line will be inserted after the |
-|                    |          |         | specified regular expression. Two special values are available: BOF for    |
-|                    |          |         | inserting the line at the beginning of the file, and EOF for inserting the |
-|                    |          |         | line at the end of the file.                                               |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| backup             | no       | no      | Create a backup file including the timestamp information so you can        |
-|                    |          |         | get the original file back if you somehow clobbered it incorrectly.        |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
 
-Example action from Ansible :doc:`playbooks`::
+.. raw:: html
 
-    lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
-    lineinfile name=/etc/sudoers regexp="^#includedir" line="#includedir /etc/sudoers.d"
-    lineinfile name=/etc/httpd/conf/httpd.conf regexp="^ServerName " insertafter="^#ServerName " line="ServerName ansible.example.com"
-    lineinfile name=/etc/sudoers state=absent regexp="^%wheel" 
+    <table>
+    <tr>
+    <td>parameter</td>
+    <td>required</td>
+    <td>default</td>
+    <td>choices</td>
+    <td>comments</td>
+    </tr>
+    
+    <tr>
+    <td>state</td>
+    <td>False</td>
+    <td>present</td>
+    <td><ul><li>present</li><li>absent</li></ul></td>
+    <td>Whether the line should be there or not.</td>
+    </tr>
+    
+    <tr>
+    <td>name</td>
+    <td>True</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>The file to modify</td>
+    </tr>
+    
+    <tr>
+    <td>insertafter</td>
+    <td>False</td>
+    <td>EOF</td>
+    <td><ul><li>BOF</li><li>EOF</li></ul></td>
+    <td>Used with <em>state=present</em>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
+    </tr>
+    
+    <tr>
+    <td>regexp</td>
+    <td>True</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>The regular expression to look for in the file. For <em>state=present</em>, the pattern to replace. For <em>state=absent</em>, the pattern of the line to remove.</td>
+    </tr>
+    
+    <tr>
+    <td>line</td>
+    <td>False</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>Required for <em>state=present</em>. The line to insert/replace into the file. Must match the value given to <code>regexp</code>.</td>
+    </tr>
+    
+    <tr>
+    <td>backup</td>
+    <td>False</td>
+    <td>False</td>
+    <td><ul></ul></td>
+    <td>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</td>
+    </tr>
+    
+    </table>
+
+
+.. raw:: html
+
+
+    <p></p>
+    <p><pre>
+    lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled</pre></p>
+
+    <p></p>
+    <p><pre>
+    lineinfile name=/etc/sudoers state=absent regexp="^%wheel"</pre></p>
+
+    <br/>
 
