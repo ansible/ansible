@@ -88,6 +88,16 @@ def html_ify(text):
     t = _CONST.sub("<code>" + r"\1" + "</code>", t)
     return t
 
+def json_ify(text):
+
+    t = _ITALIC.sub("<em>" + r"\1" + "</em>", text)
+    t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
+    t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
+    t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
+    t = _CONST.sub("<code>" + r"\1" + "</code>", t)
+
+    return t
+
 def man_ify(text):
 
     t = _ITALIC.sub(r'\\fI' + r"\1" + r"\\fR", text)
@@ -164,7 +174,7 @@ def main():
     p.add_argument("-t", "--type",
             action='store',
             dest='type',
-            choices=['html', 'latex', 'man', 'rst'],
+            choices=['html', 'latex', 'man', 'rst', 'json'],
             default='latex',
             help="Output type")
     p.add_argument("-m", "--module",
@@ -234,6 +244,9 @@ def main():
         env.filters['xline'] = rst_xline
         template = env.get_template('rst.j2')
         outputname = "%s.rst"
+    if args.type == 'json':
+        env.filters['jpfunc'] = json_ify
+        outputname = "%s.json"
 
     for module in os.listdir(args.module_dir):
         if len(args.module_list):
@@ -267,7 +280,12 @@ def main():
                     f.close()
                     doc['extradata'] = extradata
 
-            text = template.render(doc)
+            if args.type == 'json':
+                doc = { doc['module'] : doc }
+                text = json.dumps(doc, indent=2)
+            else:
+                text = template.render(doc)
+
             if args.output_dir is not None:
                 f = open(os.path.join(args.output_dir, outputname % module), 'w')
                 f.write(text)
