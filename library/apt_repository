@@ -23,6 +23,43 @@
 #   action: apt_repository repo=ppa:nginx/stable state=present
 #
 
+DOCUMENTATION = '''
+---
+module: apt_repository
+short_description: Manages apt repositores (such as for Debian/Ubuntu).
+description:
+  - Manages apt repositores (such as for Debian/Ubuntu).
+version_added: "0.7"
+options:
+  repo:
+    description:
+      - The repository name/value
+    required: true
+    default: null
+  state:
+    description:
+      - The repository state
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+notes:
+   - This module require 'apt-add-repository' wwill be available on destination server. To ensure this package is available use 'apt' module and install 'python-software-properties' package before use this module.
+   - This module work only on Ubuntu and unstable Debian, see U(https://github.com/ansible/ansible/pull/1082, this issue)
+   - A bug in 'apt-add-repository' always add 'deb' and 'deb-src' type for repo (see the U(https://bugs.launchpad.net/ubuntu/+source/software-properties/+bug/987264, issue on lunchpad)), if some repo don't have source (eg: MongoDB repo from 10gen) the system fail on update repositories.
+author: Matt Wright
+'''
+
+EXAMPLES = [
+"""
+- code: apt_repository repo=ppa://nginx/stable
+  description: Add nginx stable repository from PPA
+""",
+"""
+- code: apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'
+  description: Add specified repository into sources.
+"""
+]
+
 import platform
 
 APT = "/usr/bin/apt-get"
