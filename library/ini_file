@@ -34,7 +34,6 @@ options:
       - Path to the INI-style file; this file is created if required
     required: true
     default: null
-    aliases: []
   section:
     description:
       - Section name in INI file. This is added if C(state=present) automatically when
@@ -46,12 +45,12 @@ options:
       - if set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
     required: false
-    default: []
+    default: null
   value:
     description:
      - the string value to be associated with an I(option). May be omitted when removing an I(option).
     required: false
-    default: []
+    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get

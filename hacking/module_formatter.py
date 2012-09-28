@@ -45,23 +45,19 @@ description:
     U(url) exists too.
 version_added: "0.x"
 options:
-  - dest:
-      required: true
-      description:
-        - What does this option do, and bla bla bla
-        - More than one paragraph allowed here as well. Formatting
-          with B(bold), etc. work too.
-  - remove:
-      required: false
-      choices: [ yes, no ]
-      default: "maybe"
-      aliases: [ kill, killme, delete ]
-      description:
-        - The foo to do on M(module) but be careful of lorem ipsum
-examples:
-   - code: foo dest=/tmp/jj remove=maybe
-     description: Possibly removes the specified file
-   - code: foo dest=/dev/null 
+  dest:
+    required: true
+    description:
+      - What does this option do, and bla bla bla
+      - More than one paragraph allowed here as well. Formatting
+        with B(bold), etc. work too.
+  remove:
+    required: false
+    choices: [ yes, no ]
+    default: "maybe"
+    aliases: [ kill, killme, delete ]
+    description:
+      - The foo to do on M(module) but be careful of lorem ipsum
 '''
 
 # There is a better way of doing this!
@@ -128,6 +124,8 @@ env = Environment(loader=FileSystemLoader('../ansible/hacking/templates/'),
 
 env.globals['xline'] = rst_xline
 
+def load_examples_section(text):
+    return text.split('***BREAK***')
 
 def get_docstring(filename, verbose=False):
     """
@@ -144,10 +142,13 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.load(child.value.s)
+                 
     except:
         if verbose:
             raise
-        pass
+        else:
+            print "unable to parse %s" % filename
+
     return doc
 
 def main():
@@ -242,10 +243,10 @@ def main():
 
         doc = get_docstring(fname, verbose=args.verbose)
         if not doc is None:
-            
-            doc['filename'] = fname
-            doc['docuri'] = doc['module'].replace('_', '-')
-            doc['now_date']     = datetime.date.today().strftime('%Y-%m-%d')
+
+            doc['filename']         = fname
+            doc['docuri']           = doc['module'].replace('_', '-')
+            doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
             doc['ansible_version']  = args.ansible_version
 
             if args.verbose:
@@ -267,34 +268,34 @@ def main():
             else:
                 print text
 
-def boilerplate():
-
-    # Sneaky: insert author's name from Git config
-
-    cmd = subprocess.Popen("git config --get user.name", shell=True, 
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = cmd.communicate()
-
-    if len(out.split('\n')) == 2:
-        author = out.split('\n')[0]
-        print author
-    else:
-        author = "Your Name"
-
-    # I can't dump YAML in ordered fasion, so I use this boilerplate string
-    # and verify it is parseable just before printing it out to the user.
-
-    try:
-        boilplate = yaml.load(BOILERPLATE)
-    except:
-        print "Something is wrong with the BOILERPLATE"
-        sys.exit(1)
-
-    print """
-DOCUMENTATION = '''
-%s
-'''
-"""[1:-1] % (BOILERPLATE.replace('AUTHORNAME', author) [1:-1] )
+#def boilerplate():
+#
+#    # Sneaky: insert author's name from Git config
+#
+#    cmd = subprocess.Popen("git config --get user.name", shell=True, 
+#            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#    out, err = cmd.communicate()
+#
+#    if len(out.split('\n')) == 2:
+#        author = out.split('\n')[0]
+#        print author
+#    else:
+#        author = "Your Name"
+#
+#    # I can't dump YAML in ordered fasion, so I use this boilerplate string
+#    # and verify it is parseable just before printing it out to the user.
+#
+#    try:
+#        boilplate = yaml.load(BOILERPLATE)
+#    except:
+#        print "Something is wrong with the BOILERPLATE"
+#        sys.exit(1)
+#
+#    print """
+#DOCUMENTATION = '''
+#%s
+#'''
+#"""[1:-1] % (BOILERPLATE.replace('AUTHORNAME', author) [1:-1] )
 
 if __name__ == '__main__':
     main()
