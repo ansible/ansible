@@ -314,8 +314,12 @@ class PlayBook(object):
         host_list = [ h for h in self.inventory.list_hosts(play.hosts)
             if not (h in self.stats.failures or h in self.stats.dark) ]
 
-        if not play.gather_facts:
+        if play.gather_facts is False:
             return {}
+        elif play.gather_facts is None:
+            host_list = [h for h in host_list if h not in self.SETUP_CACHE]
+            if len(host_list) == 0:
+                return {}
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
