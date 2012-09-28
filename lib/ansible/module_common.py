@@ -173,7 +173,7 @@ class AnsibleModule(object):
             if type(choices) == list:
                 if k in self.params:
                     if self.params[k] not in choices:
-                        choices_str=",".join(choices)
+                        choices_str=",".join([str(c) for c in choices])
                         msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
                         self.fail_json(msg=msg)
             else:
