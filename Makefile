@@ -59,7 +59,7 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 all: clean python
 
 tests: 
-	PYTHONPATH=./lib nosetests -v
+	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
 docs: $(MANPAGES)
