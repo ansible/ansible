@@ -238,8 +238,11 @@ def main():
         fname = os.path.join(args.module_dir, module)
         extra = os.path.join("inc", "%s.tex" % module)
 
+        if fname.endswith(".swp"):
+            continue
+
         # FIXME: html/manpage/latex
-        print "%% modules2.py ---> %s" % fname
+        print " processing module source ---> %s" % fname
 
         doc = get_docstring(fname, verbose=args.verbose)
         if not doc is None:
