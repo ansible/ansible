@@ -44,6 +44,14 @@ Misc/Unsorted:
 * misc fixes/upgrades to the wait_for module
 * date command usage in build scripts fixed for OS X
 * git module now expands any "~" in provided destination paths
+* THINGS BELOW THIS LINE, NEED TO ANNOUNCE IN SUMMARY TO LIST YET:
+* ansible-module docs generator source merged in
+* ini_file module for manipulating INI files
+* only_if using register variables that are booleans now works in a boolean way like you'd expect
+* don't use SSH agent with paramiko if a password is specified
+* start of fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time (WIP)
+* ignore stop error code failure for service module with state=restarted, always try to start
+* make output be cleaner on multi-line command/shell errors
 
 0.7 "Panama" -- Sept 6 2012
 
