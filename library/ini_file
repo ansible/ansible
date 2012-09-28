@@ -29,41 +29,40 @@ description:
        sections if they don't exist.
 version_added: "0.9"
 options:
-  - dest:
-      description:
-        - Path to the INI-style file; this file is created if required
-      required: true
-      default: null
-      aliases: []
-  - section:
-      description:
-        - Section name in INI file. This is added if C(state=present) automatically when
-          a single value is being set.
-      required: true
-      default: null
-  - option:
-      description:
-        - if set (required for changing a I(value)), this is the name of the option.
-        - May be omitted if adding/removing a whole I(section).
-      required: false
-      default: []
-  - value:
-      description:
-        - the string value to be associated with an I(option). May be omitted when
-          removing an I(option).
-      required: false
-      default: []
-  - backup:
-      description:
-        - Create a backup file including the timestamp information so you can get
-          the original file back if you somehow clobbered it incorrectly.
-      required: false
-      default: no
-      choices: [ "yes", "no" ]
-  - others:
-       description:
-         - all arguments accepted by the M(file) module also work here
-       required: false
+  dest:
+    description:
+      - Path to the INI-style file; this file is created if required
+    required: true
+    default: null
+    aliases: []
+  section:
+    description:
+      - Section name in INI file. This is added if C(state=present) automatically when
+        a single value is being set.
+    required: true
+    default: null
+  option:
+    description:
+      - if set (required for changing a I(value)), this is the name of the option.
+      - May be omitted if adding/removing a whole I(section).
+    required: false
+    default: []
+  value:
+    description:
+     - the string value to be associated with an I(option). May be omitted when removing an I(option).
+    required: false
+    default: []
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  others:
+     description:
+       - all arguments accepted by the M(file) module also work here
+     required: false
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.

@@ -19,15 +19,26 @@
 {% endfor %}
 
 {% if options is defined -%}
-@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@
-@{ "parameter" | fmt('%-10s')}@  @{ "required" | fmt('%-10s')}@ @{ "default" | fmt('%-10s')}@ @{ "comments" | fmt('%-60s')}@
-@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@ {% for o in options -%}
-     {% for opt, v  in o.iteritems()  %}
-{% if v['required'] %}{% set required = 'yes' %}{% else %}{% set required = ' ' %}{% endif -%}
-@{opt |fmt("%-10s") }@  @{ required|fmt('%-10s') }@ @{ v['default']|fmt('%-10s') }@ {% for desc in v.description -%}@{ desc | jpfunc }@{% endfor -%}
-     {% endfor -%}
-  {% endfor %}
-@{ xline(10, "=") }@  @{xline(10)}@ @{xline(10)}@ @{xline(60)}@
+.. raw:: html
+
+    <table>
+    <tr>
+    <td>parameter</td>
+    <td>required</td>
+    <td>default</td>
+    <td>choices</td>
+    <td>comments</td>
+    </tr>
+    {% for (k,v) in options.iteritems()  %}
+    <tr>
+    <td>@{ k }@</td>
+    <td>@{ v.get('required',False) }@</td>
+    <td>@{ v['default'] }@</td>
+    <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
+    <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}</td>
+    </tr>
+    {% endfor %}
+    </table>
 {% endif %}
 
-    FIXME: examples!
+    FIXME: include the examples here!
