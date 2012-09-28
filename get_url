@@ -61,7 +61,7 @@ options:
     required: false
 examples:
    - code: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
-     description: Obtain and install config file
+     description: "Example from Ansible Playbooks"
 notes:
     - This module doesn't support proxies or passwords.
     - Also see the M(template) module.
