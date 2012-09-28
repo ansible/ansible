@@ -300,14 +300,14 @@ class TestUtils(unittest.TestCase):
 
         res = ansible.utils.template("test", template, {})
 
-        assert res == u'hello world\n'
+        assert res == u'hello world'
 
     def test_varReplace_include_script(self):
         template = 'hello $PIPE(echo world)'
 
         res = ansible.utils.template("test", template, {})
 
-        assert res == u'hello world\n'
+        assert res == u'hello world'
 
     #####################################
     ### Template function tests
