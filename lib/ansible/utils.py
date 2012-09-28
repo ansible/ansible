@@ -36,6 +36,7 @@ import stat
 import termios
 import tty
 from multiprocessing import Manager
+from ansible import lookups
 
 VERBOSITY=0
 
@@ -321,7 +322,7 @@ def varReplace(raw, vars, depth=0):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\}]+)\)")
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE|LOOKUP)\(([^\}]+)\)")
 def varReplaceFilesAndPipes(basedir, raw):
     done = [] # Completed chunks to return
 
@@ -347,6 +348,39 @@ def varReplaceFilesAndPipes(basedir, raw):
             if p.returncode != 0:
                 raise VarNotFoundException()
             replacement = stdout
+        elif m.group(1) == "LOOKUP":
+            replacement = ""
+
+# m.group(2) contains the LOOKUP options (e.g. "ldap;sn=Mens,attrib=displayName")
+# Split out the lookup type and its options
+
+            ltype = m.group(2).split(';')[0]
+            options = m.group(2).split(';')[1]
+
+            items   = options.split(',')
+            params = {}
+            for x in items:
+                (k, v) = x.split("=", 1)
+                params[k] = v
+
+            replacement = lookups.ext_lookup(ltype, params)
+
+#
+#            kw = m.group(2).split(';')
+#
+#            if kw[0] == 'redis':
+#                key = kw[1]
+#                args = {
+#                    "key" : key
+#                }
+#                replacement = stab_redis(args)
+#
+#            if kw[0] == 'env':
+#                key = kw[1]
+#                args = {
+#                    "key" : key
+#                }
+#                replacement = stab_env(args)
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token

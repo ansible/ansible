@@ -86,3 +86,9 @@ DEFAULT_SUBSET            = None
 
 ANSIBLE_SSH_ARGS          = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
 ZEROMQ_PORT               = int(get_config(p, 'fireball', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099))
+
+LOOKUPS='lookups'
+
+redisurl        = get_config(p, LOOKUPS, 'redisurl',        None,       'redis://localhost:6379/')
+ldapurl         = get_config(p, LOOKUPS, 'ldapurl',         None,       None)
+inipath         = get_config(p, LOOKUPS, 'inipath',         None,       None)
