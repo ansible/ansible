@@ -41,4 +41,13 @@
     </table>
 {% endif %}
 
-    FIXME: include the examples here!
+.. raw:: html
+
+{% for example in examples %}
+    <p>@{ example['description'] }@</p>
+    <p><pre>
+    @{ example['code'] }@</pre></p>
+{% endfor %}
+    <br/>
+
+
