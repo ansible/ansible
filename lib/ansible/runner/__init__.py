@@ -323,7 +323,7 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
-        conditional = utils.template(self.basedir, self.conditional, inject, do_repr=True)
+        conditional = utils.template(self.basedir, self.conditional, inject)
         if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
