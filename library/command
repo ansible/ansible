@@ -25,6 +25,47 @@ import traceback
 import shlex
 import os
 
+DOCUMENTATION = '''
+---
+module: command
+short_description: Executes a command on a remote node
+description:
+     - The command module takes the command name followed by a list of arguments, space delimited.
+     - The given command will be executed on all selected nodes. It will not be
+       processed through the shell, so variables like C($HOME) and operations
+       like C("<"), C(">"), C("|"), and C("&") will not work. As such, all
+       paths to commands must be fully qualified
+options:
+  free_form:
+    description:
+      - the command module takes a free form command to run
+    required: true
+    default: null
+    aliases: []
+  creates:
+    description:
+      - a filename, when it already exists, this step will B(not) be run.
+    required: no
+    default: null
+  chdir:
+    description:
+      - cd into this directory before running the command
+    version_added: "0.6"
+    required: false
+    default: null
+examples:
+   - code: command /sbin/shutdown -t now
+     description: "Example from Ansible Playbooks"
+   - code: command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+     description: "I(creates) and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+notes:
+    -  If you want to run a command through the shell (say you are using C(<),
+       C(>), C(|), etc), you actually want the M(shell) module instead. The
+       M(command) module is much more secure as it's not affected by the user's
+       environment.
+author: Michael DeHaan
+'''
+
 def main():
 
     # the command module is the one ansible module that does not take key=value args

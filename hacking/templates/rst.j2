@@ -44,7 +44,7 @@
 .. raw:: html
 
 {% for example in examples %}
-    <p>@{ example['description'] }@</p>
+    {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
     <p><pre>
     @{ example['code'] }@</pre></p>
 {% endfor %}

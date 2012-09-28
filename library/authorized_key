@@ -21,6 +21,37 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+DOCUMENTATION = '''
+---
+module: authorized_key
+short_description: Adds or removes an authorized key for a user from a remote host.
+description:
+     - Adds or removes an authorized key for a user from a remote host.
+version_added: "0.5"
+options:
+  user:
+    description:
+      - Name of the user who should have access to the remote host
+    required: true
+    default: null
+    aliases: []
+  key:
+    description:
+      - the SSH public key, as a string
+    required: true
+    default: null
+  state:
+    description:
+      - whether the given key should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+examples:
+   - code: authorized_key user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"
+     description: "Example from Ansible Playbooks"
+author: Brad Olson
+'''
+
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
 #
 # Arguments
