@@ -1,1 +1,42 @@
 # this is a virtual module that is entirely implemented server side
+
+
+DOCUMENTATION = '''
+---
+module: template
+short_description: Templates a file out to a remote server.
+description:
+     - Templates are processed by the Jinja2 templating language
+       (U(http://jinja.pocoo.org/docs/)) - documentation on the template
+       formatting can be found in the Template Designer Documentation
+       (U(http://jinja.pocoo.org/docs/templates/)).
+options:
+  src:
+    description:
+      - Path of a Jinja2 formatted template on the local server. This can be a relative or absolute path.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - Location to render the template to on the remote machine.
+    required: true
+    default: null
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+examples:
+   - code: template src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
+     description: "Example from Ansible Playbooks"
+notes: []
+requirements: null
+author: Michael DeHaan
+'''
