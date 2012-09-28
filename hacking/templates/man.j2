@@ -13,24 +13,19 @@
 ."
 {% if options is defined -%}
 .SH OPTIONS
-{% for o in options -%}{% for opt, v  in o.iteritems()  -%}
-.IP @{opt}@
-{% for desc in v.description -%}
-@{ desc | jpfunc }@ 
-{% endfor -%}
-{% if v['required'] %}(required){% endif -%}
-{% if v['choices'] -%}
-." .SS Choices
+{% for (k,v) in options.iteritems()  %}
+.IP @{ k }@
+{% for desc in v.description -%}@{ desc | jpfunc }@{% endfor -%}
+{% if v.get('choices') %}
 .IR Choices :
-{% for choice in v['choices'] -%}@{ choice }@{% if not loop.last %},{% else %}.{% endif -%}
-{% endfor -%}
-{% endif %}
+{% for choice in v.get('choices',[]) -%}@{ choice }@{% if not loop.last %},{%else%}.{%endif-%}{% endfor -%}{% endif %}
+{% if v.get('required') %}(required){% endif -%}
+{% if v.get('default') %} (default: @{ v.get('default') }@){% endif -%}
 {#---------------------------------------------- #}
-{% if v['version_added'] is defined -%}
-(Added in Ansible version @{ v['version_added'] }@.)
+{% if v.get('version_added') -%}
+(Added in Ansible version @{ v.get('version_added') }@.)
 {% endif -%}
-     {% endfor -%}
-  {% endfor -%}
+{% endfor %}
 {% endif %}
 ."
 ."

@@ -115,15 +115,6 @@ def rst_fmt(text, fmt):
 def rst_xline(width, char="="):
     return char * width
 
-
-# FIXME: path should be configurable
-env = Environment(loader=FileSystemLoader('../ansible/hacking/templates/'),
-        variable_start_string="@{",
-        variable_end_string="}@",
-    )
-
-env.globals['xline'] = rst_xline
-
 def load_examples_section(text):
     return text.split('***BREAK***')
 
@@ -165,6 +156,11 @@ def main():
             dest="module_dir",
             default=MODULEDIR,
             help="Ansible modules/ directory")
+    p.add_argument("-T", "--template-dir",
+            action="store",
+            dest="template_dir",
+            default="hacking/templates",
+            help="directory containing Jinja2 templates")
     p.add_argument("-t", "--type",
             action='store',
             dest='type',
@@ -208,7 +204,16 @@ def main():
         print "Need module_dir"
         sys.exit(1)
 
-    # TODO: make template dir configurable
+    if not args.template_dir:
+        print "Need template_dir"
+        sys.exit(1)
+
+    env = Environment(loader=FileSystemLoader(args.template_dir),
+        variable_start_string="@{",
+        variable_end_string="}@",
+        )
+
+    env.globals['xline'] = rst_xline
 
     if args.type == 'latex':
         env.filters['jpfunc'] = latex_ify
@@ -241,7 +246,6 @@ def main():
         if fname.endswith(".swp"):
             continue
 
-        # FIXME: html/manpage/latex
         print " processing module source ---> %s" % fname
 
         doc = get_docstring(fname, verbose=args.verbose)
