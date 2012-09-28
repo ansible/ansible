@@ -289,7 +289,7 @@ def varLookup(varname, vars):
     except VarNotFoundException:
         return None
 
-def varReplace(raw, vars, do_repr=False, depth=0):
+def varReplace(raw, vars, depth=0):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
@@ -315,13 +315,6 @@ def varReplace(raw, vars, do_repr=False, depth=0):
             replacement = raw[m['start']:m['end']]
 
         start, end = m['start'], m['end']
-        if do_repr:
-            replacement = repr(replacement)
-            if (start > 0 and
-                ((raw[start - 1] == "'" and raw[end] == "'") or
-                 (raw[start - 1] == '"' and raw[end] == '"'))):
-                start -= 1
-                end += 1
         done.append(raw[:start])          # Keep stuff leading up to token
         done.append(unicode(replacement)) # Append replacement value
         raw = raw[end:]                   # Continue with remainder of string
@@ -363,7 +356,7 @@ def varReplaceFilesAndPipes(basedir, raw):
     return ''.join(done)
 
 
-def template(basedir, text, vars, do_repr=False):
+def template(basedir, text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -371,7 +364,7 @@ def template(basedir, text, vars, do_repr=False):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    text = varReplace(unicode(text), vars, do_repr)
+    text = varReplace(unicode(text), vars)
     text = varReplaceFilesAndPipes(basedir, text)
     return text
 
