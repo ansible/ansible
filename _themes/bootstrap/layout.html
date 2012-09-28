@@ -7,7 +7,7 @@
   <div class="topbar" data-scrollspy="scrollspy" >
     <div class="topbar-inner">
       <div class="container">
-        <!-- <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a> -->
+        <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>
         <ul class="nav">
           {% block sidebartoc %}
             <li><a href="/">Home</A>
@@ -23,7 +23,6 @@
       </div>
     </div>
   </div>
-<a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
 {% endmacro %}
 <p></p>
 
@@ -128,8 +127,6 @@ s.parentNode.insertBefore(ga, s);
 {%- block content %}
 
 <div class="container">
-   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
-<br/>
    {% block body %} {% endblock %}
 <br/>
 </div>
@@ -137,28 +134,8 @@ s.parentNode.insertBefore(ga, s);
 
 {%- block footer %}
 <footer class="footer">
-
-  <div class="container">
-  <div id="fb-root"></div>
+<div class="container">
 <p>
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-<input type="hidden" name="cmd" value="_donations">
-<input type="hidden" name="business" value="michael.dehaan@gmail.com">
-<input type="hidden" name="lc" value="US">
-<input type="hidden" name="item_name" value="Ansible">
-<input type="hidden" name="no_note" value="0">
-<input type="hidden" name="currency_code" value="USD">
-<input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-</form>
-</p>
-<p>
-<a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-<g:plusone annotation="inline"></g:plusone>
-<div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
-</p>
 <p>
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
@@ -171,7 +148,7 @@ s.parentNode.insertBefore(ga, s);
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
     {%- endif %}
     </p>
-  </div>
+</div>
 </footer>
 {%- endblock %}
 

@@ -50,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Ansible'
+project = 'Ansible Documentation'
 copyright = "2012 Michael DeHaan"
 
 # The default replacements for |version| and |release|, also used in various
@@ -102,7 +102,7 @@ pygments_style = 'sphinx'
 
 html_theme_path = ['_themes']
 html_theme = 'bootstrap'
-html_short_title = 'Ansible'
+html_short_title = 'Ansible Documentation'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
@@ -111,7 +111,7 @@ html_style = 'default.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Ansible - SSH-Based Configuration Management & Deployment'
+html_title = 'Ansible Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None

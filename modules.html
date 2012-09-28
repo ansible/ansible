@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Ansible Modules &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Ansible Modules &mdash; Ansible Documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
     <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
+    <link rel="top" title="Ansible Documentation" href="index.html" />
     <link rel="next" title="YAML Syntax" href="YAMLSyntax.html" />
     <link rel="prev" title="Command Line Examples And Next Steps" href="examples.html" />
 <script type="text/javascript">
@@ -125,7 +125,7 @@ s.parentNode.insertBefore(ga, s);
   <div class="topbar" data-scrollspy="scrollspy" >
     <div class="topbar-inner">
       <div class="container">
-        <!-- <a class="brand" href="index.html">Ansible</a> -->
+        <a class="brand" href="index.html">Ansible Documentation</a>
         <ul class="nav">
           
             <li><a href="/">Home</A>
@@ -143,7 +143,6 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </span>
 </li>
@@ -166,6 +165,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#get-url">get_url</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
 <li><a class="reference internal" href="#group">group</a></li>
+<li><a class="reference internal" href="#ini-file">ini_file</a></li>
 <li><a class="reference internal" href="#lineinfile">lineinfile</a></li>
 <li><a class="reference internal" href="#mount">mount</a></li>
 <li><a class="reference internal" href="#mysql-db">mysql_db</a></li>
@@ -211,58 +211,56 @@ s.parentNode.insertBefore(ga, s);
       </div>
     </div>
   </div>
-<a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
 
 
 <div class="container">
-   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
-<br/>
    
   <div class="section" id="ansible-modules">
 <h1><a class="toc-backref" href="#contents">Ansible Modules</a><a class="headerlink" href="#ansible-modules" title="Permalink to this headline">¶</a></h1>
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#ansible-modules" id="id38">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#introduction" id="id39">Introduction</a></li>
-<li><a class="reference internal" href="#apt-repository" id="id40">apt_repository</a></li>
-<li><a class="reference internal" href="#apt" id="id41">apt</a></li>
-<li><a class="reference internal" href="#assemble" id="id42">assemble</a></li>
-<li><a class="reference internal" href="#authorized-key" id="id43">authorized_key</a></li>
-<li><a class="reference internal" href="#command" id="id44">command</a></li>
-<li><a class="reference internal" href="#copy" id="id45">copy</a></li>
-<li><a class="reference internal" href="#easy-install" id="id46">easy_install</a></li>
-<li><a class="reference internal" href="#facter" id="id47">facter</a></li>
-<li><a class="reference internal" href="#fetch" id="id48">fetch</a></li>
-<li><a class="reference internal" href="#file" id="id49">file</a></li>
-<li><a class="reference internal" href="#get-url" id="id50">get_url</a></li>
-<li><a class="reference internal" href="#git" id="id51">git</a></li>
-<li><a class="reference internal" href="#group" id="id52">group</a></li>
-<li><a class="reference internal" href="#lineinfile" id="id53">lineinfile</a></li>
-<li><a class="reference internal" href="#mount" id="id54">mount</a></li>
-<li><a class="reference internal" href="#mysql-db" id="id55">mysql_db</a></li>
-<li><a class="reference internal" href="#mysql-user" id="id56">mysql_user</a></li>
-<li><a class="reference internal" href="#nagios" id="id57">nagios</a></li>
-<li><a class="reference internal" href="#ohai" id="id58">ohai</a></li>
-<li><a class="reference internal" href="#ping" id="id59">ping</a></li>
-<li><a class="reference internal" href="#pip" id="id60">pip</a></li>
-<li><a class="reference internal" href="#postgresql-db" id="id61">postgresql_db</a></li>
-<li><a class="reference internal" href="#postgresql-user" id="id62">postgresql_user</a></li>
-<li><a class="reference internal" href="#raw" id="id63">raw</a></li>
-<li><a class="reference internal" href="#service" id="id64">service</a></li>
-<li><a class="reference internal" href="#seboolean" id="id65">seboolean</a></li>
-<li><a class="reference internal" href="#selinux" id="id66">selinux</a></li>
-<li><a class="reference internal" href="#setup" id="id67">setup</a></li>
-<li><a class="reference internal" href="#shell" id="id68">shell</a></li>
-<li><a class="reference internal" href="#subversion" id="id69">subversion</a></li>
-<li><a class="reference internal" href="#supervisorctl" id="id70">supervisorctl</a></li>
-<li><a class="reference internal" href="#template" id="id71">template</a></li>
-<li><a class="reference internal" href="#user" id="id72">user</a></li>
-<li><a class="reference internal" href="#wait-for" id="id73">wait_for</a></li>
-<li><a class="reference internal" href="#virt" id="id74">virt</a></li>
-<li><a class="reference internal" href="#yum" id="id75">yum</a></li>
-<li><a class="reference internal" href="#additional-contrib-modules" id="id76">Additional Contrib Modules</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules" id="id77">Writing your own modules</a></li>
+<li><a class="reference internal" href="#ansible-modules" id="id39">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#introduction" id="id40">Introduction</a></li>
+<li><a class="reference internal" href="#apt-repository" id="id41">apt_repository</a></li>
+<li><a class="reference internal" href="#apt" id="id42">apt</a></li>
+<li><a class="reference internal" href="#assemble" id="id43">assemble</a></li>
+<li><a class="reference internal" href="#authorized-key" id="id44">authorized_key</a></li>
+<li><a class="reference internal" href="#command" id="id45">command</a></li>
+<li><a class="reference internal" href="#copy" id="id46">copy</a></li>
+<li><a class="reference internal" href="#easy-install" id="id47">easy_install</a></li>
+<li><a class="reference internal" href="#facter" id="id48">facter</a></li>
+<li><a class="reference internal" href="#fetch" id="id49">fetch</a></li>
+<li><a class="reference internal" href="#file" id="id50">file</a></li>
+<li><a class="reference internal" href="#get-url" id="id51">get_url</a></li>
+<li><a class="reference internal" href="#git" id="id52">git</a></li>
+<li><a class="reference internal" href="#group" id="id53">group</a></li>
+<li><a class="reference internal" href="#ini-file" id="id54">ini_file</a></li>
+<li><a class="reference internal" href="#lineinfile" id="id55">lineinfile</a></li>
+<li><a class="reference internal" href="#mount" id="id56">mount</a></li>
+<li><a class="reference internal" href="#mysql-db" id="id57">mysql_db</a></li>
+<li><a class="reference internal" href="#mysql-user" id="id58">mysql_user</a></li>
+<li><a class="reference internal" href="#nagios" id="id59">nagios</a></li>
+<li><a class="reference internal" href="#ohai" id="id60">ohai</a></li>
+<li><a class="reference internal" href="#ping" id="id61">ping</a></li>
+<li><a class="reference internal" href="#pip" id="id62">pip</a></li>
+<li><a class="reference internal" href="#postgresql-db" id="id63">postgresql_db</a></li>
+<li><a class="reference internal" href="#postgresql-user" id="id64">postgresql_user</a></li>
+<li><a class="reference internal" href="#raw" id="id65">raw</a></li>
+<li><a class="reference internal" href="#service" id="id66">service</a></li>
+<li><a class="reference internal" href="#seboolean" id="id67">seboolean</a></li>
+<li><a class="reference internal" href="#selinux" id="id68">selinux</a></li>
+<li><a class="reference internal" href="#setup" id="id69">setup</a></li>
+<li><a class="reference internal" href="#shell" id="id70">shell</a></li>
+<li><a class="reference internal" href="#subversion" id="id71">subversion</a></li>
+<li><a class="reference internal" href="#supervisorctl" id="id72">supervisorctl</a></li>
+<li><a class="reference internal" href="#template" id="id73">template</a></li>
+<li><a class="reference internal" href="#user" id="id74">user</a></li>
+<li><a class="reference internal" href="#wait-for" id="id75">wait_for</a></li>
+<li><a class="reference internal" href="#virt" id="id76">virt</a></li>
+<li><a class="reference internal" href="#yum" id="id77">yum</a></li>
+<li><a class="reference internal" href="#additional-contrib-modules" id="id78">Additional Contrib Modules</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules" id="id79">Writing your own modules</a></li>
 </ul>
 </li>
 </ul>
@@ -694,152 +692,98 @@ be saved into &#8216;/foo/host.example.com/tmp/bar&#8217;</td>
 </div>
 <div class="section" id="file">
 <span id="id10"></span><h2><a class="toc-backref" href="#contents">file</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
-<p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
-support the same options as the file module &#8211; including &#8216;copy&#8217;, &#8216;template&#8217;, and &#8216;assmeble&#8217;.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="17%" />
-<col width="9%" />
-<col width="8%" />
-<col width="66%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">parameter</th>
-<th class="head">required</th>
-<th class="head">default</th>
-<th class="head">comments</th>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.1.</span></p>
+<p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. Many other modules support the same options as the file module - including <tt class="docutils literal"><span class="pre">copy</span></tt>, <tt class="docutils literal"><span class="pre">template</span></tt>, and <tt class="docutils literal"><span class="pre">assmeble</span></tt>.</p>
+<table>
+<tr>
+<td>parameter</td>
+<td>required</td>
+<td>default</td>
+<td>choices</td>
+<td>comments</td>
 </tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>dest</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>defines the file being managed, unless when used with state=link, and
-then sets the destination to create a symbolic link to using &#8216;src&#8217;</td>
+
+<tr>
+<td>dest</td>
+<td>True</td>
+<td>[]</td>
+<td><ul></ul></td>
+<td>defines the file being managed, unless when used with <em>state=link</em>, and then sets the destination to create a symbolic link to using <em>src</em></td>
 </tr>
-<tr class="row-odd"><td>state</td>
-<td>&nbsp;</td>
+
+<tr>
+<td>state</td>
+<td>False</td>
 <td>file</td>
-<td>values are &#8216;file&#8217;, &#8216;link&#8217;, &#8216;directory&#8217;, or &#8216;absent&#8217;.  If directory,
-all immediate subdirectories will be created if they do not exist.  If
-&#8216;file&#8217;, the file will NOT be created if it does not exist, see the &#8216;copy&#8217;
-or &#8216;template&#8217; module if you want that behavior.  If &#8216;link&#8217;, the symbolic
-link will be created or changed.  If absent, directories will be
-recursively deleted, and files or symlinks will be unlinked.</td>
+<td><ul><li>file</li><li>link</li><li>directory</li><li>absent</li></ul></td>
+<td>If directory, all immediate subdirectories will be created if they do not exist. If <em>file</em>, the file will NOT be created if it does not exist, see the <span class='module'>copy</span> or <span class='module'>template</span> module if you want that behavior. If <em>link</em>, the symbolic link will be created or changed. If absent, directories will be recursively deleted, and files or symlinks will be unlinked.</td>
 </tr>
-<tr class="row-even"><td>mode</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>mode the file or directory shoudl be, such as 0644 as would be fed to
-chmod.  English modes like &#8216;g+x&#8217; are not yet supported</td>
+
+<tr>
+<td>mode</td>
+<td>False</td>
+<td></td>
+<td><ul></ul></td>
+<td>mode the file or directory should be, such as 0644 as would be fed to <em>chmod</em>. English modes like <b>g+x</b> are not yet supported</td>
 </tr>
-<tr class="row-odd"><td>owner</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>name of the user that should own the file/directory, as would be fed to
-chown</td>
-</tr>
-<tr class="row-even"><td>group</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>name of the group that should own the file/directory, as would be fed to
-group</td>
-</tr>
-<tr class="row-odd"><td>src</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>path of the file to link to (applies only to state=link)</td>
-</tr>
-<tr class="row-even"><td>seuser</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>user part of SELinux file context.  Will default to system policy, if
-applicable.  If set to &#8216;_default&#8217;, it will use the &#8216;user&#8217; portion of the
-the policy if available</td>
-</tr>
-<tr class="row-odd"><td>serole</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>role part of SELinux file context, &#8216;_default&#8217; feature works as above.</td>
-</tr>
-<tr class="row-even"><td>setype</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>type part of SELinux file context, &#8216;_default&#8217; feature works as above</td>
-</tr>
-<tr class="row-odd"><td>selevel</td>
-<td>&nbsp;</td>
-<td>s0</td>
-<td>level part of the SELinux file context.  This is the MLS/MCS attribute,
-sometimes known as the &#8216;range&#8217;.  &#8216;_default&#8217; feature works as above</td>
-</tr>
-<tr class="row-even"><td>context</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>accepts only &#8216;default&#8217; as a value.  This will restore a file&#8217;s selinux
-context in the policy.  Does nothing if no default is available.</td>
-</tr>
-</tbody>
-</table>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>file path=/etc/foo.conf owner=foo group=foo mode=0644
-file path=/some/path owner=foo group=foo state=directory
-file path=/path/to/delete state=absent
-file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-file path=/some/path state=directory setype=httpd_sys_content_t
-file path=/some/path state=directory context=default</pre>
-</div>
-</div>
+
+</table><p>Example from Ansible Playbooks</p>
+<p><pre>
+file path=/etc/foo.conf owner=foo group=foo mode=0644</pre></p>
+
+<br/></div>
 <div class="section" id="get-url">
 <span id="id11"></span><h2><a class="toc-backref" href="#contents">get_url</a><a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
-<p>Downloads files from http, https, or ftp to the remote server.  The remote server must have direct
-access to the remote resource.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="17%" />
-<col width="9%" />
-<col width="8%" />
-<col width="66%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">parameter</th>
-<th class="head">required</th>
-<th class="head">default</th>
-<th class="head">comments</th>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
+<p>Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote server must have direct access to the remote resource.</p>
+<table>
+<tr>
+<td>parameter</td>
+<td>required</td>
+<td>default</td>
+<td>choices</td>
+<td>comments</td>
 </tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>url</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>http, https, or ftp URL</td>
+
+<tr>
+<td>url</td>
+<td>True</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>HTTP, HTTPS, or FTP URL</td>
 </tr>
-<tr class="row-odd"><td>dest</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>absolute path of where to download the file to.  If dest is a directory,
-the basename of the file on the remote server will be used.  If a
-directory, thirsty=yes must also be set.</td>
+
+<tr>
+<td>dest</td>
+<td>True</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>absolute path of where to download the file to.If <em>dest</em> is a directory, the basename of the file on the remote server will be used. If a directory, <em>thirsty=yes</em> must also be set.</td>
 </tr>
-<tr class="row-even"><td>thirsty</td>
+
+<tr>
+<td>thirsty</td>
+<td>False</td>
 <td>no</td>
-<td>&#8216;no&#8217;</td>
-<td>(new in 0.7) if yes, will download the file every time and replace the
-file if the contents change.  if no, the file will only be downloaded
-if the destination does not exist.  Generally should be &#8216;yes&#8217; only for
-small local files.  prior to 0.6, acts if &#8216;yes&#8217; by default.</td>
+<td><ul><li>yes</li><li>no</li></ul></td>
+<td>if <code>yes</code>, will download the file every time and replace the file if the contents change. if <code>no</code>, the file will only be downloaded if the destination does not exist. Generally should be <code>yes</code> only for small local files. prior to 0.6, acts if <code>yes</code> by default.</td>
 </tr>
-<tr class="row-odd"><td>OTHERS</td>
-<td>no</td>
-<td>&nbsp;</td>
-<td>all arguments accepted by the file module also work here</td>
+
+<tr>
+<td>others</td>
+<td>False</td>
+<td></td>
+<td><ul></ul></td>
+<td>all arguments accepted by the <span class='module'>file</span> module also work here</td>
 </tr>
-</tbody>
-</table>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>- action: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0444</pre>
-</div>
-</div>
+
+</table><p>Example from Ansible Playbooks</p>
+<p><pre>
+get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440</pre></p>
+
+<br/></div>
 <div class="section" id="git">
 <span id="id12"></span><h2><a class="toc-backref" href="#contents">git</a><a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p>Deploys software (or files) from git checkouts.</p>
@@ -936,77 +880,143 @@ discarded.  Prior to 0.7, this was always &#8216;yes&#8217; and could not be dis
 <div class="highlight-python"><pre>group name=somegroup state=present</pre>
 </div>
 </div>
+<div class="section" id="ini-file">
+<span id="id14"></span><h2><a class="toc-backref" href="#contents">ini_file</a><a class="headerlink" href="#ini-file" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.9.</span></p>
+<p>Manage (add, remove, change) individual settings in an INI-style file without having to manage the file as a whole with, say, <tt class="docutils literal"><span class="pre">template</span></tt> or <tt class="docutils literal"><span class="pre">assemble</span></tt>. Adds missing sections if they don&#8217;t exist.</p>
+<table>
+<tr>
+<td>parameter</td>
+<td>required</td>
+<td>default</td>
+<td>choices</td>
+<td>comments</td>
+</tr>
+
+<tr>
+<td>option</td>
+<td>False</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>if set (required for changing a <em>value</em>), this is the name of the option.May be omitted if adding/removing a whole <em>section</em>.</td>
+</tr>
+
+<tr>
+<td>others</td>
+<td>False</td>
+<td></td>
+<td><ul></ul></td>
+<td>all arguments accepted by the <span class='module'>file</span> module also work here</td>
+</tr>
+
+<tr>
+<td>dest</td>
+<td>True</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>Path to the INI-style file; this file is created if required</td>
+</tr>
+
+<tr>
+<td>section</td>
+<td>True</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>Section name in INI file. This is added if <code>state=present</code> automatically when a single value is being set.</td>
+</tr>
+
+<tr>
+<td>backup</td>
+<td>False</td>
+<td>False</td>
+<td><ul><li>yes</li><li>no</li></ul></td>
+<td>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
+
+<tr>
+<td>value</td>
+<td>False</td>
+<td>None</td>
+<td><ul></ul></td>
+<td>the string value to be associated with an <em>option</em>. May be omitted when removing an <em>option</em>.</td>
+</tr>
+
+</table><br/></div>
 <div class="section" id="lineinfile">
-<span id="id14"></span><h2><a class="toc-backref" href="#contents">lineinfile</a><a class="headerlink" href="#lineinfile" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2><a class="toc-backref" href="#contents">lineinfile</a><a class="headerlink" href="#lineinfile" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
-<p>This module will search a file for a line, and ensure that it is present or
-absent.</p>
-<p>This is primarily useful when you only want to change a single line in a file.
-For other cases, see the copy or template modules.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="17%" />
-<col width="9%" />
-<col width="8%" />
-<col width="66%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">parameter</th>
-<th class="head">required</th>
-<th class="head">default</th>
-<th class="head">comments</th>
+<p>This module will search a file for a line, and ensure that it is present or absent.
+This is primarily useful when you want to change a single line in a file only. For other cases, see the <tt class="docutils literal"><span class="pre">copy</span></tt> or <tt class="docutils literal"><span class="pre">template</span></tt> modules.</p>
+<table>
+<tr>
+<td>parameter</td>
+<td>required</td>
+<td>default</td>
+<td>choices</td>
+<td>comments</td>
 </tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>state</td>
-<td>no</td>
+
+<tr>
+<td>state</td>
+<td>False</td>
 <td>present</td>
-<td>&#8216;absent&#8217; or &#8216;present&#8217;</td>
+<td><ul><li>present</li><li>absent</li></ul></td>
+<td>Whether the line should be there or not.</td>
 </tr>
-<tr class="row-odd"><td>name</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>The file to modify.</td>
+
+<tr>
+<td>name</td>
+<td>True</td>
+<td></td>
+<td><ul></ul></td>
+<td>The file to modify</td>
 </tr>
-<tr class="row-even"><td>regexp</td>
-<td>yes</td>
-<td>&nbsp;</td>
-<td>The regular expression to look for in the file. For state=present, the
-pattern to replace. For state=absent, the pattern of the line to
-remove.</td>
-</tr>
-<tr class="row-odd"><td>line</td>
-<td>maybe</td>
-<td>&nbsp;</td>
-<td>Required for state=present. The line to insert/replace into the file. Must
-match the value given to &#8216;regexp&#8217;.</td>
-</tr>
-<tr class="row-even"><td>insertafter</td>
-<td>no</td>
+
+<tr>
+<td>insertafter</td>
+<td>False</td>
 <td>EOF</td>
-<td>Used with state=present. If specified, the line will be inserted after the
-specified regular expression. Two special values are available: BOF for
-inserting the line at the beginning of the file, and EOF for inserting the
-line at the end of the file.</td>
+<td><ul><li>BOF</li><li>EOF</li></ul></td>
+<td>Used with <em>state=present</em>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
 </tr>
-<tr class="row-odd"><td>backup</td>
-<td>no</td>
-<td>no</td>
-<td>Create a backup file including the timestamp information so you can
-get the original file back if you somehow clobbered it incorrectly.</td>
+
+<tr>
+<td>regexp</td>
+<td>True</td>
+<td></td>
+<td><ul></ul></td>
+<td>The regular expression to look for in the file. For <em>state=present</em>, the pattern to replace. For <em>state=absent</em>, the pattern of the line to remove.</td>
 </tr>
-</tbody>
-</table>
-<p>Example action from Ansible <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>:</p>
-<div class="highlight-python"><pre>lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
-lineinfile name=/etc/sudoers regexp="^#includedir" line="#includedir /etc/sudoers.d"
-lineinfile name=/etc/httpd/conf/httpd.conf regexp="^ServerName " insertafter="^#ServerName " line="ServerName ansible.example.com"
-lineinfile name=/etc/sudoers state=absent regexp="^%wheel"</pre>
-</div>
-</div>
+
+<tr>
+<td>line</td>
+<td>False</td>
+<td></td>
+<td><ul></ul></td>
+<td>Required for <em>state=present</em>. The line to insert/replace into the file. Must match the value given to <code>regexp</code>.</td>
+</tr>
+
+<tr>
+<td>backup</td>
+<td>False</td>
+<td>False</td>
+<td><ul></ul></td>
+<td>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</td>
+</tr>
+
+</table><p></p>
+<p><pre>
+lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled</pre></p>
+
+<p></p>
+<p><pre>
+lineinfile name=/etc/sudoers state=absent regexp="^%wheel"</pre></p>
+
+<br/></div>
 <div class="section" id="mount">
-<span id="id15"></span><h2><a class="toc-backref" href="#contents">mount</a><a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2><a class="toc-backref" href="#contents">mount</a><a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>The mount module controls active and configured mount points (fstab).</p>
@@ -1066,7 +1076,7 @@ configured in fstab.  &#8216;absent&#8217;, and &#8216;present&#8217; only deal 
 </table>
 </div>
 <div class="section" id="mysql-db">
-<span id="id16"></span><h2><a class="toc-backref" href="#contents">mysql_db</a><a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2><a class="toc-backref" href="#contents">mysql_db</a><a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove MySQL databases from a remote host.</p>
@@ -1133,7 +1143,7 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 </div>
 </div>
 <div class="section" id="mysql-user">
-<span id="id17"></span><h2><a class="toc-backref" href="#contents">mysql_user</a><a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2><a class="toc-backref" href="#contents">mysql_user</a><a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Adds or removes a user from a MySQL database.</p>
@@ -1211,7 +1221,7 @@ finally fall back to using the MySQL default login of &#8216;root&#8217; with no
 </div>
 </div>
 <div class="section" id="nagios">
-<span id="id18"></span><h2><a class="toc-backref" href="#contents">nagios</a><a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
+<span id="id19"></span><h2><a class="toc-backref" href="#contents">nagios</a><a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Perform common tasks in Nagios related to downtime and notifications.</p>
@@ -1383,7 +1393,7 @@ receive this error if that is the case:</p>
 </ol>
 </div>
 <div class="section" id="ohai">
-<span id="id19"></span><h2><a class="toc-backref" href="#contents">ohai</a><a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id20"></span><h2><a class="toc-backref" href="#contents">ohai</a><a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p>Similar to the <a class="reference internal" href="#facter"><em>facter</em></a> module, this returns JSON inventory data.
 Ohai data is a bit more verbose and nested than facter.</p>
 <p>Requires that &#8216;ohai&#8217; be installed on the remote end.</p>
@@ -1394,7 +1404,7 @@ Ohai data is a bit more verbose and nested than facter.</p>
 </div>
 </div>
 <div class="section" id="ping">
-<span id="id20"></span><h2><a class="toc-backref" href="#contents">ping</a><a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2><a class="toc-backref" href="#contents">ping</a><a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns &#8216;pong&#8217; on
 successful contact.  It does not make sense in playbooks, but is useful
 from /usr/bin/ansible:</p>
@@ -1402,7 +1412,7 @@ from /usr/bin/ansible:</p>
 </div>
 </div>
 <div class="section" id="pip">
-<span id="id21"></span><h2><a class="toc-backref" href="#contents">pip</a><a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2><a class="toc-backref" href="#contents">pip</a><a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manages Python library dependencies.</p>
@@ -1460,7 +1470,7 @@ pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapp
 </div>
 </div>
 <div class="section" id="postgresql-db">
-<span id="id23"></span><h2><a class="toc-backref" href="#contents">postgresql_db</a><a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2><a class="toc-backref" href="#contents">postgresql_db</a><a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL databases from a remote host.</p>
@@ -1524,7 +1534,7 @@ host before using this module.</p>
 </div>
 </div>
 <div class="section" id="postgresql-user">
-<span id="id24"></span><h2><a class="toc-backref" href="#contents">postgresql_user</a><a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2><a class="toc-backref" href="#contents">postgresql_user</a><a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL users (roles) from a remote host and, optionally, grant the users
@@ -1621,22 +1631,15 @@ happened and separately if the user was removed or not.</p>
 </div>
 </div>
 <div class="section" id="raw">
-<span id="id25"></span><h2><a class="toc-backref" href="#contents">raw</a><a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
-<p>Executes a low-down and dirty SSH command, not going through the module subsystem.</p>
-<p>This is useful and should only be done in two cases.  The first case is installing
-python-simplejson on older (python 2.4 and before) hosts that need it as a dependency
-to run modules, since nearly all core modules require it.  Another is speaking to any
-devices such as routers that do not have any Python installed.  In any other case,
-using the &#8216;shell&#8217; or &#8216;command&#8217; module is much more appropriate.</p>
-<p>Arguments given to &#8216;raw&#8217; are run directly through the configured remote shell and
-only output is returned.  There is no error detection or change handler support
-for this module.</p>
-<p>Example from <cite>/usr/bin/ansible</cite> to bootstrap a legacy python 2.4 host:</p>
-<div class="highlight-python"><pre>ansible newhost.example.com -m raw -a "yum -y install python-simplejson"</pre>
-</div>
-</div>
+<span id="id26"></span><h2><a class="toc-backref" href="#contents">raw</a><a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<p>Executes a low-down and dirty SSH command, not going through the module subsystem. This is useful and should only be done in two cases. The first case is installing python-simplejson on older (Python 2.4 and before) hosts that need it as a dependency to run modules, since nearly all core modules require it. Another is speaking to any devices such as routers that do not have any Python installed. In any other case, using the <tt class="docutils literal"><span class="pre">shell</span></tt> or <tt class="docutils literal"><span class="pre">command</span></tt> module is much more appropriate. Arguments given to <tt class="docutils literal"><span class="pre">raw</span></tt> are run directly through the configured remote shell and only output is returned. There is no error detection or change handler support for this module</p>
+<p>Example from /usr/bin/ansible to bootstrap a legacy python 2.4 host</p>
+<p><pre>
+ansible newhost.example.com -m raw -a "yum -y install python-simplejson"</pre></p>
+
+<br/></div>
 <div class="section" id="service">
-<span id="id26"></span><h2><a class="toc-backref" href="#contents">service</a><a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2><a class="toc-backref" href="#contents">service</a><a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p>Controls services on remote machines.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1689,7 +1692,7 @@ service name=foo pattern=/usr/bin/foo state=started</pre>
 </div>
 </div>
 <div class="section" id="seboolean">
-<span id="id27"></span><h2><a class="toc-backref" href="#contents">seboolean</a><a class="headerlink" href="#seboolean" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2><a class="toc-backref" href="#contents">seboolean</a><a class="headerlink" href="#seboolean" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Toggles SELinux booleans.</p>
@@ -1730,7 +1733,7 @@ service name=foo pattern=/usr/bin/foo state=started</pre>
 </div>
 </div>
 <div class="section" id="selinux">
-<span id="id28"></span><h2><a class="toc-backref" href="#contents">selinux</a><a class="headerlink" href="#selinux" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2><a class="toc-backref" href="#contents">selinux</a><a class="headerlink" href="#selinux" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Configures the SELinux mode and policy.  A reboot may be required after usage.  Ansible will not issue this reboot but
@@ -1773,138 +1776,15 @@ selinux policy=targeted state=disabled</pre>
 </div>
 </div>
 <div class="section" id="setup">
-<span id="id29"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used
-in playbooks.  It can also be executed directly by /usr/bin/ansible to check what variables are available
-to a host.</p>
-<p>Ansible provides many &#8216;facts&#8217; about the system, automatically.</p>
-<p>Some of the variables that are supplied are listed below.  These in particular
-are from a VMWare Fusion 4 VM running CentOS 6.2:</p>
-<div class="highlight-python"><pre>"ansible_facts": {
-      "ansible_all_ipv4_addresses": [
-          "192.168.144.180",
-          "192.168.122.1"
-      ],
-      "ansible_all_ipv6_addresses": [
-          "ffff::fff:ffff:ffff:ffff"
-      ],
-      "ansible_architecture": "x86_64",
-      "ansible_bios_date": "06/02/2011",
-      "ansible_bios_version": "6.00",
-      "ansible_default_ipv4": {
-          "address": "192.168.144.180",
-          "alias": "eth0",
-          "gateway": "192.168.144.2",
-          "interface": "eth0",
-          "macaddress": "AA:BB:CC:DD:EE:FF",
-          "mtu": "1500",
-          "netmask": "255.255.255.0",
-          "network": "192.168.144.0",
-          "type": "ether"
-      },
-      "ansible_default_ipv6": {},
-      "ansible_distribution": "CentOS",
-      "ansible_distribution_release": "Final",
-      "ansible_distribution_version": "6.2",
-      "ansible_eth0": {
-          "device": "eth0",
-          "ipv4": {
-              "address": "192.168.144.180",
-              "netmask": "255.255.255.0",
-              "network": "192.16.144.0"
-          },
-          "ipv6": [
-              {
-                  "address": "ffff::fff:ffff:ffff:ffff",
-                  "prefix": "64",
-                  "scope": "link"
-              }
-          ],
-          "macaddress": "00:0c:29:b6:a2:62",
-          "mtu": "1500",
-          "type": "ether"
-      },
-      "ansible_form_factor": "Other",
-      "ansible_fqdn": "localhost.localdomain",
-      "ansible_hostname": "localhost",
-      "ansible_interfaces": [
-          "lo",
-          "virbr0",
-          "eth0"
-      ],
-      "ansible_kernel": "2.6.32-220.2.1.el6.x86_64",
-      "ansible_lo": {
-          "device": "lo",
-          "ipv4": {
-              "address": "127.0.0.1",
-              "netmask": "255.0.0.0",
-              "network": "127.0.0.0"
-          },
-          "ipv6": [
-              {
-                  "address": "::1",
-                  "prefix": "128",
-                  "scope": "host"
-              }
-          ],
-          "macaddress": "00:00:00:00:00:00",
-          "mtu": "16436",
-          "type": "loopback"
-      },
-      "ansible_machine": "x86_64",
-      "ansible_memfree_mb": 166,
-      "ansible_memtotal_mb": 993,
-      "ansible_processor": [
-          "Intel(R) Core(TM) i7-2677M CPU @ 1.80GHz"
-      ],
-      "ansible_processor_cores": "NA",
-      "ansible_processor_count": 1,
-      "ansible_product_name": "VMware Virtual Platform",
-      "ansible_product_serial": "REDACTED",
-      "ansible_product_uuid": "REDACTED",
-      "ansible_product_version": "None",
-      "ansible_python_version": "2.6.6",
-      "ansible_selinux": {
-          "config_mode": "enforcing",
-          "mode": "permissive",
-          "policyvers": 24,
-          "status": "enabled",
-          "type": "targeted"
-      },
-      "ansible_ssh_host_key_dsa_public": "REDACTED",
-      "ansible_ssh_host_key_rsa_public": "REDACTED",
-      "ansible_swapfree_mb": 1933,
-      "ansible_swaptotal_mb": 2015,
-      "ansible_system": "Linux",
-      "ansible_system_vendor": "VMware, Inc.",
-      "ansible_virbr0": {
-          "device": "virbr0",
-          "ipv4": {
-              "address": "192.168.122.1",
-              "netmask": "255.255.255.0",
-              "network": "192.168.122.0"
-          },
-          "macaddress": "AA:BB:CC:DD:EE:FF",
-          "mtu": "1500",
-          "type": "ether"
-      },
-      "ansible_virtualization_role": "guest",
-      "ansible_virtualization_type": "VMware",</pre>
-</div>
-<p>More ansible facts will be added with successive releases.</p>
-<p>If facter or ohai are installed, variables from these programs will
-also be snapshotted into the JSON file for usage in templating. These
-variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and <tt class="docutils literal"><span class="pre">ohai_</span></tt> so it&#8217;s easy to
-tell their source.</p>
-<p>All variables are bubbled up to the caller.  Using the ansible facts and choosing
-to not install facter and ohai means you can avoid ruby-dependencies
-on your remote systems.</p>
-<p>Example action from <cite>/usr/bin/ansible</cite>:</p>
-<div class="highlight-python"><pre>ansible testserver -m setup</pre>
-</div>
-</div>
+<span id="id30"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt> to check what variables are available to a host. Ansible provides many <em>facts</em> about the system, automatically.</p>
+<p>Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.</p>
+<p><pre>
+ansible all -m setup -tree /tmp/facts</pre></p>
+
+<br/></div>
 <div class="section" id="shell">
-<span id="id30"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p>The shell module takes the command name followed by a list of
 arguments, space delimited.  It is almost exactly like the command module
 but runs the command through the user&#8217;s configured shell on the remote node.</p>
@@ -1954,7 +1834,7 @@ your best judgement.</p>
 </div>
 </div>
 <div class="section" id="subversion">
-<span id="id31"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
+<span id="id32"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Deploys a subversion repository.</p>
@@ -1996,7 +1876,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="supervisorctl">
-<span id="id32"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id33"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -2032,7 +1912,7 @@ discarded.  If no, this module will fail if it encounters modified files.</td>
 </div>
 </div>
 <div class="section" id="template">
-<span id="id33"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id34"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates a file out to a remote server.</p>
 <p>Templates are processed by the
 <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2 templating language</a> -
@@ -2082,7 +1962,7 @@ get the original file back if you somehow clobbered it incorrectly.</td>
 </div>
 </div>
 <div class="section" id="user">
-<span id="id34"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id35"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p>Creates user accounts, manipulates existing user accounts, and removes user accounts.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -2181,7 +2061,7 @@ user name=mdehaan state=absent force=yes</pre>
 </div>
 </div>
 <div class="section" id="wait-for">
-<span id="id35"></span><h2><a class="toc-backref" href="#contents">wait_for</a><a class="headerlink" href="#wait-for" title="Permalink to this headline">¶</a></h2>
+<span id="id36"></span><h2><a class="toc-backref" href="#contents">wait_for</a><a class="headerlink" href="#wait-for" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Waits for a given port to become accessible (or inaccessible) on a local or remote server.</p>
@@ -2236,7 +2116,7 @@ for the port being open or closed.</td>
 </div>
 </div>
 <div class="section" id="virt">
-<span id="id36"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id37"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p>Manages virtual machines supported by libvirt.  Requires that libvirt be installed
 on the managed machine.</p>
 <table border="1" class="docutils">
@@ -2296,7 +2176,7 @@ ansible host -m virt -a "command=virttype"</pre>
 </div>
 </div>
 <div class="section" id="yum">
-<span id="id37"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id38"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the yum package manager.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -2370,33 +2250,13 @@ yum name=httpd state=installed</pre>
 <br/>
 </div>
 <footer class="footer">
-
-  <div class="container">
-  <div id="fb-root"></div>
+<div class="container">
 <p>
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-<input type="hidden" name="cmd" value="_donations">
-<input type="hidden" name="business" value="michael.dehaan@gmail.com">
-<input type="hidden" name="lc" value="US">
-<input type="hidden" name="item_name" value="Ansible">
-<input type="hidden" name="no_note" value="0">
-<input type="hidden" name="currency_code" value="USD">
-<input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-</form>
-</p>
-<p>
-<a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-<g:plusone annotation="inline"></g:plusone>
-<div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
-</p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Sep 23, 2012.<br/>
+      Last updated on Sep 27, 2012.<br/>
     </p>
-  </div>
+</div>
 </footer>
   </body>
 </html>

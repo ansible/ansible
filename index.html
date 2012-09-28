@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Introducing Ansible &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <title>Contents &mdash; Ansible Documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
     <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="#" />
+    <link rel="top" title="Ansible Documentation" href="#" />
     <link rel="next" title="Getting Started" href="gettingstarted.html" />
 <script type="text/javascript">
 (function () {
@@ -124,7 +124,7 @@ s.parentNode.insertBefore(ga, s);
   <div class="topbar" data-scrollspy="scrollspy" >
     <div class="topbar-inner">
       <div class="container">
-        <!-- <a class="brand" href="#">Ansible</a> -->
+        <a class="brand" href="#">Ansible Documentation</a>
         <ul class="nav">
           
             <li><a href="/">Home</A>
@@ -142,7 +142,6 @@ s.parentNode.insertBefore(ga, s);
 <li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </span>
 </li>
@@ -150,9 +149,7 @@ s.parentNode.insertBefore(ga, s);
   <a href="#"
      class="dropdown-toggle">Page</a>
   <span class="localtoc"><ul>
-<li><a class="reference internal" href="#">Introducing Ansible</a></li>
-<li><a class="reference internal" href="#architecture">Architecture</a></li>
-<li><a class="reference internal" href="#documentation">Documentation</a><ul>
+<li><a class="reference internal" href="#">Contents</a><ul>
 </ul>
 </li>
 </ul>
@@ -173,211 +170,12 @@ s.parentNode.insertBefore(ga, s);
       </div>
     </div>
   </div>
-<a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
 
 
 <div class="container">
-   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
-<br/>
    
-  <div class="section" id="introducing-ansible">
-<h1>Introducing Ansible<a class="headerlink" href="#introducing-ansible" title="Permalink to this headline">¶</a></h1>
-<p>Ansible is a radically simple model-driven configuration management, deployment,
-and command execution framework.  Other tools in this space have been too complicated for too long,
-require too much bootstrapping, and have too much learning curve.  By comparison, Ansible is dead simple
-and painless to extend. Puppet and Chef have about 60k lines of code.  Ansible&#8217;s core is a little over 2000 lines.</p>
-<p>Ansible isn&#8217;t just for configuration management &#8211; it&#8217;s also great for ad-hoc tasks, quickly firing off commands against nodes, and it excels at complex multi-tier deployment tasks, being designed for that purpose from day one.</p>
-<p>Systems management doesn&#8217;t have to be complicated.  We&#8217;ve learned well from the &#8220;Infrastructure is Code&#8221; movement.
-Infrastructure should be easy and powerful to command, but it should not look like code, lest it acquire the disadvantages of a software project &#8211; bugs, complexity, and overhead.  Infrastructure configurations should be simple, easy to develop, and easy to audit.  This is Ansible&#8217;s philosophy and the main reason it&#8217;s different.  Read on, though, and we&#8217;ll tell you more.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="100%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Key Features</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>Dead simple setup</td>
-</tr>
-<tr class="row-odd"><td>Can be easily run from a checkout, no installation required</td>
-</tr>
-<tr class="row-even"><td>No agents or software to install on managed machines</td>
-</tr>
-<tr class="row-odd"><td>Ultra-secure; uses existing SSHd out of the box</td>
-</tr>
-<tr class="row-even"><td>Connect as any user, not just root, and sudo as needed</td>
-</tr>
-<tr class="row-odd"><td>Super fast &amp; parallel by default</td>
-</tr>
-<tr class="row-even"><td>Supports Kerberized SSH, jump hosts, forwarding, etc</td>
-</tr>
-<tr class="row-odd"><td>Modules are idempotent, but you can also easily use shell commands</td>
-</tr>
-<tr class="row-even"><td>Modules can be written in ANY language</td>
-</tr>
-<tr class="row-odd"><td>Orchestrates load balancer rotations and outage windows</td>
-</tr>
-<tr class="row-even"><td>Awesome API for creating very powerful distributed applications</td>
-</tr>
-<tr class="row-odd"><td>Pluggable transports (SSH is just the default)</td>
-</tr>
-<tr class="row-even"><td>Can draw inventory data from external sources like EC2 and Cobbler</td>
-</tr>
-<tr class="row-odd"><td>The easiest config management system to use, ever.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
-<img alt="&quot;Architecture Diagram&quot;" class="align-center" src="http://ansible.github.com/ansible_arch2.jpg" style="width: 800px;" />
-<table border="1" class="docutils">
-<colgroup>
-<col width="35%" />
-<col width="65%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="2">Tell Me More</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>Multi-node control &amp; orchestration</td>
-<td>Ansible is especially strong at expressing complex multi-node
-deployment processes, executing ordered sequences on
-different sets of nodes through <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>. Performing
-steps on all your webservers, then some steps on your database
-servers, and then some steps on monitoring servers &#8211; all the
-while sharing variables between them is trivial.</td>
-</tr>
-<tr class="row-odd"><td>Doesn&#8217;t choose sides in the
-language war</td>
-<td>Modules can be written in Bash, Perl, Python, Ruby, whatever.
-Playbooks are not a programming language, but a data format.</td>
-</tr>
-<tr class="row-even"><td>Infrastructure Is Not Code,
-Infrastructure Is Data</td>
-<td>Playbooks are not a programming language, they are designed to be
-super-easy to write, and easy to audit by non-developers.  You
-will be able to skim and very quickly understand your entire
-configuration policy.</td>
-</tr>
-<tr class="row-odd"><td>Three In One</td>
-<td>Ansible handles multiple command and control
-problems in one tool.  You don&#8217;t need to use  a config tool, a
-deployment tool, and yet another ad-hoc parallel task execution
-tool &#8211; Ansible will do all three.</td>
-</tr>
-<tr class="row-even"><td>Lower Attack Surface, No Agents</td>
-<td>Ansible is very secure.  Ansible uses SSH as a transport,
-resulting in a much lower attack surface, and requires no agents
-to be running on managed machines.  If a central server
-containing your playbooks is compromised, your nodes are not &#8211;
-which is NOT the case of most other tools, which can, more or
-less, turn into a botnet. Our security approach is to avoid
-writing custom crypto code altogether, and rely on the most
-secure part of the Linux/Unix subsystem that your machines are
-already using &#8211; openssh.</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="23%" />
-<col width="77%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="2">Community</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td colspan="2">Your ideas and contributions are welcome.  We&#8217;re also happy to help
-you with questions about Ansible.</td>
-</tr>
-<tr class="row-odd"><td>Get the source</td>
-<td>Visit the <a class="reference external" href="https://github.com/ansible/ansible">project page</a> on Github</td>
-</tr>
-<tr class="row-even"><td>File a bug</td>
-<td>View the <a class="reference external" href="https://github.com/ansible/ansible/issues">issue tracker</a></td>
-</tr>
-<tr class="row-odd"><td>Spread the word</td>
-<td>Watch slides on <a class="reference external" href="http://speakerdeck.com/u/mpdehaan/p/ansible">Speakerdeck</a></td>
-</tr>
-<tr class="row-even"><td>Join the mailing list</td>
-<td>Visit the <a class="reference external" href="http://groups.google.com/group/ansible-project">Google Group</a></td>
-</tr>
-<tr class="row-odd"><td>Chat</td>
-<td>Visit the channel on <a class="reference external" href="http://webchat.freenode.net/?channels=ansible">FreeNode</a></td>
-</tr>
-<tr class="row-even"><td>Share &amp; Learn</td>
-<td>Share <a class="reference external" href="http://bit.ly/NNwUgY">playbooks, modules, articles, and scripts</a></td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="100%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">What (Real) People Are Saying</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>&#8220;I&#8217;ve been trying to grok Chef these last weeks, and really, I don&#8217;t get it. I discovered ansible
-yesterday at noon, successfully ran it at 1pm, made my first playbook by 2pm, and pushed two small
-[contributions to the project] before the office closed... Do that with any other config management
-software!&#8221;</td>
-</tr>
-<tr class="row-odd"><td>&#8220;Ansible is much more firewall-friendly.  I have a number of hosts that are only accessible via reverse
-SSH tunnels, and let me tell you getting puppet or chef to play nice with that is a nightmare.&#8221;</td>
-</tr>
-<tr class="row-even"><td>&#8220;This software has really changed my life as an network admin, the simplicity ansible comes with is
-really childs-play and I really adore its design. No more hassle with SSL keys, DNS based &#8216;server
-entries&#8217; (e.g. puppet and what not). Just plain (secure!) SSH keys and one is good to go.&#8221;</td>
-</tr>
-<tr class="row-odd"><td>&#8220;You may get a kick out of the fact that I&#8217;m using ansible to install puppetmaster(s).  I&#8217;m starting to
-migrate all my stuff to the much more sensical ansible. Nice work.&#8221;</td>
-</tr>
-<tr class="row-even"><td>&#8220;Simple as hell&#8221;</td>
-</tr>
-<tr class="row-odd"><td>&#8220;I swear, I have gotten more done with Ansible in three days than I did in not getting chef installed
-in three weeks.&#8221;</td>
-</tr>
-<tr class="row-even"><td>&#8220;Puppet was hell... gave up on Chef... found ansible and couldn&#8217;t be happier.&#8221;</td>
-</tr>
-<tr class="row-odd"><td>&#8220;Really impressed with Ansible. Up and running in ¼ of the time it took to get going with Puppet.&#8221;</td>
-</tr>
-<tr class="row-even"><td>&#8220;Automation even a manager can understand.&#8221; &#8211; A Manager</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="100%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Presented By...</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>Ansible was created and is run by <a class="reference external" href="http://michaeldehaan.net">Michael DeHaan</a>
-(<a class="reference external" href="http://twitter.com/#!/laserllama">&#64;laserllama</a>), a Raleigh, NC
-based software developer and architect, who also created the popular open-source
-DevOps install server <a class="reference external" href="http://cobbler.github.com/">Cobbler</a>.
-Cobbler is used to deploy mission critical systems all over the
-planet, in industries ranging from massively multiplayer gaming, core
-internet infrastructure, finance, chip design, and more.  Michael also
-helped co-author <a class="reference external" href="http://fedorahosted.org/func/">Func</a>, a precursor to Ansible, which is used
-to orchestrate systems in lots of diverse places.  He&#8217;s worked on systems
-software for IBM, Motorola, Red Hat&#8217;s Emerging Technologies Group,
-Puppet Labs, and is now with <a class="reference external" href="http://rpath.com">rPath</a>.  Reach Michael by email
-<a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">here</a>.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
@@ -390,7 +188,6 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 <li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
 </ul>
 </div>
 </div>
@@ -399,33 +196,13 @@ Puppet Labs, and is now with <a class="reference external" href="http://rpath.co
 <br/>
 </div>
 <footer class="footer">
-
-  <div class="container">
-  <div id="fb-root"></div>
+<div class="container">
 <p>
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-<input type="hidden" name="cmd" value="_donations">
-<input type="hidden" name="business" value="michael.dehaan@gmail.com">
-<input type="hidden" name="lc" value="US">
-<input type="hidden" name="item_name" value="Ansible">
-<input type="hidden" name="no_note" value="0">
-<input type="hidden" name="currency_code" value="USD">
-<input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-</form>
-</p>
-<p>
-<a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-<g:plusone annotation="inline"></g:plusone>
-<div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
-</p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Sep 23, 2012.<br/>
+      Last updated on Sep 27, 2012.<br/>
     </p>
-  </div>
+</div>
 </footer>
   </body>
 </html>

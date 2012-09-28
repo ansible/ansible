@@ -10,6 +10,10 @@ do a docs build and push the static files.
 If you do not want to learn RST format (ReStructured Text), you can also file issues
 on the documentation project. 
 
+Note that module documentation can actually be generated from a DOCUMENTATION docstring
+in the modules directory, so corrections to modules written as much need to be made
+in the main project in the module source, rather than in the documentation for the module.
+
 Author
 ======
 

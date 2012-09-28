@@ -1,55 +1,58 @@
 .. _file:
 
 file
-````
+````````
 
-Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories.  Many other modules
-support the same options as the file module -- including 'copy', 'template', and 'assmeble'.
+.. versionadded:: 0.1
 
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| parameter          | required | default | comments                                                                   |
-+====================+==========+=========+============================================================================+
-| dest               | yes      |         | defines the file being managed, unless when used with state=link, and      |
-|                    |          |         | then sets the destination to create a symbolic link to using 'src'         |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| state              |          | file    | values are 'file', 'link', 'directory', or 'absent'.  If directory,        |
-|                    |          |         | all immediate subdirectories will be created if they do not exist.  If     |
-|                    |          |         | 'file', the file will NOT be created if it does not exist, see the 'copy'  |
-|                    |          |         | or 'template' module if you want that behavior.  If 'link', the symbolic   |
-|                    |          |         | link will be created or changed.  If absent, directories will be           |
-|                    |          |         | recursively deleted, and files or symlinks will be unlinked.               |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| mode               |          |         | mode the file or directory shoudl be, such as 0644 as would be fed to      |
-|                    |          |         | chmod.  English modes like 'g+x' are not yet supported                     |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| owner              |          |         | name of the user that should own the file/directory, as would be fed to    |
-|                    |          |         | chown                                                                      |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| group              |          |         | name of the group that should own the file/directory, as would be fed to   |
-|                    |          |         | group                                                                      |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| src                |          |         | path of the file to link to (applies only to state=link)                   |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| seuser             |          |         | user part of SELinux file context.  Will default to system policy, if      |
-|                    |          |         | applicable.  If set to '_default', it will use the 'user' portion of the   |
-|                    |          |         | the policy if available                                                    |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| serole             |          |         | role part of SELinux file context, '_default' feature works as above.      |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| setype             |          |         | type part of SELinux file context, '_default' feature works as above       |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| selevel            |          | s0      | level part of the SELinux file context.  This is the MLS/MCS attribute,    |
-|                    |          |         | sometimes known as the 'range'.  '_default' feature works as above         |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| context            |          |         | accepts only 'default' as a value.  This will restore a file's selinux     |
-|                    |          |         | context in the policy.  Does nothing if no default is available.           |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
 
-Example action from Ansible :doc:`playbooks`::
+Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. Many other modules support the same options as the file module - including ``copy``, ``template``, and ``assmeble``. 
 
-    file path=/etc/foo.conf owner=foo group=foo mode=0644
-    file path=/some/path owner=foo group=foo state=directory
-    file path=/path/to/delete state=absent
-    file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-    file path=/some/path state=directory setype=httpd_sys_content_t
-    file path=/some/path state=directory context=default
+
+.. raw:: html
+
+    <table>
+    <tr>
+    <td>parameter</td>
+    <td>required</td>
+    <td>default</td>
+    <td>choices</td>
+    <td>comments</td>
+    </tr>
+    
+    <tr>
+    <td>dest</td>
+    <td>True</td>
+    <td>[]</td>
+    <td><ul></ul></td>
+    <td>defines the file being managed, unless when used with <em>state=link</em>, and then sets the destination to create a symbolic link to using <em>src</em></td>
+    </tr>
+    
+    <tr>
+    <td>state</td>
+    <td>False</td>
+    <td>file</td>
+    <td><ul><li>file</li><li>link</li><li>directory</li><li>absent</li></ul></td>
+    <td>If directory, all immediate subdirectories will be created if they do not exist. If <em>file</em>, the file will NOT be created if it does not exist, see the <span class='module'>copy</span> or <span class='module'>template</span> module if you want that behavior. If <em>link</em>, the symbolic link will be created or changed. If absent, directories will be recursively deleted, and files or symlinks will be unlinked.</td>
+    </tr>
+    
+    <tr>
+    <td>mode</td>
+    <td>False</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>mode the file or directory should be, such as 0644 as would be fed to <em>chmod</em>. English modes like <b>g+x</b> are not yet supported</td>
+    </tr>
+    
+    </table>
+
+
+.. raw:: html
+
+
+    <p>Example from Ansible Playbooks</p>
+    <p><pre>
+    file path=/etc/foo.conf owner=foo group=foo mode=0644</pre></p>
+
+    <br/>
+
