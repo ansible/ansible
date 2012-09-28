@@ -53,7 +53,7 @@ options:
           with B(bold), etc. work too.
   - remove:
       required: false
-      choices: [ yes, no, maybe, perhaps ]
+      choices: [ yes, no ]
       default: "maybe"
       aliases: [ kill, killme, delete ]
       description:
@@ -90,7 +90,6 @@ def html_ify(text):
     t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
     t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
     t = _CONST.sub("<code>" + r"\1" + "</code>", t)
-
     return t
 
 def man_ify(text):
@@ -121,7 +120,8 @@ def rst_xline(width, char="="):
     return char * width
 
 
-env = Environment(loader=FileSystemLoader('templates'),
+# FIXME: path should be configurable
+env = Environment(loader=FileSystemLoader('../ansible/hacking/templates/'),
         variable_start_string="@{",
         variable_end_string="}@",
     )
@@ -207,6 +207,8 @@ def main():
         print "Need module_dir"
         sys.exit(1)
 
+    # TODO: make template dir configurable
+
     if args.type == 'latex':
         env.filters['jpfunc'] = latex_ify
         template = env.get_template('latex.j2')
@@ -221,6 +223,7 @@ def main():
         outputname = "ansible.%s.man"
     if args.type == 'rst':
         env.filters['jpfunc'] = rst_ify
+        env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
         template = env.get_template('rst.j2')
