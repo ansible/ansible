@@ -336,7 +336,7 @@ def varReplaceFilesAndPipes(basedir, raw):
 
         replacement = m.group()
         if m.group(1) == "FILE":
-            path = path_dwim(baesdir, m.group(2))
+            path = path_dwim(basedir, m.group(2))
             try:
                 f = open(path, "r")
                 replacement = f.read()
