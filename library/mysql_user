@@ -18,6 +18,69 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: mysql_user
+short_description: Adds or removes a user from a MySQL database.
+description:
+   - Adds or removes a user from a MySQL database.
+version_added: "0.6"
+options:
+  name:
+    description:
+      - name of the user (role) to add or remove
+    required: true
+    default: null
+  password:
+    description:
+      - set the user's password
+    required: false
+    default: null
+  host:
+    description:
+      - the 'host' part of the MySQL username
+    required: false
+    default: localhost
+  login_user:
+    description:
+      - The username used to authenticate with
+    required: false
+    default: null
+  login_password:
+    description:
+      - The passwordused to authenticate with
+    required: false
+    default: null
+  login_host:
+    description:
+      - Host running the database
+    required: false
+    default: localhost
+  priv:
+    description:
+      - MySQL privileges string in the format: db.table:priv1,priv2
+    required: false
+    default: null
+  state:
+    description:
+      - The database state
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+examples:
+   - code: mysql_user name=bob password=12345 priv=*.*:ALL state=present
+     description: Create database user with name 'bob' and password '12345' with all database privileges
+   - code: mysql_user login_user=root login_password=123456 name=sally state=absent
+     description: Ensure no user named 'sally' exists, also passing in the auth credentials.
+   - code: mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+     description: Example privileges string format
+notes:
+   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb.
+   - Both 'login_password' and 'login_username' are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back to using the MySQL default login of 'root' with no password.
+requirements: [ ConfigParser ]
+author: Mark Theunissen
+'''
+
 import ConfigParser
 try:
     import MySQLdb

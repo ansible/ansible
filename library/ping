@@ -18,6 +18,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
+DOCUMENTATION = '''
+---
+module: ping
+short_description: Try to connect to host and return pong on success.
+description:
+   - A trivial test module, this module always returns 'pong' on successful contact. It does not make sense in playbooks, but is useful from /usr/bin/ansible
+version_added: "0.7"
+examples:
+   - code: ansible webservers -m ping
+     description: Test 'webservers' status
+author: Michael DeHaan
+'''
+
 def main():
     module = AnsibleModule(
         argument_spec = dict()
