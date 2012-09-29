@@ -22,6 +22,44 @@ import os
 import shutil
 import time
 
+DOCUMENTATION = '''
+---
+module: copy
+short_description: Copies files to remote locations.
+description:
+     - The M(copy) module copies a file on the local box to remote locations.
+options:
+  src:
+    description:
+      - Local path to a file to copy to the remote server; can be absolute or relative.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - Remote absolute path where the file should be copied to.
+    required: true
+    default: null
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    version_added: "0.7"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+examples:
+   - code: copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
+     description: "Example from Ansible Playbooks"
+   - code: copy src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
+     description: "Copy a new C(ntp.conf) file into place, backing up the original if it differs from the copied version"
+author: Michael DeHaan
+'''
+
 def main():
 
     module = AnsibleModule(
@@ -56,6 +94,8 @@ def main():
             module.fail_json(msg="Destination %s cannot be a directory" % (dest))
         md5sum_dest = module.md5(dest)
     else:
+        if not os.path.exists(os.path.dirname(dest)):
+            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
         if not os.access(os.path.dirname(dest), os.W_OK):
             module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 

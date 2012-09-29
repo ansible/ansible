@@ -23,6 +23,49 @@ import os.path
 import shutil
 import tempfile
 
+DOCUMENTATION = '''
+---
+module: assemble
+short_description: Assembles a configuration file from fragments
+description:
+     - Assembles a configuration file from fragments. Often a particular
+       program will take a single configuration file and does not support a
+       C(conf.d) style structure where it is easy to build up the configuration
+       from multiple sources. Assemble will take a directory of files that have
+       already been transferred to the system, and concatenate them together to
+       produce a destination file. Files are assembled in string sorting order.
+       Puppet calls this idea I(fragments).
+version_added: "0.5"
+options:
+  src:
+    description:
+      - An already existing directory full of source files.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - A file to create using the concatenation of all of the source files.
+    required: true
+    default: null
+  backup:
+    description:
+      - Create a backup file (if C(yes)) including the timestamp information so
+        you can get the original file back if you somehow clobbered it
+        incorrectly.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+examples:
+   - code: assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+     description: "Example from Ansible Playbooks"
+author: Stephen Fromm
+'''
+
 # ===========================================
 # Support methods
 
@@ -47,6 +90,8 @@ def write_temp_file(data):
 def main():
 
     module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        check_invalid_arguments = False,
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),

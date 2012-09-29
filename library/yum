@@ -25,6 +25,40 @@ import traceback
 import os
 import yum
 
+DOCUMENTATION = '''
+---
+module: yum
+short_description: Manages packages with the I(yum) package manager
+description:
+     - Will install, upgrade, remove, and list packages with the I(yum) package manager.
+options:
+  name:
+    description:
+      - package name, or package specifier with version, like C(name-1.0).
+    required: true
+    default: null
+    aliases: []
+  list:
+    description:
+      - various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+    required: false
+    default: null
+  state:
+    description:
+      - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+    required: false
+    choices: [ "present", "latest", "absent" ]
+    default: "present"
+examples:
+   - code: yum name=httpd state=latest
+   - code: yum name=httpd state=removed
+   - code: yum name=httpd state=installed
+notes: []
+# informational: requirements for nodes
+requirements: [ yum, rpm ]
+author: Seth Vidal
+'''
+
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 
 repoquery='/usr/bin/repoquery'

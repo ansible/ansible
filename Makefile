@@ -59,7 +59,7 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 all: clean python
 
 tests: 
-	PYTHONPATH=./lib nosetests -v
+	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
 docs: $(MANPAGES)
@@ -160,3 +160,5 @@ deb: debian
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
+manpages:
+	hacking/module_formatter.py -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates

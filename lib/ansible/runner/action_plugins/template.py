@@ -32,14 +32,14 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject):
+    def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for template operations '''
 
         if not self.runner.is_playbook:
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
 
         # load up options
-        options  = utils.parse_kv(self.runner.module_args)
+        options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
         if (source is None and 'first_available_file' not in inject) or dest is None:
@@ -51,7 +51,7 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
-                fn = utils.template(fn, inject)
+                fn = utils.template(self.runner.basedir, fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -60,7 +60,7 @@ class ActionModule(object):
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        source = utils.template(source, inject)
+        source = utils.template(self.runner.basedir, source, inject)
 
         # template the source data locally & transfer
         try:
@@ -75,7 +75,7 @@ class ActionModule(object):
             self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
                 tmp)
         # run the copy module, queue the file module
-        self.runner.module_args = "%s src=%s dest=%s" % (self.runner.module_args, xfered, dest)
-        return self.runner._execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')
+        module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
+        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject).daisychain('file', module_args)
 
 

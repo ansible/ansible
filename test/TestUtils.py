@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        res = ansible.utils._varLookup('data.who', vars)
+        res = ansible.utils.varLookup('${data.who}', vars)
 
         assert sorted(res) == sorted(vars['data']['who'])
 
@@ -202,6 +202,29 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_varReplace_consecutive_vars(self):
+        vars = {
+            'foo': 'foo',
+            'bar': 'bar',
+        }
+
+        template = '${foo}${bar}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'foobar'
+
+    def test_varReplace_escape_dot(self):
+        vars = {
+            'hostvars': {
+                'test.example.com': {
+                    'foo': 'bar',
+                },
+            },
+        }
+
+        template = '${hostvars.{test.example.com}.foo}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'bar'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
@@ -209,9 +232,23 @@ class TestUtils(unittest.TestCase):
             'person': 'one',
         }
 
-        res = ansible.utils.template(template, vars)
+        res = ansible.utils.template(None, template, vars)
 
         assert res == u'hello oh great one'
+
+    def test_varReplace_include(self):
+        template = 'hello $FILE(world)'
+
+        res = ansible.utils.template("test", template, {})
+
+        assert res == u'hello world'
+
+    def test_varReplace_include_script(self):
+        template = 'hello $PIPE(echo world)'
+
+        res = ansible.utils.template("test", template, {})
+
+        assert res == u'hello world'
 
     #####################################
     ### Template function tests

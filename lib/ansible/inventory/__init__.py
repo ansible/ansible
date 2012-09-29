@@ -76,7 +76,7 @@ class Inventory(object):
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
-        elif os.access(host_list, os.X_OK):
+        elif utils.is_executable(host_list):
             self._is_script = True
             self.parser = InventoryScript(filename=host_list)
             self.groups = self.parser.groups.values()
@@ -109,8 +109,8 @@ class Inventory(object):
 
         # exclude hosts mentioned in a negative pattern
         if len(negative_patterns):
-            exclude_hosts = self._get_hosts(negative_patterns)
-            hosts = [ h for h in hosts if h not in exclude_hosts ]
+            exclude_hosts = [ h.name for h in self._get_hosts(negative_patterns) ]
+            hosts = [ h for h in hosts if h.name not in exclude_hosts ]
 
         # exclude hosts not in a subset, if defined
         if self._subset:

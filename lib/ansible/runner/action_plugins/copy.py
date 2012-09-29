@@ -32,11 +32,11 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject):
+    def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for file transfer operations '''
 
         # load up options
-        options = utils.parse_kv(self.runner.module_args)
+        options = utils.parse_kv(module_args)
         source  = options.get('src', None)
         dest    = options.get('dest', None)
         if (source is None and not 'first_available_file' in inject) or dest is None:
@@ -48,7 +48,7 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
-                fn = utils.template(fn, inject)
+                fn = utils.template(self.runner.basedir, fn, inject)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -57,7 +57,7 @@ class ActionModule(object):
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, results=results)
 
-        source = utils.template(source, inject)
+        source = utils.template(self.runner.basedir, source, inject)
         source = utils.path_dwim(self.runner.basedir, source)
 
         local_md5 = utils.md5(source)
@@ -77,11 +77,11 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
-            self.runner.module_args = "%s src=%s" % (self.runner.module_args, tmp_src)
-            return self.runner._execute_module(conn, tmp, 'copy', self.runner.module_args, inject=inject).daisychain('file')
+            module_args = "%s src=%s" % (module_args, tmp_src)
+            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject).daisychain('file', module_args)
 
         else:
             # no need to transfer the file, already correct md5
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
-            return ReturnData(conn=conn, result=result).daisychain('file')
+            return ReturnData(conn=conn, result=result).daisychain('file', module_args)
 

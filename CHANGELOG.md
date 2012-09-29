@@ -27,6 +27,31 @@ Misc/Unsorted:
 * ansible-pull example now sets up logrotate for the ansible-pull cron job log
 * url_get module now returns 'dest' with the location of the file saved
 * fix for yum module when using local RPMs vs downloading
+* output on failed playbook commands is now nicely split for stderr/stdout and syntax errors
+* if local_action is not used and delegate_to was 127.0.0.1 or localhost, use local connection regardless
+* explicit quoting around only_if statements is no longer neccessary
+* is_unset is also available in only_if in addition to is_set
+* negative host matching (!hosts) fixed for external inventory script usage
+* pause plugin (pause seconds=10) (pause minutes=1) (pause prompt=foo) action plugin
+* cleaner error messages with copy if destination directory does not exist
+* internals: os.executable check replaced with utils function so it plays nice on AIX
+* when running a playbook, and the statement has changed, prints 'changed:' now versus 'ok:' so it is obvious without colored mode
+* variables now usable within vars_prompt (just not host/group vars)
+* setup module now still works if PATH is not set
+* Debian packaging now includes ansible-pull manpage
+* magic variable 'ansible_ssh_host' can override the hostname (great for usage with tunnels)
+* service module status now correct for services with 'subsys locked' status
+* misc fixes/upgrades to the wait_for module
+* date command usage in build scripts fixed for OS X
+* git module now expands any "~" in provided destination paths
+* THINGS BELOW THIS LINE, NEED TO ANNOUNCE IN SUMMARY TO LIST YET:
+* ansible-module docs generator source merged in
+* ini_file module for manipulating INI files
+* only_if using register variables that are booleans now works in a boolean way like you'd expect
+* don't use SSH agent with paramiko if a password is specified
+* start of fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time (WIP)
+* ignore stop error code failure for service module with state=restarted, always try to start
+* make output be cleaner on multi-line command/shell errors
 
 0.7 "Panama" -- Sept 6 2012
 

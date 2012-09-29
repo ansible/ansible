@@ -1,0 +1,59 @@
+.TH ANSIBLE.@{ module | upper }@ 5 "@{ now_date }@" "@{ ansible_version }@" "ANSIBLE MODULES"
+." generated from @{ filename }@
+.SH NAME
+@{ module }@ \- @{ short_description }@
+." ------ DESCRIPTION
+.SH DESCRIPTION
+{% for desc in description -%}
+.PP
+@{ desc | jpfunc }@ 
+{% endfor %}
+." ------ OPTIONS
+."
+."
+{% if options is defined -%}
+.SH OPTIONS
+{% for (k,v) in options.iteritems()  %}
+.IP @{ k }@
+{% for desc in v.description -%}@{ desc | jpfunc }@{% endfor -%}
+{% if v.get('choices') %}
+.IR Choices :
+{% for choice in v.get('choices',[]) -%}@{ choice }@{% if not loop.last %},{%else%}.{%endif-%}{% endfor -%}{% endif %}
+{% if v.get('required') %}(required){% endif -%}
+{% if v.get('default') %} (default: @{ v.get('default') }@){% endif -%}
+{#---------------------------------------------- #}
+{% if v.get('version_added') -%}
+(Added in Ansible version @{ v.get('version_added') }@.)
+{% endif -%}
+{% endfor %}
+{% endif %}
+."
+."
+." ------ NOTES
+{% if notes -%}
+.SH NOTES
+{% for note in notes -%}
+.PP
+@{ note | jpfunc }@ 
+{% endfor -%}
+{% endif -%}
+."
+."
+." ------ EXAMPLES
+{% if examples is defined -%}
+.SH EXAMPLES
+{% for e in examples -%}
+.PP
+.nf
+@{ e['code'] }@
+.fi
+{% endfor -%}
+{% endif -%}
+." ------- AUTHOR
+{% if author is defined -%}
+.SH AUTHOR
+@{ author }@
+{% endif -%}
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#@{docuri}@

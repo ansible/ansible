@@ -296,11 +296,25 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         results2.pop('invocation', None)
 
         item = results2.get('item', None)
+        parsed = results2.get('parsed', True)
+        module_msg = ''
+        if not parsed:
+            module_msg  = results2.pop('msg', None)
+        stderr = results2.pop('stderr', None)
+        stdout = results2.pop('stdout', None)
+
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
         print stringc(msg, 'red')
+
+        if stderr:
+            print stringc("stderr: %s" % stderr, 'red')
+        if stdout:
+            print stringc("stdout: %s" % stdout, 'red')
+        if not parsed and module_msg:
+            print stringc("invalid output was: %s" % module_msg, 'red')
         if ignore_errors:
             print stringc("...ignoring", 'yellow')
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
@@ -310,25 +324,29 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
+        changed = host_result.get('changed', False)
+        ok_or_changed = 'ok'
+        if changed:
+            ok_or_changed = 'changed'
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
         if not self.verbose or host_result2.get("verbose_override",None) is not None:
             if item:
-                msg = "ok: [%s] => (item=%s)" % (host,item)
+                msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result:
-                    msg = "ok: [%s]" % (host)
+                    msg = "%s: [%s]" % (ok_or_changed, host)
         else:
             # verbose ...
             if item:
-                msg = "ok: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(host_result2))
+                msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "ok: [%s] => %s" % (host, utils.jsonify(host_result2))
+                    msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2))
 
         if msg != '':
-            if not 'changed' in host_result2 or not host_result['changed']:
+            if not changed:
                 print stringc(msg, 'green')
             else:
                 print stringc(msg, 'yellow')

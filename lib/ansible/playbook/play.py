@@ -57,7 +57,7 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        hosts = utils.template(hosts, playbook.extra_vars)
+        hosts = utils.template(basedir, hosts, playbook.extra_vars)
         self._ds          = ds
         self.playbook     = playbook
         self.basedir      = basedir
@@ -69,7 +69,7 @@ class Play(object):
         self.vars         = self._get_vars()
         self._tasks       = ds.get('tasks', [])
         self._handlers    = ds.get('handlers', [])
-        self.remote_user  = utils.template(ds.get('user', self.playbook.remote_user), playbook.extra_vars)
+        self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), playbook.extra_vars)
         self.remote_port  = ds.get('port', self.playbook.remote_port)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
         self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
@@ -106,8 +106,8 @@ class Play(object):
                 tokens = shlex.split(x['include'])
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
-                    task_vars[k] = utils.template(v, task_vars)
-                include_file = utils.template(tokens[0], task_vars)
+                    task_vars[k] = utils.template(self.basedir, v, task_vars)
+                include_file = utils.template(self.basedir, tokens[0], task_vars)
                 data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
             elif type(x) == dict:
                 data = [x]
@@ -165,7 +165,7 @@ class Play(object):
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
 
                 vname = var['name']
-                prompt = "%s: " % var.get("prompt", vname)
+                prompt = var.get("prompt", vname)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
@@ -261,10 +261,10 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = utils.template(real_filename, self.vars)
+                    filename2 = utils.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                        filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -294,10 +294,10 @@ class Play(object):
             else:
                 # just one filename supplied, load it!
 
-                filename2 = utils.template(filename, self.vars)
+                filename2 = utils.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
+                    filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     return

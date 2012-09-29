@@ -31,6 +31,11 @@ import time
 import StringIO
 import imp
 import glob
+import subprocess
+import stat
+import termios
+import tty
+from multiprocessing import Manager
 
 VERBOSITY=0
 
@@ -44,14 +49,53 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
-# vars_prompt_encrypt
 PASSLIB_AVAILABLE = False
-
 try:
     import passlib.hash
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+KEYCZAR_AVAILABLE=False
+try:
+    from keyczar.keys import AesKey
+    KEYCZAR_AVAILABLE=True
+except ImportError:
+    pass
+
+###############################################################
+# abtractions around keyczar
+
+def key_for_hostname(hostname):
+    # fireball mode is an implementation of ansible firing up zeromq via SSH
+    # to use no persistent daemons or key management
+
+    key_path = os.path.expanduser("~/.fireball.keys")
+    if not os.path.exists(key_path):
+        os.makedirs(key_path)
+    key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
+
+    # use new AES keys every 2 hours, which means fireball must not allow running for longer either
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+        key = AesKey.Generate()
+        fh = open(key_path, "w")
+        fh.write(str(key))
+        fh.close()
+        return key
+    else:
+        fh = open(key_path)
+        key = AesKey.Read(fh.read())  
+        fh.close()
+        return key
+
+def encrypt(key, msg):
+    return key.Encrypt(msg)
+
+def decrypt(key, msg):
+    try:
+        return key.Decrypt(msg)
+    except keyczar.errors.InvalidSignatureError:
+        raise errors.AnsibleError("decryption failed")
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -91,6 +135,19 @@ def is_failed(result):
     ''' is a given JSON result a failed result? '''
 
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
+
+def check_conditional(conditional):
+    def is_set(var):
+        return not var.startswith("$")
+    def is_unset(var):
+        return var.startswith("$")
+    return eval(conditional)
+
+def is_executable(path):
+    '''is the given path executable?'''
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] 
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] 
+            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
@@ -159,12 +216,12 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 class VarNotFoundException(Exception):
     pass
 
-def _varLookup(name, vars):
+def _varLookup(path, vars, depth=0):
     ''' find the contents of a possibly complex variable in vars. '''
 
-    path = name.split('.')
     space = vars
     for part in path:
+        part = varReplace(part, vars, depth=depth + 1)
         if part in space:
             space = space[part]
         elif "[" in part:
@@ -179,48 +236,127 @@ def _varLookup(name, vars):
             raise VarNotFoundException()
     return space
 
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
+def _varFind(text):
+    start = text.find("$")
+    if start == -1:
+        return None
+    var_start = start + 1
+    if text[var_start] == '{':
+        is_complex = True
+        brace_level = 1
+        var_start += 1
+    else:
+        is_complex = False
+        brace_level = 0
+    end = var_start
+    path = []
+    part_start = (var_start, brace_level)
+    while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
+        if text[end].isalnum() or text[end] == '_':
+            pass
+        elif is_complex and text[end] == '{':
+            brace_level += 1
+        elif is_complex and text[end] == '}':
+            brace_level -= 1
+        elif is_complex and text[end] in ('$', '[', ']'):
+            pass
+        elif is_complex and text[end] == '.':
+            if brace_level == part_start[1]:
+                if text[part_start[0]] == '{':
+                    path.append(text[part_start[0] + 1:end - 1])
+                else:
+                    path.append(text[part_start[0]:end])
+                part_start = (end + 1, brace_level)
+        else:
+            break
+        end += 1
+    var_end = end
+    if is_complex:
+        var_end -= 1
+        if text[var_end] != '}' or brace_level != 0:
+            return None
+    path.append(text[part_start[0]:var_end])
+    return {'path': path, 'start': start, 'end': end}
 
 def varLookup(varname, vars):
-    ''' helper function used by varReplace '''
+    ''' helper function used by with_items '''
 
-    m = _KEYCRE.search(varname)
+    m = _varFind(varname)
     if not m:
         return None
     try:
-        return _varLookup(m.group(2), vars)
+        return _varLookup(m['path'], vars)
     except VarNotFoundException:
         return None
 
-def varReplace(raw, vars):
+def varReplace(raw, vars, depth=0):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
+
+    if (depth > 20):
+        raise errors.AnsibleError("template recursion depth exceeded")
 
     done = [] # Completed chunks to return
 
     while raw:
-        m = _KEYCRE.search(raw)
+        m = _varFind(raw)
         if not m:
             done.append(raw)
             break
 
         # Determine replacement value (if unknown variable then preserve
         # original)
-        varname = m.group(2)
 
         try:
-            replacement = unicode(_varLookup(varname, vars))
+            replacement = _varLookup(m['path'], vars, depth)
+            if isinstance(replacement, (str, unicode)):
+                replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
-            replacement = m.group()
+            replacement = raw[m['start']:m['end']]
+
+        start, end = m['start'], m['end']
+        done.append(raw[:start])          # Keep stuff leading up to token
+        done.append(unicode(replacement)) # Append replacement value
+        raw = raw[end:]                   # Continue with remainder of string
+
+    return ''.join(done)
+
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\}]+)\)")
+def varReplaceFilesAndPipes(basedir, raw):
+    done = [] # Completed chunks to return
+
+    while raw:
+        m = _FILEPIPECRE.search(raw)
+        if not m:
+            done.append(raw)
+            break
+
+        # Determine replacement value (if unknown variable then preserve
+        # original)
+
+        if m.group(1) == "FILE":
+            try:
+                f = open(path_dwim(basedir, m.group(2)), "r")
+            except IOError:
+                raise VarNotFoundException()
+            replacement = f.read()
+            f.close()
+        elif m.group(1) == "PIPE":
+            p = subprocess.Popen(m.group(2), shell=True, stdout=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if p.returncode != 0:
+                raise VarNotFoundException()
+            replacement = stdout
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
-        done.append(replacement)    # Append replacement value
+        done.append(replacement.rstrip())    # Append replacement value
         raw = raw[end:]             # Continue with remainder of string
 
     return ''.join(done)
 
-def template(text, vars):
+
+def template(basedir, text, vars):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -228,19 +364,14 @@ def template(text, vars):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    depth = 0
-    while prev_text != text:
-        depth = depth + 1
-        if (depth > 20):
-            raise errors.AnsibleError("template recursion depth exceeded")
-        prev_text = text
-        text = varReplace(unicode(text), vars)
+    text = varReplace(unicode(text), vars)
+    text = varReplaceFilesAndPipes(basedir, text)
     return text
 
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
-    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
+    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=True)
     environment.filters['to_json'] = json.dumps
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
@@ -251,7 +382,7 @@ def template_from_file(basedir, path, vars):
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
-    return template(res, vars)
+    return template(basedir, res, vars)
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
@@ -325,7 +456,7 @@ def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
-    
+
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -347,7 +478,7 @@ def _gitinfo():
             commit = f.readline()[:10]
             f.close()
             date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:  
+            if time.daylight == 0:
                 offset = time.timezone
             else:
                 offset = time.altzone
@@ -364,6 +495,17 @@ def version(prog):
         result = result + " {0}".format(gitinfo)
     return result
 
+def getch():
+    ''' read in a single character '''
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -379,7 +521,7 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     async_opts=False, connect_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
@@ -465,15 +607,15 @@ def last_non_blank_line(buf):
         if (len(line) > 0):
             return line
     # shouldn't occur unless there's no output
-    return ""  
+    return ""
 
 def filter_leading_non_json_lines(buf):
-    ''' 
+    '''
     used to avoid random output from SSH at the top of JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-    
+
     need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-    filter only leading lines since multiline JSON is valid. 
+    filter only leading lines since multiline JSON is valid.
     '''
 
     filtered_lines = StringIO.StringIO()
@@ -486,12 +628,10 @@ def filter_leading_non_json_lines(buf):
 
 def import_plugins(directory):
     modules = {}
-    for path in glob.glob(os.path.join(directory, '*.py')): 
+    for path in glob.glob(os.path.join(directory, '*.py')):
         if path.startswith("_"):
             continue
         name, ext = os.path.splitext(os.path.basename(path))
         if not name.startswith("_"):
             modules[name] = imp.load_source(name, path)
     return modules
-
-

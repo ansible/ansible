@@ -19,6 +19,71 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+DOCUMENTATION = '''
+---
+module: apt
+short_description: Manages apt-packages
+description:
+  - Manages apt-packages (such as for Debian/Ubuntu).
+version_added: "0.0.2"
+options:
+  name:
+    description:
+      - A package name or package specifier with version, like C(foo) or C(foo=1.0)
+    required: false
+    default: null
+  state:
+    description:
+      - Indicate the package state
+    required: false
+    default: present
+    choices: [ "installed", "latest", "remove", "absent", "present" ]
+  update_cache:
+    description:
+      - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a seperate step
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  purge:
+    description:
+     - Will force purge of configuration files if state is set to C(absent).
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  default_release:
+    description:
+      - Corresponds to the C(-t) option for I(apt) and sets pin priorities
+    required: false
+    default: null
+  install_recommends:
+    description:
+      - Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  force:
+    description:
+      - If C(yes) force installs/removes.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+author: Matthew Williams
+notes: []
+examples:
+    - code: apt pkg=foo update-cache=yes
+      description: Update repositories cache and install C(foo) package
+    - code: apt pkg=foo state=removed
+      description: Remove C(foo) package
+    - code: apt pkg=foo state=installed
+      description: Install the the package C(foo)
+    - code: apt pkg=foo=1.00 state=installed
+      description: Install the version '1.00' of package C(foo)
+    - code: apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
+      description: Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)
+    - code: apt pkg=openjdk-6-jdk state=latest install-recommends=no
+      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-recomands)
+'''
+
 import traceback
 # added to stave off future warnings about apt api
 import warnings

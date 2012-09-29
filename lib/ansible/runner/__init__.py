@@ -26,6 +26,7 @@ import tempfile
 import time
 import collections
 import socket
+import base64
 
 import ansible.constants as C
 import ansible.inventory
@@ -44,8 +45,9 @@ except ImportError:
     HAS_ATFORK=False
 
 dirname = os.path.dirname(__file__)
-action_plugins = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
-
+action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
+    
+        
 ################################################
 
 def _executor_hook(job_queue, result_queue):
@@ -141,7 +143,7 @@ class Runner(object):
 
         # instantiate plugin classes
         self.action_plugins = {}
-        for (k,v) in action_plugins.iteritems():
+        for (k,v) in action_plugin_list.iteritems():
             self.action_plugins[k] = v.ActionModule(self)
 
     # *****************************************************
@@ -153,11 +155,11 @@ class Runner(object):
             # ability to turn off temp file deletion for debug purposes
             return
 
-        if type(files) == str:
+        if type(files) in [ str, unicode ]:
             files = [ files ]
         for filename in files:
             if filename.find('/tmp/') == -1:
-                raise Exception("not going to happen")
+                raise Exception("safeguard deletion, removal of %s is not going to happen" % filename)
             self._low_level_exec_command(conn, "rm -rf %s" % filename, None)
 
     # *****************************************************
@@ -188,10 +190,11 @@ class Runner(object):
 
         ''' runs a module that has already been transferred '''
 
-        if type(args) == dict:
-            args = utils.jsonify(args,format=True)
+        # hack to support fireball mode
+        if module_name == 'fireball':
+            args = "%s password=%s port=%s" % (args, base64.b64encode(str(utils.key_for_hostname(conn.host))), C.ZEROMQ_PORT)
 
-        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, inject)
+        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, args, inject)
         cmd = "chmod u+x %s" % remote_module_path
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
@@ -200,7 +203,7 @@ class Runner(object):
 
         cmd = ""
         if not is_new_style:
-            args = utils.template(args, inject)
+            args = utils.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
@@ -270,7 +273,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
 
         if len(items) == 0:
-            return self._executor_internal_inner(host, inject, port)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
         else:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -279,14 +282,9 @@ class Runner(object):
             all_changed = False
             all_failed = False
             results = []
-            # Save module name and args since daisy-chaining can overwrite them
-            module_name = self.module_name
-            module_args = self.module_args
             for x in items:
-                self.module_name = module_name
-                self.module_args = module_args
                 inject['item'] = x
-                result = self._executor_internal_inner(host, inject, port)
+                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -307,12 +305,8 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, inject, port, is_chained=False):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
-
-        # FIXME: temporary, need to refactor to pass as parameters versus reassigning
-        prev_module_name = self.module_name
-        prev_module_args = self.module_args
 
         # special non-user/non-fact variables:
         # 'groups' variable is a list of host name in each group
@@ -320,21 +314,17 @@ class Runner(object):
         #  ... and is set elsewhere
         # 'inventory_hostname' is also set elsewhere
         inject['groups'] = self.inventory.groups_list()
+
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
-        if type(self.module_args) == dict:
-            for (k,v) in self.module_args.iteritems():
+        if type(module_args) == dict:
+            for (k,v) in module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
-            self.module_args = new_args
-        self.module_args = utils.template(self.module_args, inject)
+            module_args = new_args
 
-        def _check_conditional(conditional):
-            def is_set(var):
-                return not var.startswith("$")
-            return eval(conditional)
-        conditional = utils.template(self.conditional, inject)
-        if not _check_conditional(conditional):
+        conditional = utils.template(self.basedir, self.conditional, inject)
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
@@ -343,40 +333,37 @@ class Runner(object):
         actual_host = host
         try:
             delegate_to = inject.get('delegate_to', None)
+            alternative_host = inject.get('ansible_ssh_host', None)
             if delegate_to is not None:
-                actual_host = delegate_to    
+                actual_host = delegate_to
+            elif alternative_host is not None:
+                actual_host = alternative_host
             conn = self.connector.connect(actual_host, port)
-            if delegate_to is not None:
+            if delegate_to is not None or alternative_host is not None:
                 conn._delegate_for = host
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        module_name = utils.template(self.module_name, inject)
+        module_name = utils.template(self.basedir, module_name, inject)
+        module_args = utils.template(self.basedir, module_args, inject)
 
         tmp = ''
         if self.module_name != 'raw':
             tmp = self._make_tmp_path(conn)
         result = None
 
-        handler = self.action_plugins.get(self.module_name, None)
+        handler = self.action_plugins.get(module_name, None)
         if handler:
-            result = handler.run(conn, tmp, module_name, inject)
+            result = handler.run(conn, tmp, module_name, module_args, inject)
         else:
             if self.background == 0:
-                result = self.action_plugins['normal'].run(conn, tmp, module_name, inject)
+                result = self.action_plugins['normal'].run(conn, tmp, module_name, module_args, inject)
             else:
-                result = self.action_plugins['async'].run(conn, tmp, module_name, inject)
+                result = self.action_plugins['async'].run(conn, tmp, module_name, module_args, inject)
 
         if result.is_successful() and 'daisychain' in result.result:
-            self.module_name = result.result['daisychain']
-            if 'daisychain_args' in result.result:
-                self.module_args = result.result['daisychain_args']
-            result2 = self._executor_internal_inner(host, inject, port, is_chained=True)
-
-            # FIXME: remove this hack
-            self.module_name = prev_module_name
-            self.module_args = prev_module_args
+            result2 = self._executor_internal_inner(host, result.result['daisychain'], result.result.get('daisychain_args', {}), inject, port, is_chained=True)
 
             changed = False
             if result.result.get('changed',False) or result2.result.get('changed',False):
@@ -399,8 +386,8 @@ class Runner(object):
                 result.result['item'] = inject['item']
 
             result.result['invocation'] = dict(
-                module_args=self.module_args,
-                module_name=self.module_name
+                module_args=module_args,
+                module_name=module_name
             )
 
             if is_chained:
@@ -423,12 +410,12 @@ class Runner(object):
         sudo_user = self.sudo_user
         stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
 
-        if type(stdout) != str:
+        if type(stdout) not in [ str, unicode ]:
             out = "\n".join(stdout.readlines())
         else:
             out = stdout
 
-        if type(stderr) != str:
+        if type(stderr) not in [ str, unicode ]:
             err = "\n".join(stderr.readlines())
         else:
             err = stderr
@@ -471,25 +458,27 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        return utils.last_non_blank_line(result).strip() + '/'
+        rc = utils.last_non_blank_line(result).strip() + '/'
+        return rc
+
 
     # *****************************************************
 
-    def _copy_module(self, conn, tmp, module, inject):
+    def _copy_module(self, conn, tmp, module_name, module_args, inject):
         ''' transfer a module over SFTP, does not run it '''
 
-        if module.startswith("/"):
-            raise errors.AnsibleFileNotFound("%s is not a module" % module)
+        if module_name.startswith("/"):
+            raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
 
         # Search module path(s) for named module.
         for module_path in self.module_path.split(os.pathsep):
-            in_path = os.path.expanduser(os.path.join(module_path, module))
+            in_path = os.path.expanduser(os.path.join(module_path, module_name))
             if os.path.exists(in_path):
                 break
         else:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module, self.module_path))
+            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, self.module_path))
 
-        out_path = os.path.join(tmp, module)
+        out_path = os.path.join(tmp, module_name)
 
         module_data = ""
         is_new_style=False
@@ -499,7 +488,7 @@ class Runner(object):
             if module_common.REPLACER in module_data:
                 is_new_style=True
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            encoded_args = "\"\"\"%s\"\"\"" % utils.template(self.module_args, inject).replace("\"","\\\"")
+            encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
 
         # use the correct python interpreter for the host
@@ -510,7 +499,7 @@ class Runner(object):
                 module_lines[0] = "#!%s" % interpreter
             module_data = "\n".join(module_lines)
 
-        self._transfer_str(conn, tmp, module, module_data)
+        self._transfer_str(conn, tmp, module_name, module_data)
         return (out_path, is_new_style)
 
     # *****************************************************
@@ -518,9 +507,10 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        job_queue = multiprocessing.Manager().Queue()
+        manager = multiprocessing.Manager()
+        job_queue = manager.Queue()
         [job_queue.put(i) for i in hosts]
-        result_queue = multiprocessing.Manager().Queue()
+        result_queue = manager.Queue()
 
         workers = []
         for i in range(self.forks):
@@ -582,7 +572,26 @@ class Runner(object):
 
         hosts = [ (self,x) for x in hosts ]
         results = None
-        if self.forks > 1:
+
+        # Check if this is an action plugin. Some of them are designed
+        # to be ran once per group of hosts. Example module: pause,
+        # run once per hostgroup, rather than pausing once per each
+        # host.
+        p = self.action_plugins.get(self.module_name, None)
+        if p and getattr(p, 'BYPASS_HOST_LOOP', None):
+            # Expose the current hostgroup to the bypassing plugins
+            self.host_set = hosts
+            # We aren't iterating over all the hosts in this
+            # group. So, just pick the first host in our group to
+            # construct the conn object with.
+            result_data = self._executor(hosts[0][1]).result
+            # Create a ResultData item for each host in this group
+            # using the returned result. If we didn't do this we would
+            # get false reports of dark hosts.
+            results = [ ReturnData(host=h[1], result=result_data, comm_ok=True) \
+                           for h in hosts ]
+            del self.host_set
+        elif self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
             results = [ self._executor(h[1]) for h in hosts ]
