@@ -321,7 +321,7 @@ def varReplace(raw, vars, depth=0):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\}]+)\)")
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\)]+)\)")
 def varReplaceFilesAndPipes(basedir, raw):
     done = [] # Completed chunks to return
 
