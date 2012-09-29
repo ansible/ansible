@@ -19,6 +19,32 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+DOCUMENTATION = '''
+---
+module: supervisorctl
+short_description: Manage the state of a program or group of programs running via Supervisord
+description:
+     - Manage the state of a program or group of programs running via Supervisord
+version_added: "0.7"
+options:
+  name:
+    description:
+      - The name of the supervisord program/process to manage
+    required: true
+    default: null
+  state:
+    description:
+      - The state of service
+    required: true
+    default: null
+    choices: [ "started", "stopped", "restarted" ]
+examples:
+   - code: supervisorctl name=my_app state=started
+     description: Manage the state of program I(my_app) to be in I(started) state.
+requirements: [ ]
+author: Matt Wright
+'''
+
 def _is_present(name, supervisorctl):
     rc, out, err = _run('%s status' % supervisorctl)
     return name in out
