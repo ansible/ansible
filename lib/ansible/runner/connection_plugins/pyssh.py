@@ -50,7 +50,7 @@ class Connection(object):
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
-                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+                raise errors.AnsibleError("ssh version issue, please upgrade ssh on the machine running ansible")
             elif "Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     user, self.host, self.port, msg)
