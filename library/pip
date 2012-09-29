@@ -19,6 +19,56 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+DOCUMENTATION = '''
+---
+module: pip
+short_description: Manages Python library dependencies.
+description:
+     - Manage Python library dependencies.
+version_added: "0.7"
+options:
+  name:
+    description:
+      - The name of a Python library to install
+    required: true
+    default: null
+  version:
+    description:
+      - The version number to install of the Python library specified in the 'name' parameter
+    required: false
+    default: null
+  requirements:
+    description:
+      - The path to a pip requirements file
+    required: false
+    default: null
+  virtualenv:
+    description:
+      - An optional path to a virtualenv directory to install into
+    required: false
+    default: null
+  state:
+    description:
+      - The state of module
+    required: false
+    default: present
+    choices: [ "present", "absent", "latest" ]
+examples:
+   - code: pip name=flask
+     description: Install I(flask) python package.
+   - code: pip name=flask version=0.8
+     description: Install I(flask) python package on version 0.8.
+   - code: pip name=flask virtualenv=/srv/webapps/my_app/venv
+     description: Install I(flask) python package in specified virtualenv.
+   - code: pip requirements=/srv/webapps/my_app/src/requirements.txt
+     description: Install specified python requirements.
+   - code: pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapps/my_app/venv
+     description: Install specified python requirements in indicated virtualenv.
+notes:
+   - Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
+requirements: [ ]
+author: Matt Wright
+'''
 
 def _get_full_name(name, version=None):
     if version is None:
