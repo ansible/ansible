@@ -27,10 +27,10 @@ description:
   - Manages apt-packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
-  name:
+  pkg:
     description:
       - A package name or package specifier with version, like C(foo) or C(foo=1.0)
-    required: false
+    required: true
     default: null
   state:
     description:
