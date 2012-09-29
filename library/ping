@@ -29,7 +29,7 @@ version_added: "0.7"
 examples:
    - code: ansible webservers -m ping
      description: Test 'webservers' status
-author:
+author: Michael DeHaan
 '''
 
 def main():
