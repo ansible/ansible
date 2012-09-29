@@ -39,7 +39,7 @@ options:
     default: null
   login_password:
     description:
-      - The passwordused to authenticate with
+      - The password used to authenticate with
     required: false
     default: null
   login_host:
