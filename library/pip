@@ -67,7 +67,7 @@ examples:
 notes:
    - Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ ]
-author: Jan-Piet Mens
+author: Matt Wright
 '''
 
 def _get_full_name(name, version=None):
