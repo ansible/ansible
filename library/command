@@ -23,6 +23,7 @@ import sys
 import datetime
 import traceback
 import shlex
+import pipes
 import os
 
 DOCUMENTATION = '''
@@ -139,6 +140,7 @@ class CommandModule(AnsibleModule):
             params['shell'] = True
 
         check_args = shlex.split(args)
+        l_args = []
         for x in check_args:
             if x.startswith("creates="):
                 # do not run the command if the line contains creates=filename
@@ -154,7 +156,6 @@ class CommandModule(AnsibleModule):
                         stderr=False,
                         rc=0
                     )
-                args = args.replace(x,'')
             elif x.startswith("removes="):
                 # do not run the command if the line contains removes=filename
                 # and the filename do not exists.  This allows idempotence
@@ -169,7 +170,6 @@ class CommandModule(AnsibleModule):
                         stderr=False,
                         rc=0
                     )
-                args = args.replace(x,'')
             elif x.startswith("chdir="):
                 (k,v) = x.split("=", 1)
                 v = os.path.expanduser(v)
@@ -178,8 +178,9 @@ class CommandModule(AnsibleModule):
                 elif v[0] != '/':
                     self.fail_json(msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
-                args = args.replace(x, '')
-        params['args'] = args
-        return (params, args)
+            else:
+                l_args.append(x)
+        params['args'] = " ".join([pipes.quote(x) for x in l_args])
+        return (params, params['args'])
 
 main()
