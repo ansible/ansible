@@ -141,7 +141,7 @@ def check_conditional(conditional):
         return not var.startswith("$")
     def is_unset(var):
         return var.startswith("$")
-    return eval(conditional)
+    return eval(conditional.replace("\n", "\\n"))
 
 def is_executable(path):
     '''is the given path executable?'''
