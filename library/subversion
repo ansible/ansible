@@ -18,12 +18,38 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# I wanted to keep this simple at first, so for now this checks out
-# from the given branch of a repo at a particular SHA or
-# tag.  Latest is not supported, you should not be doing
-# that. Contribs welcome! -- MPD
-
-# requires subversion and grep on the client.
+DOCUMENTATION = '''
+---
+module: subversion
+short_description: Deploys a subversion repository.
+description:
+   - This module is really simple, so for now this checks out from the given branch of a repo at a particular SHA or tag. Latest is not supported, you should not be doing that.
+version_added: "0.7"
+options:
+  repo:
+    description:
+      - The subversion URL to the repository.
+    required: true
+    default: null
+  dest:
+    description:
+      - Absolute path where the repository should be deployed.
+    required: true
+    default: null
+  force:
+    description:
+      - If yes, any modified files in the working repository will be discarded. If no, this module will fail if it encounters modified files.
+    required: false
+    default: yes
+    choices: [ "yes", "no" ]
+examples:
+   - code: subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
+     description: Export subversion repository in a specified folder
+notes:
+   - Requires subversion and grep on the client.
+requirements: [ ]
+author: Dane Summers
+'''
 
 import re
 
