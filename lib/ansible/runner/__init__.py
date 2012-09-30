@@ -261,7 +261,7 @@ class Runner(object):
 
         items = self.module_vars.get('items', [])
         if isinstance(items, basestring) and items.startswith("$"):
-            items = utils.varLookup(items, inject)
+            items = utils.varReplaceWithItems(self.basedir, items, inject)
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
 
