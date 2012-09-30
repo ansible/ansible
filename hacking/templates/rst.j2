@@ -18,7 +18,7 @@
 @{ desc | jpfunc }@ 
 {% endfor %}
 
-{% if options is defined -%}
+{% if options -%}
 .. raw:: html
 
     <table>
@@ -33,7 +33,7 @@
     <tr>
     <td>@{ k }@</td>
     <td>@{ v.get('required',False) }@</td>
-    <td>@{ v['default'] }@</td>
+    <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}</td>
     </tr>
@@ -46,8 +46,17 @@
 {% for example in examples %}
     {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
     <p><pre>
-    @{ example['code'] }@</pre></p>
+    @{ example['code'] }@
+    </pre></p>
 {% endfor %}
     <br/>
 
+{% if notes %}
+.. raw:: html
+
+    <h4>Notes</h4>
+    {% for note in notes %}
+    <p>@{ note | html_ify }@</p>
+    {% endfor %}
+{% endif %}
 
