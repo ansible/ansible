@@ -32,7 +32,7 @@
     {% for (k,v) in options.iteritems()  %}
     <tr>
     <td>@{ k }@</td>
-    <td>@{ v.get('required',False) }@</td>
+    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
     <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}</td>
