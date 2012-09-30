@@ -10,3 +10,7 @@ rpm-build
 # Eclipse/PyDev stuff...
 .project
 .pydevproject
+# PyCharm stuff
+.idea
+# Mac OS X stuff
+.DS_Store
