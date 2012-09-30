@@ -17,6 +17,40 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: seboolean
+short_description: Toggles SELinux booleans.
+description:
+     - Toggles SELinux booleans.
+version_added: "0.7"
+options:
+  name:
+    description:
+      - Name of the boolean to configure
+    required: true
+    default: null
+  persistent:
+    description:
+      - Set to 'yes' if the boolean setting should survive a reboot
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  state:
+    description:
+      - Desired boolean value
+    required: true
+    default: null
+    choices: [ "true", "false" ]
+examples:
+   - code: seboolean name=httpd_can_network_connect state=true persistent=yes
+     description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
+notes:
+   - Not tested on any debian based system
+requirements: [ ]
+author: Stephen Fromm
+'''
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -128,7 +162,7 @@ def main():
             state=dict(required=True, choices=BOOLEANS)
         )
     )
-    
+
     if not HAVE_SELINUX:
         module.fail_json(msg="SELinux not supported on this host.")
 
