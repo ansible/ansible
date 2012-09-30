@@ -20,16 +20,61 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# mount module - mount fs and define in fstab
-# usage:
-#
-# mount name=mountpoint, src=device_to_be_mounted fstype=fstype
-#        opts=mount_opts, dump=0 passno=0 state=[present|absent|mounted|unmounted]
-#
-#    absent == remove from fstab and unmounted
-#    present == add to fstab, do not change mount state
-#    mounted == add to fstab if not there and make sure it is mounted
-#    unmounted == do not change fstab state, but unmount
+DOCUMENTATION = '''
+---
+module: mount
+short_description: Control active and configured mount points
+description:
+     - This module controls active and configured mount points in C(/etc/fstab).
+version_added: "0.6"
+options:
+  name:
+    description:
+      - "path to the mount point, eg: C(/mnt/files)"
+    required: true
+    default: null
+    aliases: []
+  src:
+    description:
+      - device to be mounted on I(name).
+    required: true
+    default: null
+  fstype:
+    description:
+      - file-system type
+    required: true
+    default: null
+  opts:
+    description:
+      - mount options (see fstab(8))
+    required: false
+    default: null
+  dump:
+    description:
+      - dump (see fstab(8))
+    required: false
+    default: null
+  passno:
+    description:
+      - passno (see fstab(8))
+    required: false
+    default: null
+  state:
+    description:
+      - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
+        as well as just configured in I(fstab). C(absent) and C(present) only deal with
+        I(fstab).
+    required: true
+    choices: [ "present", "absent", "mounted", "unmounted" ]
+    default: null
+examples:
+   - code: mount name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro
+     description: "Mount DVD read-only"
+notes: []
+requirements: []
+author: Seth Vidal
+'''
+
 
 def write_fstab(lines, dest):
 
