@@ -18,6 +18,42 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: group
+author: Stephen Fromm
+version_added: 0.0.2
+short_description: Add or remove groups
+requirements: [ groupadd, groupdel, groupmod ]
+description:
+    - Manage presence of groups on a host.
+options:
+    name:
+        required: true
+        description:
+            - Name of the group to manage.
+    gid:
+        required: false
+        description:
+            - Optional I(GID) to set for the group.
+    state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
+        description:
+            - Whether the group should be present or not on the remote host.
+    system:
+        required: false
+        default: "no"
+        choices: [ yes, no ]
+        description:
+            - If I(yes), indicates that the group created is a system group.
+examples:
+    - code: group name=somegroup state=present
+      description: Example group command from Ansible Playbooks
+
+'''
+
 import grp
 
 def group_del(module, group):
