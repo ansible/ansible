@@ -18,17 +18,38 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# selinux module - change policy and state of SELinux
-# usage:
-#
-# selinux policy=<SELINUX_POLICY> state=[enforcing|permissive|disabled] configfile=[SELINUX_CONFIG_FILE]
-#
-#    configfile defaults to /etc/selinux/config
-#    policy files should be installed via the yum/apt modules
-#
-# bugs:
-# 
-# Not tested on any debian based system
+DOCUMENTATION = '''
+---
+module: selinux
+short_description: Change policy and state of SELinux
+description:
+  - Configures the SELinux mode and policy. A reboot may be required after usage. Ansible will not issue this reboot but will let you know when it is required.
+version_added: "0.7"
+options:
+  policy:
+    description:
+      - "name of the SELinux policy to use (example: 'targeted')"
+    required: true
+    default: null
+  state:
+    description:
+      - The SELinux mode
+    required: true
+    default: null
+    choices: [ "enforcing", "permissive", "disabled" ]
+  conf:
+    description:
+      - path to the SELinux configuration file, if non-standard
+    required: false
+    default: "/etc/selinux/config"
+examples:
+   - code: selinux policy=targeted state=enforcing
+   - code: selinux policy=targeted state=disabled
+notes:
+   - Not tested on any debian based system
+requirements: [ ]
+author: Derek Carter
+'''
 
 import os
 import re
@@ -84,7 +105,7 @@ def set_state(state):
 
 def set_config_policy(policy, configfile):
     # edit config file with state value
-    #SELINUXTYPE=targeted 
+    #SELINUXTYPE=targeted
     policyline='SELINUXTYPE=%s' % policy
     myfile = open(configfile, "r")
     lines = myfile.readlines()
@@ -128,12 +149,12 @@ def main():
     if (policy != runtime_policy):
         # cannot change runtime policy
         msgs.append('reboot to change the loaded policy')
-        changed=True 
+        changed=True
 
     if (policy != config_policy):
         msgs.append('config policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
         set_config_policy(policy, configfile)
-        changed=True 
+        changed=True
 
     if (state != runtime_state):
         if (state == 'disabled'):
@@ -141,13 +162,13 @@ def main():
         else:
             msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
         set_state(state)
-        changed=True 
+        changed=True
 
     if (state != config_state):
         msgs.append('config state changed from \'%s\' to \'%s\'' % (config_state, state))
         set_config_state(state, configfile)
-        changed=True 
- 
+        changed=True
+
     module.exit_json(changed=changed, msg=', '.join(msgs),
         configfile=configfile,
         policy=policy, state=state)
