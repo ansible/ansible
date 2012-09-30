@@ -51,7 +51,7 @@ notes:
      C(get_xml), C(autostart), C(freemem), C(list_vms), C(info), C(nodeinfo),
      C(virttype)"
 requirements: [ "libvirt" ]
-author: Seth Vidal
+author: Michael DeHaan, Seth Vidal
 '''
 
 VIRT_FAILED = 1
