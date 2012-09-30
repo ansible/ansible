@@ -23,7 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: facter
-short_description: Runs the discovery program ‘facter’ on the remote system
+short_description: Runs the discovery program I(facter) on the remote system
 description:
      - Runs the discovery program I(facter) on the remote system, returning JSON
        data that can be useful for inventory purposes.
