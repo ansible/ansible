@@ -19,6 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+DOCUMENTATION = '''
+---
+module: ohai
+short_description: Returns inventory data from I(ohai)
+description:
+     - Similar to the M(facter) module, this returns JSON inventory data.
+       I(Ohai) data is a bit more verbose and nested than I(facter).
+version_added: "0.6"
+options: []
+examples:
+   - code: ansible webservers -m ohai --tree=/tmp/ohaidata
+     description: "Retrieve I(ohai) data from all Web servers and store in one-file per host"
+notes: []
+requirements: [ "ohai" ]
+author: Michael DeHaan
+'''
+
 def get_ohai_data():
     p = subprocess.Popen(["/usr/bin/env", "ohai"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
