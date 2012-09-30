@@ -92,6 +92,7 @@ class Facts(object):
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
         self.get_pkg_mgr_facts()
+        self.get_lsb_facts()
 
     def populate(self):
         return self.facts
@@ -169,6 +170,32 @@ class Facts(object):
         for pkg in Facts.PKG_MGRS:
             if os.path.exists(pkg['path']):
                 self.facts['pkg_mgr'] = pkg['name']
+
+    def get_lsb_facts(self):
+        lsb_path = module.get_bin_path('lsb_release')
+        if lsb_path is None:
+            return self.facts
+        cmd = subprocess.Popen([lsb_path, "-a"], shell=False,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        if cmd.returncode == 0:
+            self.facts['lsb'] = {}
+        for line in out.split('\n'):
+            if len(line) < 1:
+                continue
+            value = line.split(':', 1)[1].strip()
+            if 'LSB Version:' in line:
+                self.facts['lsb']['release'] = value
+            elif 'Distributor ID:' in line:
+                self.facts['lsb']['id'] = value
+            elif 'Description:' in line:
+                self.facts['lsb']['description'] = value
+            elif 'Release:' in line:
+                self.facts['lsb']['release'] = value
+            elif 'Codename:' in line:
+                self.facts['lsb']['codename'] = value
+        if 'lsb' in self.facts and 'release' in self.facts['lsb']:
+            self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
