@@ -309,6 +309,8 @@ def varReplace(raw, vars, depth=0):
 
         try:
             replacement = _varLookup(m['path'], vars, depth)
+            if isinstance(replacement, (list, tuple)):
+                replacement = ",".join(replacement)
             if isinstance(replacement, (str, unicode)):
                 replacement = varReplace(replacement, vars, depth=depth + 1)
         except VarNotFoundException:
