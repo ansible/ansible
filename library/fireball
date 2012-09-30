@@ -18,6 +18,39 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: fireball
+short_description: 
+description:
+     - bla, bla
+version_added: "0.9"
+options:
+  port:
+    description:
+      - TCP port for ZeroMQ
+    required: false
+    default: 5099
+    aliases: []
+  password:
+    description:
+      - Base64-encoded password for FIXME
+    required: true
+    default: null
+  minutes:
+    description:
+      - time, in minutes, for FIXME
+    required: false
+    default: 30
+examples:
+   - code: fireball ... FIXME
+     description: "This does ..."
+notes:
+    - Also see the M(template) module.
+requirements: [ "zmq", "keyczar" ]
+author: Michael DeHaan
+'''
+
 import os
 import sys
 import shutil
