@@ -101,22 +101,28 @@ class Play(object):
         tasks = ds.get(keyname, [])
         results = []
         for x in tasks:
-            task_vars = self.vars.copy()
             if 'include' in x:
+                task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
-                for t in tokens[1:]:
-                    (k,v) = t.split("=", 1)
-                    task_vars[k] = utils.template(self.basedir, v, task_vars)
-                include_file = utils.template(self.basedir, tokens[0], task_vars)
-                data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
+                if 'with_items' in x:
+                    items = utils.varReplaceWithItems(self.basedir, x['with_items'], task_vars)
+                else:
+                    items = ['']
+                for item in items:
+                    mv = task_vars.copy()
+                    mv['item'] = item
+                    for t in tokens[1:]:
+                        (k,v) = t.split("=", 1)
+                        mv[k] = utils.varReplaceWithItems(self.basedir, v, mv)
+                    include_file = utils.template(self.basedir, tokens[0], mv)
+                    data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
+                    for y in data:
+                         results.append(Task(self,y,module_vars=mv))
             elif type(x) == dict:
-                data = [x]
+                task_vars = self.vars.copy()
+                results.append(Task(self,x,module_vars=task_vars))
             else:
                 raise Exception("unexpected task type")
-
-            for y in data:
-                mv = task_vars.copy()
-                results.append(Task(self,y,module_vars=mv))
 
         for x in results:
             if self.tags is not None:
