@@ -18,6 +18,48 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: git
+author: Michael DeHaan
+version_added: 0.0.1
+short_description: Deploy software (or files) from git checkouts
+description:
+    - Manage git checkouts of repositories to deploy files or software.
+options:
+    repo:
+        required: true
+        aliases: [ name ]
+        description:
+            - git, ssh, or http protocol address of the git repository.
+    dest:
+        required: true
+        description:
+            - Absolute path of where the repository should be checked out to.
+    version:
+        required: false
+        default: "HEAD"
+        description:
+            - What version of the repository to check out.  This can be the
+              git I(SHA), the literal string I(HEAD), branch name, or a tag name.
+    remote:
+        required: false
+        default: "origin"
+        description:
+            - Name of the remote branch.
+    force:
+        required: false
+        default: "yes"
+        choices: [ yes, no ]
+        description:
+            - (New in 0.7)  If yes, any modified files in the working
+              repository will be discarded.  Prior to 0.7, this was always
+              'yes' and could not be disabled.
+examples:
+    - code: git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
+      description: Example git checkout from Ansible Playbooks
+'''
+
 import re
 import tempfile
 

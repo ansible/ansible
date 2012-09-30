@@ -18,6 +18,51 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: service
+author: Michael DeHaan
+version_added: 0.0.1
+short_description:  Manage services.
+description:
+    - Controls services on remote hosts.
+options:
+    name:
+        required: true
+        description: Name of the service.
+    state:
+        required: false
+        choices: [ running, started, stopped, restarted, reloaded ]
+        description: I(started), I(stopped), I(reloaded), I(restarted).
+                     I(Started)/I(stopped) are idempotent actions that will
+                     not run commands unless necessary.  I(restarted) will
+                     always bounce the service.  I(reloaded) will always
+                     reload.
+    pattern:
+        required: false
+        description: New in 0.7.  If the service does not respond to the
+                     status command, name a substring to look for as would
+                     be found in the output of the I(ps) command
+                     as a stand-in for a status result.  If the string is
+                     found, the servie will be assumed to be running.
+    enabled:
+        required: false
+        choices: [ yes, no ]
+        description: Whether the service should start on boot.  Either
+                     I(yes) or I(no).
+examples:
+    - code: service name=httpd state=started
+      description: Example action from Ansible Playbooks
+    - code: service name=httpd state=stopped
+      description: Example action from Ansible Playbooks
+    - code: service name=httpd state=restarted
+      description: Example action from Ansible Playbooks
+    - code: service name=httpd state=reloaded
+      description: Example action from Ansible Playbooks
+    - code: service name=foo pattern=/usr/bin/foo state=started
+      description: Example action from Ansible Playbooks
+'''
+
 import platform
 
 SERVICE = None
