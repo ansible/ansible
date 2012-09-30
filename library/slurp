@@ -18,6 +18,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: slurp
+short_description: Slurps a file from remote nodes
+description:
+     - This module works like M(fetch). It is used for fetching a base64-
+       encoded blob containing the data in a remote file.
+options:
+  src:
+    description:
+      - The file on the remote system to fetch. This must be a file, not a
+        directory.
+    required: true
+    default: null
+    aliases: []
+examples:
+   - code: |
+           ansible host -m slurp -a 'src=/tmp/xx'
+               host | success >> {
+                  "content": "aGVsbG8gQW5zaWJsZSB3b3JsZAo=", 
+                  "encoding": "base64"
+               }
+     description: "Example using C(/usr/bin/ansible)"
+notes:
+   - "See also: M(fetch)"
+requirements: []
+author: Michael DeHaan
+'''
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
