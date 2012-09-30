@@ -221,6 +221,7 @@ def main():
     env = Environment(loader=FileSystemLoader(args.template_dir),
         variable_start_string="@{",
         variable_end_string="}@",
+        trim_blocks=True,
         )
 
     env.globals['xline'] = rst_xline
