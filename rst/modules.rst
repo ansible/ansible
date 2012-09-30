@@ -42,43 +42,7 @@ to run additional tasks.
 Let's see what's available in the Ansible module library, out of the box:
 
 
-.. include:: modules/apt_repository.rst
-.. include:: modules/apt.rst
-.. include:: modules/assemble.rst
-.. include:: modules/authorized_key.rst
-.. include:: modules/command.rst
-.. include:: modules/copy.rst
-.. include:: modules/easy_install.rst
-.. include:: modules/facter.rst
-.. include:: modules/fetch.rst
-.. include:: modules/file.rst
-.. include:: modules/get_url.rst
-.. include:: modules/git.rst
-.. include:: modules/group.rst
-.. include:: modules/ini_file.rst
-.. include:: modules/lineinfile.rst
-.. include:: modules/mount.rst
-.. include:: modules/mysql_db.rst
-.. include:: modules/mysql_user.rst
-.. include:: modules/nagios.rst
-.. include:: modules/ohai.rst
-.. include:: modules/ping.rst
-.. include:: modules/pip.rst
-.. include:: modules/postgresql_db.rst
-.. include:: modules/postgresql_user.rst
-.. include:: modules/raw.rst
-.. include:: modules/service.rst
-.. include:: modules/seboolean.rst
-.. include:: modules/selinux.rst
-.. include:: modules/setup.rst
-.. include:: modules/shell.rst
-.. include:: modules/subversion.rst
-.. include:: modules/supervisorctl.rst
-.. include:: modules/template.rst
-.. include:: modules/user.rst
-.. include:: modules/wait_for.rst
-.. include:: modules/virt.rst
-.. include:: modules/yum.rst
+.. include:: modules/_list.rst
 
 
 Additional Contrib Modules
