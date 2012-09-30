@@ -11,7 +11,7 @@
 ." ------ OPTIONS
 ."
 ."
-{% if options is defined -%}
+{% if options -%}
 .SH OPTIONS
 {% for (k,v) in options.iteritems()  %}
 .IP @{ k }@
