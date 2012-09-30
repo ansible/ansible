@@ -15,6 +15,45 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+DOCUMENTATION = '''
+---
+module: virt
+short_description: Manages virtual machines supported by libvirt
+description:
+     - Manages virtual machines supported by I(libvirt).
+version_added: "0.2"
+options:
+  name:
+    description:
+      - name of the guest VM being managed
+    required: true
+    default: null
+    aliases: []
+  state:
+    description:
+      - Note that there may be some lag for state requests like C(shutdown)
+        since these refer only to VM states. After starting a guest, it may not
+        be immediately accessible.
+    required: false
+    choices: [ "running", "shutdown", "destroyed", "undefined" ]
+    default: "no"
+  command:
+    description:
+      - in addition to state management, various non-idempotent commands are available. See examples
+    required: false
+examples:
+   - code: virt guest=alpha state=running
+     description: "Example from Ansible Playbooks"
+   - code: ansible host -m virt -a "guest=alpha command=status"
+     description: "Example guest management with C(/usr/bin/ansible)"
+notes:
+   - "Other non-idempotent commands are: C(status), C(pause), C(unpause),
+     C(get_xml), C(autostart), C(freemem), C(list_vms), C(info), C(nodeinfo),
+     C(virttype)"
+requirements: [ "libvirt" ]
+author: Seth Vidal
+'''
+
 VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
