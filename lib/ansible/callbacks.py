@@ -237,6 +237,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
     def on_skipped(self, host, item=None):
+        print "%s | skipped" % (host)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
     def on_error(self, host, err):
