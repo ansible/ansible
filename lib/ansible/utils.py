@@ -278,17 +278,6 @@ def _varFind(text):
     path.append(text[part_start[0]:var_end])
     return {'path': path, 'start': start, 'end': end}
 
-def varLookup(varname, vars):
-    ''' helper function used by with_items '''
-
-    m = _varFind(varname)
-    if not m:
-        return None
-    try:
-        return _varLookup(m['path'], vars)
-    except VarNotFoundException:
-        return None
-
 def varReplace(raw, vars, depth=0):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
@@ -359,6 +348,30 @@ def varReplaceFilesAndPipes(basedir, raw):
         raw = raw[end:]             # Continue with remainder of string
 
     return ''.join(done)
+
+def varReplaceWithItems(basedir, varname, vars):
+    ''' helper function used by with_items '''
+
+    if isinstance(varname, basestring):
+        m = _varFind(varname)
+        if not m:
+            return varname
+        if m['start'] == 0 and m['end'] == len(varname):
+            try:
+                return varReplaceWithItems(basedir, _varLookup(m['path'], vars), vars)
+            except VarNotFoundException:
+                return varname
+        else:
+            return template(basedir, varname, vars)
+    elif isinstance(varname, (list, tuple)):
+        return [varReplaceWithItems(basedir, v, vars) for v in varname]
+    elif isinstance(varname, dict):
+        d = {}
+        for (k, v) in varname.iteritems():
+            d[k] = varReplaceWithItems(basedir, v, vars)
+        return d
+    else:
+        raise Exception("invalid with_items type")
 
 
 def template(basedir, text, vars):
