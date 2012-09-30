@@ -19,9 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# things that must be installed to use this
-#    facter
-#    ruby-json
+
+DOCUMENTATION = '''
+---
+module: facter
+short_description: Runs the discovery program ‘facter’ on the remote system
+description:
+     - Runs the discovery program I(facter) on the remote system, returning JSON
+       data that can be useful for inventory purposes.
+version_added: "0.2"
+options: []
+examples:
+   - code: ansible  www.example.net -m facter
+     description: "Example command-line invocation"
+notes: []
+requirements: [ "facter", "ruby-json" ]
+author: Michael DeHaan
+'''
 
 import subprocess
 

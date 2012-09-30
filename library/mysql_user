@@ -48,7 +48,7 @@ options:
     default: null
   login_password:
     description:
-      - The passwordused to authenticate with
+      - The password used to authenticate with
     required: false
     default: null
   login_host:
@@ -58,7 +58,7 @@ options:
     default: localhost
   priv:
     description:
-      - MySQL privileges string in the format: db.table:priv1,priv2
+      - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
     required: false
     default: null
   state:
