@@ -46,8 +46,17 @@
 {% for example in examples %}
     {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
     <p><pre>
-    @{ example['code'] }@</pre></p>
+    @{ example['code'] }@
+    </pre></p>
 {% endfor %}
     <br/>
 
+{% if notes %}
+.. raw:: html
+
+    <h4>Notes</h4>
+    {% for note in notes %}
+    <p>@{ note | html_ify }@</p>
+    {% endfor %}
+{% endif %}
 
