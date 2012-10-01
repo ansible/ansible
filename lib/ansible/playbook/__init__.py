@@ -235,7 +235,14 @@ class PlayBook(object):
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
 
+        contacted = results.get('contacted',{})
+        dark      = results.get('dark', {})
+
         self.inventory.lift_restriction()
+
+        if len(contacted.keys()) == 0 and len(dark.keys()) == 0:
+            return None
+
         return results
 
     # *****************************************************
@@ -247,14 +254,18 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
-        # if no hosts are matched, carry on
-        if results is None:
-            results = {}
 
+        # if no hosts are matched, carry on
+        hosts_remaining = True
+        if results is None:
+            hosts_remaining = False
+            results = {}
+ 
+        contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
         # add facts to the global setup cache
-        for host, result in results['contacted'].iteritems():
+        for host, result in contacted.iteritems():
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
             if task.register:
@@ -268,6 +279,8 @@ class PlayBook(object):
                 if results.get('changed', False):
                     for handler_name in task.notify:
                         self._flag_handler(play.handlers(), utils.template(play.basedir, handler_name, task.module_vars), host)
+
+        return hosts_remaining
 
     # *****************************************************
 
@@ -347,11 +360,16 @@ class PlayBook(object):
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
 
+        hosts_remaining = True
         for on_hosts in serialized_batch:
 
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
+
+                if not hosts_remaining:
+                    continue
+
                 # only run the task if the requested tags match
                 should_run = False
                 for x in self.only_tags:
@@ -360,10 +378,13 @@ class PlayBook(object):
                             should_run = True
                             break
                 if should_run:
-                    self._run_task(play, task, False)
+                    if not self._run_task(play, task, False):
+                        hosts_remaining = False
 
             # run notify actions
             for handler in play.handlers():
+                if not hosts_remaining:
+                    continue
                 if len(handler.notified_by) > 0:
                     self.inventory.restrict_to(handler.notified_by)
                     self._run_task(play, handler, True)
