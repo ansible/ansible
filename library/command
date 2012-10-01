@@ -22,8 +22,8 @@ import subprocess
 import sys
 import datetime
 import traceback
+import re
 import shlex
-import pipes
 import os
 
 DOCUMENTATION = '''
@@ -131,7 +131,6 @@ class CommandModule(AnsibleModule):
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
         args = MODULE_ARGS
-        items   = shlex.split(args)
         params = {}
         params['chdir'] = None
         params['shell'] = False
@@ -139,14 +138,13 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        check_args = shlex.split(args)
-        l_args = []
-        for x in check_args:
-            if x.startswith("creates="):
+        r = re.compile(r'(^|\s)(creates|removes|chdir)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        for m in r.finditer(args):
+            v = m.group(4).replace("\\", "")
+            if m.group(2) == "creates":
                 # do not run the command if the line contains creates=filename
                 # and the filename already exists.  This allows idempotence
                 # of command executions.
-                (k,v) = x.split("=",1)
                 if os.path.exists(v):
                     self.exit_json(
                         cmd=args,
@@ -156,11 +154,10 @@ class CommandModule(AnsibleModule):
                         stderr=False,
                         rc=0
                     )
-            elif x.startswith("removes="):
+            elif m.group(2) == "removes":
                 # do not run the command if the line contains removes=filename
                 # and the filename do not exists.  This allows idempotence
                 # of command executions.
-                (k,v) = x.split("=",1)
                 if not os.path.exists(v):
                     self.exit_json(
                         cmd=args,
@@ -170,17 +167,15 @@ class CommandModule(AnsibleModule):
                         stderr=False,
                         rc=0
                     )
-            elif x.startswith("chdir="):
-                (k,v) = x.split("=", 1)
+            elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
                     self.fail_json(msg="cannot change to directory '%s': path does not exist" % v)
                 elif v[0] != '/':
                     self.fail_json(msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
-            else:
-                l_args.append(x)
-        params['args'] = " ".join([pipes.quote(x) for x in l_args])
+        args = r.sub("", args)
+        params['args'] = args
         return (params, params['args'])
 
 main()
