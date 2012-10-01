@@ -7,20 +7,6 @@ import ansible.utils
 class TestUtils(unittest.TestCase):
 
     #####################################
-    ### varLookup function tests
-
-    def test_varLookup_list(self):
-        vars = {
-            'data': {
-                'who': ['joe', 'jack', 'jeff']
-            }
-        }
-
-        res = ansible.utils.varLookup('${data.who}', vars)
-
-        assert sorted(res) == sorted(vars['data']['who'])
-
-    #####################################
     ### varReplace function tests
 
     def test_varReplace_simple(self):
