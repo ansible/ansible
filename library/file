@@ -59,6 +59,7 @@ examples:
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
+author: Michael DeHaan
 '''
 
 def add_path_info(kwargs):
