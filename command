@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 module: command
 short_description: Executes a command on a remote node
 description:
-     - The command module takes the command name followed by a list of arguments, space delimited.
+     - The command module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work. As such, all

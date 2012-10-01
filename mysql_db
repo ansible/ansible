@@ -65,10 +65,14 @@ options:
     default: null
 examples:
    - code: mysql_db db=bobdata state=present
-     description: create a new database with name 'bobdata'
+     description: Create a new database with name 'bobdata'
 notes:
-   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb.
-   - Both 'login_password' and 'login_username' are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back to using the MySQL default login of 'root' with no password.
+   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
+     is as easy as apt-get install python-mysqldb.
+   - Both C(login_password) and C(login_username) are required when you are
+     passing credentials. If none are present, the module will attempt to read
+     the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
+     default login of 'root' with no password.
 requirements: [ ConfigParser ]
 author: Mark Theunissen
 '''
