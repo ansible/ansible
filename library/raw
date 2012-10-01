@@ -18,4 +18,5 @@ description:
 examples:
     - code: ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
       description: Example from /usr/bin/ansible to bootstrap a legacy python 2.4 host
+author: Michael DeHaan
 '''
