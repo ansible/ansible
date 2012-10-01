@@ -317,7 +317,7 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            self.SETUP_CACHE[host] = result.get('ansible_facts', {})
+            self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
         return setup_results
 
     # *****************************************************
