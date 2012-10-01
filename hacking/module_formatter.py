@@ -30,6 +30,11 @@ import time
 import datetime
 import subprocess
 
+# modules that are ok that they do not have documentation strings
+BLACKLIST_MODULES = [
+   'async_wrapper'
+]
+
 MODULEDIR="/Users/jpm/Auto/pubgit/ansible/ansible/library"
 
 BOILERPLATE = '''
@@ -282,6 +287,11 @@ def main():
         print " processing module source ---> %s" % fname
 
         doc = get_docstring(fname, verbose=args.verbose)
+
+        if doc is None and module not in BLACKLIST_MODULES:
+            sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
+            #sys.exit(1)
+
         if not doc is None:
 
             doc['filename']         = fname
