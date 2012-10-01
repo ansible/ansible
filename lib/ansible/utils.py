@@ -371,7 +371,7 @@ def varReplaceWithItems(basedir, varname, vars):
             d[k] = varReplaceWithItems(basedir, v, vars)
         return d
     else:
-        raise Exception("invalid with_items type")
+        return varname
 
 
 def template(basedir, text, vars):
