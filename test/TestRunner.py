@@ -138,6 +138,21 @@ class TestRunner(unittest.TestCase):
         assert 'failed' not in result
         assert result['rc'] == 0
 
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "chdir=/tmp", "touch", "'ansible command test'" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "false" ])
+        assert 'skipped' in result
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+        assert result['stdout'] == '0'
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "false" ])
+        assert 'skipped' in result
+
     def test_git(self):
         self._run('file',['path=/tmp/gitdemo','state=absent'])
         self._run('file',['path=/tmp/gd','state=absent'])
