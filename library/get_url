@@ -67,6 +67,7 @@ notes:
     - Also see the M(template) module.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
+author: Jan-Piet Mens
 '''
 
 HAS_URLLIB2=True
