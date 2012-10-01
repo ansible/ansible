@@ -46,16 +46,78 @@ options:
     aliases: []
   state:
     description:
-      - If directory, all immediate subdirectories will be created if they do not exist. If I(file), the file will NOT be created if it does not exist, see the M(copy) or M(template) module if you want that behavior. If I(link), the symbolic link will be created or changed. If absent, directories will be recursively deleted, and files or symlinks will be unlinked.
+      - If C(directory), all immediate subdirectories will be created if they
+        do not exist. If C(file), the file will NOT be created if it does not
+        exist, see the M(copy) or M(template) module if you want that behavior.
+        If C(link), the symbolic link will be created or changed. If C(absent),
+        directories will be recursively deleted, and files or symlinks will be
+        unlinked.
     required: false
     default: file
     choices: [ file, link, directory, absent ]
   mode:
+    required: false
+    default: null
+    choices: []
     description:
-      - mode the file or directory should be, such as 0644 as would be fed to I(chmod). English modes like B(g+x) are not yet supported
+      - mode the file or directory should be, such as 0644 as would be fed to
+  owner:
+    required: false
+    default: null
+    choices: []
+    description:
+      - name of the user that should own the file/directory, as would be fed to I(chown)
+  group:
+    required: false
+    default: null
+    choices: []
+    description:
+      - name of the group that should own the file/directory, as would be fed to I(chown)
+  src:
+    required: false
+    default: null
+    choices: []
+    description:
+      - path of the file to link to (applies only to C(state=link)).
+  seuser:
+    required: false
+    default: null
+    choices: []
+    description:
+      - user part of SELinux file context. Will default to system policy, if
+        applicable. If set to C(_default), it will use the C(user) portion of the
+        the policy if available
+  serole:
+    required: false
+    default: null
+    choices: []
+    description:
+      - role part of SELinux file context, C(_default) feature works as for I(seuser).
+  setype:
+    required: false
+    default: null
+    choices: []
+    description:
+      - type part of SELinux file context, C(_default) feature works as for I(seuser).
+  selevel:
+    required: false
+    default: "s0"
+    choices: []
+    description:
+      - level part of the SELinux file context. This is the MLS/MCS attribute,
+        sometimes known as the C(range). C(_default) feature works as for
+        I(seuser).
+  context:
+    required: false
+    default: null
+    choices: [ "default" ]
+    description:
+      - accepts only C(default) as value. This will restore a file's SELinux context
+        in the policy. Does nothing if no default value is available.
 examples:
    - code: file path=/etc/foo.conf owner=foo group=foo mode=0644
      description: Example from Ansible Playbooks
+   - code: file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]

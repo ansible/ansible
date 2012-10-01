@@ -34,7 +34,7 @@ options:
     default: null
   state:
     description:
-      - Indicate the package state
+      - Indicate the desired package state
     required: false
     default: present
     choices: [ "installed", "latest", "remove", "absent", "present" ]
