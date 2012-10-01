@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import tempfile
+import filecmp
 
 from nose.plugins.skip import SkipTest
 
