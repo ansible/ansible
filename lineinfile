@@ -24,6 +24,7 @@ import os
 DOCUMENTATION = '''
 ---
 module: lineinfile
+author: Daniel Hokka Zakrisson
 short_description: Ensure a particular line is in a file
 description:
   - This module will search a file for a line, and ensure that it is present or absent.
