@@ -21,9 +21,12 @@
 DOCUMENTATION = '''
 ---
 module: fireball
-short_description: 
+short_description: Enable fireball mode on remote node
 description:
-     - bla, bla
+     - This modules launches an ephemeral I(fireball) daemon on the remote node which
+       so that Ansible can use ZeroMQ as a message bus to communicate with nodes. The
+       daemon listens on a configurable port for a configurable amount of time.
+     - Ansible and the nodes exchange AES keys with which I(fireball) mode authenticates.
 version_added: "0.9"
 options:
   port:
@@ -34,18 +37,34 @@ options:
     aliases: []
   password:
     description:
-      - Base64-encoded password for FIXME
+      - this is a serialized AesKey object that is transferred over SSH; it is never
+        logged. Keys are periodically regenerated.
     required: true
     default: null
   minutes:
     description:
-      - time, in minutes, for FIXME
+      - The I(fireball) listener daemon is started on nodes and will stay around for
+        this number of minutes before dying off by itself.
     required: false
     default: 30
+# WARNING: very careful when moving space around, below
 examples:
-   - code: fireball ... FIXME
-     description: "This does ..."
+   - code: |
+           - hosts: devservers
+                 gather_facts: false
+                 connection: ssh
+                 sudo: yes
+                 tasks:
+                     - action: fireball 
+
+               - hosts: devservers
+                 connection: fireball
+                 tasks:
+                     - action: template src=config.in dest=/etc/my.config mode=0600
+     description: "This example playbook has two plays: the first launches I(fireball) mode on all hosts via SSH, and the second actually starts using I(fireball) node for subsequent configuration tasks"
 notes:
+    - This module is used together with the C(fireball) connection plugin and is useless
+      on its own.
     - Also see the M(template) module.
 requirements: [ "zmq", "keyczar" ]
 author: Michael DeHaan
