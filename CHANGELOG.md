@@ -3,55 +3,68 @@ Ansible Changes By Release
 
 0.8 "Cathedral" -- release pending 
 
-Misc/Unsorted:
+Core:
+
+* server side action code (template, etc) are now fully pluggable
+* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
+* ansible-pull example now sets up logrotate for the ansible-pull cron job log
+* negative host matching (!hosts) fixed for external inventory script usage
+* internals: os.executable check replaced with utils function so it plays nice on AIX
+* Debian packaging now includes ansible-pull manpage
+* magic variable 'ansible_ssh_host' can override the hostname (great for usage with tunnels)
+* date command usage in build scripts fixed for OS X
+* don't use SSH agent with paramiko if a password is specified
+* start of fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time (WIP)
+* make output be cleaner on multi-line command/shell errors
+* /usr/bin/ansible now prints things when tasks are skipped, like when creates= is used with -m command and /usr/bin/ansible
+* when trying to async a module that is not a 'normal' asyncable module, ansible will now let you know
+
+Playbooks:
 
 * is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
+* to_yaml and from_yaml are available as Jinja2 filters
+* $group and $group_names are now accessible in with_items
+* playbooks can import playbooks in other directories and then be able to import tasks relative to them
+* where 'stdout' is provided a new 'stdout_lines' variable (type == list) is now generated and usable with with_items
+* FILE($path) now allows access of contents of file in a path, very good for use with SSH keys
+* similarly PIPE($command) will run a local command and return the results of executing this command
+* when local_action is used the transport is automatically overridden to the local type
+* output on failed playbook commands is now nicely split for stderr/stdout and syntax errors
+* if local_action is not used and delegate_to was 127.0.0.1 or localhost, use local connection regardless
+* is_unset is also available in only_if in addition to is_set
+* when running a playbook, and the statement has changed, prints 'changed:' now versus 'ok:' so it is obvious without colored mode
+* variables now usable within vars_prompt (just not host/group vars)
+* only_if using register variables that are booleans now works in a boolean way like you'd expect
+* if all hosts in a play fail, stop the playbook, rather than letting the console log spool on by
+* setup facts are now retained across plays (dictionary just gets updated as needed)
+* task includes now work with with_items (such as: include: path/to/wordpress.yml user=$item)
+* when using a $list variable with $var or ${var} syntax it will automatically join with commas
+* --sudo-user now works with --extra-vars
+* fix for multi_line strings with only_if
+
+Modules:
+
 * removes= exists on command just like creates=
 * postgresql modules now take an optional port= parameter
 * /proc/cmdline info is now available in Linux facts
 * public host key detection for OS X
-* to_yaml and from_yaml are available as Jinja2 filters
-* server side action code (template, etc) are now fully pluggable
 * lineinfile module now uses 'search' not exact 'match' in regexes, making it much more intuitive and not needing regex syntax most of the time
-* $group and $group_names are now accessible in with_items
-* playbooks can import playbooks in other directories and then be able to import tasks relative to them
-* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
-* fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
 * added force=yes|no (default no) option for file module, which allows transition between files to directories and so on
-* where 'stdout' is provided a new 'stdout_lines' variable (type == list) is now generated and usable with with_items
-* FILE($path) now allows access of contents of file in a path, very good for use with SSH keys
-* similarly PIPE($command) will run a local command and return the results of executing this command
 * additional facts for SunOS virtualization
-* when local_action is used the transport is automatically overridden to the local type
 * copy module is now atomic when used across volumes
-* ansible-pull example now sets up logrotate for the ansible-pull cron job log
 * url_get module now returns 'dest' with the location of the file saved
 * fix for yum module when using local RPMs vs downloading
-* output on failed playbook commands is now nicely split for stderr/stdout and syntax errors
-* if local_action is not used and delegate_to was 127.0.0.1 or localhost, use local connection regardless
-* explicit quoting around only_if statements is no longer neccessary
-* is_unset is also available in only_if in addition to is_set
-* negative host matching (!hosts) fixed for external inventory script usage
 * pause plugin (pause seconds=10) (pause minutes=1) (pause prompt=foo) action plugin
 * cleaner error messages with copy if destination directory does not exist
-* internals: os.executable check replaced with utils function so it plays nice on AIX
-* when running a playbook, and the statement has changed, prints 'changed:' now versus 'ok:' so it is obvious without colored mode
-* variables now usable within vars_prompt (just not host/group vars)
 * setup module now still works if PATH is not set
-* Debian packaging now includes ansible-pull manpage
-* magic variable 'ansible_ssh_host' can override the hostname (great for usage with tunnels)
 * service module status now correct for services with 'subsys locked' status
 * misc fixes/upgrades to the wait_for module
-* date command usage in build scripts fixed for OS X
 * git module now expands any "~" in provided destination paths
-* THINGS BELOW THIS LINE, NEED TO ANNOUNCE IN SUMMARY TO LIST YET:
-* ansible-module docs generator source merged in
 * ini_file module for manipulating INI files
-* only_if using register variables that are booleans now works in a boolean way like you'd expect
-* don't use SSH agent with paramiko if a password is specified
-* start of fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time (WIP)
 * ignore stop error code failure for service module with state=restarted, always try to start
-* make output be cleaner on multi-line command/shell errors
+* inline documentation for modules allows documentation source to built without pull requests to the ansible-docs project, among other things
+* new LSB facts (release, distro, etc)
 
 0.7 "Panama" -- Sept 6 2012
 
