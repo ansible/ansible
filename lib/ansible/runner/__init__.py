@@ -355,6 +355,8 @@ class Runner(object):
 
         handler = self.action_plugins.get(module_name, None)
         if handler:
+            if self.background != 0:
+                raise errors.AnsibleError("async mode is not supported with the %s module" % module_name)
             result = handler.run(conn, tmp, module_name, module_args, inject)
         else:
             if self.background == 0:
