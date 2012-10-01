@@ -376,7 +376,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
-        print stringc("no hosts matched or remaining\n", 'red')
+        print stringc("FATAL: no hosts matched or all hosts have already failed -- aborting playbook\n", 'red')
         super(PlaybookRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):

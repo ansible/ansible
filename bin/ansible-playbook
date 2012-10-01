@@ -122,9 +122,11 @@ def main(args):
                     print '\n'
             return 0
             
+
         try:
 
             pb.run()
+
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
