@@ -181,7 +181,8 @@ class PlayBook(object):
             raise errors.AnsibleError(msg % (unknown, unmatched))
 
         for play in plays:
-            self._run_play(play)
+            if not self._run_play(play):
+                break
 
         # summarize the results
         results = {}
@@ -360,15 +361,11 @@ class PlayBook(object):
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
 
-        hosts_remaining = True
         for on_hosts in serialized_batch:
 
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
-
-                if not hosts_remaining:
-                    continue
 
                 # only run the task if the requested tags match
                 should_run = False
@@ -379,16 +376,15 @@ class PlayBook(object):
                             break
                 if should_run:
                     if not self._run_task(play, task, False):
-                        hosts_remaining = False
+                        return False
 
             # run notify actions
             for handler in play.handlers():
-                if not hosts_remaining:
-                    continue
                 if len(handler.notified_by) > 0:
                     self.inventory.restrict_to(handler.notified_by)
                     self._run_task(play, handler, True)
                     self.inventory.lift_restriction()
 
             self.inventory.lift_also_restriction()
+        return True
 
