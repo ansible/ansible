@@ -39,8 +39,8 @@ options:
   regexp:
     required: true
     description:
-      - The regular expression to look for in the file. For I(state=present),
-        the pattern to replace. For I(state=absent), the pattern of the line
+      - The regular expression to look for in the file. For C(state=present),
+        the pattern to replace. For C(state=absent), the pattern of the line
         to remove.
   state:
     required: false
@@ -52,13 +52,13 @@ options:
   line:
     required: false
     description:
-      - Required for I(state=present). The line to insert/replace into the
+      - Required for C(state=present). The line to insert/replace into the
         file. Must match the value given to C(regexp).
   insertafter:
     required: false
     default: EOF
     description:
-      - Used with I(state=present). If specified, the line will be inserted
+      - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. Two special values are
         available; C(BOF) for inserting the line at the beginning of the
         file, and C(EOF) for inserting the line at the end of the file.

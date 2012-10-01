@@ -24,9 +24,9 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: authorized_key
-short_description: Adds or removes an authorized key for a user from a remote host.
+short_description: Adds or removes an SSH authorized key
 description:
-     - Adds or removes an authorized key for a user from a remote host.
+     - Adds or removes an SSH authorized key for a user from a remote host.
 version_added: "0.5"
 options:
   user:
