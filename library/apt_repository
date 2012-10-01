@@ -44,7 +44,7 @@ options:
     choices: [ "present", "absent" ]
 notes:
    - This module requires C(apt-add-repository) be available on destination server. To ensure this package is available use the C(apt) module and install the C(python-software-properties) package before using this module.
-   - This module works on Ubuntu and unstable Debian only, see *(https://github.com/ansible/ansible/pull/1082). 
+   - This module works on Ubuntu and unstable Debian only, see U(https://github.com/ansible/ansible/pull/1082). 
    - A bug in C(apt-add-repository) always adds C(deb) and C(deb-src) types for repositories (see the issue on Launchpad U(https://bugs.launchpad.net/ubuntu/+source/software-properties/+bug/987264)), if some repo don't have source (eg MongoDB repo from 10gen) the system fails while updating repositories.
 author: Matt Wright
 examples:

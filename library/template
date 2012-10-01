@@ -36,7 +36,8 @@ options:
 examples:
    - code: template src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
      description: "Example from Ansible Playbooks"
-notes: []
+notes:
+  - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
 requirements: null
 author: Michael DeHaan
 '''

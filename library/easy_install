@@ -43,9 +43,9 @@ examples:
    - code: easy_install name=pip
      description: "Examples from Ansible Playbooks"
    - code: easy_install name=flask virtualenv=/webapps/myapp/venv
-     description: "Install I(flask) into the specified I(virtualenv)"
+     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
 notes:
-    - Please note that the M(easy_install) command can only install Python
+    - Please note that the M(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
       generally recommended to use the M(pip) module which you can first install
       using M(easy_install).
