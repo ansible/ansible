@@ -400,13 +400,15 @@ def template_from_file(basedir, path, vars):
     data = codecs.open(realpath, encoding="utf8").read()
     t = environment.from_string(data)
     vars = vars.copy()
+
     try:
         template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
     except:
         template_uid = os.stat(realpath).st_uid
     vars['template_host']   = os.uname()[1]
     vars['template_path']   = realpath
-    vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
+    vars['template_mtime']  = time.strftime(C.DEFAULT_TIMESTAMP_FORMAT,
+                                time.localtime(os.path.getmtime(realpath)))
     vars['template_uid']    = template_uid
     vars['ansible_managed'] = "%s on %s, modified %s by %s" % (
         vars['template_path'], vars['template_host'], vars['template_mtime'],
