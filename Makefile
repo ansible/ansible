@@ -40,7 +40,7 @@ else
 ifeq ($(OS), Darwin)
 DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%S"  "$(GIT_DATE)" +%Y%m%d%H%M)
 else
-DATE := $(shell date --date="$(GIT_DATE)" +%Y%m%d%H%M)
+DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
 endif
 endif
 
