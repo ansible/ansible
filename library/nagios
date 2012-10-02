@@ -14,40 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Action Summaries (all must be delegate_to'd a nagios server):
-
-* Set 30 minutes of downtime for a single service:
-  action: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
-
-* Set 30 minutes of downtime for a few services:
-  action: nagios action=downtime minutes=30 services=httpd,git,nfs host=$inventory_hostname
-
-* (Un)Silence all alerts from a host/service:
-  action: nagios action=silence host=$inventory_hostname
-  action: nagios action=unsilence host=$inventory_hostname
-
-* Enable/Disable alerts for a host or service(s):
-  action: nagios action=enable_alerts service=host host=$inventory_hostname
-  action: nagios action=disable_alerts services=httpd,git,nfs host=$inventory_hostname
-
-Note: 'service' is an alias for 'services'. Separate multiple services
-with commas.
-
-Set the path to the command file explicitly with the 'cmdfile'
-parameter.
-"""
 
 DOCUMENTATION = '''
 ---
 module: nagios
 short_description: Perform common tasks in Nagios related to downtime and notifications. 
 description:
-  - "The Nagios module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
+  - "The M(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
   - All actions require the C(host) parameter to be given explicitly. In playbooks you can use the C($inventory_hostname) variable to refer to the host the playbook is currently running on.
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
-  - When specifying what service to handle there is a special service value, B(host), which will handle alerts/downtime for the B(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.)
-  - When using the B(nagios) module you will need to specify your nagios server using the C(delegate_to) parameter.
+  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.)
+  - When using the M(nagios) module you will need to specify your nagios server using the C(delegate_to) parameter.
 version_added: 0.7
 options:
   action:
@@ -84,52 +61,29 @@ options:
       - What to manage downtime/alerts for. Separate multiple services with commas.
       - C(service) is an alias for C(services).
       - B(Required) option when using the C(downtime), C(enable_alerts), and C(disable_alerts) actions.
+    aliases: [ "service" ]
     required: true
     default: null
 author: Tim Bielawa
+requirements: [ "Nagios" ]
+examples:
+    - description: set 30 minutes of apache downtime
+      code: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
+    - description: schedule an hour of HOST downtime
+      code: nagios action=downtime minutes=60 service=host host=$inventory_hostname
+    - description: schedule downtime for a few services
+      code: nagios action=downtime services=frob,foobar,qeuz host=$inventory_hostname
+    - description: enable SMART disk alerts
+      code: nagios action=enable_alerts service=smart host=$inventory_hostname
+    - description: "two services at once: disable httpd and nfs alerts"
+      code: nagios action=disable_alerts service=httpd,nfs host=$inventory_hostname
+    - description: disable HOST alerts
+      code: nagios action=disable_alerts service=host host=$inventory_hostname
+    - description: silence ALL alerts
+      code: nagios action=silence host=$inventory_hostname
+    - description: unsilence all alerts
+      code: nagios action=unsilence host=$inventory_hostname
 '''
-
-EXAMPLES = [
-"""
-- description: set 30 minutes of apache downtime
-  code: nagios action=downtime minutes=30 service=httpd host=$inventory_hostname
-""",
-
-"""
-- description: schedule an hour of HOST downtime
-  code: nagios action=downtime minutes=60 service=host host=$inventory_hostname
-""",
-
-"""
-- description: schedule downtime for a few services
-  code: nagios action=downtime services=frob,foobar,qeuz host=$inventory_hostname
-""",
-
-"""
-- description: enable SMART disk alerts
-  code: nagios action=enable_alerts service=smart host=$inventory_hostname
-""",
-
-"""
-- description: two services at once: disable httpd and nfs alerts
-  code: nagios action=disable_alerts service=httpd,nfs host=$inventory_hostname
-""",
-
-"""
-- description: disable HOST alerts
-  code: nagios action=disable_alerts service=host host=$inventory_hostname
-""",
-
-"""
-- description: silence ALL alerts
-  code: nagios action=silence host=$inventory_hostname
-""",
-
-"""
-- description: unsilence all alerts
-  code: nagios action=unsilence host=$inventory_hostname
-"""
-]
 
 import ConfigParser
 import types
