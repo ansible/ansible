@@ -281,15 +281,16 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self.stats = stats
         self._async_notified = {}
 
-    def on_unreachable(self, host, msg):
+    def on_unreachable(self, host, results):
         item = None
-        if type(msg) == dict:
-            item = msg.get('item', None)
+        if type(results) == dict:
+            item = results.get('item', None)
         if item:
-            print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)
+            msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
-            print "fatal: [%s] => %s" % (host, msg)
-        super(PlaybookRunnerCallbacks, self).on_unreachable(host, msg)
+            msg = "fatal: [%s] => %s" % (host, results)
+        print stringc(msg, 'red')
+        super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
 
