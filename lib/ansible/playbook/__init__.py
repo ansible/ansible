@@ -115,6 +115,9 @@ class PlayBook(object):
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
 
+        # which task we are currently executing
+        self.task_counter     = 0
+
     # *****************************************************
 
     def _load_playbook_from_file(self, path):
@@ -235,6 +238,8 @@ class PlayBook(object):
             if task.async_poll_interval > 0:
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
+
+        self.task_counter = self.task_counter + 1
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
@@ -376,7 +381,10 @@ class PlayBook(object):
                             break
                 if should_run:
                     if not self._run_task(play, task, False):
-                        return False
+                        # whether no hosts matched is fatal or not depends if it was on the initial step.
+                        # if we got exactly no hosts on the first step (setup!) then the host group
+                        # just didn't match anything and that's ok
+                        return (self.task_counter <= 1)
 
             # run notify actions
             for handler in play.handlers():
