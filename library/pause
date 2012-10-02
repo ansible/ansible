@@ -26,21 +26,11 @@ options:
     required: false
     default: null
 author: Tim Bielawa
+examples:
+    - description: Pause for 5 minutes to build app cache.
+      code: pause minutes=5
+    - description: Pause until you can verify updates to an application were successful.
+      code: pause
+    - description: A helpful reminder of what to look out for post-update.
+      code: pause prompt=Make sure org.foo.FooOverload exception is not present
 '''
-
-EXAMPLES = [
-"""
-- description: Pause for 5 minutes to build app cache.
-  action: pause minutes=5
-""",
-
-"""
-- description: Pause until you can verify updates to an application were successful.
-  action: pause
-""",
-
-"""
-- description: A helpful reminder of what to look out for post-update.
-  action: pause prompt=Make sure org.foo.FooOverload exception is not present
-"""
-]
