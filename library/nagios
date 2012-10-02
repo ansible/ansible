@@ -118,7 +118,7 @@ def which_cmdfile():
         if os.path.exists(path):
             for line in open(path):
                 if line.startswith('command_file'):
-                    return line.partition('=')[2].strip()
+                    return line.split('=')[1].strip()
 
     return None
 
