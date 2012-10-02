@@ -424,7 +424,7 @@ class PlaybookCallbacks(object):
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
 
         if prompt:
-            msg = prompt
+            msg = "%s: " % prompt
         else:
             msg = 'input for %s: ' % varname
 
