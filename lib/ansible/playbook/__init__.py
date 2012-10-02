@@ -115,9 +115,6 @@ class PlayBook(object):
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
 
-        # which task we are currently executing
-        self.task_counter     = 0
-
     # *****************************************************
 
     def _load_playbook_from_file(self, path):
@@ -239,8 +236,6 @@ class PlayBook(object):
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
 
-        self.task_counter = self.task_counter + 1
-
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
 
@@ -346,6 +341,11 @@ class PlayBook(object):
 
         self.callbacks.on_play_start(play.name)
 
+        # if no hosts matches this play, drop out
+        if not self.inventory.list_hosts(play.hosts):
+            self.callbacks.on_no_hosts_matched()
+            return True
+
         # get facts from system
         self._do_setup_step(play)
 
@@ -384,7 +384,15 @@ class PlayBook(object):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
                         # if we got exactly no hosts on the first step (setup!) then the host group
                         # just didn't match anything and that's ok
-                        return (self.task_counter <= 1)
+                        return False
+
+                host_list = [ h for h in self.inventory.list_hosts(play.hosts)
+                    if not (h in self.stats.failures or h in self.stats.dark) ]
+
+                # if no hosts remain, drop out
+                if not host_list:
+                    self.callbacks.on_no_hosts_remaining()
+                    return False
 
             # run notify actions
             for handler in play.handlers():
@@ -394,5 +402,6 @@ class PlayBook(object):
                     self.inventory.lift_restriction()
 
             self.inventory.lift_also_restriction()
+
         return True
 
