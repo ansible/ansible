@@ -75,7 +75,7 @@ class Play(object):
         self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), playbook.extra_vars)
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
-        self.gather_facts = ds.get('gather_facts', True)
+        self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
 
         self._update_vars_files_for_host(None)
