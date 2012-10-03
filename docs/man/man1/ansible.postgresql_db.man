@@ -1,0 +1,48 @@
+.TH ANSIBLE.POSTGRESQL_DB 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/postgresql_db
+.SH NAME
+postgresql_db \- Add or remove PostgreSQL databases from a remote host.
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Add or remove PostgreSQL databases from a remote host. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP state
+The database state
+.IR Choices :
+present,absent. (default: present)
+.IP name
+name of the database to add or remove(required)
+.IP login_password
+The password used to authenticate with
+.IP owner
+Name of the role to set as owner of the database
+.IP login_user
+The username used to authenticate with
+.IP login_host
+Host running the database (default: localhost)."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+The default authentication assumes that you are either logging in as or sudo'ing to the postgres account on the host. 
+.PP
+This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module. 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+postgresql_db db=acme
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Lorin Hochstein
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#postgresql-db

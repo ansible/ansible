@@ -22,8 +22,8 @@ import subprocess
 import sys
 import datetime
 import traceback
+import re
 import shlex
-import pipes
 import os
 
 DOCUMENTATION = '''
@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 module: command
 short_description: Executes a command on a remote node
 description:
-     - The command module takes the command name followed by a list of arguments, space delimited.
+     - The command module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work. As such, all
@@ -48,6 +48,12 @@ options:
       - a filename, when it already exists, this step will B(not) be run.
     required: no
     default: null
+  removes:
+    description:
+      - a filename, when it does not exist, this step will B(not) be run.
+    version_added: "0.8"
+    required: no
+    default: null
   chdir:
     description:
       - cd into this directory before running the command
@@ -58,7 +64,7 @@ examples:
    - code: command /sbin/shutdown -t now
      description: "Example from Ansible Playbooks"
    - code: command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
-     description: "I(creates) and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+     description: "I(creates), I(removes), and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
@@ -131,7 +137,6 @@ class CommandModule(AnsibleModule):
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
         args = MODULE_ARGS
-        items   = shlex.split(args)
         params = {}
         params['chdir'] = None
         params['shell'] = False
@@ -139,14 +144,14 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        check_args = shlex.split(args)
-        l_args = []
-        for x in check_args:
-            if x.startswith("creates="):
+        r = re.compile(r'(^|\s)(creates|removes|chdir)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        for m in r.finditer(args):
+            v = m.group(4).replace("\\", "")
+            if m.group(2) == "creates":
                 # do not run the command if the line contains creates=filename
                 # and the filename already exists.  This allows idempotence
                 # of command executions.
-                (k,v) = x.split("=",1)
+                v = os.path.expanduser(v)
                 if os.path.exists(v):
                     self.exit_json(
                         cmd=args,
@@ -156,31 +161,29 @@ class CommandModule(AnsibleModule):
                         stderr=False,
                         rc=0
                     )
-            elif x.startswith("removes="):
+            elif m.group(2) == "removes":
                 # do not run the command if the line contains removes=filename
                 # and the filename do not exists.  This allows idempotence
                 # of command executions.
-                (k,v) = x.split("=",1)
+                v = os.path.expanduser(v)
                 if not os.path.exists(v):
                     self.exit_json(
                         cmd=args,
-                        stdout="skipped, since %s do not exists" % v,
+                        stdout="skipped, since %s does not exist" % v,
                         skipped=True,
                         changed=False,
                         stderr=False,
                         rc=0
                     )
-            elif x.startswith("chdir="):
-                (k,v) = x.split("=", 1)
+            elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
                     self.fail_json(msg="cannot change to directory '%s': path does not exist" % v)
                 elif v[0] != '/':
                     self.fail_json(msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
-            else:
-                l_args.append(x)
-        params['args'] = " ".join([pipes.quote(x) for x in l_args])
+        args = r.sub("", args)
+        params['args'] = args
         return (params, params['args'])
 
 main()

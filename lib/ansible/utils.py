@@ -36,6 +36,8 @@ import stat
 import termios
 import tty
 from multiprocessing import Manager
+import datetime
+import pwd
 
 VERBOSITY=0
 
@@ -371,7 +373,7 @@ def varReplaceWithItems(basedir, varname, vars):
             d[k] = varReplaceWithItems(basedir, v, vars)
         return d
     else:
-        raise Exception("invalid with_items type")
+        return varname
 
 
 def template(basedir, text, vars):
@@ -389,14 +391,27 @@ def template(basedir, text, vars):
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
+    realpath = path_dwim(basedir, path)
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=True)
     environment.filters['to_json'] = json.dumps
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
     environment.filters['from_yaml'] = yaml.load
-    data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
+    data = codecs.open(realpath, encoding="utf8").read()
     t = environment.from_string(data)
     vars = vars.copy()
+    try:
+        template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
+    except:
+        template_uid = os.stat(realpath).st_uid
+    vars['template_host']   = os.uname()[1]
+    vars['template_path']   = realpath
+    vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
+    vars['template_uid']    = template_uid
+    vars['ansible_managed'] = "%s on %s, modified %s by %s" % (
+        vars['template_path'], vars['template_host'], vars['template_mtime'],
+        vars['template_uid'] )
+
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'

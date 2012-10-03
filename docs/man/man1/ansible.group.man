@@ -1,0 +1,41 @@
+.TH ANSIBLE.GROUP 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/group
+.SH NAME
+group \- Add or remove groups
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Manage presence of groups on a host. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP state
+Whether the group should be present or not on the remote host.
+.IR Choices :
+present,absent. (default: present)
+.IP gid
+Optional \fIGID\fR to set for the group.
+.IP name
+Name of the group to manage.(required)
+.IP system
+If \fIyes\fR, indicates that the group created is a system group.
+.IR Choices :
+True,False. (default: no)."
+."
+." ------ NOTES
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+group name=somegroup state=present
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Stephen Fromm
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#group

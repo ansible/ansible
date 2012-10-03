@@ -72,10 +72,10 @@ class Play(object):
         self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), playbook.extra_vars)
         self.remote_port  = ds.get('port', self.playbook.remote_port)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
+        self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), playbook.extra_vars)
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
-        self.gather_facts = ds.get('gather_facts', True)
+        self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
 
         self._update_vars_files_for_host(None)
@@ -117,7 +117,7 @@ class Play(object):
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
                     for y in data:
-                         results.append(Task(self,y,module_vars=mv))
+                         results.append(Task(self,y,module_vars=mv.copy()))
             elif type(x) == dict:
                 task_vars = self.vars.copy()
                 results.append(Task(self,x,module_vars=task_vars))

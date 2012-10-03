@@ -1,0 +1,62 @@
+.TH ANSIBLE.FILE 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/file
+.SH NAME
+file \- Sets attributes of files
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. Many other modules support the same options as the file module - including \fIcopy\fR, \fItemplate\fR, and \fIassmeble\fR. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP src
+path of the file to link to (applies only to \fCstate=link\fR).
+.IP group
+name of the group that should own the file/directory, as would be fed to \fIchown\fR
+.IP dest
+defines the file being managed, unless when used with \fIstate=link\fR, and then sets the destination to create a symbolic link to using \fIsrc\fR(required)
+.IP selevel
+level part of the SELinux file context. This is the MLS/MCS attribute, sometimes known as the \fCrange\fR. \fC_default\fR feature works as for \fIseuser\fR. (default: s0)
+.IP seuser
+user part of SELinux file context. Will default to system policy, if applicable. If set to \fC_default\fR, it will use the \fCuser\fR portion of the the policy if available
+.IP state
+If \fCdirectory\fR, all immediate subdirectories will be created if they do not exist. If \fCfile\fR, the file will NOT be created if it does not exist, see the \fIcopy\fR or \fItemplate\fR module if you want that behavior. If \fClink\fR, the symbolic link will be created or changed. If \fCabsent\fR, directories will be recursively deleted, and files or symlinks will be unlinked.
+.IR Choices :
+file,link,directory,absent. (default: file)
+.IP serole
+role part of SELinux file context, \fC_default\fR feature works as for \fIseuser\fR.
+.IP mode
+mode the file or directory should be, such as 0644 as would be fed to
+.IP context
+accepts only \fCdefault\fR as value. This will restore a file's SELinux context in the policy. Does nothing if no default value is available.
+.IR Choices :
+default.
+.IP owner
+name of the user that should own the file/directory, as would be fed to \fIchown\fR
+.IP setype
+type part of SELinux file context, \fC_default\fR feature works as for \fIseuser\fR.."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+See also \fIcopy\fR, \fItemplate\fR, \fIassemble\fR 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+file path=/etc/foo.conf owner=foo group=foo mode=0644
+.fi
+.PP
+.nf
+file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#file

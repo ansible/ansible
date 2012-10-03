@@ -7,20 +7,6 @@ import ansible.utils
 class TestUtils(unittest.TestCase):
 
     #####################################
-    ### varLookup function tests
-
-    def test_varLookup_list(self):
-        vars = {
-            'data': {
-                'who': ['joe', 'jack', 'jeff']
-            }
-        }
-
-        res = ansible.utils.varLookup('${data.who}', vars)
-
-        assert sorted(res) == sorted(vars['data']['who'])
-
-    #####################################
     ### varReplace function tests
 
     def test_varReplace_simple(self):
@@ -262,6 +248,45 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.template("test", template, {})
 
         assert res == u'hello world'
+
+    #####################################
+    ### varReplaceWithItems function tests
+
+    def test_varReplaceWithItems_basic(self):
+        vars = {
+            'data': {
+                'var': [
+                    'foo',
+                    'bar',
+                    'baz',
+                ],
+                'types': [
+                    'str',
+                    u'unicode',
+                    1,
+                    1L,
+                    1.2,
+                ],
+                'alphas': '$alphas',
+            },
+            'alphas': [
+                'abc',
+                'def',
+                'ghi',
+            ],
+        }
+
+        template = '${data.var}'
+        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        assert sorted(res) == sorted(vars['data']['var'])
+
+        template = '${data.types}'
+        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        assert sorted(res) == sorted(vars['data']['types'])
+
+        template = '${data.alphas}'
+        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        assert sorted(res) == sorted(vars['alphas'])
 
     #####################################
     ### Template function tests

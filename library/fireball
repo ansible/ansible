@@ -21,9 +21,13 @@
 DOCUMENTATION = '''
 ---
 module: fireball
-short_description: 
+short_description: Enable fireball mode on remote node
 description:
-     - bla, bla
+     - This modules launches an ephemeral I(fireball) ZeroMQ message bus daemon on the remote node which
+       Ansible can to communicate with nodes at high speed. 
+     - The daemon listens on a configurable port for a configurable amount of time.
+     - Starting a new fireball as a given user terminates any existing user fireballs.
+     - Fireball mode is AES encrypted
 version_added: "0.9"
 options:
   port:
@@ -32,21 +36,29 @@ options:
     required: false
     default: 5099
     aliases: []
-  password:
-    description:
-      - Base64-encoded password for FIXME
-    required: true
-    default: null
   minutes:
     description:
-      - time, in minutes, for FIXME
+      - The I(fireball) listener daemon is started on nodes and will stay around for
+        this number of minutes before turning itself off.
     required: false
     default: 30
+# WARNING: very careful when moving space around, below
 examples:
-   - code: fireball ... FIXME
-     description: "This does ..."
+   - code: |
+           - hosts: devservers
+                 gather_facts: false
+                 connection: ssh
+                 sudo: yes
+                 tasks:
+                     - action: fireball 
+
+               - hosts: devservers
+                 connection: fireball
+                 tasks:
+                     - action: command /usr/bin/anything
+     description: "This example playbook has two plays: the first launches I(fireball) mode on all hosts via SSH, and the second actually starts using I(fireball) node for subsequent management over the fireball interface"
 notes:
-    - Also see the M(template) module.
+    - See the advanced playbooks chapter for more about using fireball mode.
 requirements: [ "zmq", "keyczar" ]
 author: Michael DeHaan
 '''
@@ -58,7 +70,9 @@ import time
 import base64
 import syslog
 import signal
+import time
 import subprocess
+import signal
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 PIDFILE = os.path.expanduser("~/.fireball.pid")
@@ -173,6 +187,7 @@ def put(data):
 
 def serve(module, password, port, minutes):
 
+
     log("serving")
     context = zmq.Context()
     socket = context.socket(zmq.REP)
@@ -188,11 +203,14 @@ def serve(module, password, port, minutes):
  
     while True:
 
-        log("DEBUG: waiting")
         data = socket.recv()
-        data = key.Decrypt(data)
+
+        try:
+            data = key.Decrypt(data)
+        except:
+            continue
+
         data = json.loads(data)
-        log("DEBUG: got data=%s" % data)
 
         mode = data['mode']
         response = {}
@@ -204,18 +222,22 @@ def serve(module, password, port, minutes):
         elif mode == 'fetch':
             response = fetch(data)
 
-        # FIXME: send back a useful response here
         data2 = json.dumps(response)
-        log("DEBUG: returning data=%s" % data2)
         data2 = key.Encrypt(data2)
         socket.send(data2)
 
 def daemonize(module, password, port, minutes):
 
-    # FIXME: actually support the minutes killswitch here
-    # FIXME: /actually/ daemonize here
     try:
         daemonize_self(module, password, port, minutes)
+
+        def catcher(signum, _):
+            module.exit_json(msg='timer expired')
+
+        signal.signal(signal.SIGALRM, catcher)
+        signal.setitimer(signal.ITIMER_REAL, 60 * minutes)
+
+
         serve(module, password, port, minutes)
     except Exception, e:
         log("exception caught, exiting fireball mode: %s" % e)
@@ -232,9 +254,8 @@ def main():
     )
 
     password  = base64.b64decode(module.params['password'])
-    log("DEBUG pass=%s" % password)
     port      = module.params['port']
-    minutes   = module.params['minutes']
+    minutes   = int(module.params['minutes'])
 
     if not HAS_ZMQ:
         module.fail_json(msg="zmq is not installed")

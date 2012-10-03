@@ -181,7 +181,8 @@ class PlayBook(object):
             raise errors.AnsibleError(msg % (unknown, unmatched))
 
         for play in plays:
-            self._run_play(play)
+            if not self._run_play(play):
+                break
 
         # summarize the results
         results = {}
@@ -235,7 +236,14 @@ class PlayBook(object):
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
 
+        contacted = results.get('contacted',{})
+        dark      = results.get('dark', {})
+
         self.inventory.lift_restriction()
+
+        if len(contacted.keys()) == 0 and len(dark.keys()) == 0:
+            return None
+
         return results
 
     # *****************************************************
@@ -247,14 +255,18 @@ class PlayBook(object):
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
-        # if no hosts are matched, carry on
-        if results is None:
-            results = {}
 
+        # if no hosts are matched, carry on
+        hosts_remaining = True
+        if results is None:
+            hosts_remaining = False
+            results = {}
+ 
+        contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
         # add facts to the global setup cache
-        for host, result in results['contacted'].iteritems():
+        for host, result in contacted.iteritems():
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
             if task.register:
@@ -268,6 +280,8 @@ class PlayBook(object):
                 if results.get('changed', False):
                     for handler_name in task.notify:
                         self._flag_handler(play.handlers(), utils.template(play.basedir, handler_name, task.module_vars), host)
+
+        return hosts_remaining
 
     # *****************************************************
 
@@ -295,8 +309,12 @@ class PlayBook(object):
         host_list = [ h for h in self.inventory.list_hosts(play.hosts)
             if not (h in self.stats.failures or h in self.stats.dark) ]
 
-        if not play.gather_facts:
+        if play.gather_facts is False:
             return {}
+        elif play.gather_facts is None:
+            host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
+            if len(host_list) == 0:
+                return {}
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
@@ -317,7 +335,8 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            self.SETUP_CACHE[host] = result.get('ansible_facts', {})
+            self.SETUP_CACHE[host].update({'module_setup': True})
+            self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
         return setup_results
 
     # *****************************************************
@@ -326,6 +345,11 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         self.callbacks.on_play_start(play.name)
+
+        # if no hosts matches this play, drop out
+        if not self.inventory.list_hosts(play.hosts):
+            self.callbacks.on_no_hosts_matched()
+            return True
 
         # get facts from system
         self._do_setup_step(play)
@@ -352,6 +376,7 @@ class PlayBook(object):
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
+
                 # only run the task if the requested tags match
                 should_run = False
                 for x in self.only_tags:
@@ -360,7 +385,19 @@ class PlayBook(object):
                             should_run = True
                             break
                 if should_run:
-                    self._run_task(play, task, False)
+                    if not self._run_task(play, task, False):
+                        # whether no hosts matched is fatal or not depends if it was on the initial step.
+                        # if we got exactly no hosts on the first step (setup!) then the host group
+                        # just didn't match anything and that's ok
+                        return False
+
+                host_list = [ h for h in self.inventory.list_hosts(play.hosts)
+                    if not (h in self.stats.failures or h in self.stats.dark) ]
+
+                # if no hosts remain, drop out
+                if not host_list:
+                    self.callbacks.on_no_hosts_remaining()
+                    return False
 
             # run notify actions
             for handler in play.handlers():
@@ -370,4 +407,6 @@ class PlayBook(object):
                     self.inventory.lift_restriction()
 
             self.inventory.lift_also_restriction()
+
+        return True
 

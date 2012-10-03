@@ -24,8 +24,9 @@ DOCUMENTATION = '''
 module: ping
 short_description: Try to connect to host and return pong on success.
 description:
-   - A trivial test module, this module always returns 'pong' on successful contact. It does not make sense in playbooks, but is useful from /usr/bin/ansible
-version_added: "0.7"
+   - A trivial test module, this module always returns 'pong' on successful
+     contact. It does not make sense in playbooks, but is useful from
+     C(/usr/bin/ansible)
 examples:
    - code: ansible webservers -m ping
      description: Test 'webservers' status

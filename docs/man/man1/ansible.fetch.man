@@ -1,0 +1,33 @@
+.TH ANSIBLE.FETCH 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/fetch
+.SH NAME
+fetch \- Fetches a file from remote nodes
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+This module works like \fIcopy\fR, but in reverse. It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP dest
+A directory to save the file into. For example, if the \fIdest\fR directory is \fC/backup\fR a src file named \fC/etc/profile\fR on host \fChost.example.com\fR, would be saved into \fC/backup/host.example.com/etc/profile\fR(required)
+.IP src
+The file on the remote system to fetch. This must be a file, not a directory. Recursive fetching may be supported in a later release.(required)."
+."
+." ------ NOTES
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+fetch src=/var/log/messages dest=/home/logtree
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#fetch

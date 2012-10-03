@@ -237,6 +237,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
     def on_skipped(self, host, item=None):
+        print "%s | skipped" % (host)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
     def on_error(self, host, err):
@@ -280,15 +281,16 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self.stats = stats
         self._async_notified = {}
 
-    def on_unreachable(self, host, msg):
+    def on_unreachable(self, host, results):
         item = None
-        if type(msg) == dict:
-            item = msg.get('item', None)
+        if type(results) == dict:
+            item = results.get('item', None)
         if item:
-            print "fatal: [%s] => (item=%s) => %s" % (host, item, msg)
+            msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
-            print "fatal: [%s] => %s" % (host, msg)
-        super(PlaybookRunnerCallbacks, self).on_unreachable(host, msg)
+            msg = "fatal: [%s] => %s" % (host, results)
+        print stringc(msg, 'red')
+        super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
 
@@ -316,7 +318,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if not parsed and module_msg:
             print stringc("invalid output was: %s" % module_msg, 'red')
         if ignore_errors:
-            print stringc("...ignoring", 'yellow')
+            print stringc("...ignoring", 'cyan')
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
@@ -371,11 +373,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
             msg = "skipping: [%s]" % host
-        print stringc(msg, 'yellow')
+        print stringc(msg, 'cyan')
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
-        print stringc("no hosts matched or remaining\n", 'red')
+        print stringc("FATAL: no hosts matched or all hosts have already failed -- aborting\n", 'red')
         super(PlaybookRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
@@ -413,6 +415,14 @@ class PlaybookCallbacks(object):
     def on_notify(self, host, handler):
         call_callback_module('playbook_on_notify', host, handler)
 
+    def on_no_hosts_matched(self):
+        print stringc("no hosts matched", 'red')
+        call_callback_module('playbook_on_no_hosts_matched')
+
+    def on_no_hosts_remaining(self):
+        print stringc("\nFATAL: all hosts have already failed -- aborting", 'red')
+        call_callback_module('playbook_on_no_hosts_remaining')
+
     def on_task_start(self, name, is_conditional):
         msg = "TASK: [%s]" % name
         if is_conditional:
@@ -423,7 +433,7 @@ class PlaybookCallbacks(object):
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
 
         if prompt:
-            msg = prompt
+            msg = "%s: " % prompt
         else:
             msg = 'input for %s: ' % varname
 
