@@ -63,6 +63,12 @@ class CallbackModule(object):
     def playbook_on_notify(self, host, handler):
         pass
 
+    def on_no_hosts_matched(self):
+        pass
+
+    def on_no_hosts_remaining(self):
+        pass
+
     def playbook_on_task_start(self, name, is_conditional):
         pass
 

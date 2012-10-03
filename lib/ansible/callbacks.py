@@ -414,6 +414,14 @@ class PlaybookCallbacks(object):
     def on_notify(self, host, handler):
         call_callback_module('playbook_on_notify', host, handler)
 
+    def on_no_hosts_matched(self):
+        print stringc("no hosts matched", 'red')
+        call_callback_module('playbook_on_no_hosts_matched')
+
+    def on_no_hosts_remaining(self):
+        print stringc("\nFATAL: all hosts have already failed -- aborting", 'red')
+        call_callback_module('playbook_on_no_hosts_remaining')
+
     def on_task_start(self, name, is_conditional):
         msg = "TASK: [%s]" % name
         if is_conditional:
