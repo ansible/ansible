@@ -1,0 +1,63 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: fail
+short_description: Fail with custom message
+description:
+     - This module fails the progress with a custom message. It can be
+       useful for bailing out when a certain condition is met using only_if.
+version_added: "0.8"
+options:
+  msg:
+    description:
+      - The customized message used for failing execution. If ommited,
+        fail will simple bail out with a generic message.
+    required: false
+    default: "Failed because only_if condition is true"
+  rc:
+    description:
+      - The return code of the failure. This is currently not used by
+        Ansible, but might be used in the future.
+    required: false
+    default: 1
+examples:
+    - code:
+        - action: fail msg="The system may not be provisioned according to the CMDB status."
+          only_if: "'$cmdb_status' != 'to-be-staged'"
+      description: "Example of how a playbook may fail when a condition is not met"
+author: Dag Wieers
+'''
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            msg = dict(default='Failed because only_if condition is true'),
+            rc = dict(default=1),
+        )
+    )
+
+    module.fail_json(rc=module.params['rc'], msg=module.params['msg'])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
