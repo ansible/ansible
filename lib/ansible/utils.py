@@ -408,9 +408,15 @@ def template_from_file(basedir, path, vars):
     vars['template_path']   = realpath
     vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
     vars['template_uid']    = template_uid
-    vars['ansible_managed'] = "%s on %s, modified %s by %s" % (
-        vars['template_path'], vars['template_host'], vars['template_mtime'],
-        vars['template_uid'] )
+
+    managed_default = C.DEFAULT_MANAGED_STR
+    managed_str = managed_default.format(
+                    host = vars['template_host'],
+                    uid  = vars['template_uid'],
+                    file = vars['template_path']
+                    )
+    vars['ansible_managed'] = time.strftime(managed_str,
+                                time.localtime(os.path.getmtime(realpath)))
 
     res = t.render(vars)
     if data.endswith('\n') and not res.endswith('\n'):
