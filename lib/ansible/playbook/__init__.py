@@ -312,7 +312,7 @@ class PlayBook(object):
         if play.gather_facts is False:
             return {}
         elif play.gather_facts is None:
-            host_list = [h for h in host_list if h not in self.SETUP_CACHE]
+            host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
             if len(host_list) == 0:
                 return {}
 
@@ -335,6 +335,7 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
+            self.SETUP_CACHE[host].update({'module_setup': True})
             self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
         return setup_results
 
