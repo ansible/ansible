@@ -1,0 +1,44 @@
+.TH ANSIBLE.VIRT 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/virt
+.SH NAME
+virt \- Manages virtual machines supported by libvirt
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Manages virtual machines supported by \fIlibvirt\fR. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP state
+Note that there may be some lag for state requests like \fCshutdown\fR since these refer only to VM states. After starting a guest, it may not be immediately accessible.
+.IR Choices :
+running,shutdown,destroyed,undefined. (default: no)
+.IP command
+in addition to state management, various non-idempotent commands are available. See examples
+.IP name
+name of the guest VM being managed(required)."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+Other non-idempotent commands are: \fCstatus\fR, \fCpause\fR, \fCunpause\fR, \fCget_xml\fR, \fCautostart\fR, \fCfreemem\fR, \fClist_vms\fR, \fCinfo\fR, \fCnodeinfo\fR, \fCvirttype\fR 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+virt guest=alpha state=running
+.fi
+.PP
+.nf
+ansible host -m virt -a "guest=alpha command=status"
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan, Seth Vidal
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#virt

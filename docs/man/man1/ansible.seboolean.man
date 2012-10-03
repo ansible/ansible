@@ -1,0 +1,42 @@
+.TH ANSIBLE.SEBOOLEAN 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/seboolean
+.SH NAME
+seboolean \- Toggles SELinux booleans.
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Toggles SELinux booleans. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP state
+Desired boolean value
+.IR Choices :
+true,false.(required)
+.IP name
+Name of the boolean to configure(required)
+.IP persistent
+Set to 'yes' if the boolean setting should survive a reboot
+.IR Choices :
+yes,no.."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+Not tested on any debian based system 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+seboolean name=httpd_can_network_connect state=true persistent=yes
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Stephen Fromm
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#seboolean

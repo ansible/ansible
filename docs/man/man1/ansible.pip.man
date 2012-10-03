@@ -1,0 +1,60 @@
+.TH ANSIBLE.PIP 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/pip
+.SH NAME
+pip \- Manages Python library dependencies.
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Manage Python library dependencies. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP virtualenv
+An optional path to a virtualenv directory to install into
+.IP state
+The state of module
+.IR Choices :
+present,absent,latest. (default: present)
+.IP version
+The version number to install of the Python library specified in the 'name' parameter
+.IP requirements
+The path to a pip requirements file
+.IP name
+The name of a Python library to install(required)."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+Please note that \fIhttp://www.virtualenv.org/, virtualenv\fR must be installed on the remote host if the virtualenv parameter is specified. 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+pip name=flask
+.fi
+.PP
+.nf
+pip name=flask version=0.8
+.fi
+.PP
+.nf
+pip name=flask virtualenv=/srv/webapps/my_app/venv
+.fi
+.PP
+.nf
+pip requirements=/srv/webapps/my_app/src/requirements.txt
+.fi
+.PP
+.nf
+pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapps/my_app/venv
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Matt Wright
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#pip

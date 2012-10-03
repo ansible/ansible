@@ -1,0 +1,41 @@
+.TH ANSIBLE.GIT 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/git
+.SH NAME
+git \- Deploy software (or files) from git checkouts
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Manage git checkouts of repositories to deploy files or software. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP repo
+git, ssh, or http protocol address of the git repository.(required)
+.IP dest
+Absolute path of where the repository should be checked out to.(required)
+.IP version
+What version of the repository to check out.  This can be the git \fISHA\fR, the literal string \fIHEAD\fR, branch name, or a tag name. (default: HEAD)
+.IP force
+(New in 0.7)  If yes, any modified files in the working repository will be discarded.  Prior to 0.7, this was always 'yes' and could not be disabled.
+.IR Choices :
+True,False. (default: yes)
+.IP remote
+Name of the remote branch. (default: origin)."
+."
+." ------ NOTES
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#git
