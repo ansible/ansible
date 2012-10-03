@@ -1,0 +1,159 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: network_facts
+short_description: Match a host in a network inventory and return network-based facts.
+description:
+     - The network_facts module enables one to have a separate network-related inventory. The module uses DNS to provide ipaddress, domain and fqdn facts, but can also use a separate yaml inventory describing the various networks and facts related to this network. So typically you would define vlans, network-ranges, netmasks, gateways and facts related to each network (e.g. domain search path, dns servers, ntp servers, ...) or location-based information (datacenter, environment, ...).
+     - Typically this module is run as a local_action
+options:
+  host:
+    description:
+      - The host name, ip-address or FQDN of a system, usually this is set to $inventory_hostname
+    required: true
+    default: null
+  inventory:
+    description:
+      - Path to the network inventory
+    required: false
+    default: network-inventory.yml
+  full:
+    description:
+      - Boolean to determine whether we want to do a single DNS lookup (to get the ipaddress) or multiple DNS lookups (for domain and fqdn information). More DNS lookups is slower.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  gw:
+    description:
+      - Strategy for the default gateway address if not gateway has been defined for a specific CIDR.
+    required: false
+    choices: [ "none", "first", "last" ]
+    default: "last"
+version_added: "0.8"
+examples:
+   - code: local_action host=$inventory_hostname inventory=/etc/ansible/network-inventory.yml full=yes
+     description: "Run the $inventory_hostname through the network inventory"
+author: Dag Wieers
+'''
+
+import socket
+import yaml
+try:
+    import netaddr
+except ImportError:
+    print "failed=True msg='netaddr python module unavailable'"
+    sys.exit(1)
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            # Provided host can be IP address, hostname or FQDN
+            host = dict(required=True),
+            # FIXME: Allow to query a specific name server for DNS lookup
+#            nameserver = dict(),
+            full = dict(default=False, choices=BOOLEANS),
+            inventory = dict(),
+            gw = dict(default='last', choices=['none', 'first', 'last'])
+        )
+    )
+
+    host = module.params['host']
+    full = module.params['full']
+    gw = module.params['gw']
+
+    inventory = None
+    if 'inventory' in module.params.keys():
+        inventory = os.path.expanduser(module.params['inventory'])
+
+        if not os.path.exists(inventory):
+            module.fail_json(rc=11, msg="Inventory %s failed to transfer" % inventory)
+        if not os.access(inventory, os.R_OK):
+            module.fail_json(rc=12, msg="Inventory %s not readable" % inventory)
+
+    # Get IP address from DNS
+    try:
+        ipaddress = socket.gethostbyname(host)
+    except:
+        module.fail_json(rc=1, msg='IP address lookup for host %(host)s failed' % module.params)
+
+    ip = netaddr.IPAddress(ipaddress)
+    facts = {
+        'network_ipaddress': str(ip),
+        'network_ipaddress_hex': ('%08x' % ip).upper(),
+    }
+
+    # Do all DNS lookups if requested (so we get FQDN, aliases and more)
+    if full:
+        # Get FQDN from DNS
+        try:
+            fqdn = socket.getfqdn(host)
+        except:
+            module.fail_json(rc=2, msg='FQDN lookup for host %(host)s failed' % module.params)
+
+        # FIXME: We can also return the reverse namelookup and aliases, if needed
+
+        if ipaddress == fqdn == host:
+            module.fail_json(rc=3, msg='Name lookup for host %(host)s failed' % module.params)
+
+        facts['network_hostname'] = fqdn.split('.')[0]
+        facts['network_fqdn'] = fqdn
+        facts['network_domainname'] = '.'.join(fqdn.split('.')[1:])
+
+    ### Most useful information comes from a separate inventory file
+    ### The inventory file _requires_ at least a cidr entry
+    if inventory:
+        networks = yaml.load(open(inventory))
+
+        # Find the network
+        for network in networks:
+
+            net = netaddr.IPNetwork(network['cidr'])
+            if ip not in net:
+                continue
+
+            # We have a match !
+            facts['network_broadcast'] = str(net.broadcast)
+            facts['network_netmask'] = str(net.netmask)
+            facts['network_network'] = str(net.network)
+            facts['network_bits'] = net.prefixlen
+
+            for key in network:
+                factname = 'network_'+key
+                facts[factname] = network[key]
+
+            # If no gateway is specified, take the last address from the range
+            if 'gateway' not in network.keys():
+                if gw == 'first':
+                    facts['network_gateway'] = str(netaddr.IPAddress(net.first + 1))
+                elif gw == 'last':
+                    facts['network_gateway'] = str(netaddr.IPAddress(net.last - 1))
+            break
+        else:
+            module.fail_json(rc=13, msg='Network for host %(host)s is missing from %(inventory)s' % module.params)
+
+    module.exit_json(ansible_facts=facts)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
