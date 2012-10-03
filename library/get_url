@@ -63,8 +63,7 @@ examples:
    - code: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
      description: "Example from Ansible Playbooks"
 notes:
-    - This module doesn't support proxies or passwords.
-    - Also see the M(template) module.
+    - This module doesn't yet support configuration for proxies or passwords.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens

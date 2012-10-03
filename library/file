@@ -36,7 +36,6 @@ description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
        the file module - including M(copy), M(template), and M(assmeble).
-version_added: "0.1"
 options:
   dest:
     description:
