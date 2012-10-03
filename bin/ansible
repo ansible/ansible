@@ -127,6 +127,11 @@ if __name__ == '__main__':
     (options, args) = cli.parse()
     try:
         (runner, results) = cli.run(options, args)
+        for result in results['contacted'].values():
+            if 'failed' in result or result.get('rc', 0) != 0:
+                sys.exit(1)
+        if results['dark']:
+            sys.exit(1)
     except errors.AnsibleError, e:
         # Generic handler for ansible specific errors
         print "ERROR: %s" % str(e)
