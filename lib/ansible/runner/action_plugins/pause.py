@@ -18,7 +18,7 @@
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import getch
+from ansible.utils import getch, template, parse_kv
 from termios import tcflush, TCIFLUSH
 import datetime
 import sys
@@ -48,42 +48,41 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' run the pause actionmodule '''
-        args = self.runner.module_args
         hosts = ', '.join(map(lambda x: x[1], self.runner.host_set))
+        args = parse_kv(template(self.runner.basedir, module_args, inject))
 
-        (self.pause_type, sep, pause_params) = args.partition('=')
-
-        if self.pause_type == '':
-            self.pause_type = 'prompt'
-        elif not self.pause_type in self.PAUSE_TYPES:
-            raise ae("invalid parameter for pause, '%s'. must be one of: %s" % \
-                         (self.pause_type, ", ".join(self.PAUSE_TYPES)))
-
-        # error checking
-        if self.pause_type in ['minutes', 'seconds']:
+        # Are 'minutes' or 'seconds' keys that exist in 'args'?
+        if 'minutes' in args or 'seconds' in args:
             try:
-                int(pause_params)
-            except ValueError:
-                raise ae("value given to %s parameter invalid: '%s', must be an integer" % \
-                             self.pause_type, pause_params)
-
-        # The time() command operates in seconds so we need to
-        # recalculate for minutes=X values.
-        if self.pause_type == 'minutes':
-            self.seconds = int(pause_params) * 60
-        elif self.pause_type == 'seconds':
-            self.seconds = int(pause_params)
-            self.duration_unit = 'seconds'
+                if 'minutes' in args:
+                    self.pause_type = 'minutes'
+                    # The time() command operates in seconds so we need to
+                    # recalculate for minutes=X values.
+                    self.seconds = int(args['minutes']) * 60
+                else:
+                    self.pause_type = 'seconds'
+                    self.seconds = int(args['seconds'])
+                    self.duration_unit = 'seconds'
+            except ValueError, e:
+                raise ae("non-integer value given for prompt duration:\n%s" % str(e))
+        # Is 'prompt' a key in 'args'?
+        elif 'prompt' in args:
+            self.pause_type = 'prompt'
+            self.prompt = "[%s]\n%s: " % (hosts, args['prompt'])
+        # Is 'args' empty, then this is the default prompted pause
+        elif len(args.keys()) == 0:
+            self.pause_type = 'prompt'
+            self.prompt = "[%s]\nPress enter to continue: " % hosts
+        # I have no idea what you're trying to do. But it's so wrong.
         else:
-            # if no args are given we pause with a prompt
-            if pause_params == '':
-                self.prompt = "[%s]\nPress enter to continue: " % hosts
-            else:
-                self.prompt = "[%s]\n%s: " % (hosts, pause_params)
+            raise ae("invalid pause type given. must be one of: %s" % \
+                         ", ".join(self.PAUSE_TYPES))
 
         vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" % \
                 (self.pause_type, self.duration_unit, self.seconds, self.prompt))
 
+        ########################################################################
+        # Begin the hard work!
         try:
             self._start()
             if not self.pause_type == 'prompt':
