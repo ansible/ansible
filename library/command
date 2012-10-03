@@ -145,6 +145,7 @@ class CommandModule(AnsibleModule):
                 # do not run the command if the line contains creates=filename
                 # and the filename already exists.  This allows idempotence
                 # of command executions.
+                v = os.path.expanduser(v)
                 if os.path.exists(v):
                     self.exit_json(
                         cmd=args,
@@ -158,10 +159,11 @@ class CommandModule(AnsibleModule):
                 # do not run the command if the line contains removes=filename
                 # and the filename do not exists.  This allows idempotence
                 # of command executions.
+                v = os.path.expanduser(v)
                 if not os.path.exists(v):
                     self.exit_json(
                         cmd=args,
-                        stdout="skipped, since %s do not exists" % v,
+                        stdout="skipped, since %s does not exist" % v,
                         skipped=True,
                         changed=False,
                         stderr=False,
