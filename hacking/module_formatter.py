@@ -314,7 +314,6 @@ def main():
                     doc['extradata'] = extradata
 
             if args.type == 'json':
-                doc = { doc['module'] : doc }
                 text = json.dumps(doc, indent=2)
             else:
                 text = template.render(doc)
