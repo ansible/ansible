@@ -28,8 +28,6 @@ options:
 examples:
    - code: fetch src=/var/log/messages dest=/home/logtree
      description: "Example from Ansible Playbooks"
-notes:
-   - "See also: M(copy)"
 requirements: []
 author: Michael DeHaan
 '''
