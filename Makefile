@@ -9,7 +9,7 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests
-#   make pyflakes, make pep8 -- source code checks  
+#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -58,7 +58,7 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 all: clean python
 
-tests: 
+tests:
 	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
@@ -161,4 +161,4 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates
+	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
