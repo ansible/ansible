@@ -50,7 +50,7 @@ options:
     default: null
   backup:
     description:
-      - Create a backup file (if C(yes)) including the timestamp information so
+      - Create a backup file (if C(yes)), including the timestamp information so
         you can get the original file back if you somehow clobbered it
         incorrectly.
     required: false
