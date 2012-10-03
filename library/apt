@@ -34,7 +34,7 @@ options:
     default: null
   state:
     description:
-      - Indicate the desired package state
+      - Indicates the desired package state
     required: false
     default: present
     choices: [ "installed", "latest", "remove", "absent", "present" ]
@@ -46,7 +46,7 @@ options:
     choices: [ "yes", "no" ]
   purge:
     description:
-     - Will force purge of configuration files if state is set to C(absent).
+     - Will force purging of configuration files if the module state is set to C(absent).
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -63,7 +63,7 @@ options:
     choices: [ "yes", "no" ]
   force:
     description:
-      - If C(yes) force installs/removes.
+      - If C(yes), force installs/removes.
     required: false
     default: "no"
     choices: [ "yes", "no" ]

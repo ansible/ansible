@@ -48,6 +48,12 @@ options:
       - a filename, when it already exists, this step will B(not) be run.
     required: no
     default: null
+  removes:
+    description:
+      - a filename, when it does not exist, this step will B(not) be run.
+    version_added: "0.8"
+    required: no
+    default: null
   chdir:
     description:
       - cd into this directory before running the command
@@ -58,7 +64,7 @@ examples:
    - code: command /sbin/shutdown -t now
      description: "Example from Ansible Playbooks"
    - code: command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
-     description: "I(creates) and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+     description: "I(creates), I(removes), and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
