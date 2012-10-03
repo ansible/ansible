@@ -317,7 +317,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if not parsed and module_msg:
             print stringc("invalid output was: %s" % module_msg, 'red')
         if ignore_errors:
-            print stringc("...ignoring", 'yellow')
+            print stringc("...ignoring", 'cyan')
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
@@ -372,7 +372,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
             msg = "skipping: [%s]" % host
-        print stringc(msg, 'yellow')
+        print stringc(msg, 'cyan')
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
