@@ -1,0 +1,60 @@
+.TH ANSIBLE.MYSQL_USER 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/mysql_user
+.SH NAME
+mysql_user \- Adds or removes a user from a MySQL database.
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Adds or removes a user from a MySQL database. 
+." ------ OPTIONS
+."
+."
+.SH OPTIONS
+
+.IP name
+name of the user (role) to add or remove(required)
+.IP login_user
+The username used to authenticate with
+.IP login_host
+Host running the database (default: localhost)
+.IP host
+the 'host' part of the MySQL username (default: localhost)
+.IP state
+The database state
+.IR Choices :
+present,absent. (default: present)
+.IP login_password
+The password used to authenticate with
+.IP password
+set the user's password
+.IP priv
+MySQL privileges string in the format: \fCdb.table:priv1,priv2\fR."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb. 
+.PP
+Both \fClogin_password\fR and \fClogin_username\fR are required when you are passing credentials. If none are present, the module will attempt to read the credentials from \fC~/.my.cnf\fR, and finally fall back to using the MySQL default login of 'root' with no password. 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+mysql_user name=bob password=12345 priv=*.*:ALL state=present
+.fi
+.PP
+.nf
+mysql_user login_user=root login_password=123456 name=sally state=absent
+.fi
+.PP
+.nf
+mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Mark Theunissen
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#mysql-user

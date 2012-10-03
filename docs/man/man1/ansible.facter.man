@@ -1,0 +1,28 @@
+.TH ANSIBLE.FACTER 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/facter
+.SH NAME
+facter \- Runs the discovery program I(facter) on the remote system
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+Runs the \fIfacter\fR discovery program (\fIhttps://github.com/puppetlabs/facter\fR) on the remote system, returning JSON data that can be useful for inventory purposes. 
+." ------ OPTIONS
+."
+."
+."
+."
+." ------ NOTES
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+ansible  www.example.net -m facter
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#facter

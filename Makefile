@@ -62,7 +62,7 @@ tests:
 	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES)
+docs: $(MANPAGES) modulepages
 
 # Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
 # recently than %.1.asciidoc.
@@ -160,5 +160,5 @@ deb: debian
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
-manpages:
+modulepages:
 	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates

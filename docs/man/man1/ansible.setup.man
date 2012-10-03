@@ -1,0 +1,31 @@
+.TH ANSIBLE.SETUP 5 "2012-10-02" "0.8" "ANSIBLE MODULES"
+." generated from library/setup
+.SH NAME
+setup \- Gathers facts about remote hosts
+." ------ DESCRIPTION
+.SH DESCRIPTION
+.PP
+This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by \fC/usr/bin/ansible\fR to check what variables are available to a host. Ansible provides many \fIfacts\fR about the system, automatically. 
+." ------ OPTIONS
+."
+."
+."
+."
+." ------ NOTES
+.SH NOTES
+.PP
+More ansible facts will be added with successive releases. If \fIfacter\fR or \fIohai\fR are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating. These variables are prefixed with \fCfacter_\fR and \fCohai_\fR so it's easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install \fIfacter\fR and \fIohai\fR means you can avoid Ruby-dependencies on your remote systems. 
+."
+."
+." ------ EXAMPLES
+.SH EXAMPLES
+.PP
+.nf
+ansible all -m setup -tree /tmp/facts
+.fi
+." ------- AUTHOR
+.SH AUTHOR
+Michael DeHaan
+.SH SEE ALSO
+.IR ansible (1),
+.I http://ansible.github.com/modules.html#setup
