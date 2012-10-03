@@ -140,6 +140,10 @@ def main(args):
                     colorize('failed', t['failures'], 'red'))
 
             print "\n"
+            for h in hosts:
+                stats = pb.stats.summarize(h)
+                if stats['failures'] != 0 or stats['unreachable'] != 0:
+                    sys.exit(1)
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
