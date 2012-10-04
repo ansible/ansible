@@ -113,6 +113,12 @@ options:
     description:
       - accepts only C(default) as value. This will restore a file's SELinux context
         in the policy. Does nothing if no default value is available.
+  force:
+    required: false
+    default: null
+    choices: []
+    description:
+      - force is required when changing an existing file to a directory, or a link to a directory, and so on.  Use this with caution.
 examples:
    - code: file path=/etc/foo.conf owner=foo group=foo mode=0644
      description: Example from Ansible Playbooks
