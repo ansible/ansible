@@ -143,7 +143,7 @@ def main(args):
             for h in hosts:
                 stats = pb.stats.summarize(h)
                 if stats['failures'] != 0 or stats['unreachable'] != 0:
-                    sys.exit(1)
+                    return 2
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
