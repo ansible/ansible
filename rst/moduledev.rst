@@ -237,7 +237,7 @@ Successful returns are made like this::
 
 And failures are just as simple (where 'msg' is a required parameter to explain the error)::
 
-    module.exit_json(msg="Something fatal happened")
+    module.fail_json(msg="Something fatal happened")
 
 There are also other useful functions in the module class, such as module.md5(path).  See 
 lib/ansible/module_common.py in the source checkout for implementation details.
