@@ -247,7 +247,7 @@ required.</p>
 <p>Ok, so those are basics.  If you didn&#8217;t read about patterns and groups yet, go back and read <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>.</p>
 <p>The <tt class="docutils literal"><span class="pre">-f</span> <span class="pre">10</span></tt> in the above specifies the usage of 10 simultaneous
 processes.  Normally commands also take a <tt class="docutils literal"><span class="pre">-m</span></tt> for module name, but
-the default module name is <a class="reference internal" href="modules.html#command"><em>command</em></a>, so we didn&#8217;t need to
+the default module name is &#8216;command&#8217;, so we didn&#8217;t need to
 specify that all of the time.  We&#8217;ll use <tt class="docutils literal"><span class="pre">-m</span></tt> in later examples to
 run some other <a class="reference internal" href="modules.html"><em>Ansible Modules</em></a>.</p>
 <div class="admonition note">
@@ -299,7 +299,7 @@ same options can be passed directly to the <tt class="docutils literal"><span cl
 <div class="section" id="managing-packages">
 <h2><a class="toc-backref" href="#contents">Managing Packages</a><a class="headerlink" href="#managing-packages" title="Permalink to this headline">¶</a></h2>
 <p>There are modules available for yum and apt.  Here are some examples
-with <a class="reference internal" href="modules.html#yum"><em>yum</em></a>.</p>
+with yum.</p>
 <p>Ensure a package is installed, but don&#8217;t update it:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers -m yum -a <span class="s2">&quot;pkg=acme state=installed&quot;</span>
 </pre></div>
@@ -322,7 +322,7 @@ for other package managers.  Stop by the mailing list for info/details.</p>
 </div>
 <div class="section" id="users-and-groups">
 <h2><a class="toc-backref" href="#contents">Users and Groups</a><a class="headerlink" href="#users-and-groups" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="modules.html#user"><em>user</em></a> module allows easy creation and manipulation of
+<p>The &#8216;user&#8217; module allows easy creation and manipulation of
 existing user accounts, as well as removal of user accounts that may
 exist:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m user -a <span class="s2">&quot;name=foo password=&lt;crypted password here&gt;&quot;</span>

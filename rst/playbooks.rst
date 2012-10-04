@@ -144,7 +144,7 @@ files.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
-of these, prefixed with 'ansible', and are documented under :ref:`setup` in the module documentation.  Additionally,
+of these, prefixed with 'ansible', and are documented under 'setup' in the module documentation.  Additionally,
 facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai
 variables are prefixed with ``ohai_``.
 

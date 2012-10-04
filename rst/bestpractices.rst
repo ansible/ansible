@@ -111,7 +111,7 @@ for heterogeneous distributions.  While lots of software packages
 claim to make this easy on you, the configuration files are often
 quite different, to the point where it would be easier to treat them
 as different playbooks.  This is why, for example, Ansible has a
-separate :ref:`yum` and :ref:`apt` module.  Yum and apt have different
+separate 'yum' and 'apt' module.  Yum and apt have different
 capabilities, and we don't want to code for the least common
 denominator.
 
