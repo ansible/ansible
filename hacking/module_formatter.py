@@ -273,7 +273,7 @@ def main():
         incfile = open(args.includes_file, "w")
         incfile.write(includecmt)
 
-    for module in os.listdir(args.module_dir):
+    for module in sorted(os.listdir(args.module_dir)):
         if len(args.module_list):
             if not module in args.module_list:
                 continue
