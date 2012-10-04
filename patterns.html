@@ -223,9 +223,9 @@ but they are useful.</p>
 after the hostname with a colon.</p>
 <blockquote>
 <div>four.example.com:5309</div></blockquote>
-<p>In 0.6 and later, if you have a lot of hosts following similar patterns you can do this:</p>
+<p>In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
-<span class="n">www</span><span class="p">[</span><span class="mo">01</span><span class="o">-</span><span class="mi">50</span><span class="p">]</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">www</span><span class="p">[</span><span class="mo">01</span><span class="p">:</span><span class="mi">50</span><span class="p">]</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
 </pre></div>
 </div>
 <p>Leading zeros can be included or removed, as desired, and the ranges are inclusive.</p>
@@ -386,7 +386,7 @@ Ansible 0.7.  Ansible 0.6 includes a <a class="reference external" href="https:/
 <p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Sep 28, 2012.<br/>
+      Last updated on Oct 03, 2012.<br/>
     </p>
 </div>
 </footer>

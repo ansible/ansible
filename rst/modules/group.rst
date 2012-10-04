@@ -1,24 +1,56 @@
 .. _group:
 
 group
-`````
+``````````````````````````````
 
-Adds or removes groups.
+.. versionadded:: 0.0.2
 
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| parameter          | required | default | comments                                                                   |
-+====================+==========+=========+============================================================================+
-| name               | yes      |         | name of the group                                                          |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| gid                |          |         | optional git to set for the group                                          |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| state              |          | present | 'absent' or 'present'                                                      |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| system             |          | no      | if 'yes', indicates that the group being created is a system group.        |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
+Manage presence of groups on a host. 
 
-To control members of the group, see the users resource.
+.. raw:: html
 
-Example action from Ansible :doc:`playbooks`::
+    <table>
+    <tr>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
+    </tr>
+        <tr>
+    <td>state</td>
+    <td>no</td>
+    <td>present</td>
+    <td><ul><li>present</li><li>absent</li></ul></td>
+    <td>Whether the group should be present or not on the remote host.</td>
+    </tr>
+        <tr>
+    <td>gid</td>
+    <td>no</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>Optional <em>GID</em> to set for the group.</td>
+    </tr>
+        <tr>
+    <td>name</td>
+    <td>yes</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>Name of the group to manage.</td>
+    </tr>
+        <tr>
+    <td>system</td>
+    <td>no</td>
+    <td>no</td>
+    <td><ul><li>True</li><li>False</li></ul></td>
+    <td>If <em>yes</em>, indicates that the group created is a system group.</td>
+    </tr>
+        </table>
 
-   group name=somegroup state=present
+.. raw:: html
+
+    <p>Example group command from Ansible Playbooks</p>    <p><pre>
+    group name=somegroup state=present
+    </pre></p>
+    <br/>
+

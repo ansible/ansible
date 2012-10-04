@@ -1,43 +1,57 @@
 .. _virt:
 
 virt
-````
+``````````````````````````````
 
-Manages virtual machines supported by libvirt.  Requires that libvirt be installed
-on the managed machine.
+.. versionadded:: 0.2
 
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| parameter          | required | default | comments                                                                   |
-+====================+==========+=========+============================================================================+
-| name               | yes      |         | name of the guest VM being managed                                         |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| state              |          |         | 'running', 'shutdown', 'destroyed', or 'undefined'.  Note that there may   |
-|                    |          |         | be some lag for state requests like 'shutdown' since these refer only to   |
-|                    |          |         | VM states.  After starting a guest, it may not be immediately accessible.  |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
-| command            |          |         | in addition to state management, various non-idempotent commands are       |
-|                    |          |         | available.  See examples below.                                            |
-+--------------------+----------+---------+----------------------------------------------------------------------------+
+Manages virtual machines supported by *libvirt*. 
 
-Example action from Ansible :doc:`playbooks`::
+.. raw:: html
 
+    <table>
+    <tr>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
+    </tr>
+        <tr>
+    <td>state</td>
+    <td>no</td>
+    <td>no</td>
+    <td><ul><li>running</li><li>shutdown</li><li>destroyed</li><li>undefined</li></ul></td>
+    <td>Note that there may be some lag for state requests like <code>shutdown</code> since these refer only to VM states. After starting a guest, it may not be immediately accessible.</td>
+    </tr>
+        <tr>
+    <td>command</td>
+    <td>no</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>in addition to state management, various non-idempotent commands are available. See examples</td>
+    </tr>
+        <tr>
+    <td>name</td>
+    <td>yes</td>
+    <td></td>
+    <td><ul></ul></td>
+    <td>name of the guest VM being managed</td>
+    </tr>
+        </table>
+
+.. raw:: html
+
+    <p>Example from Ansible Playbooks</p>    <p><pre>
     virt guest=alpha state=running
-    virt guest=alpha state=shutdown
-    virt guest=alpha state=destroyed
-    virt guest=alpha state=undefined
+    </pre></p>
+    <p>Example guest management with <code>/usr/bin/ansible</code></p>    <p><pre>
+    ansible host -m virt -a "guest=alpha command=status"
+    </pre></p>
+    <br/>
 
-Example guest management commands from /usr/bin/ansible::
+.. raw:: html
 
-    ansible host -m virt -a "guest=foo command=status"
-    ansible host -m virt -a "guest=foo command=pause"
-    ansible host -m virt -a "guest=foo command=unpause"
-    ansible host -m virt -a "guest=foo command=get_xml"
-    ansible host -m virt -a "guest=foo command=autostart"
-
-Example host (hypervisor) management commands from /usr/bin/ansible::
-
-    ansible host -m virt -a "command=freemem"
-    ansible host -m virt -a "command=list_vms"
-    ansible host -m virt -a "command=info"
-    ansible host -m virt -a "command=nodeinfo"
-    ansible host -m virt -a "command=virttype"
+    <h4>Notes</h4>
+        <p>Other non-idempotent commands are: <code>status</code>, <code>pause</code>, <code>unpause</code>, <code>get_xml</code>, <code>autostart</code>, <code>freemem</code>, <code>list_vms</code>, <code>info</code>, <code>nodeinfo</code>, <code>virttype</code></p>
+    
