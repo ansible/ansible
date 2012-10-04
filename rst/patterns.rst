@@ -37,10 +37,10 @@ after the hostname with a colon.
 
     four.example.com:5309
 
-In 0.6 and later, if you have a lot of hosts following similar patterns you can do this::
+In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
 
     [webservers]
-    www[01-50].example.com
+    www[01:50].example.com
 
 Leading zeros can be included or removed, as desired, and the ranges are inclusive.
 

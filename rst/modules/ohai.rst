@@ -1,16 +1,17 @@
 .. _ohai:
 
 ohai
-````
+``````````````````````````````
 
-Similar to the :ref:`facter` module, this returns JSON inventory data.
-Ohai data is a bit more verbose and nested than facter.
+.. versionadded:: 0.6
 
-Requires that 'ohai' be installed on the remote end.
+Similar to the ``facter`` module, this runs the *ohai* discovery program (http://wiki.opscode.com/display/chef/Ohai) on the remote host and returns JSON inventory data. *Ohai* data is a bit more verbose and nested than *facter*. 
 
-Playbooks should not call the ohai module, playbooks call the
-:ref:`setup` module behind the scenes instead.
 
-Example::
+.. raw:: html
 
-    ansible foo.example.org -m ohai
+    <p>Retrieve <em>ohai</em> data from all Web servers and store in one-file per host</p>    <p><pre>
+    ansible webservers -m ohai --tree=/tmp/ohaidata
+    </pre></p>
+    <br/>
+

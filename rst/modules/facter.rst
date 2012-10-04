@@ -1,16 +1,17 @@
 .. _facter:
 
 facter
-``````
+``````````````````````````````
 
-Runs the discovery program 'facter' on the remote system, returning
-JSON data that can be useful for inventory purposes.
+.. versionadded:: 0.2
 
-Requires that 'facter' and 'ruby-json' be installed on the remote end.
+Runs the *facter* discovery program (https://github.com/puppetlabs/facter) on the remote system, returning JSON data that can be useful for inventory purposes. 
 
-Playbooks do not actually use this module, they use the :ref:`setup`
-module behind the scenes.
 
-Example from /usr/bin/ansible::
+.. raw:: html
 
-    ansible foo.example.org -m facter
+    <p>Example command-line invocation</p>    <p><pre>
+    ansible  www.example.net -m facter
+    </pre></p>
+    <br/>
+
