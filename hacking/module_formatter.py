@@ -148,7 +148,7 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.load(child.value.s)
-                 
+
     except:
         if verbose:
             raise
@@ -210,7 +210,7 @@ def main():
 
     module_dir = None
     args = p.parse_args()
-    
+
     # print "M: %s" % args.module_dir
     # print "t: %s" % args.type
     # print "m: %s" % args.module_list
@@ -251,7 +251,7 @@ def main():
     if args.type == 'man':
         env.filters['jpfunc'] = man_ify
         template = env.get_template('man.j2')
-        outputname = "ansible.%s.man"
+        outputname = "ansible.%s.3"
         includecmt = ""
         includefmt = ""
     if args.type == 'rst':
@@ -330,7 +330,7 @@ def main():
 #
 #    # Sneaky: insert author's name from Git config
 #
-#    cmd = subprocess.Popen("git config --get user.name", shell=True, 
+#    cmd = subprocess.Popen("git config --get user.name", shell=True,
 #            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #    out, err = cmd.communicate()
 #
