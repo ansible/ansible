@@ -61,7 +61,7 @@ For starters, here's a playbook that contains just one play::
         action: service name=httpd state=started
       handlers:
         - name: restart apache
-          action: service name=apache state=restarted
+          action: service name=httpd state=restarted
 
 Below, we'll break down what the various features of the playbook language are.
 
