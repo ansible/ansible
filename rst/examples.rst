@@ -59,7 +59,7 @@ Ok, so those are basics.  If you didn't read about patterns and groups yet, go b
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
 processes.  Normally commands also take a ``-m`` for module name, but
-the default module name is :ref:`command`, so we didn't need to
+the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
@@ -117,7 +117,7 @@ Managing Packages
 `````````````````
 
 There are modules available for yum and apt.  Here are some examples
-with :ref:`yum`.
+with yum.
 
 Ensure a package is installed, but don't update it::
 
@@ -142,7 +142,7 @@ for other package managers.  Stop by the mailing list for info/details.
 Users and Groups
 ````````````````
 
-The :ref:`user` module allows easy creation and manipulation of
+The 'user' module allows easy creation and manipulation of
 existing user accounts, as well as removal of user accounts that may
 exist::
 

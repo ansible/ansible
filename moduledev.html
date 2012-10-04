@@ -409,7 +409,7 @@ for you, and allows you to check inputs.</p>
 </pre></div>
 </div>
 <p>And failures are just as simple (where &#8216;msg&#8217; is a required parameter to explain the error):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">module</span><span class="o">.</span><span class="n">exit_json</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&quot;Something fatal happened&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">module</span><span class="o">.</span><span class="n">fail_json</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&quot;Something fatal happened&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>There are also other useful functions in the module class, such as module.md5(path).  See
