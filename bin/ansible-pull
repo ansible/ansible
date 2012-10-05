@@ -1,15 +1,5 @@
 #!/usr/bin/env python
 
-# ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from git.  There is an
-# example playbook to bootstrap this script in the examples/ dir which
-# installs ansible and sets it up to run on cron.
-#
-# usage:
-#   ansible-pull -d /var/ansible/local -U http://wherever/content.git -C production
-#
-# the git repo must contain a playbook named 'local.yml'
-
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -24,10 +14,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# ansible-pull is a script that runs ansible in local mode
+# after checking out a playbooks directory from git.  There is an
+# example playbook to bootstrap this script in the examples/ dir which
+# installs ansible and sets it up to run on cron.
+
+# usage:
+#   ansible-pull -d /var/lib/ansible \
+#                -U http://example.net/content.git [-C production] \
+#                [path/playbook.yml]
+#
+# the -d and -U arguments are required; the -C argument is optional.
+#
+# ansible-pull accepts an optional argument to specify a playbook
+# location underneath the workdir and then searches the git repo
+# for playbooks in the following order, stopping at the first match:
+#
+# 1. $workdir/path/playbook.yml, if specified
+# 2. $workdir/$hostname.yml
+# 3. $workdir/local.yml
+#
+# the git repo must contain at least one of these playbooks.
 
 import os
 import subprocess
 import sys
+import datetime
+import platform
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -43,27 +56,78 @@ def _run(cmd):
 
 def main(args):
     """ Set up and run a local playbook """
-    usage = "%prog [options]"
-    parser = OptionParser()
+    usage = "%prog [options] [path/playbook.yml]"
+    parser = OptionParser(usage=usage)
     parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to checkout git repository')
-    parser.add_option('-U', '--url', dest='url',
-                      default=None,
+                      help='Directory to checkout git repository to')
+    parser.add_option('-U', '--url', dest='url', default=None,
                       help='URL of git repository')
     parser.add_option('-C', '--checkout', dest='checkout',
                       default="HEAD",
                       help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
     options, args = parser.parse_args(args)
 
+    if not options.dest:
+      parser.error("Missing required directory argument")
+      return 1
+
+    if not options.url:
+      parser.error("URL for git repo not specified, use -h for help")
+      return 1
+
+    now = datetime.datetime.now()
+    print now.strftime("ansible-pull_started: %Y%m%d-%H%M-%S"), "\n"
+
+    hostname = "%s.yml" % platform.node()
+
+    if not args:
+      try:
+        with open('%s/%s' % (options.dest, hostname)) as f: pass
+        playbook = hostname
+        print 'using playbook %s/%s' % (options.dest, hostname)
+      except IOError as e:
+        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
+        try:
+          with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
+          playbook = DEFAULT_PLAYBOOK
+          print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
+        except IOError as e:
+          print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
+          return 1
+    else:
+      try:
+        with open('%s/%s' % (options.dest, args[0])) as f: pass
+        playbook = args[0]
+        print 'using playbook %s/%s' % (options.dest, args[0])
+      except IOError as e:
+        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, args[0], hostname)
+        try:
+          with open('%s/%s' % (options.dest, hostname)) as f: pass
+          playbook = hostname
+          print 'using playbook %s/%s' % (options.dest, hostname)
+        except IOError as e:
+          print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
+          try:
+            with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
+            playbook = DEFAULT_PLAYBOOK
+            print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
+          except IOError as e:
+            print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
+            return 1
+
+    print
+
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
     cmd = 'ansible all -c local -m git -a "%s"' % git_opts
-    print "cmd=%s" % cmd
+    print "cmd=%s" % cmd, "\n"
     rc = _run(cmd)
     if rc != 0:
         return rc
 
+
+    cmd = 'ansible-playbook -c local %s' % playbook
+    print "cmd=%s" % cmd
     os.chdir(options.dest)
-    cmd = 'ansible-playbook -c local %s' % DEFAULT_PLAYBOOK
     rc = _run(cmd)
     return rc
 
