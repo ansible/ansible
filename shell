@@ -9,7 +9,7 @@ short_description: Execute commands in nodes.
 description:
      - The shell module takes the command name followed by a list of arguments,
        space delimited. It is almost exactly like the M(command) module but runs
-       the command through the user's configured shell on the remote node.
+       the command through a shell (C(/bin/sh)) on the remote node.
 version_added: "0.2"
 options:
   (free form):
