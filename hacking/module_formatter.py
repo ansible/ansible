@@ -103,6 +103,12 @@ def json_ify(text):
 
     return t
 
+
+def js_ify(text):
+
+    return text
+
+
 def man_ify(text):
 
     t = _ITALIC.sub(r'\\fI' + r"\1" + r"\\fR", text)
@@ -157,6 +163,16 @@ def get_docstring(filename, verbose=False):
 
     return doc
 
+
+def return_data(text, args, outputname, module):
+    if args.output_dir is not None:
+        f = open(os.path.join(args.output_dir, outputname % module), 'w')
+        f.write(text)
+        f.close()
+    else:
+        print text
+
+
 def main():
 
     p = argparse.ArgumentParser(description="Convert Ansible module DOCUMENTATION strings to other formats")
@@ -179,7 +195,7 @@ def main():
     p.add_argument("-t", "--type",
             action='store',
             dest='type',
-            choices=['html', 'latex', 'man', 'rst', 'json'],
+            choices=['html', 'latex', 'man', 'rst', 'json', 'js'],
             default='latex',
             help="Output type")
     p.add_argument("-m", "--module",
@@ -268,11 +284,17 @@ def main():
         outputname = "%s.json"
         includecmt = ""
         includefmt = ""
+    if args.type == 'js':
+        env.filters['jpfunc'] = js_ify
+        template = env.get_template('js.j2')
+        outputname = "%s.js"
 
     if args.includes_file is not None and includefmt != "":
         incfile = open(args.includes_file, "w")
         incfile.write(includecmt)
 
+    # Temporary variable required to genrate aggregated content in 'js' format.
+    js_data = []
     for module in os.listdir(args.module_dir):
         if len(args.module_list):
             if not module in args.module_list:
@@ -285,6 +307,14 @@ def main():
             continue
 
         print " processing module source ---> %s" % fname
+
+        if args.type == 'js':
+            if fname.endswith(".json"):
+                f = open(fname)
+                j = json.load(f)
+                f.close()
+                js_data.append(j)
+            continue
 
         doc = get_docstring(fname, verbose=args.verbose)
 
@@ -318,12 +348,13 @@ def main():
             else:
                 text = template.render(doc)
 
-            if args.output_dir is not None:
-                f = open(os.path.join(args.output_dir, outputname % module), 'w')
-                f.write(text)
-                f.close()
-            else:
-                print text
+            return_data(text, args, outputname, module)
+
+    if args.type == 'js':
+        docs = {}
+        docs['json'] = json.dumps(js_data, indent=2)
+        text = template.render(docs)
+        return_data(text, args, outputname, 'modules')
 
 #def boilerplate():
 #

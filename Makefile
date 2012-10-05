@@ -106,7 +106,8 @@ clean:
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
-	rm -rf docs/js/tmp
+	rm -rf docs/json
+	rm -rf docs/js
 
 python:
 	python setup.py build
@@ -164,8 +165,11 @@ deb: debian
 modulepages:
 	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates
 
+modulejson:
+	mkdir -p docs/json
+	hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+
 modulejs:
-	mkdir -p docs/js/tmp
-	hacking/module_formatter.py -A $(VERSION) -t json -o docs/js/tmp --module-dir=library --template-dir=hacking/templates
-	hacking/module_docs_generator.py -d docs/js/tmp -o docs/js/modules.js --template-dir=hacking/templates
-	rm -rf docs/js/tmp
+	mkdir -p docs/js
+	make modulejson
+	hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
