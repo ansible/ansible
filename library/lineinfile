@@ -32,8 +32,9 @@ description:
     file only. For other cases, see the M(copy) or M(template) modules.
 version_added: "0.7"
 options:
-  name:
+  dest:
     required: true
+    aliases: [ name, destfile ]
     description:
       - The file to modify
   regexp:
@@ -71,12 +72,12 @@ options:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
 examples:
-   - code: lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
-   - code: lineinfile name=/etc/sudoers state=absent regexp="^%wheel"
+   - code: lineinfile dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+   - code: lineinfile dest=/etc/sudoers state=absent regexp="^%wheel"
 '''
 
-def present(module, name, regexp, line, insertafter, backup):
-    f = open(name, 'rb')
+def present(module, dest, regexp, line, insertafter, backup):
+    f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
 
@@ -124,15 +125,15 @@ def present(module, name, regexp, line, insertafter, backup):
 
     if changed:
         if backup:
-            module.backup_local(name)
-        f = open(name, 'wb')
+            module.backup_local(dest)
+        f = open(dest, 'wb')
         f.writelines(lines)
         f.close()
 
     module.exit_json(changed=changed, msg=msg)
 
-def absent(module, name, regexp, backup):
-    f = open(name, 'rb')
+def absent(module, dest, regexp, backup):
+    f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
     cre = re.compile(regexp)
@@ -147,8 +148,8 @@ def absent(module, name, regexp, backup):
     changed = len(found) > 0
     if changed:
         if backup:
-            module.backup_local(name)
-        f = open(name, 'wb')
+            module.backup_local(dest)
+        f = open(dest, 'wb')
         f.writelines(lines)
         f.close()
     module.exit_json(changed=changed, found=len(found))
@@ -156,7 +157,7 @@ def absent(module, name, regexp, backup):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True, aliases=['dest', 'destfile']),
+            dest=dict(required=True, aliases=['name', 'destfile']),
             state=dict(default='present', choices=['absent', 'present']),
             regexp=dict(required=True),
             line=dict(aliases=['value']),
@@ -171,10 +172,10 @@ def main():
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
-        present(module, params['name'], params['regexp'], params['line'],
+        present(module, params['dest'], params['regexp'], params['line'],
                 params['insertafter'], backup)
     else:
-        absent(module, params['name'], params['regexp'], backup)
+        absent(module, params['dest'], params['regexp'], backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
