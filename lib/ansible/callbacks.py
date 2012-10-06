@@ -32,6 +32,8 @@ if os.path.exists("/usr/bin/cowsay"):
     cowsay = "/usr/bin/cowsay"
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
+if os.getenv("ANSIBLE_NOCOWS") is not None:
+    cowsay = None
 
 def call_callback_module(method_name, *args, **kwargs):
    
