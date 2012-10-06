@@ -52,32 +52,32 @@ options:
     required: false
 examples:
     - code: |
-        local_action: hpilo_facts host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short
-        only_if: "'$cmdb_hwmodel'.startswith('HP ')
+            local_action: hpilo_facts host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short
+            only_if: "'$cmdb_hwmodel'.startswith('HP ')
       description: Task to gather facts from a HP iLO interface only if the system is an HP server
-    - code:
-      - hw_bios_date: "05/05/2011"
-        hw_bios_version: "P68"
-        hw_eth0:
-        - macaddress: "00:11:22:33:44:55
-          macaddress_dash: "00-11-22-33-44-55"
-        hw_eth1:
-        - macaddress: "00:11:22:33:44:57"
-          macaddress_dash: "00-11-22-33-44-57"
-        hw_eth2:
-        - macaddress: "00:11:22:33:44:5A"
-          macaddress_dash: "00-11-22-33-44-5A
-        hw_eth3:
-        - macaddress: "00:11:22:33:44:5C"
-          macaddress_dash: "00-11-22-33-44-5C"
-        hw_eth_ilo:
-        - macaddress: "00:11:22:33:44:BA"
-          macaddress_dash: "00-11-22-33-44-BA"
-        hw_product_name: "ProLiant DL360 G7"
-        hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
-        hw_system_serial: "ABC12345D6      "
-        hw_uuid: "123456ABC78901D2"
-      description: Typical output of HP iLO_facts for a physical system
+    - description: Typical output of HP iLO_facts for a physical system
+      code: |
+            - hw_bios_date: "05/05/2011"
+              hw_bios_version: "P68"
+              hw_eth0:
+              - macaddress: "00:11:22:33:44:55"
+                macaddress_dash: "00-11-22-33-44-55"
+              hw_eth1:
+              - macaddress: "00:11:22:33:44:57"
+                macaddress_dash: "00-11-22-33-44-57"
+              hw_eth2:
+              - macaddress: "00:11:22:33:44:5A"
+                macaddress_dash: "00-11-22-33-44-5A"
+              hw_eth3:
+              - macaddress: "00:11:22:33:44:5C"
+                macaddress_dash: "00-11-22-33-44-5C"
+              hw_eth_ilo:
+              - macaddress: "00:11:22:33:44:BA"
+                macaddress_dash: "00-11-22-33-44-BA"
+              hw_product_name: "ProLiant DL360 G7"
+              hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
+              hw_system_serial: "ABC12345D6"
+              hw_uuid: "123456ABC78901D2"
 notes:
   - This module ought to be run from a system that can access the HP iLO
     interface directly, either by using C(local_action) or
