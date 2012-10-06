@@ -36,6 +36,9 @@ else:
         # curses returns an error (e.g. could not find terminal)
         ANSIBLE_COLOR=False
 
+if os.getenv("ANSIBLE_FORCE_COLOR") is not None:
+        ANSIBLE_COLOR=True
+
 # --- begin "pretty"
 #
 # pretty - A miniature library that provides a Python print and stdout
