@@ -1,0 +1,222 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2012, Dane Summers <dsummers@pinedesk.biz>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Cron Plugin: The goal of this plugin is to provide an indempotent method for
+# setting up cron jobs on a host. The script will play well with other manually
+# entered crons. Each cron job entered will be preceded with a comment
+# describing the job so that it can be found later, which is required to be
+# present in order for this plugin to find/modify the job.
+
+import re
+import tempfile
+
+def get_jobs_file(user,tmpfile):
+    cmd = "crontab -l %s > %s" % (user,tmpfile)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+def install_jobs(user,tmpfile):
+    cmd = "crontab %s %s" % (user,tmpfile)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+def get_jobs(tmpfile):
+    lines = open(tmpfile).read().splitlines()
+    comment = None
+    jobs = []
+    for l in lines:
+        if comment is not None:
+            jobs.append([comment,l])
+            comment = None
+        elif re.match( r'#Ansible: ',l):
+            comment = re.sub( r'#Ansible: ', '', l)
+    return jobs
+
+def find_job(name,tmpfile):
+    jobs = get_jobs(tmpfile)
+    for j in jobs:
+        if j[0] == name:
+            return j
+    return []
+
+def add_job(name,job,tmpfile):
+    cmd = "echo \"#Ansible: %s\n%s\" >> %s" % (name,job,tmpfile)
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
+
+def update_job(name,job,tmpfile):
+    return _update_job(name,job,tmpfile,do_add_job)
+
+def do_add_job (lines, comment, job):
+    lines.append(comment)
+    lines.append(job)
+
+def remove_job(name,tmpfile):
+    return _update_job(name,"",tmpfile,do_remove_job)
+
+def do_remove_job(lines,comment,job):
+    return None
+
+def _update_job(name,job,tmpfile,addlinesfunction):
+    ansiblename="#Ansible: %s" % (name)
+    f = open(tmpfile)
+    lines = f.read().splitlines()
+    newlines = []
+    comment = None
+    for l in lines:
+        if comment is not None:
+            addlinesfunction(newlines,comment,job)
+            comment = None
+        elif l == ansiblename:
+            comment = l
+        else:
+            newlines.append(l)
+    f.close()
+    f = open(tmpfile,'w')
+    for l in newlines:
+        f.write(l)
+        f.write('\n')
+    f.close()
+    return (0,"","") # TODO add some more error testing 
+
+def main():
+    # Options:
+    # name    = name of cron job                        ( added as comment)
+    # user    = defaults to the user of your connection
+    # job     = cron time and command
+    # minute  = minute when the job would run           ( 0-59, *, */2, etc)
+    # hour    = hour when the job would run             ( 0-23, *, */2, etc)
+    # day     = day of the month                        ( 1-31, *, */2, etc)
+    # month   = month of the year                       ( 1-12, *, */2, etc)
+    # weekday = day of the week                         ( 0-7 Sunday thru Saturday, or 'mon', 'tue', etc)
+    # state   = absent|present                          ( defaults to present)
+    # backup  = make a backup of the cron before changing it.
+    #
+    # The minute/hour/day/month/weekday default to '*'.
+    #
+    # The following example playbooks:
+    # - action: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+    # - name: do the job
+    #   action: name="do the job" cron hour="5,2" job="/some/dir/job.sh"
+    # - name: no job
+    #   action: name="an old job" cron job="/some/dir/job.sh" state=absent
+    #
+    # Would produce:
+    # # Ansible: check dirs
+    # * * 5,2 * * ls -alh > /dev/null
+    # # Ansible: do the job
+    # * * 5,2 * * /some/dir/job.sh
+
+    # Function:
+    # 1. dump the existing cron:
+    #    crontab -l -u <user> > /tmp/tmpfile
+    # 2. search for comment "^# Ansible: <name>" followed by a cron.
+    # 3. if absent: remove if present (and say modified), otherwise return with no mod.
+    # 4. if present: if the same return no mod, if not present add (and say mod), if different add (and say mod)
+    # 5. Install new cron (if mod):
+    #    crontab -u <user> /tmp/tmpfile
+    # 6. return mod
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True),
+            user=dict(required=False),
+            job=dict(required=False),
+            state=dict(default='present', choices=['present', 'absent']),
+            backup=dict(default=False, choices=BOOLEANS),
+            minute=dict(default='*'),
+            hour=dict(default='*'),
+            day=dict(default='*'),
+            month=dict(default='*'),
+            weekday=dict(default='*')
+        )
+    )
+
+    backup     = module.boolean(module.params.get('backup', False))
+    name       = module.params['name']
+    user       = module.params['user']
+    job        = module.params['job']
+    minute     = module.params['minute']
+    hour       = module.params['hour']
+    day        = module.params['day']
+    month      = module.params['month']
+    weekday    = module.params['weekday']
+    do_install = module.params['state'] == 'present'
+    changed    = False
+    job = "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+
+    if not user:
+        user = ""
+    else:
+        user = "-u %s" % (user)
+
+    rc, out, err, status = (0, None, None, None)
+
+    if job is None and do_install:
+        module.fail_json(msg="You must specify 'job' to install a new cron job")
+    tmpfile = tempfile.NamedTemporaryFile()
+    (rc, out, err) = get_jobs_file(user,tmpfile.name)
+    if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
+        module.fail_json(msg=err)
+    backupfile = tempfile.NamedTemporaryFile(prefix='crontab',delete=False)
+    (rc, out, err) = get_jobs_file(user,backupfile.name)
+    if rc != 0 and rc != 1:
+        module.fail_json(msg=err)
+    old_job = find_job(name,backupfile.name)
+    if do_install:
+        if len(old_job) == 0:
+            (rc, out, err) = add_job(name,job,tmpfile.name)
+            changed = True
+        if len(old_job) > 0 and old_job[1] != job:
+            (rc, out, err) = update_job(name,job,tmpfile.name)
+            changed = True
+    else:
+        if len(old_job) > 0:
+            (rc, out, err) = remove_job(name,tmpfile.name)
+            changed = True
+    if (rc != 0):
+        module.fail_json(msg=err)
+    if changed:
+        if backup:
+            module.backup_local(backupfile.name)
+        (rc, out, err) = install_jobs(user,tmpfile.name)
+        if (rc != 0):
+            module.fail_json(msg=err)
+
+    jobnames = []
+    for j in get_jobs(tmpfile.name):
+        jobnames.append(j[0])
+    tmpfile.close()
+    backupfile.close()
+    if not backup:
+        module.exit_json(changed=changed,jobs=jobnames)
+    else:
+        module.exit_json(changed=changed,jobs=jobnames,backup=backupfile.name)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
