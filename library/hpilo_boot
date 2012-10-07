@@ -1,0 +1,175 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Dag Wieers
+module: hpilo_boot
+short_description: Boot system using specific media through HP iLO interface
+description:
+  - This module boots a system through its HP iLO interface. The boot media
+    can be one of: cdrom, floppy, hdd, network or usb.
+  - This module requires the hpilo python module.
+version_added: "0.8"
+options:
+  host:
+    description:
+      - The HP iLO hostname/address that is linked to the physical system.
+    required: true
+  login:
+    description:
+      - The login name to authenticate to the HP iLO interface.
+    required: false
+    default: Administrator
+  password:
+    description:
+      - The password to authenticate to the HP iLO interface.
+    required: false
+    default: admin
+  match:
+    description:
+      - An optional string to match against the iLO server name.
+      - This is a safety measure to prevent accidentally using the wrong
+        HP iLO interface with dire consequences.
+    required: false
+  media:
+    description:
+      - The boot media to boot the system from
+    required: false
+    default: network
+    choices: [ "cdrom", "floppy", "hdd", "network", "normal", "usb" ]
+  image:
+    description:
+      - The URL of a cdrom, floppy or usb boot media image.
+        C(protocol://username:password@hostname:port/filename)
+      - protocol is either C(http) or C(https)
+      - username:password is optional
+•     - port is optional
+    required: false
+  state:
+    description:
+      - The state of the boot media.
+      - no_boot: Do not boot from the device
+      - boot_once: Boot from the device once and then notthereafter
+      - boot_always: Boot from the device each time the serveris rebooted
+      - connect: Connect the virtual media device and set to boot_always
+      - disconnect: Disconnects the virtual media device and set to no_boot
+    required: true
+    default: boot_once
+    choices: [ "boot_always", "boot_once", "connect", "disconnect", "no_boot" ]
+  force:
+    description:
+      - Whether to force a reboot (even when the system is already booted)
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+examples:
+    - code: |
+        local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short media=cdrom image=$iso_url
+        only_if: "'$cmdb_hwmodel'.startswith('HP ')
+      description: Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server
+notes:
+  - To use a USB key image you need to specify floppy as boot media.
+  - This module ought to be run from a system that can access the HP iLO
+    interface directly, either by using C(local_action) or
+    C(using delegate)_to.
+'''
+
+import sys
+import warnings
+try:
+    import hpilo
+except ImportError:
+    print "failed=True msg='hpilo python module unavailable'"
+    sys.exit(1)
+
+# Surpress warnings from hpilo
+warnings.simplefilter('ignore')
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            host = dict(required=True),
+            login = dict(default='Administrator'),
+            password = dict(default='admin'),
+            match = dict(default=None),
+            media = dict(choices=['cdrom', 'floppy', 'hdd', 'network', 'normal', 'usb']),
+            image = dict(default=None),
+            state = dict(required=True, default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot']),
+            force = dict(default=True, choices=BOOLEANS),
+        )
+    )
+
+    host = module.params['host']
+    login = module.params['login']
+    password = module.params['password']
+    force = module.params['force']
+
+    ilo = hpilo.Ilo(host, login=login, password=password)
+
+    # If match=string is provided, only reboot server if iLO name matches 'string'
+    if module.params['match'] != None:
+        try:
+            server_name = ilo.get_server_name()
+        except Exception, e:
+            module.fail_json(rc=1, msg='Failed to connect to %s: %s' % (host, e.message))
+
+        if not server_name.lower().startswith(module.params['match'].lower()):
+            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, module.params['match']))
+
+    if module.params['media']:
+
+### FIXME: In the below case iLO fails for a short period of time due to the server rebooting
+#  File "/usr/lib/python2.6/site-packages/hpilo.py", line 381, in _parse_message
+#    raise IloError("Error communicating with iLO: %s" % child.get('MESSAGE'))
+#hpilo.IloError: Error communicating with iLO: Problem manipulating EV
+
+        ilo.set_one_time_boot(module.params['media'])
+
+        # TODO: Verify if image URL exists/works
+        if module.params['image']:
+            ilo.insert_virtual_media(module.params['media'], module.params['image'])
+
+        if module.params['media'] == 'cdrom':
+            ilo.set_vm_status('cdrom', module.params['state'], True)
+            status = ilo.get_vm_status()
+        elif module.params['media'] == 'floppy':
+            ilo.set_vf_status(module.params['state'], True)
+            status = ilo.get_vf_status()
+
+    # Only perform a boot when state is boot_once or boot_always, or in case we want to force a reboot
+    if module.params['state'] in ('boot_once', 'boot_always') or force:
+
+        power_status = ilo.get_host_power_status()
+
+        if not force and power_status == 'ON':
+            module.fail_json(rc=1, msg='The server \'%s\' is already powered on !' % server_name)
+
+        if power_status == 'ON':
+            ilo.warm_boot_server()
+        else:
+            ilo.cold_boot_server()
+
+    module.exit_json(changed=True, **status)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
