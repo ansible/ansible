@@ -88,10 +88,10 @@ def main():
         )
     )
 
-    host = module.params['host']
-    login = module.params['login']
-    password = module.params['password']
-    guest = module.params['guest']
+    host = module.params.get('host')
+    login = module.params.get('login')
+    password = module.params.get('password')
+    guest = module.params.get('guest')
 
     server = pysphere.VIServer()
     try:

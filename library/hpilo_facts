@@ -106,21 +106,22 @@ def main():
         )
     )
 
-    host = module.params['host']
-    login = module.params['login']
-    password = module.params['password']
+    host = module.params('host')
+    login = module.params('login')
+    password = module.params('password')
+    match = module.params.get('match')
 
     ilo = hpilo.Ilo(host, login=login, password=password)
 
     # If match=string is provided, only reboot server if iLO name matches 'string'
-    if module.params['match'] != None:
+    if match != None:
         try:
             server_name = ilo.get_server_name()
         except Exception, e:
             module.fail_json(rc=1, msg='Failed to connect to %s: %s' % (host, e.message))
 
-        if not server_name.lower().startswith(module.params['match'].lower()):
-            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, module.params['match']))
+        if not server_name.lower().startswith(match.lower()):
+            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, match))
 
     # TODO: Count number of CPUs, DIMMs and total memory
     data = ilo.get_host_data()
