@@ -31,6 +31,18 @@ description:
        mode (using the -v option).
 version_added: "0.8"
 options:
+  eval:
+    description:
+      - An expression to evaluate. If "fail" is not set, the evaluation will be
+        used for deciding whether to fail or succeed. The result of the
+        evaluation is inside "msg".
+  fail:
+    description:
+      - A boolean that indicates whether the debug module should fail or not.
+        If unset, it defaults to the result of the evaluation if one is given,
+        otherwise it defaults to "no".
+    required: false
+    default: None
   msg:
     description:
       - The customized message that is printed. If ommited, prints a generic
@@ -42,11 +54,6 @@ options:
       - The return code of the module. If fail=yes, this will default to 1.
     required: false
     default: 0
-  fail:
-    description:
-      - A boolean that indicates whether the debug module should fail or not.
-    required: false
-    default: "no"
 examples:
     - code:
         - local_action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"
@@ -62,8 +69,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            fail = dict(default='no', choices=BOOLEANS),
+            fail = dict(default=None, choices=BOOLEANS),
             msg = dict(default='Hello world!'),
+            eval = dict(default=None),
             rc = dict(default=0),
         )
     )
@@ -71,9 +79,25 @@ def main():
     if module.params['fail'] in BOOLEANS_TRUE and module.params['rc'] == 0:
         module.params['rc'] = 1
 
-    if module.params['fail'] in BOOLEANS_TRUE:
+    if module.params['eval'] != None:
+        ret = eval(module.params['eval'])
+        # Succeed if fail=no
+        if module.params['fail'] in BOOLEANS_FALSE:
+            module.exit_json(msg=module.params['eval'], eval=ret)
+        # Fail if fail=yes
+        elif module.params['fail'] in BOOLEANS_TRUE:
+            module.fail_json(rc=1, msg=module.params['eval'], eval=ret)
+        # Succeed depending on evaluation when fail is unset
+        elif ret:
+            module.exit_json(msg=module.params['eval'], eval=ret)
+        # Fail depending on evaluation when fail is unset
+        elif module.params['rc'] == 0:
+            module.fail_json(rc=1, msg=module.params['eval'], eval=ret)
+        else:
+            module.fail_json(rc=module.params['rc'], msg=module.params['eval'], eval=ret)
+    elif module.params['fail'] in BOOLEANS_TRUE: # Fail if fail=yes
         module.fail_json(rc=module.params['rc'], msg=module.params['msg'])
-    else:
+    else: # Suceed if fail=no or unset
         module.exit_json(msg=module.params['msg'])
 
 # this is magic, see lib/ansible/module_common.py
