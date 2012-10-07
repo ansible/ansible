@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 author: Dag Wieers
 module: hpilo_facts
-short_description: Gather facts for a systel through HP iLO interface
+short_description: Gather facts through an HP iLO interface
 description:
   - This module gathers facts for a specific system using its HP iLO interface.
     These facts include hardware and network related information useful
@@ -98,7 +98,7 @@ warnings.simplefilter('ignore')
 def main():
 
     module = AnsibleModule(
-        argument_spec=dict(
+        argument_spec = dict(
             host = dict(required=True),
             login = dict(default='Administrator'),
             password = dict(default='admin'),
