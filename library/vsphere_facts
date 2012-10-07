@@ -80,11 +80,11 @@ except ImportError:
 def main():
 
     module = AnsibleModule(
-        argument_spec=dict(
+        argument_spec = dict(
             host = dict(required=True),
             login = dict(required=True),
             password = dict(required=True),
-            guest = dict(required=True),
+            guest = dict(required=True, aliases=['name']),
         )
     )
 
