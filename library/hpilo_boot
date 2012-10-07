@@ -61,7 +61,7 @@ options:
         C(protocol://username:password@hostname:port/filename)
       - protocol is either C(http) or C(https)
       - username:password is optional
-•     - port is optional
+      - port is optional
     required: false
   state:
     description:
@@ -111,52 +111,59 @@ def main():
             login = dict(default='Administrator'),
             password = dict(default='admin'),
             match = dict(default=None),
-            media = dict(choices=['cdrom', 'floppy', 'hdd', 'network', 'normal', 'usb']),
+            media = dict(default=None, choices=['cdrom', 'floppy', 'hdd', 'network', 'normal', 'usb']),
             image = dict(default=None),
-            state = dict(required=True, default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot']),
-            force = dict(default=True, choices=BOOLEANS),
+            state = dict(default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot']),
+            force = dict(default='no', choices=BOOLEANS),
         )
     )
 
-    host = module.params['host']
-    login = module.params['login']
-    password = module.params['password']
-    force = module.params['force']
+    host = module.params.get('host')
+    login = module.params.get('login')
+    password = module.params.get('password')
+    match = module.params.get('match')
+    media = module.params.get('media')
+    image = module.params.get('image')
+    state = module.params.get('state')
+    force = module.boolean(module.params.get('force'))
 
     ilo = hpilo.Ilo(host, login=login, password=password)
 
     # If match=string is provided, only reboot server if iLO name matches 'string'
-    if module.params['match'] != None:
+    if match != None:
         try:
             server_name = ilo.get_server_name()
         except Exception, e:
             module.fail_json(rc=1, msg='Failed to connect to %s: %s' % (host, e.message))
 
-        if not server_name.lower().startswith(module.params['match'].lower()):
-            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, module.params['match']))
+        if not server_name.lower().startswith(match.lower()):
+            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, match))
 
-    if module.params['media']:
+    if media:
 
 ### FIXME: In the below case iLO fails for a short period of time due to the server rebooting
 #  File "/usr/lib/python2.6/site-packages/hpilo.py", line 381, in _parse_message
 #    raise IloError("Error communicating with iLO: %s" % child.get('MESSAGE'))
 #hpilo.IloError: Error communicating with iLO: Problem manipulating EV
 
-        ilo.set_one_time_boot(module.params['media'])
+        ilo.set_one_time_boot(media)
 
         # TODO: Verify if image URL exists/works
-        if module.params['image']:
-            ilo.insert_virtual_media(module.params['media'], module.params['image'])
+        if image:
+            ilo.insert_virtual_media(media, image)
 
-        if module.params['media'] == 'cdrom':
-            ilo.set_vm_status('cdrom', module.params['state'], True)
+        if media == 'cdrom':
+            ilo.set_vm_status('cdrom', state, True)
             status = ilo.get_vm_status()
-        elif module.params['media'] == 'floppy':
-            ilo.set_vf_status(module.params['state'], True)
+        elif media == 'floppy':
+            ilo.set_vf_status(state, True)
+            status = ilo.get_vf_status()
+        elif media == 'usb':
+            ilo.set_vf_status(state, True)
             status = ilo.get_vf_status()
 
     # Only perform a boot when state is boot_once or boot_always, or in case we want to force a reboot
-    if module.params['state'] in ('boot_once', 'boot_always') or force:
+    if state in ('boot_once', 'boot_always') or force:
 
         power_status = ilo.get_host_power_status()
 
