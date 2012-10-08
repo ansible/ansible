@@ -21,6 +21,8 @@ import ansible.constants as C
 from ansible import utils
 from ansible import errors
 import os
+import shlex
+import yaml
 import collections
 from play import Play
 
@@ -117,12 +119,12 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path):
+    def _load_playbook_from_file(self, path, extvars={}):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
+        playbook_data = utils.parse_yaml_from_file(path)
         accumulated_plays = []
         play_basedirs = []
 
@@ -134,10 +136,18 @@ class PlayBook(object):
                 raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
             if 'include' in play:
                 if len(play.keys()) == 1:
-                    included_path = utils.path_dwim(self.basedir, play['include'])
-                    (plays, basedirs) = self._load_playbook_from_file(included_path)
-                    accumulated_plays.extend(plays)
-                    play_basedirs.extend(basedirs)
+                    tokens = shlex.split(play['include'])
+                    mv = extvars.copy()
+                    for t in tokens[1:]:
+                        (k,v) = t.split("=", 1)
+                        mv[k] = utils.varReplaceWithItems(self.basedir, v, mv)
+                    play = self.__class__(tokens[0],
+                            extra_vars=mv,
+                            callbacks=self.callbacks,
+                            runner_callbacks=self.runner_callbacks,
+                            stats=self.stats)
+                    accumulated_plays.append(play)
+                    play_basedirs.append(play.basedir)
 
                 else:
                     raise errors.AnsibleError("parse error: top level includes cannot be used with other directives: %s" % play)
@@ -158,15 +168,18 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
-            play = Play(self, play_ds, play_basedir)
-            matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
-            matched_tags_all = matched_tags_all | matched_tags
-            unmatched_tags_all = unmatched_tags_all | unmatched_tags
+            if type(play_ds) == self.__class__:
+                play_ds.run()
+            else:
+                play = Play(self, play_ds, play_basedir)
+                matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
+                matched_tags_all = matched_tags_all | matched_tags
+                unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
-            # if we have matched_tags, the play must be run.
-            # if the play contains no tasks, assume we just want to gather facts
-            if (len(matched_tags) > 0 or len(play.tasks()) == 0):
-                plays.append(play)
+                # if we have matched_tags, the play must be run.
+                # if the play contains no tasks, assume we just want to gather facts
+                if (len(matched_tags) > 0 or len(play.tasks()) == 0):
+                    plays.append(play)
 
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
         # then we need to raise an error so that the user can correct the arguments.
