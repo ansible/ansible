@@ -124,7 +124,9 @@ def main():
 
     # TODO: Count number of CPUs, DIMMs and total memory
     data = ilo.get_host_data()
-    facts = {}
+    facts = {
+        'module_hw': True,
+    }
     for entry in data:
         if not entry.has_key('type'): continue
         if entry['type'] == 0: # BIOS Information
