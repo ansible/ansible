@@ -305,8 +305,8 @@ from turning into arbitrary code with ugly nested ifs, conditionals, and so on -
 in more streamlined & auditable configuration rules -- especially because there are a 
 minimum of decision points to track.
 
-Loop Shorthand
-``````````````
+Loops
+`````
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
@@ -327,8 +327,7 @@ The above would be the equivalent of::
     - name: add user testuser2
       action: user name=testuser2 state=present groups=wheel
 
-In a future release, the yum and apt modules will use with_items to execute fewer package
-manager transactions.
+The yum and apt modules use with_items to execute fewer package manager transactions.
 
 
 Selecting Files And Templates Based On Variables
