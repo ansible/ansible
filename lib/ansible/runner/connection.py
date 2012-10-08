@@ -35,12 +35,14 @@ class Connection(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port=None):
+    def connect(self, host, port):
         conn = None
         transport = self.runner.transport
         module = modules.get(transport, None)
         if module is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
         conn = module.Connection(self.runner, host, port)
-        return conn.connect()
+        self.active = conn.connect()
+        return self.active
+
 

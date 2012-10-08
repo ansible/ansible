@@ -31,9 +31,9 @@ except ImportError:
     pass
 
 class Connection(object):
-    ''' SSH based connections with Paramiko '''
+    ''' ZeroMQ accelerated connection '''
 
-    def __init__(self, runner, host, port=None):
+    def __init__(self, runner, host, port):
 
         self.runner = runner
 
@@ -45,9 +45,12 @@ class Connection(object):
         self.key = utils.key_for_hostname(host)
         self.context = None
         self.socket = None
-        # port passed in is the SSH port, which we ignore
-        self.port = constants.ZEROMQ_PORT
-  
+
+        if  port is None:
+            self.port = constants.ZEROMQ_PORT
+        else:
+            self.port = port
+
     def connect(self):
         ''' activates the connection object '''
 
