@@ -29,12 +29,12 @@ description:
 options:
     name:
         required: true
-        description: 
+        description:
         - Name of the service.
     state:
         required: false
         choices: [ running, started, stopped, restarted, reloaded ]
-        description: 
+        description:
         - I(started), I(stopped), I(reloaded), I(restarted).
           I(Started)/I(stopped) are idempotent actions that will not run
           commands unless necessary.  I(restarted) will always bounce the
@@ -42,16 +42,16 @@ options:
     pattern:
         required: false
         version_added: "0.7"
-        description: 
+        description:
         - If the service does not respond to the status command, name a
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.  If the string is found,
-          the servie will be assumed to be running.
+          the service will be assumed to be running.
     enabled:
         required: false
         choices: [ "yes", "no" ]
-        description: 
-        - Whether the service should start on boot.  
+        description:
+        - Whether the service should start on boot.
 examples:
     - code: service name=httpd state=started
       description: Example action from Ansible Playbooks
