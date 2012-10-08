@@ -14,3 +14,5 @@ rpm-build
 .idea
 # Mac OS X stuff
 .DS_Store
+# manpage build results (not all checked in)
+docs/man/man3/*
