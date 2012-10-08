@@ -85,7 +85,7 @@ command line tools ``ansible`` and ``ansible-playbook``.
 Plugins Repository
 ------------------
 
-The remainder of features in the API docs have components available in the `ansible-plugins <http://github.com/ansible/ansible-plugins>`_ repository.  Please consult this repository for more information.  Send us a github pull request if you develop any interesting features.
+The remainder of features in the API docs have components available in `ansible-plugins <https://github.com/ansible/ansible/blob/devel/plugins>`_.  Send us a github pull request if you develop any interesting features.
 
 External Inventory Scripts
 --------------------------
@@ -93,7 +93,7 @@ External Inventory Scripts
 Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_, 
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.  The ansible-plugins repo contains some of these already -- including options for EC2/Eucalyptus and OpenStack, which will be detailed below.
+of these options via an external inventory system.  The plugins directory contains some of these already -- including options for EC2/Eucalyptus and OpenStack, which will be detailed below.
 
 It's possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
 
@@ -126,7 +126,7 @@ layer that allows it to represent data for multiple configuration management sys
 been referred to as a 'lightweight CMDB' by some admins.   This particular script will communicate with Cobbler
 using Cobbler's XMLRPC API.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://github.com/ansible/ansible-plugins/blob/master/inventory/cobbler.py>`_ to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py>`_ to /etc/ansible/hosts and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible.
 
 Test the file by running `./etc/ansible/hosts` directly.   You should see some JSON data output, but it may not have
@@ -177,7 +177,7 @@ So that's the Cobbler integration support -- using the cobbler script as an exam
 Example: AWS EC2 External Inventory Script
 ``````````````````````````````````````````
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the `EC2 external inventory  <https://github.com/ansible/ansible-plugins/blob/master/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script.
 
@@ -282,13 +282,13 @@ To see the complete list of variables available for an instance, run the script 
 Example: OpenStack
 ``````````````````
 
-Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the ansible-plugins repository.  See the inline comments in the module source.
+Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the plugins directory.  See the inline comments in the module source.
 
 Callback Plugins
 ----------------
 
 Ansible can be configured via code to respond to external events.  This can include enhancing logging, signalling an external software
-system, or even (yes, really) making sound effects.  Some examples are contained in the ansible-plugins repository.
+system, or even (yes, really) making sound effects.  Some examples are contained in the plugins directory.
 
 Connection Type Plugins
 -----------------------
