@@ -161,7 +161,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#passing-variables-on-the-command-line">Passing Variables On The Command Line</a></li>
 <li><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports">Conditional Imports</a></li>
-<li><a class="reference internal" href="#loop-shorthand">Loop Shorthand</a></li>
+<li><a class="reference internal" href="#loops">Loops</a></li>
 <li><a class="reference internal" href="#selecting-files-and-templates-based-on-variables">Selecting Files And Templates Based On Variables</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling">Asynchronous Actions and Polling</a></li>
 <li><a class="reference internal" href="#local-playbooks">Local Playbooks</a></li>
@@ -216,7 +216,7 @@ be 90% or more of what they use in Ansible.</p>
 <li><a class="reference internal" href="#passing-variables-on-the-command-line" id="id9">Passing Variables On The Command Line</a></li>
 <li><a class="reference internal" href="#conditional-execution" id="id10">Conditional Execution</a></li>
 <li><a class="reference internal" href="#conditional-imports" id="id11">Conditional Imports</a></li>
-<li><a class="reference internal" href="#loop-shorthand" id="id12">Loop Shorthand</a></li>
+<li><a class="reference internal" href="#loops" id="id12">Loops</a></li>
 <li><a class="reference internal" href="#selecting-files-and-templates-based-on-variables" id="id13">Selecting Files And Templates Based On Variables</a></li>
 <li><a class="reference internal" href="#asynchronous-actions-and-polling" id="id14">Asynchronous Actions and Polling</a></li>
 <li><a class="reference internal" href="#local-playbooks" id="id15">Local Playbooks</a></li>
@@ -490,8 +490,8 @@ from turning into arbitrary code with ugly nested ifs, conditionals, and so on -
 in more streamlined &amp; auditable configuration rules &#8211; especially because there are a
 minimum of decision points to track.</p>
 </div>
-<div class="section" id="loop-shorthand">
-<h2><a class="toc-backref" href="#contents">Loop Shorthand</a><a class="headerlink" href="#loop-shorthand" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="loops">
+<h2><a class="toc-backref" href="#contents">Loops</a><a class="headerlink" href="#loops" title="Permalink to this headline">¶</a></h2>
 <p>To save some typing, repeated tasks can be written in short-hand like so:</p>
 <div class="highlight-python"><pre>- name: add user $item
   action: user name=$item state=present groups=wheel
@@ -508,8 +508,7 @@ minimum of decision points to track.</p>
 - name: add user testuser2
   action: user name=testuser2 state=present groups=wheel</pre>
 </div>
-<p>In a future release, the yum and apt modules will use with_items to execute fewer package
-manager transactions.</p>
+<p>The yum and apt modules use with_items to execute fewer package manager transactions.</p>
 </div>
 <div class="section" id="selecting-files-and-templates-based-on-variables">
 <h2><a class="toc-backref" href="#contents">Selecting Files And Templates Based On Variables</a><a class="headerlink" href="#selecting-files-and-templates-based-on-variables" title="Permalink to this headline">¶</a></h2>
@@ -733,7 +732,7 @@ place to set such a default is in a group variable.</p>
 <p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Oct 04, 2012.<br/>
+      Last updated on Oct 08, 2012.<br/>
     </p>
 </div>
 </footer>
