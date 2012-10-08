@@ -68,13 +68,17 @@ def main():
         )
     )
 
-    if module.params['fail'] in BOOLEANS_TRUE and module.params['rc'] == 0:
-        module.params['rc'] = 1
+    fail = module.boolean(module.params.get('fail'))
+    msg = module.params.get('msg')
+    rc = module.params.get('rc')
 
-    if module.params['fail'] in BOOLEANS_TRUE:
-        module.fail_json(rc=module.params['rc'], msg=module.params['msg'])
+    if fail and rc == 0:
+        rc = 1
+
+    if fail:
+        module.fail_json(rc=rc, msg=msg)
     else:
-        module.exit_json(msg=module.params['msg'])
+        module.exit_json(msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
