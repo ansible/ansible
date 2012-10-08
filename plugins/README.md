@@ -1,7 +1,7 @@
 ansible-plugins
 ===============
 
-Extend ansible with optional callback and connection plugins.
+You can extend ansible with optional callback and connection plugins.
 
 callbacks
 =========
