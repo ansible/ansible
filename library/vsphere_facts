@@ -107,6 +107,7 @@ def main():
 
     data = vm.get_properties()
     facts = {
+        'module_hw': True,
         'hw_name': vm.properties.name,
         'hw_guest_full_name':  vm.properties.config.guestFullName,
         'hw_guest_id': vm.properties.config.guestId,
