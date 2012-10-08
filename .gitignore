@@ -14,3 +14,6 @@ rpm-build
 .idea
 # Mac OS X stuff
 .DS_Store
+# Sublime stuff
+*.sublime-project
+*.sublime-workspace
