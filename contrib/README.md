@@ -2,14 +2,14 @@ Ansible Resources
 =================
 
 User contributed playbooks, modules, and articles.  This is a small curated list, but growing.  Everyone is encouraged to add to this document, 
-submit a pull request at http://github.com/ansible/ansible-resources.
+just send in a pull request!
 
 Ansible Modules
 ===============
 
 Ansible modules are a way of adding new client-side logic to ansible.  They can be written in any language.
 
-* [Official "core" ansible modules](http://ansible.github.com/modules.html) - various
+* [Official "core" ansible modules](http://ansible.cc/docs/modules.html) - various
 * [mercurial](https://github.com/bradobro/ansible-module-mercurial) - bradobro
 * [zypper (bash module example)](https://github.com/jpmens/ansible-zypp) - jp_mens
 * [homebrew](https://gist.github.com/3170079) - swehack
@@ -21,7 +21,7 @@ See the official documentation for more details.
 Selected Playbooks
 ==================
 
-[Playbooks](http://ansible.github.com/playbooks.html) are ansible's configuration management language.  It should
+[Playbooks](http://ansible.cc/docs/playbooks.html) are Ansible's configuration management language.  It should
 be easy to write your own from scratch for most applications, but it's always helpful to look at what others have
 done for reference.
 
@@ -38,7 +38,7 @@ Callbacks and Plugins
 The Ansible project has a whole repo devoted to extending ansible with new connection types, logging/event callbacks, and
 inventory data storage.  Talk to Cobbler and EC2, tweak the way things are logged, or even add sound effects.
 
-* [Ansible-Plugins](https://github.com/ansible/ansible-plugins)
+* [Ansible-Plugins](https://github.com/ansible/ansible/tree/devel/plugins)
 
 Scripts And Misc
 ================
@@ -63,7 +63,7 @@ Blogs & Articles
 * [Ansible Facts](http://jpmens.net/2012/07/15/ansible-it-s-a-fact/) - jp_mens
 * [Infrastructure as Data](http://www.capsunlock.net/2012/04/ansible-infrastructure-as-data-not-infrastructure-as-code.html) - cocoy
 * [Ansible Pull Mode](http://www.capsunlock.net/2012/05/using-ansible-pull-and-user-data-to-setup-ec2-or-openstack-servers.html) - cocoy
-* [Exploring Configuration Management With Ansible](http://palominodb.com/blog/2012/08/01/exploring-configuration-management-ansible) - Palamino DB                                                                                                                                 - 
+* [Exploring Configuration Management With Ansible](http://palominodb.com/blog/2012/08/01/exploring-configuration-management-ansible) - Palamino DB                              
 * [You Should Consider Using SSH Based Configuration Management](http://www.lshift.net/blog/2012/07/30/you-should-consider-using-ssh-based-configuration-management) - LShift Ltd
 * [Deploying Flask/uWSGI, Nginx, and Supervisorctl](http://mattupstate.github.com/python/devops/2012/08/07/flask-wsgi-application-deployment-with-ubuntu-ansible-nginx-supervisor-and-uwsgi.html) - mattupstate
 
@@ -71,9 +71,10 @@ Disclaimer
 ==========
 
 Modules and playbooks here may not be using the latest in Ansible features.   When in doubt to the features of
-a particular version of Ansbile, always consult [ansible.github.com](http://ansible.github.com) and in particular
-see [Best Practices](http://ansible.github.com/bestpractices.html) for some tips and tricks that may be useful.
+a particular version of Ansbile, always consult [ansible.cc](http://ansible.cc) and in particular
+see [Best Practices](http://ansible.cc/docs/bestpractices.html) for some tips and tricks that may be useful.
 
 Ansible is (C) 2012, [Michael DeHaan](http://twitter.com/laserllama) and others and is available under the GPLv3 license.  Content here is as specified
 by individual contributors.
+
 
