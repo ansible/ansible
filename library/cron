@@ -24,6 +24,89 @@
 # describing the job so that it can be found later, which is required to be
 # present in order for this plugin to find/modify the job.
 
+DOCUMENTATION = '''
+---
+module: cron
+short_description: Manage crontab entries.
+description:
+     - Use this module to manage crontab entries. This module allows you to create named
+       crontab entries, update, or delete them.
+     - The module include one line with the description of the crontab entry "#Ansible: <name>" 
+       corresponding to the 'name' passed to the module, which is used by future ansible/module calls
+       to find/check the state.
+version_added: "0.9"
+options:
+  name:
+    description:
+      - Description of a crontab entry.
+    required: true
+    default:
+    aliases: []
+  user:
+    description:
+      - The specific user who's crontab should be modified.
+    required: false
+    default: root
+    aliases: []
+  job:
+    description:
+      - The command to execute.
+      - Required if state=present.
+    required: false
+    default: 
+    aliases: []
+  state:
+    description:
+      - Whether to ensure the job is present or absent.
+    required: false
+    default: present
+    aliases: []
+  backup:
+    description:
+      - If set, then create a backup of the crontab before it is modified.
+      - The location of the backup is returned in the 'backup' variable by this module.
+    required: false
+    default: false
+    aliases: []
+  minute:
+    description:
+      - Minute when the job should run ( 0-59, *, */2, etc )
+    required: false
+    default: *
+    aliases: []
+  hour:
+    description:
+      - Hour when the job should run ( 0-23, *, */2, etc )
+    required: false
+    default: *
+    aliases: []
+  day:
+    description:
+      - Day of the month the job should run ( 1-31, *, */2, etc )
+    required: false
+    default: *
+    aliases: []
+  month:
+    description:
+      - Month of the year the job should run ( 1-12, *, */2, etc )
+    required: false
+    default: *
+    aliases: []
+  weekday:
+    description:
+      - Day of the week that the job should run ( 0-7 for Sunday - Saturday, or mon, tue, * etc )
+    required: false
+    default: *
+    aliases: []
+examples:
+   - code: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+     description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
+   - code: name="an old job" cron job="/some/dir/job.sh" state=absent
+     description: Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab
+requirements: cron
+author: Dane Summers
+'''
+
 import re
 import tempfile
 
@@ -104,20 +187,6 @@ def _update_job(name,job,tmpfile,addlinesfunction):
     return (0,"","") # TODO add some more error testing 
 
 def main():
-    # Options:
-    # name    = name of cron job                        ( added as comment)
-    # user    = defaults to the user of your connection
-    # job     = cron time and command
-    # minute  = minute when the job would run           ( 0-59, *, */2, etc)
-    # hour    = hour when the job would run             ( 0-23, *, */2, etc)
-    # day     = day of the month                        ( 1-31, *, */2, etc)
-    # month   = month of the year                       ( 1-12, *, */2, etc)
-    # weekday = day of the week                         ( 0-7 Sunday thru Saturday, or 'mon', 'tue', etc)
-    # state   = absent|present                          ( defaults to present)
-    # backup  = make a backup of the cron before changing it.
-    #
-    # The minute/hour/day/month/weekday default to '*'.
-    #
     # The following example playbooks:
     # - action: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
     # - name: do the job
