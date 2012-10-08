@@ -1,4 +1,4 @@
-.TH ANSIBLE.FAIL 5 "2012-10-03" "0.8" "ANSIBLE MODULES"
+.TH ANSIBLE.FAIL 3 "2012-10-08" "0.8" "ANSIBLE MODULES"
 ." generated from library/fail
 .SH NAME
 fail \- Fail with custom message
@@ -12,7 +12,7 @@ This module fails the progress with a custom message. It can be useful for baili
 .SH OPTIONS
 
 .IP msg
-The customized message used for failing execution. If ommited, fail will simple bail out with a generic message. (default: Failed because only_if condition is true)
+The customized message used for failing execution. If ommited, fail will simple bail out with a generic message. (default: 'Failed because only_if condition is true')
 .IP rc
 The return code of the failure. This is currently not used by Ansible, but might be used in the future. (default: 1)."
 ."
@@ -23,7 +23,9 @@ The return code of the failure. This is currently not used by Ansible, but might
 .SH EXAMPLES
 .PP
 .nf
-[{'action': 'fail msg="The system may not be provisioned according to the CMDB status."', 'only_if': "'$cmdb_status' != 'to-be-staged'"}]
+action: fail msg="The system may not be provisioned according to the CMDB status." rc=100
+only_if: "'$cmdb_status' != 'to-be-staged'"
+
 .fi
 ." ------- AUTHOR
 .SH AUTHOR

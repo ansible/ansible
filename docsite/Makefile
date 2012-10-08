@@ -25,9 +25,6 @@ clean:
 
 .PHONEY: docs clean
 
-#modules: $(FORMATTER) ../ansible/hacking/templates/rst.j2
-#	$(FORMATTER) -t rst --module-dir=../ansible/library -o rst/modules/
-
 modules: $(FORMATTER) ../ansible/hacking/templates/rst.j2
 	$(FORMATTER) -t rst --template-dir=../ansible/hacking/templates --module-dir=../ansible/library -o rst/modules/ --includes-file=rst/modules/_list.rst
 
