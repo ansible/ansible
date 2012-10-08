@@ -314,7 +314,7 @@ Sharing Your Module
 ```````````````````
 
 If you think your module is generally useful to others, a good place to share it
-is in `Ansible Resources <https://github.com/ansible/ansible-resources>`_.  This is maintained
+is in `Ansible Resources <https://github.com/ansible/ansible/tree/devel/contrib>`_.  This is maintained
 as a simple repo with pointers to other github projects.
 
 Contrib modules here can be implemented in a variety of languages.  
@@ -335,7 +335,7 @@ the program.   Stop by the mailing list to inquire about requirements.
 
    :doc:`modules`
        Learn about available modules
-   `Ansible Resources <https://github.com/ansible/ansible-resources>`_
+   `Ansible Resources <https://github.com/ansible/ansible/tree/devel/contrib>`_
        User contributed playbooks, modules, and articles
    `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
