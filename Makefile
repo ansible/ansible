@@ -96,9 +96,10 @@ clean:
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
-	@echo "Cleaning up asciidoc to man transformations and results"
+	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete
 	find ./docs/man -type f -name "*.asciidoc" -delete
+	find ./docs/man/man3 -type f -name "*.3" -delete
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
