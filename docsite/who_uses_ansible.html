@@ -1,0 +1,267 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Who Uses Ansible &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <!-- <a class="brand" href="index.html">Ansible</a> -->
+        <ul class="nav">
+          
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples And Next Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Who Uses Ansible</a></li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+<h1>Ansible Documentation</h1>
+
+
+<div class="container">
+   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
+<br/>
+   
+  <div class="section" id="who-uses-ansible">
+<h1>Who Uses Ansible<a class="headerlink" href="#who-uses-ansible" title="Permalink to this headline">¶</a></h1>
+<p>Ansible is used by all sorts of organizations from hosted web applications, media companies, universities, consultancies, and ISVs &#8211; all over the world. Some of these users include:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="64%" />
+<col width="36%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Who They Are</th>
+<th class="head">What They Do</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference external" href="http://www.altalang.com">Alta Language Services</a></td>
+<td>Language testing, solutions, and translation services</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://basho.com">Basho</a></td>
+<td>Makers of NoSQL key-value store Riak</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://catn.com">CatN Hosting</a></td>
+<td>Scalable Cloud Hosting</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://cygate.se">Cygate AB</a></td>
+<td>IT solutions from Malmö, Sweden</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://dagit.net">Dag IT Solutions</a></td>
+<td>&#8220;Enterprise Linux and Beyond&#8221;</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://duke.edu">Duke University Economics</a></td>
+<td>Research and Education</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://fedoraproject.org">The Fedora Project</a></td>
+<td>Produces the popular Linux distribution</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://fourkitchens.com">Four Kitchens</a></td>
+<td>&#8220;The Drupal Experts&#8221;</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://lizenzfrei.at/">Lizenzfrei</a></td>
+<td>Open source consulting and development, Austria</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://www.schmoozecom.com/">Schmooze Com</a></td>
+<td>Creators of Industry-Leading PBX Platforms</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://www.grid.auth.gr/en/">Scientific Computing Center, Aristotle Univ. of Thessaloniki</a></td>
+<td>Grid/Cloud-Based Scientific Computing</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://skylin.es">Skyline.es</a></td>
+<td>Realtime Photo Search Engine</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://steelhouse.com">Steelhouse</a></td>
+<td>Behavioral Commerce</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="http://www.t-f-t.net/">Tomorrow Focus Technologies GmbH</a></td>
+<td>Running some of the biggest web sites in Europe</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="http://123i.com.br">123i.com.br</a></td>
+<td>Find real estate in Brazil</td>
+</tr>
+</tbody>
+</table>
+<p>and lots of other people (you should see our Google Analytics data).  Tweet at <a class="reference external" href="http://twitter.com/laserllama">Michael DeHaan</a> or <a class="reference external" href="mailto:michael&#46;dehaan&#37;&#52;&#48;gmail&#46;com">email him</a> to get your company or project listed here.  (It&#8217;s free!)</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Several hundred of our closest friends, great for Q&amp;A</dd>
+<dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
+<dd>#ansible IRC chat channel</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/graphs/contributors">List of Github Contributors</a></dt>
+<dd>all the awesome folks who have contributed improvements to Ansible</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/graphs/impact">Github Impact Graphs</a></dt>
+<dd>week-to-week source code activity, by contributor</dd>
+</dl>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+<div class="container">
+<p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Sep 23, 2012.<br/>
+    </p>
+</div>
+</footer>
+  </body>
+</html>
