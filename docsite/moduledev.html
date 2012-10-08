@@ -1,0 +1,515 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Module Development &mdash; Ansible Documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible Documentation" href="index.html" />
+    <link rel="prev" title="API &amp; Integrations" href="api.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible Documentation</a>
+        <ul class="nav">
+          
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples And Next Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Module Development</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Module Development</a><ul>
+<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
+<li><a class="reference internal" href="#testing-modules">Testing Modules</a></li>
+<li><a class="reference internal" href="#reading-input">Reading Input</a></li>
+<li><a class="reference internal" href="#module-provided-facts">Module Provided &#8216;Facts&#8217;</a></li>
+<li><a class="reference internal" href="#common-module-boilerplate">Common Module Boilerplate</a></li>
+<li><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a></li>
+<li><a class="reference internal" href="#conventions-recomendations">Conventions/Recomendations</a></li>
+<li><a class="reference internal" href="#shorthand-vs-json">Shorthand Vs JSON</a></li>
+<li><a class="reference internal" href="#sharing-your-module">Sharing Your Module</a></li>
+<li><a class="reference internal" href="#getting-your-module-into-core">Getting Your Module Into Core</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+<div class="container">
+   
+  <div class="section" id="module-development">
+<h1><a class="toc-backref" href="#contents">Module Development</a><a class="headerlink" href="#module-development" title="Permalink to this headline">¶</a></h1>
+<p>Ansible modules are reusable units of magic that can be used by the Ansible API,
+or by the <cite>ansible</cite> or <cite>ansible-playbook</cite> programs.</p>
+<p>Modules can be written in any language and are found in the path specified
+by <cite>ANSIBLE_LIBRARY_PATH</cite> or the <tt class="docutils literal"><span class="pre">--module-path</span></tt> command line option.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#module-development" id="id2">Module Development</a><ul>
+<li><a class="reference internal" href="#tutorial" id="id3">Tutorial</a></li>
+<li><a class="reference internal" href="#testing-modules" id="id4">Testing Modules</a></li>
+<li><a class="reference internal" href="#reading-input" id="id5">Reading Input</a></li>
+<li><a class="reference internal" href="#module-provided-facts" id="id6">Module Provided &#8216;Facts&#8217;</a></li>
+<li><a class="reference internal" href="#common-module-boilerplate" id="id7">Common Module Boilerplate</a></li>
+<li><a class="reference internal" href="#common-pitfalls" id="id8">Common Pitfalls</a></li>
+<li><a class="reference internal" href="#conventions-recomendations" id="id9">Conventions/Recomendations</a></li>
+<li><a class="reference internal" href="#shorthand-vs-json" id="id10">Shorthand Vs JSON</a></li>
+<li><a class="reference internal" href="#sharing-your-module" id="id11">Sharing Your Module</a></li>
+<li><a class="reference internal" href="#getting-your-module-into-core" id="id12">Getting Your Module Into Core</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="tutorial">
+<h2><a class="toc-backref" href="#contents">Tutorial</a><a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s build a module to get and set the system time.  For starters, let&#8217;s build
+a module that just outputs the current time.</p>
+<p>We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
+out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
+is fine.</p>
+<p>Now Python Ansible modules contain some extremely powerful shortcuts (that all the core modules use)
+but first we are going to build a module the very hard way.  The reason we do this is because modules
+written in any language OTHER than Python are going to have to do exactly this.  We&#8217;ll show the easy
+way later.</p>
+<p>So, here&#8217;s an example.  You would never really need to build a module to set the system time,
+the &#8216;command&#8217; module could already be used to do this.  Though we&#8217;re going to make one.</p>
+<p>Reading the modules that come with ansible (linked above) is a great way to learn how to write
+modules.   Keep in mind, though, that some modules in ansible&#8217;s source tree are internalisms,
+so look at <cite>service</cite> or <cite>yum</cite>, and don&#8217;t stare too close into things like <cite>async_wrapper</cite> or
+you&#8217;ll turn to stone.  Nobody ever executes async_wrapper directly.</p>
+<p>Ok, let&#8217;s get going with an example.  We&#8217;ll use Python.  For starters, save this as a file named <cite>time</cite>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">date</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s">&quot;time&quot;</span> <span class="p">:</span> <span class="n">date</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing-modules">
+<h2><a class="toc-backref" href="#contents">Testing Modules</a><a class="headerlink" href="#testing-modules" title="Permalink to this headline">¶</a></h2>
+<p>There&#8217;s a useful test script in the source checkout for ansible:</p>
+<div class="highlight-python"><pre>git clone git@github.com:ansible/ansible.git
+chmod +x ansible/hacking/test-module</pre>
+</div>
+<p>Let&#8217;s run the script you just wrote with that:</p>
+<div class="highlight-python"><pre>ansible/hacking/test-module -m ./time</pre>
+</div>
+<p>You should see output that looks something like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">u&#39;time&#39;</span><span class="p">:</span> <span class="s">u&#39;2012-03-14 22:13:48.539183&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>If you did not, you might have a typo in your module, so recheck it and try again.</p>
+</div>
+<div class="section" id="reading-input">
+<h2><a class="toc-backref" href="#contents">Reading Input</a><a class="headerlink" href="#reading-input" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s modify the module to allow setting the current time.  We&#8217;ll do this by seeing
+if a key value pair in the form <cite>time=&lt;string&gt;</cite> is passed in to the module.</p>
+<p>Ansible internally saves arguments to an arguments file.  So we must read the file
+and parse it.  The arguments file is just a string, so any form of arguments are legal.
+Here we&#8217;ll do some basic parsing to treat the input as key=value.</p>
+<p>The example usage we are trying to achieve to set the time is:</p>
+<div class="highlight-python"><pre>time time="March 14 22:10"</pre>
+</div>
+<p>If no time parameter is set, we&#8217;ll just leave the time as is and return the current time.</p>
+<p>Let&#8217;s look at the code.  Read the comments as we&#8217;ll explain as we go.  Note that this
+is highly verbose because it&#8217;s intended as an educational example.  You can write modules
+a lot shorter than this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+
+<span class="c"># import some python modules that we&#39;ll use.  These are all</span>
+<span class="c"># available in Python&#39;s core</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+
+<span class="c"># read the argument string from the arguments file</span>
+<span class="n">args_file</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">args_data</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">args_file</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="c"># for this module, we&#39;re going to do key=value style arguments</span>
+<span class="c"># this is up to each module to decide what it wants, but all</span>
+<span class="c"># core modules besides &#39;command&#39; and &#39;shell&#39; take key=value</span>
+<span class="c"># so this is highly recommended</span>
+
+<span class="n">arguments</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">args_data</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span><span class="p">:</span>
+
+    <span class="c"># ignore any arguments without an equals in it</span>
+    <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;=&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+
+        <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;=&quot;</span><span class="p">)</span>
+
+        <span class="c"># if setting the time, the key &#39;time&#39;</span>
+        <span class="c"># will contain the value we want to set the time to</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&quot;time&quot;</span><span class="p">:</span>
+
+            <span class="c"># now we&#39;ll affect the change.  Many modules</span>
+            <span class="c"># will strive to be &#39;idempotent&#39;, meaning they</span>
+            <span class="c"># will only make changes when the desired state</span>
+            <span class="c"># expressed to the module does not match</span>
+            <span class="c"># the current state.  Look at &#39;service&#39;</span>
+            <span class="c"># or &#39;yum&#39; in the main git tree for an example</span>
+            <span class="c"># of how that might look.</span>
+
+            <span class="n">rc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s">&quot;date -s </span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="c"># always handle all possible errors</span>
+            <span class="c">#</span>
+            <span class="c"># when returning a failure, include &#39;failed&#39;</span>
+            <span class="c"># in the return data, and explain the failure</span>
+            <span class="c"># in &#39;msg&#39;.  Both of these conventions are</span>
+            <span class="c"># required however additional keys and values</span>
+            <span class="c"># can be added.</span>
+
+            <span class="k">if</span> <span class="n">rc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+                    <span class="s">&quot;failed&quot;</span> <span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                    <span class="s">&quot;msg&quot;</span>    <span class="p">:</span> <span class="s">&quot;failed setting the time&quot;</span>
+                <span class="p">})</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c"># when things do not fail, we do not</span>
+            <span class="c"># have any restrictions on what kinds of</span>
+            <span class="c"># data are returned, but it&#39;s always a</span>
+            <span class="c"># good idea to include whether or not</span>
+            <span class="c"># a change was made, as that will allow</span>
+            <span class="c"># notifiers to be used in playbooks.</span>
+
+            <span class="n">date</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+            <span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+                <span class="s">&quot;time&quot;</span> <span class="p">:</span> <span class="n">date</span><span class="p">,</span>
+                <span class="s">&quot;changed&quot;</span> <span class="p">:</span> <span class="bp">True</span>
+            <span class="p">})</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c"># if no parameters are sent, the module may or</span>
+<span class="c"># may not error out, this one will just</span>
+<span class="c"># return the time</span>
+
+<span class="n">date</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s">&quot;time&quot;</span> <span class="p">:</span> <span class="n">date</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>Let&#8217;s test that module:</p>
+<div class="highlight-python"><pre>ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"</pre>
+</div>
+<p>This should return something like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;changed&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;2012-03-14 12:23:00.000307&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="module-provided-facts">
+<h2><a class="toc-backref" href="#contents">Module Provided &#8216;Facts&#8217;</a><a class="headerlink" href="#module-provided-facts" title="Permalink to this headline">¶</a></h2>
+<p>The &#8216;setup&#8217; module that ships with Ansible provides many variables about a system that can be used in playbooks
+and templates.  However, it&#8217;s possible to also add your own facts without modifying the system module.  To do
+this, just have the module return a <cite>ansible_facts</cite> key, like so, along with other return data:</p>
+<div class="highlight-python"><pre>{
+    "changed" : True,
+    "rc" : 5,
+    "ansible_facts" : {
+        "leptons" : 5000
+        "colors" : {
+            "red"   : "FF0000",
+            "white" : "FFFFFF"
+        }
+    }
+}</pre>
+</div>
+<p>These &#8216;facts&#8217; will be available to all statements called after that module (but not before) in the playbook.
+A good idea might be make a module called &#8216;site_facts&#8217; and always call it at the top of each playbook, though
+we&#8217;re always open to improving the selection of core facts in Ansible as well.</p>
+</div>
+<div class="section" id="common-module-boilerplate">
+<h2><a class="toc-backref" href="#contents">Common Module Boilerplate</a><a class="headerlink" href="#common-module-boilerplate" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned, if you are writing a module in Python, there are some very powerful shortcuts you can use.
+Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
+only shorter in terms of code, they are actually FASTER in terms of execution time.</p>
+<p>Rather than mention these here, the best way to learn is to read some of the <a class="reference external" href="https://github.com/ansible/ansible/tree/devel/library">source of the modules</a> that come with Ansible.</p>
+<p>The &#8216;group&#8217; and &#8216;user&#8217; modules are reasonably non-trival and showcase what this looks like.</p>
+<p>Key parts include always ending the module file with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># include magic from lib/ansible/module_common.py</span>
+<span class="c">#&lt;&lt;INCLUDE_ANSIBLE_MODULE_COMMON&gt;&gt;</span>
+<span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And instantiating the module class like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">module</span> <span class="o">=</span> <span class="n">AnsibleModule</span><span class="p">(</span>
+    <span class="n">argument_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">state</span>     <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;present&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;present&#39;</span><span class="p">,</span> <span class="s">&#39;absent&#39;</span><span class="p">]),</span>
+        <span class="n">name</span>      <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+        <span class="n">enabled</span>   <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">BOOLEANS</span><span class="p">),</span>
+        <span class="n">something</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;whatever&#39;</span><span class="p">])</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The AnsibleModule provides lots of common code for handling returns, parses your arguments
+for you, and allows you to check inputs.</p>
+<p>Successful returns are made like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">module</span><span class="o">.</span><span class="n">exit_json</span><span class="p">(</span><span class="n">changed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">something_else</span><span class="o">=</span><span class="mi">12345</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And failures are just as simple (where &#8216;msg&#8217; is a required parameter to explain the error):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">module</span><span class="o">.</span><span class="n">fail_json</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&quot;Something fatal happened&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There are also other useful functions in the module class, such as module.md5(path).  See
+lib/ansible/module_common.py in the source checkout for implementation details.</p>
+<p>Again, modules developed this way are best tested with the hacking/test-module script in the git
+source checkout.  Because of the magic involved, this is really the only way the scripts
+can function outside of Ansible.</p>
+<p>If submitting a module to ansible&#8217;s core code, which we encourage, use of the AnsibleModule
+class is required.</p>
+</div>
+<div class="section" id="common-pitfalls">
+<h2><a class="toc-backref" href="#contents">Common Pitfalls</a><a class="headerlink" href="#common-pitfalls" title="Permalink to this headline">¶</a></h2>
+<p>You should also never do this in a module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span> <span class="s">&quot;some status message&quot;</span>
+</pre></div>
+</div>
+<p>Because the output is supposed to be valid JSON.  Except that&#8217;s not quite true,
+but we&#8217;ll get to that later.</p>
+<p>Modules must not output anything on standard error, because the system will merge
+standard out with standard error and prevent the JSON from parsing. Capturing standard
+error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
+how the command module is implemented.</p>
+<p>If a module returns stderr or otherwise fails to produce valid JSON, the actual output
+will still be shown in Ansible, but the command will not succeed.</p>
+<p>Always use the hacking/test-module script when developing modules and it will warn
+you about these kind of things.</p>
+</div>
+<div class="section" id="conventions-recomendations">
+<h2><a class="toc-backref" href="#contents">Conventions/Recomendations</a><a class="headerlink" href="#conventions-recomendations" title="Permalink to this headline">¶</a></h2>
+<p>As a reminder from the example code above, here are some basic conventions
+and guidelines:</p>
+<ul class="simple">
+<li>If the module is addressing an object, the parameter for that object should be called &#8216;name&#8217; whenever possible, or accept &#8216;name&#8217; as an alias.</li>
+<li>If you have a company module that returns facts specific to your installations, a good name for this module is <cite>site_facts</cite>.</li>
+<li>Modules accepting boolean status should generally accept &#8216;yes&#8217;, &#8216;no&#8217;, &#8216;true&#8217;, &#8216;false&#8217;, or anything else a user may likely throw at them.  The AnsibleModule common code supports this with &#8220;choices=BOOLEANS&#8221; and a module.boolean(value) casting function.</li>
+<li>Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.</li>
+<li>Modules must be self contained in one file to be auto-transferred by ansible.</li>
+<li>If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.</li>
+<li>Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.</li>
+<li>In the event of failure, a key of &#8216;failed&#8217; should be included, along with a string explanation in &#8216;msg&#8217;.  Modules that raise tracebacks (stacktraces) are generally considered &#8216;poor&#8217; modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the &#8216;failed&#8217; element will be included for you automatically when you call &#8216;fail_json&#8217;.</li>
+<li>Return codes from modules are not actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.</li>
+<li>As results from many hosts will be aggregrated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.</li>
+</ul>
+</div>
+<div class="section" id="shorthand-vs-json">
+<h2><a class="toc-backref" href="#contents">Shorthand Vs JSON</a><a class="headerlink" href="#shorthand-vs-json" title="Permalink to this headline">¶</a></h2>
+<p>To make it easier to write modules in bash and in cases where a JSON
+module might not be available, it is acceptable for a module to return
+key=value output all on one line, like this.   The Ansible parser
+will know what to do:</p>
+<div class="highlight-python"><pre>somekey=1 somevalue=2 rc=3 favcolor=red</pre>
+</div>
+<p>If you&#8217;re writing a module in Python or Ruby or whatever, though, returning
+JSON is probably the simplest way to go.</p>
+</div>
+<div class="section" id="sharing-your-module">
+<h2><a class="toc-backref" href="#contents">Sharing Your Module</a><a class="headerlink" href="#sharing-your-module" title="Permalink to this headline">¶</a></h2>
+<p>If you think your module is generally useful to others, a good place to share it
+is in <a class="reference external" href="https://github.com/ansible/ansible-resources">Ansible Resources</a>.  This is maintained
+as a simple repo with pointers to other github projects.</p>
+<p>Contrib modules here can be implemented in a variety of languages.
+We would like to build up as many of these as possible in as many languages as possible.</p>
+<p><a class="reference external" href="http://groups.google.com/group/ansible-project">Ansible Mailing List</a></p>
+</div>
+<div class="section" id="getting-your-module-into-core">
+<h2><a class="toc-backref" href="#contents">Getting Your Module Into Core</a><a class="headerlink" href="#getting-your-module-into-core" title="Permalink to this headline">¶</a></h2>
+<p>High-quality modules with minimal dependencies
+can be included in the core, but core modules (just due to the programming
+preferences of the developers) will need to be implemented in Python and use
+the AnsibleModule common code, and should generally use consistent arguments with the rest of
+the program.   Stop by the mailing list to inquire about requirements.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>Learn about available modules</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible-resources">Ansible Resources</a></dt>
+<dd>User contributed playbooks, modules, and articles</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/devel/library">Github modules directory</a></dt>
+<dd>Browse source of core modules</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
+<dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
+<dd>#ansible IRC chat channel</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+<div class="container">
+<p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Oct 08, 2012.<br/>
+    </p>
+</div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,269 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Glossary &mdash; Ansible - SSH-Based Configuration Management &amp; Deployment</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible - SSH-Based Configuration Management &amp; Deployment" href="index.html" />
+    <link rel="next" title="Who Uses Ansible" href="who_uses_ansible.html" />
+    <link rel="prev" title="FAQ" href="faq.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <!-- <a class="brand" href="index.html">Ansible</a> -->
+        <ul class="nav">
+          
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="who_uses_ansible.html">Who Uses Ansible</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Glossary</a></li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+<a href="http://github.com/ansible/ansible"><img style="position: absolute; right: 0; border: 0;" src="http://ansible.github.com/github.png" alt="Fork me on GitHub"></a>
+
+
+<div class="container">
+   <a href="http://ansible.github.com"><img src="http://ansible.github.com/ansible-logo.png" alt="Ansible"/></a><br/>
+<br/>
+   
+  <div class="section" id="glossary">
+<h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+<p>After reading through the rest of the documentation, it may be helpful to review some terms.</p>
+<p>ansible &#8211; from science fiction, a device for communicating instanteously over large distances.</p>
+<p>ansible &#8211; When speaking of /usr/bin/ansible, a tool for ad-hoc task execution on a group of hosts.  This constrasts with /usr/bin/ansible-playbook, which is a full on configuration management and orchestration tool built on top of these fundamentals.  Both come with &#8216;ansible&#8217;, the application.</p>
+<p>action &#8211; the part of a task that specifies what module to run and what arguments to send it</p>
+<p>async &#8211; the act of running a ansible task in the background, potentially polling it for completion.  This is useful for kicking off tasks where the result is not important, or in executing tasks that would exceed the SSH timeout.</p>
+<p>cobbler &#8211; a kickstart, mirroring, power management, and miscellaneous datacenter management tool that Michael wrote before Ansible, and is frequently used with it.  See <a class="reference external" href="http://cobbler.github.com">Cobbler</a></p>
+<p>common module code &#8211; a facility in which Ansible modules written in Python can minimize boilerplate code for argument validation and returning values.  This is not available to non-Python modules but modules can still be written in languages other than Python.</p>
+<p>connection &#8211; how Ansible connects to and manages remote hosts.  Paramiko and native ssh are the main options, though
+there is also a local connection mode.</p>
+<p>cowsay &#8211; a special utility program that, if installed, greatly enhances the clarity of ansible-playbook output.</p>
+<p>daisy chaining &#8211; comes up in development discussions.   It&#8217;s how in Ansible one module (like copy or template) can
+use parameters supported by the file module by requesting the file module be run after the copy module.  For example, if specifying a file be templated, we can also specify the mode and owner because the file module is automatically daisy-chained
+after the file module.</p>
+<p>DSL &#8211; domain specific language.  The idea of making a special &#8220;programming&#8221; language or a subset of a language to build a tool out of.  Ansible doesn&#8217;t believe in these, and instead treats it&#8217;s playbook language as a data format.</p>
+<p>env-setup &#8211; a very useful script in the &#8220;hacking&#8221; directory of an ansible checkout.  Sourcing this script makes it very easy to run ansible from source without doing any installation.</p>
+<p>external inventory script &#8211; the act of using an executable script in place of an ansible inventory file, so that ansible will invoke the script when needed to ask about what hosts it is managing and variables related to those hosts.</p>
+<p>fact &#8211; a variable discovered about a remote host, rather than configured in a config file.  Facts can include
+the system architecture, the hostname, the operating system version, and so on.  facts can be used in configuration
+files.</p>
+<p>forks &#8211; the level of parallelism used with a /usr/bin/ansible or /usr/bin/ansible-playbook command.  Ansible executes multiple remote management commands in parallel to get things done faster.</p>
+<p>func &#8211; an earlier ad-hoc execution tool that is the basis of some of the ideas in Ansible.  Michael wrote Func with some colleagues from Red Hat, and a later tool called taboot built on Func helped inspire the playbooks language.   Func didn&#8217;t have a configuration management language on top of it, nor did it use SSH, but it helped pave the way for several other tools.</p>
+<p>handler &#8211; a special class of a task that is not run unless a given task registers a change event.  Handlers are most
+frequently used for restarting services when the contents of configuration files change.</p>
+<p>idempotent &#8211; when applied to configuration management, this means that running a given task twice does not produce
+an unexpected effect on the system.  Mathematically, F(x) = F(F(x)).  Ansible&#8217;s core modules all support this concept
+but Ansible does not force this upon you.</p>
+<p>include &#8211; a playbook, handler, or variable data loaded from another file</p>
+<p>infrastructure as code &#8211; the practice of treating configuration, management, and deployment of systems as a software project.  Ansible doesn&#8217;t really believe in this and tries to simplify things by making a simpler language that is easier to write and audit, and is therefore easier to understand by all parties involved.  More advanced takes on I.A.C. use actual programming languages to describe configurations.</p>
+<p>inventory &#8211; ansible keeps track of what hosts you are managing, and allows them to be put in groups for easier selection.  This file is by default in a simple INI format, but can be replaced with an &#8216;external inventory script&#8217;</p>
+<p>Jinja2 &#8211; Ansible uses this as a templating language for the &#8216;template&#8217; module.</p>
+<p>JSON &#8211; the format Ansible modules use to return data over the wire.  &#8220;Java Script Object Notation&#8221;</p>
+<p>module &#8211; a reusable unit of logic that tells Ansible how to do things on remote machines.  Ansible ships with many modules written in Python, but modules can be written in any language.  Modules return structured data in JSON.</p>
+<p>notify &#8211; what a task does when it detects that something has changed on the remote system.   A task notifying a handler
+means it is sending a message to the handler that it needs to run at the end of a playbook execution.</p>
+<p>paramiko &#8211; the default connection type for ansible uses a pure-Python SSH library called paramiko.  It is generally
+easier to set up than native SSH but does not offer as many configuration options and does not support Kerberized SSH.</p>
+<p>pattern &#8211; a selector that can match host or group names using wildcards.  Patterns are used in plays or in ad-hoc executions of /usr/bin/ansible to target groups of hosts to manage.</p>
+<p>play &#8211; a group of ansible tasks that are to be executed on the same set of hosts.   A play is always run by the same user account and may optionally sudo to a particular user after connecting.  In addition to a list of tasks, a play may also choose to define variables or include them from other files, all of which are shared with each task in the play.</p>
+<p>playbook &#8211; a list of ansible plays grouped together in a single file, which are run top to bottom.  Each play may select different hosts and have different tasks.  A playbook is analogous to a Chef recipe, a Puppet manifest, a CFEngine &#8220;promise&#8221;.  Playbooks can be broken up into more than one file using includes, in which case it&#8217;s still ok to call it a playbook.</p>
+<p>pull &#8211; the act of a managed system phoning home to ask how it is configured.  This is useful in large scale out scenarios or for periodic automatic system remediation.</p>
+<p>push &#8211; the act of reaching out to systems you want to manage rather than them phoning home.  This is Ansible&#8217;s default
+mode, but pull is also supported via the &#8216;ansible-pull&#8217; script.</p>
+<p>runner &#8211; comes up in development discussions.  a core component of the ansible code that runs a single module/task against a given set of hosts.  /usr/bin/ansible makes use of runner directly.   Playbooks instantiate multiple instances of runner,
+one for each task in a playbook.</p>
+<p>setup cache &#8211; comes up in development discussions.  The setup cache is a mechanism of storing fact results from various
+systems and makes them available as variables in action lines and templates</p>
+<p>SSH &#8211; secure shell.  Ansible by default uses SSH to talk to remote hosts because it is already there and very secure.  It does not require any additional daemons.</p>
+<p>task &#8211; one of many ansible modules to execute on a given set of hosts, and the parameters to use when calling it.
+A task has a name, an &#8216;action&#8217;, and other optional variables.   Making sure a package is installed, or a file
+is templated and transferred, is the example of a task.</p>
+<p>template &#8211; the act of taking a file with variable placeholders in it and substituting variables to make a final file.  Templating is frequently used to place configuration files.</p>
+<p>test-module &#8211; a useful script in the &#8220;hacking&#8221; directory of an ansible checkout for running a module locally, without ansible&#8217;s core code in the way.  Used when developing or debugging modules.</p>
+<p>Van Halen &#8211; the great American Rock Band, known for great instrumental guitar work and also songs about Alien Abductions.  All Ansible releases are code named after Van Halen songs.  C&#8217;mon Dave, gimme a break.</p>
+<p>YAML &#8211; the core language format for ansible playbooks and include files.  Stands for &#8220;YAML Ain&#8217;t Markup Language&#8221;.  YAML can be taken to extremes where it is difficult to write and read, but Ansible uses a relatively simple dialect and minimal levels of nesting.</p>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+
+  <div class="container">
+  <div id="fb-root"></div>
+<p>
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+<input type="hidden" name="cmd" value="_donations">
+<input type="hidden" name="business" value="michael.dehaan@gmail.com">
+<input type="hidden" name="lc" value="US">
+<input type="hidden" name="item_name" value="Ansible">
+<input type="hidden" name="no_note" value="0">
+<input type="hidden" name="currency_code" value="USD">
+<input type="hidden" name="bn" value="PP-DonationsBF:btn_donate_LG.gif:NonHostedGuest">
+<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+</form>
+</p>
+<p>
+<a href="https://twitter.com/share" class="twitter-share-button" data-text="ansible.github.com">Share On Twitter</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+<g:plusone annotation="inline"></g:plusone>
+<div class="fb-like" data-href="http://ansible.github.com" data-send="true" data-width="450" data-show-faces="false"></div>
+</p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Aug 10, 2012.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

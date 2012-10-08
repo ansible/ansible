@@ -1,0 +1,394 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Inventory &amp; Patterns &mdash; Ansible Documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible Documentation" href="index.html" />
+    <link rel="next" title="Command Line Examples And Next Steps" href="examples.html" />
+    <link rel="prev" title="Getting Started" href="gettingstarted.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible Documentation</a>
+        <ul class="nav">
+          
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples And Next Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Inventory &amp; Patterns</a><ul>
+<li><a class="reference internal" href="#hosts-and-groups">Hosts and Groups</a></li>
+<li><a class="reference internal" href="#selecting-targets">Selecting Targets</a></li>
+<li><a class="reference internal" href="#host-variables">Host Variables</a></li>
+<li><a class="reference internal" href="#group-variables">Group Variables</a></li>
+<li><a class="reference internal" href="#groups-of-groups-and-group-variables">Groups of Groups, and Group Variables</a></li>
+<li><a class="reference internal" href="#splitting-out-host-and-group-specific-data">Splitting Out Host and Group Specific Data</a></li>
+<li><a class="reference internal" href="#yaml-inventory">YAML Inventory</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+<div class="container">
+   
+  <div class="section" id="inventory-patterns">
+<span id="patterns"></span><h1><a class="toc-backref" href="#table-of-contents">Inventory &amp; Patterns</a><a class="headerlink" href="#inventory-patterns" title="Permalink to this headline">¶</a></h1>
+<p>Ansible works against multiple systems in your infrastructure at the
+same time.  It does this by selecting portions of systems listed in
+Ansible&#8217;s inventory file, which defaults to /etc/ansible/hosts.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first"><cite>Table of contents</cite></p>
+<ul class="simple">
+<li><a class="reference internal" href="#inventory-patterns" id="id1">Inventory &amp; Patterns</a><ul>
+<li><a class="reference internal" href="#hosts-and-groups" id="id2">Hosts and Groups</a></li>
+<li><a class="reference internal" href="#selecting-targets" id="id3">Selecting Targets</a></li>
+<li><a class="reference internal" href="#host-variables" id="id4">Host Variables</a></li>
+<li><a class="reference internal" href="#group-variables" id="id5">Group Variables</a></li>
+<li><a class="reference internal" href="#groups-of-groups-and-group-variables" id="id6">Groups of Groups, and Group Variables</a></li>
+<li><a class="reference internal" href="#splitting-out-host-and-group-specific-data" id="id7">Splitting Out Host and Group Specific Data</a></li>
+<li><a class="reference internal" href="#yaml-inventory" id="id8">YAML Inventory</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="hosts-and-groups">
+<span id="inventoryformat"></span><h2><a class="toc-backref" href="#table-of-contents">Hosts and Groups</a><a class="headerlink" href="#hosts-and-groups" title="Permalink to this headline">¶</a></h2>
+<p>The format for /etc/ansible/hosts is an INI format and looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mail</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+
+<span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
+<span class="n">foo</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">bar</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+
+<span class="p">[</span><span class="n">dbservers</span><span class="p">]</span>
+<span class="n">one</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">two</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">three</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<p>The things in brackets are group names. You don&#8217;t have to have them,
+but they are useful.</p>
+<p>If you have hosts that run on non-standard SSH ports you can put the port number
+after the hostname with a colon.</p>
+<blockquote>
+<div>four.example.com:5309</div></blockquote>
+<p>In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">webservers</span><span class="p">]</span>
+<span class="n">www</span><span class="p">[</span><span class="mo">01</span><span class="p">:</span><span class="mi">50</span><span class="p">]</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<p>Leading zeros can be included or removed, as desired, and the ranges are inclusive.</p>
+</div>
+<div class="section" id="selecting-targets">
+<h2><a class="toc-backref" href="#table-of-contents">Selecting Targets</a><a class="headerlink" href="#selecting-targets" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ll go over how to use the command line in <a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a> section, however, basically it looks like this:</p>
+<div class="highlight-python"><pre>ansible &lt;pattern_goes_here&gt; -m &lt;module_name&gt; -a &lt;arguments&gt;</pre>
+</div>
+<p>Such as:</p>
+<div class="highlight-python"><pre>ansible webservers -m service -a "name=httpd state=restarted"</pre>
+</div>
+<p>Within <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a>, these patterns can be used for even greater purposes.</p>
+<p>Anyway, to use Ansible, you&#8217;ll first need to know how to tell Ansible which hosts in your inventory file to talk to.
+This is done by designating particular host names or groups of hosts.</p>
+<p>The following patterns target all hosts in the inventory file:</p>
+<div class="highlight-python"><pre>all
+*</pre>
+</div>
+<p>Basically &#8216;all&#8217; is an alias for &#8216;*&#8217;.  It is also possible to address a specific host or hosts:</p>
+<div class="highlight-python"><pre>one.example.com
+one.example.com:two.example.com
+192.168.1.50
+192.168.1.*</pre>
+</div>
+<p>The following patterns address one or more groups, which are denoted
+with the aforementioned bracket headers in the inventory file:</p>
+<div class="highlight-python"><pre>webservers
+webservers:dbservers</pre>
+</div>
+<p>You can exclude groups as well, for instance, all webservers not in Phoenix:</p>
+<div class="highlight-python"><pre>webservers:!phoenix</pre>
+</div>
+<p>Individual host names (or IPs), but not groups, can also be referenced using
+wildcards:</p>
+<div class="highlight-python"><pre>*.example.com
+*.com</pre>
+</div>
+<p>It&#8217;s also ok to mix wildcard patterns and groups at the same time:</p>
+<div class="highlight-python"><pre>one*.com:dbservers</pre>
+</div>
+<p>Easy enough.  See <a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a> and then <a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> for how to do things to selected hosts.</p>
+</div>
+<div class="section" id="host-variables">
+<h2><a class="toc-backref" href="#table-of-contents">Host Variables</a><a class="headerlink" href="#host-variables" title="Permalink to this headline">¶</a></h2>
+<p>It is easy to assign variables to hosts that will be used later in playbooks:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1 http_port=80 maxRequestsPerChild=808
+host2 http_port=303 maxRequestsPerChild=909</pre>
+</div>
+</div>
+<div class="section" id="group-variables">
+<h2><a class="toc-backref" href="#table-of-contents">Group Variables</a><a class="headerlink" href="#group-variables" title="Permalink to this headline">¶</a></h2>
+<p>Variables can also be applied to an entire group at once:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1
+host2
+
+[atlanta:vars]
+ntp_server=ntp.atlanta.example.com
+proxy=proxy.atlanta.example.com</pre>
+</div>
+</div>
+<div class="section" id="groups-of-groups-and-group-variables">
+<h2><a class="toc-backref" href="#table-of-contents">Groups of Groups, and Group Variables</a><a class="headerlink" href="#groups-of-groups-and-group-variables" title="Permalink to this headline">¶</a></h2>
+<p>It is also possible to make groups of groups and assign
+variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
+/usr/bin/ansible:</p>
+<div class="highlight-python"><pre>[atlanta]
+host1
+host2
+
+[raleigh]
+host2
+host3
+
+[southeast:children]
+atlanta
+raleigh
+
+[southeast:vars]
+some_server=foo.southeast.example.com
+halon_system_timeout=30
+self_destruct_countdown=60
+escape_pods=2
+
+[usa:children]
+southeast
+northeast
+southwest
+southeast</pre>
+</div>
+<p>If you need to store lists or hash data, or prefer to keep host and group specific variables
+seperate from the inventory file, see the next section.</p>
+</div>
+<div class="section" id="splitting-out-host-and-group-specific-data">
+<h2><a class="toc-backref" href="#table-of-contents">Splitting Out Host and Group Specific Data</a><a class="headerlink" href="#splitting-out-host-and-group-specific-data" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.6.</span></p>
+<p>In addition to the storing variables directly in the INI file, host
+and group variables can be stored in individual files relative to the
+inventory file.  These variable files are in YAML format.</p>
+<p>Assuming the inventory file path is:</p>
+<div class="highlight-python"><pre>/etc/ansible/hosts</pre>
+</div>
+<p>If the host is named &#8216;foosball&#8217;, and in groups &#8216;raleigh&#8217; and &#8216;webservers&#8217;, variables
+in YAML files at the following locations will be made available to the host:</p>
+<div class="highlight-python"><pre>/etc/ansible/group_vars/raleigh
+/etc/ansible/group_vars/webservers
+/etc/ansible/host_vars/foosball</pre>
+</div>
+<p>For instance, suppose you have hosts grouped by datacenter, and each datacenter
+uses some different servers.  The data in the groupfile &#8216;/etc/ansible/group_vars/raleigh&#8217; for
+the &#8216;raleigh&#8217; group might look like:</p>
+<div class="highlight-python"><pre>---
+ntp_server: acme.example.org
+database_server: storage.example.org</pre>
+</div>
+<p>It is ok if these files do not exist, this is an optional feature.</p>
+<p>Tip: Keeping your inventory file and variables in a git repo (or other version control)
+is an excellent way to track changes to your inventory and host variables.</p>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.5: </span>If you ever have two python interpreters on a system, set a
+variable called &#8216;ansible_python_interpreter&#8217; to the Python
+interpreter path you would like to use.</p>
+</div>
+<div class="section" id="yaml-inventory">
+<h2><a class="toc-backref" href="#table-of-contents">YAML Inventory</a><a class="headerlink" href="#yaml-inventory" title="Permalink to this headline">¶</a></h2>
+<p class="deprecated">
+<span class="versionmodified">Deprecated since version 0.7.</span></p>
+<p>Ansible&#8217;s YAML inventory format is deprecated and will be removed in
+Ansible 0.7.  Ansible 0.6 includes a <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py">conversion script</a>.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">yaml_to_ini</span><span class="o">.</span><span class="n">py</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">ansible</span><span class="o">/</span><span class="n">hosts</span>
+</pre></div>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a></dt>
+<dd>Examples of basic commands</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Learning ansible&#8217;s configuration management language</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
+<dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
+<dd>#ansible IRC chat channel</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+<div class="container">
+<p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Oct 08, 2012.<br/>
+    </p>
+</div>
+</footer>
+  </body>
+</html>
