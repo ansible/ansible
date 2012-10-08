@@ -64,7 +64,6 @@ New Modules:
 * new LSB facts (release, distro, etc)
 * new VMware ESX facts module (use with local_action or delegate_to)
 * new HP ILO facts module (use with local_action or delegate_to)
-* new VMware provisioning module (use with local_action or delegate_to)
 * new HP ILO provisioning module (use with local_action or delegate_to)
 * pause module -- (pause seconds=10) (pause minutes=1) (pause prompt=foo) -- it's an action plugin
 * a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
