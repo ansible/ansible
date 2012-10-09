@@ -99,7 +99,9 @@ client = nova_client.Client(
     username    = config.get('openstack', 'username'),
     api_key     = config.get('openstack', 'api_key'),
     auth_url    = config.get('openstack', 'auth_url'),
-    project_id  = config.get('openstack', 'project_id')
+    region_name = config.get('openstack', 'region_name'),
+    project_id  = config.get('openstack', 'project_id'),
+    auth_system = config.get('openstack', 'auth_system')
 )
 
 if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
