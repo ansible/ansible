@@ -1,0 +1,18 @@
+{
+  "description": [
+    "A trivial test module, this module always returns 'pong' on successful contact. It does not make sense in playbooks, but is useful from C(/usr/bin/ansible)"
+  ], 
+  "author": "Michael DeHaan", 
+  "module": "ping", 
+  "filename": "library/ping", 
+  "examples": [
+    {
+      "code": "ansible webservers -m ping", 
+      "description": "Test 'webservers' status"
+    }
+  ], 
+  "docuri": "ping", 
+  "short_description": "Try to connect to host and return pong on success.", 
+  "now_date": "2012-10-09", 
+  "ansible_version": "0.8"
+}

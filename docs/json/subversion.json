@@ -1,0 +1,50 @@
+{
+  "requirements": [], 
+  "description": [
+    "This module is really simple, so for now this checks out from the given branch of a repo at a particular SHA or tag. Latest is not supported, you should not be doing that."
+  ], 
+  "author": "Dane Summers", 
+  "notes": [
+    "Requires subversion and grep on the client."
+  ], 
+  "docuri": "subversion", 
+  "module": "subversion", 
+  "filename": "library/subversion", 
+  "examples": [
+    {
+      "code": "subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout", 
+      "description": "Export subversion repository in a specified folder"
+    }
+  ], 
+  "version_added": "0.7", 
+  "short_description": "Deploys a subversion repository.", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "repo": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "The subversion URL to the repository."
+      ]
+    }, 
+    "dest": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Absolute path where the repository should be deployed."
+      ]
+    }, 
+    "force": {
+      "default": true, 
+      "required": false, 
+      "description": [
+        "If yes, any modified files in the working repository will be discarded. If no, this module will fail if it encounters modified files."
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

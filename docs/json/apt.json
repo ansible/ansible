@@ -1,0 +1,114 @@
+{
+  "description": [
+    "Manages apt-packages (such as for Debian/Ubuntu)."
+  ], 
+  "author": "Matthew Williams", 
+  "notes": [], 
+  "docuri": "apt", 
+  "module": "apt", 
+  "filename": "library/apt", 
+  "examples": [
+    {
+      "code": "apt pkg=foo update-cache=yes", 
+      "description": "Update repositories cache and install C(foo) package"
+    }, 
+    {
+      "code": "apt pkg=foo state=removed", 
+      "description": "Remove C(foo) package"
+    }, 
+    {
+      "code": "apt pkg=foo state=installed", 
+      "description": "Install the the package C(foo)"
+    }, 
+    {
+      "code": "apt pkg=foo=1.00 state=installed", 
+      "description": "Install the version '1.00' of package C(foo)"
+    }, 
+    {
+      "code": "apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes", 
+      "description": "Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)"
+    }, 
+    {
+      "code": "apt pkg=openjdk-6-jdk state=latest install-recommends=no", 
+      "description": "Install latest version of C(openjdk-6-jdk) ignoring C(install-recomands)"
+    }
+  ], 
+  "version_added": "0.0.2", 
+  "short_description": "Manages apt-packages", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "purge": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "Will force purging of configuration files if the module state is set to C(absent)."
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }, 
+    "state": {
+      "default": "present", 
+      "required": false, 
+      "description": [
+        "Indicates the desired package state"
+      ], 
+      "choices": [
+        "installed", 
+        "latest", 
+        "remove", 
+        "absent", 
+        "present"
+      ]
+    }, 
+    "force": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "If C(yes), force installs/removes."
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }, 
+    "pkg": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "A package name or package specifier with version, like C(foo) or C(foo=1.0)"
+      ]
+    }, 
+    "update_cache": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a seperate step"
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }, 
+    "default_release": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "Corresponds to the C(-t) option for I(apt) and sets pin priorities"
+      ]
+    }, 
+    "install_recommends": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed."
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

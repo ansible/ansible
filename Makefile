@@ -107,6 +107,8 @@ clean:
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
+	rm -rf docs/json
+	rm -rf docs/js
 
 python:
 	python setup.py build
@@ -162,7 +164,16 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates
+
+modulejson:
+	mkdir -p docs/json
+	hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+
+modulejs:
+	mkdir -p docs/js
+	make modulejson
+	hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
 
 webdocs:
 	(cd docsite; make docs)
