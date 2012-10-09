@@ -29,11 +29,11 @@ DOCUMENTATION = '''
 module: cron
 short_description: Manage crontab entries.
 description:
-     - Use this module to manage crontab entries. This module allows you to create named
-       crontab entries, update, or delete them.
-     - The module include one line with the description of the crontab entry "#Ansible: <name>" 
-       corresponding to the 'name' passed to the module, which is used by future ansible/module calls
-       to find/check the state.
+  - Use this module to manage crontab entries. This module allows you to create named
+    crontab entries, update, or delete them.
+  - 'The module include one line with the description of the crontab entry "#Ansible: <name>"
+    corresponding to the "name" passed to the module, which is used by future ansible/module calls
+    to find/check the state.'
 version_added: "0.9"
 options:
   name:
@@ -72,37 +72,37 @@ options:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
     required: false
-    default: *
+    default: "*"
     aliases: []
   hour:
     description:
       - Hour when the job should run ( 0-23, *, */2, etc )
     required: false
-    default: *
+    default: "*"
     aliases: []
   day:
     description:
       - Day of the month the job should run ( 1-31, *, */2, etc )
     required: false
-    default: *
+    default: "*"
     aliases: []
   month:
     description:
       - Month of the year the job should run ( 1-12, *, */2, etc )
     required: false
-    default: *
+    default: "*"
     aliases: []
   weekday:
     description:
       - Day of the week that the job should run ( 0-7 for Sunday - Saturday, or mon, tue, * etc )
     required: false
-    default: *
+    default: "*"
     aliases: []
 examples:
    - code: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
      description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
    - code: name="an old job" cron job="/some/dir/job.sh" state=absent
-     description: Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab
+     description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
 requirements: cron
 author: Dane Summers
 '''

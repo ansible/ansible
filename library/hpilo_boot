@@ -24,8 +24,8 @@ author: Dag Wieers
 module: hpilo_boot
 short_description: Boot system using specific media through HP iLO interface
 description:
-  - This module boots a system through its HP iLO interface. The boot media
-    can be one of: cdrom, floppy, hdd, network or usb.
+  - 'This module boots a system through its HP iLO interface. The boot media
+    can be one of: cdrom, floppy, hdd, network or usb.'
   - This module requires the hpilo python module.
 version_added: "0.8"
 options:
@@ -57,20 +57,20 @@ options:
     choices: [ "cdrom", "floppy", "hdd", "network", "normal", "usb" ]
   image:
     description:
-      - The URL of a cdrom, floppy or usb boot media image.
-        C(protocol://username:password@hostname:port/filename)
+      - "The URL of a cdrom, floppy or usb boot media image.
+        C(protocol://username:password@hostname:port/filename)"
       - protocol is either C(http) or C(https)
-      - username:password is optional
+      - "username:password is optional"
       - port is optional
     required: false
   state:
     description:
       - The state of the boot media.
-      - no_boot: Do not boot from the device
-      - boot_once: Boot from the device once and then notthereafter
-      - boot_always: Boot from the device each time the serveris rebooted
-      - connect: Connect the virtual media device and set to boot_always
-      - disconnect: Disconnects the virtual media device and set to no_boot
+      - "no_boot: Do not boot from the device"
+      - "boot_once: Boot from the device once and then notthereafter"
+      - "boot_always: Boot from the device each time the serveris rebooted"
+      - "connect: Connect the virtual media device and set to boot_always"
+      - "disconnect: Disconnects the virtual media device and set to no_boot"
     required: true
     default: boot_once
     choices: [ "boot_always", "boot_once", "connect", "disconnect", "no_boot" ]
@@ -81,10 +81,10 @@ options:
     default: no
     choices: [ "yes", "no" ]
 examples:
-    - code: |
-        local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short media=cdrom image=$iso_url
-        only_if: "'$cmdb_hwmodel'.startswith('HP ')
-      description: Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server
+  - code: |
+      local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short media=cdrom image=$iso_url
+      only_if: "'$cmdb_hwmodel'.startswith('HP ')
+    description: Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server
 notes:
   - To use a USB key image you need to specify floppy as boot media.
   - This module ought to be run from a system that can access the HP iLO
