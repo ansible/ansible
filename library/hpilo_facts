@@ -106,9 +106,9 @@ def main():
         )
     )
 
-    host = module.params('host')
-    login = module.params('login')
-    password = module.params('password')
+    host = module.params.get('host')
+    login = module.params.get('login')
+    password = module.params.get('password')
     match = module.params.get('match')
 
     ilo = hpilo.Ilo(host, login=login, password=password)
