@@ -1,0 +1,54 @@
+{
+  "description": [
+    "This module prints statements during execution and can be useful for debugging variables or expressions without necessarily halting the playbook. Useful for debugging together with the only_if directive.\nIn order to see the debug message, you need to run ansible in verbose mode (using the -v option)."
+  ], 
+  "module": "debug", 
+  "examples": [
+    {
+      "code": [
+        {
+          "local_action": "debug msg=\"System $inventory_hostname has uuid $ansible_product_uuid\""
+        }, 
+        {
+          "only_if": "is_unset('${ansible_default_ipv4.gateway}')", 
+          "local_action": "debug msg=\"System $inventory_hostname lacks a gateway\" fail=yes"
+        }, 
+        {
+          "only_if": "is_set('${ansible_default_ipv4.gateway}')", 
+          "local_action": "debug msg=\"System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}\""
+        }
+      ], 
+      "description": "Example that prints the loopback address and gateway for each host"
+    }
+  ], 
+  "docuri": "debug", 
+  "author": "Dag Wieers", 
+  "filename": "library/debug", 
+  "version_added": "0.8", 
+  "short_description": "Print statements during execution", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "msg": {
+      "default": "Hello world!", 
+      "required": false, 
+      "description": [
+        "The customized message that is printed. If ommited, prints a generic message."
+      ]
+    }, 
+    "fail": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "A boolean that indicates whether the debug module should fail or not."
+      ]
+    }, 
+    "rc": {
+      "default": 0, 
+      "required": false, 
+      "description": [
+        "The return code of the module. If fail=yes, this will default to 1."
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

@@ -1,0 +1,47 @@
+{
+  "requirements": [
+    "virtualenv"
+  ], 
+  "description": [
+    "Installs Python libraries, optionally in a I(virtualenv)"
+  ], 
+  "author": "Matt Wright", 
+  "notes": [
+    "Please note that the M(easy_install) module can only install Python libraries. Thus this module is not able to remove libraries. It is generally recommended to use the M(pip) module which you can first install using M(easy_install).", 
+    "Also note that I(virtualenv) must be installed on the remote host if the C(virtualenv) parameter is specified."
+  ], 
+  "docuri": "easy-install", 
+  "module": "easy_install", 
+  "filename": "library/easy_install", 
+  "examples": [
+    {
+      "code": "easy_install name=pip", 
+      "description": "Examples from Ansible Playbooks"
+    }, 
+    {
+      "code": "easy_install name=flask virtualenv=/webapps/myapp/venv", 
+      "description": "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
+    }
+  ], 
+  "version_added": "0.7", 
+  "short_description": "Installs Python libraries", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "virtualenv": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "an optional I(virtualenv) directory path to install into. If the I(virtualenv) does not exist, it is created automatically"
+      ]
+    }, 
+    "name": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "A Python library name"
+      ], 
+      "aliases": []
+    }
+  }, 
+  "ansible_version": "0.8"
+}

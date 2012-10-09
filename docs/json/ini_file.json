@@ -1,0 +1,76 @@
+{
+  "requirements": [
+    "ConfigParser"
+  ], 
+  "description": [
+    "Manage (add, remove, change) individual settings in an INI-style file without having to manage the file as a whole with, say, M(template) or M(assemble). Adds missing sections if they don't exist."
+  ], 
+  "author": "Jan-Piet Mens", 
+  "notes": [
+    "While it is possible to add an I(option) without specifying a I(value), this makes no sense."
+  ], 
+  "docuri": "ini-file", 
+  "module": "ini_file", 
+  "filename": "library/ini_file", 
+  "examples": [
+    {
+      "code": "ini_file dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=true", 
+      "description": "Ensure C(fav=lemonade) is in section C([drinks]) in said file"
+    }, 
+    {
+      "code": "ini_file dest=/etc/anotherconf\n         section=drinks\n         option=temperature\n         value=cold\n         backup=true\n"
+    }
+  ], 
+  "version_added": "0.9", 
+  "short_description": "Tweak settings in INI files", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "option": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "if set (required for changing a I(value)), this is the name of the option.", 
+        "May be omitted if adding/removing a whole I(section)."
+      ]
+    }, 
+    "others": {
+      "required": false, 
+      "description": [
+        "all arguments accepted by the M(file) module also work here"
+      ]
+    }, 
+    "dest": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Path to the INI-style file; this file is created if required"
+      ]
+    }, 
+    "section": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Section name in INI file. This is added if C(state=present) automatically when a single value is being set."
+      ]
+    }, 
+    "backup": {
+      "default": false, 
+      "required": false, 
+      "description": [
+        "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly."
+      ], 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }, 
+    "value": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "the string value to be associated with an I(option). May be omitted when removing an I(option)."
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

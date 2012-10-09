@@ -1,0 +1,53 @@
+{
+  "requirements": [], 
+  "description": [
+    "Configures the SELinux mode and policy. A reboot may be required after usage. Ansible will not issue this reboot but will let you know when it is required."
+  ], 
+  "author": "Derek Carter", 
+  "notes": [
+    "Not tested on any debian based system"
+  ], 
+  "docuri": "selinux", 
+  "module": "selinux", 
+  "filename": "library/selinux", 
+  "examples": [
+    {
+      "code": "selinux policy=targeted state=enforcing"
+    }, 
+    {
+      "code": "selinux policy=targeted state=disabled"
+    }
+  ], 
+  "version_added": "0.7", 
+  "short_description": "Change policy and state of SELinux", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "policy": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "name of the SELinux policy to use (example: 'targeted')"
+      ]
+    }, 
+    "state": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "The SELinux mode"
+      ], 
+      "choices": [
+        "enforcing", 
+        "permissive", 
+        "disabled"
+      ]
+    }, 
+    "conf": {
+      "default": "/etc/selinux/config", 
+      "required": false, 
+      "description": [
+        "path to the SELinux configuration file, if non-standard"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

@@ -1,0 +1,60 @@
+{
+  "requirements": [
+    "groupadd", 
+    "groupdel", 
+    "groupmod"
+  ], 
+  "description": [
+    "Manage presence of groups on a host."
+  ], 
+  "author": "Stephen Fromm", 
+  "docuri": "group", 
+  "module": "group", 
+  "filename": "library/group", 
+  "examples": [
+    {
+      "code": "group name=somegroup state=present", 
+      "description": "Example group command from Ansible Playbooks"
+    }
+  ], 
+  "version_added": "0.0.2", 
+  "short_description": "Add or remove groups", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "state": {
+      "default": "present", 
+      "required": false, 
+      "description": [
+        "Whether the group should be present or not on the remote host."
+      ], 
+      "choices": [
+        "present", 
+        "absent"
+      ]
+    }, 
+    "gid": {
+      "required": false, 
+      "description": [
+        "Optional I(GID) to set for the group."
+      ]
+    }, 
+    "name": {
+      "required": true, 
+      "description": [
+        "Name of the group to manage."
+      ]
+    }, 
+    "system": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "If I(yes), indicates that the group created is a system group."
+      ], 
+      "choices": [
+        true, 
+        false
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

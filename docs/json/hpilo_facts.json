@@ -1,0 +1,56 @@
+{
+  "description": [
+    "This module gathers facts for a specific system using its HP iLO interface. These facts include hardware and network related information useful for provisioning (e.g. macaddress, uuid).", 
+    "This module requires the hpilo python module."
+  ], 
+  "author": "Dag Wieers", 
+  "notes": [
+    "This module ought to be run from a system that can access the HP iLO interface directly, either by using C(local_action) or C(using delegate)_to."
+  ], 
+  "docuri": "hpilo-facts", 
+  "module": "hpilo_facts", 
+  "filename": "library/hpilo_facts", 
+  "examples": [
+    {
+      "code": "local_action: hpilo_facts host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short\nonly_if: \"'$cmdb_hwmodel'.startswith('HP ')\n", 
+      "description": "Task to gather facts from a HP iLO interface only if the system is an HP server"
+    }, 
+    {
+      "code": "- hw_bios_date: \"05/05/2011\"\n  hw_bios_version: \"P68\"\n  hw_eth0:\n  - macaddress: \"00:11:22:33:44:55\"\n    macaddress_dash: \"00-11-22-33-44-55\"\n  hw_eth1:\n  - macaddress: \"00:11:22:33:44:57\"\n    macaddress_dash: \"00-11-22-33-44-57\"\n  hw_eth2:\n  - macaddress: \"00:11:22:33:44:5A\"\n    macaddress_dash: \"00-11-22-33-44-5A\"\n  hw_eth3:\n  - macaddress: \"00:11:22:33:44:5C\"\n    macaddress_dash: \"00-11-22-33-44-5C\"\n  hw_eth_ilo:\n  - macaddress: \"00:11:22:33:44:BA\"\n    macaddress_dash: \"00-11-22-33-44-BA\"\n  hw_product_name: \"ProLiant DL360 G7\"\n  hw_product_uuid: \"ef50bac8-2845-40ff-81d9-675315501dac\"\n  hw_system_serial: \"ABC12345D6\"\n  hw_uuid: \"123456ABC78901D2\"\n", 
+      "description": "Typical output of HP iLO_facts for a physical system"
+    }
+  ], 
+  "version_added": "0.8", 
+  "short_description": "Gather facts through an HP iLO interface", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "host": {
+      "required": true, 
+      "description": [
+        "The HP iLO hostname/address that is linked to the physical system."
+      ]
+    }, 
+    "password": {
+      "default": "admin", 
+      "required": false, 
+      "description": [
+        "The password to authenticate to the HP iLO interface."
+      ]
+    }, 
+    "login": {
+      "default": "Administrator", 
+      "required": false, 
+      "description": [
+        "The login name to authenticate to the HP iLO interface."
+      ]
+    }, 
+    "match": {
+      "required": false, 
+      "description": [
+        "An optional string to match against the iLO server name.", 
+        "This is a safety measure to prevent accidentally using the wrong HP iLO interface with dire consequences."
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}
