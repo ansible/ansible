@@ -17,6 +17,9 @@
 
 from ansible import errors
 from ansible import utils
+import ansible.constants as C
+import os
+from os import pathsep
 
 
 class Task(object):
@@ -38,9 +41,15 @@ class Task(object):
 
     def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
-
+        modules_list = set()
+        for path in C.DEFAULT_MODULE_PATH.split(pathsep):
+            modules_list.update(os.listdir(path))
+        modules_list = list(modules_list)
         for x in ds.keys():
-            if not x in Task.VALID_KEYS:
+            if x in modules_list:
+                ds['action'] = x + " " + ds.get(x, None)
+                ds.pop(x)
+            elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
         self.module_vars = module_vars
