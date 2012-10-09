@@ -69,6 +69,22 @@ def _executor_hook(job_queue, result_queue):
         except:
             traceback.print_exc()
 
+class HostVars(dict):
+    ''' A special view of setup_cache that adds values from the inventory
+        when needed. '''
+    def __init__(self, setup_cache, inventory):
+        self.setup_cache = setup_cache
+        self.inventory = inventory
+        self.lookup = {}
+
+        self.update(setup_cache)
+
+    def __getitem__(self, host):
+        if not host in self.lookup:
+            self.lookup[host] = self.inventory.get_variables(host)
+        self.setup_cache[host].update(self.lookup[host])
+        return self.setup_cache[host]
+
 class Runner(object):
     ''' core API interface to ansible '''
 
@@ -84,7 +100,7 @@ class Runner(object):
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
-        remote_port=C.DEFAULT_REMOTE_PORT,  # if SSH on different ports
+        remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
@@ -192,7 +208,9 @@ class Runner(object):
 
         # hack to support fireball mode
         if module_name == 'fireball':
-            args = "%s password=%s port=%s" % (args, base64.b64encode(str(utils.key_for_hostname(conn.host))), C.ZEROMQ_PORT)
+            args = "%s password=%s" % (args, base64.b64encode(str(utils.key_for_hostname(conn.host))))
+            if 'port' not in args:
+                args += " port=%s" % C.ZEROMQ_PORT
 
         (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, args, inject)
         cmd = "chmod u+x %s" % remote_module_path
@@ -246,13 +264,19 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
-        port = host_variables.get('ansible_ssh_port', self.remote_port)
+        if self.transport in [ 'paramiko', 'ssh' ]:
+            port = host_variables.get('ansible_ssh_port', self.remote_port)
+            if port is None:
+                port = C.DEFAULT_REMOTE_PORT 
+        else:
+            # fireball, local, etc
+            port = self.remote_port
 
         inject = {}
         inject.update(host_variables)
         inject.update(self.module_vars)
         inject.update(self.setup_cache[host])
-        inject['hostvars'] = self.setup_cache
+        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups'] = self.inventory.groups_list()
 

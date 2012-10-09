@@ -1,0 +1,411 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting Started &mdash; Ansible Documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible Documentation" href="index.html" />
+    <link rel="next" title="Inventory &amp; Patterns" href="patterns.html" />
+    <link rel="prev" title="Contents" href="index.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible Documentation</a>
+        <ul class="nav">
+          
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples And Next Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks.html">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#python-2-6-epel-instructions-for-rhel-and-centos-5">Python 2.6 EPEL instructions for RHEL and CentOS 5</a></li>
+<li><a class="reference internal" href="#getting-ansible">Getting Ansible</a><ul>
+<li><a class="reference internal" href="#running-from-checkout">Running From Checkout</a></li>
+<li><a class="reference internal" href="#make-install">Make Install</a></li>
+<li><a class="reference internal" href="#via-rpm">Via RPM</a></li>
+<li><a class="reference internal" href="#debian-gentoo-arch-others">Debian, Gentoo, Arch, Others</a></li>
+<li><a class="reference internal" href="#tagged-releases">Tagged Releases</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#choosing-between-paramiko-and-native-ssh">Choosing Between Paramiko and Native SSH</a></li>
+<li><a class="reference internal" href="#your-first-commands">Your first commands</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+<div class="container">
+   
+  <div class="section" id="getting-started">
+<h1><a class="toc-backref" href="#contents">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#getting-started" id="id1">Getting Started</a><ul>
+<li><a class="reference internal" href="#requirements" id="id2">Requirements</a></li>
+<li><a class="reference internal" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" id="id3">Python 2.6 EPEL instructions for RHEL and CentOS 5</a></li>
+<li><a class="reference internal" href="#getting-ansible" id="id4">Getting Ansible</a></li>
+<li><a class="reference internal" href="#choosing-between-paramiko-and-native-ssh" id="id5">Choosing Between Paramiko and Native SSH</a></li>
+<li><a class="reference internal" href="#your-first-commands" id="id6">Your first commands</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="requirements">
+<h2><a class="toc-backref" href="#contents">Requirements</a><a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>Requirements for Ansible are extremely minimal.</p>
+<p>Ansible is written for Python 2.6.  If you are running Python 2.5 on an &#8220;Enterprise Linux&#8221; variant,
+your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
+of Linux and OS X should already have 2.6.</p>
+<p>In additon to Python 2.6, you will want the following packages:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">paramiko</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">PyYAML</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">python-jinja2</span></tt></li>
+</ul>
+<p>On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
+also need:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">python-simplejson</span></tt></li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Ansible&#8217;s &#8220;raw&#8221; module (for executing commands in a quick and dirty
+way) and the copy module &#8211; some of the most basic features in
+ansible &#8211; don&#8217;t even need that.  So technically, you can use
+Ansible to install python-simplejson using the raw module, which
+then allows you to use everything else.  (That&#8217;s jumping ahead
+though.)</p>
+</div>
+</div>
+<div class="section" id="python-2-6-epel-instructions-for-rhel-and-centos-5">
+<h2><a class="toc-backref" href="#contents">Python 2.6 EPEL instructions for RHEL and CentOS 5</a><a class="headerlink" href="#python-2-6-epel-instructions-for-rhel-and-centos-5" title="Permalink to this headline">¶</a></h2>
+<p>These distributions don&#8217;t have Python 2.6 by default, but it is easily
+installable. If you have not already done so, <a class="reference external" href="http://fedoraproject.org/wiki/EPEL">configure EPEL</a></p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>yum install python26 python26-PyYAML python26-paramiko python26-jinja2
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-ansible">
+<h2><a class="toc-backref" href="#contents">Getting Ansible</a><a class="headerlink" href="#getting-ansible" title="Permalink to this headline">¶</a></h2>
+<p>If you are interested in using all the latest features, you may wish to keep up to date
+with the development branch of the git checkout.  This also makes it easiest to contribute
+back to the project.</p>
+<p>Instructions for installing from source are below.</p>
+<p>Ansible&#8217;s release cycles are about one month long.  Due to this
+short release cycle, any bugs will generally be fixed in the next release versus maintaining
+backports on the stable branch.</p>
+<p>You may also wish to follow the <a class="reference external" href="https://github.com/ansible/ansible">Github project</a> if
+you have a github account.  This is also where we keep the issue tracker for sharing
+bugs and feature ideas.</p>
+<div class="section" id="running-from-checkout">
+<h3>Running From Checkout<a class="headerlink" href="#running-from-checkout" title="Permalink to this headline">¶</a></h3>
+<p>Ansible is trivially easy to run from a checkout, root permissions are not required
+to use it:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>git clone git://github.com/ansible/ansible.git
+<span class="nv">$ </span><span class="nb">cd</span> ./ansible
+<span class="nv">$ </span><span class="nb">source</span> ./hacking/env-setup
+</pre></div>
+</div>
+<p>You can optionally specify an inventory file (see <a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a>) other than /etc/ansible/hosts:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span><span class="nb">echo</span> <span class="s2">&quot;127.0.0.1&quot;</span> &gt; ~/ansible_hosts
+<span class="nv">$ </span><span class="nb">export </span><span class="nv">ANSIBLE_HOSTS</span><span class="o">=</span>~/ansible_hosts
+</pre></div>
+</div>
+<p>Now let&#8217;s test things:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m ping --ask-pass
+</pre></div>
+</div>
+</div>
+<div class="section" id="make-install">
+<h3>Make Install<a class="headerlink" href="#make-install" title="Permalink to this headline">¶</a></h3>
+<p>If you are not working from a distribution where Ansible is packaged yet, you can install Ansible
+using &#8220;make install&#8221;.  This is done through <cite>python-distutils</cite>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>git clone git://github.com/ansible/ansible.git
+<span class="nv">$ </span><span class="nb">cd</span> ./ansible
+<span class="nv">$ </span>sudo make install
+</pre></div>
+</div>
+</div>
+<div class="section" id="via-rpm">
+<h3>Via RPM<a class="headerlink" href="#via-rpm" title="Permalink to this headline">¶</a></h3>
+<p>RPMs for the last Ansible release are available for <a class="reference external" href="http://fedoraproject.org/wiki/EPEL">EPEL</a> 6 and currently supported
+Fedora distributions.  Ansible itself can manage earlier operating
+systems that contain python 2.4 or higher.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux</span>
+<span class="nv">$ </span>sudo yum install ansible
+</pre></div>
+</div>
+<p>You can also use the <tt class="docutils literal"><span class="pre">make</span> <span class="pre">rpm</span></tt> command to build an RPM you can
+distribute and install:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>git clone git://github.com/ansible/ansible.git
+<span class="nv">$ </span><span class="nb">cd</span> ./ansible
+<span class="nv">$ </span>make rpm
+<span class="nv">$ </span>sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian-gentoo-arch-others">
+<h3>Debian, Gentoo, Arch, Others<a class="headerlink" href="#debian-gentoo-arch-others" title="Permalink to this headline">¶</a></h3>
+<p>Ubuntu builds are available <a class="reference external" href="https://launchpad.net/~rquillo/+archive/ansible">in a PPA here</a></p>
+<p>Debian/Ubuntu package recipes can also be built from the source checkout, run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>make debian
+</pre></div>
+</div>
+<p>Gentoo eBuilds are available <a class="reference external" href="https://github.com/uu/ubuilds">on github here</a></p>
+<p>An Arch PKGBUILD is available on <a class="reference external" href="https://aur.archlinux.org/packages.php?ID=58621">AUR</a>
+If you have python3 installed on Arch, you probably want to symlink python to python2:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>sudo ln -sf /usr/bin/python2 /usr/bin/python
+</pre></div>
+</div>
+<p>If you would like to package Ansible for Homebrew, BSD, or others,
+please stop by the mailing list and say hi!</p>
+</div>
+<div class="section" id="tagged-releases">
+<h3>Tagged Releases<a class="headerlink" href="#tagged-releases" title="Permalink to this headline">¶</a></h3>
+<p>Tagged releases are available as tar.gz files from the Ansible github
+project page:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ansible/ansible/downloads">Ansible/downloads</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="choosing-between-paramiko-and-native-ssh">
+<h2><a class="toc-backref" href="#contents">Choosing Between Paramiko and Native SSH</a><a class="headerlink" href="#choosing-between-paramiko-and-native-ssh" title="Permalink to this headline">¶</a></h2>
+<p>By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko is fast, works
+very transparently, requires no configuration, and is a good choice for most users.
+However, it does not support some advanced SSH features that folks will want to use.</p>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.5.</span></p>
+<p>If you want to leverage more advanced SSH features (such as Kerberized
+SSH or jump hosts), pass the flag &#8220;&#8211;connection=ssh&#8221; to any ansible
+command, or set the ANSIBLE_TRANSPORT environment variable to
+&#8216;ssh&#8217;. This will cause Ansible to use openssh tools instead.</p>
+<p>If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
+by default.  You are free to override this environment variable, but should still pass ControlMaster
+options to ensure performance of this transport.  With ControlMaster in use, both transports
+are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.</p>
+<p>If none of this makes sense to you, the default paramiko option is probably fine.</p>
+</div>
+<div class="section" id="your-first-commands">
+<h2><a class="toc-backref" href="#contents">Your first commands</a><a class="headerlink" href="#your-first-commands" title="Permalink to this headline">¶</a></h2>
+<p>Now that you&#8217;ve installed Ansible, it&#8217;s time to test it.</p>
+<p>Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
+which you have your SSH key in <tt class="docutils literal"><span class="pre">authorized_keys</span></tt>:</p>
+<div class="highlight-python"><pre>192.168.1.50
+aserver.example.org
+bserver.example.org</pre>
+</div>
+<p>Set up SSH agent to avoid retyping passwords:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ssh-agent bash
+<span class="nv">$ </span>ssh-add ~/.ssh/id_rsa
+</pre></div>
+</div>
+<p>(Depending on your setup, you may wish to ansible&#8217;s &#8211;private-key-file option to specify a pem file instead)</p>
+<p>Now ping all your nodes:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -m ping
+</pre></div>
+</div>
+<p>In Ansible 0.7 and later, ansible will attempt to remote connect to the machines using your current
+user name, just like SSH would.  In 0.6 and before, this actually defaults to &#8216;root&#8217; (we liked the current
+user behavior better).  To override the remote user name, just use the &#8216;-u&#8217; parameter.</p>
+<p>If you would like to access sudo mode, there are also flags to do that:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># as bruce</span>
+<span class="nv">$ </span>ansible all -m ping -u bruce
+<span class="c"># as bruce, sudoing to root</span>
+<span class="nv">$ </span>ansible all -m ping -u bruce --sudo
+<span class="c"># as bruce, sudoing to batman</span>
+<span class="nv">$ </span>ansible all -m ping -u bruce --sudo --sudo-user batman
+</pre></div>
+</div>
+<p>Now run a live command on all of your nodes:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible all -a <span class="s2">&quot;/bin/echo hello&quot;</span>
+</pre></div>
+</div>
+<p>Congratulations.  You&#8217;ve just contacted your nodes with Ansible.  It&#8217;s
+now time to read some of the more real-world <a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a>, and explore
+what you can do with different modules, as well as the Ansible
+<a class="reference internal" href="playbooks.html"><em>Playbooks</em></a> language.  Ansible is not just about running commands, it
+also has powerful configuration management and deployment features.  There&#8217;s more to
+explore, but you already have a fully working infrastructure!</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="examples.html"><em>Command Line Examples And Next Steps</em></a></dt>
+<dd>Examples of basic commands</dd>
+<dt><a class="reference internal" href="playbooks.html"><em>Playbooks</em></a></dt>
+<dd>Learning ansible&#8217;s configuration management language</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
+<dt><a class="reference external" href="http://irc.freenode.net">irc.freenode.net</a></dt>
+<dd>#ansible IRC chat channel</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+<div class="container">
+<p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Oct 08, 2012.<br/>
+    </p>
+</div>
+</footer>
+  </body>
+</html>

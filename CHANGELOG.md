@@ -3,9 +3,14 @@ Ansible Changes By Release
 
 0.8 "Cathedral" -- release pending 
 
-Core:
+Highlighted Core Changes:
 
+* fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time.  It is very fast.
+* playbooks with errors now return 2 on failure.  1 indicates a more fatal syntax error.  Similar for /usr/bin/ansible
 * server side action code (template, etc) are now fully pluggable
+
+Other Core Changes:
+
 * ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
 * fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
 * ansible-pull example now sets up logrotate for the ansible-pull cron job log
@@ -15,35 +20,56 @@ Core:
 * magic variable 'ansible_ssh_host' can override the hostname (great for usage with tunnels)
 * date command usage in build scripts fixed for OS X
 * don't use SSH agent with paramiko if a password is specified
-* start of fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time (WIP)
 * make output be cleaner on multi-line command/shell errors
 * /usr/bin/ansible now prints things when tasks are skipped, like when creates= is used with -m command and /usr/bin/ansible
 * when trying to async a module that is not a 'normal' asyncable module, ansible will now let you know
+* ability to access inventory variables via 'hostvars' for hosts not yet included in any play, using on demand lookups
+* merged ansible-plugins, ansible-resources, and ansible-docs into the main project
+* you can set ANSIBLE_NOCOWS=1 if you want to disable cowsay if it is installed.  Though no one should ever want to do this!  Cows are great!
+* you can set ANSIBLE_FORCECOLOR=1 to force color mode even when running without a TTY
+* fatal errors are now properly colored red.
+* skipped messages are now cyan, to differentiate them from unchanged messages.
+* extensive documentation upgrades
 
-Playbooks:
+Highlighted playbook changes:
 
-* is_set is available for use inside of an only_if expression:  is_set('ansible_eth0') # etc
-* to_yaml and from_yaml are available as Jinja2 filters
-* $group and $group_names are now accessible in with_items
+* is_set is available for use inside of an only_if expression:  is_set('ansible_eth0').  We intend to further upgrade this with a 'when'
+  keyword providing better options to 'only_if' in the next release.   Also is_unset('ansible_eth0')
 * playbooks can import playbooks in other directories and then be able to import tasks relative to them
-* where 'stdout' is provided a new 'stdout_lines' variable (type == list) is now generated and usable with with_items
 * FILE($path) now allows access of contents of file in a path, very good for use with SSH keys
 * similarly PIPE($command) will run a local command and return the results of executing this command
+* if all hosts in a play fail, stop the playbook, rather than letting the console log spool on by
+* only_if using register variables that are booleans now works in a boolean way like you'd expect
+* task includes now work with with_items (such as: include: path/to/wordpress.yml user=$item)
+* when using a $list variable with $var or ${var} syntax it will automatically join with commas
+* setup is not run more than once when we know it is has already been run in a play that included another play, etc
+
+Other playbook changes:
+
+* to_yaml and from_yaml are available as Jinja2 filters
+* $group and $group_names are now accessible in with_items
+* where 'stdout' is provided a new 'stdout_lines' variable (type == list) is now generated and usable with with_items
 * when local_action is used the transport is automatically overridden to the local type
 * output on failed playbook commands is now nicely split for stderr/stdout and syntax errors
 * if local_action is not used and delegate_to was 127.0.0.1 or localhost, use local connection regardless
-* is_unset is also available in only_if in addition to is_set
 * when running a playbook, and the statement has changed, prints 'changed:' now versus 'ok:' so it is obvious without colored mode
 * variables now usable within vars_prompt (just not host/group vars)
-* only_if using register variables that are booleans now works in a boolean way like you'd expect
-* if all hosts in a play fail, stop the playbook, rather than letting the console log spool on by
 * setup facts are now retained across plays (dictionary just gets updated as needed)
-* task includes now work with with_items (such as: include: path/to/wordpress.yml user=$item)
-* when using a $list variable with $var or ${var} syntax it will automatically join with commas
 * --sudo-user now works with --extra-vars
 * fix for multi_line strings with only_if
 
-Modules:
+New Modules:
+
+* ini_file module for manipulating INI files
+* new LSB facts (release, distro, etc)
+* new VMware ESX facts module (use with local_action or delegate_to)
+* new HP ILO facts module (use with local_action or delegate_to)
+* pause module -- (pause seconds=10) (pause minutes=1) (pause prompt=foo) -- it's an action plugin
+* a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
+* debug module can be used for outputing messages without using 'shell echo'
+* a fail module is now available for causing errors, you might want to use it with only_if to fail in certain conditions
+
+Other module Changes, Upgrades, and Fixes:
 
 * removes= exists on command just like creates=
 * postgresql modules now take an optional port= parameter
@@ -55,16 +81,15 @@ Modules:
 * copy module is now atomic when used across volumes
 * url_get module now returns 'dest' with the location of the file saved
 * fix for yum module when using local RPMs vs downloading
-* pause plugin (pause seconds=10) (pause minutes=1) (pause prompt=foo) action plugin
 * cleaner error messages with copy if destination directory does not exist
 * setup module now still works if PATH is not set
 * service module status now correct for services with 'subsys locked' status
 * misc fixes/upgrades to the wait_for module
 * git module now expands any "~" in provided destination paths
-* ini_file module for manipulating INI files
 * ignore stop error code failure for service module with state=restarted, always try to start
 * inline documentation for modules allows documentation source to built without pull requests to the ansible-docs project, among other things
-* new LSB facts (release, distro, etc)
+* variable '$ansible_managed' is now great to include at the top of your templates and includes useful information and a warning that it will be replaced
+* "~" now expanded in command module when using creates/removes
 
 0.7 "Panama" -- Sept 6 2012
 

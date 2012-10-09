@@ -27,7 +27,7 @@ Contributions to the core and modules are greatly welcome.
        * Joining the mailing list
        * Fixing bugs instead of sending bug reports.
        * Using squash merges
-       * Updating the "rst/*" files in the docs project and "docs/" manpage content
+       * Updating the "rst/*" files in the "docsite/" directory and "docs/" manpage content
        * Adding more unit tests
    * Avoid:
        * Sending patches to the mailing list directly.

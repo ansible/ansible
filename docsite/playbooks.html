@@ -1,0 +1,567 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Playbooks &mdash; Ansible Documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-scrollspy.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Ansible Documentation" href="index.html" />
+    <link rel="next" title="Advanced Playbooks" href="playbooks2.html" />
+    <link rel="prev" title="YAML Syntax" href="YAMLSyntax.html" />
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+  </head>
+  <body>
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Ansible Documentation</a>
+        <ul class="nav">
+          
+            <li><a href="/">Home</A>
+	    <li class="dropdown" data-dropdown="dropdown">
+  <a href="index.html"
+     class="dropdown-toggle">Chapter</a>
+  <span class="globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">Inventory &amp; Patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Command Line Examples And Next Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Ansible Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="YAMLSyntax.html">YAML Syntax</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="playbooks2.html">Advanced Playbooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bestpractices.html">Best Practices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API &amp; Integrations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="moduledev.html">Module Development</a></li>
+</ul>
+</span>
+</li>
+            <li class="dropdown" data-dropdown="dropdown">
+  <a href="#"
+     class="dropdown-toggle">Page</a>
+  <span class="localtoc"><ul>
+<li><a class="reference internal" href="#">Playbooks</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#playbook-language-example">Playbook Language Example</a></li>
+<li><a class="reference internal" href="#basics">Basics</a><ul>
+<li><a class="reference internal" href="#hosts-and-users">Hosts and Users</a></li>
+<li><a class="reference internal" href="#vars-section">Vars section</a></li>
+<li><a class="reference internal" href="#tasks-list">Tasks list</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#running-operations-on-change">Running Operations On Change</a></li>
+<li><a class="reference internal" href="#include-files-and-encouraging-reuse">Include Files And Encouraging Reuse</a></li>
+<li><a class="reference internal" href="#executing-a-playbook">Executing A Playbook</a></li>
+<li><a class="reference internal" href="#tips-and-tricks">Tips and Tricks</a></li>
+</ul>
+</li>
+</ul>
+</span>
+</li>
+          
+        </ul>
+        <ul class="nav secondary-nav">
+          
+            
+<form class="pull-left" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+<div class="container">
+   
+  <div class="section" id="playbooks">
+<h1><a class="toc-backref" href="#contents">Playbooks</a><a class="headerlink" href="#playbooks" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#playbooks" id="id2">Playbooks</a><ul>
+<li><a class="reference internal" href="#introduction" id="id3">Introduction</a></li>
+<li><a class="reference internal" href="#playbook-language-example" id="id4">Playbook Language Example</a></li>
+<li><a class="reference internal" href="#basics" id="id5">Basics</a></li>
+<li><a class="reference internal" href="#running-operations-on-change" id="id6">Running Operations On Change</a></li>
+<li><a class="reference internal" href="#include-files-and-encouraging-reuse" id="id7">Include Files And Encouraging Reuse</a></li>
+<li><a class="reference internal" href="#executing-a-playbook" id="id8">Executing A Playbook</a></li>
+<li><a class="reference internal" href="#tips-and-tricks" id="id9">Tips and Tricks</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#contents">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Playbooks are a completely different way to use ansible than in task execution mode, and are
+particularly powerful. Simply put, playbooks are the basis for a really simple
+configuration management and multi-machine deployment system,
+unlike any that already exist, and one that is very well suited to deploying complex applications.</p>
+<p>Playbooks can declare configurations, but they can also orchestrate steps of
+any manual ordered process, even as different steps must bounce back and forth
+between sets of machines in particular orders.  They can launch tasks
+synchronously or asynchronously.</p>
+<p>While you might run the main /usr/bin/ansible program for ad-hoc
+tasks, playbooks are more likely to be kept in source control and used
+to push out your configuration or assure the configurations of your
+remote systems are in spec.</p>
+<p>Let&#8217;s dive in and see how they work.  As you go, you may wish to open
+the <a class="reference external" href="https://github.com/ansible/ansible/tree/devel/examples/playbooks">github examples directory</a> in
+another tab, so you can apply the theory to what things look like in practice.</p>
+</div>
+<div class="section" id="playbook-language-example">
+<h2><a class="toc-backref" href="#contents">Playbook Language Example</a><a class="headerlink" href="#playbook-language-example" title="Permalink to this headline">¶</a></h2>
+<p>Playbooks are expressed in YAML format and have a minimum of syntax.
+Each playbook is composed of one or more &#8216;plays&#8217; in a list.</p>
+<p>The goal of a play is map a group of hosts to some well defined roles, represented by
+things ansible called tasks.  At the basic level, a task is nothing more than a call
+to an ansible module, which you should have learned about in earlier chapters.</p>
+<p>By composing a playbook of multiple &#8216;plays&#8217;, it is possible to
+orchestrate multi-machine deployments, running certain steps on all
+machines in the webservers group, then certain steps on the database
+server group, then more commands back on the webservers group, etc.</p>
+<p>For starters, here&#8217;s a playbook that contains just one play:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  vars:
+    http_port: 80
+    max_clients: 200
+  user: root
+  tasks:
+  - name: ensure apache is at the latest version
+    action: yum pkg=httpd state=latest
+  - name: write the apache config file
+    action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
+    notify:
+    - restart apache
+  - name: ensure apache is running
+    action: service name=httpd state=started
+  handlers:
+    - name: restart apache
+      action: service name=httpd state=restarted</pre>
+</div>
+<p>Below, we&#8217;ll break down what the various features of the playbook language are.</p>
+</div>
+<div class="section" id="basics">
+<h2><a class="toc-backref" href="#contents">Basics</a><a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hosts-and-users">
+<h3>Hosts and Users<a class="headerlink" href="#hosts-and-users" title="Permalink to this headline">¶</a></h3>
+<p>For each play in a playbook, you get to choose which machines in your infrastructure
+to target and what remote user to complete the steps (called tasks) as.</p>
+<p>The <cite>hosts</cite> line is a list of one or more groups or host patterns,
+separated by colons, as described in the <a class="reference internal" href="patterns.html#patterns"><em>Inventory &amp; Patterns</em></a>
+documentation.  The <cite>user</cite> is just the name of the user account:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: root</pre>
+</div>
+<p>Support for running things from sudo is also available:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: yourname
+  sudo: True</pre>
+</div>
+<p>You can also login as you, and then sudo to different users than root:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: yourname
+  sudo: True
+  sudo_user: postgres</pre>
+</div>
+<p>If you need to specify a password to sudo, run <cite>ansible-playbook</cite> with <tt class="docutils literal"><span class="pre">--ask-sudo-pass</span></tt> (<cite>-K</cite>).
+If you run a sudo playbook and the playbook seems to hang, it&#8217;s probably stuck at the sudo prompt.
+Just <cite>Control-C</cite> to kill it and run it again with <cite>-K</cite>.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">When using <cite>sudo_user</cite> to a user other than root, the module
+arguments are briefly written into a random tempfile in /tmp.
+These are deleted immediately after the command is executed.  This
+only occurs when sudoing from a user like &#8216;bob&#8217; to &#8216;timmy&#8217;, not
+when going from &#8216;bob&#8217; to &#8216;root&#8217;, or logging in directly as &#8216;bob&#8217; or
+&#8216;root&#8217;.  If this concerns you that this data is briefly readable
+(not writeable), avoid transferring uncrypted passwords with
+<cite>sudo_user</cite> set.  In other cases, &#8216;/tmp&#8217; is not used and this does
+not come into play. Ansible also takes care to not log password
+parameters.</p>
+</div>
+</div>
+<div class="section" id="vars-section">
+<h3>Vars section<a class="headerlink" href="#vars-section" title="Permalink to this headline">¶</a></h3>
+<p>The <cite>vars</cite> section contains a list of variables and values that can be used in the plays, like this:</p>
+<div class="highlight-python"><pre>---
+- hosts: webservers
+  user: root
+  vars:
+     http_port: 80
+     van_halen_port: 5150
+     other: 'magic'</pre>
+</div>
+<p>These variables can be used later in the playbook like this:</p>
+<div class="highlight-python"><pre>$varname or ${varname}</pre>
+</div>
+<p>The later is useful in the event you need to do something like ${other}_some_string.</p>
+<p>Inside templates, the full power of the <a class="reference external" href="http://jinja.pocoo.org/docs/">Jinja2</a> templating language is also available, which looks like this:</p>
+<div class="highlight-python"><pre>{{ varname }}</pre>
+</div>
+<p>The Jinja2 documentation provides information about how to construct loops and conditionals for those
+who which to use more advanced templating.  This is optional and the $varname format still works in template
+files.</p>
+<p>If there are discovered variables about the system, called &#8216;facts&#8217;, these variables bubble up back into the
+playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
+of these, prefixed with &#8216;ansible&#8217;, and are documented under &#8216;setup&#8217; in the module documentation.  Additionally,
+facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with <tt class="docutils literal"><span class="pre">facter_</span></tt> and Ohai
+variables are prefixed with <tt class="docutils literal"><span class="pre">ohai_</span></tt>.</p>
+<p>So for instance, if I wanted
+to write the hostname into the /etc/motd file, I could say:</p>
+<div class="highlight-python"><pre>- name: write the motd
+  action: template src=/srv/templates/motd.j2 dest=/etc/motd</pre>
+</div>
+<p>And in /srv/templates/motd.j2:</p>
+<div class="highlight-python"><pre>You are logged into {{ facter_hostname }}</pre>
+</div>
+<p>But we&#8217;re getting ahead of ourselves.  Let&#8217;s talk about tasks.</p>
+</div>
+<div class="section" id="tasks-list">
+<h3>Tasks list<a class="headerlink" href="#tasks-list" title="Permalink to this headline">¶</a></h3>
+<p>Each play contains a list of tasks.  Tasks are executed in order, one
+at a time, against all machines matched by the host pattern,
+before moving on to the next task.  It is important to understand that, within a play,
+all hosts are going to get the same task directives.  It is the purpose of a play to map
+a selection of hosts to tasks.</p>
+<p>When running the playbook, which runs top to bottom, hosts with failed tasks are
+taken out of the rotation for the entire playbook.  If things fail, simply correct the playbook file and rerun.</p>
+<p>The goal of each task is to execute a module, with very specific arguments.
+Variables, as mentioned above, can be used in arguments to modules.</p>
+<p>Modules are &#8216;idempotent&#8217;, meaning if you run them
+again, they will make the changes they are told to make to bring the
+system to the desired state.  This makes it very safe to rerun
+the same playbook multiple times.  They won&#8217;t change things
+unless they have to change things.</p>
+<p>The <cite>command</cite> and <cite>shell</cite> modules will typically rerun the same command again,
+which is totally ok if the command is something like
+&#8216;chmod&#8217; or &#8216;setsebool&#8217;, etc.  Though there is a &#8216;creates&#8217; flag available which can
+be used to make these modules also idempotent.</p>
+<p>Every task should have a <cite>name</cite>, which is included in the output from
+running the playbook.   This is output for humans, so it is
+nice to have reasonably good descriptions of each task step.  If the name
+is not provided though, the string fed to &#8216;action&#8217; will be used for
+output.</p>
+<p>Here is what a basic task looks like, as with most modules,
+the service module takes key=value arguments:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: make sure apache is running
+    action: service name=httpd state=running</pre>
+</div>
+<p>The <cite>command</cite> and <cite>shell</cite> modules are the one modules that just takes a list
+of arguments, and don&#8217;t use the key=value form.  This makes
+them work just like you would expect. Simple:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: disable selinux
+    action: command /sbin/setenforce 0</pre>
+</div>
+<p>The command and shell module care about return codes, so if you have a command
+who&#8217;s successful exit code is not zero, you may wish to do this:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: run this command and ignore the result
+    action: shell /usr/bin/somecommand &amp; /bin/true</pre>
+</div>
+<p>Variables can be used in action lines.   Suppose you defined
+a variable called &#8216;vhost&#8217; in the &#8216;vars&#8217; section, you could do this:</p>
+<div class="highlight-python"><pre>tasks:
+  - name: create a virtual host file for $vhost
+    action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost</pre>
+</div>
+<p>Those same variables are usable in templates, which we&#8217;ll get to later.</p>
+<p>Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
+make more sense to break up tasks using the &#8216;include:&#8217; directive.  We&#8217;ll show that a bit later.</p>
+</div>
+</div>
+<div class="section" id="running-operations-on-change">
+<h2><a class="toc-backref" href="#contents">Running Operations On Change</a><a class="headerlink" href="#running-operations-on-change" title="Permalink to this headline">¶</a></h2>
+<p>As we&#8217;ve mentioned, modules are written to be &#8216;idempotent&#8217; and can relay  when
+they have made a change on the remote system.   Playbooks recognize this and
+have a basic event system that can be used to respond to change.</p>
+<p>These &#8216;notify&#8217; actions are triggered at the end of each &#8216;play&#8217; in a playbook, and
+trigger only once each.  For instance, multiple resources may indicate
+that apache needs to be restarted, but apache will only be bounced once.</p>
+<p>Here&#8217;s an example of restarting two services when the contents of a file
+change, but only if the file changes:</p>
+<div class="highlight-python"><pre>- name: template configuration file
+  action: template src=template.j2 dest=/etc/foo.conf
+  notify:
+     - restart memcached
+     - restart apache</pre>
+</div>
+<p>The things listed in the &#8216;notify&#8217; section of a task are called
+handlers.</p>
+<p>Handlers are lists of tasks, not really any different from regular
+tasks, that are referenced by name.  Handlers are what notifiers
+notify.  If nothing notifies a handler, it will not run.  Regardless
+of how many things notify a handler, it will run only once, after all
+of the tasks complete in a particular play.</p>
+<p>Here&#8217;s an example handlers section:</p>
+<div class="highlight-python"><pre>handlers:
+    - name: restart memcached
+      action: service name=memcached state=restarted
+    - name: restart apache
+      action: service name=apache state=restarted</pre>
+</div>
+<p>Handlers are best used to restart services and trigger reboots.  You probably
+won&#8217;t need them for much else.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Notify handlers are always run in the order written.</p>
+</div>
+</div>
+<div class="section" id="include-files-and-encouraging-reuse">
+<h2><a class="toc-backref" href="#contents">Include Files And Encouraging Reuse</a><a class="headerlink" href="#include-files-and-encouraging-reuse" title="Permalink to this headline">¶</a></h2>
+<p>Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
+include files to do this.  Use of included task lists is a great way to define a role
+that system is going to fulfill.  Remember, the goal of a play in a playbook is to map
+a group of systems into multiple roles.  Let&#8217;s see what this looks like...</p>
+<p>A task include file simply contains a flat list of tasks, like so:</p>
+<div class="highlight-python"><pre>---
+# possibly saved as tasks/foo.yml
+- name: placeholder foo
+  action: command /bin/foo
+- name: placeholder bar
+  action: command /bin/bar</pre>
+</div>
+<p>Include directives look like this, and can be mixed in with regular tasks in a playbook:</p>
+<div class="highlight-python"><pre>tasks:
+ - include: tasks/foo.yml</pre>
+</div>
+<p>You can also pass variables into includes.  We call this a &#8216;parameterized include&#8217;.</p>
+<p>For instance, if deploying multiple wordpress instances, I could
+contain all of my wordpress tasks in a single wordpress.yml file, and use it like so:</p>
+<div class="highlight-python"><pre>tasks:
+  - include: wordpress.yml user=timmy
+  - include: wordpress.yml user=alice
+  - include: wordpress.yml user=bob</pre>
+</div>
+<p>Variables passed in can then be used in the included files.  You can reference them like this:</p>
+<div class="highlight-python"><pre>$user</pre>
+</div>
+<p>(In addition to the explicitly passed in parameters, all variables from
+the vars section are also available for use here as well.)</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Task include statements are only usable one-level deep.
+This means task includes can not include other
+task includes.  This may change in a later release.</p>
+</div>
+<p>Includes can also be used in the &#8216;handlers&#8217; section, for instance, if you
+want to define how to restart apache, you only have to do that once for all
+of your playbooks.  You might make a handlers.yml that looks like:</p>
+<div class="highlight-python"><pre>----
+# this might be in a file like handlers/handlers.yml
+- name: restart apache
+  action: service name=apache state=restarted</pre>
+</div>
+<p>And in your main playbook file, just include it like so, at the bottom
+of a play:</p>
+<div class="highlight-python"><pre>handlers:
+  - include: handlers/handlers.yml</pre>
+</div>
+<p>You can mix in includes along with your regular non-included tasks and handlers.</p>
+<p>Includes can also be used to import one playbook file into another. This allows
+you to define a top-level playbook that is composed of other playbooks.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>- name: this is a play at the top level of a file
+  hosts: all
+  user: root
+  tasks:
+  - name: say hi
+    tags: foo
+    action: shell echo "hi..."
+
+- include: load_balancers.yml
+- include: webservers.yml
+- include: dbservers.yml</pre>
+</div>
+<p>Note that you cannot do variable substitution when including one playbook
+inside another.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can not conditionally path the location to an include file,
+like you can with &#8216;vars_files&#8217;.  If you find yourself needing to do
+this, consider how you can restructure your playbook to be more
+class/role oriented.  This is to say you cannot use a &#8216;fact&#8217; to
+decide what include file to use.  All hosts contained within the
+play are going to get the same tasks.  (&#8216;only_if&#8217; provides some
+ability for hosts to conditionally skip tasks).</p>
+</div>
+</div>
+<div class="section" id="executing-a-playbook">
+<h2><a class="toc-backref" href="#contents">Executing A Playbook</a><a class="headerlink" href="#executing-a-playbook" title="Permalink to this headline">¶</a></h2>
+<p>Now that you&#8217;ve learned playbook syntax, how do you run a playbook?  It&#8217;s simple.
+Let&#8217;s run a playbook using a parallelism level of 10:</p>
+<div class="highlight-python"><pre>ansible-playbook playbook.yml -f 10</pre>
+</div>
+</div>
+<div class="section" id="tips-and-tricks">
+<h2><a class="toc-backref" href="#contents">Tips and Tricks</a><a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h2>
+<p>Look at the bottom of the playbook execution for a summary of the nodes that were executed
+and how they performed.   General failures and fatal &#8220;unreachable&#8221; communication attempts are
+kept seperate in the counts.</p>
+<p>If you ever want to see detailed output from successful modules as well as unsuccessful ones,
+use the &#8216;&#8211;verbose&#8217; flag.  This is available in Ansible 0.5 and later.</p>
+<p>Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay
+package is installed.  Try it!</p>
+<p>In version 0.7 and later, to see what hosts would be affected by a playbook before you run it, you
+can do this:</p>
+<div class="highlight-python"><pre>ansible-playbook playbook.yml --list-hosts.</pre>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="YAMLSyntax.html"><em>YAML Syntax</em></a></dt>
+<dd>Learn about YAML syntax</dd>
+<dt><a class="reference internal" href=""><em>Playbooks</em></a></dt>
+<dd>Review the basic Playbook language features</dd>
+<dt><a class="reference internal" href="playbooks2.html"><em>Advanced Playbooks</em></a></dt>
+<dd>Learn about Advanced Playbook Features</dd>
+<dt><a class="reference internal" href="bestpractices.html"><em>Best Practices</em></a></dt>
+<dd>Various tips about managing playbooks in the real world</dd>
+<dt><a class="reference internal" href="modules.html"><em>Ansible Modules</em></a></dt>
+<dd>Learn about available modules</dd>
+<dt><a class="reference internal" href="moduledev.html"><em>Module Development</em></a></dt>
+<dd>Learn how to extend Ansible by writing your own modules</dd>
+<dt><a class="reference internal" href="patterns.html"><em>Inventory &amp; Patterns</em></a></dt>
+<dd>Learn about how to select hosts</dd>
+<dt><a class="reference external" href="https://github.com/ansible/ansible/tree/devel/examples/playbooks">Github examples directory</a></dt>
+<dd>Complete playbook files from the github project source</dd>
+<dt><a class="reference external" href="http://groups.google.com/group/ansible-project">Mailing List</a></dt>
+<dd>Questions? Help? Ideas?  Stop by the list on Google Groups</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+<br/>
+</div>
+<footer class="footer">
+<div class="container">
+<p>
+<p>
+        &copy; Copyright 2012 Michael DeHaan.<br/>
+      Last updated on Oct 08, 2012.<br/>
+    </p>
+</div>
+</footer>
+  </body>
+</html>

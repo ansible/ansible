@@ -108,9 +108,6 @@ Use this remote 'USERNAME' instead of root.
 
 Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
 
-*--private-key=*'PRIVATE_KEY_FILE'::
-Use this file to authenticate the connection.
-
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
 Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',

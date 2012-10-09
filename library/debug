@@ -1,0 +1,85 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: debug
+short_description: Print statements during execution
+description:
+     - This module prints statements during execution and can be useful
+       for debugging variables or expressions without necessarily halting
+       the playbook. Useful for debugging together with the only_if directive.
+
+       In order to see the debug message, you need to run ansible in verbose
+       mode (using the -v option).
+version_added: "0.8"
+options:
+  msg:
+    description:
+      - The customized message that is printed. If ommited, prints a generic
+        message.
+    required: false
+    default: "Hello world!"
+  rc:
+    description:
+      - The return code of the module. If fail=yes, this will default to 1.
+    required: false
+    default: 0
+  fail:
+    description:
+      - A boolean that indicates whether the debug module should fail or not.
+    required: false
+    default: "no"
+examples:
+    - code:
+        - local_action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"
+        - local_action: debug msg="System $inventory_hostname lacks a gateway" fail=yes
+          only_if: "is_unset('${ansible_default_ipv4.gateway}')"
+        - local_action: debug msg="System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}"
+          only_if: "is_set('${ansible_default_ipv4.gateway}')"
+      description: "Example that prints the loopback address and gateway for each host"
+author: Dag Wieers
+'''
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            fail = dict(default='no', choices=BOOLEANS),
+            msg = dict(default='Hello world!'),
+            rc = dict(default=0),
+        )
+    )
+
+    fail = module.boolean(module.params.get('fail'))
+    msg = module.params.get('msg')
+    rc = module.params.get('rc')
+
+    if fail and rc == 0:
+        rc = 1
+
+    if fail:
+        module.fail_json(rc=rc, msg=msg)
+    else:
+        module.exit_json(msg=msg)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
