@@ -114,7 +114,7 @@ python:
 install:
 	python setup.py install
 
-sdist: clean
+sdist: clean docs
 	python setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
