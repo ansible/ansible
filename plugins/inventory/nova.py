@@ -1,46 +1,5 @@
 #!/usr/bin/python
 
-"""
-OpenStack external inventory script
-=================================
-
-Generates inventory that Ansible can understand by making API request to
-OpenStack endpoint using the novaclient library.
-
-NOTE: This script assumes Ansible is being executed where the environment
-variables needed for novaclient have already been set on nova.ini file
-
-For more details, see: https://github.com/openstack/python-novaclient
-
-When run against a specific host, this script returns the following variables:
-    os_os-ext-sts_task_state
-    os_addresses
-    os_links
-    os_image
-    os_os-ext-sts_vm_state
-    os_flavor
-    os_id
-    os_rax-bandwidth_bandwidth
-    os_user_id
-    os_os-dcf_diskconfig
-    os_accessipv4
-    os_accessipv6
-    os_progress
-    os_os-ext-sts_power_state
-    os_metadata
-    os_status
-    os_updated
-    os_hostid
-    os_name
-    os_created
-    os_tenant_id
-    os__info
-    os__loaded
-
-where some item can have nested structure.
-
-"""
-
 # (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 #
 # This file is part of Ansible,
@@ -58,7 +17,116 @@ where some item can have nested structure.
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-######################################################################
+DOCUMENTATION = '''
+---
+inventory: nova
+short_description: OpenStack external inventory script
+description:
+  - Generates inventory that Ansible can understand by making API request to OpenStack endpoint using the novaclient library.
+  - |
+    When run against a specific host, this script returns the following variables:
+        os_os-ext-sts_task_state
+        os_addresses
+        os_links
+        os_image
+        os_os-ext-sts_vm_state
+        os_flavor
+        os_id
+        os_rax-bandwidth_bandwidth
+        os_user_id
+        os_os-dcf_diskconfig
+        os_accessipv4
+        os_accessipv6
+        os_progress
+        os_os-ext-sts_power_state
+        os_metadata
+        os_status
+        os_updated
+        os_hostid
+        os_name
+        os_created
+        os_tenant_id
+        os__info
+        os__loaded
+
+    where some item can have nested structure.
+  - All information are set on B(nova.ini) file
+version_added: None
+options:
+  version:
+    description:
+      - OpenStack version to use.
+    required: true
+    default: null
+    choices: [ "1.1", "2" ]
+  username:
+    description:
+      - Username used to authenticate in OpenStack.
+    required: true
+    default: null
+  api_key:
+    description:
+      - Password used to authenticate in OpenStack, can be the ApiKey on some authentication system.
+    required: true
+    default: null
+  auth_url:
+    description:
+      - Authentication URL required to generate token.
+      - To manage RackSpace use I(https://identity.api.rackspacecloud.com/v2.0/)
+    required: true
+    default: null
+  auth_system:
+    description:
+      - Authentication system used to login
+      - To manage RackSpace install B(rackspace-novaclient) and insert I(rackspace)
+    required: true
+    default: null
+  region_name:
+    description:
+      - Region name to use in request
+      - In RackSpace some value can be I(ORD) or I(DWF).
+    required: true
+    default: null
+  project_id:
+    description:
+      - Project ID to use in connection
+      - In RackSpace use OS_TENANT_NAME
+    required: false
+    default: null
+  endpoint_type:
+    description:
+      - The endpoint type for novaclient
+      - In RackSpace use 'publicUrl'
+    required: false
+    default: null
+  service_type:
+    description:
+      - The service type you are managing.
+      - In RackSpace use 'compute'
+    required: false
+    default: null
+  service_name:
+    description:
+      - The service name you are managing.
+      - In RackSpace use 'cloudServersOpenStack'
+    required: false
+    default: null
+  insicure:
+    description:
+      - To no check security
+    required: false
+    default: false
+    choices: [ "true", "false" ]
+author: Marco Vito Moscaritolo
+notes:
+  - This script assumes Ansible is being executed where the environment variables needed for novaclient have already been set on nova.ini file
+  - For more details, see U(https://github.com/openstack/python-novaclient)
+examples:
+    - description: List instances
+      code: nova.py --list
+    - description: Instance property
+      code: nova.py --instance INSTANCE_IP
+'''
 
 
 import sys
