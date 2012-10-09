@@ -1,0 +1,61 @@
+{
+  "requirements": null, 
+  "description": [
+    "This is useful for when services are not immediately available after their init scripts return - which is true of certain Java application servers. It is also useful when starting guests with the M(virt) module and needing to pause until they are ready."
+  ], 
+  "author": "Jeroen Hoekx", 
+  "notes": [], 
+  "docuri": "wait-for", 
+  "module": "wait_for", 
+  "filename": "library/wait_for", 
+  "examples": [
+    {
+      "code": "wait_for port=8000 delay=10", 
+      "description": "Example from Ansible Playbooks"
+    }
+  ], 
+  "version_added": "0.7", 
+  "short_description": "Waits for a given port to become accessible on a server.", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "delay": {
+      "default": 0, 
+      "required": false, 
+      "description": [
+        "number of seconds to wait before starting to poll"
+      ]
+    }, 
+    "host": {
+      "default": "127.0.0.1", 
+      "required": false, 
+      "description": [
+        "hostname or IP address to wait for"
+      ], 
+      "aliases": []
+    }, 
+    "port": {
+      "required": true, 
+      "description": [
+        "port number to poll"
+      ]
+    }, 
+    "timeout": {
+      "default": 300, 
+      "required": false, 
+      "description": [
+        "maximum number of seconds to wait for"
+      ]
+    }, 
+    "state": {
+      "default": "started", 
+      "description": [
+        "either C(started), or C(stopped) depending on whether the module should poll for the port being open or closed."
+      ], 
+      "choices": [
+        "started", 
+        "stopped"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

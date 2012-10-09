@@ -1,0 +1,57 @@
+{
+  "now_date": "2012-10-09", 
+  "description": [
+    "The M(copy) module copies a file on the local box to remote locations."
+  ], 
+  "docuri": "copy", 
+  "author": "Michael DeHaan", 
+  "short_description": "Copies files to remote locations.", 
+  "ansible_version": "0.8", 
+  "filename": "library/copy", 
+  "options": {
+    "dest": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Remote absolute path where the file should be copied to."
+      ]
+    }, 
+    "src": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Local path to a file to copy to the remote server; can be absolute or relative."
+      ], 
+      "aliases": []
+    }, 
+    "backup": {
+      "default": "no", 
+      "required": false, 
+      "description": [
+        "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly."
+      ], 
+      "version_added": "0.7", 
+      "choices": [
+        "yes", 
+        "no"
+      ]
+    }, 
+    "others": {
+      "required": false, 
+      "description": [
+        "all arguments accepted by the M(file) module also work here"
+      ]
+    }
+  }, 
+  "module": "copy", 
+  "examples": [
+    {
+      "code": "copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644", 
+      "description": "Example from Ansible Playbooks"
+    }, 
+    {
+      "code": "copy src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes", 
+      "description": "Copy a new C(ntp.conf) file into place, backing up the original if it differs from the copied version"
+    }
+  ]
+}
