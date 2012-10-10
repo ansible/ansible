@@ -104,21 +104,6 @@ s.parentNode.insertBefore(ga, s);
 
 </script>
 
-<script type="text/javascript">
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
 
   </head>
   <body>
@@ -159,6 +144,8 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#authorized-key">authorized_key</a></li>
 <li><a class="reference internal" href="#command">command</a></li>
 <li><a class="reference internal" href="#copy">copy</a></li>
+<li><a class="reference internal" href="#cron">cron</a></li>
+<li><a class="reference internal" href="#debug">debug</a></li>
 <li><a class="reference internal" href="#easy-install">easy_install</a></li>
 <li><a class="reference internal" href="#facter">facter</a></li>
 <li><a class="reference internal" href="#fail">fail</a></li>
@@ -168,6 +155,8 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#get-url">get_url</a></li>
 <li><a class="reference internal" href="#git">git</a></li>
 <li><a class="reference internal" href="#group">group</a></li>
+<li><a class="reference internal" href="#hpilo-boot">hpilo_boot</a></li>
+<li><a class="reference internal" href="#hpilo-facts">hpilo_facts</a></li>
 <li><a class="reference internal" href="#ini-file">ini_file</a></li>
 <li><a class="reference internal" href="#lineinfile">lineinfile</a></li>
 <li><a class="reference internal" href="#mount">mount</a></li>
@@ -192,6 +181,7 @@ s.parentNode.insertBefore(ga, s);
 <li><a class="reference internal" href="#template">template</a></li>
 <li><a class="reference internal" href="#user">user</a></li>
 <li><a class="reference internal" href="#virt">virt</a></li>
+<li><a class="reference internal" href="#vsphere-facts">vsphere_facts</a></li>
 <li><a class="reference internal" href="#wait-for">wait_for</a></li>
 <li><a class="reference internal" href="#yum">yum</a></li>
 <li><a class="reference internal" href="#additional-contrib-modules">Additional Contrib Modules</a></li>
@@ -225,52 +215,57 @@ s.parentNode.insertBefore(ga, s);
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#ansible-modules" id="id43">Ansible Modules</a><ul>
-<li><a class="reference internal" href="#introduction" id="id44">Introduction</a></li>
-<li><a class="reference internal" href="#apt" id="id45">apt</a></li>
-<li><a class="reference internal" href="#apt-repository" id="id46">apt_repository</a></li>
-<li><a class="reference internal" href="#assemble" id="id47">assemble</a></li>
-<li><a class="reference internal" href="#async-status" id="id48">async_status</a></li>
-<li><a class="reference internal" href="#authorized-key" id="id49">authorized_key</a></li>
-<li><a class="reference internal" href="#command" id="id50">command</a></li>
-<li><a class="reference internal" href="#copy" id="id51">copy</a></li>
-<li><a class="reference internal" href="#easy-install" id="id52">easy_install</a></li>
-<li><a class="reference internal" href="#facter" id="id53">facter</a></li>
-<li><a class="reference internal" href="#fail" id="id54">fail</a></li>
-<li><a class="reference internal" href="#fetch" id="id55">fetch</a></li>
-<li><a class="reference internal" href="#file" id="id56">file</a></li>
-<li><a class="reference internal" href="#fireball" id="id57">fireball</a></li>
-<li><a class="reference internal" href="#get-url" id="id58">get_url</a></li>
-<li><a class="reference internal" href="#git" id="id59">git</a></li>
-<li><a class="reference internal" href="#group" id="id60">group</a></li>
-<li><a class="reference internal" href="#ini-file" id="id61">ini_file</a></li>
-<li><a class="reference internal" href="#lineinfile" id="id62">lineinfile</a></li>
-<li><a class="reference internal" href="#mount" id="id63">mount</a></li>
-<li><a class="reference internal" href="#mysql-db" id="id64">mysql_db</a></li>
-<li><a class="reference internal" href="#mysql-user" id="id65">mysql_user</a></li>
-<li><a class="reference internal" href="#nagios" id="id66">nagios</a></li>
-<li><a class="reference internal" href="#ohai" id="id67">ohai</a></li>
-<li><a class="reference internal" href="#pause" id="id68">pause</a></li>
-<li><a class="reference internal" href="#ping" id="id69">ping</a></li>
-<li><a class="reference internal" href="#pip" id="id70">pip</a></li>
-<li><a class="reference internal" href="#postgresql-db" id="id71">postgresql_db</a></li>
-<li><a class="reference internal" href="#postgresql-user" id="id72">postgresql_user</a></li>
-<li><a class="reference internal" href="#raw" id="id73">raw</a></li>
-<li><a class="reference internal" href="#seboolean" id="id74">seboolean</a></li>
-<li><a class="reference internal" href="#selinux" id="id75">selinux</a></li>
-<li><a class="reference internal" href="#service" id="id76">service</a></li>
-<li><a class="reference internal" href="#setup" id="id77">setup</a></li>
-<li><a class="reference internal" href="#shell" id="id78">shell</a></li>
-<li><a class="reference internal" href="#slurp" id="id79">slurp</a></li>
-<li><a class="reference internal" href="#subversion" id="id80">subversion</a></li>
-<li><a class="reference internal" href="#supervisorctl" id="id81">supervisorctl</a></li>
-<li><a class="reference internal" href="#template" id="id82">template</a></li>
-<li><a class="reference internal" href="#user" id="id83">user</a></li>
-<li><a class="reference internal" href="#virt" id="id84">virt</a></li>
-<li><a class="reference internal" href="#wait-for" id="id85">wait_for</a></li>
-<li><a class="reference internal" href="#yum" id="id86">yum</a></li>
-<li><a class="reference internal" href="#additional-contrib-modules" id="id87">Additional Contrib Modules</a></li>
-<li><a class="reference internal" href="#writing-your-own-modules" id="id88">Writing your own modules</a></li>
+<li><a class="reference internal" href="#ansible-modules" id="id48">Ansible Modules</a><ul>
+<li><a class="reference internal" href="#introduction" id="id49">Introduction</a></li>
+<li><a class="reference internal" href="#apt" id="id50">apt</a></li>
+<li><a class="reference internal" href="#apt-repository" id="id51">apt_repository</a></li>
+<li><a class="reference internal" href="#assemble" id="id52">assemble</a></li>
+<li><a class="reference internal" href="#async-status" id="id53">async_status</a></li>
+<li><a class="reference internal" href="#authorized-key" id="id54">authorized_key</a></li>
+<li><a class="reference internal" href="#command" id="id55">command</a></li>
+<li><a class="reference internal" href="#copy" id="id56">copy</a></li>
+<li><a class="reference internal" href="#cron" id="id57">cron</a></li>
+<li><a class="reference internal" href="#debug" id="id58">debug</a></li>
+<li><a class="reference internal" href="#easy-install" id="id59">easy_install</a></li>
+<li><a class="reference internal" href="#facter" id="id60">facter</a></li>
+<li><a class="reference internal" href="#fail" id="id61">fail</a></li>
+<li><a class="reference internal" href="#fetch" id="id62">fetch</a></li>
+<li><a class="reference internal" href="#file" id="id63">file</a></li>
+<li><a class="reference internal" href="#fireball" id="id64">fireball</a></li>
+<li><a class="reference internal" href="#get-url" id="id65">get_url</a></li>
+<li><a class="reference internal" href="#git" id="id66">git</a></li>
+<li><a class="reference internal" href="#group" id="id67">group</a></li>
+<li><a class="reference internal" href="#hpilo-boot" id="id68">hpilo_boot</a></li>
+<li><a class="reference internal" href="#hpilo-facts" id="id69">hpilo_facts</a></li>
+<li><a class="reference internal" href="#ini-file" id="id70">ini_file</a></li>
+<li><a class="reference internal" href="#lineinfile" id="id71">lineinfile</a></li>
+<li><a class="reference internal" href="#mount" id="id72">mount</a></li>
+<li><a class="reference internal" href="#mysql-db" id="id73">mysql_db</a></li>
+<li><a class="reference internal" href="#mysql-user" id="id74">mysql_user</a></li>
+<li><a class="reference internal" href="#nagios" id="id75">nagios</a></li>
+<li><a class="reference internal" href="#ohai" id="id76">ohai</a></li>
+<li><a class="reference internal" href="#pause" id="id77">pause</a></li>
+<li><a class="reference internal" href="#ping" id="id78">ping</a></li>
+<li><a class="reference internal" href="#pip" id="id79">pip</a></li>
+<li><a class="reference internal" href="#postgresql-db" id="id80">postgresql_db</a></li>
+<li><a class="reference internal" href="#postgresql-user" id="id81">postgresql_user</a></li>
+<li><a class="reference internal" href="#raw" id="id82">raw</a></li>
+<li><a class="reference internal" href="#seboolean" id="id83">seboolean</a></li>
+<li><a class="reference internal" href="#selinux" id="id84">selinux</a></li>
+<li><a class="reference internal" href="#service" id="id85">service</a></li>
+<li><a class="reference internal" href="#setup" id="id86">setup</a></li>
+<li><a class="reference internal" href="#shell" id="id87">shell</a></li>
+<li><a class="reference internal" href="#slurp" id="id88">slurp</a></li>
+<li><a class="reference internal" href="#subversion" id="id89">subversion</a></li>
+<li><a class="reference internal" href="#supervisorctl" id="id90">supervisorctl</a></li>
+<li><a class="reference internal" href="#template" id="id91">template</a></li>
+<li><a class="reference internal" href="#user" id="id92">user</a></li>
+<li><a class="reference internal" href="#virt" id="id93">virt</a></li>
+<li><a class="reference internal" href="#vsphere-facts" id="id94">vsphere_facts</a></li>
+<li><a class="reference internal" href="#wait-for" id="id95">wait_for</a></li>
+<li><a class="reference internal" href="#yum" id="id96">yum</a></li>
+<li><a class="reference internal" href="#additional-contrib-modules" id="id97">Additional Contrib Modules</a></li>
+<li><a class="reference internal" href="#writing-your-own-modules" id="id98">Writing your own modules</a></li>
 </ul>
 </li>
 </ul>
@@ -629,8 +624,138 @@ copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
 copy src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
 </pre></p>
 <br/></div>
+<div class="section" id="cron">
+<span id="id8"></span><h2><a class="toc-backref" href="#contents">cron</a><a class="headerlink" href="#cron" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.9.</span></p>
+<p>Use this module to manage crontab entries. This module allows you to create named crontab entries, update, or delete them.
+The module include one line with the description of the crontab entry &#8220;#Ansible: &lt;name&gt;&#8221; corresponding to the &#8220;name&#8221; passed to the module, which is used by future ansible/module calls to find/check the state.</p>
+<table>
+<tr>
+<th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">choices</th>
+<th class="head">comments</th>
+</tr>
+    <tr>
+<td>name</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>Description of a crontab entry.</td>
+</tr>
+    <tr>
+<td>hour</td>
+<td>no</td>
+<td>*</td>
+<td><ul></ul></td>
+<td>Hour when the job should run ( 0-23, *, */2, etc )</td>
+</tr>
+    <tr>
+<td>job</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>The command to execute.Required if state=present.</td>
+</tr>
+    <tr>
+<td>month</td>
+<td>no</td>
+<td>*</td>
+<td><ul></ul></td>
+<td>Month of the year the job should run ( 1-12, *, */2, etc )</td>
+</tr>
+    <tr>
+<td>state</td>
+<td>no</td>
+<td>present</td>
+<td><ul></ul></td>
+<td>Whether to ensure the job is present or absent.</td>
+</tr>
+    <tr>
+<td>user</td>
+<td>no</td>
+<td>root</td>
+<td><ul></ul></td>
+<td>The specific user who's crontab should be modified.</td>
+</tr>
+    <tr>
+<td>backup</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>If set, then create a backup of the crontab before it is modified.The location of the backup is returned in the 'backup' variable by this module.</td>
+</tr>
+    <tr>
+<td>day</td>
+<td>no</td>
+<td>*</td>
+<td><ul></ul></td>
+<td>Day of the month the job should run ( 1-31, *, */2, etc )</td>
+</tr>
+    <tr>
+<td>minute</td>
+<td>no</td>
+<td>*</td>
+<td><ul></ul></td>
+<td>Minute when the job should run ( 0-59, *, */2, etc )</td>
+</tr>
+    <tr>
+<td>weekday</td>
+<td>no</td>
+<td>*</td>
+<td><ul></ul></td>
+<td>Day of the week that the job should run ( 0-7 for Sunday - Saturday, or mon, tue, * etc )</td>
+</tr>
+    </table><p>Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"</p>    <p><pre>
+cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+</pre></p>
+<p>Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab</p>    <p><pre>
+name="an old job" cron job="/some/dir/job.sh" state=absent
+</pre></p>
+<br/></div>
+<div class="section" id="debug">
+<span id="id9"></span><h2><a class="toc-backref" href="#contents">debug</a><a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.8.</span></p>
+<p>This module prints statements during execution and can be useful for debugging variables or expressions without necessarily halting the playbook. Useful for debugging together with the only_if directive.
+In order to see the debug message, you need to run ansible in verbose mode (using the -v option).</p>
+<table>
+<tr>
+<th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">choices</th>
+<th class="head">comments</th>
+</tr>
+    <tr>
+<td>msg</td>
+<td>no</td>
+<td>Hello world!</td>
+<td><ul></ul></td>
+<td>The customized message that is printed. If ommited, prints a generic message.</td>
+</tr>
+    <tr>
+<td>fail</td>
+<td>no</td>
+<td>no</td>
+<td><ul></ul></td>
+<td>A boolean that indicates whether the debug module should fail or not.</td>
+</tr>
+    <tr>
+<td>rc</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>The return code of the module. If fail=yes, this will default to 1.</td>
+</tr>
+    </table><p>Example that prints the loopback address and gateway for each host</p>    <p><pre>
+[{'local_action': 'debug msg="System $inventory_hostname has uuid $ansible_product_uuid"'}, {'only_if': "is_unset('${ansible_default_ipv4.gateway}')", 'local_action': 'debug msg="System $inventory_hostname lacks a gateway" fail=yes'}, {'only_if': "is_set('${ansible_default_ipv4.gateway}')", 'local_action': 'debug msg="System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}"'}]
+</pre></p>
+<br/></div>
 <div class="section" id="easy-install">
-<span id="id8"></span><h2><a class="toc-backref" href="#contents">easy_install</a><a class="headerlink" href="#easy-install" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2><a class="toc-backref" href="#contents">easy_install</a><a class="headerlink" href="#easy-install" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Installs Python libraries, optionally in a <em>virtualenv</em></p>
@@ -666,7 +791,7 @@ easy_install name=flask virtualenv=/webapps/myapp/venv
     <p>Please note that the <span class='module'>easy_install</span> module can only install Python libraries. Thus this module is not able to remove libraries. It is generally recommended to use the <span class='module'>pip</span> module which you can first install using <span class='module'>easy_install</span>.</p>
     <p>Also note that <em>virtualenv</em> must be installed on the remote host if the <code>virtualenv</code> parameter is specified.</p></div>
 <div class="section" id="facter">
-<span id="id9"></span><h2><a class="toc-backref" href="#contents">facter</a><a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
+<span id="id11"></span><h2><a class="toc-backref" href="#contents">facter</a><a class="headerlink" href="#facter" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.2.</span></p>
 <p>Runs the <em>facter</em> discovery program (<a class="reference external" href="https://github.com/puppetlabs/facter">https://github.com/puppetlabs/facter</a>) on the remote system, returning JSON data that can be useful for inventory purposes.</p>
@@ -675,7 +800,7 @@ ansible  www.example.net -m facter
 </pre></p>
 <br/></div>
 <div class="section" id="fail">
-<span id="id10"></span><h2><a class="toc-backref" href="#contents">fail</a><a class="headerlink" href="#fail" title="Permalink to this headline">¶</a></h2>
+<span id="id12"></span><h2><a class="toc-backref" href="#contents">fail</a><a class="headerlink" href="#fail" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.8.</span></p>
 <p>This module fails the progress with a custom message. It can be useful for bailing out when a certain condition is met using only_if.</p>
@@ -690,7 +815,7 @@ ansible  www.example.net -m facter
     <tr>
 <td>msg</td>
 <td>no</td>
-<td>Failed because only_if condition is true</td>
+<td>'Failed because only_if condition is true'</td>
 <td><ul></ul></td>
 <td>The customized message used for failing execution. If ommited, fail will simple bail out with a generic message.</td>
 </tr>
@@ -701,12 +826,14 @@ ansible  www.example.net -m facter
 <td><ul></ul></td>
 <td>The return code of the failure. This is currently not used by Ansible, but might be used in the future.</td>
 </tr>
-    </table><p>Example of how a playbook may fail when a condition is not met</p>    <p><pre>
-[{'action': 'fail msg="The system may not be provisioned according to the CMDB status."', 'only_if': "'$cmdb_status' != 'to-be-staged'"}]
-</pre></p>
-<br/></div>
+    </table><p>Example playbook using fail and only_if together</p>    <p><pre>
+action: fail msg="The system may not be provisioned according to the CMDB status." rc=100<p>only_if: &#8220;&#8217;$cmdb_status&#8217; != &#8216;to-be-staged&#8217;&#8221;</p>
+<blockquote>
+<div>&lt;/pre&gt;&lt;/p&gt;
+&lt;br/&gt;</div></blockquote>
+</div>
 <div class="section" id="fetch">
-<span id="id11"></span><h2><a class="toc-backref" href="#contents">fetch</a><a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
+<span id="id13"></span><h2><a class="toc-backref" href="#contents">fetch</a><a class="headerlink" href="#fetch" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.2.</span></p>
 <p>This module works like <tt class="docutils literal"><span class="pre">copy</span></tt>, but in reverse. It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.</p>
@@ -737,7 +864,7 @@ fetch src=/var/log/messages dest=/home/logtree
 </pre></p>
 <br/></div>
 <div class="section" id="file">
-<span id="id12"></span><h2><a class="toc-backref" href="#contents">file</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
+<span id="id14"></span><h2><a class="toc-backref" href="#contents">file</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h2>
 <p>Sets attributes of files, symlinks, and directories, or removes files/symlinks/directories. Many other modules support the same options as the file module - including <tt class="docutils literal"><span class="pre">copy</span></tt>, <tt class="docutils literal"><span class="pre">template</span></tt>, and <tt class="docutils literal"><span class="pre">assmeble</span></tt>.</p>
 <table>
 <tr>
@@ -840,7 +967,7 @@ file src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 <br/><h4>Notes</h4>
     <p>See also <span class='module'>copy</span>, <span class='module'>template</span>, <span class='module'>assemble</span></p></div>
 <div class="section" id="fireball">
-<span id="id13"></span><h2><a class="toc-backref" href="#contents">fireball</a><a class="headerlink" href="#fireball" title="Permalink to this headline">¶</a></h2>
+<span id="id15"></span><h2><a class="toc-backref" href="#contents">fireball</a><a class="headerlink" href="#fireball" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.9.</span></p>
 <p>This modules launches an ephemeral <em>fireball</em> ZeroMQ message bus daemon on the remote node which Ansible can to communicate with nodes at high speed.
@@ -886,7 +1013,7 @@ Fireball mode is AES encrypted</p>
 <br/><h4>Notes</h4>
     <p>See the advanced playbooks chapter for more about using fireball mode.</p></div>
 <div class="section" id="get-url">
-<span id="id14"></span><h2><a class="toc-backref" href="#contents">get_url</a><a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
+<span id="id16"></span><h2><a class="toc-backref" href="#contents">get_url</a><a class="headerlink" href="#get-url" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote server must have direct access to the remote resource.</p>
@@ -932,7 +1059,7 @@ get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
 <br/><h4>Notes</h4>
     <p>This module doesn't yet support configuration for proxies or passwords.</p></div>
 <div class="section" id="git">
-<span id="id15"></span><h2><a class="toc-backref" href="#contents">git</a><a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
+<span id="id17"></span><h2><a class="toc-backref" href="#contents">git</a><a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.0.1.</span></p>
 <p>Manage git checkouts of repositories to deploy files or software.</p>
@@ -984,7 +1111,7 @@ git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=
 </pre></p>
 <br/></div>
 <div class="section" id="group">
-<span id="id16"></span><h2><a class="toc-backref" href="#contents">group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
+<span id="id18"></span><h2><a class="toc-backref" href="#contents">group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.0.2.</span></p>
 <p>Manage presence of groups on a host.</p>
@@ -1028,8 +1155,166 @@ git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=
 group name=somegroup state=present
 </pre></p>
 <br/></div>
+<div class="section" id="hpilo-boot">
+<span id="id19"></span><h2><a class="toc-backref" href="#contents">hpilo_boot</a><a class="headerlink" href="#hpilo-boot" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.8.</span></p>
+<p>This module boots a system through its HP iLO interface. The boot media can be one of: cdrom, floppy, hdd, network or usb.
+This module requires the hpilo python module.</p>
+<table>
+<tr>
+<th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">choices</th>
+<th class="head">comments</th>
+</tr>
+    <tr>
+<td>force</td>
+<td>no</td>
+<td></td>
+<td><ul><li>yes</li><li>no</li></ul></td>
+<td>Whether to force a reboot (even when the system is already booted)</td>
+</tr>
+    <tr>
+<td>media</td>
+<td>no</td>
+<td>network</td>
+<td><ul><li>cdrom</li><li>floppy</li><li>hdd</li><li>network</li><li>normal</li><li>usb</li></ul></td>
+<td>The boot media to boot the system from</td>
+</tr>
+    <tr>
+<td>image</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>The URL of a cdrom, floppy or usb boot media image. <code>protocol://username:password@hostname:port/filename</code>protocol is either <code>http</code> or <code>https</code>username:password is optionalport is optional</td>
+</tr>
+    <tr>
+<td>host</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The HP iLO hostname/address that is linked to the physical system.</td>
+</tr>
+    <tr>
+<td>state</td>
+<td>yes</td>
+<td>boot_once</td>
+<td><ul><li>boot_always</li><li>boot_once</li><li>connect</li><li>disconnect</li><li>no_boot</li></ul></td>
+<td>The state of the boot media.no_boot: Do not boot from the deviceboot_once: Boot from the device once and then notthereafterboot_always: Boot from the device each time the serveris rebootedconnect: Connect the virtual media device and set to boot_alwaysdisconnect: Disconnects the virtual media device and set to no_boot</td>
+</tr>
+    <tr>
+<td>login</td>
+<td>no</td>
+<td>Administrator</td>
+<td><ul></ul></td>
+<td>The login name to authenticate to the HP iLO interface.</td>
+</tr>
+    <tr>
+<td>password</td>
+<td>no</td>
+<td>admin</td>
+<td><ul></ul></td>
+<td>The password to authenticate to the HP iLO interface.</td>
+</tr>
+    <tr>
+<td>match</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>An optional string to match against the iLO server name.This is a safety measure to prevent accidentally using the wrong HP iLO interface with dire consequences.</td>
+</tr>
+    </table><p>Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server</p>    <p><pre>
+local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short media=cdrom image=$iso_url<p>only_if: &#8220;&#8217;$cmdb_hwmodel&#8217;.startswith(&#8216;HP &#8216;)</p>
+<blockquote>
+<div>&lt;/pre&gt;&lt;/p&gt;
+&lt;br/&gt;</div></blockquote>
+<h4>Notes</h4>
+    <p>To use a USB key image you need to specify floppy as boot media.</p>
+    <p>This module ought to be run from a system that can access the HP iLO interface directly, either by using <code>local_action</code> or <code>using delegate</code>_to.</p></div>
+<div class="section" id="hpilo-facts">
+<span id="id20"></span><h2><a class="toc-backref" href="#contents">hpilo_facts</a><a class="headerlink" href="#hpilo-facts" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.8.</span></p>
+<p>This module gathers facts for a specific system using its HP iLO interface. These facts include hardware and network related information useful for provisioning (e.g. macaddress, uuid).
+This module requires the hpilo python module.</p>
+<table>
+<tr>
+<th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">choices</th>
+<th class="head">comments</th>
+</tr>
+    <tr>
+<td>host</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The HP iLO hostname/address that is linked to the physical system.</td>
+</tr>
+    <tr>
+<td>password</td>
+<td>no</td>
+<td>admin</td>
+<td><ul></ul></td>
+<td>The password to authenticate to the HP iLO interface.</td>
+</tr>
+    <tr>
+<td>login</td>
+<td>no</td>
+<td>Administrator</td>
+<td><ul></ul></td>
+<td>The login name to authenticate to the HP iLO interface.</td>
+</tr>
+    <tr>
+<td>match</td>
+<td>no</td>
+<td></td>
+<td><ul></ul></td>
+<td>An optional string to match against the iLO server name.This is a safety measure to prevent accidentally using the wrong HP iLO interface with dire consequences.</td>
+</tr>
+    </table><p>Task to gather facts from a HP iLO interface only if the system is an HP server</p>    <p><pre>
+local_action: hpilo_facts host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short<p>only_if: &#8220;&#8217;$cmdb_hwmodel&#8217;.startswith(&#8216;HP &#8216;)</p>
+<blockquote>
+<div><blockquote>
+<div>&lt;/pre&gt;&lt;/p&gt;
+&lt;p&gt;Typical output of HP iLO_facts for a physical system&lt;/p&gt;    &lt;p&gt;&lt;pre&gt;
+- hw_bios_date: &#8220;05/05/2011&#8221;</div></blockquote>
+<p>hw_bios_version: &#8220;P68&#8221;
+hw_eth0:
+- macaddress: &#8220;00:11:22:33:44:55&#8221;</p>
+<blockquote>
+<div>macaddress_dash: &#8220;00-11-22-33-44-55&#8221;</div></blockquote>
+<p>hw_eth1:
+- macaddress: &#8220;00:11:22:33:44:57&#8221;</p>
+<blockquote>
+<div>macaddress_dash: &#8220;00-11-22-33-44-57&#8221;</div></blockquote>
+<p>hw_eth2:
+- macaddress: &#8220;00:11:22:33:44:5A&#8221;</p>
+<blockquote>
+<div>macaddress_dash: &#8220;00-11-22-33-44-5A&#8221;</div></blockquote>
+<p>hw_eth3:
+- macaddress: &#8220;00:11:22:33:44:5C&#8221;</p>
+<blockquote>
+<div>macaddress_dash: &#8220;00-11-22-33-44-5C&#8221;</div></blockquote>
+<p>hw_eth_ilo:
+- macaddress: &#8220;00:11:22:33:44:BA&#8221;</p>
+<blockquote>
+<div>macaddress_dash: &#8220;00-11-22-33-44-BA&#8221;</div></blockquote>
+<p>hw_product_name: &#8220;ProLiant DL360 G7&#8221;
+hw_product_uuid: &#8220;ef50bac8-2845-40ff-81d9-675315501dac&#8221;
+hw_system_serial: &#8220;ABC12345D6&#8221;
+hw_uuid: &#8220;123456ABC78901D2&#8221;</p>
+<blockquote>
+<div>&lt;/pre&gt;&lt;/p&gt;
+&lt;br/&gt;</div></blockquote>
+</div></blockquote>
+<h4>Notes</h4>
+    <p>This module ought to be run from a system that can access the HP iLO interface directly, either by using <code>local_action</code> or <code>using delegate</code>_to.</p></div>
 <div class="section" id="ini-file">
-<span id="id17"></span><h2><a class="toc-backref" href="#contents">ini_file</a><a class="headerlink" href="#ini-file" title="Permalink to this headline">¶</a></h2>
+<span id="id21"></span><h2><a class="toc-backref" href="#contents">ini_file</a><a class="headerlink" href="#ini-file" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.9.</span></p>
 <p>Manage (add, remove, change) individual settings in an INI-style file without having to manage the file as a whole with, say, <tt class="docutils literal"><span class="pre">template</span></tt> or <tt class="docutils literal"><span class="pre">assemble</span></tt>. Adds missing sections if they don&#8217;t exist.</p>
@@ -1097,7 +1382,7 @@ ini_file dest=/etc/anotherconf
 <br/><h4>Notes</h4>
     <p>While it is possible to add an <em>option</em> without specifying a <em>value</em>, this makes no sense.</p></div>
 <div class="section" id="lineinfile">
-<span id="id18"></span><h2><a class="toc-backref" href="#contents">lineinfile</a><a class="headerlink" href="#lineinfile" title="Permalink to this headline">¶</a></h2>
+<span id="id22"></span><h2><a class="toc-backref" href="#contents">lineinfile</a><a class="headerlink" href="#lineinfile" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>This module will search a file for a line, and ensure that it is present or absent.
@@ -1111,6 +1396,13 @@ This is primarily useful when you want to change a single line in a file only. F
 <th class="head">comments</th>
 </tr>
     <tr>
+<td>insertafter</td>
+<td>no</td>
+<td>EOF</td>
+<td><ul><li>BOF</li><li>EOF</li></ul></td>
+<td>Used with <code>state=present</code>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
+</tr>
+    <tr>
 <td>state</td>
 <td>no</td>
 <td>present</td>
@@ -1118,18 +1410,11 @@ This is primarily useful when you want to change a single line in a file only. F
 <td>Whether the line should be there or not.</td>
 </tr>
     <tr>
-<td>name</td>
+<td>dest</td>
 <td>yes</td>
 <td></td>
 <td><ul></ul></td>
 <td>The file to modify</td>
-</tr>
-    <tr>
-<td>insertafter</td>
-<td>no</td>
-<td>EOF</td>
-<td><ul><li>BOF</li><li>EOF</li></ul></td>
-<td>Used with <code>state=present</code>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
 </tr>
     <tr>
 <td>regexp</td>
@@ -1153,14 +1438,14 @@ This is primarily useful when you want to change a single line in a file only. F
 <td>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</td>
 </tr>
     </table>    <p><pre>
-lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+lineinfile dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
 </pre></p>
     <p><pre>
-lineinfile name=/etc/sudoers state=absent regexp="^%wheel"
+lineinfile dest=/etc/sudoers state=absent regexp="^%wheel"
 </pre></p>
 <br/></div>
 <div class="section" id="mount">
-<span id="id19"></span><h2><a class="toc-backref" href="#contents">mount</a><a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
+<span id="id23"></span><h2><a class="toc-backref" href="#contents">mount</a><a class="headerlink" href="#mount" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>This module controls active and configured mount points in <tt class="docutils literal"><span class="pre">/etc/fstab</span></tt>.</p>
@@ -1226,7 +1511,7 @@ mount name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro
 </pre></p>
 <br/></div>
 <div class="section" id="mysql-db">
-<span id="id20"></span><h2><a class="toc-backref" href="#contents">mysql_db</a><a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id24"></span><h2><a class="toc-backref" href="#contents">mysql_db</a><a class="headerlink" href="#mysql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove MySQL databases from a remote host.</p>
@@ -1294,7 +1579,7 @@ mysql_db db=bobdata state=present
     <p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb.</p>
     <p>Both <code>login_password</code> and <code>login_username</code> are required when you are passing credentials. If none are present, the module will attempt to read the credentials from <code>~/.my.cnf</code>, and finally fall back to using the MySQL default login of 'root' with no password.</p></div>
 <div class="section" id="mysql-user">
-<span id="id21"></span><h2><a class="toc-backref" href="#contents">mysql_user</a><a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id25"></span><h2><a class="toc-backref" href="#contents">mysql_user</a><a class="headerlink" href="#mysql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Adds or removes a user from a MySQL database.</p>
@@ -1375,7 +1660,7 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
     <p>Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb.</p>
     <p>Both <code>login_password</code> and <code>login_username</code> are required when you are passing credentials. If none are present, the module will attempt to read the credentials from <code>~/.my.cnf</code>, and finally fall back to using the MySQL default login of 'root' with no password.</p></div>
 <div class="section" id="nagios">
-<span id="id22"></span><h2><a class="toc-backref" href="#contents">nagios</a><a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
+<span id="id26"></span><h2><a class="toc-backref" href="#contents">nagios</a><a class="headerlink" href="#nagios" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>The <tt class="docutils literal"><span class="pre">nagios</span></tt> module has two basic functions: scheduling downtime and toggling alerts for services or hosts.
@@ -1459,7 +1744,7 @@ nagios action=unsilence host=$inventory_hostname
 </pre></p>
 <br/></div>
 <div class="section" id="ohai">
-<span id="id23"></span><h2><a class="toc-backref" href="#contents">ohai</a><a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
+<span id="id27"></span><h2><a class="toc-backref" href="#contents">ohai</a><a class="headerlink" href="#ohai" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Similar to the <tt class="docutils literal"><span class="pre">facter</span></tt> module, this runs the <em>ohai</em> discovery program (<a class="reference external" href="http://wiki.opscode.com/display/chef/Ohai">http://wiki.opscode.com/display/chef/Ohai</a>) on the remote host and returns JSON inventory data. <em>Ohai</em> data is a bit more verbose and nested than <em>facter</em>.</p>
@@ -1468,7 +1753,7 @@ ansible webservers -m ohai --tree=/tmp/ohaidata
 </pre></p>
 <br/></div>
 <div class="section" id="pause">
-<span id="id24"></span><h2><a class="toc-backref" href="#contents">pause</a><a class="headerlink" href="#pause" title="Permalink to this headline">¶</a></h2>
+<span id="id28"></span><h2><a class="toc-backref" href="#contents">pause</a><a class="headerlink" href="#pause" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.8.</span></p>
 <p>Pauses playbook execution for a set amount of time, or until a prompt is acknowledged. All parameters are optional. The default behavior is to pause with a prompt.
@@ -1514,14 +1799,14 @@ pause prompt=Make sure org.foo.FooOverload exception is not present
 </pre></p>
 <br/></div>
 <div class="section" id="ping">
-<span id="id25"></span><h2><a class="toc-backref" href="#contents">ping</a><a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
+<span id="id29"></span><h2><a class="toc-backref" href="#contents">ping</a><a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h2>
 <p>A trivial test module, this module always returns &#8216;pong&#8217; on successful contact. It does not make sense in playbooks, but is useful from <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt></p>
 <p>Test 'webservers' status</p>    <p><pre>
 ansible webservers -m ping
 </pre></p>
 <br/></div>
 <div class="section" id="pip">
-<span id="id26"></span><h2><a class="toc-backref" href="#contents">pip</a><a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2><a class="toc-backref" href="#contents">pip</a><a class="headerlink" href="#pip" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage Python library dependencies.</p>
@@ -1586,7 +1871,7 @@ pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapp
 <br/><h4>Notes</h4>
     <p>Please note that <a href='http://www.virtualenv.org/, virtualenv'>http://www.virtualenv.org/, virtualenv</a> must be installed on the remote host if the virtualenv parameter is specified.</p></div>
 <div class="section" id="postgresql-db">
-<span id="id27"></span><h2><a class="toc-backref" href="#contents">postgresql_db</a><a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
+<span id="id31"></span><h2><a class="toc-backref" href="#contents">postgresql_db</a><a class="headerlink" href="#postgresql-db" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL databases from a remote host.</p>
@@ -1647,7 +1932,7 @@ postgresql_db db=acme
     <p>The default authentication assumes that you are either logging in as or sudo'ing to the postgres account on the host.</p>
     <p>This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.</p></div>
 <div class="section" id="postgresql-user">
-<span id="id28"></span><h2><a class="toc-backref" href="#contents">postgresql_user</a><a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
+<span id="id32"></span><h2><a class="toc-backref" href="#contents">postgresql_user</a><a class="headerlink" href="#postgresql-user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.6.</span></p>
 <p>Add or remove PostgreSQL users (roles) from a remote host and, optionally, grant the users access to an existing database or tables.
@@ -1740,14 +2025,14 @@ INSERT,UPDATE/table:SELECT/anothertable:ALL
     <p>The default authentication assumes that you are either logging in as or sudo'ing to the postgres account on the host.</p>
     <p>This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.</p></div>
 <div class="section" id="raw">
-<span id="id29"></span><h2><a class="toc-backref" href="#contents">raw</a><a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
+<span id="id33"></span><h2><a class="toc-backref" href="#contents">raw</a><a class="headerlink" href="#raw" title="Permalink to this headline">¶</a></h2>
 <p>Executes a low-down and dirty SSH command, not going through the module subsystem. This is useful and should only be done in two cases. The first case is installing python-simplejson on older (Python 2.4 and before) hosts that need it as a dependency to run modules, since nearly all core modules require it. Another is speaking to any devices such as routers that do not have any Python installed. In any other case, using the <tt class="docutils literal"><span class="pre">shell</span></tt> or <tt class="docutils literal"><span class="pre">command</span></tt> module is much more appropriate. Arguments given to <tt class="docutils literal"><span class="pre">raw</span></tt> are run directly through the configured remote shell and only output is returned. There is no error detection or change handler support for this module</p>
 <p>Example from /usr/bin/ansible to bootstrap a legacy python 2.4 host</p>    <p><pre>
 ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
 </pre></p>
 <br/></div>
 <div class="section" id="seboolean">
-<span id="id30"></span><h2><a class="toc-backref" href="#contents">seboolean</a><a class="headerlink" href="#seboolean" title="Permalink to this headline">¶</a></h2>
+<span id="id34"></span><h2><a class="toc-backref" href="#contents">seboolean</a><a class="headerlink" href="#seboolean" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Toggles SELinux booleans.</p>
@@ -1786,7 +2071,7 @@ seboolean name=httpd_can_network_connect state=true persistent=yes
 <br/><h4>Notes</h4>
     <p>Not tested on any debian based system</p></div>
 <div class="section" id="selinux">
-<span id="id31"></span><h2><a class="toc-backref" href="#contents">selinux</a><a class="headerlink" href="#selinux" title="Permalink to this headline">¶</a></h2>
+<span id="id35"></span><h2><a class="toc-backref" href="#contents">selinux</a><a class="headerlink" href="#selinux" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Configures the SELinux mode and policy. A reboot may be required after usage. Ansible will not issue this reboot but will let you know when it is required.</p>
@@ -1828,7 +2113,7 @@ selinux policy=targeted state=disabled
 <br/><h4>Notes</h4>
     <p>Not tested on any debian based system</p></div>
 <div class="section" id="service">
-<span id="id32"></span><h2><a class="toc-backref" href="#contents">service</a><a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
+<span id="id36"></span><h2><a class="toc-backref" href="#contents">service</a><a class="headerlink" href="#service" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.1.</span></p>
 <p>Controls services on remote hosts.</p>
@@ -1845,7 +2130,7 @@ selinux policy=targeted state=disabled
 <td>no</td>
 <td></td>
 <td><ul></ul></td>
-<td>If the service does not respond to the status command, name a substring to look for as would be found in the output of the <em>ps</em> command as a stand-in for a status result.  If the string is found, the servie will be assumed to be running. (added in Ansible 0.7)</td>
+<td>If the service does not respond to the status command, name a substring to look for as would be found in the output of the <em>ps</em> command as a stand-in for a status result.  If the string is found, the service will be assumed to be running. (added in Ansible 0.7)</td>
 </tr>
     <tr>
 <td>state</td>
@@ -1885,7 +2170,7 @@ service name=foo pattern=/usr/bin/foo state=started
 </pre></p>
 <br/></div>
 <div class="section" id="setup">
-<span id="id33"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="id37"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt> to check what variables are available to a host. Ansible provides many <em>facts</em> about the system, automatically.</p>
 <p>Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.</p>    <p><pre>
 ansible all -m setup -tree /tmp/facts
@@ -1893,10 +2178,10 @@ ansible all -m setup -tree /tmp/facts
 <br/><h4>Notes</h4>
     <p>More ansible facts will be added with successive releases. If <em>facter</em> or <em>ohai</em> are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating. These variables are prefixed with <code>facter_</code> and <code>ohai_</code> so it's easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install <em>facter</em> and <em>ohai</em> means you can avoid Ruby-dependencies on your remote systems.</p></div>
 <div class="section" id="shell">
-<span id="id34"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
+<span id="id38"></span><h2><a class="toc-backref" href="#contents">shell</a><a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.2.</span></p>
-<p>The shell module takes the command name followed by a list of arguments, space delimited. It is almost exactly like the <tt class="docutils literal"><span class="pre">command</span></tt> module but runs the command through the user&#8217;s configured shell on the remote node.</p>
+<p>The shell module takes the command name followed by a list of arguments, space delimited. It is almost exactly like the <tt class="docutils literal"><span class="pre">command</span></tt> module but runs the command through a shell (<tt class="docutils literal"><span class="pre">/bin/sh</span></tt>) on the remote node.</p>
 <table>
 <tr>
 <th class="head">parameter</th>
@@ -1932,7 +2217,7 @@ shell somescript.sh >> somelog.txt
 <br/><h4>Notes</h4>
     <p>If you want to execute a command securely and predicably, it may be better to use the <span class='module'>command</span> module instead. Best practices when writing playbooks will follow the trend of using <span class='module'>command</span> unless <span class='module'>shell</span> is explicitly required. When running ad-hoc commands, use your best judgement.</p></div>
 <div class="section" id="slurp">
-<span id="id35"></span><h2><a class="toc-backref" href="#contents">slurp</a><a class="headerlink" href="#slurp" title="Permalink to this headline">¶</a></h2>
+<span id="id39"></span><h2><a class="toc-backref" href="#contents">slurp</a><a class="headerlink" href="#slurp" title="Permalink to this headline">¶</a></h2>
 <p>This module works like <tt class="docutils literal"><span class="pre">fetch</span></tt>. It is used for fetching a base64- encoded blob containing the data in a remote file.</p>
 <table>
 <tr>
@@ -1960,7 +2245,7 @@ host | success >> {
 <br/><h4>Notes</h4>
     <p>See also: <span class='module'>fetch</span></p></div>
 <div class="section" id="subversion">
-<span id="id36"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
+<span id="id40"></span><h2><a class="toc-backref" href="#contents">subversion</a><a class="headerlink" href="#subversion" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>This module is really simple, so for now this checks out from the given branch of a repo at a particular SHA or tag. Latest is not supported, you should not be doing that.</p>
@@ -1999,7 +2284,7 @@ subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
 <br/><h4>Notes</h4>
     <p>Requires subversion and grep on the client.</p></div>
 <div class="section" id="supervisorctl">
-<span id="id37"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
+<span id="id41"></span><h2><a class="toc-backref" href="#contents">supervisorctl</a><a class="headerlink" href="#supervisorctl" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>Manage the state of a program or group of programs running via Supervisord</p>
@@ -2030,7 +2315,7 @@ supervisorctl name=my_app state=started
 </pre></p>
 <br/></div>
 <div class="section" id="template">
-<span id="id38"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
+<span id="id42"></span><h2><a class="toc-backref" href="#contents">template</a><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h2>
 <p>Templates are processed by the Jinja2 templating language (<a class="reference external" href="http://jinja.pocoo.org/docs/">http://jinja.pocoo.org/docs/</a>) - documentation on the template formatting can be found in the Template Designer Documentation (<a class="reference external" href="http://jinja.pocoo.org/docs/templates/">http://jinja.pocoo.org/docs/templates/</a>).</p>
 <table>
 <tr>
@@ -2074,7 +2359,7 @@ template src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=
 <br/><h4>Notes</h4>
     <p>Since Ansible version 0.9, templates are loaded with <code>trim_blocks=True</code>.</p></div>
 <div class="section" id="user">
-<span id="id39"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
+<span id="id43"></span><h2><a class="toc-backref" href="#contents">user</a><a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.2.</span></p>
 <p>Manage user accounts and user attributes.</p>
@@ -2186,7 +2471,7 @@ template src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=
 </tr>
     </table><br/></div>
 <div class="section" id="virt">
-<span id="id40"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
+<span id="id44"></span><h2><a class="toc-backref" href="#contents">virt</a><a class="headerlink" href="#virt" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.2.</span></p>
 <p>Manages virtual machines supported by <em>libvirt</em>.</p>
@@ -2227,8 +2512,60 @@ ansible host -m virt -a "guest=alpha command=status"
 </pre></p>
 <br/><h4>Notes</h4>
     <p>Other non-idempotent commands are: <code>status</code>, <code>pause</code>, <code>unpause</code>, <code>get_xml</code>, <code>autostart</code>, <code>freemem</code>, <code>list_vms</code>, <code>info</code>, <code>nodeinfo</code>, <code>virttype</code></p></div>
+<div class="section" id="vsphere-facts">
+<span id="id45"></span><h2><a class="toc-backref" href="#contents">vsphere_facts</a><a class="headerlink" href="#vsphere-facts" title="Permalink to this headline">¶</a></h2>
+<p class="versionadded">
+<span class="versionmodified">New in version 0.8.</span></p>
+<p>This module gathers facts for a specific guest on VMWare vSphere. These facts include hardware and network related information useful for provisioning (e.g. macaddress, uuid).
+This module requires the pysphere python module.</p>
+<table>
+<tr>
+<th class="head">parameter</th>
+<th class="head">required</th>
+<th class="head">default</th>
+<th class="head">choices</th>
+<th class="head">comments</th>
+</tr>
+    <tr>
+<td>host</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The vSphere server from the cluster the virtual server is located on.</td>
+</tr>
+    <tr>
+<td>password</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The password to authenticate on the vSphere cluster.</td>
+</tr>
+    <tr>
+<td>login</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The login name to authenticate on the vSphere cluster.</td>
+</tr>
+    <tr>
+<td>guest</td>
+<td>yes</td>
+<td></td>
+<td><ul></ul></td>
+<td>The virtual server to gather facts for on the vSphere cluster.</td>
+</tr>
+    </table><p>Task to gather facts from a vSphere cluster only if the system is a VMWare guest</p>    <p><pre>
+local_action: vsphere_facts host=$esxserver login=$esxlogin password=$esxpassword guest=$inventory_hostname_short<p>only_if: &#8220;&#8217;$cmdb_hwmodel&#8217;.startswith(&#8216;VMWare &#8216;)</p>
+<blockquote>
+<div>&lt;/pre&gt;&lt;/p&gt;
+&lt;p&gt;Typical output of a vsphere_facts run on a guest&lt;/p&gt;    &lt;p&gt;&lt;pre&gt;
+[{&#8216;hw_name&#8217;: &#8216;centos6&#8217;, &#8216;hw_processor_count&#8217;: 1, &#8216;hw_guest_id&#8217;: &#8216;rhel6_64Guest&#8217;, &#8216;hw_memtotal_mb&#8217;: 2048, &#8216;hw_eth0&#8217;: [{&#8216;macaddress&#8217;: &#8216;00:11:22:33:44:55&#8217;, &#8216;label&#8217;: &#8216;Network adapter 1&#8217;, &#8216;addresstype&#8217;: &#8216;assigned&#8217;, &#8216;summary&#8217;: &#8216;VLAN-321&#8217;, &#8216;macaddress_dash&#8217;: &#8216;00-11-22-33-44-55&#8217;}], &#8216;hw_product_uuid&#8217;: &#8216;ef50bac8-2845-40ff-81d9-675315501dac&#8217;, &#8216;hw_guest_full_name&#8217;: &#8216;Red Hat Enterprise Linux 6 (64-bit)&#8217;}]
+&lt;/pre&gt;&lt;/p&gt;
+&lt;br/&gt;</div></blockquote>
+<h4>Notes</h4>
+    <p>This module ought to be run from a system that can access vSphere directly. Either by using <code>local_action</code>, or <code>using delegate</code>_to.</p></div>
 <div class="section" id="wait-for">
-<span id="id41"></span><h2><a class="toc-backref" href="#contents">wait_for</a><a class="headerlink" href="#wait-for" title="Permalink to this headline">¶</a></h2>
+<span id="id46"></span><h2><a class="toc-backref" href="#contents">wait_for</a><a class="headerlink" href="#wait-for" title="Permalink to this headline">¶</a></h2>
 <p class="versionadded">
 <span class="versionmodified">New in version 0.7.</span></p>
 <p>This is useful for when services are not immediately available after their init scripts return - which is true of certain Java application servers. It is also useful when starting guests with the <tt class="docutils literal"><span class="pre">virt</span></tt> module and needing to pause until they are ready.</p>
@@ -2280,7 +2617,7 @@ wait_for port=8000 delay=10
 </pre></p>
 <br/></div>
 <div class="section" id="yum">
-<span id="id42"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
+<span id="id47"></span><h2><a class="toc-backref" href="#contents">yum</a><a class="headerlink" href="#yum" title="Permalink to this headline">¶</a></h2>
 <p>Will install, upgrade, remove, and list packages with the <em>yum</em> package manager.</p>
 <table>
 <tr>
@@ -2354,11 +2691,9 @@ yum name=httpd state=installed
 <br/>
 </div>
 <footer class="footer">
-<div class="container">
-<p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Oct 08, 2012.<br/>
+      Last updated on Oct 09, 2012.<br/>
     </p>
 </div>
 </footer>

@@ -5,7 +5,7 @@ shell
 
 .. versionadded:: 0.2
 
-The shell module takes the command name followed by a list of arguments, space delimited. It is almost exactly like the ``command`` module but runs the command through the user's configured shell on the remote node. 
+The shell module takes the command name followed by a list of arguments, space delimited. It is almost exactly like the ``command`` module but runs the command through a shell (``/bin/sh``) on the remote node. 
 
 .. raw:: html
 

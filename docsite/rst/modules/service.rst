@@ -22,7 +22,7 @@ Controls services on remote hosts.
     <td>no</td>
     <td></td>
     <td><ul></ul></td>
-    <td>If the service does not respond to the status command, name a substring to look for as would be found in the output of the <em>ps</em> command as a stand-in for a status result.  If the string is found, the servie will be assumed to be running. (added in Ansible 0.7)</td>
+    <td>If the service does not respond to the status command, name a substring to look for as would be found in the output of the <em>ps</em> command as a stand-in for a status result.  If the string is found, the service will be assumed to be running. (added in Ansible 0.7)</td>
     </tr>
         <tr>
     <td>state</td>

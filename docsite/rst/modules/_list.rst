@@ -6,6 +6,8 @@
 .. include:: modules/authorized_key.rst
 .. include:: modules/command.rst
 .. include:: modules/copy.rst
+.. include:: modules/cron.rst
+.. include:: modules/debug.rst
 .. include:: modules/easy_install.rst
 .. include:: modules/facter.rst
 .. include:: modules/fail.rst
@@ -15,6 +17,8 @@
 .. include:: modules/get_url.rst
 .. include:: modules/git.rst
 .. include:: modules/group.rst
+.. include:: modules/hpilo_boot.rst
+.. include:: modules/hpilo_facts.rst
 .. include:: modules/ini_file.rst
 .. include:: modules/lineinfile.rst
 .. include:: modules/mount.rst
@@ -39,5 +43,6 @@
 .. include:: modules/template.rst
 .. include:: modules/user.rst
 .. include:: modules/virt.rst
+.. include:: modules/vsphere_facts.rst
 .. include:: modules/wait_for.rst
 .. include:: modules/yum.rst

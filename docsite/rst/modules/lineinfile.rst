@@ -19,6 +19,13 @@ This is primarily useful when you want to change a single line in a file only. F
     <th class="head">comments</th>
     </tr>
         <tr>
+    <td>insertafter</td>
+    <td>no</td>
+    <td>EOF</td>
+    <td><ul><li>BOF</li><li>EOF</li></ul></td>
+    <td>Used with <code>state=present</code>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
+    </tr>
+        <tr>
     <td>state</td>
     <td>no</td>
     <td>present</td>
@@ -26,18 +33,11 @@ This is primarily useful when you want to change a single line in a file only. F
     <td>Whether the line should be there or not.</td>
     </tr>
         <tr>
-    <td>name</td>
+    <td>dest</td>
     <td>yes</td>
     <td></td>
     <td><ul></ul></td>
     <td>The file to modify</td>
-    </tr>
-        <tr>
-    <td>insertafter</td>
-    <td>no</td>
-    <td>EOF</td>
-    <td><ul><li>BOF</li><li>EOF</li></ul></td>
-    <td>Used with <code>state=present</code>. If specified, the line will be inserted after the specified regular expression. Two special values are available; <code>BOF</code> for inserting the line at the beginning of the file, and <code>EOF</code> for inserting the line at the end of the file.</td>
     </tr>
         <tr>
     <td>regexp</td>
@@ -65,10 +65,10 @@ This is primarily useful when you want to change a single line in a file only. F
 .. raw:: html
 
         <p><pre>
-    lineinfile name=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+    lineinfile dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
     </pre></p>
         <p><pre>
-    lineinfile name=/etc/sudoers state=absent regexp="^%wheel"
+    lineinfile dest=/etc/sudoers state=absent regexp="^%wheel"
     </pre></p>
     <br/>
 
