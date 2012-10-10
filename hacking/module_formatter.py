@@ -25,7 +25,7 @@ import json
 import ast
 from jinja2 import Environment, FileSystemLoader
 import re
-import argparse
+import getopt
 import time
 import datetime
 import subprocess
@@ -158,58 +158,72 @@ def get_docstring(filename, verbose=False):
     return doc
 
 def main():
+    class Object(object):
+        pass
 
-    p = argparse.ArgumentParser(description="Convert Ansible module DOCUMENTATION strings to other formats")
+    type_choices = ['html', 'latex', 'man', 'rst', 'json']
 
-    p.add_argument("-A", "--ansible-version",
-            action="store",
-            dest="ansible_version",
-            default="unknown",
-            help="Ansible version number")
-    p.add_argument("-M", "--module-dir",
-            action="store",
-            dest="module_dir",
-            default=MODULEDIR,
-            help="Ansible modules/ directory")
-    p.add_argument("-T", "--template-dir",
-            action="store",
-            dest="template_dir",
-            default="hacking/templates",
-            help="directory containing Jinja2 templates")
-    p.add_argument("-t", "--type",
-            action='store',
-            dest='type',
-            choices=['html', 'latex', 'man', 'rst', 'json'],
-            default='latex',
-            help="Output type")
-    p.add_argument("-m", "--module",
-            action='append',
-            default=[],
-            dest='module_list',
-            help="Add modules to process in module_dir")
-    p.add_argument("-v", "--verbose",
-            action='store_true',
-            default=False,
-            help="Verbose")
-    p.add_argument("-o", "--output-dir",
-            action="store",
-            dest="output_dir",
-            default=None,
-            help="Output directory for module files")
-    p.add_argument("-I", "--includes-file",
-            action="store",
-            dest="includes_file",
-            default=None,
-            help="Create a file containing list of processed modules")
-    p.add_argument("-G", "--generate",
-            action="store_true",
-            dest="do_boilerplate",
-            default=False,
-            help="generate boilerplate DOCUMENTATION to stdout")
-    p.add_argument('-V', '--version', action='version', version='%(prog)s 1.0')
+    args = Object()
+    args.ansible_version = 'unknown'
+    args.module_dir = MODULEDIR
+    args.template_dir = 'hacking/templates'
+    args.type = 'latex'
+    args.module_list = []
+    args.verbose = False
+    args.output_dir = None
+    args.includes_file = None
+    args.do_boilerplate = False
 
-    module_dir = None
-    args = p.parse_args()
+    try:
+        opts, arguments = getopt.getopt(sys.argv[1:], 'A:M:T:t:m:vo:I:GVh',
+            [ 'ansible-version=', 'module-dir=', 'template-dir=', 'type=',
+              'module=', 'verbose', 'output-dir=', 'includes-file=',
+              'generate', 'version', 'help', ])
+    except getopt.error, e:
+        print >>sys.stderr, 'ERROR: %s'% str(e)
+        sys.exit(1)
+
+    for opt, arg in opts:
+        if opt in ('-A', '--ansible-version'):
+            args.ansible_version = arg
+        elif opt in ('-M', '--module-dir'):
+            args.module_dir = arg
+        elif opt in ('-T', '--template-dir'):
+            args.template_dir = arg
+        elif opt in ('-t', '--type'):
+            args.type = arg
+            if args.type not in type_choices:
+                print >>sys.stderr, 'ERROR: Type %s not in possible types %s.' % (args.type, type_choices)
+                sys.exit(1)
+        elif opt in ('-m', '--module'):
+            args.module_list.append(arg)
+        elif opt in ('-v', '--verbose'):
+            args.verbose = True
+        elif opt in ('-o', '--output-dir'):
+            args.output_dir = arg
+        elif opt in ('-I', '--includes-file'):
+            args.includes_file = arg
+        elif opt in ('-G', '--generate'):
+            args.do_boilerplate = True
+        elif opt in ('-V', '--version'):
+            print >>sys.stderr, '%(prog)s 1.0'
+        elif opt in ('-h', '--help'):
+            print >>sys.stderr, '''Convert Ansible module DOCUMENTATION strings to other formats
+
+ -A, --ansible-version=     Ansible version number
+ -M, --module-dir=          Ansible modules/ directory
+ -T, --template-dir=        Directory containing Jinja2 templates
+ -t, --type=                Output type
+ -m, --module=              Add modules to process in module_dir
+ -v, --verbose              Verbose
+ -o, --output-dir=          Output directory for module files
+ -I, --includes-file=       Create a file containing list of processed modules
+ -G, --generate             Generate boilerplate DOCUMENTATION to stdout
+'''
+            sys.exit(0)
+        else:
+            print >>sys.stderr, 'ERROR: Option %s unknown to getopt' % opt
+            sys.exit(1)
 
     # print "M: %s" % args.module_dir
     # print "t: %s" % args.type
