@@ -145,11 +145,11 @@ class Runner(object):
             # ability to turn off temp file deletion for debug purposes
             return
 
-        if type(files) == str:
+        if type(files) in [ str, unicode ]:
             files = [ files ]
         for filename in files:
             if filename.find('/tmp/') == -1:
-                raise Exception("not going to happen")
+                raise Exception("trying to delete unexpected tempdir, not going to happen")
             self._low_level_exec_command(conn, "rm -rf %s" % filename, None)
 
     # *****************************************************
