@@ -35,6 +35,7 @@ class InventoryScript(object):
         self.groups = self._parse()
 
     def _parse(self):
+        all_hosts = {}
 
         groups = {}
         self.raw = utils.parse_json(self.data)
@@ -45,7 +46,9 @@ class InventoryScript(object):
             group = groups[group_name] = Group(group_name)
             host = None
             for hostname in hosts:
-                host = Host(hostname)
+                if not hostname in all_hosts:
+                    all_hosts[hostname] = Host(hostname)
+                host = all_hosts[hostname]
                 group.add_host(host)
                 # FIXME: hack shouldn't be needed
                 all.add_host(host)
