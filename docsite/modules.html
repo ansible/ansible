@@ -2173,7 +2173,7 @@ service name=foo pattern=/usr/bin/foo state=started
 <span id="id37"></span><h2><a class="toc-backref" href="#contents">setup</a><a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by <tt class="docutils literal"><span class="pre">/usr/bin/ansible</span></tt> to check what variables are available to a host. Ansible provides many <em>facts</em> about the system, automatically.</p>
 <p>Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.</p>    <p><pre>
-ansible all -m setup -tree /tmp/facts
+ansible all -m setup --tree /tmp/facts
 </pre></p>
 <br/><h4>Notes</h4>
     <p>More ansible facts will be added with successive releases. If <em>facter</em> or <em>ohai</em> are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating. These variables are prefixed with <code>facter_</code> and <code>ohai_</code> so it's easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install <em>facter</em> and <em>ohai</em> means you can avoid Ruby-dependencies on your remote systems.</p></div>
@@ -2693,7 +2693,7 @@ yum name=httpd state=installed
 <footer class="footer">
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Oct 09, 2012.<br/>
+      Last updated on Oct 10, 2012.<br/>
     </p>
 </div>
 </footer>
