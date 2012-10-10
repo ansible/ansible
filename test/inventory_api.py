@@ -15,13 +15,15 @@ options, args = parser.parse_args()
 systems = {
     "ungrouped": [ "jupiter", "saturn" ],
     "greek": [ "zeus", "hera", "poseidon" ],
-    "norse": [ "thor", "odin", "loki" ]
+    "norse": [ "thor", "odin", "loki" ],
+    "major-god": [ "zeus", "odin" ],
 }
 
 variables = {
     "thor": {
         "hammer": True
-        }
+        },
+    "zeus": {},
 }
 
 if options.list_hosts == True:

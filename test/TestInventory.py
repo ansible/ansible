@@ -246,3 +246,13 @@ class TestInventory(unittest.TestCase):
         actual_hosts = inventory.get_hosts(host_names)
         actual_host_names = [host.name for host in actual_hosts]
         assert host_names == actual_host_names
+
+    def test_script_multiple_groups(self):
+        inventory = self.script_inventory()
+        vars = inventory.get_variables('zeus')
+
+        print "VARS=%s" % vars
+        
+        assert vars == {'inventory_hostname': 'zeus',
+                        'inventory_hostname_short': 'zeus',
+                        'group_names': ['greek', 'major-god']}
