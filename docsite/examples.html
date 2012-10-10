@@ -382,7 +382,7 @@ by using &#8216;batch&#8217; (or &#8216;range&#8217;) selectors.</p>
 </div>
 <p>This is an &#8220;or&#8221; condition.  If you want to further constrain the selection, use &#8211;limit, which
 also works with <tt class="docutils literal"><span class="pre">ansible-playbook</span></tt>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers:dbservers -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span> region
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>ansible webservers:dbservers -m <span class="nb">command</span> -a <span class="s2">&quot;/bin/foo xyz&quot;</span> --limit region
 </pre></div>
 </div>
 <p>Now let&#8217;s talk about range selection.   Suppose you have 1000 servers in group &#8216;datacenter&#8217;, but only want to target one at a time.  This is also easy:</p>
