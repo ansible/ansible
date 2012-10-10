@@ -1,0 +1,134 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2012 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Dag Wieers
+module: email
+short_description: Send an email
+description:
+  - This module is useful for sending emails from playbooks.
+  - One may wonder why automate sending emails ? In complex environments
+    there are from time to time processes that cannot be automated, either
+    because you lack the authority to make it so, or because not everyone
+    agrees to a common approach.
+  - If you cannot automate a specific step, but the step is non-blocking,
+    sending out an email to the responsible party to make him perform his
+    part of the bargain is an elegant way to put the responsibility in
+    someone else's lap.
+  - Of course sending out a mail can be equally useful as a way to notify
+    one or more people in a team that a specific action has been
+    (successfully) taken.
+version_added: "0.8"
+options:
+  from:
+    description:
+      - The email-address the mail is sent from.
+    default: root
+    required: false
+  to:
+    description:
+      - The email-address(es) the mail is being sent to. This is
+        a comma-separated list.
+    default: root
+    required: false
+  cc:
+    description:
+      - The email-address(es) the mail is being copied to. This is
+        a comma-separated list.
+    required: false
+  bcc:
+    description:
+      - The email-address(es) the mail is being 'blind' copied to. This is
+        a comma-separated list.
+    required: false
+  subject:
+    description:
+      - The subject of the email being sent.
+    aliases: [ msg ]
+    required: true
+  body:
+    description:
+      - The body of the email being sent.
+    default: $subject
+    required: false
+examples:
+    - description: "Example playbook sending mail to root"
+      code: local_action: mail msg="System ${ansible_hostname} has been sucessfully provisioned."
+'''
+
+import smtplib
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            host = dict(default='localhost'),
+            sender = dict(default='root', aliases=['from']),
+            to = dict(default='root', aliases=['recipients']),
+            cc = dict(default=None),
+            bcc = dict(default=None),
+            subject = dict(required=True, aliases=['msg']),
+            body = dict(default=None),
+        )
+    )
+
+    host = module.params.get('host')
+    sender = module.params.get('sender')
+    recipients = module.params.get('to')
+    copies = module.params.get('cc')
+    blindcopies = module.params.get('bcc')
+    subject = module.params.get('subject')
+    body = module.params.get('body')
+
+    if not body:
+        body = subject
+
+    try:
+        smtp = smtplib.SMTP(host)
+    except Exception, e:
+        module.fail_json(rc=1, msg='Failed to send mail to server %s: %s' % (host, e))
+
+    content = 'From: %s\n' % sender
+    content += 'To: %s\n' % recipients
+    if copies:
+        content += 'Cc: %s\n' % copies
+    content += 'Subject: %s\n\n' % subject
+    content += body
+
+    addresses = recipients.split(',')
+    if copies:
+        addresses += copies.split(',')
+    if blindcopies:
+        addresses += blindcopies.split(',')
+
+    for address in addresses:
+        try:
+            smtp.sendmail(sender, address, content)
+        except Exception, e:
+            module.fail_json(rc=1, msg='Failed to send mail to address %s: %s' % (address, e))
+
+    smtp.quit()
+
+    module.exit_json(changed=False)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
