@@ -224,7 +224,7 @@ As mentioned above, patterns can be strung together to select hosts in more than
 This is an "or" condition.  If you want to further constrain the selection, use --limit, which
 also works with ``ansible-playbook``::
 
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" region
+    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" --limit region
 
 Now let's talk about range selection.   Suppose you have 1000 servers in group 'datacenter', but only want to target one at a time.  This is also easy::
 
