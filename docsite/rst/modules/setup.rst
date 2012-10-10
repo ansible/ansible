@@ -10,7 +10,7 @@ This module is automatically called by playbooks to gather useful variables abou
 .. raw:: html
 
     <p>Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.</p>    <p><pre>
-    ansible all -m setup -t /tmp/facts
+    ansible all -m setup --tree /tmp/facts
     </pre></p>
     <br/>
 
