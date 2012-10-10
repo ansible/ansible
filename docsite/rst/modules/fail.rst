@@ -20,7 +20,7 @@ This module fails the progress with a custom message. It can be useful for baili
         <tr>
     <td>msg</td>
     <td>no</td>
-    <td>Failed because only_if condition is true</td>
+    <td>'Failed because only_if condition is true'</td>
     <td><ul></ul></td>
     <td>The customized message used for failing execution. If ommited, fail will simple bail out with a generic message.</td>
     </tr>
@@ -35,8 +35,10 @@ This module fails the progress with a custom message. It can be useful for baili
 
 .. raw:: html
 
-    <p>Example of how a playbook may fail when a condition is not met</p>    <p><pre>
-    [{'action': 'fail msg="The system may not be provisioned according to the CMDB status."', 'only_if': "'$cmdb_status' != 'to-be-staged'"}]
+    <p>Example playbook using fail and only_if together</p>    <p><pre>
+    action: fail msg="The system may not be provisioned according to the CMDB status." rc=100
+only_if: "'$cmdb_status' != 'to-be-staged'"
+
     </pre></p>
     <br/>
 

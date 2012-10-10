@@ -104,21 +104,6 @@ s.parentNode.insertBefore(ga, s);
 
 </script>
 
-<script type="text/javascript">
-  (function() {
-    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-    po.src = 'https://apis.google.com/js/plusone.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
-  })();
-</script>
-
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
 
   </head>
   <body>
@@ -278,14 +263,14 @@ command line tools <tt class="docutils literal"><span class="pre">ansible</span>
 </div>
 <div class="section" id="plugins-repository">
 <h2><a class="toc-backref" href="#table-of-contents">Plugins Repository</a><a class="headerlink" href="#plugins-repository" title="Permalink to this headline">¶</a></h2>
-<p>The remainder of features in the API docs have components available in the <a class="reference external" href="http://github.com/ansible/ansible-plugins">ansible-plugins</a> repository.  Please consult this repository for more information.  Send us a github pull request if you develop any interesting features.</p>
+<p>The remainder of features in the API docs have components available in <a class="reference external" href="https://github.com/ansible/ansible/blob/devel/plugins">ansible-plugins</a>.  Send us a github pull request if you develop any interesting features.</p>
 </div>
 <div class="section" id="external-inventory-scripts">
 <h2><a class="toc-backref" href="#table-of-contents">External Inventory Scripts</a><a class="headerlink" href="#external-inventory-scripts" title="Permalink to this headline">¶</a></h2>
 <p>Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, <a class="reference external" href="http://cobbler.github.com">Cobbler</a>,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
-of these options via an external inventory system.  The ansible-plugins repo contains some of these already &#8211; including options for EC2/Eucalyptus and OpenStack, which will be detailed below.</p>
+of these options via an external inventory system.  The plugins directory contains some of these already &#8211; including options for EC2/Eucalyptus and OpenStack, which will be detailed below.</p>
 <p>It&#8217;s possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as &#8216;external nodes&#8217;, with the slight difference that it also defines which hosts are managed.</p>
 <div class="section" id="script-conventions">
 <h3>Script Conventions<a class="headerlink" href="#script-conventions" title="Permalink to this headline">¶</a></h3>
@@ -314,7 +299,7 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a &#8216;lightweight CMDB&#8217; by some admins.   This particular script will communicate with Cobbler
 using Cobbler&#8217;s XMLRPC API.</p>
-<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <a class="reference external" href="https://github.com/ansible/ansible-plugins/blob/master/inventory/cobbler.py">this script</a> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
+<p>To tie Ansible&#8217;s inventory to Cobbler (optional), copy <a class="reference external" href="https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py">this script</a> to /etc/ansible/hosts and <cite>chmod +x</cite> the file.  cobblerd will now need
 to be running when you are using Ansible.</p>
 <p>Test the file by running <cite>./etc/ansible/hosts</cite> directly.   You should see some JSON data output, but it may not have
 anything in it just yet.</p>
@@ -355,7 +340,7 @@ a conf.d file appropriately or something similar.  Who knows?</p>
 </div>
 <div class="section" id="example-aws-ec2-external-inventory-script">
 <h3>Example: AWS EC2 External Inventory Script<a class="headerlink" href="#example-aws-ec2-external-inventory-script" title="Permalink to this headline">¶</a></h3>
-<p>If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the <a class="reference external" href="https://github.com/ansible/ansible-plugins/blob/master/inventory/ec2.py">EC2 external inventory</a> script.</p>
+<p>If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach. For this reason, you can use the <a class="reference external" href="https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.py">EC2 external inventory</a> script.</p>
 <p>You can use this script in one of two ways. The easiest is to use Ansible&#8217;s <tt class="docutils literal"><span class="pre">-i</span></tt> command line option and specify the path to the script.</p>
 <blockquote>
 <div>ansible -i ec2.py -u ubuntu us-east-1d -m ping</div></blockquote>
@@ -446,13 +431,13 @@ e.g.
 </div>
 <div class="section" id="example-openstack">
 <h3>Example: OpenStack<a class="headerlink" href="#example-openstack" title="Permalink to this headline">¶</a></h3>
-<p>Though not detailed here in as much depth as the EC2 module, there&#8217;s also a OpenStack Nova external inventory source in the ansible-plugins repository.  See the inline comments in the module source.</p>
+<p>Though not detailed here in as much depth as the EC2 module, there&#8217;s also a OpenStack Nova external inventory source in the plugins directory.  See the inline comments in the module source.</p>
 </div>
 </div>
 <div class="section" id="callback-plugins">
 <h2><a class="toc-backref" href="#table-of-contents">Callback Plugins</a><a class="headerlink" href="#callback-plugins" title="Permalink to this headline">¶</a></h2>
 <p>Ansible can be configured via code to respond to external events.  This can include enhancing logging, signalling an external software
-system, or even (yes, really) making sound effects.  Some examples are contained in the ansible-plugins repository.</p>
+system, or even (yes, really) making sound effects.  Some examples are contained in the plugins directory.</p>
 </div>
 <div class="section" id="connection-type-plugins">
 <h2><a class="toc-backref" href="#table-of-contents">Connection Type Plugins</a><a class="headerlink" href="#connection-type-plugins" title="Permalink to this headline">¶</a></h2>
@@ -479,11 +464,9 @@ directory.</p>
 <br/>
 </div>
 <footer class="footer">
-<div class="container">
-<p>
 <p>
         &copy; Copyright 2012 Michael DeHaan.<br/>
-      Last updated on Oct 08, 2012.<br/>
+      Last updated on Oct 09, 2012.<br/>
     </p>
 </div>
 </footer>
