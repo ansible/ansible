@@ -68,6 +68,7 @@ Blogs & Articles
 * [Exploring Configuration Management With Ansible](http://palominodb.com/blog/2012/08/01/exploring-configuration-management-ansible) - Palamino DB                              
 * [You Should Consider Using SSH Based Configuration Management](http://www.lshift.net/blog/2012/07/30/you-should-consider-using-ssh-based-configuration-management) - LShift Ltd
 * [Deploying Flask/uWSGI, Nginx, and Supervisorctl](http://mattupstate.github.com/python/devops/2012/08/07/flask-wsgi-application-deployment-with-ubuntu-ansible-nginx-supervisor-and-uwsgi.html) - mattupstate
+* [Infracoders Presentation](http://www.danielhall.me/2012/10/ansible-talk-infra-coders/) - Daniel Hall
 
 Disclaimer
 ==========
