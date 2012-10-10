@@ -13,7 +13,7 @@ parser.add_option('-e', '--extra-vars', default=None, dest="extra")
 options, args = parser.parse_args()
 
 systems = {
-    "ungouped": [ "jupiter", "saturn" ],
+    "ungrouped": [ "jupiter", "saturn" ],
     "greek": [ "zeus", "hera", "poseidon" ],
     "norse": [ "thor", "odin", "loki" ]
 }
