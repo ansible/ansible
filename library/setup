@@ -45,7 +45,7 @@ notes:
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems.
 examples:
-    - code: ansible all -m setup -tree /tmp/facts
+    - code: ansible all -m setup --tree /tmp/facts
       description: Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.
 author: Michael DeHaan
 '''
