@@ -62,7 +62,7 @@ tests:
 	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES) modulepages webdocs
+docs: $(MANPAGES) modulepages
 
 # Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
 # recently than %.1.asciidoc.
@@ -116,7 +116,7 @@ python:
 install:
 	python setup.py install
 
-sdist: clean
+sdist: clean docs
 	python setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
@@ -175,5 +175,8 @@ modulejs:
 	make modulejson
 	hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
 
+# because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
+
 webdocs:
 	(cd docsite; make docs)
+
