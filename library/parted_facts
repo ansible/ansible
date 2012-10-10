@@ -1,0 +1,80 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+DOCUMENTATION = '''
+---
+module: parted_facts
+short_description: Gathers facts about disk drives and partitions
+description:
+     - This module can be used to get the facts about disk drives on the system.
+       It searches for disk drives, partitions, geometry and file systems.
+notes:
+    - The output format uses fact dictionary C(parted) where it places all the info
+      When running you must use I(sudo) to gain access to disk data
+examples:
+    - code: ansible all -s -m parted_facts
+      description: Obtain facts from all hosts and print them to stdout. 
+author: Constantine Peresypkin
+'''
+
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+def run_parted(module, devs):
+	parted_result = {}
+	parted_result['ansible_facts'] = {}
+	parted_result['ansible_facts']['parted'] = []
+	for d in devs:
+		jd = {}
+		jd['type'] = d.type
+		jd['model'] = d.device.model
+		jd['path'] = d.device.path
+		jd['size'] =  d.device.sectorSize * d.device.length
+		jd['sector'] = d.device.sectorSize
+		jd['partitions'] = []
+		jd['free'] = [{'start': 0L, 'end': d.device.length, 'length': d.device.length}]
+		for p in d.partitions:
+			jp = {}
+			jp['number'] = p.number
+			jp['path'] = p.path
+			jp['start'] = p.geometry.start
+			jp['end'] = p.geometry.end
+			jp['size'] = p.geometry.length * jd['sector']
+			jp['fs'] = None
+			if p.fileSystem:
+				jp['fs'] = p.fileSystem.type
+			jd['partitions'].append(jp)
+			jfree = []
+			for f in jd['free']:
+				if jp['start'] >= f['start'] and jp['end'] <= f['end']:
+					length = jp['start'] - f['start'] - 1
+					if length > 0:
+						jfree.append({'start': f['start'], 'end': jp['start'] - 1, 'length': length})
+					length = f['end'] - jp['end'] - 1
+					if length > 0:
+						jfree.append({'start': jp['end'] + 1, 'end': f['end'], 'length': length})
+				else:
+					jfree.append(f)
+			jd['free'] = jfree
+		parted_result['ansible_facts']['parted'].append(jd)
+	return parted_result
+
+def main():
+	global module
+	module = AnsibleModule(
+		argument_spec = dict()
+	)
+	try:
+		import parted
+	except ImportError:
+		module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
+	devs = [parted.Disk(d) for d in parted.getAllDevices()]
+	data = run_parted(module, devs)
+	module.exit_json(**data)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
