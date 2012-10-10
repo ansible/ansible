@@ -1,0 +1,84 @@
+{
+  "requirements": [
+    "virtualenv", 
+    "pip"
+  ], 
+  "description": [
+    "Manage Python library dependencies."
+  ], 
+  "author": "Matt Wright", 
+  "notes": [
+    "Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified."
+  ], 
+  "docuri": "pip", 
+  "module": "pip", 
+  "filename": "library/pip", 
+  "examples": [
+    {
+      "code": "pip name=flask", 
+      "description": "Install I(flask) python package."
+    }, 
+    {
+      "code": "pip name=flask version=0.8", 
+      "description": "Install I(flask) python package on version 0.8."
+    }, 
+    {
+      "code": "pip name=flask virtualenv=/srv/webapps/my_app/venv", 
+      "description": "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
+    }, 
+    {
+      "code": "pip requirements=/srv/webapps/my_app/src/requirements.txt", 
+      "description": "Install specified python requirements."
+    }, 
+    {
+      "code": "pip requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapps/my_app/venv", 
+      "description": "Install specified python requirements in indicated virtualenv."
+    }
+  ], 
+  "version_added": "0.7", 
+  "short_description": "Manages Python library dependencies.", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "virtualenv": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "An optional path to a virtualenv directory to install into"
+      ]
+    }, 
+    "state": {
+      "default": "present", 
+      "required": false, 
+      "description": [
+        "The state of module"
+      ], 
+      "choices": [
+        "present", 
+        "absent", 
+        "latest"
+      ]
+    }, 
+    "version": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "The version number to install of the Python library specified in the 'name' parameter"
+      ]
+    }, 
+    "requirements": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "The path to a pip requirements file"
+      ]
+    }, 
+    "name": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "The name of a Python library to install"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

@@ -1,0 +1,59 @@
+{
+  "description": [
+    "The command module takes the command name followed by a list of space-delimited arguments.", 
+    "The given command will be executed on all selected nodes. It will not be processed through the shell, so variables like C($HOME) and operations like C(\"<\"), C(\">\"), C(\"|\"), and C(\"&\") will not work. As such, all paths to commands must be fully qualified"
+  ], 
+  "module": "command", 
+  "examples": [
+    {
+      "code": "command /sbin/shutdown -t now", 
+      "description": "Example from Ansible Playbooks"
+    }, 
+    {
+      "code": "command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database", 
+      "description": "I(creates), I(removes), and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    }
+  ], 
+  "docuri": "command", 
+  "author": "Michael DeHaan", 
+  "notes": [
+    "If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead. The M(command) module is much more secure as it's not affected by the user's environment."
+  ], 
+  "filename": "library/command", 
+  "short_description": "Executes a command on a remote node", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "creates": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "a filename, when it already exists, this step will B(not) be run."
+      ]
+    }, 
+    "free_form": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "the command module takes a free form command to run"
+      ], 
+      "aliases": []
+    }, 
+    "chdir": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "cd into this directory before running the command"
+      ], 
+      "version_added": "0.6"
+    }, 
+    "removes": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "a filename, when it does not exist, this step will B(not) be run."
+      ], 
+      "version_added": "0.8"
+    }
+  }, 
+  "ansible_version": "0.8"
+}

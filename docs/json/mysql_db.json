@@ -1,0 +1,81 @@
+{
+  "requirements": [
+    "ConfigParser"
+  ], 
+  "description": [
+    "Add or remove MySQL databases from a remote host."
+  ], 
+  "author": "Mark Theunissen", 
+  "notes": [
+    "Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb.", 
+    "Both C(login_password) and C(login_username) are required when you are passing credentials. If none are present, the module will attempt to read the credentials from C(~/.my.cnf), and finally fall back to using the MySQL default login of 'root' with no password."
+  ], 
+  "docuri": "mysql-db", 
+  "module": "mysql_db", 
+  "filename": "library/mysql_db", 
+  "examples": [
+    {
+      "code": "mysql_db db=bobdata state=present", 
+      "description": "Create a new database with name 'bobdata'"
+    }
+  ], 
+  "version_added": "0.6", 
+  "short_description": "Add or remove MySQL databases from a remote host.", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "state": {
+      "default": "present", 
+      "required": false, 
+      "description": [
+        "The database state"
+      ], 
+      "choices": [
+        "present", 
+        "absent"
+      ]
+    }, 
+    "name": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "name of the database to add or remove"
+      ]
+    }, 
+    "encoding": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "Encoding mode"
+      ]
+    }, 
+    "collation": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "Collation mode"
+      ]
+    }, 
+    "login_user": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "The username used to authenticate with"
+      ]
+    }, 
+    "login_host": {
+      "default": "localhost", 
+      "required": false, 
+      "description": [
+        "Host running the database"
+      ]
+    }, 
+    "login_password": {
+      "default": null, 
+      "required": false, 
+      "description": [
+        "The password used to authenticate with"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}

@@ -1,0 +1,21 @@
+{
+  "now_date": "2012-10-09", 
+  "description": [
+    "This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by C(/usr/bin/ansible) to check what variables are available to a host. Ansible provides many I(facts) about the system, automatically."
+  ], 
+  "docuri": "setup", 
+  "author": "Michael DeHaan", 
+  "short_description": "Gathers facts about remote hosts", 
+  "ansible_version": "0.8", 
+  "notes": [
+    "More ansible facts will be added with successive releases. If I(facter) or I(ohai) are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating. These variables are prefixed with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your remote systems."
+  ], 
+  "filename": "library/setup", 
+  "module": "setup", 
+  "examples": [
+    {
+      "code": "ansible all -m setup -tree /tmp/facts", 
+      "description": "Obtain facts from all hosts and store them indexed by hostname at /tmp/facts."
+    }
+  ]
+}

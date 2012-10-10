@@ -1,0 +1,51 @@
+{
+  "description": [
+    "Adds or removes an SSH authorized key for a user from a remote host."
+  ], 
+  "module": "authorized_key", 
+  "examples": [
+    {
+      "code": "authorized_key user=charlie key=\"ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17\"", 
+      "description": "Example from Ansible Playbooks"
+    }, 
+    {
+      "code": "authorized_key user=charlie key=$FILE(/home/charlie/.ssh/id_rsa.pub)", 
+      "description": "Shorthand available in Ansible 0.8 and later"
+    }
+  ], 
+  "docuri": "authorized-key", 
+  "author": "Brad Olson", 
+  "filename": "library/authorized_key", 
+  "version_added": "0.5", 
+  "short_description": "Adds or removes an SSH authorized key", 
+  "now_date": "2012-10-09", 
+  "options": {
+    "state": {
+      "default": "present", 
+      "required": false, 
+      "description": [
+        "whether the given key should or should not be in the file"
+      ], 
+      "choices": [
+        "present", 
+        "absent"
+      ]
+    }, 
+    "user": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "Name of the user who should have access to the remote host"
+      ], 
+      "aliases": []
+    }, 
+    "key": {
+      "default": null, 
+      "required": true, 
+      "description": [
+        "the SSH public key, as a string"
+      ]
+    }
+  }, 
+  "ansible_version": "0.8"
+}
