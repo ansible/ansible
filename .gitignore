@@ -19,3 +19,12 @@ docs/man/man3/*
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
+# docsite stuff
+docsite/rst/modules
+docsite/YAMLSyntax.html
+docsite/*.html
+docsite/_static/*.gif
+docsite/_static/*.png
+docsite/_static/websupport.js
+# deb building stuff
+debian/
