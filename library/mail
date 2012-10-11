@@ -18,14 +18,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 author: Dag Wieers
 module: email
 short_description: Send an email
 description:
   - This module is useful for sending emails from playbooks.
-  - One may wonder why automate sending emails ? In complex environments
+  - One may wonder why automate sending emails?  In complex environments
     there are from time to time processes that cannot be automated, either
     because you lack the authority to make it so, or because not everyone
     agrees to a common approach.
@@ -72,7 +72,7 @@ options:
 examples:
     - description: "Example playbook sending mail to root"
       code: local_action: mail msg="System ${ansible_hostname} has been sucessfully provisioned."
-'''
+"""
 
 import smtplib
 
