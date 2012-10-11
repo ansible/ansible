@@ -16,3 +16,6 @@ rpm-build
 .DS_Store
 # manpage build results (not all checked in)
 docs/man/man3/*
+# Sublime stuff
+*.sublime-project
+*.sublime-workspace

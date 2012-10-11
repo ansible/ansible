@@ -392,7 +392,8 @@ def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
     realpath = path_dwim(basedir, path)
-    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=True)
+    loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
+    environment = jinja2.Environment(loader=loader, trim_blocks=True)
     environment.filters['to_json'] = json.dumps
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
