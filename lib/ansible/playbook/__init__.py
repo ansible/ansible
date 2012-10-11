@@ -107,6 +107,7 @@ class PlayBook(object):
 
         self.inventory        = ansible.inventory.Inventory(host_list)
         self.inventory.subset(subset)
+        self.modules_list = utils.get_available_modules(self.module_path)  
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))

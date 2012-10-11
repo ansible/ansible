@@ -30,7 +30,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir'
+       'basedir', 'modules_list'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -79,6 +79,7 @@ class Play(object):
         self.serial       = ds.get('serial', 0)
 
         self._update_vars_files_for_host(None)
+        self.modules_list = self.playbook.modules_list
 
         self._tasks      = self._load_tasks(self._ds, 'tasks')
         self._handlers   = self._load_tasks(self._ds, 'handlers')
@@ -117,10 +118,10 @@ class Play(object):
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
                     for y in data:
-                         results.append(Task(self,y,module_vars=mv.copy()))
+                         results.append(Task(self,y,module_vars=mv.copy(), modules_list=self.modules_list))
             elif type(x) == dict:
                 task_vars = self.vars.copy()
-                results.append(Task(self,x,module_vars=task_vars))
+                results.append(Task(self,x,module_vars=task_vars, modules_list=self.modules_list))
             else:
                 raise Exception("unexpected task type")
 

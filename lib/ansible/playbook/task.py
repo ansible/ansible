@@ -17,9 +17,6 @@
 
 from ansible import errors
 from ansible import utils
-import ansible.constants as C
-import os
-from os import pathsep
 
 
 class Task(object):
@@ -39,16 +36,10 @@ class Task(object):
          'delegate_to', 'local_action', 'transport'
     ]
 
-    def __init__(self, play, ds, module_vars=None):
+    def __init__(self, play, ds, module_vars=None, modules_list=None):
         ''' constructor loads from a task or handler datastructure '''
-
-        # code to allow for saying "modulename: args" versus "action: modulename args"
-
-        modules_list = set()
-        for path in C.DEFAULT_MODULE_PATH.split(pathsep):
-            if os.path.exists(path):
-                modules_list.update(os.listdir(path))
-        modules_list = list(modules_list)
+        if modules_list is None:
+            modules_list = utils.get_available_modules()
         for x in ds.keys():
             if x in modules_list:
                 ds['action'] = x + " " + ds.get(x, None)
