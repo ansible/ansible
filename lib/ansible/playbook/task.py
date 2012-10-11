@@ -36,12 +36,10 @@ class Task(object):
          'delegate_to', 'local_action', 'transport'
     ]
 
-    def __init__(self, play, ds, module_vars=None, modules_list=None):
+    def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
-        if modules_list is None:
-            modules_list = utils.get_available_modules()
         for x in ds.keys():
-            if x in modules_list:
+            if x in play.playbook.modules_list:
                 ds['action'] = x + " " + ds.get(x, None)
                 ds.pop(x)
             elif not x in Task.VALID_KEYS:
