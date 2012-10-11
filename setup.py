@@ -9,8 +9,8 @@ from ansible import __version__, __author__
 from distutils.core import setup
 
 # find library modules
-from ansible.constants import DEFAULT_MODULE_PATH
-data_files = [ (DEFAULT_MODULE_PATH, glob('./library/*')) ]
+from ansible.constants import DIST_MODULE_PATH
+data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
 
 print "DATA FILES=%s" % data_files
 
