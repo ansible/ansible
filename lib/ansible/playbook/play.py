@@ -306,7 +306,7 @@ class Play(object):
                     filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
-                    return
+                    continue
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
