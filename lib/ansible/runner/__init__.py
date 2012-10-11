@@ -467,7 +467,7 @@ class Runner(object):
         data2 = utils.last_non_blank_line(data)
         try:
             return data2.split()[0]
-        except:
+        except IndexError:
             sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % md5s)
             sys.stderr.write("----\n")

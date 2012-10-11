@@ -41,9 +41,13 @@ class Task(object):
 
     def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
+
+        # code to allow for saying "modulename: args" versus "action: modulename args"
+
         modules_list = set()
         for path in C.DEFAULT_MODULE_PATH.split(pathsep):
-            modules_list.update(os.listdir(path))
+            if os.path.exists(path):
+                modules_list.update(os.listdir(path))
         modules_list = list(modules_list)
         for x in ds.keys():
             if x in modules_list:
@@ -77,10 +81,10 @@ class Task(object):
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
-	        self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
-	        # delegate_to: localhost should use local transport
-	        if self.delegate_to in ['127.0.0.1', 'localhost']:
-	            self.transport   = 'local'
+	    self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
+	    # delegate_to: localhost should use local transport
+	    if self.delegate_to in ['127.0.0.1', 'localhost']:
+	        self.transport   = 'local'
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
