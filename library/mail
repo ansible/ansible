@@ -71,7 +71,7 @@ options:
     required: false
 examples:
     - description: "Example playbook sending mail to root"
-      code: local_action: mail msg="System ${ansible_hostname} has been sucessfully provisioned."
+      code: "local_action: mail msg='System ${ansible_hostname} has been sucessfully provisioned.'"
 """
 
 import smtplib
