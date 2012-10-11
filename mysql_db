@@ -52,7 +52,7 @@ options:
       - The database state
     required: false
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "dump", "import" ]
   collation:
     description:
       - Collation mode
@@ -63,6 +63,10 @@ options:
       - Encoding mode
     required: false
     default: null
+  target:
+    description:
+      - Where to dump/get the .sql file
+    required: true
 examples:
    - code: mysql_db db=bobdata state=present
      description: Create a new database with name 'bobdata'
@@ -78,6 +82,7 @@ author: Mark Theunissen
 '''
 
 import ConfigParser
+import os
 try:
     import MySQLdb
 except ImportError:
@@ -97,6 +102,18 @@ def db_delete(cursor, db):
     query = "DROP DATABASE %s" % db
     cursor.execute(query)
     return True
+
+def db_dump(user, password, db_name, target):
+    res = os.system("/usr/bin/mysqldump -q -u "+user+ " -p"+password+" "
+            +db_name+" > "
+            +target)
+    return (res == 0)
+
+def db_import(user, password, db_name, target):
+    res = os.system("/usr/bin/mysql -u "+user+ " -p"+password+" "
+            +db_name+" < "
+            +target)
+    return (res == 0)
 
 def db_create(cursor, db, encoding, collation):
     if encoding:
@@ -133,7 +150,8 @@ def main():
             db=dict(required=True, aliases=['name']),
             encoding=dict(default=""),
             collation=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
+            target=dict(default=None),
+            state=dict(default="present", choices=["absent", "present","dump", "import"]),
         )
     )
 
@@ -144,6 +162,7 @@ def main():
     encoding = module.params["encoding"]
     collation = module.params["collation"]
     state = module.params["state"]
+    target = module.params["target"]
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
@@ -163,17 +182,28 @@ def main():
 
     try:
         if module.params["login_unix_socket"] != None:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db=db)
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db=db)
         cursor = db_connection.cursor()
     except Exception as e:
         module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+
+    if (state in ['dump','import']) and target is None:
+        module.fail_json(msg="with state={0} target is required".format(state))
 
     changed = False
     if db_exists(cursor, db):
         if state == "absent":
             changed = db_delete(cursor, db)
+        elif state == "dump":
+            changed = db_dump(login_user, login_password, db, target)
+            if not changed:
+                module.fail_json(msg="dump failed!")
+        elif state == "import":
+            changed = db_import(login_user, login_password, db, target)
+            if not changed:
+                module.fail_json(msg="import failed!")
     else:
         if state == "present":
             changed = db_create(cursor, db, encoding, collation)
