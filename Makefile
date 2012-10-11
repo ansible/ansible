@@ -164,7 +164,7 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man1/ --module-dir=library --template-dir=hacking/templates
+	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
 
 modulejson:
 	mkdir -p docs/json
