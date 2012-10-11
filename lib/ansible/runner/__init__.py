@@ -27,6 +27,7 @@ import time
 import collections
 import socket
 import base64
+import sys
 
 import ansible.constants as C
 import ansible.inventory
@@ -463,8 +464,17 @@ class Runner(object):
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
-        data = utils.last_non_blank_line(data)
-        return data.split()[0]
+        data2 = utils.last_non_blank_line(data)
+        try:
+            return data2.split()[0]
+        except:
+            sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
+            sys.stderr.write("command: %s\n" % md5s)
+            sys.stderr.write("----\n")
+            sys.stderr.write("output: %s\n" % data)
+            sys.stderr.write("----\n")
+            # this will signal that it changed and allow things to keep going
+            return "INVALIDMD5SUM"
 
     # *****************************************************
 
