@@ -33,7 +33,7 @@ options:
         - Name of the service.
     state:
         required: false
-        choices: [ running, started, stopped, restarted, reloaded ]
+        choices: [ started, stopped, restarted, reloaded ]
         description:
         - I(started), I(stopped), I(reloaded), I(restarted).
           I(Started)/I(stopped) are idempotent actions that will not run

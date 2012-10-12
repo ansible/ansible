@@ -37,7 +37,7 @@ options:
       - Indicates the desired package state
     required: false
     default: present
-    choices: [ "installed", "latest", "remove", "absent", "present" ]
+    choices: [ "latest", "absent", "present" ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a seperate step
