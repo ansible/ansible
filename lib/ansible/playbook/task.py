@@ -29,14 +29,15 @@ class Task(object):
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register', 'with_items', 
         'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action', 'transport'
+        'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action', 'transport'
+         'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
+         'sudo_pass'
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -63,6 +64,13 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
+        self.sudo         = ds.get('sudo', play.sudo)
+        if self.sudo is True:
+            self.sudo_user    = ds.get('sudo_user', play.sudo_user)
+            self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
+        else:
+            self.sudo_user    = None
+            self.sudo_pass    = None
         
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):

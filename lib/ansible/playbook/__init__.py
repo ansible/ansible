@@ -223,8 +223,8 @@ class PlayBook(object):
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
-            sudo=task.play.sudo, sudo_user=task.play.sudo_user,
-            transport=task.transport, sudo_pass=self.sudo_pass, is_playbook=True
+            sudo=task.sudo, sudo_user=task.sudo_user,
+            transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True
         )
 
         if task.async_seconds == 0:
