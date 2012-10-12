@@ -92,6 +92,7 @@ Other module Changes, Upgrades, and Fixes:
 * inline documentation for modules allows documentation source to built without pull requests to the ansible-docs project, among other things
 * variable '$ansible_managed' is now great to include at the top of your templates and includes useful information and a warning that it will be replaced
 * "~" now expanded in command module when using creates/removes
+* mysql module can do dumps and imports
 
 0.7 "Panama" -- Sept 6 2012
 
