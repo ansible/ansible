@@ -44,22 +44,56 @@ import socket
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
+PLAYBOOK_ERRORS = { 1: 'File does not exist',
+                    2: 'File is not readable' }
 
 def _run(cmd):
+    print >>sys.stderr, "Running: '%s'" % cmd
     cmd = subprocess.Popen(cmd, shell=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     print out
     if cmd.returncode != 0:
-        print err
+        print >>sys.stderr, err
     return cmd.returncode
+
+def try_playbook(path):
+    if not os.path.exists(path):
+        return 1
+    if not os.access(path, os.R_OK):
+        return 2
+    return 0
+
+def select_playbook(path, args):
+    playbook = None
+    if len(args) > 0 and args[0] is not None:
+        playbook = "%s/%s" % (path, args[0])
+        rc = try_playbook(playbook)
+        if rc != 0:
+            print >>sys.stderr, "%s: %s" % (playbook, PLAYBOOK_ERRORS[rc])
+            return None
+        return playbook
+    else:
+        hostpb = "%s/%s.yml" % (path, socket.getfqdn())
+        localpb = "%s/%s" % (path, DEFAULT_PLAYBOOK)
+        errors = []
+        for pb in [hostpb, localpb]:
+            rc = try_playbook(pb)
+            if rc == 0:
+                playbook = pb
+                break
+            else:
+                errors.append("%s: %s" % (pb, PLAYBOOK_ERRORS[rc]))
+        if playbook is None:
+            print >>sys.stderr, "\n".join(errors)
+        return playbook
 
 def main(args):
     """ Set up and run a local playbook """
-    usage = "%prog [options] [path/playbook.yml]"
+    usage = "%prog [options] [playbook.yml]"
     parser = OptionParser(usage=usage)
     parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to checkout git repository to')
+                      help='Directory to clone git repository to')
     parser.add_option('-U', '--url', dest='url', default=None,
                       help='URL of git repository')
     parser.add_option('-C', '--checkout', dest='checkout',
@@ -68,64 +102,29 @@ def main(args):
     options, args = parser.parse_args(args)
 
     if not options.dest:
-      parser.error("Missing required directory argument")
-      return 1
+        parser.error("Missing required directory argument")
+        return 1
 
     if not options.url:
-      parser.error("URL for git repo not specified, use -h for help")
-      return 1
+        parser.error("URL for git repo not specified, use -h for help")
+        return 1
 
     now = datetime.datetime.now()
-    print now.strftime("ansible-pull_started: %Y%m%d-%H%M-%S"), "\n"
+    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
     cmd = 'ansible all -c local -m git -a "%s"' % git_opts
-    print "cmd=%s" % cmd, "\n"
     rc = _run(cmd)
     if rc != 0:
         return rc
 
-    hostname = "%s.yml" % socket.getfqdn()
+    playbook = select_playbook(options.dest, args)
 
-    if not args:
-      try:
-        with open('%s/%s' % (options.dest, hostname)) as f: pass
-        playbook = hostname
-        print 'using playbook %s/%s' % (options.dest, hostname)
-      except IOError as e:
-        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
-        try:
-          with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
-          playbook = DEFAULT_PLAYBOOK
-          print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
-        except IOError as e:
-          print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
-          return 1
-    else:
-      try:
-        with open('%s/%s' % (options.dest, args[0])) as f: pass
-        playbook = args[0]
-        print 'using playbook %s/%s' % (options.dest, args[0])
-      except IOError as e:
-        print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, args[0], hostname)
-        try:
-          with open('%s/%s' % (options.dest, hostname)) as f: pass
-          playbook = hostname
-          print 'using playbook %s/%s' % (options.dest, hostname)
-        except IOError as e:
-          print 'playbook %s/%s does not exist, falling back to %s' % (options.dest, hostname, DEFAULT_PLAYBOOK)
-          try:
-            with open('%s/%s' % (options.dest, DEFAULT_PLAYBOOK)) as f: pass
-            playbook = DEFAULT_PLAYBOOK
-            print 'using playbook %s/%s' % (options.dest, DEFAULT_PLAYBOOK)
-          except IOError as e:
-            print 'playbook %s/%s does not exist, no playbooks to run; use -h for help' % (options.dest, DEFAULT_PLAYBOOK)
-            return 1
-
-    print
+    if playbook is None:
+        print >>sys.stderr, "Could not find a playbook to run."
+        return 1
 
     cmd = 'ansible-playbook -c local %s' % playbook
-    print "cmd=%s" % cmd
     os.chdir(options.dest)
     rc = _run(cmd)
     return rc
