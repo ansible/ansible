@@ -43,6 +43,7 @@ Highlighted playbook changes:
 * task includes now work with with_items (such as: include: path/to/wordpress.yml user=$item)
 * when using a $list variable with $var or ${var} syntax it will automatically join with commas
 * setup is not run more than once when we know it is has already been run in a play that included another play, etc
+* can set/override sudo and sudo_user on individual tasks in a play, defaults to what is set in the play if not present
 
 Other playbook changes:
 
@@ -68,6 +69,7 @@ New Modules:
 * a module for adding entries to the main crontab (though you may still wish to just drop template files into cron.d)
 * debug module can be used for outputing messages without using 'shell echo'
 * a fail module is now available for causing errors, you might want to use it with only_if to fail in certain conditions
+* virt_boot  -- creates new virtual machines with libvirt
 
 Other module Changes, Upgrades, and Fixes:
 
