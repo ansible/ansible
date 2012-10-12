@@ -1,0 +1,309 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Jeroen Hoekx
+module: virt_boot
+short_description: Define libvirt boot parameters
+description:
+  - "This module configures the boot order or boot media of a libvirt virtual
+     machine. A guest can be configured to boot from network, hard disk, floppy,
+     cdrom or a direct kernel boot. Specific media can be attached for cdrom, 
+     floppy and direct kernel boot."
+  - This module requires the libvirt module.
+version_added: "0.8"
+options:
+  domain:
+    description:
+    - The name of the libvirt domain.
+    required: true
+  boot:
+    description:
+    - "Specify the boot order of the virtual machine. This is a comma-separated 
+      list of: I(fd), I(hd), I(cdrom) and I(network)."
+    required: false
+  bootmenu:
+    description:
+    - Enable or disable the boot menu.
+    required: false
+    choices: [ "yes", "no" ]
+  kernel:
+    description:
+    - The path of the kernel to boot.
+    required: false
+  initrd:
+    description:
+    - The path of the initrd to boot.
+    required: false
+  cmdline:
+    description:
+    - The command line to boot the kernel with.
+    required: false
+  device:
+    default: hdc
+    description:
+    - The libvirt device name of the cdrom/floppy.
+    required: false
+  image:
+    description:
+    - The image to connect to the cdrom/floppy device.
+    required: false
+examples:
+  - description: Boot from a cdrom image.
+    code: virt_boot domain=archrear image=/srv/rear/archrear/rear-archrear.iso boot=cdrom
+  - description: Boot from the local disk.
+    code: virt_boot domain=archrear boot=hd
+  - description: Boot a specific kernel with a special command line.
+    code: virt_boot domain=archrear kernel=$storage/kernel-archrear initrd=$storage/initramfs-archrear.img cmdline="root=/dev/ram0 vga=normal rw"
+  - description: Boot from the harddisk and if that fails from the network.
+    code: virt_boot domain=archrear boot=hd,network
+  - description: Enable the boot menu.
+    code: virt_boot domain=archrear bootmenu=yes
+requirements: [ "libvirt" ]
+notes:
+  - Run this on the libvirt host.
+  - I(kernel) and I(boot) are mutually exclusive.
+  - This module can not change a running system.
+  - Using direct kernel boot will always result in a I(changed) state due to libvirt internals.
+'''
+
+from xml.dom.minidom import parseString
+
+try:
+    import libvirt
+except ImportError:
+    print "failed=True msg='libvirt python module unavailable'"
+    sys.exit(1)
+
+def get_domain(name):
+    conn = libvirt.open("qemu:///system")
+    domain = conn.lookupByName(name)
+
+    return domain, conn
+
+def get_xml(domain):
+    domain_data = domain.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE)
+    tree = parseString(domain_data)
+
+    return tree
+
+def write_xml(tree, conn):
+    conn.defineXML( tree.toxml() )
+
+def element_text(element, data=None):
+    if data:
+        to_be_removed = []
+        for node in element.childNodes:
+            to_be_removed.append(node)
+        for node in to_be_removed:
+            element.removeChild(node)
+        element.appendChild( element.ownerDocument.createTextNode(data) )
+    if element.firstChild and element.firstChild.nodeType==element.TEXT_NODE:
+        return element.firstChild.data
+
+def get_disk(tree, device):
+    for target in tree.getElementsByTagName('target'):
+        if target.getAttribute("dev") == device:
+            return target
+
+def attach_disk(domain, tree, device, image):
+    disk = get_disk(tree, device)
+    if disk:
+        source = disk.parentNode.getElementsByTagName('source').item(0)
+        if source and source.getAttribute("file") == image:
+            return False
+
+    CDROM_TEMPLATE='''<disk type="file" device="disk">
+                        <driver name="qemu" type="raw"/>
+                        <source file="{path}"/>
+                        <target bus="virtio" dev="{dev}"/>
+                      </disk>'''
+    xml = CDROM_TEMPLATE.format(path=image, dev=device)
+    domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+    return True
+
+def detach_disk(domain, tree, device):
+    disk = get_disk(tree, device)
+    if disk:
+        source = disk.parentNode.getElementsByTagName('source').item(0)
+        if source and source.hasAttribute("file"):
+            source.removeAttribute("file")
+            xml = disk.parentNode.toxml()
+            domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            return True
+    return False
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            domain=dict(required=True, aliases=['guest']),
+            boot=dict(),
+            bootmenu=dict(choices=BOOLEANS),
+            kernel=dict(),
+            initrd=dict(),
+            cmdline=dict(),
+            device=dict(default='hdc'),
+            image=dict(),
+        ),
+        required_one_of = [['boot','kernel','image','bootmenu']],
+        mutually_exclusive = [['boot','kernel']]
+    )
+
+    params = module.params
+
+    domain_name = params['domain']
+
+    boot = params['boot']
+    bootmenu = module.boolean(params['bootmenu'])
+    kernel = params['kernel']
+    initrd = params['initrd']
+    cmdline = params['cmdline']
+
+    device = params['device']
+    image = params['image']
+
+    changed = False
+
+    domain, conn = get_domain(domain_name)
+    if domain.isActive():
+        module.fail_json(msg="Domain %s is still running."%(domain_name))
+    tree = get_xml(domain)
+
+    ### Connect image
+    if image:
+        changed = changed or attach_disk(domain, tree, device, image)
+        if not boot and not kernel:
+            module.exit_json(changed=changed, image=image, device=device)
+    else:
+        changed = changed or detach_disk(domain, tree, device)
+
+    if changed:
+        tree = get_xml(domain)
+
+    ### Boot ordering
+    os = tree.getElementsByTagName('os').item(0)
+    boot_list = os.getElementsByTagName('boot')
+    kernel_el = os.getElementsByTagName('kernel').item(0)
+    initrd_el = os.getElementsByTagName('initrd').item(0)
+    cmdline_el = os.getElementsByTagName('cmdline').item(0)
+    if boot:
+        if kernel_el:
+            changed = True
+            kernel_el.parentNode.removeChild(kernel_el)
+        if initrd_el:
+            changed = True
+            initrd_el.parentNode.removeChild(initrd_el)
+        if cmdline_el:
+            changed = True
+            cmdline_el.parentNode.removeChild(cmdline_el)
+
+        items = boot.split(',')
+        if boot_list:
+            needs_change = False
+            if len(items) == len(boot_list):
+                for (boot_el, dev) in zip(boot_list, items):
+                    if boot_el.getAttribute('dev') != dev:
+                        needs_change = True
+            else:
+                needs_change = True
+
+            if needs_change:
+                changed = True
+                to_be_removed = []
+                for boot_el in boot_list:
+                    to_be_removed.append(boot_el)
+                for boot_el in to_be_removed:
+                    os.removeChild(boot_el)
+                for item in items:
+                    boot_el = tree.createElement('boot')
+                    boot_el.setAttribute('dev', item)
+                    os.appendChild(boot_el)
+        else:
+            changed = True
+            for item in items:
+                boot_el = tree.createElement('boot')
+                boot_el.setAttribute('dev', item)
+                os.appendChild(boot_el)
+
+    elif kernel:
+        if boot_list:
+            changed = True
+            to_be_removed = []
+            for boot_el in boot_list:
+                to_be_removed.append(boot_el)
+            for boot_el in to_be_removed:
+                os.removeChild(boot_el)
+        if kernel_el:
+            if element_text(kernel_el) != kernel:
+                changed = True
+                element_text(kernel_el, kernel)
+        else:
+            changed = True
+            kernel_el = tree.createElement('kernel')
+            kernel_el.appendChild( tree.createTextNode(kernel) )
+            os.appendChild(kernel_el)
+
+        if initrd_el:
+            if element_text(initrd_el) != initrd:
+                changed = True
+                element_text(initrd_el, initrd)
+        else:
+            changed = True
+            initrd_el = tree.createElement('initrd')
+            initrd_el.appendChild( tree.createTextNode(initrd) )
+            os.appendChild(initrd_el)
+
+        if cmdline_el:
+            if element_text(cmdline_el) != cmdline:
+                changed = True
+                element_text(cmdline_el, cmdline)
+        else:
+            changed = True
+            cmdline_el = tree.createElement('cmdline')
+            cmdline_el.appendChild( tree.createTextNode(cmdline) )
+            os.appendChild(cmdline_el)
+
+    ### Enable/disable bootmenu
+    bootmenu_state = tree.getElementsByTagName('bootmenu').item(0)
+    if bootmenu and bootmenu_state:
+        bootmenu_enabled = bootmenu_state.getAttribute('enable')
+        if bootmenu_enabled != 'yes':
+            changed = True
+            bootmenu_state.setAttribute('enable', 'yes')
+    elif bootmenu:
+        os = tree.getElementsByTagName('os').item(0)
+        bootmenu_state = tree.createElement('bootmenu')
+        bootmenu_state.setAttribute('enable', 'yes')
+        changed = True
+        os.appendChild(bootmenu_state)
+    elif bootmenu_state:
+        bootmenu_state.parentNode.removeChild(bootmenu_state)
+        changed = True
+
+    ### save back
+    write_xml(tree, conn)
+
+    module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
