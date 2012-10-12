@@ -60,12 +60,16 @@ p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
+# Needed so the RPM can call setup.py and have modules land in the
+# correct location. See #1277 for discussion
+DIST_MODULE_PATH = '/usr/share/ansible/'
+
 # sections in config file
 DEFAULTS='defaults'
 
 # configurable things
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts'))
-DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          '/usr/share/ansible'))
+DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH))
 DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
