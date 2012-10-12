@@ -251,11 +251,11 @@ def main():
     (rc, out, err) = get_jobs_file(user,tmpfile.name)
     if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
         module.fail_json(msg=err)
-    backupfile = tempfile.NamedTemporaryFile(prefix='crontab',delete=False)
-    (rc, out, err) = get_jobs_file(user,backupfile.name)
+    (handle,backupfile) = tempfile.mkstemp(prefix='crontab')
+    (rc, out, err) = get_jobs_file(user,backupfile)
     if rc != 0 and rc != 1:
         module.fail_json(msg=err)
-    old_job = find_job(name,backupfile.name)
+    old_job = find_job(name,backupfile)
     if do_install:
         if len(old_job) == 0:
             (rc, out, err) = add_job(name,job,tmpfile.name)
@@ -271,7 +271,7 @@ def main():
         module.fail_json(msg=err)
     if changed:
         if backup:
-            module.backup_local(backupfile.name)
+            module.backup_local(backupfile)
         (rc, out, err) = install_jobs(user,tmpfile.name)
         if (rc != 0):
             module.fail_json(msg=err)
@@ -280,11 +280,10 @@ def main():
     for j in get_jobs(tmpfile.name):
         jobnames.append(j[0])
     tmpfile.close()
-    backupfile.close()
     if not backup:
         module.exit_json(changed=changed,jobs=jobnames)
     else:
-        module.exit_json(changed=changed,jobs=jobnames,backup=backupfile.name)
+        module.exit_json(changed=changed,jobs=jobnames,backup=backupfile)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
