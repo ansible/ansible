@@ -107,6 +107,16 @@ ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
+FILES
+-----
+
+/etc/ansible/hosts -- Default inventory file
+
+/usr/share/ansible/ -- Default module library
+
+/etc/ansible/ansible.conf -- Config file, used if present
+
+~/.ansible.config -- User config file, overrides the default config if present
 
 AUTHOR
 ------
