@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 DOCUMENTATION = '''
 ---
-module: parted_facts
+module: parted
 short_description: Gathers facts about disk drives and partitions
 description:
      - This module can be used to get the facts about disk drives on the system.
@@ -64,15 +64,44 @@ def run_parted(module, devs):
 def main():
 	global module
 	module = AnsibleModule(
-		argument_spec = dict()
+		argument_spec = dict(
+		ensure=dict(default=None),
+		minfree=dict(default=0),
+		maxfree=dict(default=0),
+		repeated=dict(default='no', choices=['yes', 'no'])
 	)
+	ensure = module.params['ensure']
+	minfree = module.params['minfree']
+	maxfree = module.params['maxfree']
+	repeated = module.params['repeated']
+
 	try:
 		import parted
 	except ImportError:
 		module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
 	devs = [parted.Disk(d) for d in parted.getAllDevices()]
 	data = run_parted(module, devs)
-	module.exit_json(**data)
+	changed = False
+	if ensure:
+		space = ensure_space(data, ensure=ensure, minfree=minfree)
+		while space:
+			changed = space.create()
+			devs = [parted.Disk(d) for d in parted.getAllDevices()]
+        		data = run_parted(module, devs)
+			if 'no' in repeated:
+				break
+			space = ensure_space(data, ensure=ensure, minfree=minfree)
+	elif maxfree > 0:
+		space = ensure_space(data, maxfree=maxfree, minfree=minfree)
+		while space:
+			changed = space.create()
+                        devs = [parted.Disk(d) for d in parted.getAllDevices()]
+                        data = run_parted(module, devs)
+                        if 'no' in repeated:
+                                break
+			space = ensure_space(data, maxfree=maxfree, minfree=minfree)
+        data['changed'] = changed
+        module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
