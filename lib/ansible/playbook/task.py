@@ -17,9 +17,6 @@
 
 from ansible import errors
 from ansible import utils
-import ansible.constants as C
-import os
-from os import pathsep
 
 
 class Task(object):
@@ -43,14 +40,8 @@ class Task(object):
         ''' constructor loads from a task or handler datastructure '''
 
         # code to allow for saying "modulename: args" versus "action: modulename args"
-
-        modules_list = set()
-        for path in C.DEFAULT_MODULE_PATH.split(pathsep):
-            if os.path.exists(path):
-                modules_list.update(os.listdir(path))
-        modules_list = list(modules_list)
         for x in ds.keys():
-            if x in modules_list:
+            if x in play.playbook.modules_list:
                 ds['action'] = x + " " + ds.get(x, None)
                 ds.pop(x)
             elif not x in Task.VALID_KEYS:
