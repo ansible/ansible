@@ -41,11 +41,6 @@ options:
     description:
       - The password to authenticate to the HP iLO interface.
     default: admin
-  match:
-    description:
-      - An optional string to match against the iLO server name.
-      - This is a safety measure to prevent accidentally using the wrong
-        HP iLO interface with dire consequences.
   media:
     description:
       - The boot media to boot the system from
@@ -54,8 +49,8 @@ options:
   image:
     description:
       - "The URL of a cdrom, floppy or usb boot media image.
-        C(protocol://username:password@hostname:port/filename)"
-      - protocol is either C(http) or C(https)
+        'protocol://username:password@hostname:port/filename'"
+      - protocol is either 'http' or 'https'
       - "username:password is optional"
       - port is optional
   state:
@@ -66,26 +61,33 @@ options:
       - "boot_always: Boot from the device each time the serveris rebooted"
       - "connect: Connect the virtual media device and set to boot_always"
       - "disconnect: Disconnects the virtual media device and set to no_boot"
+      - "poweroff: Power off the server"
     default: boot_once
-    choices: [ "boot_always", "boot_once", "connect", "disconnect", "no_boot" ]
+    choices: [ "boot_always", "boot_once", "connect", "disconnect", "no_boot", "poweroff" ]
   force:
     description:
-      - Whether to force a reboot (even when the system is already booted)
+      - Whether to force a reboot (even when the system is already booted).
+      - As a safeguard, without force, hpilo_boot will refuse to reboot a server that is already running.
     default: no
     choices: [ "yes", "no" ]
 examples:
   - description: Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server
     code: |
-      local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password match=$inventory_hostname_short media=cdrom image=$iso_url
-      only_if: "'$cmdb_hwmodel'.startswith('HP ')
+      - local_action: fail msg="CMDB serial ($cmdb_serialno) does not match hardware serial ($hw_system_serial) !"
+        only_if: "'$cmdb_serialno' != '$hw_system_serial'"
+      - local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password media=cdrom image=$iso_url
+        only_if: "'$cmdb_hwmodel'.startswith('HP ')"
+  - description: Power off a server
+    code: "local_action: hpilo_boot host=$ilo_address login=$ilo_login password=$ilo_password state=poweroff"
 notes:
   - To use a USB key image you need to specify floppy as boot media.
   - This module ought to be run from a system that can access the HP iLO
-    interface directly, either by using C(local_action) or
-    using C(delegate_to).
+    interface directly, either by using local_action or
+    using delegate_to.
 '''
 
 import sys
+import time
 import warnings
 try:
     import hpilo
@@ -103,10 +105,9 @@ def main():
             host = dict(required=True),
             login = dict(default='Administrator'),
             password = dict(default='admin'),
-            match = dict(default=None),
             media = dict(default=None, choices=['cdrom', 'floppy', 'hdd', 'network', 'normal', 'usb']),
             image = dict(default=None),
-            state = dict(default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot']),
+            state = dict(default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
             force = dict(default='no', choices=BOOLEANS),
         )
     )
@@ -114,25 +115,17 @@ def main():
     host = module.params.get('host')
     login = module.params.get('login')
     password = module.params.get('password')
-    match = module.params.get('match')
     media = module.params.get('media')
     image = module.params.get('image')
     state = module.params.get('state')
     force = module.boolean(module.params.get('force'))
 
     ilo = hpilo.Ilo(host, login=login, password=password)
+    changed = False
+    status = {}
+    power_status = 'UNKNOWN'
 
-    # If match=string is provided, only reboot server if iLO name matches 'string'
-    if match != None:
-        try:
-            server_name = ilo.get_server_name()
-        except Exception, e:
-            module.fail_json(rc=1, msg='Failed to connect to %s: %s' % (host, e.message))
-
-        if not server_name.lower().startswith(match.lower()):
-            module.fail_json(rc=1, msg='The iLO server name \'%s\' does not match \'%s\'' % (server_name, match))
-
-    if media:
+    if media and state in ('boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot'):
 
         # Workaround for: Error communicating with iLO: Problem manipulating EV
         try:
@@ -144,16 +137,16 @@ def main():
         # TODO: Verify if image URL exists/works
         if image:
             ilo.insert_virtual_media(media, image)
+            changed = True
 
         if media == 'cdrom':
             ilo.set_vm_status('cdrom', state, True)
             status = ilo.get_vm_status()
-        elif media == 'floppy':
+            changed = True
+        elif media in ('floppy', 'usb'):
             ilo.set_vf_status(state, True)
             status = ilo.get_vf_status()
-        elif media == 'usb':
-            ilo.set_vf_status(state, True)
-            status = ilo.get_vf_status()
+            changed = True
 
     # Only perform a boot when state is boot_once or boot_always, or in case we want to force a reboot
     if state in ('boot_once', 'boot_always') or force:
@@ -161,14 +154,28 @@ def main():
         power_status = ilo.get_host_power_status()
 
         if not force and power_status == 'ON':
-            module.fail_json(rc=1, msg='The server \'%s\' is already powered on !' % server_name)
+            module.fail_json(rc=1, msg='HP iLO (%s) reports that the server is already powered on !' % host)
 
         if power_status == 'ON':
+#            ilo.cold_boot_server()
             ilo.warm_boot_server()
+            changed = True
         else:
-            ilo.cold_boot_server()
+            ilo.press_pwr_btn()
+#            ilo.reset_server()
+#            ilo.set_host_power(host_power=True)
+            changed = True
 
-    module.exit_json(changed=True, **status)
+    elif state in ('poweroff'):
+
+        power_status = ilo.get_host_power_status()
+
+        if not power_status == 'OFF':
+            ilo.hold_pwr_btn()
+#            ilo.set_host_power(host_power=False)
+            changed = True
+
+    module.exit_json(changed=changed, power=power_status, **status)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
