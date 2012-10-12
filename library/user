@@ -125,9 +125,9 @@ if os.path.exists('/etc/master.passwd'):
 def user_del(module, user, **kwargs):
     cmd = [module.get_bin_path('userdel', True)]
     for key in kwargs:
-        if key == 'force' and kwargs[key] == 'yes':
+        if key == 'force' and module.boolean(kwargs[key]):
             cmd.append('-f')
-        elif key == 'remove' and kwargs[key] == 'yes':
+        elif key == 'remove' and module.boolean(kwargs[key]):
             cmd.append('-r')
     cmd.append(user)
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -166,11 +166,12 @@ def user_add(module, user, **kwargs):
             cmd.append(kwargs[key])
         elif key == 'createhome':
             if kwargs[key] is not None:
-                if kwargs[key] == 'yes':
+                value = module.boolean(kwargs[key])
+                if value:
                     cmd.append('-m')
                 else:
                     cmd.append('-M')
-        elif key == 'system' and kwargs[key] == 'yes':
+        elif key == 'system' and module.boolean(kwargs[key]):
             cmd.append('-r')
     cmd.append(user)
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -207,7 +208,7 @@ def user_mod(module, user, **kwargs):
             groups_need_mod = False
 
             if group_diff:
-                if kwargs['append'] is not None and kwargs['append'] == 'yes':
+                if kwargs['append'] is not None and module.boolean(kwargs['append']):
                     for g in groups:
                         if g in group_diff:
                             cmd.append('-a')
@@ -323,13 +324,13 @@ def main():
             shell=dict(default=None),
             password=dict(default=None),
             # following options are specific to userdel
-            force=dict(default='no', choices=['yes', 'no']),
-            remove=dict(default='no', choices=['yes', 'no']),
+            force=dict(default='no', choices=BOOLEANS),
+            remove=dict(default='no', choices=BOOLEANS),
             # following options are specific to useradd
-            createhome=dict(default='yes', choices=['yes', 'no']),
-            system=dict(default='no', choices=['yes', 'no']),
+            createhome=dict(default='yes', choices=BOOLEANS),
+            system=dict(default='no', choices=BOOLEANS),
             # following options are specific to usermod
-            append=dict(default='no', choices=['yes', 'no']),
+            append=dict(default='no', choices=BOOLEANS)
         )
     )
 
