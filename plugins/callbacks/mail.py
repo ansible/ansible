@@ -17,7 +17,7 @@
 
 import smtplib
 
-def mail(subject='Ansible error mail', sender='root', to='root', cc=None, bcc=None, body=None):
+def mail(subject='Ansible error mail', sender='<root>', to='root', cc=None, bcc=None, body=None):
     if not body:
         body = subject
 
@@ -51,7 +51,7 @@ class CallbackModule(object):
     def runner_on_failed(self, host, res, ignore_errors=False):
         if ignore_errors:
             return
-        sender = 'Ansible error on %s' % host
+        sender = 'Ansible error on %s <root>' % host
         subject = 'Failure: %s' % res['msg'].split('\n')[0]
         mail(sender=sender, subject=subject, 
              body='''The following task failed for host %s:
