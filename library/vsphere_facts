@@ -47,11 +47,12 @@ options:
       - The virtual server to gather facts for on the vSphere cluster.
     required: true
 examples:
-    - code: |
-        local_action: vsphere_facts host=$esxserver login=$esxlogin password=$esxpassword guest=$inventory_hostname_short
+  - description: Task to gather facts from a vSphere cluster only if the system is a VMWare guest
+    code: |
+      - local_action: vsphere_facts host=$esxserver login=$esxlogin password=$esxpassword guest=$inventory_hostname_short
         only_if: "'$cmdb_hwmodel'.startswith('VMWare ')
-      description: Task to gather facts from a vSphere cluster only if the system is a VMWare guest
-    - code:
+  - description: Typical output of a vsphere_facts run on a guest
+    code:
       - hw_eth0:
         - addresstype: "assigned"
           label: "Network adapter 1"
@@ -64,10 +65,9 @@ examples:
         hw_name: "centos6"
         hw_processor_count: 1
         hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
-      description: Typical output of a vsphere_facts run on a guest
 notes:
   - This module ought to be run from a system that can access vSphere directly.
-    Either by using C(local_action), or C(using delegate)_to.
+    Either by using local_action, or using delegate_to.
 '''
 
 import sys
