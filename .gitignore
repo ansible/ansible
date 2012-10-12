@@ -21,7 +21,6 @@ docs/man/man3/*
 *.sublime-workspace
 # docsite stuff
 docsite/rst/modules
-docsite/YAMLSyntax.html
 docsite/*.html
 docsite/_static/*.gif
 docsite/_static/*.png
