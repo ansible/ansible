@@ -37,7 +37,7 @@ description:
        files/symlinks/directories. Many other modules support the same options as
        the file module - including M(copy), M(template), and M(assmeble).
 options:
-  dest:
+  path:
     description:
       - defines the file being managed, unless when used with I(state=link), and then sets the destination to create a symbolic link to using I(src)
     required: true
