@@ -339,10 +339,17 @@ def main():
     params = module.params
     state  = params['state']
     path   = os.path.expanduser(params['path'])
+
+    # source is both the source of a symlink or an informational passing of the src for a template module
+    # or copy module, even if this module never uses it, it is needed to key off some things
+
     src    = params.get('src', None)
     if src:
         src = os.path.expanduser(src)
     force = module.boolean(params['force'])
+
+    if src is not None and os.path.isdir(path):
+        params['path'] = path = os.path.join(path, os.path.basename(src))
 
     mode   = params.get('mode', None)
     owner  = params.get('owner', None)
@@ -370,6 +377,7 @@ def main():
     changed = False
 
     prev_state = 'absent'
+
     if os.path.lexists(path):
         if os.path.islink(path):
             prev_state = 'link'
@@ -392,7 +400,7 @@ def main():
         module_exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state and not force:
-        module_fail_json(path=path, msg='refusing to convert between %s and %s' % (prev_state, state))
+        module_fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
         module_exit_json(path=path, changed=False)
@@ -400,7 +408,7 @@ def main():
     if state == 'file':
 
         if prev_state != 'file':
-            module_fail_json(path=path, msg='file does not exist, use copy or template module to create')
+            module_fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
 
         # set modes owners and context as needed
         changed = set_context_if_different(path, secontext, changed)
