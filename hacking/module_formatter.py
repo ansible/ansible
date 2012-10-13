@@ -35,35 +35,13 @@ BLACKLIST_MODULES = [
    'async_wrapper'
 ]
 
-MODULEDIR="/Users/jpm/Auto/pubgit/ansible/ansible/library"
-
-BOILERPLATE = '''
----
-module: foo
-author: AUTHORNAME
-short_description: A short description, think title
-description:
-  - First paragraph explains what the module does. More paragraphs can
-    be added.
-  - Second para of description. You can use B(bold), I(italic), and
-    C(constant-width). To refer to another M(module) use that, and
-    U(url) exists too.
-version_added: "0.x"
-options:
-  dest:
-    required: true
-    description:
-      - What does this option do, and bla bla bla
-      - More than one paragraph allowed here as well. Formatting
-        with B(bold), etc. work too.
-  remove:
-    required: false
-    choices: [ yes, no ]
-    default: "maybe"
-    aliases: [ kill, killme, delete ]
-    description:
-      - The foo to do on M(module) but be careful of lorem ipsum
-'''
+# Get parent directory of the directory this script lives in
+MODULEDIR=os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
+    ))
+EXAMPLE_YAML=os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yaml'
+    ))
 
 # There is a better way of doing this!
 # TODO: somebody add U(text, http://foo.bar/) as described by Tim in #991
@@ -177,6 +155,11 @@ def return_data(text, options, outputname, module):
     else:
         print text
 
+def boilerplate():
+    if not os.path.exists(EXAMPLE_YAML):
+        print >>sys.stderr, "Missing example boiler plate: %S" % EXAMPLE_YAML
+    print file(EXAMPLE_YAML).read()
+
 
 def main():
 
@@ -231,7 +214,7 @@ def main():
             dest="do_boilerplate",
             default=False,
             help="generate boilerplate DOCUMENTATION to stdout")
-    p.add_option('-V', action='version')
+    p.add_option('-V', action='version', help='Show version number and exit')
 
     (options, args) = p.parse_args()
 
@@ -247,6 +230,10 @@ def main():
     if not options.module_dir:
         print "Need module_dir"
         sys.exit(1)
+    if not os.path.exists(options.module_dir):
+        print >>sys.stderr, "Module directory does not exist: %s" % options.module_dir
+        sys.exit(1)
+
 
     if not options.template_dir:
         print "Need template_dir"
@@ -363,35 +350,6 @@ def main():
         docs['json'] = json.dumps(js_data, indent=2)
         text = template.render(docs)
         return_data(text, options, outputname, 'modules')
-
-#def boilerplate():
-#
-#    # Sneaky: insert author's name from Git config
-#
-#    cmd = subprocess.Popen("git config --get user.name", shell=True,
-#            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#    out, err = cmd.communicate()
-#
-#    if len(out.split('\n')) == 2:
-#        author = out.split('\n')[0]
-#        print author
-#    else:
-#        author = "Your Name"
-#
-#    # I can't dump YAML in ordered fasion, so I use this boilerplate string
-#    # and verify it is parseable just before printing it out to the user.
-#
-#    try:
-#        boilplate = yaml.load(BOILERPLATE)
-#    except:
-#        print "Something is wrong with the BOILERPLATE"
-#        sys.exit(1)
-#
-#    print """
-#DOCUMENTATION = '''
-#%s
-#'''
-#"""[1:-1] % (BOILERPLATE.replace('AUTHORNAME', author) [1:-1] )
 
 if __name__ == '__main__':
     main()
