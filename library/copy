@@ -89,9 +89,9 @@ def main():
             module.fail_json(msg="Destination %s not writable" % (dest))
         if not os.access(dest, os.R_OK):
             module.fail_json(msg="Destination %s not readable" % (dest))
-        # Allow dest to be directory without compromising md5 check
         if (os.path.isdir(dest)):
-            module.fail_json(msg="Destination %s cannot be a directory" % (dest))
+            basename = os.path.basename(src)
+            dest = os.path.join(dest, basename)
         md5sum_dest = module.md5(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):

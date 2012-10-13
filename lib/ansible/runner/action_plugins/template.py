@@ -42,6 +42,11 @@ class ActionModule(object):
         options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
+
+        if dest.endswith("/"):
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
+
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
