@@ -26,6 +26,8 @@ from play import Play
 
 SETUP_CACHE = collections.defaultdict(dict)
 
+plugins_dir = os.path.join(os.path.dirname(__file__), '..', 'runner')
+
 class PlayBook(object):
     '''
     runs an ansible playbook, given as a datastructure or YAML filename.
@@ -105,9 +107,12 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
-        self.inventory        = ansible.inventory.Inventory(host_list)
+        self.inventory           = ansible.inventory.Inventory(host_list)
         self.inventory.subset(subset)
-        self.modules_list = utils.get_available_modules(self.module_path)
+
+        self.modules_list        = utils.get_available_modules(self.module_path)
+        lookup_plugins_dir = os.path.join(plugins_dir, 'lookup_plugins')
+        self.lookup_plugins_list = utils.import_plugins(lookup_plugins_dir)
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))

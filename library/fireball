@@ -199,7 +199,6 @@ def serve(module, password, port, minutes):
     # password as a variable in ansible is never logged though, so it serves well
 
     key = AesKey.Read(password)
-    log("DEBUG KEY=%s" % key) # REALLY NEED TO REMOVE THIS, DEBUG/DEV ONLY!
  
     while True:
 

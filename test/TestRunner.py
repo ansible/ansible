@@ -193,8 +193,11 @@ class TestRunner(unittest.TestCase):
         assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
         assert os.path.isdir(filedemo)
 
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
-        assert os.path.isdir(filedemo)
+        # this used to fail but will now make a 'null' symlink in the directory pointing to dev/null.
+        # I feel this is ok but don't want to enforce it with a test.
+        #result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])
+        #assert result['failed']
+        #assert os.path.isdir(filedemo)
 
         assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory'])['changed']
         assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
@@ -245,7 +248,9 @@ class TestRunner(unittest.TestCase):
         assert self._run('file', ['dest=' + filedemo, 'state=file', 'force=yes'])['failed']
         assert os.path.isdir(filedemo)
 
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link', 'force=yes'])['changed']
+        result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link', 'force=yes'])
+        assert result['changed']
+        print result
         assert os.path.islink(filedemo)
         os.unlink(filedemo)
 

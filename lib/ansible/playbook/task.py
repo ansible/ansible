@@ -26,7 +26,8 @@ class Task(object):
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register', 'with_items', 
         'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass'
+        'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
+        'items_lookup_plugin', 'items_lookup_terms'
     ]
 
     # to prevent typos and such
@@ -40,11 +41,23 @@ class Task(object):
     def __init__(self, play, ds, module_vars=None):
         ''' constructor loads from a task or handler datastructure '''
 
-        # code to allow for saying "modulename: args" versus "action: modulename args"
         for x in ds.keys():
+
+            # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in play.playbook.modules_list:
-                ds['action'] = x + " " + ds.get(x, None)
+                ds['action'] = x + " " + ds[x]
                 ds.pop(x)
+
+            # code to allow "with_glob" and to reference a lookup plugin named glob
+            elif x.startswith("with_") and x != 'with_items':
+                plugin_name = x.replace("with_","")
+                if plugin_name in play.playbook.lookup_plugins_list:
+                    ds['items_lookup_plugin'] = plugin_name
+                    ds['items_lookup_terms'] = ds[x]
+                    ds.pop(x)
+                else:
+                    raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+
             elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
@@ -101,6 +114,10 @@ class Task(object):
         self.first_available_file = ds.get('first_available_file', None)
         self.with_items = ds.get('with_items', None)
 
+        self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
+        self.items_lookup_terms  = ds.get('items_lookup_terms', None)
+     
+
         self.ignore_errors = ds.get('ignore_errors', False)
 
         # notify can be a string or a list, store as a list
@@ -125,8 +142,9 @@ class Task(object):
         self.action = utils.template(None, self.action, self.module_vars)
 
         # handle mutually incompatible options
-        if self.with_items is not None and self.first_available_file is not None:
-            raise errors.AnsibleError("with_items and first_available_file are mutually incompatible in a single task")
+        incompatibles = [ x for x in [ self.with_items, self.first_available_file, self.items_lookup_plugin ] if x is not None ]
+        if len(incompatibles) > 1:
+            raise errors.AnsibleError("with_items, with_(plugin), and first_available_file are mutually incompatible in a single task")
 
         # make first_available_file accessable to Runner code
         if self.first_available_file:
@@ -136,6 +154,10 @@ class Task(object):
         if self.with_items is None:
             self.with_items = [ ]
         self.module_vars['items'] = self.with_items
+
+        if self.items_lookup_plugin is not None:
+            self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
+            self.module_vars['items_lookup_terms'] = self.items_lookup_terms
 
         # allow runner to see delegate_to option
         self.module_vars['delegate_to'] = self.delegate_to

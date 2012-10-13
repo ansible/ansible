@@ -47,7 +47,7 @@ except ImportError:
 
 dirname = os.path.dirname(__file__)
 action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
-    
+lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins')) 
         
 ################################################
 
@@ -71,8 +71,8 @@ def _executor_hook(job_queue, result_queue):
             traceback.print_exc()
 
 class HostVars(dict):
-    ''' A special view of setup_cache that adds values from the inventory
-        when needed. '''
+    ''' A special view of setup_cache that adds values from the inventory when needed. '''
+
     def __init__(self, setup_cache, inventory):
         self.setup_cache = setup_cache
         self.inventory = inventory
@@ -82,9 +82,10 @@ class HostVars(dict):
 
     def __getitem__(self, host):
         if not host in self.lookup:
-            self.lookup[host] = self.inventory.get_variables(host)
-        self.setup_cache[host].update(self.lookup[host])
-        return self.setup_cache[host]
+            result = self.inventory.get_variables(host)
+            result.update(self.setup_cache.get(host, {}))
+            self.lookup[host] = result
+        return self.lookup[host]
 
 class Runner(object):
     ''' core API interface to ansible '''
@@ -160,8 +161,11 @@ class Runner(object):
 
         # instantiate plugin classes
         self.action_plugins = {}
+        self.lookup_plugins = {}
         for (k,v) in action_plugin_list.iteritems():
             self.action_plugins[k] = v.ActionModule(self)
+        for (k,v) in lookup_plugin_list.iteritems():
+            self.lookup_plugins[k] = v.LookupModule(self)
 
     # *****************************************************
 
@@ -189,7 +193,10 @@ class Runner(object):
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
-        afo.write(data.encode('utf8'))
+        try:
+            afo.write(data.encode('utf8'))
+        except:
+            raise errors.AnsibleError("failure encoding into utf-8")
         afo.flush()
         afo.close()
 
@@ -283,10 +290,18 @@ class Runner(object):
 
         # allow with_items to work in playbooks...
         # apt and yum are converted into a single call, others run in a loop
-
         items = self.module_vars.get('items', [])
         if isinstance(items, basestring) and items.startswith("$"):
             items = utils.varReplaceWithItems(self.basedir, items, inject)
+
+        # if we instead said 'with_foo' and there is a lookup module named foo...
+        items_plugin = self.module_vars.get('items_lookup_plugin', None)
+        if items_plugin is not None:
+            items_terms = self.module_vars.get('items_lookup_terms', '')
+            if items_plugin in self.lookup_plugins:
+                items_terms = utils.template(self.basedir, items_terms, inject)
+                items = self.lookup_plugins[items_plugin].run(items_terms)
+
         if type(items) != list:
             raise errors.AnsibleError("with_items only takes a list: %s" % items)
 
@@ -313,6 +328,7 @@ class Runner(object):
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
+                    all_failed = True
                     break
                 for x in results:
                     if x.get('changed') == True:
@@ -320,7 +336,7 @@ class Runner(object):
                     if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
                         all_failed = True
                         break
-            msg = 'All items succeeded'
+            msg = 'All items completed'
             if all_failed:
                 msg = "One or more items failed."
             rd_result = dict(failed=all_failed, changed=all_changed, results=results, msg=msg)

@@ -8,6 +8,7 @@ Highlighted Core Changes:
 * fireball mode -- ansible can bootstrap a ephemeral 0mq (zeromq) daemon that runs as a given user and expires after X period of time.  It is very fast.
 * playbooks with errors now return 2 on failure.  1 indicates a more fatal syntax error.  Similar for /usr/bin/ansible
 * server side action code (template, etc) are now fully pluggable
+* ability to write lookup plugins, like the code powering "with_fileglob" (see below)
 
 Other Core Changes:
 
@@ -44,6 +45,7 @@ Highlighted playbook changes:
 * when using a $list variable with $var or ${var} syntax it will automatically join with commas
 * setup is not run more than once when we know it is has already been run in a play that included another play, etc
 * can set/override sudo and sudo_user on individual tasks in a play, defaults to what is set in the play if not present
+* ability to use with_fileglob to iterate over local file patterns
 
 Other playbook changes:
 

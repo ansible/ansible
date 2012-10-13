@@ -398,7 +398,10 @@ def template_from_file(basedir, path, vars):
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
     environment.filters['from_yaml'] = yaml.load
-    data = codecs.open(realpath, encoding="utf8").read()
+    try:
+        data = codecs.open(realpath, encoding="utf8").read()
+    except:
+        raise errors.AnsibleError("unable to process as utf-8: %s" % realpath)
     t = environment.from_string(data)
     vars = vars.copy()
     try:
@@ -668,7 +671,8 @@ def filter_leading_non_json_lines(buf):
 
 def import_plugins(directory):
     modules = {}
-    for path in glob.glob(os.path.join(directory, '*.py')):
+    python_files = os.path.join(directory, '*.py')
+    for path in glob.glob(python_files):
         if path.startswith("_"):
             continue
         name, ext = os.path.splitext(os.path.basename(path))
