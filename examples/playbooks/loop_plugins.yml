@@ -1,0 +1,27 @@
+---
+
+# in addition to loop_with_items, the loop that works over a variable, ansible can do more sophisticated looping.
+
+# developer types: these are powered by 'lookup_plugins' should you ever decide to write your own
+# see lib/ansible/runner/lookup_plugins/fileglob.py
+
+- hosts: all
+  gather_facts: False
+
+  tasks:
+
+    # this will copy every file in /etc to the directory /tmp/fuzz
+    # note the directory must be created first
+
+    - file: dest=/tmp/fuzz state=directory
+
+    - copy: src=$item dest=/tmp/fuzz/
+      with_fileglob: /etc/* 
+
+    # think about what other kinds of variables you would like to use in ansible.  It's easy to write lookup
+    # plugins and the name of the plugin will make "with_(PLUGIN)" available for use in the task syntax.
+    # for instance, writing a plugin named "weather" would make "with_weather" available, and you could
+    # write a lookup plugin to query the weather forecast.
+
+    # note with_items and with_* are currently incompatible, and you can use only one of these per task.
+
