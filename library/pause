@@ -32,5 +32,5 @@ examples:
     - description: Pause until you can verify updates to an application were successful.
       code: pause
     - description: A helpful reminder of what to look out for post-update.
-      code: pause prompt=Make sure org.foo.FooOverload exception is not present
+      code: pause prompt="Make sure org.foo.FooOverload exception is not present"
 '''
