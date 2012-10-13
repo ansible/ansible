@@ -16,92 +16,102 @@ examples:
 author: Constantine Peresypkin
 '''
 
+MEGABYTE = 1024 * 1024
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-def run_parted(module, devs):
-	parted_result = {}
-	parted_result['ansible_facts'] = {}
-	parted_result['ansible_facts']['parted'] = []
-	for d in devs:
-		jd = {}
-		jd['type'] = d.type
-		jd['model'] = d.device.model
-		jd['path'] = d.device.path
-		jd['size'] =  d.device.sectorSize * d.device.length
-		jd['sector'] = d.device.sectorSize
-		jd['partitions'] = []
-		jd['free'] = [{'start': 0L, 'end': d.device.length, 'length': d.device.length}]
-		for p in d.partitions:
-			jp = {}
-			jp['number'] = p.number
-			jp['path'] = p.path
-			jp['start'] = p.geometry.start
-			jp['end'] = p.geometry.end
-			jp['size'] = p.geometry.length * jd['sector']
-			jp['fs'] = None
-			if p.fileSystem:
-				jp['fs'] = p.fileSystem.type
-			jd['partitions'].append(jp)
-			jfree = []
-			for f in jd['free']:
-				if jp['start'] >= f['start'] and jp['end'] <= f['end']:
-					length = jp['start'] - f['start'] - 1
-					if length > 0:
-						jfree.append({'start': f['start'], 'end': jp['start'] - 1, 'length': length})
-					length = f['end'] - jp['end'] - 1
-					if length > 0:
-						jfree.append({'start': jp['end'] + 1, 'end': f['end'], 'length': length})
-				else:
-					jfree.append(f)
-			jd['free'] = jfree
-		parted_result['ansible_facts']['parted'].append(jd)
-	return parted_result
+def create(parted, disk, size=None, minsize=None, minfree=None, type=None, fs=None):
+    if not type:
+        type = parted.PARTITION_NORMAL
+    const_min = None
+    const_max = None
+    if size:
+        size *= MEGABYTE / disk.device.sectorSize
+        const_min = size
+        const_max = size
+    elif minsize:
+        minsize *= MEGABYTE / disk.device.sectorSize
+        const_min = minsize
+    const = parted.Constraint(device=disk.device)
+    if not const_max:
+        const_max = const.maxSize
+    if not const_min:
+        const_min = 0
+    if const_max < const_min:
+        return None
+    if minfree:
+        minfree *= MEGABYTE / disk.device.sectorSize
+        max_length = 0
+        space = None
+        for f in disk.getFreeSpaceRegions():
+            length = f.length - minfree
+            if max_length < length:
+                max_length = length
+                space = f
+        if not space:
+            return None
+        max_geom = parted.Geometry(device=disk.device, start=space.start, length=max_length)
+        const2 = parted.Constraint(maxGeom=max_geom)
+    else:
+        const2 = parted.Constraint(startAlign=const.startAlign, endAlign=const.endAlign,
+            startRange=const.startRange, endRange=const.endRange,
+            minSize = const_min, maxSize=const_max)
+    if fs:
+        fs = parted.FileSystem(type=fs, geometry=const2.solveMax())
+    part = parted.Partition(disk=disk, type=type, geometry=const2.solveMax(), fs=fs)
+    try:
+        disk.addPartition(partition=part, constraint=const2)
+        disk.commit()
+        created = {'number': part.number, 'path': part.path, 'start': part.geometry.start, 'end': part.geometry.end,
+                   'size': part.geometry.length * disk['sector'], 'fs': part.fileSystem.type}
+        return created
+    except parted.PartitionException:
+        return None
+
+def create_space(parted, size=None, minsize=None, minfree=None):
+    disks = [parted.Disk(d) for d in parted.getAllDevices()]
+    for d in disks:
+        created = create(parted, d, size=size, minsize=minsize, minfree=minfree)
+        if created:
+            return created
+    return None
+
 
 def main():
-	global module
-	module = AnsibleModule(
-		argument_spec = dict(
-		ensure=dict(default=None),
-		minfree=dict(default=0),
-		maxfree=dict(default=0),
-		repeated=dict(default='no', choices=['yes', 'no'])
-	)
-	ensure = module.params['ensure']
-	minfree = module.params['minfree']
-	maxfree = module.params['maxfree']
-	repeated = module.params['repeated']
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            size=dict(default=None),
+            minsize=dict(default=None),
+            minfree=dict(default=None),
+            repeated=dict(default='no', choices=['yes', 'no'])
+        )
+    )
+    size = module.params['size']
+    minsize = module.params['minsize']
+    minfree = module.params['minfree']
+    repeated = module.params['repeated']
 
-	try:
-		import parted
-	except ImportError:
-		module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
-	devs = [parted.Disk(d) for d in parted.getAllDevices()]
-	data = run_parted(module, devs)
-	changed = False
-	if ensure:
-		space = ensure_space(data, ensure=ensure, minfree=minfree)
-		while space:
-			changed = space.create()
-			devs = [parted.Disk(d) for d in parted.getAllDevices()]
-        		data = run_parted(module, devs)
-			if 'no' in repeated:
-				break
-			space = ensure_space(data, ensure=ensure, minfree=minfree)
-	elif maxfree > 0:
-		space = ensure_space(data, maxfree=maxfree, minfree=minfree)
-		while space:
-			changed = space.create()
-                        devs = [parted.Disk(d) for d in parted.getAllDevices()]
-                        data = run_parted(module, devs)
-                        if 'no' in repeated:
-                                break
-			space = ensure_space(data, maxfree=maxfree, minfree=minfree)
-        data['changed'] = changed
-        module.exit_json(**data)
+    try:
+        import parted
+    except ImportError:
+        module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
+    created = None
+    if size or minsize or minfree:
+        created = [create_space(parted, size=size, minsize=minsize, minfree=minfree)]
+        while created:
+            if 'no' in repeated:
+                break
+            created.append(create_space(parted, size=size, minsize=minsize, minfree=minfree))
+    data = {}
+    if created:
+        data['changed'] = True
+        data['ansible_facts'] = {}
+        data['ansible_facts']['parted_created'] = created
+    module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
