@@ -28,15 +28,16 @@ callbacks = utils.import_plugins(os.path.join(dirname, 'callback_plugins'))
 callbacks = [ c.CallbackModule() for c in callbacks.values() ]
 
 cowsay = None
-if os.path.exists("/usr/bin/cowsay"):
-    cowsay = "/usr/bin/cowsay"
-elif os.path.exists("/usr/games/cowsay"):
-    cowsay = "/usr/games/cowsay"
 if os.getenv("ANSIBLE_NOCOWS") is not None:
     cowsay = None
+elif os.path.exists("/usr/games/cowsay"):
+    cowsay = "/usr/games/cowsay"
+elif os.path.exists("/usr/local/bin/cowsay"):
+    # BSD path for cowsay
+    cowsay = "/usr/local/bin/cowsay"
 
 def call_callback_module(method_name, *args, **kwargs):
-   
+
     for callback_plugin in callbacks:
         methods = [ 
             getattr(callback_plugin, method_name, None), 
