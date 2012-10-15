@@ -59,6 +59,8 @@ def main(args):
         help="only run plays and tasks tagged with these values")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help="dump out a list of hosts, each play will run against, does not run playbook!")
+    parser.add_option('--syntax-check', dest='syntax', action='store_true',
+        help="do a playbook syntax check on the playbook, do not execute the playbook")
 
     options, args = parser.parse_args(args)
 
@@ -120,6 +122,11 @@ def main(args):
                     for host in pb.inventory.list_hosts(play['hosts']):
                         print '  %s' % host
                     print '\n'
+            return 0
+
+        if options.syntax:
+            # if we've not exited by now then we are fine.
+            print 'Playbook Syntax is fine'
             return 0
             
 
