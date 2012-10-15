@@ -212,7 +212,7 @@ who's successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
-       action: shell /usr/bin/somecommand & /bin/true
+       action: shell /usr/bin/somecommand && /bin/true
 
 Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
