@@ -36,3 +36,6 @@
 
   - name: ensure user has access to database
     action: postgresql_user db=$dbname user=$dbuser password=$dbpassword priv=ALL
+
+  - name: ensure user does not have unnecessary privilege
+    action: postgresql_user user=$dbuser role_attr_flags=NOSUPERUSER,NOCREATEDB
