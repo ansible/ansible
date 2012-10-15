@@ -189,9 +189,8 @@ class Play(object):
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
-        results = self.playbook.extra_vars.copy()
-        results.update(vars)
-        return results
+        vars.update(self.playbook.extra_vars)
+        return vars
 
     # *************************************************
 

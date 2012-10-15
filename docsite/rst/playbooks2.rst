@@ -528,17 +528,19 @@ You have already learned about inventory host and group variables, 'vars', and '
 If a variable name is defined in more than one place with the same name, priority is as follows
 to determine which place sets the value of the variable.
 
-1.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
+1.  Variables specified via command line with --extra-vars.
 
-2.  'vars' as defined in the playbook.
+2.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
 
-3.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
+3.  'vars' as defined in the playbook.
 
-4.  variables passed to parameterized task include statements.
+4.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
 
-5.  Host variables from inventory.
+5.  variables passed to parameterized task include statements.
 
-6.  Group variables from inventory, in order of least specific group to most specific.
+6.  Host variables from inventory.
+
+7.  Group variables from inventory, in order of least specific group to most specific.
 
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
 place to set such a default is in a group variable.
