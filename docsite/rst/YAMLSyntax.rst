@@ -38,7 +38,7 @@ A dictionary is represented in a simple ``key:`` and ``value`` form::
 
     ---
     # An employee record
-    name: John Eckersberg
+    name: Example Developer
     job: Developer
     skill: Elite
 
@@ -46,7 +46,7 @@ Dictionaries can also be represented in an abbreviated form if you really want t
 
     ---
     # An employee record
-    {name: John Eckersberg, job: Developer, skill: Elite}
+    {name: Example Developer, job: Developer, skill: Elite}
 
 .. _truthiness:
 
@@ -63,7 +63,7 @@ has nothing to do with Ansible, but will give you a feel for the format::
 
     ---
     # An employee record
-    name: John Eckersberg
+    name: Example Developer
     job: Developer
     skill: Elite
     employed: True
@@ -79,6 +79,19 @@ has nothing to do with Ansible, but will give you a feel for the format::
 
 That's all you really need to know about YAML to get started writing
 `Ansible` playbooks.
+
+Gotchas
+-------
+
+While YAML is generally friendly, the following is going to be a YAML syntax error:
+
+    foo: somebody said I should put a colon here: so I did
+
+You will want to quote any hash values using colons, like so:
+
+    foo: "somebody said I should put a colon here: so I did"
+
+And then the colon will be preserved.
 
 .. seealso::
 
