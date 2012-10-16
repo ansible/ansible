@@ -21,17 +21,16 @@ import ConfigParser
 import traceback
 
 def get_config(p, section, key, env_var, default):
-    if p is not None:
+    if env_var is not None:
+        return os.environ.get(env_var, default)
+    elif p is not None:
         try:
             return p.get(section, key)
         except:
             if env_var is not None:
                 return os.environ.get(env_var, default)
             return default
-    else:
-        if env_var is not None:
-            return os.environ.get(env_var, default)
-        return default
+    return default
 
 def load_config_file():
     p = ConfigParser.ConfigParser()
