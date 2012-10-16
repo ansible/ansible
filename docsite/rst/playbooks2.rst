@@ -254,6 +254,16 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo ${my_custom_fact_can_be_used_now}
 
+One common useful trick with only_if is to key off the changed result of a last command.  As an example::
+
+    tasks:
+        - action: template src=/templates/foo.j2 dest=/etc/foo.conf
+        - action: command echo 'the file has changed'
+          only_if: '${last_result.changed}'
+
+$last_result is a variable automatically set by Ansible, and it is a boolean, so there is no need
+to test for it against something else with an explicit equals.  This assumes Ansible 0.8 and later.
+
 In Ansible 0.8, a few shortcuts are available for testing whether a variable is defined or not::
 
     tasks:
