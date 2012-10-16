@@ -47,8 +47,13 @@ except ImportError:
 
 dirname = os.path.dirname(__file__)
 action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
+for i in reversed(C.DEFAULT_ACTION_PLUGIN_PATH.split(os.pathsep)):
+    action_plugin_list.update(utils.import_plugins(i))
 lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins')) 
-        
+for i in reversed(C.DEFAULT_LOOKUP_PLUGIN_PATH.split(os.pathsep)):
+    lookup_plugin_list.update(utils.import_plugins(i))
+
+
 ################################################
 
 def _executor_hook(job_queue, result_queue):
@@ -165,6 +170,11 @@ class Runner(object):
         for (k,v) in action_plugin_list.iteritems():
             self.action_plugins[k] = v.ActionModule(self)
         for (k,v) in lookup_plugin_list.iteritems():
+            self.lookup_plugins[k] = v.LookupModule(self)
+
+        for (k,v) in utils.import_plugins(os.path.join(self.basedir, 'action_plugins')).iteritems():
+            self.action_plugins[k] = v.ActionModule(self)
+        for (k,v) in utils.import_plugins(os.path.join(self.basedir, 'lookup_plugins')).iteritems():
             self.lookup_plugins[k] = v.LookupModule(self)
 
     # *****************************************************
