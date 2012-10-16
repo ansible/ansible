@@ -632,7 +632,7 @@ if you have a large number of hosts::
                 - two
 
 In order to use fireball mode, certain dependencies must be installed on both ends.   You can use this playbook as a basis for initial bootstrapping on
-any platform.  You will also need gcc and zeromq-devel installed from your package manager, which you can of course also get Ansible to install.
+any platform.  You will also need gcc and zeromq-devel installed from your package manager, which you can of course also get Ansible to install::
 
     ---
     - hosts: all
