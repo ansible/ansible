@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/env python
 
 '''
 EC2 external inventory script
@@ -109,12 +109,14 @@ Security groups are comma-separated in 'ec2_security_group_ids' and
 ######################################################################
 
 import os
+import sys
 import argparse
 import re
 from time import time
 import boto
 from boto import ec2
 import ConfigParser
+import pkg_resources
 
 try:
     import json
@@ -132,7 +134,7 @@ class Ec2Inventory(object):
 
         # Index of hostname (address) to instance ID
         self.index = {}
-        
+
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
@@ -399,7 +401,11 @@ class Ec2Inventory(object):
         else:
             return json.dumps(data)
 
-
+## Test boto version if greater than 2.3.0
+boto_version = pkg_resources.get_distribution("boto").version
+if not pkg_resources.parse_version(boto_version) >=  pkg_resources.parse_version('2.3.0'):
+    print "Boto package is a bit older. Please upgrade to boto 2.3.0 or up."
+    sys.exit(1)
 # Run the script
 Ec2Inventory()
 
