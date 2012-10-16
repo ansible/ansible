@@ -59,7 +59,7 @@ what parts of those plays.
 Ignoring Failed Commands
 ````````````````````````
 
-.. deprecated:: 0.6
+.. versionadded:: 0.6
 
 Generally playbooks will stop executing any more steps on a host that
 has a failure.  Sometimes, though, you want to continue on.  To do so,
