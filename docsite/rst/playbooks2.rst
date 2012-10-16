@@ -99,7 +99,11 @@ assigned to another node, it's easy to do so within a template or even an action
 .. note::
    No database or other complex system is required to exchange data
    between hosts.  The hosts that you want to reference data from must
-   be included in either the current play or any previous play.
+   be included in either the current play or any previous play if you
+   are using a version prior to 0.8.  If you are using 0.8, and you have
+   not yet contacted the host, you'll be able to read inventory variables
+   but not fact variables.  Speak to the host by including it in a play
+   to make fact information available.
 
 Additionally, *group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
 
@@ -107,7 +111,7 @@ Additionally, *group_names* is a list (array) of all the groups the current host
       # some part of a configuration file that only applies to webservers
    {% endif %}
 
-*groups* is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group. 
+*groups* is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
 For example::
 
    {% for host in groups['app_servers'] %}
@@ -119,7 +123,7 @@ Use cases include pointing a frontend proxy server to all of the app servers, se
 *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
 reasons.  If you have a long FQDN, *inventory_hostname_short* (in Ansible 0.6) also contains the part up to the first
-period.   
+period.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
@@ -232,18 +236,18 @@ Don't panic -- it's actually pretty simple::
       - name: "shutdown if my favorite color is blue"
         action: command /sbin/shutdown -t now
         only_if: '$is_favcolor_blue'
-      
+
 Variables from tools like `facter` and `ohai` can be used here, if installed, or you can
 use variables that bubble up from ansible, which many are provided by the :ref:`setup` module.   As a reminder,
 these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  Ansible's
-built in variables are prefixed with `ansible_`. 
+built in variables are prefixed with `ansible_`.
 
 The only_if expression is actually a tiny small bit of Python, so be sure to quote variables and make something
 that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' instead of 'vars' to define
 all of your conditional expressions in a way that makes them very easy to reuse between plays
 and playbooks.
 
-You cannot use live checks here, like 'os.path.exists', so don't try.  
+You cannot use live checks here, like 'os.path.exists', so don't try.
 
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
@@ -268,7 +272,7 @@ In Ansible 0.8, a few shortcuts are available for testing whether a variable is 
 
     tasks:
         - action: command echo hi
-          only_if: is_set($some_variable)          
+          only_if: is_set($some_variable)
 
 There is a matching 'is_unset' that works the same way.  Do not quote the variables inside the function.
 
@@ -282,7 +286,7 @@ Conditional Imports
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
 
-As an example, the name of the Apache package may be different between CentOS and Debian, 
+As an example, the name of the Apache package may be different between CentOS and Debian,
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
@@ -290,7 +294,7 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
       user: root
       vars_files:
         - "vars/common.yml"
-        - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ] 
+        - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ]
       tasks:
       - name: make sure apache is running
         action: service name=$apache state=running
@@ -324,7 +328,7 @@ you can of course push this out with Ansible if you like::
 
 Ansible's approach to configuration -- seperating variables from tasks, keeps your playbooks
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined & auditable configuration rules -- especially because there are a 
+in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
 
 Loops
@@ -351,7 +355,7 @@ The above would be the equivalent of::
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
-Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.  
+Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.
 If you have a list of hashes, you can reference subkeys using things like::
 
     ${item.subKeyName}
@@ -378,14 +382,14 @@ be used like this::
 
         # copy each file over that matches the given pattern
         - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
-          with_fileglob: /playbooks/files/fooapp/* 
+          with_fileglob: /playbooks/files/fooapp/*
 
 Getting values from files
 `````````````````````````
 
 .. versionadded: 0.8
 
-Sometimes you'll want to include the content of a file directly into a playbook.  You can do so using a macro.  
+Sometimes you'll want to include the content of a file directly into a playbook.  You can do so using a macro.
 This syntax will remain in future versions, though we will also will provide ways to do this via lookup plugins (see "More Loops") as well.  What follows
 is an example using the authorized_key module, which requires the actual text of the SSH key as a parameter::
 
@@ -396,7 +400,7 @@ is an example using the authorized_key module, which requires the actual text of
              - brain
              - snowball
 
-The "$PIPE" macro works just like file, except you would feed it a command string instead.  It executes locally, not remotely, as does $FILE.     
+The "$PIPE" macro works just like file, except you would feed it a command string instead.  It executes locally, not remotely, as does $FILE.
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
@@ -422,9 +426,9 @@ By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  If executing playbooks with
 a small parallelism value (aka ``--forks``), you may wish that long
 running operations can go faster.  The easiest way to do this is
-to kick them off all at once and then poll until they are done.  
+to kick them off all at once and then poll until they are done.
 
-You will also want to use asynchronous mode on very long running 
+You will also want to use asynchronous mode on very long running
 operations that might be subject to timeout.
 
 To launch a task asynchronously, specify its maximum runtime
@@ -458,9 +462,9 @@ Alternatively, if you do not need to wait on the task to complete, you may
         poll: 0
 
 .. note::
-   You shouldn't "fire and forget" with operations that require 
+   You shouldn't "fire and forget" with operations that require
    exclusive locks, such as yum transactions, if you expect to run other
-   commands later in the playbook against those same resources.  
+   commands later in the playbook against those same resources.
 
 .. note::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
@@ -515,7 +519,7 @@ Register Variables
 
 Often in a playbook it may be useful to store the result of a given command in a variable and access
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
-instance, you could test for the existance of a particular program.  
+instance, you could test for the existance of a particular program.
 
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
 
@@ -538,14 +542,14 @@ Rolling Updates
 
 By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
 use case, you can define how many hosts ansible should manage at a single time by using the ''serial'' keyword::
-    
+
 
     - name: test play
       hosts: webservers
       serial: 3
 
-In the above example, if we had 100 hosts, 3 hosts in the group 'webservers' 
-would complete the play completely before moving on to the next 3 hosts. 
+In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
+would complete the play completely before moving on to the next 3 hosts.
 
 Delegation
 ``````````
@@ -600,8 +604,8 @@ to use Ansible, though some users may appreciate it.
 
 Fireball mode works by launching a temporary 0mq daemon from SSH that by default lives for only 30 minutes before
 shutting off.  Fireball mode once running uses temporary AES keys to encrypt a session, and requires direct
-communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you 
-set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts, 
+communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you
+set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts,
 take care to use unique ports.
 
 Fireball mode is roughly 10 times faster than paramiko for communicating with nodes and may be a good option
@@ -622,7 +626,7 @@ if you have a large number of hosts::
       connection: fireball
       sudo: True
       tasks:
-          - action: shell echo "Hello ${item}" 
+          - action: shell echo "Hello ${item}"
             with_items:
                 - one
                 - two
@@ -639,7 +643,7 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
           - action: easy_install name=pip
           - action: pip name=pyzmq state=present
           - action: pip name=pyasn1
-          - action: pip name=PyCrypto 
+          - action: pip name=PyCrypto
           - action: pip name=python-keyczar
 
 For more information about fireball, see the module documentation section.
@@ -680,7 +684,7 @@ Ansible playbooks also look more impressive with cowsay installed, and we encour
        Learn about YAML syntax
    :doc:`playbooks`
        Review the basic playbook features
-   :doc:`bestpractices` 
+   :doc:`bestpractices`
        Various tips about playbooks in the real world
    :doc:`modules`
        Learn about available modules
