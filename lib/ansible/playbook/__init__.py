@@ -20,6 +20,7 @@ import ansible.runner
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
+import ansible.callbacks
 import os
 import collections
 from play import Play
@@ -111,8 +112,7 @@ class PlayBook(object):
         self.inventory.subset(subset)
 
         self.modules_list        = utils.get_available_modules(self.module_path)
-        lookup_plugins_dir = os.path.join(plugins_dir, 'lookup_plugins')
-        self.lookup_plugins_list = utils.import_plugins(lookup_plugins_dir)
+        self.lookup_plugins_list = ansible.runner.lookup_plugin_list
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
@@ -120,6 +120,9 @@ class PlayBook(object):
         self.basedir     = os.path.dirname(playbook)
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
+        ansible.callbacks.load_more_callbacks(os.path.join(self.basedir, "callback_plugins"))
+
+        self.lookup_plugins_list.update(utils.import_plugins(os.path.join(self.basedir, 'lookup_plugins')))
 
     # *****************************************************
 
