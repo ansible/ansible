@@ -444,7 +444,7 @@ class FreeBSDHardware(Hardware):
         except IOError:
             dmesg_cmd = subprocess.Popen("/sbin/dmesg", shell=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            dmesg_boot,dmesg_err = dmesg_cmd.communicate()
+            dmesg_boot = dmesg_cmd.stdout
 
         for line in dmesg_boot.readlines():
             if 'CPU:' in line:
