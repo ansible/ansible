@@ -82,8 +82,8 @@ Advanced programmers may also wish to read the source to ansible itself, for
 it uses the Runner() API (with all available options) to implement the
 command line tools ``ansible`` and ``ansible-playbook``.
 
-Plugins Repository
-------------------
+Plugins Available Online
+------------------------
 
 The remainder of features in the API docs have components available in `ansible-plugins <https://github.com/ansible/ansible/blob/devel/plugins>`_.  Send us a github pull request if you develop any interesting features.
 
@@ -279,10 +279,10 @@ To see the complete list of variables available for an instance, run the script 
     cd examples/scripts
     ./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
-Example: OpenStack
-``````````````````
+Example: OpenStack Inventory Script
+```````````````````````````````````
 
-Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the plugins directory.  See the inline comments in the module source.
+Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the plugins directory.  See the inline comments in the module source for how to use it.
 
 Callback Plugins
 ----------------
@@ -293,11 +293,34 @@ system, or even (yes, really) making sound effects.  Some examples are contained
 Connection Type Plugins
 -----------------------
 
-By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection type, which can be used
+By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection type.  Release 0.8 also
+added an accelerated connection type named 'fireball'.  All of these can be used
 in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
 are covered in the 'getting started' section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
 directory.
+
+Lookup Plugins
+--------------
+
+Language constructs like "with_fileglob" are implemnted via lookup plugins.  Just like other plugin types, you can write your own.
+
+Distributing Plugins
+--------------------
+
+.. versionadded: 0.8
+
+Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
+to /usr/share/ansible/plugins, in a subfolder for each plugin type::
+
+    * action_plugins
+    * lookup_plugins
+    * callback_plugins
+    * connection_plugins
+
+To change this path, edit the ansible configuration file.
+
+In addition, plugins can be shipped in a subdirectory relative to a top-level playbook, in folders named the same as indicated above.
 
 .. seealso::
 
