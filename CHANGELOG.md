@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-0.8 "Cathedral" -- release pending 
+0.8 "Cathedral" -- release pending
 
 Highlighted Core Changes:
 
