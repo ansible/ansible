@@ -21,7 +21,7 @@
 DOCUMENTATION = """
 ---
 author: Dag Wieers
-module: email
+module: mail
 short_description: Send an email
 description:
   - This module is useful for sending emails from playbooks.
