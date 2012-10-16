@@ -341,6 +341,11 @@ The above would be the equivalent of::
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
+Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.  
+If you have a list of hashes, you can reference subkeys using things like::
+
+    ${item.subKeyName}
+
 More Loops
 ``````````
 
@@ -359,12 +364,29 @@ be used like this::
       tasks:
 
         # first ensure our target directory exists
-        - file: dest=/etc/fooapp state=directory
+        - action: file dest=/etc/fooapp state=directory
 
         # copy each file over that matches the given pattern
-        - copy: src=$item dest=/etc/fooapp/ owner=root mode=600
+        - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
           with_fileglob: /playbooks/files/fooapp/* 
 
+Getting values from files
+`````````````````````````
+
+.. versionadded: 0.8
+
+Sometimes you'll want to include the content of a file directly into a playbook.  You can do so using a macro.  
+This syntax will remain in future versions, though we will also will provide ways to do this via lookup plugins (see "More Loops") as well.  What follows
+is an example using the authorized_key module, which requires the actual text of the SSH key as a parameter::
+
+    tasks:
+        - authorized_key name=$item key=$FILE(/keys/$user1)
+          with_items:
+             - pinky
+             - brain
+             - snowball
+
+The "$PIPE" macro works just like file, except you would feed it a command string instead.  It executes locally, not remotely, as does $FILE.     
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
