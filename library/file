@@ -113,12 +113,6 @@ options:
     description:
       - accepts only C(default) as value. This will restore a file's SELinux context
         in the policy. Does nothing if no default value is available.
-  force:
-    required: false
-    default: null
-    choices: []
-    description:
-      - force is required when changing an existing file to a directory, or a link to a directory, and so on.  Use this with caution.
 examples:
    - code: file path=/etc/foo.conf owner=foo group=foo mode=0644
      description: Example from Ansible Playbooks
@@ -325,7 +319,6 @@ def main():
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             src   = dict(),
-            force = dict(default='no', choices=['yes', 'no']),
             mode  = dict(),
             owner = dict(),
             group = dict(),
@@ -346,7 +339,6 @@ def main():
     src    = params.get('src', None)
     if src:
         src = os.path.expanduser(src)
-    force = module.boolean(params['force'])
 
     if src is not None and os.path.isdir(path):
         params['path'] = path = os.path.join(path, os.path.basename(src))
@@ -399,7 +391,7 @@ def main():
             module_fail_json(path=path, msg=str(e))
         module_exit_json(path=path, changed=True)
 
-    if prev_state != 'absent' and prev_state != state and not force:
+    if prev_state != 'absent' and prev_state != state:
         module_fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
@@ -423,13 +415,6 @@ def main():
         if prev_state == 'absent':
             os.makedirs(path)
             changed = True
-        elif prev_state != 'directory' and force:
-            try:
-                os.unlink(path)
-            except Exception, e:
-                module_fail_json(path=path, msg=str(e))
-            os.makedirs(path)
-            changed = True
 
         # set modes owners and context as needed
         changed = set_context_if_different(path, secontext, changed)
@@ -449,16 +434,6 @@ def main():
             module_fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
-            os.symlink(src, path)
-            changed = True
-        elif prev_state != 'link' and force:
-            try:
-                if os.path.isfile(path):
-                    os.unlink(path)
-                else:
-                    shutil.rmtree(path, ignore_errors=False, onerror=rmtree_error)
-            except Exception, e:
-                module_fail_json(path=path, msg=str(e))
             os.symlink(src, path)
             changed = True
         elif prev_state == 'link':

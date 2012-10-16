@@ -224,65 +224,6 @@ class TestRunner(unittest.TestCase):
         assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
         os.rmdir(tmp_dir)
 
-
-        filedemo = tempfile.mkstemp()[1]
-        assert self._run('file', ['dest=' + filedemo, 'state=directory', 'force=yes'])['changed']
-        assert os.path.isdir(filedemo)
-        os.rmdir(filedemo)
-
-        filedemo = tempfile.mkstemp()[1]
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link', 'force=yes'])['changed']
-        assert os.path.islink(filedemo)
-        os.unlink(filedemo)
-
-        filedemo = tempfile.mkstemp()[1]
-        assert self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file', 'force=yes'])['changed']
-        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-
-
-        filedemo = tempfile.mkdtemp()
-        assert self._run('file', ['dest=' + filedemo, 'state=file', 'force=yes'])['failed']
-        assert os.path.isdir(filedemo)
-
-        result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link', 'force=yes'])
-        assert result['changed']
-        print result
-        assert os.path.islink(filedemo)
-        os.unlink(filedemo)
-
-        filedemo = tempfile.mkdtemp()
-        assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory', 'force=yes'])['changed']
-        assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
-        os.path.isdir(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-
-
-        tmp_dir = tempfile.mkdtemp()
-        filedemo = os.path.join(tmp_dir, 'link')
-        os.symlink('/dev/zero', filedemo)
-        assert self._run('file', ['dest=' + filedemo, 'state=file', 'force=yes'])['failed']
-        assert os.path.islink(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'state=directory', 'force=yes'])['changed']
-        assert os.path.isdir(filedemo)
-        os.rmdir(filedemo)
-
-        os.symlink('/dev/zero', filedemo)
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link', 'force=yes'])['changed']
-        assert os.path.islink(filedemo) and os.path.realpath(filedemo) == '/dev/null'
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent', 'force=yes'])['changed']
-        os.rmdir(tmp_dir)
-
     def test_large_output(self):
         large_path = "/usr/share/dict/words"
         if not os.path.exists(large_path):
