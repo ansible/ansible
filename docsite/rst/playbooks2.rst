@@ -254,6 +254,18 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo ${my_custom_fact_can_be_used_now}
 
+In Ansible 0.8, a few shortcuts are available for testing whether a variable is defined or not::
+
+    tasks:
+        - action: command echo hi
+          only_if: is_set($some_variable)          
+
+There is a matching 'is_unset' that works the same way.  Do not quote the variables inside the function.
+
+While only_if is a pretty good option for advanced users, it exposes more guts of the engine than we'd like, and
+we can do better.  In 0.9, we will be adding 'when', which will be like a syntactic sugar for only_if and hide
+this level of complexity -- it will numerous built in operators.
+
 Conditional Imports
 ```````````````````
 
@@ -328,6 +340,30 @@ The above would be the equivalent of::
       action: user name=testuser2 state=present groups=wheel
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
+
+More Loops
+``````````
+
+.. versionadded: 0.8
+
+Various 'lookup plugins' allow additional ways to iterate over data.  Ansible will have more of these
+over time.  In 0.8, the only lookup plugin that comes stock is 'with_fileglob', but you can also write
+your own.
+
+'with_fileglob' matches all files in a single directory, non-recursively, that match a pattern.  It can
+be used like this::
+
+    ----
+    - hosts: all
+
+      tasks:
+
+        # first ensure our target directory exists
+        - file: dest=/etc/fooapp state=directory
+
+        # copy each file over that matches the given pattern
+        - copy: src=$item dest=/etc/fooapp/ owner=root mode=600
+          with_fileglob: /playbooks/files/fooapp/* 
 
 
 Selecting Files And Templates Based On Variables
