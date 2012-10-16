@@ -226,6 +226,23 @@ Those same variables are usable in templates, which we'll get to later.
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
 make more sense to break up tasks using the 'include:' directive.  We'll show that a bit later.
 
+Action Shorthand
+````````````````
+
+.. versionadded: 0.8
+
+Rather than listing out the explicit word, "action:", like so::
+
+    action: template src=templates/foo.j2 dest=/etc/foo.conf
+
+It is also possible to say:
+
+    template: src=templates/foo.j2 dest=/etc/foo.conf
+
+The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.  
+Our documentation has not converted over to this new format just yet as many users may still be using older versions.  
+You'll be able to use both formats forever.
+
 Running Operations On Change
 ````````````````````````````
 
