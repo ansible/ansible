@@ -328,8 +328,9 @@ Here's a correctly formatted YAML document we could use for a
 .. literalinclude:: ../DOCUMENTATION.yaml
 
 This is available in the 'examples/' directory of the of the Ansible
-github repository. You can copy it into your module and use it as a
-starting point when writing your own docs.
+github repository, and you can have that generated with
+``./hacking/module_formatter.py -G``. You can copy it into your module and use
+it as a starting point when writing your own docs.
 
 Include it in your module file like this::
 
