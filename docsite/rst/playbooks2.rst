@@ -520,6 +520,62 @@ Here is the same playbook as above, but using the shorthand syntax,
       - name: add back to load balancer pool
         local_action: command /usr/bin/add_back_to_pool $inventory_hostname
 
+Fireball Mode
+`````````````
+
+.. versionadded:: 0.8
+
+Paramiko's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 by a new extra-fast
+connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
+outside the lines of ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
+to use Ansible, though some users may appreciate it.
+
+Fireball mode works by launching a temporary 0mq daemon from SSH that by default lives for only 30 minutes before
+shutting off.  Fireball mode once running uses temporary AES keys to encrypt a session, and requires direct
+communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you 
+set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts, 
+take care to use unique ports.
+
+Fireball mode is roughly 10 times faster than paramiko for communicating with nodes and may be a good option
+if you have a large number of hosts::
+
+    ---
+
+    # set up the fireball transport
+    - hosts: all
+      gather_facts: False
+      connection: ssh
+      sudo: True
+      tasks:
+          - action: fireball
+
+    # these operations will occur over the fireball transport
+    - hosts: all
+      connection: fireball
+      sudo: True
+      tasks:
+          - action: shell echo "Hello ${item}" 
+            with_items:
+                - one
+                - two
+
+In order to use fireball mode, certain dependencies must be installed on both ends.   You can use this playbook as a basis for initial bootstrapping on
+any platform.  You will also need gcc and zeromq-devel installed from your package manager, which you can of course also get Ansible to install.
+
+    ---
+    - hosts: all
+      sudo: True
+      gather_facts: False
+      connection: ssh
+      tasks:
+          - action: easy_install name=pip
+          - action: pip name=pyzmq state=present
+          - action: pip name=pyasn1
+          - action: pip name=PyCrypto 
+          - action: pip name=python-keyczar
+
+For more information about fireball, see the module documentation section.
+
 Understanding Variable Precedence
 `````````````````````````````````
 
