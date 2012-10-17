@@ -286,7 +286,7 @@ class Inventory(object):
 
         host = self.get_host(hostname)
         if host is None:
-            raise Exception("host not found: %s" % hostname)
+            raise errors.AnsibleError("host not found: %s" % hostname)
         return host.get_variables()
 
     def add_group(self, group):
