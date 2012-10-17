@@ -389,6 +389,7 @@ class Runner(object):
             # and we need to transfer those, and only those, variables
 
             if delegate_to is not None:
+                delegate_to = utils.template(self.basedir, delegate_to, inject) 
                 delegate_vars = {}
                 try:
                     delegate_vars = inject['hostvars'][delegate_to]
