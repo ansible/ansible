@@ -214,6 +214,14 @@ who's successful exit code is not zero, you may wish to do this::
      - name: run this command and ignore the result
        action: shell /usr/bin/somecommand && /bin/true
 
+If the action line is getting too long for comfort you can break it on
+a space and indent any continuation lines::
+
+    tasks:
+      - name: Copy ansible inventory file to client
+        action: copy src=/etc/ansible/hosts dest=/etc/ansible/hosts
+                owner=root group=root mode=0644
+
 Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
