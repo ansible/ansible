@@ -35,6 +35,8 @@ for i in C.DEFAULT_CALLBACK_PLUGIN_PATH.split(os.pathsep):
 cowsay = None
 if os.getenv("ANSIBLE_NOCOWS") is not None:
     cowsay = None
+elif os.path.exists("/usr/bin/cowsay"):
+    cowsay = "/usr/bin/cowsay"
 elif os.path.exists("/usr/games/cowsay"):
     cowsay = "/usr/games/cowsay"
 elif os.path.exists("/usr/local/bin/cowsay"):
