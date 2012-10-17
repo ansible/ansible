@@ -221,7 +221,7 @@ class TestUtils(unittest.TestCase):
         }
 
         template = 'yum pkg=${list} state=installed'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(template, vars, expand_lists=True)
         assert res == 'yum pkg=foo,bar,baz state=installed'
 
     def test_template_varReplace_iterated(self):
