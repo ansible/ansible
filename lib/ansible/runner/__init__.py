@@ -404,7 +404,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject)
+        module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
 
         tmp = ''
         if self.module_name != 'raw':

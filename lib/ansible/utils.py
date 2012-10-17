@@ -280,7 +280,7 @@ def _varFind(text):
     path.append(text[part_start[0]:var_end])
     return {'path': path, 'start': start, 'end': end}
 
-def varReplace(raw, vars, depth=0):
+def varReplace(raw, vars, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
@@ -300,10 +300,10 @@ def varReplace(raw, vars, depth=0):
 
         try:
             replacement = _varLookup(m['path'], vars, depth)
-            if isinstance(replacement, (list, tuple)):
+            if expand_lists and isinstance(replacement, (list, tuple)):
                 replacement = ",".join(replacement)
             if isinstance(replacement, (str, unicode)):
-                replacement = varReplace(replacement, vars, depth=depth + 1)
+                replacement = varReplace(replacement, vars, depth=depth+1, expand_lists=expand_lists)
         except VarNotFoundException:
             replacement = raw[m['start']:m['end']]
 
@@ -376,7 +376,7 @@ def varReplaceWithItems(basedir, varname, vars):
         return varname
 
 
-def template(basedir, text, vars):
+def template(basedir, text, vars, expand_lists=False):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
     prev_text = ''
@@ -384,7 +384,7 @@ def template(basedir, text, vars):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    text = varReplace(unicode(text), vars)
+    text = varReplace(unicode(text), vars, expand_lists=expand_lists)
     text = varReplaceFilesAndPipes(basedir, text)
     return text
 
