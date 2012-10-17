@@ -83,7 +83,6 @@ class ActionModule(object):
 
             # run the copy module
             module_args = "%s src=%s" % (module_args, tmp_src)
-            print "CALLING FILE WITH: %s" % module_args
             return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject).daisychain('file', module_args)
 
         else:
@@ -93,6 +92,5 @@ class ActionModule(object):
             tmp_src = tmp + os.path.basename(source)
             module_args = "%s src=%s" % (module_args, tmp_src)
             result = dict(changed=False, md5sum=remote_md5, transferred=False)
-            print "CALLING FILE WITH: %s" % module_args
             return ReturnData(conn=conn, result=result).daisychain('file', module_args)
 
