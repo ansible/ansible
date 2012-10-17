@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/env python
 
 '''
 EC2 external inventory script
@@ -108,6 +108,7 @@ Security groups are comma-separated in 'ec2_security_group_ids' and
 
 ######################################################################
 
+import sys
 import os
 import argparse
 import re
@@ -132,7 +133,7 @@ class Ec2Inventory(object):
 
         # Index of hostname (address) to instance ID
         self.index = {}
-        
+
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
@@ -292,9 +293,14 @@ class Ec2Inventory(object):
         self.push(self.inventory, instance.placement, dest)
 
         # Inventory: Group by security group
-        for group in instance.groups:
-            key = self.to_safe("security_group_" + group.name)
-            self.push(self.inventory, key, dest)
+        try:
+            for group in instance.groups:
+                key = self.to_safe("security_group_" + group.name)
+                self.push(self.inventory, key, dest)
+        except AttributeError:
+            print 'Package boto seems a bit older.'
+            print 'Please upgrade boto >= 2.3.0.'
+            sys.exit(1)
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
