@@ -60,6 +60,11 @@ options:
     version_added: "0.6"
     required: false
     default: null
+  executable:
+    description:
+      - change the shell used to execute the command. Should be an absolute path the the executable.
+    required: false
+    default: null
 examples:
    - code: command /sbin/shutdown -t now
      description: "Example from Ansible Playbooks"
