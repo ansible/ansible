@@ -384,14 +384,32 @@ class Runner(object):
         actual_host = host
         try:
             delegate_to = inject.get('delegate_to', None)
-            alternative_host = inject.get('ansible_ssh_host', None)
+
+            # the delegated host may have different SSH port configured, etc
+            # and we need to transfer those, and only those, variables
+
             if delegate_to is not None:
+                delegate_vars = {}
+                try:
+                    delegate_vars = inject['hostvars'][delegate_to]
+                    for (k,v) in delegate_vars.iteritems():
+                        if k.startswith('ansible_ssh_'):
+                            inject[k] = v
+                except errors.AnsibleError:
+                    # host not listed in inventory, it's ok
+                    pass
+
+            # the host record may just be an alias in case of tunnels
+            alternative_host = inject.get('ansible_ssh_host', None)
+            if delegate_to is not None and not alternative_host:
                 actual_host = delegate_to
-            elif alternative_host is not None:
-                actual_host = alternative_host
+
+            # connect
             conn = self.connector.connect(actual_host, port)
+
             if delegate_to is not None or alternative_host is not None:
                 conn._delegate_for = host
+
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
