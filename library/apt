@@ -75,7 +75,7 @@ examples:
     - code: apt pkg=foo state=removed
       description: Remove C(foo) package
     - code: apt pkg=foo state=installed
-      description: Install the the package C(foo)
+      description: Install the package C(foo)
     - code: apt pkg=foo=1.00 state=installed
       description: Install the version '1.00' of package C(foo)
     - code: apt pkg=nginx state=latest default-release=squeeze-backports update-cache=yes
