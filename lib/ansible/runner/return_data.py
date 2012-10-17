@@ -26,11 +26,12 @@ class ReturnData(object):
 
         # which host is this ReturnData about?
         if conn is not None:
-            delegate_for = getattr(conn, '_delegate_for', None)
-            if delegate_for:
-                self.host = delegate_for
-            else:
-                self.host = conn.host
+            self.host = conn.host
+            delegate = getattr(conn, 'delegate', None)
+            if delegate is not None:
+                self.host = delegate
+
+
         else:
             self.host = host
 
@@ -39,6 +40,7 @@ class ReturnData(object):
 
         if type(self.result) in [ str, unicode ]:
             self.result = utils.parse_json(self.result)
+
 
         if self.host is None:
             raise Exception("host not set")

@@ -381,28 +381,23 @@ class Runner(object):
             return ReturnData(host=host, result=result)
 
         conn = None
-        actual_host = host
-        actual_port = port
+        actual_host = inject.get('ansible_ssh_host', host)
+        actual_port = inject.get('ansible_ssh_port', port)
+
+        # the delegated host may have different SSH port configured, etc
+        # and we need to transfer those, and only those, variables
+        delegate_to = inject.get('delegate_to', None)
+        if delegate_to is not None:
+            delegate_to = utils.template(self.basedir, delegate_to, inject)
+            delegate_info = inject['hostvars'][delegate_to]
+            actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
+            actual_port = delegate_info.get('ansible_ssh_port', port)
+
         try:
-            alternative_host = inject.get('ansible_ssh_host', None)
-            if alternative_host is not None:
-                actual_host = alternative_host
-
-            delegate_to = inject.get('delegate_to', None)
-
-            # the delegated host may have different SSH port configured, etc
-            # and we need to transfer those, and only those, variables
-
-            if delegate_to is not None:
-                delegate_to = utils.template(self.basedir, delegate_to, inject)
-                actual_host = inject['hostvars'][delegate_to].get('ansible_ssh_host', delegate_to)
-                actual_port = inject['hostvars'][delegate_to].get('ansible_ssh_port', port)
-
             # connect
             conn = self.connector.connect(actual_host, actual_port)
-
-            if delegate_to is not None or alternative_host is not None:
-                conn._delegate_for = host
+            if delegate_to:
+                conn.delegate = host
 
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
