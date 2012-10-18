@@ -26,12 +26,13 @@ from ansible import utils
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, filename=C.DEFAULT_HOST_LIST, inventory=None):
 
         cmd = [ filename, "--list" ]
         sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = sp.communicate()
         self.data = stdout
+        self.inventory = inventory
         self.groups = self._parse()
 
     def _parse(self):
@@ -39,15 +40,15 @@ class InventoryScript(object):
 
         groups = {}
         self.raw = utils.parse_json(self.data)
-        all=Group('all')
+        all=Group('all', inventory=self.inventory)
         self.groups = dict(all=all)
         group = None
         for (group_name, hosts) in self.raw.items():
-            group = groups[group_name] = Group(group_name)
+            group = groups[group_name] = Group(group_name, inventory=self.inventory)
             host = None
             for hostname in hosts:
                 if not hostname in all_hosts:
-                    all_hosts[hostname] = Host(hostname)
+                    all_hosts[hostname] = Host(hostname, inventory=self.inventory)
                 host = all_hosts[hostname]
                 group.add_host(host)
                 # FIXME: hack shouldn't be needed

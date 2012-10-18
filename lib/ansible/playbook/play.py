@@ -243,21 +243,6 @@ class Play(object):
             hostrec = inventory.get_host(host)
             groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)
             groups = [ g.name for g in groupz ]
-            basedir = inventory.basedir()
-            if basedir is not None:
-                for x in groups:
-                    path = os.path.join(basedir, "group_vars/%s" % x)
-                    if os.path.exists(path):
-                        data = utils.parse_yaml_from_file(path)
-                        if type(data) != dict:
-                            raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                        self.playbook.SETUP_CACHE[host].update(data)
-                path = os.path.join(basedir, "host_vars/%s" % hostrec.name)
-                if os.path.exists(path):
-                    data = utils.parse_yaml_from_file(path)
-                    if type(data) != dict:
-                        raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                    self.playbook.SETUP_CACHE[host].update(data)
 
         for filename in self.vars_files:
 

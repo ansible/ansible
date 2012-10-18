@@ -15,12 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from ansible import utils
+from ansible import errors
+
 class Group(object):
     ''' a group of ansible hosts '''
 
-    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth' ]
+    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', 'inventory' ]
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, inventory=None):
 
         self.depth = 0
         self.name = name
@@ -28,6 +32,7 @@ class Group(object):
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
+        self.inventory = inventory
         if self.name is None:
             raise Exception("group name is required")
 
@@ -62,6 +67,13 @@ class Group(object):
         # FIXME: verify this variable override order is what we want
         for ancestor in self.get_ancestors():
             vars.update(ancestor.get_variables())
+        if self.inventory is not None:
+            path = os.path.join(self.inventory.basedir(), "group_vars", self.name)
+            if os.path.exists(path):
+                data = utils.parse_yaml_from_file(path)
+                if type(data) != dict:
+                    raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
+                vars.update(data)
         vars.update(self.vars)
         return vars
 

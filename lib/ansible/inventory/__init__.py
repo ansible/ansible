@@ -68,22 +68,22 @@ class Inventory(object):
                 host_list = [ h for h in host_list if h and h.strip() ]
 
         if type(host_list) == list:
-            all = Group('all')
+            all = Group('all', inventory=self)
             self.groups = [ all ]
             for x in host_list:
                 if x.find(":") != -1:
                     tokens = x.split(":",1)
-                    all.add_host(Host(tokens[0], tokens[1]))
+                    all.add_host(Host(tokens[0], tokens[1], inventory=self))
                 else:
-                    all.add_host(Host(x))
+                    all.add_host(Host(x, inventory=self))
         elif utils.is_executable(host_list):
             self._is_script = True
-            self.parser = InventoryScript(filename=host_list)
+            self.parser = InventoryScript(filename=host_list, inventory=self)
             self.groups = self.parser.groups.values()
         else:
             data = file(host_list).read()
             if not data.startswith("---"):
-                self.parser = InventoryParser(filename=host_list)
+                self.parser = InventoryParser(filename=host_list, inventory=self)
                 self.groups = self.parser.groups.values()
             else:
                 raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
