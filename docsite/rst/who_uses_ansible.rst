@@ -12,7 +12,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
-    * `Four Kitchens <http://fourkitchens.com>`_ - The Druapl Experts
+    * `Four Kitchens <http://fourkitchens.com>`_ - The Drupal Experts
     * `Lizenfrei.at <http://lizenzfrei.at/>`_ - Open Source consulting and development, Austria
     * `Schmooze Com <http://www.schmoozecom.com/>`_ - Creators of Industry Leading PBX Platforms
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
@@ -20,4 +20,5 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
     * `Tommorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
+    * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
 
