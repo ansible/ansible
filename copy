@@ -100,11 +100,15 @@ def main():
             module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
-    if md5sum_src != md5sum_dest:
+    if md5sum_src != md5sum_dest or os.path.islink(dest):
         try:
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
+            # allow for conversion from symlink.
+            if os.path.islink(dest):
+                os.unlink(dest)
+                open(dest, 'w').close()
             #TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
             # might be an issue with exceeding path length
             dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
