@@ -291,7 +291,7 @@ def main():
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
-            changed = user_add(cursor, user, host, password, priv, grant)
+            changed = user_add(cursor, user, host, password, priv)
     elif state == "absent":
         if user_exists(cursor, user, host):
             changed = user_delete(cursor, user, host)
