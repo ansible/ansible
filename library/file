@@ -340,7 +340,7 @@ def main():
     if src:
         src = os.path.expanduser(src)
 
-    if src is not None and os.path.isdir(path):
+    if src is not None and os.path.isdir(path) and state != "link":
         params['path'] = path = os.path.join(path, os.path.basename(src))
 
     mode   = params.get('mode', None)
