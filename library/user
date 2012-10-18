@@ -102,7 +102,11 @@ options:
         description:
             - When used with I(state=absent), behavior is as with
               I(userdel --remove).
-
+examples:
+    - code: user name=johnd comment="John Doe" uid=1040
+      description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
+    - code: user name=johnd state=absent remove=yes
+      description: "Remove the user 'johnd'"
 '''
 
 import os
