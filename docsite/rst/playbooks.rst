@@ -343,7 +343,7 @@ Includes can also be used in the 'handlers' section, for instance, if you
 want to define how to restart apache, you only have to do that once for all
 of your playbooks.  You might make a handlers.yml that looks like::
 
-   ----
+   ---
    # this might be in a file like handlers/handlers.yml
    - name: restart apache
      action: service name=apache state=restarted
