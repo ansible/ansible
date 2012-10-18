@@ -72,6 +72,9 @@ def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
 
+    if not KEYCZAR_AVAILABLE:
+        raise errors.AnsibleError("python-keyczar must be installed to use fireball mode")
+
     key_path = os.path.expanduser("~/.fireball.keys")
     if not os.path.exists(key_path):
         os.makedirs(key_path)
