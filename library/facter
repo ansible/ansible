@@ -31,7 +31,7 @@ description:
 version_added: "0.2"
 options: []
 examples:
-   - code: ansible  www.example.net -m facter
+   - code: ansible www.example.net -m facter
      description: "Example command-line invocation"
 notes: []
 requirements: [ "facter", "ruby-json" ]
