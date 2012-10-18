@@ -400,7 +400,7 @@ class Runner(object):
 
         try:
             # connect
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, int(actual_port))
             if delegate_to:
                 conn.delegate = host
 
