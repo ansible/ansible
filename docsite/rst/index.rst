@@ -56,4 +56,13 @@ with other solutions in your environment.
    api
    moduledev
 
+Miscellaneous
+`````````````
+
+A list of some people using Ansible.
+
+.. toctree::
+   :maxdepth: 1
+
+   who_uses_ansible
 
