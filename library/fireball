@@ -51,8 +51,7 @@ examples:
                  sudo: yes
                  tasks:
                      - action: fireball 
-
-               - hosts: devservers
+           - hosts: devservers
                  connection: fireball
                  tasks:
                      - action: command /usr/bin/anything

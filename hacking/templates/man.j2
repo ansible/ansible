@@ -46,6 +46,10 @@
 .SH EXAMPLES
 {% for e in examples %}
 .PP
+{% if e['description'] %}
+@{ e['description'] | jpfunc }@
+{% endif %}
+
 .nf
 @{ e['code'] }@
 .fi
