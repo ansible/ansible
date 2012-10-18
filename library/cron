@@ -101,7 +101,7 @@ options:
 examples:
    - code: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
      description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
-   - code: name="an old job" cron job="/some/dir/job.sh" state=absent
+   - code: cron name="an old job" cron job="/some/dir/job.sh" state=absent
      description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
 requirements: cron
 author: Dane Summers
