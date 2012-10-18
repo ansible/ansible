@@ -391,13 +391,16 @@ class Runner(object):
         delegate_to = inject.get('delegate_to', None)
         if delegate_to is not None:
             delegate_to = utils.template(self.basedir, delegate_to, inject)
-            delegate_info = inject['hostvars'][delegate_to]
-            actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
-            actual_port = delegate_info.get('ansible_ssh_port', port)
+            try:
+                delegate_info = inject['hostvars'][delegate_to]
+                actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
+                actual_port = delegate_info.get('ansible_ssh_port', port)
+            except errors.AnsibleError:
+                actual_host = delegate_to
 
         try:
             # connect
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, int(actual_port))
             if delegate_to:
                 conn.delegate = host
 
