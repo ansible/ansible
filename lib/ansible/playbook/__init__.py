@@ -51,7 +51,7 @@ class PlayBook(object):
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
         sudo_pass        = C.DEFAULT_SUDO_PASS,
-        remote_port      = C.DEFAULT_REMOTE_PORT,
+        remote_port      = None,
         transport        = C.DEFAULT_TRANSPORT,
         private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
         callbacks        = None,
