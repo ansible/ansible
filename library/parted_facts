@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 DOCUMENTATION = '''
 ---
-module: parted
+module: parted_facts
 short_description: Gathers facts about disk drives and partitions
 description:
      - This module can be used to get the facts about disk drives on the system.
@@ -10,13 +10,15 @@ description:
 notes:
     - The output format uses fact dictionary C(parted) where it places all the info
       When running you must use I(sudo) to gain access to disk data
+      All I(length) attributes are in units of I(sectors)
+      All I(size) attributes are in MiB
 examples:
     - code: ansible all -s -m parted_facts
-      description: Obtain facts from all hosts and print them to stdout.
+      description: Obtain facts from all hosts and print to stdout.
 author: Constantine Peresypkin
 '''
 
-MEGABYTE = 1024 * 1024
+MBYTE = 1024 * 1024
 
 try:
     import json
@@ -29,18 +31,46 @@ def run_parted(module, parted):
         parted_result = {'ansible_facts': {}}
         parted_result['ansible_facts']['parted'] = []
         for d in disks:
-            disk = {'type': d.type, 'model': d.device.model, 'path': d.device.path,
-                    'size': d.device.sectorSize * d.device.length, 'sector': d.device.sectorSize, 'partitions': [],
-                    'free': [{'start': 0L, 'end': d.device.length, 'length': d.device.length}]}
-            for p in d.partitions:
+            disk = {'type': d.type, 'model': d.device.model, 'path': d.device.path, 'length': d.device.length,
+                    'size': d.device.sectorSize * d.device.length / MBYTE, 'partitions': []}
+            for p in d.getPrimaryPartitions():
                 partition = {'number': p.number, 'path': p.path, 'start': p.geometry.start, 'end': p.geometry.end,
-                             'size': p.geometry.length * disk['sector'], 'fs': None}
+                             'length': p.geometry.length, 'size': p.geometry.length * d.device.sectorSize / MBYTE,
+                             'fs': None, 'type': 'primary'}
+                if p.fileSystem:
+                    partition['fs'] = p.fileSystem.type
+                disk['partitions'].append(partition)
+            p = d.getExtendedPartition()
+            if p:
+                partition = {'number': p.number, 'path': p.path, 'start': p.geometry.start, 'end': p.geometry.end,
+                             'length': p.geometry.length, 'size': p.geometry.length * d.device.sectorSize / MBYTE,
+                             'fs': None, 'type': 'extended'}
+                disk['partitions'].append(partition)
+            for p in d.getLogicalPartitions():
+                partition = {'number': p.number, 'path': p.path, 'start': p.geometry.start, 'end': p.geometry.end,
+                             'length': p.geometry.length, 'size': p.geometry.length * d.device.sectorSize / MBYTE,
+                             'fs': None, 'type': 'logical'}
+                if p.fileSystem:
+                    partition['fs'] = p.fileSystem.type
+                disk['partitions'].append(partition)
+            for p in d.getRaidPartitions():
+                partition = {'number': p.number, 'path': p.path, 'start': p.geometry.start, 'end': p.geometry.end,
+                             'length': p.geometry.length, 'size': p.geometry.length * d.device.sectorSize / MBYTE,
+                             'fs': None, 'type': 'raid'}
+                if p.fileSystem:
+                    partition['fs'] = p.fileSystem.type
+                disk['partitions'].append(partition)
+            for p in d.getLVMPartitions():
+                partition = {'number': p.number, 'path': p.path, 'start': p.geometry.start, 'end': p.geometry.end,
+                             'length': p.geometry.length, 'size': p.geometry.length * d.device.sectorSize / MBYTE,
+                             'fs': None, 'type': 'lvm'}
                 if p.fileSystem:
                     partition['fs'] = p.fileSystem.type
                 disk['partitions'].append(partition)
             disk['free'] = []
             for f in d.getFreeSpaceRegions():
-                disk['free'].append({'start': f.start, 'end': f.end, 'length': f.length})
+                disk['free'].append({'start': f.start, 'end': f.end, 'length': f.length,
+                                     'size': f.length * d.device.sectorSize / MBYTE})
             parted_result['ansible_facts']['parted'].append(disk)
     except Exception, e:
         return module.fail_json(e)

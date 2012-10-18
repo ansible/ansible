@@ -525,6 +525,7 @@ class LinuxNetwork(Network):
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
         interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
         self.facts['interfaces'] = interfaces.keys()
+	self.facts['interfaces_full'] = interfaces
         for iface in interfaces:
             self.facts[iface] = interfaces[iface]
         self.facts['default_ipv4'] = default_ipv4
