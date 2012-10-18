@@ -112,6 +112,16 @@ def rst_ify(text):
 
     return t
 
+def markdown_ify(text):
+
+    t = _ITALIC.sub("_" + r"\1" + "_", text)
+    t = _BOLD.sub("**" + r"\1" + "**", t)
+    t = _MODULE.sub("*" + r"\1" + "*", t)
+    t = _URL.sub("[" + r"\1" + "](" + r"\1" + ")", t)
+    t = _CONST.sub("`" + r"\1" + "`", t)
+
+    return t
+
 # Helper for Jinja2 (format() doesn't work here...)
 def rst_fmt(text, fmt):
     return fmt % (text)
@@ -187,7 +197,7 @@ def main():
     p.add_option("-t", "--type",
             action='store',
             dest='type',
-            choices=['html', 'latex', 'man', 'rst', 'json'],
+            choices=['html', 'latex', 'man', 'rst', 'json', 'markdown'],
             default='latex',
             help="Output type")
     p.add_option("-m", "--module",
@@ -283,6 +293,13 @@ def main():
         env.filters['jpfunc'] = js_ify
         template = env.get_template('js.j2')
         outputname = "%s.js"
+    if options.type == 'markdown':
+        env.filters['jpfunc'] = markdown_ify
+        env.filters['html_ify'] = html_ify
+        template = env.get_template('markdown.j2')
+        outputname = "%s.md"
+        includecmt = ""
+        includefmt = ""
 
     if options.includes_file is not None and includefmt != "":
         incfile = open(options.includes_file, "w")
