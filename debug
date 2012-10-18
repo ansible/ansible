@@ -48,7 +48,7 @@ options:
     required: false
     default: "no"
 examples:
-    - code:
+    - code: |
         - local_action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"
         - local_action: debug msg="System $inventory_hostname lacks a gateway" fail=yes
           only_if: "is_unset('${ansible_default_ipv4.gateway}')"
