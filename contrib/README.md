@@ -27,7 +27,7 @@ Selected Playbooks
 be easy to write your own from scratch for most applications, but it's always helpful to look at what others have
 done for reference.
 
-* [Hadoop](https://github.com/jkleint/ansible-contrib/tree/master/playbooks/hadoop_jkleint) - jkleint
+* [Hadoop](https://github.com/jkleint/ansible-hadoop) - jkleint
 * [LAMP](https://github.com/fourkitchens/server-playbooks) - [Four Kitchens](http://fourkitchens.com)
 * [Ganglia (demo)](https://github.com/mpdehaan/ansible-examples) - mpdehaan
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
