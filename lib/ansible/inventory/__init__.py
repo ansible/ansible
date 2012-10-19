@@ -266,8 +266,11 @@ class Inventory(object):
 
     def _get_variables(self, hostname):
 
+        host = self.get_host(hostname)
+        if host is None:
+            raise errors.AnsibleError("host not found: %s" % hostname)
+
         if self._is_script:
-            host = self.get_host(hostname)
             cmd = subprocess.Popen(
                 [self.host_list,"--host",hostname],
                 stdout=subprocess.PIPE,
@@ -283,11 +286,8 @@ class Inventory(object):
             results['group_names'] = sorted(groups)
 
             return results
-
-        host = self.get_host(hostname)
-        if host is None:
-            raise errors.AnsibleError("host not found: %s" % hostname)
-        return host.get_variables()
+	else:
+            return host.get_variables()
 
     def add_group(self, group):
         self.groups.append(group)
