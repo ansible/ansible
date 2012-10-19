@@ -28,8 +28,8 @@ version_added: "0.7"
 options:
   policy:
     description:
-      - "name of the SELinux policy to use (example: 'targeted')"
-    required: true
+      - "name of the SELinux policy to use (example: 'targeted') will be required if state is not 'disabled'"
+    required: false
     default: null
   state:
     description:
@@ -44,11 +44,12 @@ options:
     default: "/etc/selinux/config"
 examples:
    - code: selinux policy=targeted state=enforcing
-   - code: selinux policy=targeted state=disabled
+   - code: selinux policy=targeted state=permissive
+   - code: selinux state=disabled
 notes:
    - Not tested on any debian based system
-requirements: [ ]
-author: Derek Carter
+requirements: [ libselinux-python ]
+author: Derek Carter <goozbach@friocorte.com>
 '''
 
 import os
@@ -101,7 +102,7 @@ def set_state(state):
         pass
     else:
         msg = 'trying to set invalid runtime state %s' % state
-        fail_json(msg=msg)
+        module.fail_json(msg=msg)
 
 def set_config_policy(policy, configfile):
     # edit config file with state value
@@ -117,11 +118,11 @@ def set_config_policy(policy, configfile):
 
 def main():
     if (not HAVE_SELINUX):
-        fail_json(msg='python-selinux required for this module')
+        module.fail_json(msg='python-selinux required for this module')
 
     module = AnsibleModule(
         argument_spec = dict(
-            policy=dict(required=True),
+            policy=dict(required=False),
             state=dict(choices=['enforcing', 'permissive', 'disabled'], required=True),
             configfile=dict(aliases=['conf','file'], default='/etc/selinux/config')
         )
@@ -145,6 +146,14 @@ def main():
     config_policy         = get_config_policy(configfile)
     config_state          = get_config_state(configfile)
 
+    # check to see if policy is set if state is not 'disabled'
+    if (state != 'disabled'):
+        if (policy == '' or policy == None):
+            module.fail_json(msg='policy is required if state is not \'disabled\'')
+    else:
+        if (policy == '' or policy == None):
+            policy = config_policy
+
     # check changed values and run changes
     if (policy != runtime_policy):
         # cannot change runtime policy
@@ -158,10 +167,13 @@ def main():
 
     if (state != runtime_state):
         if (state == 'disabled'):
-            msgs.append('disabled state will take effect next reboot')
+            msgs.append('state change will take effect next reboot')
         else:
-            msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
-        set_state(state)
+            if (runtime_enabled):
+                set_state(state)
+                msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
+            else:
+                msgs.append('state change will take effect next reboot')
         changed=True
 
     if (state != config_state):
