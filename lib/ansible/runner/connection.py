@@ -40,13 +40,12 @@ class Connection(object):
         self.runner = runner
         self.modules = None
 
-    def connect(self, host, port, transport=None):
+    def connect(self, host, port):
         if self.modules is None:
             self.modules = modules.copy()
             self.modules.update(utils.import_plugins(os.path.join(self.runner.basedir, 'connection_plugins')))
         conn = None
-        if transport is None:
-            transport = self.runner.transport
+        transport = self.runner.transport
         module = self.modules.get(transport, None)
         if module is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
