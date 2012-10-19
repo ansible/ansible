@@ -7,7 +7,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
 
     * `Alta Language Services <http://www.altalang.com>`_ - language testing, solutions, and translation services
     * `Basho <http://basho.com>`_ - makers of NoSQL engine Riak
-    *  `CatN Hosting <http://catn.com>`_ - scalable Cloud hosting
+    * `CatN Hosting <http://catn.com>`_ - scalable Cloud hosting
     * `Cygate AB <http://cygate.se>`_ - IT solutions from Malmo, Sweeden
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
@@ -18,7 +18,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
     * `Skylines.io <http://skylines.io>`_ - Real time photo search engine
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
-    * `Tommorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
+    * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
     * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
 

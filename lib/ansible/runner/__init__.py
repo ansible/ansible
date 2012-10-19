@@ -49,7 +49,7 @@ dirname = os.path.dirname(__file__)
 action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
 for i in reversed(C.DEFAULT_ACTION_PLUGIN_PATH.split(os.pathsep)):
     action_plugin_list.update(utils.import_plugins(i))
-lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins')) 
+lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins'))
 for i in reversed(C.DEFAULT_LOOKUP_PLUGIN_PATH.split(os.pathsep)):
     lookup_plugin_list.update(utils.import_plugins(i))
 
@@ -285,7 +285,7 @@ class Runner(object):
         if self.transport in [ 'paramiko', 'ssh' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
-                port = C.DEFAULT_REMOTE_PORT 
+                port = C.DEFAULT_REMOTE_PORT
         else:
             # fireball, local, etc
             port = self.remote_port
@@ -399,10 +399,13 @@ class Runner(object):
                 actual_host = delegate_to
 
         try:
-            # connect
-            conn = self.connector.connect(actual_host, int(actual_port))
+            transport = None # use Runner setting
+            if delegate_to and actual_host in [ '127.0.0.1', 'localhost' ]:
+                transport = 'local'
+            conn = self.connector.connect(actual_host, int(actual_port), transport=transport)
             if delegate_to:
                 conn.delegate = host
+
 
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
