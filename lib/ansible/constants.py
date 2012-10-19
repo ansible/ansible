@@ -29,8 +29,6 @@ def get_config(p, section, key, env_var, default):
         try:
             return p.get(section, key)
         except:
-            if env_var is not None:
-                return os.environ.get(env_var, default)
             return default
     else:
         return default
