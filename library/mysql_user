@@ -175,7 +175,7 @@ def privileges_get(cursor, user,host):
             module.fail_json(msg="unable to parse the MySQL grant string")
         privileges = res.group(1).split(", ")
         privileges = ['ALL' if x=='ALL PRIVILEGES' else x for x in privileges]
-        if res.group(3) == " WITH GRANT OPTION":
+        if res.group(3) == "WITH GRANT OPTION":
           privileges.append('GRANT')
         db = res.group(2).replace('`', '')
         output[db] = privileges
