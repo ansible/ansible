@@ -31,6 +31,7 @@ Other Core Changes:
 * fatal errors are now properly colored red.
 * skipped messages are now cyan, to differentiate them from unchanged messages.
 * extensive documentation upgrades
+* delegate_action to localhost (aka local_action) will always use the local connection type
 
 Highlighted playbook changes:
 
@@ -46,6 +47,8 @@ Highlighted playbook changes:
 * setup is not run more than once when we know it is has already been run in a play that included another play, etc
 * can set/override sudo and sudo_user on individual tasks in a play, defaults to what is set in the play if not present
 * ability to use with_fileglob to iterate over local file patterns
+* templates now use Jinja2's 'trim_blocks=True' to avoid stray newlines, small changes to templates may
+be required in rare cases.
 
 Other playbook changes:
 
