@@ -399,13 +399,10 @@ class Runner(object):
                 actual_host = delegate_to
 
         try:
-            transport = None # use Runner setting
-            if delegate_to and actual_host in [ '127.0.0.1', 'localhost' ]:
-                transport = 'local'
-            conn = self.connector.connect(actual_host, int(actual_port), transport=transport)
+            # connect
+            conn = self.connector.connect(actual_host, int(actual_port))
             if delegate_to:
                 conn.delegate = host
-
 
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
