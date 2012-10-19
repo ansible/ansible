@@ -33,6 +33,7 @@ done for reference.
 * [Nginx](http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html) - cocoy
 * [OpenStack](http://github.com/lorin/openstack-ansible) - lorin
 * [Systems Configuration](https://github.com/cegeddin/ansible-contrib) - cegeddin
+* [Fedora Infrastructure](http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/) - [Fedora](http://fedoraproject.org)
 
 Callbacks and Plugins
 =====================
