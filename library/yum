@@ -212,7 +212,10 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf):
         rc2,out2,err2 = run(cmd)
         if rc == 0 and rc2 == 0:
             out += out2
-            return set([ p for p in out.split('\n') if p.strip() ])
+            pkgs = set([ p for p in out.split('\n') if p.strip() ])
+            if not pkgs:
+                pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf)
+            return pkgs
         else:
             module.fail_json(msg='Error from repoquery: %s' % err + err2)
             
@@ -350,6 +353,7 @@ def install(module, items, repoq, yum_basecmd, conf_file):
                 if is_installed(module, repoq, this, conf_file):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
+                    break
 
             if found:
                 continue
