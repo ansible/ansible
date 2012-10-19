@@ -30,8 +30,7 @@ def get_config(p, section, key, env_var, default):
             return p.get(section, key)
         except:
             return default
-    else:
-        return default
+    return default
 
 def load_config_file():
     p = ConfigParser.ConfigParser()
