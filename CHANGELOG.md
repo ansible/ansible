@@ -95,6 +95,8 @@ Other module Changes, Upgrades, and Fixes:
 * variable '$ansible_managed' is now great to include at the top of your templates and includes useful information and a warning that it will be replaced
 * "~" now expanded in command module when using creates/removes
 * mysql module can do dumps and imports
+* selinux policy is only required if setting to not disabled
+* various fixes for yum module when working with packages not in any present repo
 
 0.7 "Panama" -- Sept 6 2012
 
