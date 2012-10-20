@@ -354,7 +354,7 @@ def get_ssh_key_path(user, ssh_file):
     if os.path.isabs(ssh_file):
         ssh_key_file = ssh_file
     else:
-        ssh_key_file = "%s/%s" % (info[5], ssh_file)
+        ssh_key_file = os.path.join(info[5], ssh_file)
     return ssh_key_file
 
 def ssh_key_gen(module, user, ssh):
@@ -419,7 +419,7 @@ def main():
             'passphrase': None,
             'comment': 'ansible-generated'
     }
-    ssh_defaults['file'] = '.ssh/id_%s' % ssh_defaults['type']
+    ssh_defaults['file'] = os.path.join('.ssh', 'id_%s' % ssh_defaults['type'])
     ssh = dict(ssh_defaults)
     module = AnsibleModule(
         argument_spec = dict(
@@ -473,7 +473,7 @@ def main():
     ssh['passphrase'] = module.params['ssh_key_passphrase']
     # If using default filename, make sure it is named appropriately
     if ssh['file'] == ssh_defaults['file']:
-        ssh['file'] = '.ssh/id_%s' % ssh['type']
+        ssh['file'] = os.path.join('.ssh', 'id_%s' % ssh_defaults['type'])
 
 
     rc = None
