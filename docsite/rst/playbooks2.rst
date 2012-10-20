@@ -406,11 +406,9 @@ Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
 
 Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
-The following construct selects the first available file appropriate for the variables of a given host,
-which is often much cleaner than putting a lot of if conditionals in a template.
+The following construct selects the first available file appropriate for the variables of a given host, which is often much cleaner than putting a lot of if conditionals in a template.
 
-The following example shows how to template out a configuration file that was very different between, say,
-CentOS and Debian::
+The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
 
     - name: template a file
       action: template src=$item dest=/etc/myapp/foo.conf
@@ -418,6 +416,7 @@ CentOS and Debian::
         - /srv/templates/myapp/${ansible_distribution}.conf
         - /srv/templates/myapp/default.conf
 
+first_available_file is only available to the copy and template modules.  
 
 Asynchronous Actions and Polling
 ````````````````````````````````
