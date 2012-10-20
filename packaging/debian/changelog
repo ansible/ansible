@@ -1,6 +1,12 @@
+ansible (0.9) unstable; urgency=low
+  
+  * 0.9 release pending
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 19 Oct 2012 20:50:01 -0400
+
 ansible (0.8) unstable; urgency=low
   
-  * 0.8 release pending
+  * 0.8 update
  
  -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 19 Oct 2012 20:50:00 -0400
 
