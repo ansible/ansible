@@ -399,12 +399,9 @@ class Runner(object):
                 actual_host = delegate_to
 
         try:
-            transport = None # use Runner setting
-            if delegate_to and actual_host in [ '127.0.0.1', 'localhost' ]:
-                transport = 'local'
             if actual_port is not None:
                 actual_port = int(actual_port)
-            conn = self.connector.connect(actual_host, actual_port, transport=transport)
+            conn = self.connector.connect(actual_host, actual_port)
             if delegate_to:
                 conn.delegate = host
 

@@ -246,6 +246,8 @@ def _varFind(text):
     if start == -1:
         return None
     var_start = start + 1
+    if var_start >= len(text):
+        return None
     if text[var_start] == '{':
         is_complex = True
         brace_level = 1
