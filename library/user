@@ -102,11 +102,47 @@ options:
         description:
             - When used with I(state=absent), behavior is as with
               I(userdel --remove).
+    ssh_key:
+        required: false
+        choices: [ generate ]
+        description:
+            - Whether to generate a SSH key for the user in question.
+              This will B(not) overwrite an existing SSH key.
+    ssh_key_bits:
+        required: false
+        default: 2048
+        description:
+            - Optionally specify number of bits in SSH key to create.
+    ssh_key_type:
+        required: false
+        default: rsa
+        description:
+            - Optionally specify the tyep of SSH key to generate. 
+              Available SSH key types will depend on implementation
+              present on target host.
+    ssh_key_file:
+        required: false
+        default: $HOME/.ssh/id_rsa
+        description:
+            - Optionally specify the SSH key filename.
+    ssh_key_comment:
+        required: false
+        default: ansible-generated
+        description:
+            - Optionally define the comment for the SSH key.
+    ssh_key_passphrase:
+        required: false
+        description:
+            - Set a passphrase for the SSH key.  If no
+              passphrase is provided, the SSH key will default to
+              having no passphrase.
 examples:
     - code: user name=johnd comment="John Doe" uid=1040
       description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
     - code: user name=johnd state=absent remove=yes
       description: "Remove the user 'johnd'"
+    - code: user name=jsmith ssh_key=generate ssh_key_bits=2048
+      description: "Create a 2048-bit SSH key for user jsmith"
 '''
 
 import os
@@ -313,9 +349,78 @@ def user_password(user):
                     passwd = line.split(':')[1]
     return passwd
 
+def get_ssh_key_path(user, ssh_file):
+    info = user_info(user)
+    if os.path.isabs(ssh_file):
+        ssh_key_file = ssh_file
+    else:
+        ssh_key_file = os.path.join(info[5], ssh_file)
+    return ssh_key_file
+
+def ssh_key_gen(module, user, ssh):
+    info = user_info(user)
+    if not os.path.exists(info[5]):
+        return (1, '', 'User %s home directory does not exist' % user)
+    ssh_key_file = get_ssh_key_path(user, ssh['file'])
+    ssh_dir = os.path.dirname(ssh_key_file)
+    if not os.path.exists(ssh_dir):
+        try:
+            os.mkdir(ssh_dir, 0700)
+        except OSError, e:
+            return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
+    if os.path.exists(ssh_key_file):
+        return (None, 'Key already exists', '')
+    cmd = [module.get_bin_path('ssh-keygen', True)]
+    for key in ssh:
+        if key == 'type' and ssh[key] is not None:
+            cmd.append('-t')
+            cmd.append(ssh[key])
+        elif key == 'bits' and ssh[key] is not None:
+            cmd.append('-b')
+            cmd.append(ssh[key])
+        elif key == 'comment' and ssh[key] is not None:
+            cmd.append('-C')
+            cmd.append(ssh[key])
+        elif key == 'file' and ssh[key] is not None:
+            cmd.append('-f')
+            cmd.append(ssh_key_file)
+        elif key == 'passphrase':
+            cmd.append('-N')
+            if ssh[key] is not None:
+                cmd.append(ssh['passphrase'])
+            else:
+                cmd.append('')
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
+
+def ssh_key_fingerprint(module, user, ssh):
+    ssh_key_file = get_ssh_key_path(user, ssh['file'])
+    if not os.path.exists(ssh_key_file):
+        return (1, 'SSH Key file %s does not exist' % ssh_key_file, '')
+    cmd = [module.get_bin_path('ssh-keygen', True)]
+    cmd.append('-l')
+    cmd.append('-f')
+    cmd.append(ssh_key_file)
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    rc = p.returncode
+    return (rc, out, err)
+
+
+
 # ===========================================
 
 def main():
+    ssh_defaults = {
+            'bits': '2048',
+            'type': 'rsa',
+            'passphrase': None,
+            'comment': 'ansible-generated'
+    }
+    ssh_defaults['file'] = os.path.join('.ssh', 'id_%s' % ssh_defaults['type'])
+    ssh = dict(ssh_defaults)
     module = AnsibleModule(
         argument_spec = dict(
             state=dict(default='present', choices=['present', 'absent']),
@@ -334,7 +439,14 @@ def main():
             createhome=dict(default='yes', choices=BOOLEANS),
             system=dict(default='no', choices=BOOLEANS),
             # following options are specific to usermod
-            append=dict(default='no', choices=BOOLEANS)
+            append=dict(default='no', choices=BOOLEANS),
+            # following are specific to ssh key generation
+            ssh_key=dict(choices=['generate']),
+            ssh_key_bits=dict(default=ssh_defaults['bits']),
+            ssh_key_type=dict(default=ssh_defaults['type']),
+            ssh_key_file=dict(default=ssh_defaults['file']),
+            ssh_key_comment=dict(default=ssh_defaults['comment']),
+            ssh_key_passphrase=dict(default=None)
         )
     )
 
@@ -352,6 +464,17 @@ def main():
     createhome = module.params['createhome']
     system     = module.params['system']
     append     = module.params['append']
+    sshkeygen  = module.params['ssh_key']
+
+    ssh['bits'] = module.params['ssh_key_bits']
+    ssh['type'] = module.params['ssh_key_type']
+    ssh['file'] = module.params['ssh_key_file']
+    ssh['comment'] = module.params['ssh_key_comment']
+    ssh['passphrase'] = module.params['ssh_key_passphrase']
+    # If using default filename, make sure it is named appropriately
+    if ssh['file'] == ssh_defaults['file']:
+        ssh['file'] = os.path.join('.ssh', 'id_%s' % ssh_defaults['type'])
+
 
     rc = None
     out = ''
@@ -408,6 +531,19 @@ def main():
         result['uid'] = info[2]
         if len(groups) > 0:
             result['groups'] = groups
+        if sshkeygen:
+            (rc, out, err) = ssh_key_gen(module, name, ssh)
+            if rc is not None and rc != 0:
+                module.fail_json(name=name, msg=err, rc=rc)
+            if rc == 0:
+                result['changed'] = True
+            (rc, out, err) = ssh_key_fingerprint(module, name, ssh)
+            if rc == 0:
+                result['ssh_fingerprint'] = out.strip()
+            else:
+                result['ssh_fingerprint'] = err.strip()
+            result['ssh_key_file'] = get_ssh_key_path(name, ssh['file'])
+
 
     module.exit_json(**result)
 
