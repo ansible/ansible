@@ -61,8 +61,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc examples/playbooks
 
 %changelog
-* Thu Aug 7 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
-- pending
+* Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
+- Release of 0.8
 
 * Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
