@@ -77,6 +77,13 @@ options:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
     required: false
     default: null
+  role_attr_flags:
+    description:
+      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
+    required: false
+    default: null
+    choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
+                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
   state:
     description:
       - The database state
@@ -86,6 +93,8 @@ options:
 examples:
    - code: postgresql_user db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL
      description: Create django user and grant access to database and products table
+   - code: postgresql_user user=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
+   - description: Create rails user, grant privilege to create other databases and demote rails from super user status
    - code: postgresql_user db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no
      description: Remove test user privileges from acme
    - code: postgresql_user db=test user=test priv=ALL state=absent
@@ -125,29 +134,45 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password):
+def user_add(cursor, user, password, role_attr_flags):
     """Create a new user with write access to the database"""
-    query = "CREATE USER %(user)s with PASSWORD '%(password)s'"
-    cursor.execute(query % {"user": user, "password": password})
+    query = "CREATE USER %(user)s with PASSWORD '%(password)s' %(role_attr_flags)s"
+    cursor.execute(query % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
     return True
 
-def user_chpass(cursor, user, password):
+def user_alter(cursor, user, password, role_attr_flags):
     """Change user password"""
     changed = False
 
     # Handle passwords.
-    if password is not None:
-        select = "SELECT rolpassword FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"user": user})
-        current_pass_hash = cursor.fetchone()[0]
-        # Not sure how to hash the new password, so we just initiate the
-        # change and check if the hash changed
-        alter = "ALTER USER %(user)s WITH PASSWORD '%(password)s'"
-        cursor.execute(alter % {"user": user, "password": password})
-        cursor.execute(select, {"user": user})
-        new_pass_hash = cursor.fetchone()[0]
-        if current_pass_hash != new_pass_hash:
-            changed = True
+    if password is not None or role_attr_flags is not None:
+        # Define columns for select.
+        columns = 'rolpassword,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication'
+        # Select password and all flag-like columns in order to verify changes.
+        # rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcatupdate |
+        # rolcanlogin | rolreplication | rolconnlimit | rolpassword | rolvaliduntil
+        # Not sure how to interpolate properly in python yet...
+        select = "SELECT " + columns + " FROM pg_authid where rolname=%(user)s"
+        cursor.execute(select, {"columns": columns, "user": user})
+        # Grab current role attributes.
+        current_role_attrs = cursor.fetchone()
+
+        if password is not None:
+            # Update the role attributes, including password.
+            alter = "ALTER USER %(user)s WITH PASSWORD '%(password)s' %(role_attr_flags)s"
+            cursor.execute(alter % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
+        else:
+            # Update the role attributes, excluding password.
+            alter = "ALTER USER %(user)s WITH %(role_attr_flags)s"
+            cursor.execute(alter % {"user": user, "role_attr_flags": role_attr_flags})
+        # Grab new role attributes.
+        cursor.execute(select, {"columns": columns, "user": user})
+        new_role_attrs = cursor.fetchone()
+
+        # Detect any differences between current_ and new_role_attrs.
+        for i in range(len(current_role_attrs)):
+            if current_role_attrs[i] != new_role_attrs[i]:
+                changed = True
 
     return changed
 
@@ -267,6 +292,23 @@ def grant_privileges(cursor, user, privs):
 
     return changed
 
+def parse_role_attrs(role_attr_flags):
+    """
+    Parse role attributes string for user creation.
+    Format:
+
+        attributes[,attributes,...]
+
+    Where:
+
+        attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
+    """
+    if ',' not in role_attr_flags:
+        return role_attr_flags
+    flag_set = role_attr_flags.split(",")
+    o_flags = " ".join(flag_set)
+    return o_flags
+
 def parse_privs(privs, db):
     """
     Parse privilege string to determine permissions for database db.
@@ -316,7 +358,8 @@ def main():
             priv=dict(default=None),
             db=dict(default=''),
             port=dict(default='5432'),
-            fail_on_user=dict(default='yes')
+            fail_on_user=dict(default='yes'),
+            role_attr_flags=dict(default='')
         )
     )
     user = module.params["user"]
@@ -328,6 +371,7 @@ def main():
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
     port = module.params["port"]
+    role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -355,12 +399,12 @@ def main():
     user_removed = False
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_chpass(cursor, user, password)
+            changed = user_alter(cursor, user, password, role_attr_flags)
         else:
             if password is None:
                 msg = "password parameter required when adding a user"
                 module.fail_json(msg=msg)
-            changed = user_add(cursor, user, password)
+            changed = user_add(cursor, user, password, role_attr_flags)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
         if user_exists(cursor, user):
