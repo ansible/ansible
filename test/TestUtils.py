@@ -19,6 +19,12 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
+    def test_varReplace_trailing_dollar(self):
+        template = '$what $who $'
+        vars = dict(what='hello', who='world')
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'hello world $'
+
     def test_varReplace_multiple(self):
         template = '$what $who'
         vars = {
