@@ -57,6 +57,7 @@ class ActionModule(object):
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
                 fn = utils.template(self.runner.basedir, fn, inject)
+                fn = utils.path_dwim(self.runner.basedir, fn)
                 if os.path.exists(fn):
                     source = fn
                     found = True
