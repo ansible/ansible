@@ -29,6 +29,7 @@ import optparse
 import time
 import datetime
 import subprocess
+import traceback
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -149,11 +150,8 @@ def get_docstring(filename, verbose=False):
                     doc = yaml.load(child.value.s)
 
     except:
-        if verbose:
-            raise
-        else:
-            print "unable to parse %s" % filename
-
+        traceback.print_exc()
+        print "unable to parse %s" % filename
     return doc
 
 

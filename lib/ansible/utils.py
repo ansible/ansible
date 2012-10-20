@@ -184,6 +184,8 @@ def json_loads(data):
 
 def parse_json(raw_data):
     ''' this version for module return data only '''
+ 
+    orig_data = raw_data
 
     # ignore stuff like tcgetattr spewage or other warnings
     data = filter_leading_non_json_lines(raw_data)
@@ -202,7 +204,7 @@ def parse_json(raw_data):
 
         for t in tokens:
             if t.find("=") == -1:
-                raise errors.AnsibleError("failed to parse: %s" % raw_data)
+                raise errors.AnsibleError("failed to parse: %s" % orig_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ]:
@@ -213,7 +215,7 @@ def parse_json(raw_data):
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : raw_data }
+            return { "failed" : True, "parsed" : False, "msg" : orig_data }
         return results
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
