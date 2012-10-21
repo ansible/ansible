@@ -1,6 +1,5 @@
 # this is a virtual module that is entirely implemented server side
 
-
 DOCUMENTATION = '''
 ---
 module: template

@@ -123,191 +123,6 @@ requirements: [ ]
 author: Michael DeHaan
 '''
 
-def add_path_info(kwargs):
-    path = kwargs['path']
-    if os.path.exists(path):
-        (user, group) = user_and_group(path)
-        kwargs['owner']  = user
-        kwargs['group'] = group
-        st = os.stat(path)
-        kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
-        # secontext not yet supported
-        if os.path.islink(path):
-            kwargs['state'] = 'link'
-        elif os.path.isdir(path):
-            kwargs['state'] = 'directory'
-        else:
-            kwargs['state'] = 'file'
-        if HAVE_SELINUX and selinux_enabled():
-            kwargs['secontext'] = ':'.join(selinux_context(path))
-    else:
-        kwargs['state'] = 'absent'
-    return kwargs
-
-def module_exit_json(**kwargs):
-    add_path_info(kwargs)
-    module.exit_json(**kwargs)
-
-def module_fail_json(**kwargs):
-    add_path_info(kwargs)
-    module.fail_json(**kwargs)
-
-# Detect whether using selinux that is MLS-aware.
-# While this means you can set the level/range with
-# selinux.lsetfilecon(), it may or may not mean that you
-# will get the selevel as part of the context returned
-# by selinux.lgetfilecon().
-def selinux_mls_enabled():
-    if not HAVE_SELINUX:
-        return False
-    if selinux.is_selinux_mls_enabled() == 1:
-        return True
-    else:
-        return False
-
-def selinux_enabled():
-    if not HAVE_SELINUX:
-        return False
-    if selinux.is_selinux_enabled() == 1:
-        return True
-    else:
-        return False
-
-# Determine whether we need a placeholder for selevel/mls
-def selinux_initial_context():
-    context = [None, None, None]
-    if selinux_mls_enabled():
-        context.append(None)
-    return context
-
-# If selinux fails to find a default, return an array of None
-def selinux_default_context(path, mode=0):
-    context = selinux_initial_context()
-    if not HAVE_SELINUX or not selinux_enabled():
-        return context
-    try:
-        ret = selinux.matchpathcon(path, mode)
-    except OSError:
-        return context
-    if ret[0] == -1:
-        return context
-    context = ret[1].split(':')
-    return context
-
-def selinux_context(path):
-    context = selinux_initial_context()
-    if not HAVE_SELINUX or not selinux_enabled():
-        return context
-    try:
-        ret = selinux.lgetfilecon(path)
-    except:
-        module_fail_json(path=path, msg='failed to retrieve selinux context')
-    if ret[0] == -1:
-        return context
-    context = ret[1].split(':')
-    return context
-
-# ===========================================
-# support functions
-
-def user_and_group(filename):
-    st = os.stat(filename)
-    uid = st.st_uid
-    gid = st.st_gid
-    try:
-        user = pwd.getpwuid(uid)[0]
-    except KeyError:
-        user = str(uid)
-    try:
-        group = grp.getgrgid(gid)[0]
-    except KeyError:
-        group = str(gid)
-    return (user, group)
-
-def set_context_if_different(path, context, changed):
-    if not HAVE_SELINUX or not selinux_enabled():
-        return changed
-    cur_context = selinux_context(path)
-    new_context = list(cur_context)
-    # Iterate over the current context instead of the
-    # argument context, which may have selevel.
-    for i in range(len(cur_context)):
-        if context[i] is not None and context[i] != cur_context[i]:
-            new_context[i] = context[i]
-    if cur_context != new_context:
-        try:
-            rc = selinux.lsetfilecon(path, ':'.join(new_context))
-        except OSError:
-            module_fail_json(path=path, msg='invalid selinux context')
-        if rc != 0:
-            module_fail_json(path=path, msg='set selinux context failed')
-        changed = True
-    return changed
-
-def set_owner_if_different(path, owner, changed):
-    if owner is None:
-        return changed
-    user, group = user_and_group(path)
-    if owner != user:
-        try:
-            uid = pwd.getpwnam(owner).pw_uid
-        except KeyError:
-            module_fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-        try:
-            os.chown(path, uid, -1)
-        except OSError:
-            module_fail_json(path=path, msg='chown failed')
-        return True
-
-    return changed
-
-def set_group_if_different(path, group, changed):
-    if group is None:
-        return changed
-    old_user, old_group = user_and_group(path)
-    if old_group != group:
-        try:
-            gid = grp.getgrnam(group).gr_gid
-        except KeyError:
-            module_fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
-        try:
-            os.chown(path, -1, gid)
-        except OSError:
-            module_fail_json(path=path, msg='chgrp failed')
-        return True
-    return changed
-
-def set_mode_if_different(path, mode, changed):
-    if mode is None:
-        return changed
-    try:
-        # FIXME: support English modes
-        mode = int(mode, 8)
-    except Exception, e:
-        module_fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
-
-    st = os.stat(path)
-    prev_mode = stat.S_IMODE(st[stat.ST_MODE])
-
-    if prev_mode != mode:
-        # FIXME: comparison against string above will cause this to be executed
-        # every time
-        try:
-            os.chmod(path, mode)
-        except Exception, e:
-            module_fail_json(path=path, msg='chmod failed', details=str(e))
- 
-        st = os.stat(path)
-        new_mode = stat.S_IMODE(st[stat.ST_MODE])
-
-        if new_mode != prev_mode:
-            return True
-    return changed
-
-
-def rmtree_error(func, path, exc_info):
-    module_fail_json(path=path, msg='failed to remove directory')
-
 def main():
 
     # FIXME: pass this around, should not use global
@@ -318,15 +133,8 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
-            src   = dict(),
-            mode  = dict(),
-            owner = dict(),
-            group = dict(),
-            seuser = dict(),
-            serole = dict(),
-            selevel = dict(),
-            setype = dict(),
-        )
+        ),
+        add_file_common_args=True
     )
 
     params = module.params
@@ -336,35 +144,19 @@ def main():
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
 
-    src    = params.get('src', None)
+    src = params.get('src', None)
     if src:
         src = os.path.expanduser(src)
 
     if src is not None and os.path.isdir(path) and state != "link":
         params['path'] = path = os.path.join(path, os.path.basename(src))
 
-    mode   = params.get('mode', None)
-    owner  = params.get('owner', None)
-    group  = params.get('group', None)
-
-    # selinux related options
-    seuser    = params.get('seuser', None)
-    serole    = params.get('serole', None)
-    setype    = params.get('setype', None)
-    selevel   = params.get('serange', 's0')
-    secontext = [seuser, serole, setype]
-    if selinux_mls_enabled():
-        secontext.append(selevel)
-
-    default_secontext = selinux_default_context(path)
-    for i in range(len(default_secontext)):
-        if i is not None and secontext[i] == '_default':
-            secontext[i] = default_secontext[i]
+    file_args = module.load_file_common_arguments(params)
 
     if state == 'link' and (src is None or path is None):
-        module_fail_json(msg='src and dest are required for "link" state')
+        module.fail_json(msg='src and dest are required for "link" state')
     elif path is None:
-        module_fail_json(msg='path is required')
+        module.fail_json(msg='path is required')
 
     changed = False
 
@@ -384,31 +176,29 @@ def main():
                 if os.path.islink(path):
                     os.unlink(path)
                 else:
-                    shutil.rmtree(path, ignore_errors=False, onerror=rmtree_error)
+                    try:
+                        shutil.rmtree(path, ignore_errors=False)
+                    except:
+                        module.exit_json(msg="rmtree failed")
             else:
                 os.unlink(path)
         except Exception, e:
-            module_fail_json(path=path, msg=str(e))
-        module_exit_json(path=path, changed=True)
+            module.fail_json(path=path, msg=str(e))
+        module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        module_fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+        module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
-        module_exit_json(path=path, changed=False)
+        module.exit_json(path=path, changed=False)
 
     if state == 'file':
 
         if prev_state != 'file':
-            module_fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
+            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
 
-        # set modes owners and context as needed
-        changed = set_context_if_different(path, secontext, changed)
-        changed = set_owner_if_different(path, owner, changed)
-        changed = set_group_if_different(path, group, changed)
-        changed = set_mode_if_different(path, mode, changed)
-
-        module_exit_json(path=path, changed=changed)
+        changed = module.set_file_attributes_if_different(file_args, changed)
+        module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
 
@@ -416,13 +206,8 @@ def main():
             os.makedirs(path)
             changed = True
 
-        # set modes owners and context as needed
-        changed = set_context_if_different(path, secontext, changed)
-        changed = set_owner_if_different(path, owner, changed)
-        changed = set_group_if_different(path, group, changed)
-        changed = set_mode_if_different(path, mode, changed)
-
-        module_exit_json(path=path, changed=changed)
+        changed = module.set_directory_attributes_if_different(file_args, changed)
+        module.exit_json(path=path, changed=changed)
 
     elif state == 'link':
 
@@ -431,7 +216,7 @@ def main():
         else:
             module.fail_json(msg="absolute paths are required")
         if not os.path.exists(abs_src):
-            module_fail_json(path=path, src=src, msg='src file does not exist')
+            module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
             os.symlink(src, path)
@@ -445,17 +230,19 @@ def main():
                 os.symlink(src, path)
                 changed = True
         else:
-            module_fail_json(dest=path, src=src, msg='unexpected position reached')
+            module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
         # set modes owners and context as needed
-        changed = set_context_if_different(path, secontext, changed)
-        changed = set_owner_if_different(path, owner, changed)
-        changed = set_group_if_different(path, group, changed)
-        changed = set_mode_if_different(path, mode, changed)
+
+        file_args = module.load_file_common_arguments(module.params)
+        changed = module.set_context_if_different(path, file_args['secontext'], changed)
+        changed = module.set_owner_if_different(path, file_args['owner'], changed)
+        changed = module.set_group_if_different(path, file_args['group'], changed)
+        changed = module.set_mode_if_different(path, file_args['mode'], changed)
 
         module.exit_json(dest=path, src=src, changed=changed)
 
-    module_fail_json(path=path, msg='unexpected position reached')
+    module.fail_json(path=path, msg='unexpected position reached')
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
