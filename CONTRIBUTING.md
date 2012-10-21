@@ -52,13 +52,13 @@ We're not too strict on style considerations, but we require:
 Testing Requirements
 ====================
 
-Tests are run by "make tests".  To run the tests you need the following:-
+Automation tests are run by "make tests" and contain a mixture of integration and "unit" level tests.  To run the tests you need the following:
 
    * nose must be installed - https://nose.readthedocs.org/en/latest/
-   * ansible tests require paramiko, PyYAML and json modules
-   * The (optional) facter test requires facter to be installed.
-   * Your user environment should allow "ssh myip" (where myip is your ip address)
-     without a password - so a key held in ssh-agent and an authorised_keys entry.
+   * ansible tests require paramiko, PyYAML python modules, and python 2.6+.
+   * Some tests require additional components (facter, ohai) and will be skipped if not available.
+   * Your user environment should allow "ssh 127.0.0.1"
+     without a password - so a key held in ssh-agent and an authorized_keys entry.
 
 Contributors License Agreement
 ==============================
