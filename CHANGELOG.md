@@ -3,7 +3,13 @@ Ansible Changes By Release
 
 0.9 "Dreams" -- release pending
 
-* STAY TUNED!
+* various performance tweaks, ansible executes dramatically less SSH ops per unit of work
+* added 'script' module for pushing and running self-deleting remote scripts
+* relative paths now work for 'first_available_file'
+* fix for template calls when last character is '$'
+* postgresql module now takes role_attr_flags
+* --extra-vars variables now have the highest priority
+* ability to create SSH keys for users when using user module to create users
 
 0.8 "Cathedral" -- Oct 19, 2012
 
