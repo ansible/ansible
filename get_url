@@ -108,9 +108,7 @@ def url_do_get(module, url, dest):
         module.params['path'] = actualdest
     else:
         actualdest = dest
-    info['daisychain_args'] = module.params
-    info['daisychain_args']['state'] = 'file'
-    info['daisychain_args']['dest'] = actualdest
+
     info['actualdest'] = actualdest
 
     request = urllib2.Request(url)
@@ -177,12 +175,12 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        check_invalid_arguments = False,
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
             thirsty = dict(default='no', choices=BOOLEANS)
-        )
+        ),
+        add_file_common_args=True
     )
 
     url  = module.params['url']
@@ -236,6 +234,12 @@ def main():
         changed = False
 
     os.remove(tmpsrc)
+
+    # allow file attribute changes
+    module.params['path'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    file_args['path'] = dest
+    changed = module.set_file_attributes_if_different(file_args, changed)
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,

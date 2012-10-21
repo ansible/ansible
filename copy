@@ -64,18 +64,19 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        check_invalid_arguments = False,
         argument_spec = dict(
             src=dict(required=True),
             dest=dict(required=True),
             backup=dict(default=False, choices=BOOLEANS),
-        )
+        ),
+        add_file_common_args=True
     )
 
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
     backup = module.boolean(module.params.get('backup', False))
-    
+    file_args = module.load_file_common_arguments(module.params)    
+
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
     if not os.access(src, os.R_OK):
@@ -122,15 +123,16 @@ def main():
     else:
         changed = False
 
-    res_args = {
-        'dest':dest,
-        'src':src,
-        'md5sum':md5sum_src,
-        'changed':changed
-    }
+    res_args = dict(
+        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+    )
     if backup_file:
         res_args['backup_file'] = backup_file
-        
+
+    module.params['dest'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+
     module.exit_json(**res_args)
 
 # this is magic, see lib/ansible/module_common.py
