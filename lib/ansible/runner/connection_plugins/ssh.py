@@ -109,7 +109,7 @@ class Connection(object):
         p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in the config file) before running again')
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
 
         return ('', stdout, '')
 
