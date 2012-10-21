@@ -179,22 +179,6 @@ class Runner(object):
 
     # *****************************************************
 
-    def _delete_remote_files(self, conn, files):
-        ''' deletes one or more remote files '''
-
-        if os.getenv("ANSIBLE_KEEP_REMOTE_FILES","0") == "1":
-            # ability to turn off temp file deletion for debug purposes
-            return
-
-        if type(files) in [ str, unicode ]:
-            files = [ files ]
-        for filename in files:
-            if filename.find('/tmp/') == -1:
-                raise Exception("safeguard deletion, removal of %s is not going to happen" % filename)
-            self._low_level_exec_command(conn, "rm -rf %s" % filename, None)
-
-    # *****************************************************
-
     def _transfer_str(self, conn, tmp, name, data):
         ''' transfer string to remote file '''
 
@@ -230,12 +214,12 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (remote_module_path, is_new_style) = self._copy_module(conn, tmp, module_name, args, inject)
-        cmd = "chmod u+x %s" % remote_module_path
+        (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject)
+
+        cmd_mod = ""
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            cmd = "chmod a+rx %s" % remote_module_path
-        self._low_level_exec_command(conn, cmd, tmp)
+            cmd_mod = "chmod a+r %s; " % remote_module_path
 
         cmd = ""
         if not is_new_style:
@@ -251,6 +235,13 @@ class Runner(object):
             else:
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
+        if not shebang:
+            raise errors.AnsibleError("module is missing interpreter line")
+
+        cmd = shebang.replace("#!","") + " " + cmd
+        if tmp.find("tmp") != -1:
+            cmd = cmd + "; rm -rf %s > /tmp/del.log 2>&1" % tmp
+        cmd = cmd_mod + cmd
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         return ReturnData(conn=conn, result=res)
 
@@ -429,19 +420,6 @@ class Runner(object):
             else:
                 result = self.action_plugins['async'].run(conn, tmp, module_name, module_args, inject)
 
-        if result.is_successful() and 'daisychain' in result.result:
-            result2 = self._executor_internal_inner(host, result.result['daisychain'], result.result.get('daisychain_args', {}), inject, port, is_chained=True)
-
-            changed = False
-            if result.result.get('changed',False) or result2.result.get('changed',False):
-                changed = True
-            result.result.update(result2.result)
-            result.result['changed'] = changed
-
-            del result.result['daisychain']
-
-        if self.module_name != 'raw':
-            self._delete_remote_files(conn, tmp)
         conn.close()
 
         if not result.comm_ok:
@@ -576,7 +554,13 @@ class Runner(object):
             module_data = "\n".join(module_lines)
 
         self._transfer_str(conn, tmp, module_name, module_data)
-        return (out_path, is_new_style)
+
+        lines = module_data.split("\n")
+        shebang = None
+        if lines[0].startswith("#!"):
+            shebang = lines[0]
+
+        return (out_path, is_new_style, shebang)
 
     # *****************************************************
 
