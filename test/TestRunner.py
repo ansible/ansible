@@ -181,7 +181,9 @@ class TestRunner(unittest.TestCase):
         assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
         assert os.path.isfile(filedemo)
 
-        assert self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])['changed']
+        res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
+        print res
+        assert res['changed']
         assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
 
         assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
@@ -271,6 +273,7 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert os.path.exists(output)
         out = file(output).read()
         assert out.find("first") != -1
@@ -283,4 +286,5 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert result['changed'] == False

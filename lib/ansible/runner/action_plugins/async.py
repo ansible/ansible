@@ -40,7 +40,7 @@ class ActionModule(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        (module_path, is_new_style) = self.runner._copy_module(conn, tmp, module_name, module_args, inject)
+        (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject)
         self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,

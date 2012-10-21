@@ -80,8 +80,9 @@ class ActionModule(object):
         if self.runner.sudo and self.runner.sudo_user != 'root':
             self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
                 tmp)
-        # run the copy module, queue the file module
+
+        # run the copy module
         module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
-        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject).daisychain('file', module_args)
+        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
 
 
