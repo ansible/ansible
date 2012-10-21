@@ -49,6 +49,17 @@ We're not too strict on style considerations, but we require:
    * no single-line if statements, deeply nested list comprehensions, or clever use of metaclasses -- keep it simple
    * comments where appropriate
 
+Testing Requirements
+====================
+
+Tests are run by "make tests".  To run the tests you need the following:-
+
+   * nose must be installed - https://nose.readthedocs.org/en/latest/
+   * ansible tests require paramiko, PyYAML and json modules
+   * The (optional) facter test requires facter to be installed.
+   * Your user environment should allow "ssh myip" (where myip is your ip address)
+     without a password - so a key held in ssh-agent and an authorised_keys entry.
+
 Contributors License Agreement
 ==============================
 
