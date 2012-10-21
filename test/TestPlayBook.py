@@ -111,12 +111,12 @@ class TestPlaybook(unittest.TestCase):
        filename = os.path.join(self.stage_dir, filename)
        return filename
 
-   def _run(self, test_playbook):
+   def _run(self, test_playbook, host_list='test/ansible_hosts'):
        ''' run a module and get the localhost results '''
        self.test_callbacks = TestCallbacks()
        self.playbook = ansible.playbook.PlayBook(
            playbook     = test_playbook,
-           host_list    = 'test/ansible_hosts',
+           host_list    = host_list,
            module_path  = 'library/',
            forks        = 1,
            timeout      = 5,
@@ -154,6 +154,21 @@ class TestPlaybook(unittest.TestCase):
        data = file('/tmp/ansible_test_data_template.out').read()
        print data
        assert data.find("ears") != -1, "template success"
+
+   def test_aliased_node(self):
+       pb = os.path.join(self.test_dir, 'alias_playbook.yml')
+       actual = self._run(pb, 'test/alias_hosts')
+       expected = {
+           "alias-node.example.com": {
+                "changed": 3,
+                "failures": 0,
+                "ok": 4,
+                "skipped": 1,
+                "unreachable": 0,
+            }
+       }
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
 
    def test_playbook_vars(self): 
        test_callbacks = TestCallbacks()
