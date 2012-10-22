@@ -181,9 +181,9 @@ class Ec2Inventory(object):
         self.eucalyptus_host = None
         self.eucalyptus = False
         if config.has_option('ec2', 'eucalyptus'):
-           self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
+            self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
         if self.eucalyptus and config.has_option('ec2', 'eucalyptus_host'):
-           self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
+            self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
 
         # Regions
         self.regions = []
@@ -236,16 +236,23 @@ class Ec2Inventory(object):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
 
-        if self.eucalyptus:
-            conn = boto.connect_euca(host=self.eucalyptus_host)
-            conn.APIVersion = '2010-08-31'
-        else:
-            conn = ec2.connect_to_region(region)
-
-        reservations = conn.get_all_instances()
-        for reservation in reservations:
-            for instance in reservation.instances:
-                self.add_instance(instance, region)
+        try:
+            if self.eucalyptus:
+                conn = boto.connect_euca(host=self.eucalyptus_host)
+                conn.APIVersion = '2010-08-31'
+            else:
+                conn = ec2.connect_to_region(region)
+            
+            reservations = conn.get_all_instances()
+            for reservation in reservations:
+                for instance in reservation.instances:
+                    self.add_instance(instance, region)
+        
+        except boto.exception.BotoServerError as e:
+            if  not self.eucalyptus:
+                print "Looks like AWS is down again:"
+            print e
+            sys.exit(1)
 
 
     def get_instance(self, region, instance_id):
