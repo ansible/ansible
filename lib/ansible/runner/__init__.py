@@ -53,6 +53,9 @@ lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins'
 for i in reversed(C.DEFAULT_LOOKUP_PLUGIN_PATH.split(os.pathsep)):
     lookup_plugin_list.update(utils.import_plugins(i))
 
+# Set recursion limit - the python default for this is 1000, but this needs to be higher
+# for very large inventories
+sys.setrecursionlimit(C.DEFAULT_RECURSION_LIMIT)
 
 ################################################
 
