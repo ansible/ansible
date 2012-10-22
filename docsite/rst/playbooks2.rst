@@ -272,12 +272,20 @@ In Ansible 0.8, a few shortcuts are available for testing whether a variable is 
 
     tasks:
         - action: command echo hi
-          only_if: is_set($some_variable)
+          only_if: is_set('$some_variable')
 
-There is a matching 'is_unset' that works the same way.  Do not quote the variables inside the function.
+There is a matching 'is_unset' that works the same way.  Quoting the variable inside the function is mandatory.
 
-While only_if is a pretty good option for advanced users, it exposes more guts of the engine than we'd like, and
-we can do better.  In 0.9, we will be adding 'when', which will be like a syntactic sugar for only_if and hide
+When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed for each item.
+This is a deliberate design::
+
+    tasks:
+        - action: command echo $item
+          with_item: [ 0, 2, 4, 6, 8, 10 ]
+          only_if: "$item > 5"
+
+While `only_if` is a pretty good option for advanced users, it exposes more guts of the engine than we'd like, and
+we can do better.  In 0.9, we will be adding `when`, which will be like a syntactic sugar for `only_if` and hide
 this level of complexity -- it will numerous built in operators.
 
 Conditional Imports
