@@ -138,8 +138,9 @@ class Task(object):
             # allow the user to list comma delimited tags
             import_tags = import_tags.split(",")
 
-        self.name = utils.template(None, self.name, self.module_vars)
-        self.action = utils.template(None, self.action, self.module_vars)
+        b = self.play.basedir
+        self.name = utils.template(b, self.name, self.module_vars)
+        self.action = utils.template(b, self.action, self.module_vars)
 
         # handle mutually incompatible options
         incompatibles = [ x for x in [ self.with_items, self.first_available_file, self.items_lookup_plugin ] if x is not None ]
