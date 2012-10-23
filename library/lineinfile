@@ -72,8 +72,8 @@ options:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
 examples:
-   - code: lineinfile dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
-   - code: lineinfile dest=/etc/sudoers state=absent regexp="^%wheel"
+   - code: "lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled"
+   - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
 '''
 
 def present(module, dest, regexp, line, insertafter, backup):

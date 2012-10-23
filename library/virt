@@ -42,7 +42,7 @@ options:
       - in addition to state management, various non-idempotent commands are available. See examples
     required: false
 examples:
-   - code: virt guest=alpha state=running
+   - code: "virt: guest=alpha state=running"
      description: "Example from Ansible Playbooks"
    - code: ansible host -m virt -a "guest=alpha command=status"
      description: "Example guest management with C(/usr/bin/ansible)"

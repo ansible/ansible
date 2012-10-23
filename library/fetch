@@ -26,7 +26,7 @@ options:
     required: true
     default: null
 examples:
-   - code: fetch src=/var/log/messages dest=/home/logtree
+   - code: "fetch: src=/var/log/messages dest=/home/logtree"
      description: "Example from Ansible Playbooks"
 requirements: []
 author: Michael DeHaan

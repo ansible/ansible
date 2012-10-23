@@ -61,9 +61,9 @@ options:
     required: false
     default: null
 examples:
-   - code: command /sbin/shutdown -t now
+   - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
-   - code: command /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+   - code: "command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
      description: "I(creates), I(removes), and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),

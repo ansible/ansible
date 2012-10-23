@@ -53,15 +53,15 @@ options:
         description:
         - Whether the service should start on boot.
 examples:
-    - code: service name=httpd state=started
+    - code: "service: name=httpd state=started"
       description: Example action from Ansible Playbooks
-    - code: service name=httpd state=stopped
+    - code: "service: name=httpd state=stopped"
       description: Example action from Ansible Playbooks
-    - code: service name=httpd state=restarted
+    - code: "service: name=httpd state=restarted"
       description: Example action from Ansible Playbooks
-    - code: service name=httpd state=reloaded
+    - code: "service: name=httpd state=reloaded"
       description: Example action from Ansible Playbooks
-    - code: service name=foo pattern=/usr/bin/foo state=started
+    - code: "service: name=foo pattern=/usr/bin/foo state=started"
       description: Example action from Ansible Playbooks
 '''
 

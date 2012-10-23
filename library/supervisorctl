@@ -39,7 +39,7 @@ options:
     default: null
     choices: [ "started", "stopped", "restarted" ]
 examples:
-   - code: supervisorctl name=my_app state=started
+   - code: "supervisorctl: name=my_app state=started"
      description: Manage the state of program I(my_app) to be in I(started) state.
 requirements: [ ]
 author: Matt Wright

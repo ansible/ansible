@@ -61,7 +61,7 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 examples:
-   - code: assemble src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+   - code: "assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf"
      description: "Example from Ansible Playbooks"
 author: Stephen Fromm
 '''
