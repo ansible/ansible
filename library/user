@@ -108,34 +108,37 @@ options:
         description:
             - Whether to generate a SSH key for the user in question.
               This will B(not) overwrite an existing SSH key.
+              New in version 0.9.
     ssh_key_bits:
         required: false
         default: 2048
         description:
             - Optionally specify number of bits in SSH key to create.
+              New in version 0.9.
     ssh_key_type:
         required: false
         default: rsa
         description:
             - Optionally specify the tyep of SSH key to generate. 
               Available SSH key types will depend on implementation
-              present on target host.
+              present on target host.  New in version 0.9.
     ssh_key_file:
         required: false
         default: $HOME/.ssh/id_rsa
         description:
-            - Optionally specify the SSH key filename.
+            - Optionally specify the SSH key filename.  New in version 0.9.
     ssh_key_comment:
         required: false
         default: ansible-generated
         description:
             - Optionally define the comment for the SSH key.
+              New in version 0.9.
     ssh_key_passphrase:
         required: false
         description:
             - Set a passphrase for the SSH key.  If no
               passphrase is provided, the SSH key will default to
-              having no passphrase.
+              having no passphrase.  New in version 0.9.
 examples:
     - code: 'user: name=johnd comment="John Doe" uid=1040'
       description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
