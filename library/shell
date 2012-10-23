@@ -28,7 +28,7 @@ options:
     required: false
     default: null
 examples:
-   - code: shell somescript.sh >> somelog.txt
+   - code: "shell: somescript.sh >> somelog.txt"
      description: Execute the command in remote shell
 notes:
    -  If you want to execute a command securely and predicably, it may be

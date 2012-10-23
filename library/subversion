@@ -43,7 +43,7 @@ options:
     default: yes
     choices: [ "yes", "no" ]
 examples:
-   - code: subversion repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
+   - code: "subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout"
      description: Export subversion repository in a specified folder
 notes:
    - Requires subversion and grep on the client.
