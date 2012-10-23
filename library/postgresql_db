@@ -56,7 +56,7 @@ options:
     default: present
     choices: [ "present", "absent" ]
 examples:
-   - code: postgresql_db db=acme
+   - code: "postgresql_db: db=acme"
      description: Create a new database with name 'acme'
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the postgres account on the host.
