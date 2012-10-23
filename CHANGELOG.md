@@ -8,7 +8,6 @@ Ansible Changes By Release
 * relative paths now work for 'first_available_file'
 * fix for template calls when last character is '$'
 * postgresql module now takes role_attr_flags
-* --extra-vars variables now have the highest priority
 * ability to create SSH keys for users when using user module to create users
 
 0.8 "Cathedral" -- Oct 19, 2012
