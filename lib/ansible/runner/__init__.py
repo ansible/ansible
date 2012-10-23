@@ -57,7 +57,7 @@ multiprocessing_runner = None
 
 ################################################
 
-def _executor_hook(job_queue, result_queue):
+def __old__executor_hook(job_queue, result_queue):
     ''' callback used by multiprocessing pool '''
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
@@ -74,6 +74,13 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
+
+def _executor_hook(host):
+    # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
+    # this function also not present in CentOS 6
+    if HAS_ATFORK:
+        atfork()
+    return multiprocessing_runner._executor(host)
 
 class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
@@ -567,6 +574,14 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
+        # experiment for 0.9, we may revert this if it causes
+        # problems -- used to cause problems when Runner was a passed
+        # argument but may not be anymore.
+
+        p = multiprocessing.Pool(self.forks)
+        return p.map(_executor_hook, hosts)
+
+        OLD_METHOD = '''
         manager = multiprocessing.Manager()
         job_queue = manager.Queue()
         [job_queue.put(i) for i in hosts]
@@ -594,6 +609,7 @@ class Runner(object):
         except socket.error:
             raise errors.AnsibleError("<interrupted>")
         return results
+        '''
 
     # *****************************************************
 
