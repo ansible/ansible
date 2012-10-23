@@ -68,7 +68,7 @@ options:
       - Where to dump/get the .sql file
     required: true
 examples:
-   - code: mysql_db db=bobdata state=present
+   - code: "mysql_db: db=bobdata state=present"
      description: Create a new database with name 'bobdata'
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this

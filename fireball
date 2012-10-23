@@ -54,7 +54,7 @@ examples:
            - hosts: devservers
                  connection: fireball
                  tasks:
-                     - action: command /usr/bin/anything
+                     - command: /usr/bin/anything
      description: "This example playbook has two plays: the first launches I(fireball) mode on all hosts via SSH, and the second actually starts using I(fireball) node for subsequent management over the fireball interface"
 notes:
     - See the advanced playbooks chapter for more about using fireball mode.
