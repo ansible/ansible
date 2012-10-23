@@ -127,7 +127,7 @@ period.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
-Variable File Seperation
+Variable File Separation
 ````````````````````````
 
 It's a great idea to keep your playbooks under source control, but
@@ -334,7 +334,7 @@ you can of course push this out with Ansible if you like::
     # for ohai
     ansible -m yum -a "pkg=ohai ensure=installed"
 
-Ansible's approach to configuration -- seperating variables from tasks, keeps your playbooks
+Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
@@ -512,7 +512,7 @@ A script for setting up ansible-pull is provided in the examples/playbooks direc
 checkout.
 
 The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
-cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
+cron and update playbook source via git.  This inverts the default push architecture of ansible into a pull
 architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
 the cron frequency, logging locations, and parameters to ansible-pull.
 
