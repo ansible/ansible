@@ -331,6 +331,7 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
+            subset_pattern = subset_pattern.replace(',',':')
             self._subset = subset_pattern.replace(";",":").split(":")
 
     def lift_restriction(self):
