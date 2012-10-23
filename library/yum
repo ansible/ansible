@@ -1,8 +1,9 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Red Hat, Inc
+# (c) 2012, Kel Byers, parts (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
+# Additions by Kel Byers https://github.com/kelbyers
 #
 # This file is part of Ansible
 #
@@ -37,7 +38,7 @@ options:
       - package name, or package specifier with version, like C(name-1.0).
     required: true
     default: null
-    aliases: []
+    aliases: ["pkg"]
   list:
     description:
       - various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
@@ -49,14 +50,29 @@ options:
     required: false
     choices: [ "present", "latest", "absent" ]
     default: "present"
+  enablerepo:
+    description:
+      - a repo or repos to enable for this one package
+    required: false
+    default: null
+    aliases: ["enable"]
+  disablerepo:
+    description:
+      - a repo or repos to disable for this one package
+    required: false
+    default: null
+    aliases: ["disable"]
 examples:
    - code: yum name=httpd state=latest
+   - code: yum name=httpd state=latest enablerepo=fedora-testing
    - code: yum name=httpd state=removed
    - code: yum name=httpd state=installed
+   - code: yum name=httpd state=installed disablerepo=updates
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
 author: Seth Vidal
+version_added: 0.2
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
@@ -501,7 +517,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file):
 
     module.exit_json(**res)
 
-def ensure(module, state, pkgspec, conf_file):
+def ensure(module, state, pkgspec, enablerepo, disablerepo, conf_file):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -517,6 +533,14 @@ def ensure(module, state, pkgspec, conf_file):
         yum_basecmd += ['-c', conf_file]
         if repoq:
             repoq += ['-c', conf_file]
+
+    if enablerepo:
+        for repo in enablerepo.split(','):
+            yum_basecmd += ['--enablerepo=%s' % repo]
+
+    if disablerepo:
+        for repo in disablerepo.split(','):
+            yum_basecmd += ['--disablerepo=%s' % repo]
 
     if state in ['installed', 'present']:
         install(module, items, repoq, yum_basecmd, conf_file)
@@ -547,6 +571,8 @@ def main():
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             list=dict(),
+            enablerepo=dict(aliases=['enable']),
+            disablerepo=dict(aliases=['disable']),
             conf_file=dict(default=None),
         ),
         required_one_of = [['name','list']],
@@ -554,6 +580,15 @@ def main():
     )
 
     params = module.params
+
+    if params['enablerepo']:
+        enablerepo = params['enablerepo']
+    else:
+        enablerepo = None
+    if params['disablerepo']:
+        disablerepo = params['disablerepo']
+    else:
+        disablerepo = None
 
     if params['list']:
         if not repoquery:
@@ -564,7 +599,7 @@ def main():
     else:
         pkg = params['name']
         state = params['state']
-        res = ensure(module, state, pkg, params['conf_file'])
+        res = ensure(module, state, pkg, enablerepo, disablerepo, params['conf_file'])
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # this is magic, see lib/ansible/module_common.py
