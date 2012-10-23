@@ -53,6 +53,7 @@ lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins'
 for i in reversed(C.DEFAULT_LOOKUP_PLUGIN_PATH.split(os.pathsep)):
     lookup_plugin_list.update(utils.import_plugins(i))
 
+multiprocessing_runner = None
 
 ################################################
 
@@ -67,9 +68,8 @@ def _executor_hook(job_queue, result_queue):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while not job_queue.empty():
         try:
-            job = job_queue.get(block=False)
-            runner, host = job
-            result_queue.put(runner._executor(host))
+            host = job_queue.get(block=False)
+            result_queue.put(multiprocessing_runner._executor(host))
         except Queue.Empty:
             pass
         except:
@@ -240,7 +240,7 @@ class Runner(object):
 
         cmd = shebang.replace("#!","") + " " + cmd
         if tmp.find("tmp") != -1:
-            cmd = cmd + "; rm -rf %s > /tmp/del.log 2>&1" % tmp
+            cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         cmd = cmd_mod + cmd
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         return ReturnData(conn=conn, result=res)
@@ -630,7 +630,8 @@ class Runner(object):
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
 
-        hosts = [ (self,x) for x in hosts ]
+        global multiprocessing_runner
+        multiprocessing_runner = self
         results = None
 
         # Check if this is an action plugin. Some of them are designed
@@ -648,13 +649,13 @@ class Runner(object):
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.
-            results = [ ReturnData(host=h[1], result=result_data, comm_ok=True) \
+            results = [ ReturnData(host=h, result=result_data, comm_ok=True) \
                            for h in hosts ]
             del self.host_set
         elif self.forks > 1:
             results = self._parallel_exec(hosts)
         else:
-            results = [ self._executor(h[1]) for h in hosts ]
+            results = [ self._executor(h) for h in hosts ]
         return self._partition_results(results)
 
     # *****************************************************
