@@ -9,6 +9,12 @@ description:
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
        formatting can be found in the Template Designer Documentation
        (U(http://jinja.pocoo.org/docs/templates/)).
+     - "Four additional variables can be used in templates: C(ansible_managed) 
+       (configurable via the C(defaults) section of C(ansible.cfg)) contains a string
+       which can be used to describe the template name, host, modification time of the
+       template file and the owner uid, C(template_host) contains the node name of 
+       the template's machine, C(template_uid) the owner, and C(template_path) the
+       file name."
 options:
   src:
     description:
@@ -33,7 +39,7 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 examples:
-   - code: template src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
+   - code: "template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644"
      description: "Example from Ansible Playbooks"
 notes:
   - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).

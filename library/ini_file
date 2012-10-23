@@ -63,14 +63,14 @@ options:
        - all arguments accepted by the M(file) module also work here
      required: false
 examples:
-   - code: ini_file dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=true
+   - code: "ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=true"
      description: Ensure C(fav=lemonade) is in section C([drinks]) in said file
    - code: |
-           ini_file dest=/etc/anotherconf
-                    section=drinks
-                    option=temperature
-                    value=cold
-                    backup=true
+           ini_file: dest=/etc/anotherconf
+                     section=drinks
+                     option=temperature
+                     value=cold
+                     backup=true
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.

@@ -41,7 +41,7 @@ options:
     default: 1
 examples:
     - code: |
-        action: fail msg="The system may not be provisioned according to the CMDB status." rc=100
+        fail: msg="The system may not be provisioned according to the CMDB status." rc=100
             only_if: "'$cmdb_status' != 'to-be-staged'"
 
       description: "Example playbook using fail and only_if together"
