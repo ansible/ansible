@@ -30,12 +30,13 @@ class InventoryParser(object):
     Host inventory for ansible.
     """
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, filename=C.DEFAULT_HOST_LIST, inventory=None):
 
         fh = open(filename)
         self.lines = fh.readlines()
         self.groups = {}
         self.hosts = {}
+        self.inventory = inventory
         self._parse()
 
     def _parse(self):
@@ -55,8 +56,8 @@ class InventoryParser(object):
     def _parse_base_groups(self):
         # FIXME: refactor
 
-        ungrouped = Group(name='ungrouped')
-        all = Group(name='all')
+        ungrouped = Group(name='ungrouped', inventory=self.inventory)
+        all = Group(name='all', inventory=self.inventory)
         all.add_child_group(ungrouped)
 
         self.groups = dict(all=all, ungrouped=ungrouped)
@@ -68,7 +69,7 @@ class InventoryParser(object):
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = None
                 else:
-                    new_group = self.groups[active_group_name] = Group(name=active_group_name)
+                    new_group = self.groups[active_group_name] = Group(name=active_group_name, inventory=self.inventory)
                     all.add_child_group(new_group)
             elif line.startswith("#") or line == '':
                 pass
@@ -99,11 +100,11 @@ class InventoryParser(object):
                     if detect_range(hostname):
                         _hosts = expand_hostname_range(hostname)
                         for _ in _hosts:
-                            host = Host(name=_, port=port)
+                            host = Host(name=_, port=port, inventory=self.inventory)
                             self.hosts[_] = host
                             _all_hosts.append(host)
                     else:
-                        host = Host(name=hostname, port=port)
+                        host = Host(name=hostname, port=port, inventory=self.inventory)
                         self.hosts[hostname] = host
                         _all_hosts.append(host)
                 if len(tokens) > 1:
@@ -128,7 +129,7 @@ class InventoryParser(object):
                 line = line.replace("[","").replace(":children]","")
                 group = self.groups.get(line, None)
                 if group is None:
-                    group = self.groups[line] = Group(name=line)
+                    group = self.groups[line] = Group(name=line, inventory=self.inventory)
             elif line.startswith("#"):
                 pass
             elif line.startswith("["):
