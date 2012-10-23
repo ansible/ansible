@@ -53,9 +53,9 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 examples:
-   - code: copy src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
+   - code: "copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644"
      description: "Example from Ansible Playbooks"
-   - code: copy src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
+   - code: "copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes"
      description: "Copy a new C(ntp.conf) file into place, backing up the original if it differs from the copied version"
 author: Michael DeHaan
 '''

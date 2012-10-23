@@ -48,9 +48,9 @@ notes:
    - A bug in C(apt-add-repository) always adds C(deb) and C(deb-src) types for repositories (see the issue on Launchpad U(https://bugs.launchpad.net/ubuntu/+source/software-properties/+bug/987264)), if a repo doesn't have source information (eg MongoDB repo from 10gen) the system will fail while updating repositories.
 author: Matt Wright
 examples:
-- code: apt_repository repo=ppa://nginx/stable
+- code: "apt_repository: repo=ppa://nginx/stable"
   description: Add nginx stable repository from PPA
-- code: apt_repository repo='deb http://archive.canonical.com/ubuntu hardy partner'
+- code: "apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner'"
   description: Add specified repository into sources.
 '''
 

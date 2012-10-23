@@ -56,7 +56,7 @@ options:
               repository will be discarded.  Prior to 0.7, this was always
               'yes' and could not be disabled.
 examples:
-    - code: git repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22
+    - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
       description: Example git checkout from Ansible Playbooks
 '''
 

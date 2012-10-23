@@ -137,11 +137,11 @@ options:
               passphrase is provided, the SSH key will default to
               having no passphrase.
 examples:
-    - code: user name=johnd comment="John Doe" uid=1040
+    - code: 'user: name=johnd comment="John Doe" uid=1040'
       description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
-    - code: user name=johnd state=absent remove=yes
+    - code: "user: name=johnd state=absent remove=yes"
       description: "Remove the user 'johnd'"
-    - code: user name=jsmith ssh_key=generate ssh_key_bits=2048
+    - code: 'user: name=jsmith ssh_key=generate ssh_key_bits=2048'
       description: "Create a 2048-bit SSH key for user jsmith"
 '''
 
