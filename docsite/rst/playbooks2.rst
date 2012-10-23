@@ -262,11 +262,11 @@ One common useful trick with only_if is to key off the changed result of a last 
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
+          register: last_result
         - action: command echo 'the file has changed'
           only_if: '${last_result.changed}'
 
-$last_result is a variable automatically set by Ansible, and it is a boolean, so there is no need
-to test for it against something else with an explicit equals.  This assumes Ansible 0.8 and later.
+$last_result is a variable set by the register directive. This assumes Ansible 0.8 and later.
 
 In Ansible 0.8, a few shortcuts are available for testing whether a variable is defined or not::
 
