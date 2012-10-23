@@ -68,9 +68,9 @@ options:
     default: present
     choices: [ "present", "absent" ]
 examples:
-   - code: mysql_user name=bob password=12345 priv=*.*:ALL state=present
+   - code: "mysql_user: name=bob password=12345 priv=*.*:ALL state=present"
      description: Create database user with name 'bob' and password '12345' with all database privileges
-   - code: mysql_user login_user=root login_password=123456 name=sally state=absent
+   - code: "mysql_user: login_user=root login_password=123456 name=sally state=absent"
      description: Ensure no user named 'sally' exists, also passing in the auth credentials.
    - code: mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
      description: Example privileges string format

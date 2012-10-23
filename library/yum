@@ -50,9 +50,9 @@ options:
     choices: [ "present", "latest", "absent" ]
     default: "present"
 examples:
-   - code: yum name=httpd state=latest
-   - code: yum name=httpd state=removed
-   - code: yum name=httpd state=installed
+   - code: "yum: name=httpd state=latest"
+   - code: "yum: name=httpd state=removed"
+   - code: "yum: name=httpd state=installed"
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]

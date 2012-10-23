@@ -30,6 +30,11 @@ From playbooks, Ansible modules are executed in a very similar way::
     - name: reboot the servers
       action: command /sbin/reboot -t now
 
+Version 0.8 and higher support the following shorter syntax::
+
+    - name: reboot the servers
+      command: /sbin/reboot -t now
+
 All modules technically return JSON format data, though if you are using the
 command line or playbooks, you don't really need to know much about
 that.  If you're writing your own module, you care, and this means you do

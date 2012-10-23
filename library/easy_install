@@ -40,9 +40,9 @@ options:
     required: false
     default: null
 examples:
-   - code: easy_install name=pip
+   - code: "easy_install: name=pip"
      description: "Examples from Ansible Playbooks"
-   - code: easy_install name=flask virtualenv=/webapps/myapp/venv
+   - code: "easy_install: name=flask virtualenv=/webapps/myapp/venv"
      description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
 notes:
     - Please note that the M(easy_install) module can only install Python

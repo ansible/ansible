@@ -60,7 +60,7 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 examples:
-   - code: get_url url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
+   - code: "get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440"
      description: "Example from Ansible Playbooks"
 notes:
     - This module doesn't yet support configuration for proxies or passwords.
