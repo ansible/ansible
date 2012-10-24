@@ -127,7 +127,7 @@ period.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
-Variable File Seperation
+Variable File Separation
 ````````````````````````
 
 It's a great idea to keep your playbooks under source control, but
@@ -262,11 +262,11 @@ One common useful trick with only_if is to key off the changed result of a last 
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
+          register: last_result
         - action: command echo 'the file has changed'
           only_if: '${last_result.changed}'
 
-$last_result is a variable automatically set by Ansible, and it is a boolean, so there is no need
-to test for it against something else with an explicit equals.  This assumes Ansible 0.8 and later.
+$last_result is a variable set by the register directive. This assumes Ansible 0.8 and later.
 
 In Ansible 0.8, a few shortcuts are available for testing whether a variable is defined or not::
 
@@ -334,7 +334,7 @@ you can of course push this out with Ansible if you like::
     # for ohai
     ansible -m yum -a "pkg=ohai ensure=installed"
 
-Ansible's approach to configuration -- seperating variables from tasks, keeps your playbooks
+Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
@@ -512,7 +512,7 @@ A script for setting up ansible-pull is provided in the examples/playbooks direc
 checkout.
 
 The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
-cron and update playbook source via git.  This interverts the default push architecture of ansible into a pull
+cron and update playbook source via git.  This inverts the default push architecture of ansible into a pull
 architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
 the cron frequency, logging locations, and parameters to ansible-pull.
 
