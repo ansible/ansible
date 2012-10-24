@@ -182,6 +182,10 @@ def switch_version(module, dest, remote, version):
             cmd = "git checkout --force %s" % version
     else:
         # is there a better way to do this?
+        branch = get_head_branch(module, dest, remote)
+        (rc, out, err) = _run("git checkout --force %s" % branch)
+        if rc != 0:
+            module.fail_json(msg="Failed to checkout branch %s" % branch)
         cmd = "git rebase %s" % remote
     return _run(cmd)
 
