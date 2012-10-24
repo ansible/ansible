@@ -51,17 +51,20 @@ options:
     default: "present"
   enablerepo:
     description:
-      - repoid of repositories to enable for the install/update operation
-      - these repos will not persist beyond the transaction
-      - multiple repos separated with a ,
+      - Repoid of repositories to enable for the install/update operation.
+        These repos will not persist beyond the transaction
+        multiple repos separated with a ','
+        New in version 0.9.
     required: false
     default: null
     aliases: []
+    
   disablerepo:
     description:
-      - repoid of repositories to disable for the install/update operation
-      - these repos will not persist beyond the transaction
-      - multiple repos separated with a ,
+      - Repoid of repositories to disable for the install/update operation
+        These repos will not persist beyond the transaction
+        Multiple repos separated with a ','
+        New in version 0.9.      
     required: false
     default: null
     aliases: []
