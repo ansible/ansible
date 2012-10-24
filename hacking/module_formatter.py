@@ -259,8 +259,8 @@ def main():
         env.filters['jpfunc'] = latex_ify
         template = env.get_template('latex.j2')
         outputname = "%s.tex"
-        includecmt = "% generated code\n"
-        includefmt = "\\input %s\n"
+        includecmt = ""
+        includefmt = "%s\n"
     if options.type == 'html':
         env.filters['jpfunc'] = html_ify
         template = env.get_template('html.j2')
