@@ -68,7 +68,7 @@ options:
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
 examples:
-   - code: "mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro"
+   - code: "mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present"
      description: "Mount DVD read-only"
 notes: []
 requirements: []
