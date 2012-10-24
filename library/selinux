@@ -57,9 +57,9 @@ import re
 
 try:
     import selinux
-    HAVE_SELINUX=True
 except ImportError:
-    HAVE_SELINUX=False
+    print "failed=True msg='python-selinux required for this module'"
+    sys.exit(1)
 
 # getter subroutines
 def get_config_state(configfile):
@@ -117,8 +117,6 @@ def set_config_policy(policy, configfile):
     myfile.close()
 
 def main():
-    if (not HAVE_SELINUX):
-        module.fail_json(msg='python-selinux required for this module')
 
     module = AnsibleModule(
         argument_spec = dict(
