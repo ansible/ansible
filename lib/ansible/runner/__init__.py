@@ -210,7 +210,8 @@ class Runner(object):
         cmd_mod = ""
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            cmd_mod = "chmod a+r %s; " % remote_module_path
+            cmd_chmod = "chmod a+r %s" % remote_module_path
+            self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
 
         cmd = ""
         if not is_new_style:
@@ -232,7 +233,6 @@ class Runner(object):
         cmd = shebang.replace("#!","") + " " + cmd
         if tmp.find("tmp") != -1:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
-        cmd = cmd_mod + cmd
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         return ReturnData(conn=conn, result=res)
 
