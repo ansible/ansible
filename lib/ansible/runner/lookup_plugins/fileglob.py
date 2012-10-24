@@ -17,6 +17,7 @@
 
 import os
 import glob
+from ansible import utils
 
 class LookupModule(object):
 
@@ -24,7 +25,7 @@ class LookupModule(object):
         self.runner = runner
 
     def run(self, terms):
-        return [ f for f in glob.glob(terms) if os.path.isfile(f) ]
+        return [ f for f in glob.glob(utils.path_dwim(self.runner.basedir, terms)) if os.path.isfile(f) ]
 
 
 
