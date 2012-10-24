@@ -407,8 +407,10 @@ def template_from_file(basedir, path, vars):
     environment.filters['from_yaml'] = yaml.load
     try:
         data = codecs.open(realpath, encoding="utf8").read()
-    except:
+    except UnicodeDecodeError:
         raise errors.AnsibleError("unable to process as utf-8: %s" % realpath)
+    except:
+        raise errors.AnsibleError("unable to read %s" % realpath)
     t = environment.from_string(data)
     vars = vars.copy()
     try:
