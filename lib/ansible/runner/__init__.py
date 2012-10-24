@@ -57,29 +57,13 @@ multiprocessing_runner = None
 
 ################################################
 
-def __old__executor_hook(job_queue, result_queue):
-    ''' callback used by multiprocessing pool '''
-
-    # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
-    # this function also not present in CentOS 6
-    if HAS_ATFORK:
-        atfork()
-
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    while not job_queue.empty():
-        try:
-            host = job_queue.get(block=False)
-            result_queue.put(multiprocessing_runner._executor(host))
-        except Queue.Empty:
-            pass
-        except:
-            traceback.print_exc()
 
 def _executor_hook(host):
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
     if HAS_ATFORK:
         atfork()
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     return multiprocessing_runner._executor(host)
 
 class HostVars(dict):
@@ -579,37 +563,11 @@ class Runner(object):
         # argument but may not be anymore.
 
         p = multiprocessing.Pool(self.forks)
-        return p.map(_executor_hook, hosts)
-
-        OLD_METHOD = '''
-        manager = multiprocessing.Manager()
-        job_queue = manager.Queue()
-        [job_queue.put(i) for i in hosts]
-        result_queue = manager.Queue()
-
-        workers = []
-        for i in range(self.forks):
-            prc = multiprocessing.Process(target=_executor_hook,
-                args=(job_queue, result_queue))
-            prc.start()
-            workers.append(prc)
-
         try:
-            for worker in workers:
-                worker.join()
+            return p.map(_executor_hook, hosts)
         except KeyboardInterrupt:
-            for worker in workers:
-                worker.terminate()
-                worker.join()
-
-        results = []
-        try:
-            while not result_queue.empty():
-                results.append(result_queue.get(block=False))
-        except socket.error:
-            raise errors.AnsibleError("<interrupted>")
-        return results
-        '''
+            pool.terminate()
+            raise errors.AnsibleError("Interrupted")
 
     # *****************************************************
 
