@@ -564,10 +564,12 @@ class Runner(object):
 
         p = multiprocessing.Pool(self.forks)
         try:
-            return p.map(_executor_hook, hosts)
+            result = p.map(_executor_hook, hosts)
+            p.close()
         except KeyboardInterrupt:
             p.terminate()
             raise errors.AnsibleError("Interrupted")
+        return result
 
     # *****************************************************
 
