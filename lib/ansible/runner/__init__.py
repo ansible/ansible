@@ -566,7 +566,7 @@ class Runner(object):
         try:
             return p.map(_executor_hook, hosts)
         except KeyboardInterrupt:
-            pool.terminate()
+            p.terminate()
             raise errors.AnsibleError("Interrupted")
 
     # *****************************************************
@@ -627,7 +627,14 @@ class Runner(object):
                            for h in hosts ]
             del self.host_set
         elif self.forks > 1:
-            results = self._parallel_exec(hosts)
+            try:
+                results = self._parallel_exec(hosts)
+            except IOError, ie:
+                print ie.errno
+                if ie.errno == 32:
+                    # broken pipe from Ctrl+C
+                    raise errors.AnsibleError("interupted")
+                raise
         else:
             results = [ self._executor(h) for h in hosts ]
         return self._partition_results(results)
