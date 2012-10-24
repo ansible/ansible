@@ -1,0 +1,9 @@
+---
+- hosts: all
+  vars:
+    test_file: /tmp/ansible-alias-test
+  tasks:
+  - action: command creates=$test_file touch $test_file
+  - action: command creates=$test_file false
+  - local_action: command true
+  - action: command removes=$test_file rm -f $test_file

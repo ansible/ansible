@@ -405,7 +405,7 @@ class Runner(object):
             if actual_port is not None:
                 actual_port = int(actual_port)
             conn = self.connector.connect(actual_host, actual_port, transport=transport)
-            if delegate_to:
+            if delegate_to or host != actual_host:
                 conn.delegate = host
 
 
