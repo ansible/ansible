@@ -594,6 +594,20 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
+    def atomic_replace(self, src, dest):
+        '''atomically replace dest with src, copying attributes from dest'''
+        st = os.stat(dest)
+        os.chmod(src, st.st_mode & 07777)
+        try:
+            os.chown(src, st.st_uid, st.st_gid)
+        except OSError, e:
+            if e.errno != errno.EPERM:
+                raise
+        if self.selinux_enabled():
+            context = self.selinux_context(dest)
+            self.set_context_if_different(src, context, False)
+        os.rename(src, dest)
+
 
 # == END DYNAMICALLY INSERTED CODE ===
 
