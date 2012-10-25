@@ -9,6 +9,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Basho <http://basho.com>`_ - makers of NoSQL engine Riak
     * `CatN Hosting <http://catn.com>`_ - scalable Cloud hosting
     * `Cygate AB <http://cygate.se>`_ - IT solutions from Malmo, Sweeden
+    * `D square NV <http://dsquare.be>`_ - Process industry data mining, Belgium
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
