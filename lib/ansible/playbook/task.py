@@ -24,7 +24,7 @@ class Task(object):
     __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
-        'play', 'notified_by', 'tags', 'register', 'with_items', 
+        'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms'
@@ -32,7 +32,7 @@ class Task(object):
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
+         'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
          'sudo_pass'
@@ -49,7 +49,7 @@ class Task(object):
                 ds.pop(x)
 
             # code to allow "with_glob" and to reference a lookup plugin named glob
-            elif x.startswith("with_") and x != 'with_items':
+            elif x.startswith("with_"):
                 plugin_name = x.replace("with_","")
                 if plugin_name in play.playbook.lookup_plugins_list:
                     ds['items_lookup_plugin'] = plugin_name
@@ -112,7 +112,6 @@ class Task(object):
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
-        self.with_items = ds.get('with_items', None)
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
@@ -142,18 +141,13 @@ class Task(object):
         self.action = utils.template(None, self.action, self.module_vars)
 
         # handle mutually incompatible options
-        incompatibles = [ x for x in [ self.with_items, self.first_available_file, self.items_lookup_plugin ] if x is not None ]
+        incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
         if len(incompatibles) > 1:
-            raise errors.AnsibleError("with_items, with_(plugin), and first_available_file are mutually incompatible in a single task")
+            raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
         # make first_available_file accessable to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
-
-        # process with_items so it can be used by Runner code
-        if self.with_items is None:
-            self.with_items = [ ]
-        self.module_vars['items'] = self.with_items
 
         if self.items_lookup_plugin is not None:
             self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
