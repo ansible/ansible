@@ -111,8 +111,8 @@ def main():
 
     module.exit_json(
         cmd     = args,
-        stdout  = out.strip(),
-        stderr  = err.strip(),
+        stdout  = out.rstrip("\r\n"),
+        stderr  = err.rstrip("\r\n"),
         rc      = cmd.returncode,
         start   = str(startd),
         end     = str(endd),
