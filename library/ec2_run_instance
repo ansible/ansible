@@ -120,9 +120,9 @@ def main():
             count = dict(default='1'),
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
-            ec2_url = dict(),
-            ec2_secret_key = dict(),
-            ec2_access_key = dict(),
+            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
+            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
         )
     )
 
@@ -138,6 +138,14 @@ def main():
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
     
+    if ec2_url:
+        os.environ['EC2_URL'] = ec2_url
+    if ec2_secret_key:
+        os.environ['EC2_SECRET_KEY'] = ec2_secret_key
+    if ec2_access_key:
+        os.environ['EC2_ACCESS_KEY'] = ec2_access_key
+
+        
     # yes I recognize how hacky this is - but it is easier than rewriting
     # all the try/except's myself.
     sys.argv.append(image)
