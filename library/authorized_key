@@ -118,7 +118,7 @@ def readkeys(filename):
 
 def writekeys(module, filename, keys):
 
-    fd, tmp_path = tempfile.mkstemp()
+    fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
     try:
         f.writelines( (key + "\n" for key in keys) )
