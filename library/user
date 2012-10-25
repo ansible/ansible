@@ -314,7 +314,7 @@ def user_group_membership(user):
     groups = []
     info = get_pwd_info(user)
     for group in grp.getgrall():
-        if user in group[3] and info[3] != group[2]:
+        if user in group[3]:
             groups.append(group[0])
     return groups
 
