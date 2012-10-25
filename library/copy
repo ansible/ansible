@@ -114,7 +114,7 @@ def main():
             # might be an issue with exceeding path length
             dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
             shutil.copyfile(src, dest_tmp)
-            shutil.move(dest_tmp, dest)
+            module.atomic_replace(dest_tmp, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
         except IOError:
