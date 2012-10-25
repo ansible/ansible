@@ -117,7 +117,7 @@ options:
         required: false
         default: rsa
         description:
-            - Optionally specify the tyep of SSH key to generate. 
+            - Optionally specify the type of SSH key to generate. 
               Available SSH key types will depend on implementation
               present on target host.
     ssh_key_file:
