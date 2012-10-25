@@ -280,22 +280,17 @@ class Runner(object):
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups'] = self.inventory.groups_list()
 
-        # allow with_items to work in playbooks...
-        # apt and yum are converted into a single call, others run in a loop
-        items = self.module_vars.get('items', [])
-        if isinstance(items, basestring) and items.startswith("$"):
-            items = utils.varReplaceWithItems(self.basedir, items, inject)
-
-        # if we instead said 'with_foo' and there is a lookup module named foo...
+        # allow with_foo to work in playbooks...
+        items = []
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
         if items_plugin is not None:
             items_terms = self.module_vars.get('items_lookup_terms', '')
             if items_plugin in self.lookup_plugins:
-                items_terms = utils.template(self.basedir, items_terms, inject)
+                items_terms = utils.varReplaceWithItems(self.basedir, items_terms, inject)
                 items = self.lookup_plugins[items_plugin].run(items_terms)
 
         if type(items) != list:
-            raise errors.AnsibleError("with_items only takes a list: %s" % items)
+            raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
         if len(items) and self.module_name in [ 'apt', 'yum' ]:
             # hack for apt and soon yum, with_items maps back into a single module call
