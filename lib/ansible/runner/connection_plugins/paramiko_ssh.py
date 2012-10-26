@@ -33,6 +33,12 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
+# keep connection objects on a per host basis to avoid repeated attempts to reconnect
+
+SSH_CONNECTION_CACHE = {}
+SFTP_CONNECTION_CACHE = {}
+
+
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
@@ -45,7 +51,20 @@ class Connection(object):
         if port is None:
             self.port = self.runner.remote_port
 
+    def _cache_key(self):
+        return "%s__%s__" % (self.host, self.runner.remote_user)
+
     def connect(self):
+        cache_key = self._cache_key()
+        if cache_key in SSH_CONNECTION_CACHE:
+            print "DEBUG: using cached"
+            self.ssh = SSH_CONNECTION_CACHE[cache_key]
+        else:
+            print "DEBUG: using new"
+            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+        return self
+
+    def _connect_uncached(self):
         ''' activates the connection object '''
 
         if not HAVE_PARAMIKO:
@@ -76,8 +95,7 @@ class Connection(object):
             else:
                 raise errors.AnsibleConnectionFailed(msg)
 
-        self.ssh = ssh
-        return self
+        return ssh
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
         ''' run a command on the remote host '''
@@ -143,11 +161,19 @@ class Connection(object):
         except IOError:
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
+    def _connect_sftp(self):
+        cache_key = "%s__%s__" % (self.host, self.runner.remote_user)
+        if cache_key in SFTP_CONNECTION_CACHE:
+            return SFTP_CONNECTION_CACHE[cache_key]
+        else:
+            result = SFTP_CONNECTION_CACHE[cache_key] = self.connect().ssh.open_sftp()
+            return result
+
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
-            self.sftp = self.ssh.open_sftp()
+            self.sftp = self._connect_sftp()
         except:
             raise errors.AnsibleError("failed to open a SFTP connection")
         try:
@@ -157,7 +183,10 @@ class Connection(object):
 
     def close(self):
         ''' terminate the connection '''
+        cache_key = self._cache_key()
+        SSH_CONNECTION_CACHE.pop(cache_key, None)
+        SFTP_CONNECTION_CACHE.pop(cache_key, None)
         if self.sftp is not None:
             self.sftp.close()
         self.ssh.close()
-
+        
