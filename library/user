@@ -30,6 +30,7 @@ description:
 options:
     name:
         required: true
+        aliases: [ "user" ]
         description:
             - Name of the user to create, remove or modify.
     comment:
@@ -430,7 +431,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state=dict(default='present', choices=['present', 'absent']),
-            name=dict(required=True),
+            name=dict(required=True, aliases=['user']),
             uid=dict(default=None),
             group=dict(default=None),
             groups=dict(default=None),
