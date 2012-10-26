@@ -25,9 +25,42 @@ try:
 except ImportError:
     import simplejson as json
 
+class FakeDisk(object):
+    
+    def __init__(self, parted, device):
+        self.type = None
+        self.device = device
+        self.parted = parted
+    
+    def getPrimaryPartitions(self):
+        return []
+  
+    def getExtendedPartition(self):
+        return None
+    
+    def getLogicalPartitions(self):
+        return []
+    
+    def getRaidPartitions(self):
+        return []
+    
+    def getLVMPartitions(self):
+        return []
+
+    def getFreeSpaceRegions(self):
+        free = self.parted.Geometry(device=self.device, start=0, length=self.device.length)
+        return [free]
+
+
 def run_parted(module, parted):
     try:
-        disks = [parted.Disk(d) for d in parted.getAllDevices()]
+        disks = []
+	for d in parted.getAllDevices():
+            try:
+                disk = parted.Disk(d)
+            except parted.DiskLabelException:
+                disk = FakeDisk(parted, d)
+            disks.append(disk)
         parted_result = {'ansible_facts': {}}
         parted_result['ansible_facts']['parted'] = []
         for d in disks:
@@ -73,7 +106,7 @@ def run_parted(module, parted):
                                      'size': f.length * d.device.sectorSize / MBYTE})
             parted_result['ansible_facts']['parted'].append(disk)
     except Exception, e:
-        return module.fail_json(e)
+        return module.fail_json(msg=str(e))
     return parted_result
 
 def main():
