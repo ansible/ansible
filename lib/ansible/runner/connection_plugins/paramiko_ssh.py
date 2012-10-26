@@ -135,29 +135,29 @@ class Connection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
-            sftp = self.ssh.open_sftp()
+            self.sftp = self.ssh.open_sftp()
         except:
             raise errors.AnsibleError("failed to open a SFTP connection")
         try:
-            sftp.put(in_path, out_path)
+            self.sftp.put(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-        sftp.close()
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
-            sftp = self.ssh.open_sftp()
+            self.sftp = self.ssh.open_sftp()
         except:
             raise errors.AnsibleError("failed to open a SFTP connection")
         try:
-            sftp.get(in_path, out_path)
+            self.sftp.get(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
-        sftp.close()
 
     def close(self):
         ''' terminate the connection '''
+        if self.sftp is not None:
+            self.sftp.close()
         self.ssh.close()
 
