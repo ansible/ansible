@@ -56,21 +56,15 @@ with other solutions in your environment.
    api
    moduledev
 
-Ansible Resources
-`````````````````
-
-.. toctree::
-   :maxdepth: 0
-
-   contrib
 
 Miscellaneous
 `````````````
 
-A list of some people using Ansible.
+A list of some people using Ansible, and some additional resources.
 
 .. toctree::
    :maxdepth: 1
 
    who_uses_ansible
+   contrib
 
