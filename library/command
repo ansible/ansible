@@ -84,7 +84,7 @@ def main():
     args  = module.params['args']
 
     if args.strip() == '':
-        module.fail_json(msg="no command given")
+        module.fail_json(rc=255, msg="no command given")
 
     if chdir:
         os.chdir(os.path.expanduser(chdir))
@@ -97,9 +97,9 @@ def main():
         cmd = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
-        module.fail_json(cmd=args, msg=str(e))
+        module.fail_json(rc=e.errno, msg=str(e), cmd=args)
     except:
-        module.fail_json(msg=traceback.format_exc())
+        module.fail_json(rc=254, msg=traceback.format_exc(), cmd=args)
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -178,9 +178,9 @@ class CommandModule(AnsibleModule):
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
-                    self.fail_json(msg="cannot change to directory '%s': path does not exist" % v)
+                    self.fail_json(rc=253, msg="cannot change to directory '%s': path does not exist" % v)
                 elif v[0] != '/':
-                    self.fail_json(msg="the path for 'chdir' argument must be fully qualified")
+                    self.fail_json(rc=252, msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
         args = r.sub("", args)
         params['args'] = args
