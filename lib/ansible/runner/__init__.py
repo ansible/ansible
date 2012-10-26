@@ -58,13 +58,22 @@ multiprocessing_runner = None
 ################################################
 
 
-def _executor_hook(host):
+def _executor_hook(job_queue, result_queue):
+
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
     if HAS_ATFORK:
         atfork()
+
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    return multiprocessing_runner._executor(host)
+    while not job_queue.empty():
+        try:
+            host = job_queue.get(block=False)
+            result_queue.put(multiprocessing_runner._executor(host))
+        except Queue.Empty:
+            pass
+        except:
+            traceback.print_exc()
 
 class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
@@ -560,20 +569,38 @@ class Runner(object):
 
     # *****************************************************
 
+
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        # experiment for 0.9, we may revert this if it causes
-        # problems -- used to cause problems when Runner was a passed
-        # argument but may not be anymore.
+        manager = multiprocessing.Manager()
+        job_queue = manager.Queue()
+        for host in hosts:
+            job_queue.put(host)
+        result_queue = manager.Queue()
 
-        p = multiprocessing.Pool(self.forks)
+        workers = []
+        for i in range(self.forks):
+            prc = multiprocessing.Process(target=_executor_hook,
+                args=(job_queue, result_queue))
+            prc.start()
+            workers.append(prc)
+
         try:
-            result = p.map(_executor_hook, hosts)
+            for worker in workers:
+                worker.join()
         except KeyboardInterrupt:
-            p.terminate()
-            raise errors.AnsibleError("Interrupted")
-        return result
+            for worker in workers:
+                worker.terminate()
+                worker.join()
+
+        results = []
+        try:
+            while not result_queue.empty():
+                results.append(result_queue.get(block=False))
+        except socket.error:
+            raise errors.AnsibleError("<interrupted>")
+        return results
 
     # *****************************************************
 
