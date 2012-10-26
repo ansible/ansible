@@ -62,7 +62,7 @@ See :doc:`moduledev`.
 
 .. seealso::
 
-   `Ansible Resources (Contrib) <https://github.com/ansible/ansible-resources>`_
+   :doc:`contrib`
        User contributed playbooks, modules, and articles
    :doc:`examples`
        Examples of using modules in /usr/bin/ansible

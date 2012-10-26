@@ -377,18 +377,6 @@ output formats available:
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
 
-Sharing Your Module
-```````````````````
-
-If you think your module is generally useful to others, a good place to share it
-is in `Ansible Resources <https://github.com/ansible/ansible/tree/devel/contrib>`_.  This is maintained
-as a simple repo with pointers to other github projects.
-
-Contrib modules here can be implemented in a variety of languages.
-We would like to build up as many of these as possible in as many languages as possible.
-
-`Ansible Mailing List <http://groups.google.com/group/ansible-project>`_
-
 Getting Your Module Into Core
 `````````````````````````````
 
