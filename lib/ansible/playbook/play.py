@@ -104,10 +104,16 @@ class Play(object):
             if 'include' in x:
                 task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
-                if 'with_items' in x:
-                    items = utils.varReplaceWithItems(self.basedir, x['with_items'], task_vars)
-                else:
-                    items = ['']
+                items = ['']
+                for k in x:
+                    if not k.startswith("with_"):
+                        continue
+                    plugin_name = k[5:]
+                    if plugin_name not in self.playbook.lookup_plugins_list:
+                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                    terms = utils.varReplaceWithItems(self.basedir, x[k], task_vars)
+                    items = self.playbook.lookup_plugins_list[plugin_name].LookupModule(None).run(terms)
+
                 for item in items:
                     mv = task_vars.copy()
                     mv['item'] = item
