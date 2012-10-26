@@ -373,10 +373,20 @@ class Runner(object):
         delegate_to = inject.get('delegate_to', None)
         if delegate_to is not None:
             delegate_to = utils.template(self.basedir, delegate_to, inject)
+            inject = inject.copy()
+            interpreters = []
+            for i in inject:
+                if i.startswith("ansible_") and i.endswith("_interpreter"):
+                    interpreters.append(i)
+            for i in interpreters:
+                del inject[i]
             try:
                 delegate_info = inject['hostvars'][delegate_to]
                 actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
                 actual_port = delegate_info.get('ansible_ssh_port', port)
+                for i in delegate_info:
+                    if i.startswith("ansible_") and i.endswith("_interpreter"):
+                        inject[i] = delegate_info[i]
             except errors.AnsibleError:
                 actual_host = delegate_to
 
