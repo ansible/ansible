@@ -125,7 +125,13 @@ def writekeys(module, filename, keys):
     except IOError, e:
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
-    shutil.move(tmp_path, filename)
+    try:
+        shutil.copyfile(tmp_path, filename)
+        os.unlink(tmp_path)
+    except IOError, e:
+        module.fail_json(msg="Failed to copy temp file to %s: %s" % (filename, str(e)))
+    except OSError, e:
+        module.fail_json(msg="Failed to remove temp file: %s" % str(e))
 
 def enforce_state(module, params):
     """
