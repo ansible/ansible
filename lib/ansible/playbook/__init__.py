@@ -282,6 +282,23 @@ class PlayBook(object):
                 if 'stdout' in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
+            if task.group_by and result.get(task.group_by, None):
+                groups = result.get(task.group_by)
+
+                if type(groups) != list:
+                    groups = [ groups ]
+
+                inv_host = self.inventory.get_host(host)
+                if not inv_host:
+                    inv_host = ansible.inventory.Host(name=host)
+
+                for group in groups:
+                    inv_group = self.inventory.get_group(group)
+                    if not inv_group:
+                        inv_group = ansible.inventory.Group(name=group)
+                        self.inventory.add_group(inv_group)
+                    if inv_group not in inv_host.get_groups():
+                        inv_group.add_host(inv_host)
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:

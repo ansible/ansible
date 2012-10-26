@@ -24,7 +24,7 @@ class Task(object):
     __slots__ = [
         'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
-        'play', 'notified_by', 'tags', 'register',
+        'play', 'notified_by', 'tags', 'register', 'group_by',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms'
@@ -35,7 +35,7 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass'
+         'sudo_pass', 'group_by',
     ]
 
     def __init__(self, play, ds, module_vars=None):
@@ -68,6 +68,7 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
+        self.group_by     = ds.get('group_by', None)
         self.sudo         = ds.get('sudo', play.sudo)
         if self.sudo is True:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
