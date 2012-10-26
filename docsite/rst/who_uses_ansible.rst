@@ -14,6 +14,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
     * `Four Kitchens <http://fourkitchens.com>`_ - The Drupal Experts
+    * `HP (Germany) <http://hp.com>`_ - HP
     * `Lizenfrei.at <http://lizenzfrei.at/>`_ - Open Source consulting and development, Austria
     * `Schmooze Com <http://www.schmoozecom.com/>`_ - Creators of Industry Leading PBX Platforms
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
