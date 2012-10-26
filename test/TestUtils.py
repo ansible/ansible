@@ -230,6 +230,14 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplace(template, vars, expand_lists=True)
         assert res == 'yum pkg=foo,bar,baz state=installed'
 
+    def test_varReplace_escaped_var(self):
+        vars = {
+            'foo': 'bar',
+        }
+        template = 'action \$foo'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'action $foo'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {

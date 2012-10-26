@@ -220,36 +220,39 @@ def parse_json(raw_data):
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
-class VarNotFoundException(Exception):
-    pass
-
-def _varLookup(path, vars, depth=0):
-    ''' find the contents of a possibly complex variable in vars. '''
-
-    space = vars
-    for part in path:
-        part = varReplace(part, vars, depth=depth + 1)
-        if part in space:
-            space = space[part]
-        elif "[" in part:
-            m = _LISTRE.search(part)
-            if not m:
-                raise VarNotFoundException()
+def _varFindLimitSpace(space, part, depth):
+    if space is None:
+        return space
+    if part[0] == '{' and part[-1] == '}':
+        part = part[1:-1]
+    part = varReplace(part, vars, depth=depth + 1)
+    if part in space:
+        space = space[part]
+    elif "[" in part:
+        m = _LISTRE.search(part)
+        if not m:
+            return None
+        else:
             try:
                 space = space[m.group(1)][int(m.group(2))]
             except (KeyError, IndexError):
-                raise VarNotFoundException()
-        else:
-            raise VarNotFoundException()
+                return None
+    else:
+        return None
     return space
 
-def _varFind(text):
+def _varFind(text, vars, depth=0):
     start = text.find("$")
     if start == -1:
         return None
-    var_start = start + 1
-    if var_start >= len(text):
+    # $ as last character
+    if start + 1 == len(text):
         return None
+    # Escaped var
+    if start > 0 and text[start - 1] == '\\':
+        return {'replacement': '$', 'start': start - 1, 'end': start + 1}
+
+    var_start = start + 1
     if text[var_start] == '{':
         is_complex = True
         brace_level = 1
@@ -260,6 +263,7 @@ def _varFind(text):
     end = var_start
     path = []
     part_start = (var_start, brace_level)
+    space = vars
     while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
         if text[end].isalnum() or text[end] == '_':
             pass
@@ -271,10 +275,7 @@ def _varFind(text):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == part_start[1]:
-                if text[part_start[0]] == '{':
-                    path.append(text[part_start[0] + 1:end - 1])
-                else:
-                    path.append(text[part_start[0]:end])
+                space = _varFindLimitSpace(space, text[part_start[0]:end], depth)
                 part_start = (end + 1, brace_level)
         else:
             break
@@ -284,8 +285,10 @@ def _varFind(text):
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
-    path.append(text[part_start[0]:var_end])
-    return {'path': path, 'start': start, 'end': end}
+    if var_end == part_start[0]:
+        return None
+    space = _varFindLimitSpace(space, text[part_start[0]:var_end], depth)
+    return {'replacement': space, 'start': start, 'end': end}
 
 def varReplace(raw, vars, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
@@ -297,7 +300,7 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
     done = [] # Completed chunks to return
 
     while raw:
-        m = _varFind(raw)
+        m = _varFind(raw, vars, depth)
         if not m:
             done.append(raw)
             break
@@ -305,13 +308,12 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
         # Determine replacement value (if unknown variable then preserve
         # original)
 
-        try:
-            replacement = _varLookup(m['path'], vars, depth)
-            if expand_lists and isinstance(replacement, (list, tuple)):
-                replacement = ",".join(replacement)
-            if isinstance(replacement, (str, unicode)):
-                replacement = varReplace(replacement, vars, depth=depth+1, expand_lists=expand_lists)
-        except VarNotFoundException:
+        replacement = m['replacement']
+        if expand_lists and isinstance(replacement, (list, tuple)):
+            replacement = ",".join(replacement)
+        if isinstance(replacement, (str, unicode)):
+            replacement = varReplace(replacement, vars, depth=depth+1, expand_lists=expand_lists)
+        if replacement is None:
             replacement = raw[m['start']:m['end']]
 
         start, end = m['start'], m['end']
@@ -362,12 +364,12 @@ def varReplaceWithItems(basedir, varname, vars):
     ''' helper function used by with_items '''
 
     if isinstance(varname, basestring):
-        m = _varFind(varname)
+        m = _varFind(varname, vars)
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             try:
-                return varReplaceWithItems(basedir, _varLookup(m['path'], vars), vars)
+                return varReplaceWithItems(basedir, m['replacement'], vars)
             except VarNotFoundException:
                 return varname
         else:
