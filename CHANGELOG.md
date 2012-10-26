@@ -9,6 +9,17 @@ Ansible Changes By Release
 * fix for template calls when last character is '$'
 * postgresql module now takes role_attr_flags
 * ability to create SSH keys for users when using user module to create users
+* close paramiko SFTP connections less often on copy/template operations (speed increase)
+* change the way we use multiprocessing (speed/RAM usage improvements)
+* atomic replacement of files preserves permissions of original file
+* if ansible_*_interpreter is set on a delegated host, it now works as intended
+* authorized key module uses temp file now to prevent failure on full disk
+* MySQL module takes new grant options
+* user module can create SHS keys
+* yum module takes enablerepo= and disablerepo=
+* --limit can now take "," as well as ";" or ":"
+* various git module improvements/tweaks
+* EC2 module now produces nicer failure message if AWS is down (or similar)
 
 0.8 "Cathedral" -- Oct 19, 2012
 
