@@ -180,8 +180,6 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks=test_callbacks
        )
        playbook.run()
-       assert playbook.SETUP_CACHE['host1'] == {'attr2': 2, 'attr1': 1}
-       assert playbook.SETUP_CACHE['host2'] == {'attr2': 2}
 
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
