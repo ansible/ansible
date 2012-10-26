@@ -87,6 +87,7 @@ DEFAULT_ACTION_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'acti
 DEFAULT_CALLBACK_PLUGIN_PATH   = shell_expand_path(get_config(p, DEFAULTS, 'callback_plugins',   None, '/usr/share/ansible_plugins/callback_plugins'))
 DEFAULT_CONNECTION_PLUGIN_PATH = shell_expand_path(get_config(p, DEFAULTS, 'connection_plugins', None, '/usr/share/ansible_plugins/connection_plugins'))
 DEFAULT_LOOKUP_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'lookup_plugins',     None, '/usr/share/ansible_plugins/lookup_plugins'))
+DEFAULT_VARS_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'vars_plugins',     None, '/usr/share/ansible_plugins/vars_plugins'))
 
 # non-configurable things
 DEFAULT_REMOTE_PASS       = None

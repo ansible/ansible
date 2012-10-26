@@ -29,13 +29,20 @@ from ansible.inventory.host import Host
 from ansible import errors
 from ansible import utils
 
+# FIXME, adapt.
+dirname = os.path.dirname(__file__)
+vars_plugin_list = utils.import_plugins(os.path.join(dirname, 'vars_plugins'))
+for i in reversed(C.DEFAULT_VARS_PLUGIN_PATH.split(os.pathsep)):
+    vars_plugin_list.update(utils.import_plugins(i))
+
 class Inventory(object):
     """
     Host inventory for ansible.
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list' ]
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
+                   '_vars_plugins' ]
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -87,6 +94,8 @@ class Inventory(object):
                 self.groups = self.parser.groups.values()
             else:
                 raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+
+        self._vars_plugins = [ i.VarsModule(self) for i in vars_plugin_list.values() ]
 
     def _match(self, str, pattern_str):
         return fnmatch.fnmatch(str, pattern_str)
@@ -270,6 +279,11 @@ class Inventory(object):
         if host is None:
             raise errors.AnsibleError("host not found: %s" % hostname)
 
+        vars = {}
+        for ip in self._vars_plugins:
+            updated = ip.run(host)
+            vars.update(updated)
+
         if self._is_script:
             cmd = subprocess.Popen(
                 [self.host_list,"--host",hostname],
@@ -284,10 +298,10 @@ class Inventory(object):
             results['inventory_hostname_short'] = hostname.split('.')[0]
             groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
             results['group_names'] = sorted(groups)
-
-            return results
+            vars.update(results)
 	else:
-            return host.get_variables()
+            vars.update(host.get_variables())
+        return vars
 
     def add_group(self, group):
         self.groups.append(group)

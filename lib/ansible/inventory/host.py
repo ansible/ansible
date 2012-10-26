@@ -62,3 +62,5 @@ class Host(object):
         groups = self.get_groups()
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
         return results
+
+
