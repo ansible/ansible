@@ -59,7 +59,6 @@ class Connection(object):
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
-            print "DEBUG: using new"
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
 
