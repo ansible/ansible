@@ -56,6 +56,14 @@ with other solutions in your environment.
    api
    moduledev
 
+Ansible Resources
+`````````````````
+
+.. toctree::
+   :maxdepth: 0
+
+   contrib
+
 Miscellaneous
 `````````````
 
