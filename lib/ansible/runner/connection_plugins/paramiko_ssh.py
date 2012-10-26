@@ -45,6 +45,7 @@ class Connection(object):
     def __init__(self, runner, host, port=None):
 
         self.ssh = None
+        self.sftp = None
         self.runner = runner
         self.host = host
         self.port = port
