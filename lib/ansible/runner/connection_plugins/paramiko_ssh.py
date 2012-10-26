@@ -109,7 +109,7 @@ class Connection(object):
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
-            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
+            quoted_command = '/bin/sh -c ' + pipes.quote(cmd)
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
@@ -122,7 +122,7 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s "$SHELL" -c %s' % (
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
             vvv("EXEC %s" % sudocmd, host=self.host)
             sudo_output = ''
