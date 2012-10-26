@@ -57,7 +57,6 @@ class Connection(object):
     def connect(self):
         cache_key = self._cache_key()
         if cache_key in SSH_CONNECTION_CACHE:
-            print "DEBUG: using cached"
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
             print "DEBUG: using new"
