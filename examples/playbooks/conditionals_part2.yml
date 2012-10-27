@@ -20,6 +20,10 @@
 #
 # when using 'when', take care to make sure any variables given are surrounded by spaces
 # as an example, $z>3 will not do what you want, use "$z > 3"
+#
+# note, if you are doing comparisons to variables that are stored as hashes or lists,
+# you will need to use the older 'only_if', which is more free form.  
+# see conditionals_part_3.yml
 
   tasks:
 
