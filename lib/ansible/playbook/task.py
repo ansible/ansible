@@ -68,8 +68,9 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
-        self.sudo         = ds.get('sudo', play.sudo)
-        if self.sudo is True:
+        self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
+
+        if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
         else:

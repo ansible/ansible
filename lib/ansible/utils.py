@@ -499,3 +499,12 @@ def get_available_modules(dirname=None):
             modules_list.update(os.listdir(path))
     modules_list = list(modules_list)
     return modules_list
+
+def boolean(value):
+    val = str(value)
+    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+        return True
+    else:
+        return False
+
+
