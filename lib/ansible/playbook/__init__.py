@@ -59,6 +59,7 @@ class PlayBook(object):
         stats            = None,
         sudo             = False,
         sudo_user        = C.DEFAULT_SUDO_USER,
+        ask_sudo_pass    = C.DEFAULT_ASK_SUDO_PASS,
         extra_vars       = None,
         only_tags        = None,
         subset           = C.DEFAULT_SUBSET):
@@ -103,6 +104,7 @@ class PlayBook(object):
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.sudo_user        = sudo_user
+        self.ask_sudo_pass    = ask_sudo_pass
         self.extra_vars       = extra_vars
         self.global_vars      = {}
         self.private_key_file = private_key_file

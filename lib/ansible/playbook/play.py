@@ -28,7 +28,7 @@ class Play(object):
     __slots__ = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
-       'sudo', 'sudo_user', 'transport', 'playbook',
+       'sudo', 'sudo_user', 'ask_sudo_pass', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir'
     ]
@@ -37,7 +37,7 @@ class Play(object):
     # and don't line up 1:1 with how they are stored
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'user', 'port', 'include',
+       'tasks', 'handlers', 'user', 'port', 'include', 'ask_sudo_pass',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial'
     ]
 
@@ -77,6 +77,7 @@ class Play(object):
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
+        self.ask_sudo_pass = ds.get('ask_sudo_pass', self.playbook.ask_sudo_pass)
 
         self._update_vars_files_for_host(None)
 
