@@ -26,7 +26,7 @@ setup(name='ansible',
       packages=[
          'ansible',
          'ansible.inventory',
-         'ansible.inventory.var_plugins',
+         'ansible.inventory.vars_plugins',
          'ansible.playbook',
          'ansible.runner',
          'ansible.runner.action_plugins',
