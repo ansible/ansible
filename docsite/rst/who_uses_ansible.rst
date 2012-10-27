@@ -6,6 +6,7 @@ Who Uses Ansible
 The following is an opt-in list of just some of the folks using Ansible -- to get your company details here, `Email Michael <mailto:michael.dehaan@gmail.com>`_.
 
     * `Alta Language Services <http://www.altalang.com>`_ - language testing, solutions, and translation services
+    * `Aspiro TV <http://www.aspiro.com/en/TV/>`_ - Media Streaming
     * `Basho <http://basho.com>`_ - makers of NoSQL engine Riak
     * `CatN Hosting <http://catn.com>`_ - scalable Cloud hosting
     * `Cygate AB <http://cygate.se>`_ - IT solutions from Malmo, Sweeden
