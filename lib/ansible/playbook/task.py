@@ -22,7 +22,7 @@ from ansible import utils
 class Task(object):
 
     __slots__ = [
-        'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
+        'name', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
@@ -57,6 +57,11 @@ class Task(object):
                     ds.pop(x)
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+
+            elif x.startswith("when_"):
+                when_name = x.replace("when_","")
+                ds['when'] = "%s %s" % (when_name, ds[x])
+                ds.pop(x)
 
             elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
@@ -109,6 +114,8 @@ class Task(object):
 
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
+        self.when    = ds.get('when', None)
+
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
         self.notify = ds.get('notify', [])
@@ -168,4 +175,59 @@ class Task(object):
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
+
+        if self.when is not None:
+            if self.only_if != 'True':
+                raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
+            self.only_if = self.compile_when_to_only_if(self.when)
+
+    def compile_when_to_only_if(self, expression):
+        ''' 
+        when is a shorthand for writing only_if conditionals.  It requires less quoting
+        magic.  only_if is retained for backwards compatibility.
+        '''
+
+        # when: set $variable
+        # when: unset $variable
+        # when: int $x >= $z and $y < 3
+        # when: int $x in $alist
+        # when: float $x > 2 and $y <= $z
+        # when: str $x != $y
+
+        if type(expression) not in [ str, unicode ]:
+             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+        tokens = expression.split()
+        if len(tokens) < 2:
+             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+
+        # when_set / when_unset
+        if tokens[0] in [ 'set', 'unset' ]:
+             if len(tokens) != 2:
+                 raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
+             return "is_%s('%s')" % (tokens[0], tokens[1])
+
+        # when_integer / when_float / when_string
+        elif tokens[0] in [ 'integer', 'float', 'string' ]:
+             cast = None
+             if tokens[0] == 'integer':
+                 cast = 'int'
+             elif tokens[0] == 'string':
+                 cast = 'str'
+             elif tokens[0] == 'float':
+                 cast = 'float'
+             tcopy = tokens[1:]
+             for (i,t) in enumerate(tokens[1:]):
+                 if t.find("$") != -1:
+                     # final variable substitution will happen in Runner code
+                     tcopy[i] = "%s('%s')" % (cast, t)
+                 else:
+                     tcopy[i] = t
+             return " ".join(tcopy)
+ 
+        else:
+             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+ 
+
+
+
 
