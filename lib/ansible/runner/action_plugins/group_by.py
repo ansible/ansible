@@ -17,7 +17,9 @@
 
 import ansible
 
+from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
+from ansible.utils import parse_kv, template
 
 class ActionModule(object):
     ''' Create inventory groups based on variables '''
@@ -29,39 +31,38 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        variables = module_args.strip().split(',')
+        args = parse_kv(template(self.runner.basedir, module_args, inject))
+        if not 'var' in args:
+            raise ae("'var' is a required argument.")
+        variable = args['var']
         inventory = self.runner.inventory
 
         result = {'changed': False}
 
-        for variable in variables:
-            if not variable:
-                continue ### ignore trailing comma
-            variable = variable.strip()
+        ### find all returned groups
+        groups = {}
+        for _,host in self.runner.host_set:
+            data = self.runner.setup_cache[host]
+            if variable in data:
+                group_name = data[variable].replace(' ','-')
+                if group_name not in groups:
+                    groups[group_name] = []
+                groups[group_name].append(host)
 
-            ### find all returned groups
-            groups = {}
-            for _,host in self.runner.host_set:
-                data = self.runner.setup_cache[host]
-                if variable in data:
-                    if data[variable] not in groups:
-                        groups[data[variable]] = []
-                    groups[data[variable]].append(host)
+        result[variable] = groups
 
-            result[variable] = groups
-
-            ### add to inventory
-            for group, hosts in groups.items():
-                inv_group = inventory.get_group(group)
-                if not inv_group:
-                    inv_group = ansible.inventory.Group(name=group)
-                    inventory.add_group(inv_group)
-                for host in hosts:
-                    inv_host = inventory.get_host(host)
-                    if not inv_host:
-                        inv_host = ansible.inventory.Host(name=host)
-                    if inv_group not in inv_host.get_groups():
-                        result['changed'] = True
-                        inv_group.add_host(inv_host)
+        ### add to inventory
+        for group, hosts in groups.items():
+            inv_group = inventory.get_group(group)
+            if not inv_group:
+                inv_group = ansible.inventory.Group(name=group)
+                inventory.add_group(inv_group)
+            for host in hosts:
+                inv_host = inventory.get_host(host)
+                if not inv_host:
+                    inv_host = ansible.inventory.Host(name=host)
+                if inv_group not in inv_host.get_groups():
+                    result['changed'] = True
+                    inv_group.add_host(inv_host)
 
         return ReturnData(conn=conn, comm_ok=True, result=result)
