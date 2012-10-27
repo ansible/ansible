@@ -1,0 +1,23 @@
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: group_by
+short_description: Create Ansible groups based on facts
+description:
+  - Use facts to create ad-hoc groups that can be used later in a playbook.
+version_added: 0.9
+options:
+  key:
+    description:
+    - The variables whose values will be used as groups
+    required: true
+author: Jeroen Hoekx
+examples:
+  - description: Create groups based on the machine architecture
+    code: group_by key=${ansible_machine}
+  - description: Create groups like 'kvm-host'
+    code: group_by key=${ansible_virtualization_type}-${ansible_virtualization_role}
+notes:
+  - Spaces in group names are converted to dashes '-'.
+'''
