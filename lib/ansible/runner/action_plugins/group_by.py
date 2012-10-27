@@ -35,6 +35,11 @@ class ActionModule(object):
         if not 'var' in args:
             raise ae("'var' is a required argument.")
         variable = args['var']
+        if 'prefix' in args:
+            prefix = "%s-"%(args['prefix'])
+        else:
+            prefix = ""
+
         inventory = self.runner.inventory
 
         result = {'changed': False}
@@ -44,7 +49,7 @@ class ActionModule(object):
         for _,host in self.runner.host_set:
             data = self.runner.setup_cache[host]
             if variable in data:
-                group_name = data[variable].replace(' ','-')
+                group_name = "%s%s"%(prefix,data[variable].replace(' ','-'))
                 if group_name not in groups:
                     groups[group_name] = []
                 groups[group_name].append(host)
