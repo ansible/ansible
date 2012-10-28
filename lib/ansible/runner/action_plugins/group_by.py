@@ -32,9 +32,9 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         args = parse_kv(template(self.runner.basedir, module_args, inject))
-        if not 'var' in args:
-            raise ae("'var' is a required argument.")
-        variable = args['var']
+        if not 'key' in args:
+            raise ae("'key' is a required argument.")
+        variable = args['key']
         if 'prefix' in args:
             prefix = "%s-"%(args['prefix'])
         else:

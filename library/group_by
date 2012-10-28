@@ -8,7 +8,7 @@ description:
   - Use facts to create ad-hoc groups that can be used later in a playbook.
 version_added: 0.9
 options:
-  var:
+  key:
     description:
     - The variable whose values will be used as groups
     required: true
@@ -18,7 +18,7 @@ options:
 author: Jeroen Hoekx
 examples:
   - description: Create groups based on the machine architecture
-    code: group_by var=ansible_machine prefix=ansible
+    code: group_by key=ansible_machine prefix=ansible
 notes:
   - Spaces in group names are converted to dashes '-'.
 '''
