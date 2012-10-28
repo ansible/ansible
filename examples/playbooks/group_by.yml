@@ -1,0 +1,23 @@
+---
+# Example playbook to demonstrate the group_by action plugin.
+
+- hosts: all
+  # This runs the setup module to gather facts
+  tasks:
+  # Use the ansible_machine variable to create a group for every value,
+  # prefix the group name with 'ansible-'
+  - action: group_by key=ansible_machine prefix=ansible
+
+- hosts: ansible-x86_64
+  tasks:
+  # Run ping on all x86_64 machines
+  - action: ping
+
+- hosts: all
+  tasks:
+  ### Create a group of all kvm hosts
+  - action: group_by key=ansible_virtualization_type,ansible_virtualization_role
+
+- hosts: kvm-host
+  tasks:
+  - action: ping
