@@ -88,7 +88,7 @@ class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=True):
+        required_one_of=None, add_file_common_args=False):
 
         '''
         common code for quickly building an ansible module in Python
@@ -458,7 +458,7 @@ class AnsibleModule(object):
              default = v.get('default', None)
              if pre == True:
                  # this prevents setting defaults on required items
-                 if default and k not in self.params:
+                 if default is not None and k not in self.params:
                      self.params[k] = default
              else:
                  # make sure things without a default still get set None
