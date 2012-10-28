@@ -275,7 +275,7 @@ class Play(object):
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
                         break
-                if not found:
+                if not found and host is not None:
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
