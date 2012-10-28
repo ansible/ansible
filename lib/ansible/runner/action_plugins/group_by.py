@@ -19,7 +19,7 @@ import ansible
 
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv, template
+from ansible.utils import parse_kv, template, varLookup, VarNotFoundException
 
 class ActionModule(object):
     ''' Create inventory groups based on variables '''
@@ -50,8 +50,11 @@ class ActionModule(object):
             data = self.runner.setup_cache[host]
             values = []
             for variable in variables:
-                if variable in data:
-                    values.append(data[variable].replace(' ','-'))
+                try:
+                    val = varLookup(variable, data)
+                    values.append(val.replace(' ','-'))
+                except VarNotFoundException:
+                    pass
             if len(values) == len(variables):
                 group_name = "%s%s"%(prefix,"-".join(values))
                 if group_name not in groups:

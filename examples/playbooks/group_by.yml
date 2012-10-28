@@ -21,3 +21,12 @@
 - hosts: kvm-host
   tasks:
   - action: ping
+
+- hosts: all
+  tasks:
+  ### Group based on a complex variable (IPv4 network)
+  - action: group_by key=ansible_default_ipv4.network prefix=network
+
+- hosts: network-192.168.1.0
+  tasks:
+  - action: ping

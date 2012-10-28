@@ -221,6 +221,10 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 class VarNotFoundException(Exception):
     pass
 
+def varLookup(key, vars):
+    ''' Look up a complex key in vars '''
+    return _varLookup(key.split('.'), vars)
+
 def _varLookup(path, vars, depth=0):
     ''' find the contents of a possibly complex variable in vars. '''
 
