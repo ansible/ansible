@@ -19,6 +19,8 @@ author: Jeroen Hoekx
 examples:
   - description: Create groups based on the machine architecture
     code: group_by key=ansible_machine prefix=ansible
+  - description: Create groups like 'kvm-host'
+    code: group_by key=ansible_virtualization_type,ansible_virtualization_role
 notes:
   - Spaces in group names are converted to dashes '-'.
 '''

@@ -12,3 +12,12 @@
   tasks:
   # Run ping on all x86_64 machines
   - action: ping
+
+- hosts: all
+  tasks:
+  ### Create a group of all kvm hosts
+  - action: group_by key=ansible_virtualization_type,ansible_virtualization_role
+
+- hosts: kvm-host
+  tasks:
+  - action: ping

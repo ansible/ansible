@@ -34,7 +34,7 @@ class ActionModule(object):
         args = parse_kv(template(self.runner.basedir, module_args, inject))
         if not 'key' in args:
             raise ae("'key' is a required argument.")
-        variable = args['key']
+        variables = args['key'].rstrip(',').split(',')
         if 'prefix' in args:
             prefix = "%s-"%(args['prefix'])
         else:
@@ -48,8 +48,12 @@ class ActionModule(object):
         groups = {}
         for _,host in self.runner.host_set:
             data = self.runner.setup_cache[host]
-            if variable in data:
-                group_name = "%s%s"%(prefix,data[variable].replace(' ','-'))
+            values = []
+            for variable in variables:
+                if variable in data:
+                    values.append(data[variable].replace(' ','-'))
+            if len(values) == len(variables):
+                group_name = "%s%s"%(prefix,"-".join(values))
                 if group_name not in groups:
                     groups[group_name] = []
                 groups[group_name].append(host)
