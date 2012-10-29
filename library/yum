@@ -440,13 +440,9 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         else:
             pkglist = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
-                res['msg'] += "No Package matching '%s' found installed" % spec
-                module.exit_json(**res)
-
-            found = False
-            for this in pkglist:
-                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
-                    found = True
+                found = False
+            else:
+                found = True
 
             if not found:
                 res['results'].append('%s is not installed' % spec)
