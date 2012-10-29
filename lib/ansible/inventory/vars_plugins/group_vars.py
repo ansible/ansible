@@ -17,6 +17,7 @@
 
 import os
 import glob
+from ansible import errors
 from ansible import utils
 
 class VarsModule(object):
