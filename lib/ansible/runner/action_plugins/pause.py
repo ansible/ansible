@@ -48,7 +48,7 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' run the pause actionmodule '''
-        hosts = ', '.join(map(lambda x: x[1], self.runner.host_set))
+        hosts = ', '.join(self.runner.host_set)
         args = parse_kv(template(self.runner.basedir, module_args, inject))
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
