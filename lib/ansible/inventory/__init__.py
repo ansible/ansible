@@ -282,7 +282,8 @@ class Inventory(object):
         vars = {}
         for ip in self._vars_plugins:
             updated = ip.run(host)
-            vars.update(updated)
+            if updated is not None:
+                vars.update(updated)
 
         if self._is_script:
             cmd = subprocess.Popen(
