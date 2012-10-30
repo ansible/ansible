@@ -238,6 +238,28 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplace(template, vars)
         assert res == 'action $foo'
 
+    def test_varReplace_var_part(self):
+        vars = {
+            'foo': {
+                'bar': 'result',
+            },
+            'key': 'bar',
+        }
+        template = 'test ${foo.$key}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'test result'
+
+    def test_varReplace_var_partial_part(self):
+        vars = {
+            'foo': {
+                'barbaz': 'result',
+            },
+            'key': 'bar',
+        }
+        template = 'test ${foo.${key}baz}'
+        res = ansible.utils.varReplace(template, vars)
+        assert res == 'test result'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {

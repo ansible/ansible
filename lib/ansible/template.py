@@ -40,7 +40,7 @@ import pwd
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
 
-def _varFindLimitSpace(space, part, depth):
+def _varFindLimitSpace(vars, space, part, depth):
 
     # TODO: comments
 
@@ -101,7 +101,7 @@ def _varFind(text, vars, depth=0):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == part_start[1]:
-                space = _varFindLimitSpace(space, text[part_start[0]:end], depth)
+                space = _varFindLimitSpace(vars, space, text[part_start[0]:end], depth)
                 part_start = (end + 1, brace_level)
         else:
             break
@@ -113,7 +113,7 @@ def _varFind(text, vars, depth=0):
             return None
     if var_end == part_start[0]:
         return None
-    space = _varFindLimitSpace(space, text[part_start[0]:var_end], depth)
+    space = _varFindLimitSpace(vars, space, text[part_start[0]:var_end], depth)
     return {'replacement': space, 'start': start, 'end': end}
 
 def varReplace(raw, vars, depth=0, expand_lists=False):
