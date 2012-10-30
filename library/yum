@@ -429,42 +429,46 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
+    res['failed'] = False
 
-    for spec in items:
-        pkg = None
-
-        # group remove - hope you like things dying!
-        if spec.startswith('@'):
-            pkg = spec
-        # req or pkgname remove
+    for pkg in items:
+        is_group = False
+        # group remove - this is doom on a stick
+        if pkg.startswith('@'):
+            is_group = True
         else:
-            pkglist = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
-            if not pkglist:
-                found = False
-            else:
-                found = True
-
-            if not found:
-                res['results'].append('%s is not installed' % spec)
+            if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                res['results'].append('%s is not installed' % pkg)
                 continue
-            pkg = spec
 
+        # run an actual yum transaction
         cmd = yum_basecmd + ["remove", pkg]
         rc, out, err = run(cmd)
 
-        # FIXME if we ran the remove - check to make sure it actually removed :(
-        # look for the pkg in the rpmdb - this is notoriously hard for groups :(
+        # at this point we should check to see if the pkg is no longer present
+        
+        if not is_group: # we can't sensibly check for a group being uninstalled reliably
+            # look to see if the pkg shows up from is_installed. If it doesn't
+            if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                res['changed'] = True
+            else:
+                res['failed'] = True
+
         if rc != 0:
-            res['changed'] = False
             res['failed'] = True
-            res['rc'] = rc
-            res['results'].append(out)
-            res['msg'] += err
-        else:
-            res['changed'] = True
-            res['rc'] = 0
-            res['results'].append(out)
-            res['msg'] += err
+            
+        # compile the results into one batch. If anything is changed 
+        # then mark changed
+        # at the end - if we've end up failed then fail out of the rest
+        # of the process
+        res['changed'] = res['changed'] or False
+        res['failed'] = res['failed'] or False
+        res['rc'] += rc
+        res['results'].append(out)
+        res['msg'] += err
+
+        if res['failed']:
+            module.fail_json(**res)
 
     module.exit_json(**res)
 
