@@ -164,7 +164,7 @@ def main():
     )
 
     if not HAVE_SELINUX:
-        module.fail_json(msg="SELinux not supported on this host.")
+        module.fail_json(msg="This module requires libselinux-python support")
 
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
