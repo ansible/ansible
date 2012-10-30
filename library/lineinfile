@@ -181,7 +181,7 @@ def main():
             regexp=dict(required=True),
             line=dict(aliases=['value']),
             insertafter=dict(default='EOF'),
-            create=dict(default=false, choices=BOOLEANS),
+            create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
     )
