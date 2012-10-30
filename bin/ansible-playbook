@@ -73,6 +73,7 @@ def main(args):
     if not options.listhosts:
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
+        options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         if options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
             options.sudo = True
@@ -128,8 +129,14 @@ def main(args):
             # if we've not exited by now then we are fine.
             print 'Playbook Syntax is fine'
             return 0
-            
 
+        if not sudopass:
+            for play in pb.playbook:
+                if 'ask_sudo_pass' in play and play['ask_sudo_pass']:
+                    sudopass = getpass.getpass(prompt="sudo password: ")
+                    options.sudo = True
+                    play.sudo_pass = sudopass
+            
         try:
 
             pb.run()
