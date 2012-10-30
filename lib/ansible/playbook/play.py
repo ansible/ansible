@@ -159,7 +159,7 @@ class Play(object):
         if type(self.vars) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
 
-        vars = self.playbook.global_vars
+        vars = self.playbook.global_vars.copy()
 
         # translate a list of vars into a dict
         if type(self.vars) == list:
@@ -195,9 +195,8 @@ class Play(object):
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
-        results = self.playbook.extra_vars.copy()
-        results.update(vars)
-        return results
+        vars.update(self.playbook.extra_vars)
+        return vars
 
     # *************************************************
 
