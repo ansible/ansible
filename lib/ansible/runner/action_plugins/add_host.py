@@ -34,7 +34,7 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        args = parse_kv(self.runner.module_args)
+        args = parse_kv(module_args)
         if not 'hostname' in args:
             raise ae("'hostname' is a required argument.")
 
