@@ -149,7 +149,7 @@ def main():
     # To use defaults values, keyword arguments must be absent, so 
     # check which values are empty and don't include in the **kw
     # dictionary
-    params_map =  {
+    params_map = {
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",

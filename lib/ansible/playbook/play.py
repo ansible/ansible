@@ -123,7 +123,7 @@ class Play(object):
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
                     for y in data:
-                         results.append(Task(self,y,module_vars=mv.copy()))
+                        results.append(Task(self,y,module_vars=mv.copy()))
             elif type(x) == dict:
                 task_vars = self.vars.copy()
                 results.append(Task(self,x,module_vars=task_vars))

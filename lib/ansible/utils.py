@@ -142,10 +142,13 @@ def is_failed(result):
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
 def check_conditional(conditional):
+
     def is_set(var):
         return not var.startswith("$")
+
     def is_unset(var):
         return var.startswith("$")
+
     return eval(conditional.replace("\n", "\\n"))
 
 def is_executable(path):

@@ -853,19 +853,19 @@ def run_setup(module):
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       out, err = cmd.communicate()
-       ohai = True
-       try:
-           ohai_ds = json.loads(out)
-       except:
-           ohai = False
-       if ohai:
-           for (k,v) in ohai_ds.items():
-               if type(v) == str or type(v) == unicode:
-                   k2 = "ohai_%s" % k.replace('-', '_')
-                   setup_options[k2] = v
+        cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        ohai = True
+        try:
+            ohai_ds = json.loads(out)
+        except:
+            ohai = False
+        if ohai:
+            for (k,v) in ohai_ds.items():
+                if type(v) == str or type(v) == unicode:
+                    k2 = "ohai_%s" % k.replace('-', '_')
+                    setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options

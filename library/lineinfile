@@ -157,12 +157,14 @@ def absent(module, dest, regexp, backup):
     f.close()
     cre = re.compile(regexp)
     found = []
+
     def matcher(line):
         if cre.search(line):
             found.append(line)
             return False
         else:
             return True
+
     lines = filter(matcher, lines)
     changed = len(found) > 0
     if changed:

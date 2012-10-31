@@ -77,7 +77,7 @@ syslog.openlog('ansible-%s' % os.path.basename(__file__))
 PIDFILE = os.path.expanduser("~/.fireball.pid")
 
 def log(msg):
-   syslog.syslog(syslog.LOG_NOTICE, msg)
+    syslog.syslog(syslog.LOG_NOTICE, msg)
 
 if os.path.exists(PIDFILE):
     try:
@@ -92,17 +92,17 @@ if os.path.exists(PIDFILE):
 
 HAS_ZMQ = False
 try:
-   import zmq
-   HAS_ZMQ = True
+    import zmq
+    HAS_ZMQ = True
 except ImportError:
-   pass
+    pass
 
 HAS_KEYCZAR = False
 try:
-   from keyczar.keys import AesKey
-   HAS_KEYCZAR = True
+    from keyczar.keys import AesKey
+    HAS_KEYCZAR = True
 except ImportError:
-   pass
+    pass
 
 # NOTE: this shares a fair amount of code in common with async_wrapper, if async_wrapper were a new module we could move
 # this into utils.module_common and probably should anyway
@@ -163,9 +163,9 @@ def command(data):
   
 def fetch(data):
     if 'data' not in data:
-       return dict(failed=True, msg='internal error: data is required')
+        return dict(failed=True, msg='internal error: data is required')
     if 'in_path' not in data:
-       return dict(failed=True, msg='internal error: out_path is required')
+        return dict(failed=True, msg='internal error: out_path is required')
 
     fh = open(data['in_path'])
     data = fh.read()

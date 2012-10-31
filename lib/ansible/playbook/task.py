@@ -99,10 +99,10 @@ class Task(object):
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
-	    self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
-	    # delegate_to: localhost should use local transport
-	    if self.delegate_to in ['127.0.0.1', 'localhost']:
-	        self.transport   = 'local'
+            self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
+            # delegate_to: localhost should use local transport
+            if self.delegate_to in ['127.0.0.1', 'localhost']:
+                self.transport   = 'local'
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
@@ -195,37 +195,37 @@ class Task(object):
         # when: str $x != $y
 
         if type(expression) not in [ str, unicode ]:
-             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
         tokens = expression.split()
         if len(tokens) < 2:
-             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
         # when_set / when_unset
         if tokens[0] in [ 'set', 'unset' ]:
-             if len(tokens) != 2:
-                 raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
-             return "is_%s('%s')" % (tokens[0], tokens[1])
+            if len(tokens) != 2:
+                raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
+            return "is_%s('%s')" % (tokens[0], tokens[1])
 
         # when_integer / when_float / when_string
         elif tokens[0] in [ 'integer', 'float', 'string' ]:
-             cast = None
-             if tokens[0] == 'integer':
-                 cast = 'int'
-             elif tokens[0] == 'string':
-                 cast = 'str'
-             elif tokens[0] == 'float':
-                 cast = 'float'
-             tcopy = tokens[1:]
-             for (i,t) in enumerate(tokens[1:]):
-                 if t.find("$") != -1:
-                     # final variable substitution will happen in Runner code
-                     tcopy[i] = "%s('%s')" % (cast, t)
-                 else:
-                     tcopy[i] = t
-             return " ".join(tcopy)
+            cast = None
+            if tokens[0] == 'integer':
+                cast = 'int'
+            elif tokens[0] == 'string':
+                cast = 'str'
+            elif tokens[0] == 'float':
+                cast = 'float'
+            tcopy = tokens[1:]
+            for (i,t) in enumerate(tokens[1:]):
+                if t.find("$") != -1:
+                    # final variable substitution will happen in Runner code
+                    tcopy[i] = "%s('%s')" % (cast, t)
+                else:
+                    tcopy[i] = t
+            return " ".join(tcopy)
  
         else:
-             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
  
 
 
