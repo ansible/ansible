@@ -300,7 +300,7 @@ class Inventory(object):
             groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
             results['group_names'] = sorted(groups)
             vars.update(results)
-	else:
+        else:
             vars.update(host.get_variables())
         return vars
 
