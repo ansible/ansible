@@ -65,6 +65,14 @@ options:
         file, and C(EOF) for inserting the line at the end of the file.
     choices: [ BOF, EOF ]
     default: EOF
+  create:
+    required: false
+    choices: [ yes, no ]
+    default: no
+    description:
+      - Used with C(state=present). If specified, the file will be created
+        if it does not already exist. By default it will fail if the file
+        is missing.
   backup:
      required: false
      default: no
@@ -76,10 +84,21 @@ examples:
    - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
 '''
 
-def present(module, dest, regexp, line, insertafter, backup):
-    f = open(dest, 'rb')
-    lines = f.readlines()
-    f.close()
+def present(module, dest, regexp, line, insertafter, create, backup):
+
+    if os.path.isdir(dest):
+        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    elif not os.path.exists(dest):
+        if not create:
+            module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+        destpath = os.path.dirname(dest)
+        if not os.path.exists(destpath):
+            os.makedirs(destpath)
+        lines = []
+    else:
+        f = open(dest, 'rb')
+        lines = f.readlines()
+        f.close()
 
     mre = re.compile(regexp)
     if not mre.search(line):
@@ -162,18 +181,20 @@ def main():
             regexp=dict(required=True),
             line=dict(aliases=['value']),
             insertafter=dict(default='EOF'),
+            create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
     )
 
     params = module.params
+    create = module.boolean(module.params.get('create', False))
     backup = module.boolean(module.params.get('backup', False))
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
         present(module, params['dest'], params['regexp'], params['line'],
-                params['insertafter'], backup)
+                params['insertafter'], create, backup)
     else:
         absent(module, params['dest'], params['regexp'], backup)
 
