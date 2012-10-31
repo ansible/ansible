@@ -114,9 +114,9 @@ FILES
 
 /usr/share/ansible/ -- Default module library
 
-/etc/ansible/ansible.conf -- Config file, used if present
+/etc/ansible/ansible.cfg -- Config file, used if present
 
-~/.ansible.config -- User config file, overrides the default config if present
+~/.ansible.cfg -- User config file, overrides the default config if present
 
 AUTHOR
 ------
