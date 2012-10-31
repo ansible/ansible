@@ -18,7 +18,6 @@
 import os
 import pwd
 import ConfigParser
-import traceback
 
 def get_config(p, section, key, env_var, default):
     if env_var is not None:
