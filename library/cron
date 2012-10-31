@@ -154,7 +154,7 @@ def add_job(name,job,tmpfile):
 def update_job(name,job,tmpfile):
     return _update_job(name,job,tmpfile,do_add_job)
 
-def do_add_job (lines, comment, job):
+def do_add_job(lines, comment, job):
     lines.append(comment)
     lines.append(job)
 

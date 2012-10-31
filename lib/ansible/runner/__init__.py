@@ -369,7 +369,7 @@ class Runner(object):
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         actual_port = port
-        if self.transport in ['paramiko', 'ssh' ]:
+        if self.transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
