@@ -171,6 +171,8 @@ def _get_service_status(name, pattern):
             running = False
         elif 'dead but subsys locked' in cleanout:
             running = False
+        elif 'dead but pid file exists' in cleanout:
+            running = False
 
     # if the job status is still not known check it by special conditions
     if running == None:
