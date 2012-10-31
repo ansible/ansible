@@ -1,4 +1,23 @@
-#!/usr/bin/python
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Afterburn
+# Written by Matthew Williams <matthew@flowroute.com>
+# Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
 
 DOCUMENTATION = '''
 ---
@@ -25,7 +44,19 @@ options:
         description:
             - Define the state of a package (install/remove)
         required: false
-        default: null'''
+        default: null
+
+author: Afterburn
+notes:  []
+examples:
+    - code: "pacman: pkg=foo update"
+      description: update package db and install package foo
+    - code: "pacman: remove=foo"
+      description: remove package 
+    - code: "upgrade"
+      description: update and upgrade all installed packages
+      
+'''
 
 
 import json
