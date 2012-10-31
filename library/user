@@ -373,6 +373,7 @@ def ssh_key_gen(module, user, ssh):
     if not os.path.exists(ssh_dir):
         try:
             os.mkdir(ssh_dir, 0700)
+            os.chown(ssh_dir, info[2], info[3])
         except OSError, e:
             return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
     if os.path.exists(ssh_key_file):
@@ -400,6 +401,11 @@ def ssh_key_gen(module, user, ssh):
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
+    if rc == 0:
+        # If the keys were successfully created, we should be able
+        # to tweak ownership.
+        os.chown(ssh_key_file, info[2], info[3])
+        os.chown('%s.pub' % ssh_key_file, info[2], info[3])
     return (rc, out, err)
 
 def ssh_key_fingerprint(module, user, ssh):
