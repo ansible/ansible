@@ -112,7 +112,7 @@ class Play(object):
                     if plugin_name not in self.playbook.lookup_plugins_list:
                         raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
                     terms = utils.varReplaceWithItems(self.basedir, x[k], task_vars)
-                    items = self.playbook.lookup_plugins_list[plugin_name].LookupModule(None).run(terms)
+                    items = self.playbook.lookup_plugins_list[plugin_name].LookupModule(basedir=self.basedir, runner=None).run(terms)
 
                 for item in items:
                     mv = task_vars.copy()
