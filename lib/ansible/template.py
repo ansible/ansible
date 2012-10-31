@@ -15,22 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import os
-import shlex
 import re
 import codecs
 import jinja2
 import yaml
-import operator
 import json
 from ansible import errors
-from ansible import __version__
 import ansible.constants as C
 import time
-import StringIO
-import imp
-import glob
 import subprocess
 import datetime
 import pwd
@@ -87,7 +80,6 @@ def _varFind(text, vars, depth=0):
         is_complex = False
         brace_level = 0
     end = var_start
-    path = []
     part_start = (var_start, brace_level)
     space = vars
     while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
@@ -195,10 +187,7 @@ def varReplaceWithItems(basedir, varname, vars):
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
-            try:
-                return varReplaceWithItems(basedir, m['replacement'], vars)
-            except VarNotFoundException:
-                return varname
+            return varReplaceWithItems(basedir, m['replacement'], vars)
         else:
             return template(basedir, varname, vars)
     elif isinstance(varname, (list, tuple)):
@@ -214,7 +203,6 @@ def varReplaceWithItems(basedir, varname, vars):
 def template(basedir, text, vars, expand_lists=False):
     ''' run a text buffer through the templating engine until it no longer changes '''
 
-    prev_text = ''
     try:
         text = text.decode('utf-8')
     except UnicodeEncodeError:
