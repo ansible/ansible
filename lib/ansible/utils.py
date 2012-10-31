@@ -18,9 +18,6 @@
 import sys
 import os
 import shlex
-import re
-import codecs
-import jinja2
 import yaml
 import optparse
 import operator
@@ -32,12 +29,9 @@ import time
 import StringIO
 import imp
 import glob
-import subprocess
 import stat
 import termios
 import tty
-import datetime
-import pwd
 
 VERBOSITY=0
 
@@ -60,6 +54,7 @@ except:
 
 KEYCZAR_AVAILABLE=False
 try:
+    import keyczar.errors as key_errors
     from keyczar.keys import AesKey
     KEYCZAR_AVAILABLE=True
 except ImportError:
@@ -99,7 +94,7 @@ def encrypt(key, msg):
 def decrypt(key, msg):
     try:
         return key.Decrypt(msg)
-    except keyczar.errors.InvalidSignatureError:
+    except key_errors.InvalidSignatureError:
         raise errors.AnsibleError("decryption failed")
 
 ###############################################################
