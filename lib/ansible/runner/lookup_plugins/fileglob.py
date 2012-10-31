@@ -21,11 +21,11 @@ from ansible import utils
 
 class LookupModule(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, basedir=None, **kwargs):
+        self.basedir = basedir
 
-    def run(self, terms):
-        return [ f for f in glob.glob(utils.path_dwim(self.runner.basedir, terms)) if os.path.isfile(f) ]
+    def run(self, terms, **kwargs):
+        return [ f for f in glob.glob(utils.path_dwim(self.basedir, terms)) if os.path.isfile(f) ]
 
 
 
