@@ -66,20 +66,29 @@ examples:
 '''
 
 import platform
+import os
+import re
 
 SERVICE = None
 CHKCONFIG = None
 INITCTL = None
+INITSCRIPT = None
+RCCONF = None
+
 PS_OPTIONS = 'auxww'
 
-def _find_binaries(m):
+def _find_binaries(m,name):
     # list of possible paths for service/chkconfig binaries
     # with the most probable first
     global SERVICE
     global CHKCONFIG
     global INITCTL
+    global INITSCRIPT
+    global RCCONF
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl']
+    initpaths = [ '/etc/init.d','/etc/rc.d','/usr/local/etc/rc.d' ]
+    rcpaths = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
     location = dict()
 
     for binary in binaries:
@@ -95,11 +104,20 @@ def _find_binaries(m):
     elif location.get('update-rc.d', None):
         CHKCONFIG = location['update-rc.d']
     else:
+        for rcfile in rcpaths:
+            if os.path.isfile(rcfile):
+                RCCONF = rcfile
+    if not CHKCONFIG and not RCCONF:
         m.fail_json(msg='unable to find chkconfig or update-rc.d binary')
     if location.get('service', None):
         SERVICE = location['service']
     else:
-        m.fail_json(msg='unable to find service binary')
+        for rcdir in initpaths:
+            initscript = "%s/%s" % (rcdir,name)
+            if os.path.isfile(initscript):
+                INITSCRIPT = initscript
+    if not SERVICE and not INITSCRIPT:
+        m.fail_json(msg='unable to find service binary nor initscript')
     if location.get('initctl', None):
         INITCTL = location['initctl']
     else:
@@ -196,19 +214,39 @@ def _do_enable(name, enable):
     if enable:
         on_off = "on"
         enable_disable = "enable"
+        rc = "YES"
     else:
         on_off = "off"
         enable_disable = "disable"
+        rc = "NO"
 
-    if CHKCONFIG.endswith("update-rc.d"):
-        args = (CHKCONFIG, name, enable_disable)
-    elif CHKCONFIG.endswith("systemctl"):
-        args = (CHKCONFIG, enable_disable, name + ".service")
+    if RCCONF:
+        entry = "%s_enable" % name
+        full_entry = '%s="%s"' % (entry,rc)
+        rc = open(RCCONF,"r+")
+        rctext = rc.read()
+        if re.search("^%s" % full_entry,rctext,re.M) is None:
+            if re.search("^%s" % entry,rctext,re.M) is None:
+                rctext += "\n%s" % full_entry
+            else:
+                rctext = re.sub("^%s.*" % entry,full_entry,rctext,1,re.M)
+            rc.truncate(0)
+            rc.seek(0)
+            rc.write(rctext)
+        rc.close()
+
+        rc=0
+        stderr=stdout=''
     else:
-        args = (CHKCONFIG, name, on_off)
+        if CHKCONFIG.endswith("update-rc.d"):
+            args = (CHKCONFIG, name, enable_disable)
+        elif CHKCONFIG.endswith("systemctl"):
+            args = (CHKCONFIG, enable_disable, name + ".service")
+        else:
+            args = (CHKCONFIG, name, on_off)
 
-    if enable is not None:
-        rc, stdout, stderr = _run("%s %s %s" % args)
+        if enable is not None:
+            rc, stdout, stderr = _run("%s %s %s" % args)
 
     return rc, stdout, stderr
 
@@ -235,7 +273,7 @@ def main():
 
     # ===========================================
     # find binaries locations on minion
-    _find_binaries(module)
+    _find_binaries(module,name)
 
     # ===========================================
     # get service status
@@ -247,6 +285,12 @@ def main():
     rc = 0
     err = ''
     out = ''
+
+    # set command to run
+    if SERVICE:
+        svc_cmd = "%s %s" % (SERVICE, name)
+    elif INITSCRIPT:
+        svc_cmd = "%s" % INITSCRIPT
 
     if module.params['enabled']:
         rc_enable, out_enable, err_enable = _do_enable(name, enable)
@@ -273,15 +317,24 @@ def main():
         # run change commands if we need to
         if changed:
 
+            if platform.system() == 'FreeBSD':
+                start = "onestart"
+                stop = "onestop"
+                reload = "onereload"
+            else:
+                start = "start"
+                stop = "stop"
+                reload = "reload"
+
             if state in ['started', 'running']:
-                rc_state, stdout, stderr = _run("%s %s start" % (SERVICE, name))
+                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,start))
             elif state == 'stopped':
-                rc_state, stdout, stderr = _run("%s %s stop" % (SERVICE, name))
+                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,stop))
             elif state == 'reloaded':
-                rc_state, stdout, stderr = _run("%s %s reload" % (SERVICE, name))
+                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,reload))
             elif state == 'restarted':
-                rc1, stdout1, stderr1 = _run("%s %s stop" % (SERVICE, name))
-                rc2, stdout2, stderr2 = _run("%s %s start" % (SERVICE, name))
+                rc1, stdout1, stderr1 = _run("%s %s" % (svc_cmd,stop))
+                rc2, stdout2, stderr2 = _run("%s %s" % (svc_cmd,start))
                 if rc1 != 0 and rc2 == 0:
                     rc_state = rc + rc2
                     stdout = stdout2
@@ -303,7 +356,8 @@ def main():
         result['enabled'] = module.params['enabled']
     if state:
         result['state'] = state
-    rc, stdout, stderr = _run("%s %s status" % (SERVICE, name))
+
+    rc, stdout, stderr = _run("%s status" % (svc_cmd))
     module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
