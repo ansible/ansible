@@ -222,6 +222,9 @@ def template_from_file(basedir, path, vars):
     environment.filters['from_json'] = json.loads
     environment.filters['to_yaml'] = yaml.dump
     environment.filters['from_yaml'] = yaml.load
+    if 'ansible_jinja2_filters' in vars:
+        for name,filter in vars['ansible_jinja2_filters']:
+            environment.filters[name] = filter
     try:
         data = codecs.open(realpath, encoding="utf8").read()
     except UnicodeDecodeError:
