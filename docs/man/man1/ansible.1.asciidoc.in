@@ -135,9 +135,9 @@ FILES
 
 /usr/share/ansible/ -- Default module library
 
-/etc/ansible/ansible.conf -- Config file, used if present
+/etc/ansible/ansible.cfg -- Config file, used if present
 
-~/.ansible.config -- User config file, overrides the default config if present
+~/.ansible.cfg -- User config file, overrides the default config if present
 
 ENVIRONMENT
 -----------
@@ -147,6 +147,8 @@ The following environment variables may specified.
 ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+ANSIBLE_CONFIG -- Override the default ansible config file
 
 
 AUTHOR
