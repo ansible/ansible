@@ -290,27 +290,25 @@ class Runner(object):
         inject['groups'] = self.inventory.groups_list()
 
         # allow with_foo to work in playbooks...
-        items = []
+        items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
-        if items_plugin is not None:
+        if items_plugin is not None and items_plugin in self.lookup_plugins:
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            if items_plugin in self.lookup_plugins:
-                items_terms = utils.varReplaceWithItems(self.basedir, items_terms, inject)
-                items = self.lookup_plugins[items_plugin].run(items_terms)
+            items_terms = utils.varReplaceWithItems(self.basedir, items_terms, inject)
+            items = self.lookup_plugins[items_plugin].run(items_terms)
+            if type(items) != list:
+                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-        if type(items) != list:
-            raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
-
-        if len(items) and self.module_name in [ 'apt', 'yum' ]:
-            # hack for apt and soon yum, with_items maps back into a single module call
-            inject['item'] = ",".join(items)
-            items = []
+            if len(items) and self.module_name in [ 'apt', 'yum' ]:
+                # hack for apt and soon yum, with_items maps back into a single module call
+                inject['item'] = ",".join(items)
+                items = None
 
         # logic to decide how to run things depends on whether with_items is used
 
-        if len(items) == 0:
+        if items is None:
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
-        else:
+        elif len(items) > 0:
             # executing using with_items, so make multiple calls
             # TODO: refactor
             aggregrate = {}
@@ -339,6 +337,9 @@ class Runner(object):
             if not all_failed:
                 del rd_result['failed']
             return ReturnData(host=host, comm_ok=all_comm_ok, result=rd_result)
+        else:
+            self.callbacks.on_skipped(host, None)
+            return ReturnData(host=host, comm_ok=True, result=dict(skipped=True))
 
     # *****************************************************
 
