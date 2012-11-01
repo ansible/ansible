@@ -15,14 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-
 class LookupModule(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, **kwargs):
+        pass
 
-    def run(self, terms):
+    def run(self, terms, **kwargs):
         return terms
 
 
