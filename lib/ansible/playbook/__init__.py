@@ -27,8 +27,6 @@ from play import Play
 
 SETUP_CACHE = collections.defaultdict(dict)
 
-plugins_dir = os.path.join(os.path.dirname(__file__), '..', 'runner')
-
 class PlayBook(object):
     '''
     runs an ansible playbook, given as a datastructure or YAML filename.
@@ -112,7 +110,6 @@ class PlayBook(object):
         self.inventory.subset(subset)
 
         self.modules_list        = utils.get_available_modules(self.module_path)
-        self.lookup_plugins_list = ansible.runner.lookup_plugin_list
 
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
@@ -120,9 +117,9 @@ class PlayBook(object):
         self.basedir     = os.path.dirname(playbook)
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
         self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
-        ansible.callbacks.load_more_callbacks(os.path.join(self.basedir, "callback_plugins"))
 
-        self.lookup_plugins_list.update(utils.import_plugins(os.path.join(self.basedir, 'lookup_plugins')))
+        for i in self.play_basedirs:
+            utils.plugins.push_basedir(i)
 
     # *****************************************************
 

@@ -24,11 +24,10 @@ import operator
 from ansible import errors
 from ansible import __version__
 from ansible.utils.template import *
+from ansible.utils.plugins import *
 import ansible.constants as C
 import time
 import StringIO
-import imp
-import glob
 import stat
 import termios
 import tty
@@ -456,17 +455,6 @@ def filter_leading_non_json_lines(buf):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
-
-def import_plugins(directory):
-    modules = {}
-    python_files = os.path.join(directory, '*.py')
-    for path in glob.glob(python_files):
-        if path.startswith("_"):
-            continue
-        name, ext = os.path.splitext(os.path.basename(path))
-        if not name.startswith("_"):
-            modules[name] = imp.load_source(name, path)
-    return modules
 
 def get_available_modules(dirname=None):
     """
