@@ -165,6 +165,25 @@ except:
 
 
 class User(object):
+    """
+    This is a generic User manipulation class - generic in this case
+    meaning it is aimed at Linuxish platforms using useradd/userdel/usermod
+    On object creation it will load the most appropriate subclass based
+    on the platform and distribution.
+    
+    A subclass may wish to override the following action methods:-
+      - create_user()
+      - remove_user()
+      - modify_user()
+      - ssh_key_gen()
+      - ssh_key_fingerprint()
+
+    The main function also uses the following User methods to decide
+    what to do:-
+      - user_exists()
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
 
     platform = 'Generic'
     distribution = None
@@ -484,6 +503,16 @@ class User(object):
 # ===========================================
 
 class FreeBSD_User(User):
+    """
+    This is a FreeBSD User manipulation class - it uses the pw command
+    to manipulate the user database, followed by the chpass command
+    to change the password.
+    
+    This overrides the following methods from the generic class:-
+      - create_user()
+      - remove_user()
+      - modify_user()
+    """
 
     platform = 'FreeBSD'
     distribution = None
