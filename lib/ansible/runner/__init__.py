@@ -384,6 +384,7 @@ class Runner(object):
                     interpreters.append(i)
             for i in interpreters:
                 del inject[i]
+            port = C.DEFAULT_REMOTE_PORT
             try:
                 delegate_info = inject['hostvars'][delegate_to]
                 actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
@@ -393,6 +394,7 @@ class Runner(object):
                         inject[i] = delegate_info[i]
             except errors.AnsibleError:
                 actual_host = delegate_to
+                actual_port = port
 
         try:
             if actual_port is not None:

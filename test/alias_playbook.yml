@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: aliasgroup
   vars:
     test_file: /tmp/ansible-alias-test
   tasks:
@@ -7,3 +7,10 @@
   - action: command creates=$test_file false
   - local_action: command true
   - action: command removes=$test_file rm -f $test_file
+
+- hosts: all
+  gather_facts: False
+  tasks:
+  - action: command true
+    delegate_to: alias-node.example.com
+  - action: command true
