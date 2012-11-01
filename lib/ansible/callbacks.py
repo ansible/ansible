@@ -46,8 +46,8 @@ elif os.path.exists("/usr/local/bin/cowsay"):
 def call_callback_module(method_name, *args, **kwargs):
 
     for callback_plugin in callbacks:
-        methods = [ 
-            getattr(callback_plugin, method_name, None), 
+        methods = [
+            getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
         ]
         for method in methods:
@@ -314,6 +314,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             module_msg  = results2.pop('msg', None)
         stderr = results2.pop('stderr', None)
         stdout = results2.pop('stdout', None)
+        returned_msg = results2.pop('msg', None)
 
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
@@ -325,6 +326,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print stringc("stderr: %s" % stderr, 'red')
         if stdout:
             print stringc("stdout: %s" % stdout, 'red')
+        if returned_msg:
+            print stringc("msg: %s" % returned_msg, 'red')
         if not parsed and module_msg:
             print stringc("invalid output was: %s" % module_msg, 'red')
         if ignore_errors:
@@ -457,7 +460,7 @@ class PlaybookCallbacks(object):
             while True:
                 result = prompt(msg, private)
                 second = prompt("confirm " + msg, private)
-                if result == second: 
+                if result == second:
                     break
                 print "***** VALUES ENTERED DO NOT MATCH ****"
         else:
