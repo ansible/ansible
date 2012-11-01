@@ -24,14 +24,6 @@ import os.path
 from ansible.color import stringc
 import ansible.constants as C
 
-dirname = os.path.dirname(__file__)
-callbacks = utils.import_plugins(os.path.join(dirname, 'callback_plugins'))
-callbacks = [ c.CallbackModule() for c in callbacks.values() ]
-def load_more_callbacks(dirname):
-    callbacks.extend([c.CallbackModule() for c in utils.import_plugins(dirname).values()])
-for i in C.DEFAULT_CALLBACK_PLUGIN_PATH.split(os.pathsep):
-    load_more_callbacks(i)
-
 cowsay = None
 if os.getenv("ANSIBLE_NOCOWS") is not None:
     cowsay = None
@@ -45,7 +37,7 @@ elif os.path.exists("/usr/local/bin/cowsay"):
 
 def call_callback_module(method_name, *args, **kwargs):
 
-    for callback_plugin in callbacks:
+    for callback_plugin in utils.plugins.callback_loader.all():
         methods = [
             getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
