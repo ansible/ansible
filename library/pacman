@@ -55,6 +55,8 @@ examples:
       description: remove package 
     - code: "upgrade"
       description: update and upgrade all installed packages
+    - code: "pacman: pkgs=foo,bar state=absent
+      description: remove packages foo and bar (if installed)
       
 '''
 
@@ -98,7 +100,7 @@ def remove_packages(module, packages):
         # Query the package first, to see if we even need to remove
         if not query_package(package):
             continue
-        rc = os.system("pacman -R %s" % (package))
+        rc = os.system("pacman -R %s --noconfirm" % (package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -119,10 +121,10 @@ def install_packages(module, packages):
         if query_package(package):
             continue
 
-        rc = os.system("pacman -S %s" % (name))
+        rc = os.system("pacman -S %s --noconfirm" % (package))
 
         if rc != 0:
-            module.fail_json(msg="failed to install 5s" % (package))
+            module.fail_json(msg="failed to install %s" % (package))
 
         install_c += 1
     
@@ -134,15 +136,18 @@ def install_packages(module, packages):
 
 def main():
     module = AnsibleModule(
+            # I chose to leave upgrade and update out,
+            # that way you can just specify "upgrade" or "update" 
+            # and not "upgrade=yes or "update=yes"
             argument_spec = dict(
                 state = dict(default="present", choices=["present", "absent"]),
-                pkg   = dict(default=None)))
+                pkg   = dict(default=None, aliases=["pkgs"])))
+                
 
     if not os.path.exists(PACMAN_PATH):
         module.fail_json(msg="cannot find pacman, looking for %s" % (PACMAN_PATH))
 
     p = module.params
-
 
     if "upgrade" in p:
         upgrade_packages()
