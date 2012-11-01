@@ -51,7 +51,7 @@ class Task(object):
             # code to allow "with_glob" and to reference a lookup plugin named glob
             elif x.startswith("with_"):
                 plugin_name = x.replace("with_","")
-                if plugin_name in play.playbook.lookup_plugins_list:
+                if plugin_name in utils.plugins.lookup_loader:
                     ds['items_lookup_plugin'] = plugin_name
                     ds['items_lookup_terms'] = ds[x]
                     ds.pop(x)
