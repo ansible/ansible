@@ -160,12 +160,19 @@ class TestPlaybook(unittest.TestCase):
        actual = self._run(pb, 'test/alias_hosts')
        expected = {
            "alias-node.example.com": {
-                "changed": 3,
+                "changed": 5,
                 "failures": 0,
-                "ok": 4,
+                "ok": 6,
                 "skipped": 1,
                 "unreachable": 0,
-            }
+            },
+            "other-alias-node.example.com": {
+                "changed": 1,
+                "failures": 0,
+                "ok": 1,
+                "skipped": 0,
+                "unreachable": 1,
+            },
        }
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
