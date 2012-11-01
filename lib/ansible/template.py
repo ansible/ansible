@@ -187,7 +187,10 @@ def varReplaceWithItems(basedir, varname, vars):
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
-            return varReplaceWithItems(basedir, m['replacement'], vars)
+            if m['replacement'] is not None:
+                return varReplaceWithItems(basedir, m['replacement'], vars)
+            else:
+                return varname
         else:
             return template(basedir, varname, vars)
     elif isinstance(varname, (list, tuple)):
