@@ -1,0 +1,23 @@
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: jinja2_filter
+short_description: Load custom Jinja2 filters
+description:
+  - Load custom Jinja2 filters from a module to use in templates.
+version_added: 0.9
+options:
+  src:
+    description:
+    - The file containing the filters.
+    required: true
+  name:
+    description:
+    - A comma separated list of the names of the filters to import.
+    required: true
+author: Jeroen Hoekx
+examples:
+  - description: Import the 'generate_uuid' function as a filter.
+    code: jinja2_filter src=../library/custom_filters.py name=generate_uuid
+'''
