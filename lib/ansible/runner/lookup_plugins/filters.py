@@ -27,7 +27,8 @@ class LookupModule(object):
         self.runner = runner
 
     def run(self, terms, inject, **kwargs):
-        filters = {}
+        ### lookup plugins have to return a list
+        filters = []
 
         for term in terms:
             args = parse_kv(template(self.runner.basedir, term, inject))
@@ -47,6 +48,6 @@ class LookupModule(object):
                     fn = getattr(module, name)
                 except AttributeError:
                     raise ae("Module '%s' has no filter '%s'"%(module_path, name))
-                filters[name] = fn
+                filters.append( (name, fn) )
 
-        return [{'ansible_jinja2_filters':filters}]
+        return 'ansible_jinja2_filters',filters

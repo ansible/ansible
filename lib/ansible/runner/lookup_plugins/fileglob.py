@@ -25,7 +25,7 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, **kwargs):
-        return [ f for f in glob.glob(utils.path_dwim(self.basedir, terms)) if os.path.isfile(f) ]
+        return 'items', [ f for f in glob.glob(utils.path_dwim(self.basedir, terms)) if os.path.isfile(f) ]
 
 
 

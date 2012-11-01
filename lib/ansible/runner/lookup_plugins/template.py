@@ -23,5 +23,5 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        return utils.template_from_file(self.basedir, terms, inject)
+        return 'items',utils.template_from_file(self.basedir, terms, inject)
 

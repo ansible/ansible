@@ -21,7 +21,7 @@ class LookupModule(object):
         pass
 
     def run(self, terms, **kwargs):
-        return terms
+        return 'items',terms
 
 
 

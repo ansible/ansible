@@ -27,7 +27,7 @@ class Task(object):
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms'
+        'lookup_plugins'
     ]
 
     # to prevent typos and such
@@ -52,8 +52,9 @@ class Task(object):
             elif x.startswith("with_"):
                 plugin_name = x.replace("with_","")
                 if plugin_name in play.playbook.lookup_plugins_list:
-                    ds['items_lookup_plugin'] = plugin_name
-                    ds['items_lookup_terms'] = ds[x]
+                    if 'lookup_plugins' not in ds:
+                        ds['lookup_plugins'] = []
+                    ds['lookup_plugins'].append((plugin_name, ds[x]))
                     ds.pop(x)
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
@@ -121,9 +122,7 @@ class Task(object):
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
 
-        self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
-        self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+        self.lookup_plugins = ds.get('lookup_plugins', None)
 
         self.ignore_errors = ds.get('ignore_errors', False)
 
@@ -149,7 +148,7 @@ class Task(object):
         self.action = utils.template(None, self.action, self.module_vars)
 
         # handle mutually incompatible options
-        incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
+        incompatibles = [ x for x in [ self.first_available_file, self.lookup_plugins ] if x is not None ]
         if len(incompatibles) > 1:
             raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
@@ -157,9 +156,8 @@ class Task(object):
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
 
-        if self.items_lookup_plugin is not None:
-            self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
-            self.module_vars['items_lookup_terms'] = self.items_lookup_terms
+        if self.lookup_plugins is not None:
+            self.module_vars['lookup_plugins'] = self.lookup_plugins
 
         # allow runner to see delegate_to option
         self.module_vars['delegate_to'] = self.delegate_to

@@ -291,18 +291,21 @@ class Runner(object):
 
         # allow with_foo to work in playbooks...
         items = None
-        items_plugin = self.module_vars.get('items_lookup_plugin', None)
-        if items_plugin is not None and items_plugin in self.lookup_plugins:
-            items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.varReplaceWithItems(self.basedir, items_terms, inject)
-            items = self.lookup_plugins[items_plugin].run(items_terms, inject=inject)
-            if type(items) != list:
-                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
-
-            if len(items) and self.module_name in [ 'apt', 'yum' ]:
-                # hack for apt and soon yum, with_items maps back into a single module call
-                inject['item'] = ",".join(items)
-                items = None
+        lookup_plugins = self.module_vars.get('lookup_plugins', [])
+        for lookup_plugin,lookup_terms in lookup_plugins:
+            if lookup_plugin in self.lookup_plugins:
+                lookup_terms = utils.varReplaceWithItems(self.basedir, lookup_terms, inject)
+                ns,val = self.lookup_plugins[lookup_plugin].run(lookup_terms, inject=inject)
+                if type(val) != list:
+                    raise errors.AnsibleError("lookup plugins have to return a list: %r" % val)
+                if ns == 'items':
+                    if self.module_name in [ 'apt', 'yum' ]:
+                        # hack for apt and yum, with_items maps back into a single module call
+                        inject['item'] = ",".join(val)
+                    else:
+                        items = val
+                else:
+                    inject[ns] = val
 
         # logic to decide how to run things depends on whether with_items is used
 
