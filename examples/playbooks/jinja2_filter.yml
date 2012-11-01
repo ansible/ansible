@@ -1,0 +1,10 @@
+---
+
+- hosts: all
+  tasks:
+  # The python module library/custom_filters contains the generate_uuid and
+  # generate_answer functions
+  - action: template src=templates/jinja2_filters.txt dest=/tmp/jinja2_filters.txt
+    with_filters:
+    - src=library/custom_filters.py name=generate_uuid
+    - src=library/custom_filters.py name=generate_answer

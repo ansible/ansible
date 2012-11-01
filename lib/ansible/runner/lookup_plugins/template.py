@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import glob
 from ansible import utils
 
 class LookupModule(object):
@@ -24,8 +22,6 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
-        return 'items', [ f for f in glob.glob(utils.path_dwim(self.basedir, terms)) if os.path.isfile(f) ]
-
-
+    def run(self, terms, inject=None, **kwargs):
+        return 'items',utils.template_from_file(self.basedir, terms, inject)
 
