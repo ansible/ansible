@@ -27,9 +27,9 @@ from ansible.runner.return_data import ReturnData
 from ansible.utils import path_dwim, parse_kv
 
 class ActionModule(object):
-    ''' Create inventory groups based on variables '''
+    ''' Define custom jinja2 template filters '''
 
-    ### We need to be able to modify the inventory
+    ### We need to be able to return function pointers
     BYPASS_HOST_LOOP = True
 
     def __init__(self, runner):
