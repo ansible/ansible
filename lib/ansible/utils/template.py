@@ -141,8 +141,9 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE)\(([^\)]+)\)")
-def _varReplaceFilesAndPipes(basedir, raw):
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE|LOOKUP)\(([^\)]+)\)")
+def _varReplaceFilesAndPipes(basedir, raw, vars):
+    from ansible import utils
     done = [] # Completed chunks to return
 
     while raw:
@@ -156,21 +157,18 @@ def _varReplaceFilesAndPipes(basedir, raw):
 
         replacement = m.group()
         if m.group(1) == "FILE":
-            from ansible import utils
-            path = utils.path_dwim(basedir, m.group(2))
-            try:
-                f = open(path, "r")
-                replacement = f.read()
-                f.close()
-            except IOError:
-                raise errors.AnsibleError("$FILE(%s) failed" % path)
+            module_name = "file"
+            args = m.group(2)
         elif m.group(1) == "PIPE":
-            p = subprocess.Popen(m.group(2), shell=True, stdout=subprocess.PIPE)
-            (stdout, stderr) = p.communicate()
-            if p.returncode == 0:
-                replacement = stdout
-            else:
-                raise errors.AnsibleError("$PIPE(%s) returned %d" % (m.group(2), p.returncode))
+            module_name = "pipe"
+            args = m.group(2)
+        elif m.group(1) == "LOOKUP":
+            module_name, args = m.group(2).split(",", 1)
+            args = args.strip()
+        instance = utils.plugins.lookup_loader.get(module_name, basedir=basedir)
+        replacement = instance.run(args, inject=vars)
+        if not isinstance(replacement, basestring):
+            replacement = ",".join(replacement)
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -211,7 +209,7 @@ def template(basedir, text, vars, expand_lists=False):
     except UnicodeEncodeError:
         pass # already unicode
     text = varReplace(unicode(text), vars, expand_lists=expand_lists)
-    text = _varReplaceFilesAndPipes(basedir, text)
+    text = _varReplaceFilesAndPipes(basedir, text, vars)
     return text
 
 def template_from_file(basedir, path, vars):
