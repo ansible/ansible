@@ -49,14 +49,14 @@ class ActionModule(object):
         if not os.path.exists(module_path):
             raise ae("'%s' does not exist."%(module_path))
 
-        filters = inject.get('ansible_jinja2_filters',[])
+        filters = inject.get('ansible_jinja2_filters',{})
         module = imp.load_source('module', module_path)
         for name in args['name'].strip(',').split(','):
             try:
                 fn = getattr(module, name)
             except AttributeError:
                 raise ae("Module '%s' has no filter '%s'"%(module_path, name))
-            filters.append((name,fn))
+            filters[name] = fn
 
         result = {'changed': False, 'ansible_facts': {'ansible_jinja2_filters': filters}}
 
