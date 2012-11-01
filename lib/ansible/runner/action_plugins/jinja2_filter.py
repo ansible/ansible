@@ -24,7 +24,7 @@ import ansible
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv
+from ansible.utils import path_dwim, parse_kv
 
 class ActionModule(object):
     ''' Create inventory groups based on variables '''
@@ -44,7 +44,7 @@ class ActionModule(object):
 
         vv("created 'jinja2_filter' ActionModule: src=%s name=%s"%(args['src'],args['name']))
 
-        module_path = os.path.join(self.runner.basedir, args['src'])
+        module_path = path_dwim(self.runner.basedir, args['src'])
 
         if not os.path.exists(module_path):
             raise ae("'%s' does not exist."%(module_path))
