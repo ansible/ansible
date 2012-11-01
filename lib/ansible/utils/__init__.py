@@ -23,7 +23,7 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible import template as ans_template
+from ansible.utils.template import *
 import ansible.constants as C
 import time
 import StringIO
@@ -215,22 +215,6 @@ def parse_json(raw_data):
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
         return results
-
-def varReplace(raw, vars, depth=0, expand_lists=False):
-    ''' Perform variable replacement of $variables in string raw using vars dictionary '''
-    return ans_template.varReplace(raw, vars, depth=depth, expand_lists=expand_lists)
-
-def varReplaceWithItems(basedir, varname, vars):
-    ''' helper function used by with_items '''
-    return ans_template.varReplaceWithItems(basedir, varname, vars)
-
-def template(basedir, text, vars, expand_lists=False):
-    ''' run a text buffer through the templating engine until it no longer changes '''
-    return ans_template.template(basedir, text, vars, expand_lists=expand_lists)
-
-def template_from_file(basedir, path, vars):
-    ''' run a file through the templating engine '''
-    return ans_template.template_from_file(basedir, path, vars)
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
