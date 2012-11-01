@@ -324,6 +324,10 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplaceWithItems(None, template, vars)
         assert sorted(res) == sorted(vars['alphas'])
 
+        template = '${data.nonexisting}'
+        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        assert res == template
+
     #####################################
     ### Template function tests
 
