@@ -33,16 +33,18 @@ The things in brackets are group names. You don't have to have them,
 but they are useful.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  
+after the hostname with a colon.
 
     four.example.com:5309
 
-In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
+In 0.6 and later, if you have a lot of hosts following similar patterns you can
+do this rather than listing each hostname::
 
     [webservers]
     www[01:50].example.com
+    db-[a:f].example.com
 
-Leading zeros can be included or removed, as desired, and the ranges are inclusive.
+For numeric patterns, leading zeros can be included or removed. The ranges are inclusive.
 
 Selecting Targets
 +++++++++++++++++
@@ -50,7 +52,7 @@ Selecting Targets
 We'll go over how to use the command line in :doc:`examples` section, however, basically it looks like this::
 
     ansible <pattern_goes_here> -m <module_name> -a <arguments>
-    
+
 Such as::
 
     ansible webservers -m service -a "name=httpd state=restarted"
@@ -63,7 +65,7 @@ This is done by designating particular host names or groups of hosts.
 The following patterns target all hosts in the inventory file::
 
     all
-    *    
+    *
 
 Basically 'all' is an alias for '*'.  It is also possible to address a specific host or hosts::
 
@@ -71,7 +73,7 @@ Basically 'all' is an alias for '*'.  It is also possible to address a specific 
     one.example.com:two.example.com
     192.168.1.50
     192.168.1.*
- 
+
 The following patterns address one or more groups, which are denoted
 with the aforementioned bracket headers in the inventory file::
 
@@ -98,7 +100,7 @@ Host Variables
 ++++++++++++++
 
 It is easy to assign variables to hosts that will be used later in playbooks::
- 
+
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
@@ -181,7 +183,7 @@ the 'raleigh' group might look like::
 
 It is ok if these files do not exist, this is an optional feature.
 
-Tip: Keeping your inventory file and variables in a git repo (or other version control) 
+Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
 .. versionadded:: 0.5

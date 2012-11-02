@@ -35,32 +35,28 @@ class TestInventory(unittest.TestCase):
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
 
+    all_simple_hosts=['jupiter', 'saturn', 'zeus', 'hera',
+            'cerberus001','cerberus002','cerberus003',
+            'cottus99', 'cottus100',
+            'poseidon', 'thor', 'odin', 'loki',
+            'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
+            'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5',
+            'Hotep-a', 'Hotep-b', 'Hotep-c',
+            'BastC', 'BastD', ]
+
     #####################################
     ### Simple inventory format tests
 
     def test_simple(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts()
-
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
-                        'cerberus001','cerberus002','cerberus003',
-                        'cottus99', 'cottus100',
-                        'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
+        print 'hosts', hosts
+        self.assertEqual(sorted(hosts),  sorted(self.all_simple_hosts))
 
     def test_simple_all(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
-
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
-                        'cerberus001','cerberus002','cerberus003',
-                        'cottus99', 'cottus100',
-                        'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
+        assert sorted(hosts) == sorted(self.all_simple_hosts)
 
     def test_simple_norse(self):
         inventory = self.simple_inventory()
@@ -159,8 +155,6 @@ class TestInventory(unittest.TestCase):
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_complex_enumeration(self):
-
-
         expected1 = ['rtp_a', 'rtp_b']
         expected2 = ['rtp_c', 'tri_a']
         expected3 = ['rtp_b', 'rtp_c', 'tri_a', 'tri_b', 'tri_c']
@@ -252,7 +246,7 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('zeus')
 
         print "VARS=%s" % vars
-        
+
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god']}
