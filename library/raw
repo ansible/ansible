@@ -4,6 +4,7 @@ DOCUMENTATION = '''
 ---
 module: raw
 short_description: Executes a low-down and dirty SSH command
+options: {}
 description: 
      - Executes a low-down and dirty SSH command, not going through the module
        subsystem. This is useful and should only be done in two cases. The
