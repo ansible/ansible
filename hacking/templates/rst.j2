@@ -29,7 +29,8 @@
     <th class="head">choices</th>
     <th class="head">comments</th>
     </tr>
-    {% for (k,v) in options.iteritems()  %}
+    {% for k in option_keys %}
+    {% set v = options[k] %}
     <tr>
     <td>@{ k }@</td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
