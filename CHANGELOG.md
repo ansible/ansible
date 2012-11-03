@@ -15,11 +15,25 @@ Ansible Changes By Release
 * if ansible_*_interpreter is set on a delegated host, it now works as intended
 * authorized key module uses temp file now to prevent failure on full disk
 * MySQL module takes new grant options
-* user module can create SHS keys
+* user module can create SSH keys
 * yum module takes enablerepo= and disablerepo=
 * --limit can now take "," as well as ";" or ":"
 * various git module improvements/tweaks
-* EC2 module now produces nicer failure message if AWS is down (or similar)
+* EC2 inventory script now produces nicer failure message if AWS is down (or similar)
+* user module now works on FreeBSD, generic system for modules subclassed by OS platform/distro
+* plugin loading code now more streamlined
+* module options now sorted in documentation
+* able to set default for asking password & sudo password in config file
+* now installs nicely if running inside a virtualenv
+* msg is now displaced with newlines when a task fails
+* added a template lookup plugin (with_template: "{{ some_jinja2 }}")
+* if any with_ plugin has no results in a list, the task is now skipped
+* further upgrades to service module service status reporting
+* tweaks to get service module to play nice with BSD style service systems (rc.conf)
+* 'domain' fact now available
+* group_by module allows partitioning hosts based on group data
+* create= option on lineinfile can create the file when it does not exist
+* misc yum module fixing for various corner cases
 
 0.8 "Cathedral" -- Oct 19, 2012
 
