@@ -45,14 +45,6 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-dirname = os.path.dirname(__file__)
-action_plugin_list = utils.import_plugins(os.path.join(dirname, 'action_plugins'))
-for i in reversed(C.DEFAULT_ACTION_PLUGIN_PATH.split(os.pathsep)):
-    action_plugin_list.update(utils.import_plugins(i))
-lookup_plugin_list = utils.import_plugins(os.path.join(dirname, 'lookup_plugins'))
-for i in reversed(C.DEFAULT_LOOKUP_PLUGIN_PATH.split(os.pathsep)):
-    lookup_plugin_list.update(utils.import_plugins(i))
-
 multiprocessing_runner = None
 
 ################################################
@@ -163,19 +155,6 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
-
-        # instantiate plugin classes
-        self.action_plugins = {}
-        self.lookup_plugins = {}
-        for (k,v) in action_plugin_list.iteritems():
-            self.action_plugins[k] = v.ActionModule(self)
-        for (k,v) in lookup_plugin_list.iteritems():
-            self.lookup_plugins[k] = v.LookupModule(runner=self, basedir=self.basedir)
-
-        for (k,v) in utils.import_plugins(os.path.join(self.basedir, 'action_plugins')).iteritems():
-            self.action_plugins[k] = v.ActionModule(self)
-        for (k,v) in utils.import_plugins(os.path.join(self.basedir, 'lookup_plugins')).iteritems():
-            self.lookup_plugins[k] = v.LookupModule(runner=self, basedir=self.basedir)
 
     # *****************************************************
 
@@ -292,10 +271,10 @@ class Runner(object):
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
-        if items_plugin is not None and items_plugin in self.lookup_plugins:
+        if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
             items_terms = self.module_vars.get('items_lookup_terms', '')
             items_terms = utils.varReplaceWithItems(self.basedir, items_terms, inject)
-            items = self.lookup_plugins[items_plugin].run(items_terms, inject=inject)
+            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
@@ -417,16 +396,16 @@ class Runner(object):
             tmp = self._make_tmp_path(conn)
         result = None
 
-        handler = self.action_plugins.get(module_name, None)
-        if handler:
+        if module_name in utils.plugins.action_loader:
             if self.background != 0:
                 raise errors.AnsibleError("async mode is not supported with the %s module" % module_name)
+            handler = utils.plugins.action_loader.get(module_name, self)
             result = handler.run(conn, tmp, module_name, module_args, inject)
         else:
             if self.background == 0:
-                result = self.action_plugins['normal'].run(conn, tmp, module_name, module_args, inject)
+                result = utils.plugins.action_loader.get('normal', self).run(conn, tmp, module_name, module_args, inject)
             else:
-                result = self.action_plugins['async'].run(conn, tmp, module_name, module_args, inject)
+                result = utils.plugins.action_loader.get('async', self).run(conn, tmp, module_name, module_args, inject)
 
         conn.close()
 
@@ -648,7 +627,7 @@ class Runner(object):
         # to be ran once per group of hosts. Example module: pause,
         # run once per hostgroup, rather than pausing once per each
         # host.
-        p = self.action_plugins.get(self.module_name, None)
+        p = utils.plugins.action_loader.get(self.module_name, self)
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
