@@ -33,15 +33,18 @@ The things in brackets are group names. You don't have to have them,
 but they are useful.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  
+after the hostname with a colon.  Ports listed in any SSH config file won't be read,
+so it is important that you set them if things are not running on the default port::
 
-    four.example.com:5309
+    badwolf.example.com:5309
 
-You can also use other variables to specify your hosts (useful when using '-c ssh'). Suppose that you want to use in your inventory file the name four.example.com. That host has a sshd running on port 5309 (or have a firewall rule in front to redirect 5309->22) and is known in the DNS a four.example.org : 
-    
-    four.example.com ansible_ssh_port=5309 ansible_ssh_host=four.example.org
+Suppose you have just static IPs and want to set up some aliases that don't live in your host file, or you are connecting through tunnels.  You can do things like this::
 
-In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
+    jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
+
+In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.
+
+Adding a lot of hosts?  In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
 
     [webservers]
     www[01:50].example.com
