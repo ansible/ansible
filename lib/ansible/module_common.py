@@ -53,6 +53,7 @@ import stat
 import stat
 import grp
 import pwd
+import platform
 
 HAVE_SELINUX=False
 try:
@@ -83,6 +84,47 @@ FILE_COMMON_ARGUMENTS=dict(
     selevel = dict(),
     setype = dict(),
 )
+
+def get_platform():
+    ''' what's the platform?  example: Linux is a platform. '''
+    return platform.system()
+
+def get_distribution():
+    ''' return the distribution name '''
+    if platform.system() == 'Linux':
+        try:
+            distribution = platform.linux_distribution()[0].capitalize
+        except:
+            # FIXME: MethodMissing, I assume?
+            distribution = platform.dist()[0].capitalize
+    else:
+        distribution = None
+    return distribution
+
+def load_platform_subclass(cls, *args, **kwargs):
+    ''' 
+    used by modules like User to have different implementations based on detected platform.  See User
+    module for an example.
+    '''
+
+    this_platform = get_platform()
+    distribution = get_distribution()
+    subclass = None
+  
+    # get the most specific superclass for this platform
+    if distribution is not None:
+        for sc in cls.__subclasses__():
+            if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
+                subclass = sc
+    if subclass is None:
+        for sc in cls.__subclasses__():
+            if sc.platform == this_platform and sc.distribution is None:
+                subclass = sc
+    if subclass is None:
+        subclass = cls
+
+    return super(cls, subclass).__new__(subclass, *args, **kwargs)
+
 
 class AnsibleModule(object):
 
