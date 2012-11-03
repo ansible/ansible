@@ -27,6 +27,7 @@ description:
    - A trivial test module, this module always returns 'pong' on successful
      contact. It does not make sense in playbooks, but is useful from
      C(/usr/bin/ansible)
+options: {}
 examples:
    - code: ansible webservers -m ping
      description: Test 'webservers' status

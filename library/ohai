@@ -29,7 +29,7 @@ description:
        returns JSON inventory data.
        I(Ohai) data is a bit more verbose and nested than I(facter).
 version_added: "0.6"
-options: []
+options: {}
 examples:
    - code: ansible webservers -m ohai --tree=/tmp/ohaidata
      description: "Retrieve I(ohai) data from all Web servers and store in one-file per host"

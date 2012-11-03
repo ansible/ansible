@@ -30,6 +30,7 @@ DOCUMENTATION = '''
 ---
 module: setup
 short_description: Gathers facts about remote hosts
+options: {}
 description: 
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be

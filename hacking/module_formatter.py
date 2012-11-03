@@ -251,7 +251,7 @@ def main():
         variable_start_string="@{",
         variable_end_string="}@",
         trim_blocks=True,
-        )
+    )
 
     env.globals['xline'] = rst_xline
 
@@ -333,6 +333,12 @@ def main():
             #sys.exit(1)
 
         if not doc is None:
+
+            all_keys = []
+            for (k,v) in doc['options'].iteritems():
+                all_keys.append(k)
+            all_keys = sorted(all_keys)
+            doc['option_keys'] = all_keys 
 
             doc['filename']         = fname
             doc['docuri']           = doc['module'].replace('_', '-')

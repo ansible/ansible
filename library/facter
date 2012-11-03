@@ -29,7 +29,7 @@ description:
        (U(https://github.com/puppetlabs/facter)) on the remote system, returning
        JSON data that can be useful for inventory purposes.
 version_added: "0.2"
-options: []
+options: {}
 examples:
    - code: ansible www.example.net -m facter
      description: "Example command-line invocation"
