@@ -75,6 +75,7 @@ class Cli(object):
 
         sshpass = None
         sudopass = None
+        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
         options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
