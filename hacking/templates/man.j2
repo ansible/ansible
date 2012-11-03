@@ -13,7 +13,8 @@
 ."
 {% if options %}
 .SH OPTIONS
-{% for (k,v) in options.iteritems()  %}
+{% for k in option_keys %}
+   {% set v = options[k] %}
 
 .IP @{ k }@
 {% for desc in v.description %}@{ desc | jpfunc }@{% endfor %}
