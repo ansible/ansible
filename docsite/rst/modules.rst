@@ -50,11 +50,6 @@ Let's see what's available in the Ansible module library, out of the box:
 .. include:: modules/_list.rst
 
 
-Additional Contrib Modules
-``````````````````````````
-
-In addition to the following built-in modules, community modules are available at `Ansible Resources <http://github.com/ansible/ansible-resources>`_.
-
 Writing your own modules
 ````````````````````````
 
