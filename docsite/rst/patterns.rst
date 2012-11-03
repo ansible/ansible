@@ -37,6 +37,10 @@ after the hostname with a colon.
 
     four.example.com:5309
 
+You can also use other variables to specify your hosts (useful when using '-c ssh'). Suppose that you want to use in your inventory file the name four.example.com. That host has a sshd running on port 5309 (or have a firewall rule in front to redirect 5309->22) and is known in the DNS a four.example.org : 
+    
+    four.example.com ansible_ssh_port=5309 ansible_ssh_host=four.example.org
+
 In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
 
     [webservers]
