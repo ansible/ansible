@@ -25,6 +25,7 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.utils',
          'ansible.inventory',
          'ansible.inventory.vars_plugins',
          'ansible.playbook',
