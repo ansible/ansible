@@ -149,7 +149,7 @@ examples:
       description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
     - code: "user: name=johnd state=absent remove=yes"
       description: "Remove the user 'johnd'"
-    - code: 'user: name=jsmith ssh_key=generate ssh_key_bits=2048'
+    - code: 'user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048'
       description: "Create a 2048-bit SSH key for user jsmith"
 '''
 
