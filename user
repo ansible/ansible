@@ -450,9 +450,7 @@ class User(object):
         else:
             cmd.append('')
 
-        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate()
-        rc = p.returncode
+        (rc, out, err) = self.execute_command(cmd)
         if rc == 0:
             # If the keys were successfully created, we should be able
             # to tweak ownership.
