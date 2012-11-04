@@ -407,8 +407,8 @@ class User(object):
             return passwd
         else:
             # Read shadow file for user's encrypted password string
-            if os.path.exists(User.SHADOWFILE) and os.access(User.SHADOWFILE, os.R_OK):
-                for line in open(User.SHADOWFILE).readlines():
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
         return passwd
@@ -430,6 +430,7 @@ class User(object):
         if not os.path.exists(ssh_dir):
             try:
                 os.mkdir(ssh_dir, 0700)
+                os.chown(ssh_dir, info[2], info[3])
             except OSError, e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
         if os.path.exists(ssh_key_file):
@@ -449,9 +450,7 @@ class User(object):
         else:
             cmd.append('')
 
-        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate()
-        rc = p.returncode
+        (rc, out, err) = self.execute_command(cmd)
         if rc == 0:
             # If the keys were successfully created, we should be able
             # to tweak ownership.
@@ -569,6 +568,7 @@ class FreeBsdUser(User):
                'usermod',
                '-n',
                self.name ]
+        cmd_len = len(cmd)
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
@@ -615,15 +615,19 @@ class FreeBsdUser(User):
                     groups_need_mod = True
 
             if groups_need_mod:
+                cmd.append('-G')
                 new_groups = groups
                 if self.append:
                     new_groups.append(current_groups)           
                 cmd.append(','.join(new_groups))
 
-        # modify the user
-        (rc, out, err) = self.execute_command(cmd)
-        if rc is not None and rc != 0:
-            module.fail_json(name=self.name, msg=err, rc=rc)
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
+            (rc, out, err) = (None, '', '')
 
         # we have to set the password in a second command
         if self.password is not None and info[1] != self.password:
