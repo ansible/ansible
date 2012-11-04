@@ -568,6 +568,7 @@ class FreeBsdUser(User):
                'usermod',
                '-n',
                self.name ]
+        cmd_len = len(cmd)
         info = self.user_info()
 
         if self.uid is not None and info[2] != int(self.uid):
@@ -614,15 +615,19 @@ class FreeBsdUser(User):
                     groups_need_mod = True
 
             if groups_need_mod:
+                cmd.append('-G')
                 new_groups = groups
                 if self.append:
                     new_groups.append(current_groups)           
                 cmd.append(','.join(new_groups))
 
-        # modify the user
-        (rc, out, err) = self.execute_command(cmd)
-        if rc is not None and rc != 0:
-            module.fail_json(name=self.name, msg=err, rc=rc)
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
+            (rc, out, err) = (None, '', '')
 
         # we have to set the password in a second command
         if self.password is not None and info[1] != self.password:
