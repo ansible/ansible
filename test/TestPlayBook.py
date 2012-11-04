@@ -113,6 +113,10 @@ class TestPlaybook(unittest.TestCase):
 
    def _run(self, test_playbook, host_list='test/ansible_hosts'):
        ''' run a module and get the localhost results '''
+       # This ensures tests are independent of eachother
+       ansible.playbook.SETUP_CACHE.clear()
+       EVENTS = []
+
        self.test_callbacks = TestCallbacks()
        self.playbook = ansible.playbook.PlayBook(
            playbook     = test_playbook,
@@ -176,6 +180,29 @@ class TestPlaybook(unittest.TestCase):
        }
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
+
+   def test_lookups(self):
+       pb = os.path.join(self.test_dir, 'lookup_plugins.yml')
+       actual = self._run(pb)
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 7,
+               "failures": 0,
+               "ok": 9,
+               "skipped": 1,
+               "unreachable": 0
+           }   
+       }   
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
+       assert len(EVENTS) == 44
 
    def test_playbook_vars(self): 
        test_callbacks = TestCallbacks()
