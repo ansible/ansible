@@ -42,6 +42,7 @@ class PluginLoader(object):
         self.subdir = subdir
         self.aliases = aliases
         self._module_cache = {}
+        self._instance_cache = {}
 
     def _get_package_path(self):
         """Gets the path of a Python package"""
@@ -70,6 +71,12 @@ class PluginLoader(object):
         return self.find_plugin(name) is not None
     __contains__ = has_plugin
 
+    def _get_instance(self, path, *args, **kwargs):
+        k = "%s %s %s" % (path, " ".join([repr(a) for a in args]), " ".join(["%s=%r" % (k, v) for k,v in kwargs.iteritems()]))
+        if k not in self._instance_cache:
+            self._instance_cache[k] = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+        return self._instance_cache[k]
+
     def get(self, name, *args, **kwargs):
         if name in self.aliases:
             name = self.aliases[name]
@@ -78,7 +85,7 @@ class PluginLoader(object):
             return None
         if path not in self._module_cache:
             self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
-        return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+        return self._get_instance(path, *args, **kwargs)
 
     def all(self, *args, **kwargs):
         for i in self._get_paths():
@@ -88,7 +95,7 @@ class PluginLoader(object):
                     continue
                 if path not in self._module_cache:
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
-                yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+                yield self._get_instance(path, *args, **kwargs)
 
 action_loader     = PluginLoader('ActionModule',   'ansible.runner.action_plugins',     C.DEFAULT_ACTION_PLUGIN_PATH,     'action_plugins')
 callback_loader   = PluginLoader('CallbackModule', 'ansible.callback_plugins',          C.DEFAULT_CALLBACK_PLUGIN_PATH,   'callback_plugins')
