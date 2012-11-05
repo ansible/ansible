@@ -95,3 +95,4 @@ callback_loader   = PluginLoader('CallbackModule', 'ansible.callback_plugins',  
 connection_loader = PluginLoader('Connection',     'ansible.runner.connection_plugins', C.DEFAULT_CONNECTION_PLUGIN_PATH, 'connection_plugins', aliases={'paramiko': 'paramiko_ssh'})
 lookup_loader     = PluginLoader('LookupModule',   'ansible.runner.lookup_plugins',     C.DEFAULT_LOOKUP_PLUGIN_PATH,     'lookup_plugins')
 vars_loader       = PluginLoader('VarsModule',     'ansible.inventory.vars_plugins',    C.DEFAULT_VARS_PLUGIN_PATH,       'vars_plugins')
+filter_loader     = PluginLoader('FilterModule',   'ansible.runner.filter_plugins',     C.DEFAULT_FILTER_PLUGIN_PATH,     'filter_plugins')
