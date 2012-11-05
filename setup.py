@@ -34,6 +34,7 @@ setup(name='ansible',
          'ansible.runner.lookup_plugins',
          'ansible.runner.connection_plugins',
          'ansible.runner.action_plugins',
+         'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
       ],
       scripts=[
