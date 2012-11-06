@@ -151,7 +151,7 @@ def command(data):
         return dict(failed=True, msg='internal error: tmp_path is required')
 
     log("executing: %s" % data['cmd'])
-    p = subprocess.Popen(data['cmd'], shell=True, stdout=subprocess.PIPE)
+    p = subprocess.Popen(data['cmd'], shell=True, stdout=subprocess.PIPE, close_fds=True)
     (stdout, stderr) = p.communicate()
     if stdout is None:
         stdout = ''
