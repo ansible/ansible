@@ -98,24 +98,14 @@ def url_do_get(module, url, dest):
     """
 
     USERAGENT = 'ansible-httpget'
-    info = dict(url=url)
+    info = dict(url=url, dest=dest)
     r = None
-    actualdest = None
-
-    if os.path.isdir(dest):
-        urlfilename = url_filename(url)
-        actualdest = "%s/%s" % (dest, urlfilename)
-        module.params['path'] = actualdest
-    else:
-        actualdest = dest
-
-    info['actualdest'] = actualdest
 
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
-    if os.path.exists(actualdest):
-        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(actualdest))
+    if os.path.exists(dest):
+        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
         tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
 
@@ -144,12 +134,11 @@ def url_get(module, url, dest):
 
     # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
-        module.exit_json(url=url, dest=info.get('actualdest', dest), changed=False, msg=info.get('msg', ''))
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
 
     # create a temporary file and copy content to do md5-based replacement
     if info['status'] != 200:
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url)
-    actualdest = info['actualdest']
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
 
     fd, tempname = tempfile.mkstemp()
     f = os.fdopen(fd, 'wb')
@@ -187,9 +176,10 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     thirsty = module.boolean(module.params['thirsty'])
 
+    if os.path.isdir(dest):
+        dest = os.path.join(dest, url_filename(url))
+
     if not thirsty:
-        if os.path.isdir(dest):
-            module.fail_json(msg="non-thirsty mode needs a filename for a destination, not a directory")
         if os.path.exists(dest):
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
@@ -197,7 +187,6 @@ def main():
     tmpsrc, info = url_get(module, url, dest)
     md5sum_src   = None
     md5sum_dest  = None
-    dest         = info['actualdest']
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
