@@ -235,14 +235,15 @@ class Runner(object):
                 raise Exception("unexpected return type: %s" % type(exec_rc))
             # redundant, right?
             if not exec_rc.comm_ok:
-                self.callbacks.on_unreachable(host, exec_rc.result)
+                msg = exec_rc.result.strip('\r\n')
+                self.callbacks.on_unreachable(host, msg)
             return exec_rc
         except errors.AnsibleError, ae:
-            msg = str(ae)
+            msg = str(ae).strip('\r\n')
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
-            msg = traceback.format_exc()
+            msg = traceback.format_exc().strip('\r\n')
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 

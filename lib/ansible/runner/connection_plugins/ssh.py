@@ -111,7 +111,7 @@ class Connection(object):
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
 
-        return ('', stdout, '')
+        return ('', stdout.strip('\r\n'), '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

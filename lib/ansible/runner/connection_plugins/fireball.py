@@ -87,7 +87,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        return ('', response.get('stdout',''), response.get('stderr',''))
+        return ('', response.get('stdout','').strip('\r\n'), response.get('stderr','').strip('\r\n'))
 
     def put_file(self, in_path, out_path):
 
