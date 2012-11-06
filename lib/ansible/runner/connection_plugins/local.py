@@ -51,7 +51,7 @@ class Connection(object):
         p = subprocess.Popen(cmd, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        return ("", stdout, stderr)
+        return ("", stdout.strip('\r\n'), stderr.strip('\r\n'))
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''

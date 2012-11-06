@@ -144,7 +144,7 @@ class Connection(object):
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
-        return (chan.makefile('wb', bufsize), chan.makefile('rb', bufsize), '')
+        return (chan.makefile('wb', bufsize), chan.makefile('rb', bufsize).strip('\r\n'), '')
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
