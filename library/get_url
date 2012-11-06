@@ -98,24 +98,14 @@ def url_do_get(module, url, dest):
     """
 
     USERAGENT = 'ansible-httpget'
-    info = dict(url=url)
+    info = dict(url=url, dest=dest)
     r = None
-    actualdest = None
-
-    if os.path.isdir(dest):
-        urlfilename = url_filename(url)
-        actualdest = "%s/%s" % (dest, urlfilename)
-        module.params['path'] = actualdest
-    else:
-        actualdest = dest
-
-    info['actualdest'] = actualdest
 
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
-    if os.path.exists(actualdest):
-        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(actualdest))
+    if os.path.exists(dest):
+        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
         tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
 
@@ -129,7 +119,7 @@ def url_do_get(module, url, dest):
         return r, info
     except urllib2.URLError, e:
         code = getattr(e, 'code', -1)
-        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
+        module.fail_json(rc=256, msg="Request failed: %s" % str(e), status_code=code)
 
     return r, info
 
@@ -144,12 +134,11 @@ def url_get(module, url, dest):
 
     # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
-        module.exit_json(url=url, dest=info.get('actualdest', dest), changed=False, msg=info.get('msg', ''))
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
 
     # create a temporary file and copy content to do md5-based replacement
     if info['status'] != 200:
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url)
-    actualdest = info['actualdest']
+        module.fail_json(rc=257, msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
 
     fd, tempname = tempfile.mkstemp()
     f = os.fdopen(fd, 'wb')
@@ -157,7 +146,7 @@ def url_get(module, url, dest):
         shutil.copyfileobj(req, f)
     except Exception, err:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(rc=258, msg="failed to create temporary content file: %s" % str(err))
     f.close()
     req.close()
     return tempname, info
@@ -169,9 +158,9 @@ def main():
 
     # does this really happen on non-ancient python?
     if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
+        module.fail_json(rc=259, msg="urllib2 is not installed")
     if not HAS_URLPARSE:
-        module.fail_json(msg="urlparse is not installed")
+        module.fail_json(rc=260, msg="urlparse is not installed")
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
@@ -187,25 +176,25 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     thirsty = module.boolean(module.params['thirsty'])
 
+    if os.path.isdir(dest):
+        dest = os.path.join(dest, url_filename(url))
+
     if not thirsty:
-        if os.path.isdir(dest):
-            module.fail_json(msg="non-thirsty mode needs a filename for a destination, not a directory")
         if os.path.exists(dest):
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+            module.exit_json(rc=261, msg="file already exists", dest=dest, url=url, changed=False)
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest)
     md5sum_src   = None
     md5sum_dest  = None
-    dest         = info['actualdest']
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
+        module.fail_json(rc=262, msg="Request failed", status_code=info['status'], response=info['msg'])
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json( msg="Source %s not readable" % (tmpsrc))
+        module.fail_json(rc=263, msg="Source %s not readable" % (tmpsrc))
     md5sum_src = module.md5(tmpsrc)
 
     # check if there is no dest file
@@ -213,22 +202,22 @@ def main():
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json( msg="Destination %s not writable" % (dest))
+            module.fail_json(rc=264, msg="Destination %s not writable" % (dest))
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json( msg="Destination %s not readable" % (dest))
+            module.fail_json(rc=265, msg="Destination %s not readable" % (dest))
         md5sum_dest = module.md5(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
+            module.fail_json(rc=266, msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     if md5sum_src != md5sum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(rc=267, msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
         changed = True
     else:
         changed = False
