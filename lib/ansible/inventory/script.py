@@ -22,6 +22,7 @@ import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible import utils
+from ansible import errors
 
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
@@ -29,7 +30,10 @@ class InventoryScript(object):
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         cmd = [ filename, "--list" ]
-        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
         self.data = stdout
         self.groups = self._parse()
