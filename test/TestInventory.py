@@ -9,9 +9,10 @@ class TestInventory(unittest.TestCase):
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
 
-        self.inventory_file         = os.path.join(self.test_dir, 'simple_hosts')
-        self.complex_inventory_file = os.path.join(self.test_dir, 'complex_hosts')
-        self.inventory_script       = os.path.join(self.test_dir, 'inventory_api.py')
+        self.inventory_file             = os.path.join(self.test_dir, 'simple_hosts')
+        self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
+        self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
+        self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -28,6 +29,9 @@ class TestInventory(unittest.TestCase):
 
     def simple_inventory(self):
         return Inventory(self.inventory_file)
+
+    def large_range_inventory(self):
+        return Inventory(self.large_range_inventory_file)
 
     def script_inventory(self):
         return Inventory(self.inventory_script)
@@ -50,7 +54,6 @@ class TestInventory(unittest.TestCase):
     def test_simple(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts()
-        print 'hosts', hosts
         self.assertEqual(sorted(hosts),  sorted(self.all_simple_hosts))
 
     def test_simple_all(self):
@@ -127,6 +130,11 @@ class TestInventory(unittest.TestCase):
                      'inventory_hostname_short': 'hera' }
         print expected
         assert vars == expected
+
+    def test_large_range(self):
+        inventory = self.large_range_inventory()
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts),  sorted('bob%03i' %i  for i in range(0, 143)))
 
     ###################################################
     ### INI file advanced tests
