@@ -56,17 +56,17 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
-                fn = utils.template(self.runner.basedir, fn, inject)
-                fn = utils.path_dwim(self.runner.basedir, fn)
-                if os.path.exists(fn):
-                    source = fn
+                fnt = utils.template(self.runner.basedir, fn, inject)
+                fnd = utils.path_dwim(self.runner.basedir, fnt)
+                if os.path.exists(fnd):
+                    source = fnt
                     found = True
                     break
             if not found:
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, comm_ok=False, result=result)
-
-        source = utils.template(self.runner.basedir, source, inject)
+        else:
+            source = utils.template(self.runner.basedir, source, inject)
 
         # template the source data locally & transfer
         try:
