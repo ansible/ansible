@@ -130,7 +130,7 @@ class TestPlaybook(unittest.TestCase):
        return result
 
    def test_one(self):
-       pb = os.path.join(self.test_dir, 'playbook1.yml')
+       pb = 'test/playbook1.yml'
        actual = self._run(pb)
 
        # if different, this will output to screen
