@@ -127,6 +127,10 @@ class Task(object):
 
         self.ignore_errors = ds.get('ignore_errors', False)
 
+        # action should be a string
+        if not isinstance(self.action, basestring):
+            raise errors.AnsibleError("action is of type '%s' and not a string in task. name: %s" % (type(self.action).__name__, self.name))
+
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
             self.notify = [ self.notify ]
