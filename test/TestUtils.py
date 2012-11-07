@@ -272,18 +272,18 @@ class TestUtils(unittest.TestCase):
         assert res == u'hello oh great one'
 
     def test_varReplace_include(self):
-        template = 'hello $FILE(world)'
+        template = 'hello $FILE(world) $LOOKUP(file, world)'
 
         res = ansible.utils.template("test", template, {})
 
-        assert res == u'hello world'
+        assert res == u'hello world world'
 
     def test_varReplace_include_script(self):
-        template = 'hello $PIPE(echo world)'
+        template = 'hello $PIPE(echo world) $LOOKUP(pipe, echo world)'
 
         res = ansible.utils.template("test", template, {})
 
-        assert res == u'hello world'
+        assert res == u'hello world world'
 
     #####################################
     ### varReplaceWithItems function tests
