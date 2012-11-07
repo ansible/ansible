@@ -77,13 +77,13 @@ def get_version(dest):
     sha = sha[0].split()[1]
     return sha
 
-def clone(repo, dest):
+def clone(repo, dest, remote):
     ''' makes a new git repo if it does not already exist '''
     try:
         os.makedirs(os.path.dirname(dest))
     except:
         pass
-    return _run("git clone %s %s" % (repo, dest))
+    return _run("git clone -o %s %s %s" % (remote, repo, dest))
 
 def has_local_mods(dest):
     os.chdir(dest)
@@ -217,7 +217,7 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
-        (rc, out, err) = clone(repo, dest)
+        (rc, out, err) = clone(repo, dest, remote)
         if rc != 0:
             module.fail_json(msg=err)
     else:
