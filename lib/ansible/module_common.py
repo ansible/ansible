@@ -542,7 +542,10 @@ class AnsibleModule(object):
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             for arg in log_args:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
-            syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % msg)
+            if msg:
+                syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % msg)
+            else:
+                syslog.syslog(syslog.LOG_NOTICE, 'Invoked')
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
