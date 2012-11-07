@@ -298,7 +298,13 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
-
+        
+        # Inventory: Group by instance type
+        self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
+        
+        # Inventory: Group by key pair
+        self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
+        
         # Inventory: Group by security group
         try:
             for group in instance.groups:
