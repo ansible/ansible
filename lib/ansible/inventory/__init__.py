@@ -279,12 +279,12 @@ class Inventory(object):
                 vars.update(updated)
 
         if self._is_script:
-            cmd = subprocess.Popen(
-                [self.host_list,"--host",hostname],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            (out, err) = cmd.communicate()
+            cmd = [self.host_list,"--host",hostname]
+            try:
+                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError, e:
+                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            (out, err) = sp.communicate()
             results = utils.parse_json(out)
 
             # FIXME: this is a bit redundant with host.py and should share code
