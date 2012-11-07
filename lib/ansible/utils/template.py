@@ -221,10 +221,11 @@ def template_from_file(basedir, path, vars):
     realpath = utils.path_dwim(basedir, path)
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
     environment = jinja2.Environment(loader=loader, trim_blocks=True)
-    environment.filters['to_json'] = json.dumps
-    environment.filters['from_json'] = json.loads
-    environment.filters['to_yaml'] = yaml.dump
-    environment.filters['from_yaml'] = yaml.load
+    for filter_plugin in utils.plugins.filter_loader.all():
+        filters = filter_plugin.filters()
+        if not isinstance(filters, dict):
+            raise errors.AnsibleError("FilterModule.filters should return a dict.")
+        environment.filters.update(filters)
     try:
         data = codecs.open(realpath, encoding="utf8").read()
     except UnicodeDecodeError:
