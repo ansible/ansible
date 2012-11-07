@@ -28,6 +28,30 @@ over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
 
+%package fireball
+Summary: Ansible fireball transport support
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: python-keyczar
+Requires: python-zmq
+
+%description fireball
+
+Ansible can optionally use a 0MQ based transport mechanism, which is
+considerably faster than the standard ssh mechanism when there are
+multiple actions, but requires additional supporting packages.
+
+%package node-fireball
+Summary: Ansible fireball transport - node end support
+Group: Development/Libraries
+Requires: python-keyczar
+Requires: python-zmq
+
+%description node-fireball
+
+Ansible can optionally use a 0MQ based transport mechanism, which has
+additional requirements for nodes to use.  This package includes those
+requirements.
 
 %prep
 %setup -q
@@ -53,12 +77,24 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
-%{_datadir}/ansible
+%dir %{_datadir}/ansible
+%{_datadir}/ansible/[a-eg-z]*
+%{_datadir}/ansible/f[a-hj-z]*
+%{_datadir}/ansible/file
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.*
+%doc %{_mandir}/man3/ansible.[a-eg-z]*
+%doc %{_mandir}/man3/ansible.f[a-hj-z]*
+%doc %{_mandir}/man3/ansible.file*
 %doc examples/playbooks
+
+%files fireball
+%{_datadir}/ansible/fireball
+%doc %{_mandir}/man3/ansible.fireball.*
+
+%files node-fireball
+%doc README.md PKG-INFO COPYING
 
 %changelog
 * Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.9-0
