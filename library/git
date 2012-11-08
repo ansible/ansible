@@ -149,15 +149,35 @@ def is_not_a_branch(module, dest):
     return False
 
 def get_head_branch(module, dest, remote):
-    os.chdir(dest)
-    head = ''
-    (rc, out, err) = _run("git remote show %s" % remote)
-    if rc != 0:
-        module.fail_json(msg="Could not determine HEAD branch via git remote show")
-    for line in out.split('\n'):
-        if 'HEAD branch' in line:
-            head = line.split()[-1].strip()
-    return head
+    '''
+    Determine what branch HEAD is associated with.  This is partly
+    taken from lib/ansible/utils/__init__.py.  It finds the correct
+    path to .git/HEAD and reads from that file the branch that HEAD is
+    associated with.  In the case of a detached HEAD, this will look
+    up the branch in .git/refs/remotes/<remote>/HEAD.
+    '''
+    repo_path = os.path.join(dest, '.git')
+    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+    if os.path.isfile(repo_path):
+        try:
+            gitdir = yaml.load(open(repo_path)).get('gitdir')
+            # There is a posibility the .git file to have an absolute path.
+            if os.path.isabs(gitdir):
+                repo_path = gitdir
+            else:
+                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        except (IOError, AttributeError):
+            return ''
+    # Read .git/HEAD for the name of the branch.
+    # If we're in a detached HEAD state, look up the branch associated with
+    # the remote HEAD in .git/refs/remotes/<remote>/HEAD
+    f = open(os.path.join(repo_path, "HEAD"))
+    if is_not_a_branch(module, dest):
+        f.close()
+        f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
+    branch = f.readline().split('/')[-1].rstrip("\n")
+    f.close()
+    return branch
 
 def fetch(module, repo, dest, version, remote):
     ''' updates repo from remote sources '''
@@ -181,12 +201,11 @@ def switch_version(module, dest, remote, version):
         else:
             cmd = "git checkout --force %s" % version
     else:
-        # is there a better way to do this?
         branch = get_head_branch(module, dest, remote)
         (rc, out, err) = _run("git checkout --force %s" % branch)
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch)
-        cmd = "git rebase %s" % remote
+        cmd = "git reset --hard %s" % remote
     return _run(cmd)
 
 # ===========================================
