@@ -27,6 +27,12 @@ options:
       - cd into this directory before running the command (0.6 and later)
     required: false
     default: null
+  executable:
+    description:
+      - change the shell used to execute the command. Should be an absolute path to the executable.
+    required: false
+    default: null
+    version_added: "0.9"
 examples:
    - code: "shell: somescript.sh >> somelog.txt"
      description: Execute the command in remote shell
