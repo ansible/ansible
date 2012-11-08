@@ -60,6 +60,12 @@ options:
     version_added: "0.6"
     required: false
     default: null
+  executable:
+    description:
+      - change the shell used to execute the command. Should be an absolute path to the executable.
+    required: false
+    default: null
+    version_added: "0.9"
 examples:
    - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
@@ -81,6 +87,7 @@ def main():
 
     shell = module.params['shell']
     chdir = module.params['chdir']
+    executable = module.params['executable']
     args  = module.params['args']
 
     if args.strip() == '':
@@ -94,7 +101,7 @@ def main():
     startd = datetime.datetime.now()
 
     try:
-        cmd = subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(args, executable=executable, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
     except (OSError, IOError), e:
         module.fail_json(rc=e.errno, msg=str(e), cmd=args)
@@ -140,11 +147,12 @@ class CommandModule(AnsibleModule):
         params = {}
         params['chdir'] = None
         params['shell'] = False
+        params['executable'] = None
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -182,6 +190,13 @@ class CommandModule(AnsibleModule):
                 elif v[0] != '/':
                     self.fail_json(rc=259, msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
+            elif m.group(2) == "executable":
+                v = os.path.expanduser(v)
+                if not (os.path.exists(v)):
+                    self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
+                elif v[0] != '/':
+                    self.fail_json(rc=259, msg="the path for 'executable' argument must be fully qualified")
+                params['executable'] = v
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
