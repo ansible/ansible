@@ -405,19 +405,16 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         cmd = yum_basecmd + ['install', pkg]
         rc, out, err = run(cmd)
+
+        res['rc'] += rc
+        res['results'].append(out)
+        res['msg'] += err
+
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
         # look for the pkg via obsoletes
-        if rc:
-            res['changed'] = False
-            res['rc'] = rc
-            res['results'].append(out)
-            res['msg'] += err
-        else:
+        if not rc:
             res['changed'] = True
-            res['rc'] = 0
-            res['results'].append(out)
-            res['msg'] += err
 
     module.exit_json(**res)
 
@@ -429,7 +426,6 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['msg'] = ''
     res['changed'] = False
     res['rc'] = 0
-    res['failed'] = False
 
     for pkg in items:
         is_group = False
@@ -445,6 +441,15 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         cmd = yum_basecmd + ["remove", pkg]
         rc, out, err = run(cmd)
 
+        res['rc'] += rc
+        res['results'].append(out)
+        res['msg'] += err
+
+        # compile the results into one batch. If anything is changed 
+        # then mark changed
+        # at the end - if we've end up failed then fail out of the rest
+        # of the process
+
         # at this point we should check to see if the pkg is no longer present
         
         if not is_group: # we can't sensibly check for a group being uninstalled reliably
@@ -452,24 +457,11 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                 res['changed'] = True
             else:
-                res['failed'] = True
+                module.fail_json(**res)
 
         if rc != 0:
-            res['failed'] = True
-            
-        # compile the results into one batch. If anything is changed 
-        # then mark changed
-        # at the end - if we've end up failed then fail out of the rest
-        # of the process
-        res['changed'] = res['changed'] or False
-        res['failed'] = res['failed'] or False
-        res['rc'] += rc
-        res['results'].append(out)
-        res['msg'] += err
-
-        if res['failed']:
             module.fail_json(**res)
-
+            
     module.exit_json(**res)
 
 def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
@@ -497,8 +489,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
-                res['failed']=True
-                module.exit_json(**res)
+                module.fail_json(**res)
             
             nothing_to_do = True
             for this in pkglist:
@@ -519,26 +510,17 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         cmd = yum_basecmd + [basecmd, pkg]
         rc, out, err = run(cmd)
 
+        res['rc'] += rc
+        res['results'].append(out)
+        res['msg'] += err
+
         # FIXME if it is - update it and check to see if it applied
         # check to see if there is no longer an update available for the pkgspec
-        if rc:
-            changed = False
-            failed = True
-        else:
-            changed = True
-            failed = False
 
         if rc:
-            res['changed'] = False
             res['failed'] = True
-            res['rc'] = rc
-            res['results'].append(out)
-            res['msg'] += err
         else:
             res['changed'] = True
-            res['rc'] = 0
-            res['results'].append(out)
-            res['msg'] += err
 
     module.exit_json(**res)
 
