@@ -118,20 +118,34 @@ class Connection(object):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        sftp_cmd = ["sftp"] + self.common_args + [self.host]
-        p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate("put %s %s\n" % (in_path, out_path))
+        if C.DEFAULT_SCP_IF_SSH:
+            ft_cmd = ["scp"] + self.common_args
+            ft_cmd += [in_path,self.host + ":" + out_path]
+            p = subprocess.Popen(ft_cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+        else:
+            sftp_cmd = ["sftp"] + self.common_args + [self.host]
+            p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate("put %s %s\n" % (in_path, out_path))
         if p.returncode != 0:
             raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        sftp_cmd = ["sftp"] + self.common_args + [self.host]
-        p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate("get %s %s\n" % (in_path, out_path))
+        if C.DEFAULT_SCP_IF_SSH:
+            ft_cmd = ["scp"] + self.common_args
+            ft_cmd += [self.host + ":" + in_path, out_path]
+            p = subprocess.Popen(ft_cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+        else:
+            sftp_cmd = ["sftp"] + self.common_args + [self.host]
+            p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate("get %s %s\n" % (in_path, out_path))
         if p.returncode != 0:
             raise errors.AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
 
