@@ -71,7 +71,7 @@ import os.path
 import tempfile
 import shutil
 
-def keyfile(user, write=False):
+def keyfile(module, user, write=False):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
@@ -81,7 +81,10 @@ def keyfile(user, write=False):
     :return: full path string to authorized_keys for user
     """
 
-    user_entry = pwd.getpwnam(user)
+    try:
+        user_entry = pwd.getpwnam(user)
+    except KeyError, e:
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
     homedir    = user_entry.pw_dir
     sshdir     = os.path.join(homedir, ".ssh")
     keysfile   = os.path.join(sshdir, "authorized_keys")
@@ -137,7 +140,7 @@ def enforce_state(module, params):
     state = params.get("state", "present")
 
     # check current state -- just get the filename, don't create file
-    params["keyfile"] = keyfile(user, write=False)
+    params["keyfile"] = keyfile(module, user, write=False)
     keys = readkeys(params["keyfile"])
     present = key in keys
 
@@ -146,13 +149,13 @@ def enforce_state(module, params):
         if present:
             module.exit_json(changed=False)
         keys.append(key)
-        writekeys(module, keyfile(user,write=True), keys)
+        writekeys(module, keyfile(module, user,write=True), keys)
 
     elif state=="absent":
         if not present:
             module.exit_json(changed=False)
         keys.remove(key)
-        writekeys(module, keyfile(user,write=True), keys)
+        writekeys(module, keyfile(module, user,write=True), keys)
 
     params['changed'] = True
     return params
