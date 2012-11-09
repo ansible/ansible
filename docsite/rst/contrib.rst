@@ -18,10 +18,7 @@ They can be written in any language.
 -  `zypper (bash module
    example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `homebrew <https://gist.github.com/3170079>`_ - swehack
--  `network\_facts <https://github.com/dagwieers/ansible-network-facts>`_
-   - dagwieers
--  `vsphere\_boot <https://github.com/dagwieers/ansible-vsphere-boot>`_
-   - dagwieers
+-  `Ansible-Provisioning <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 
 Python modules using 0.6 and later can use the common "AnsibleModule"
 class to dramatically reduce the amount of boilerplate code required.
@@ -89,6 +86,7 @@ Blogs & Articles
 -  `You Should Consider Using SSH Based Configuration Management <http://www.lshift.net/blog/2012/07/30/you-should-consider-using-ssh-based-configuration-management>`_ - LShift Ltd
 -  `Deploying Flask/uWSGI, Nginx, and Supervisorctl <http://mattupstate.github.com/python/devops/2012/08/07/flask-wsgi-application-deployment-with-ubuntu-ansible-nginx-supervisor-and-uwsgi.html>`_ - mattupstate
 -  `Infracoders Presentation <http://www.danielhall.me/2012/10/ansible-talk-infra-coders/>`_ - Daniel Hall
+-  `Ansible - an introduction <https://speakerdeck.com/jpmens/ansible-an-introduction>`_ - jp\_mens
 
 Disclaimer
 ``````````
