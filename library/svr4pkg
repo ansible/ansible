@@ -48,7 +48,7 @@ options:
   src:
     description:
       - Specifies the location to install the package from. Required when C(state=present).
-      - Can be any path acceptable to the C(pkgadd) command's C(-d) option. e.g.: C(somefile.pkg), C(/dir/with/pkgs), C(http:/server/mypkgs.pkg).
+      - "Can be any path acceptable to the C(pkgadd) command's C(-d) option. e.g.: C(somefile.pkg), C(/dir/with/pkgs), C(http:/server/mypkgs.pkg)."
       - If using a file or directory, they must already be accessible by the host. See the I(copy) module for a way to get them there.
   proxy:
     description:
@@ -57,7 +57,7 @@ options:
 examples:
   - code: svr4pkg name=CSWcommon src=/tmp/cswpkgs.pkg state=present
     description: Install a package from an already copied file
-  - code: svr4pkg name=CSWpkgutil src=http://get.opencsw.org/now state=present
+  - code: 'svr4pkg name=CSWpkgutil src=http://get.opencsw.org/now state=present'
     description: Install a package directly from an http site
   - code: svr4pkg name=SUNWgnome-sound-recorder state=absent
     description: Ensure that a package is not installed.
