@@ -32,34 +32,13 @@ options:
       - The customized message used for failing execution. If ommited,
         fail will simple bail out with a generic message.
     required: false
-    default: "'Failed because only_if condition is true'"
-  rc:
-    description:
-      - The return code of the failure. This is currently not used by
-        Ansible, but might be used in the future.
-    required: false
-    default: 1
+    default: "'Failed as requested from task'"
 examples:
     - code: |
-        fail: msg="The system may not be provisioned according to the CMDB status." rc=100
+        fail: msg="The system may not be provisioned according to the CMDB status."
             only_if: "'$cmdb_status' != 'to-be-staged'"
 
       description: "Example playbook using fail and only_if together"
 
 author: Dag Wieers
 '''
-
-def main():
-
-    module = AnsibleModule(
-        argument_spec = dict(
-            msg = dict(default='Failed because only_if condition is true'),
-            rc = dict(default=1),
-        )
-    )
-
-    module.fail_json(rc=module.params['rc'], msg=module.params['msg'])
-
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
