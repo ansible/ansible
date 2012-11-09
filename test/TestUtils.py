@@ -286,9 +286,9 @@ class TestUtils(unittest.TestCase):
         assert res == u'hello world world'
 
     #####################################
-    ### varReplaceWithItems function tests
+    ### template_ds function tests
 
-    def test_varReplaceWithItems_basic(self):
+    def test_template_ds_basic(self):
         vars = {
             'data': {
                 'var': [
@@ -313,19 +313,19 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${data.var}'
-        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        res = ansible.utils.template_ds(None, template, vars)
         assert sorted(res) == sorted(vars['data']['var'])
 
         template = '${data.types}'
-        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        res = ansible.utils.template_ds(None, template, vars)
         assert sorted(res) == sorted(vars['data']['types'])
 
         template = '${data.alphas}'
-        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        res = ansible.utils.template_ds(None, template, vars)
         assert sorted(res) == sorted(vars['alphas'])
 
         template = '${data.nonexisting}'
-        res = ansible.utils.varReplaceWithItems(None, template, vars)
+        res = ansible.utils.template_ds(None, template, vars)
         assert res == template
 
     #####################################
