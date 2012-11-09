@@ -29,12 +29,9 @@ import optparse
 import time
 import datetime
 import subprocess
-import traceback
+import ansible.utils
+from ansible.utils import module_docs
 
-# modules that are ok that they do not have documentation strings
-BLACKLIST_MODULES = [
-   'async_wrapper'
-]
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
@@ -132,28 +129,6 @@ def rst_xline(width, char="="):
 
 def load_examples_section(text):
     return text.split('***BREAK***')
-
-def get_docstring(filename, verbose=False):
-    """
-    Search for assignment of the DOCUMENTATION variable in the given file.
-    Parse that from YAML and return the YAML doc or None.
-    """
-
-    doc = None
-
-    try:
-        # Thank you, Habbie, for this bit of code :-)
-        M = ast.parse(''.join(open(filename)))
-        for child in M.body:
-            if isinstance(child, ast.Assign):
-                if 'DOCUMENTATION' in (t.id for t in child.targets):
-                    doc = yaml.load(child.value.s)
-
-    except:
-        traceback.print_exc()
-        print "unable to parse %s" % filename
-    return doc
-
 
 def return_data(text, options, outputname, module):
     if options.output_dir is not None:
@@ -326,9 +301,9 @@ def main():
                 js_data.append(j)
             continue
 
-        doc = get_docstring(fname, verbose=options.verbose)
+        doc = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
-        if doc is None and module not in BLACKLIST_MODULES:
+        if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
             sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
             #sys.exit(1)
 
