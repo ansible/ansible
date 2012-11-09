@@ -141,7 +141,7 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE|LOOKUP)\(([^\)]+)\)")
+_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE|LOOKUP|[A-Z]+)\(([^\)]+)\)")
 def _varReplaceFilesAndPipes(basedir, raw, vars):
     from ansible import utils
     done = [] # Completed chunks to return
@@ -165,6 +165,9 @@ def _varReplaceFilesAndPipes(basedir, raw, vars):
         elif m.group(1) == "LOOKUP":
             module_name, args = m.group(2).split(",", 1)
             args = args.strip()
+        else:
+            module_name = m.group(1).lower()
+            args = m.group(2)
         instance = utils.plugins.lookup_loader.get(module_name, basedir=basedir)
         replacement = instance.run(args, inject=vars)
         if not isinstance(replacement, basestring):
