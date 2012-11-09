@@ -111,7 +111,7 @@ class Play(object):
                     plugin_name = k[5:]
                     if plugin_name not in utils.plugins.lookup_loader:
                         raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.varReplaceWithItems(self.basedir, x[k], task_vars)
+                    terms = utils.template_ds(self.basedir, x[k], task_vars)
                     items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
 
                 for item in items:
@@ -119,7 +119,7 @@ class Play(object):
                     mv['item'] = item
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
-                        mv[k] = utils.varReplaceWithItems(self.basedir, v, mv)
+                        mv[k] = utils.template_ds(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
                     for y in data:
