@@ -18,6 +18,7 @@ They can be written in any language.
 -  `zypper (bash module
    example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `homebrew <https://gist.github.com/3170079>`_ - swehack
+-  `Ansible-Provisioning <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 
 Python modules using 0.6 and later can use the common "AnsibleModule"
 class to dramatically reduce the amount of boilerplate code required.
