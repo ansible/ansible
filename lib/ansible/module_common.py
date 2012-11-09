@@ -594,6 +594,8 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
+        if not kwargs.has_key('changed'):
+            kwargs['changed'] = False
         print self.jsonify(kwargs)
         sys.exit(0)
 
