@@ -153,9 +153,9 @@ def command_generic_msg(hostname, result, oneline, caption):
         return buf + "\n"
     else:
         if stderr:
-            return "%s | %s | rc=%s | (stdout) %s (stderr) %s\n" % (hostname, caption, rc, stdout, stderr)
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, rc, stdout, stderr)
         else:
-            return "%s | %s | rc=%s | (stdout) %s\n" % (hostname, caption, rc, stdout)
+            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, rc, stdout)
 
 def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
