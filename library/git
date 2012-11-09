@@ -63,6 +63,12 @@ examples:
 import re
 import tempfile
 
+def _run(args):
+    cmd = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = cmd.communicate()
+    rc = cmd.returncode
+    return (rc, out, err)
+
 def get_version(dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
@@ -71,18 +77,13 @@ def get_version(dest):
     sha = sha[0].split()[1]
     return sha
 
-def clone(repo, dest):
+def clone(repo, dest, remote):
     ''' makes a new git repo if it does not already exist '''
     try:
         os.makedirs(os.path.dirname(dest))
     except:
         pass
-    cmd = "git clone %s %s" % (repo, dest)
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempfile.gettempdir())
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
-
+    return _run("git clone -o %s %s %s" % (remote, repo, dest))
 
 def has_local_mods(dest):
     os.chdir(dest)
@@ -100,19 +101,13 @@ def reset(module,dest,force):
     os.chdir(dest)
     if not force and has_local_mods(dest):
         module.fail_json(msg="Local modifications exist in repository (force=no).")
-    cmd = "git reset --hard HEAD"
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
+    return _run("git reset --hard HEAD")
 
 def get_branches(module, dest):
     os.chdir(dest)
     branches = []
-    cmd = "git branch -a"
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = cmd.communicate()
-    if cmd.returncode != 0:
+    (rc, out, err) = _run("git branch -a")
+    if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
     for line in out.split('\n'):
         branches.append(line.strip())
@@ -154,41 +149,47 @@ def is_not_a_branch(module, dest):
     return False
 
 def get_head_branch(module, dest, remote):
-    os.chdir(dest)
-    head = ''
-    cmd = "git remote show %s" % remote
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = cmd.communicate()
-    if cmd.returncode != 0:
-        module.fail_json(msg="Could not determine HEAD branch via git remote show")
-    for line in out.split('\n'):
-        if 'HEAD branch' in line:
-            head = line.split()[-1].strip()
-    return head
+    '''
+    Determine what branch HEAD is associated with.  This is partly
+    taken from lib/ansible/utils/__init__.py.  It finds the correct
+    path to .git/HEAD and reads from that file the branch that HEAD is
+    associated with.  In the case of a detached HEAD, this will look
+    up the branch in .git/refs/remotes/<remote>/HEAD.
+    '''
+    repo_path = os.path.join(dest, '.git')
+    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+    if os.path.isfile(repo_path):
+        try:
+            gitdir = yaml.load(open(repo_path)).get('gitdir')
+            # There is a posibility the .git file to have an absolute path.
+            if os.path.isabs(gitdir):
+                repo_path = gitdir
+            else:
+                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        except (IOError, AttributeError):
+            return ''
+    # Read .git/HEAD for the name of the branch.
+    # If we're in a detached HEAD state, look up the branch associated with
+    # the remote HEAD in .git/refs/remotes/<remote>/HEAD
+    f = open(os.path.join(repo_path, "HEAD"))
+    if is_not_a_branch(module, dest):
+        f.close()
+        f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
+    branch = f.readline().split('/')[-1].rstrip("\n")
+    f.close()
+    return branch
 
-def pull(module, repo, dest, version, remote):
+def fetch(module, repo, dest, version, remote):
     ''' updates repo from remote sources '''
     os.chdir(dest)
-    branches = get_branches(module, dest)
-    cur_branch = ''
-    for b in branches:
-        if b.startswith('* '):
-            cur_branch = b
-    if is_local_branch(module, dest, version) and not is_current_branch(module, dest, version):
-        (rc, out, err) = switch_version(module, dest, remote, version)
-        if rc != 0:
-            module.fail_json(msg=err)
-    if is_not_a_branch(module, dest):
-        head_branch = get_head_branch(module, dest, remote)
-        (rc, out, err) = switch_version(module, dest, remote, head_branch)
-        if rc != 0:
-            module.fail_json(msg=err)
+    (rc, out1, err1) = _run("git fetch %s" % remote)
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs")
 
-    cmd = "git pull -u %s" % remote
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
+    (rc, out2, err2) = _run("git fetch --tags %s" % remote)
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs")
+    return (rc, out1 + out2, err1 + err2)
 
 def switch_version(module, dest, remote, version):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
@@ -200,12 +201,12 @@ def switch_version(module, dest, remote, version):
         else:
             cmd = "git checkout --force %s" % version
     else:
-        # is there a better way to do this?
-        cmd = "git rebase %s" % remote
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
+        branch = get_head_branch(module, dest, remote)
+        (rc, out, err) = _run("git checkout --force %s" % branch)
+        if rc != 0:
+            module.fail_json(msg="Failed to checkout branch %s" % branch)
+        cmd = "git reset --hard %s" % remote
+    return _run(cmd)
 
 # ===========================================
 
@@ -235,7 +236,7 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
-        (rc, out, err) = clone(repo, dest)
+        (rc, out, err) = clone(repo, dest, remote)
         if rc != 0:
             module.fail_json(msg=err)
     else:
@@ -245,7 +246,7 @@ def main():
         (rc, out, err) = reset(module,dest,force)
         if rc != 0:
             module.fail_json(msg=err)
-        (rc, out, err) = pull(module, repo, dest, version, remote)
+        (rc, out, err) = fetch(module, repo, dest, version, remote)
         if rc != 0:
             module.fail_json(msg=err)
 
