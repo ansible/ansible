@@ -86,10 +86,8 @@ options:
 examples:
    - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
      description: "Examples from Ansible Playbooks"
-   - code: 
 requirements: [ "euca2ools" ]
 author: Seth Vidal
-
 '''
 
 import euca2ools.commands.euca.runinstances
