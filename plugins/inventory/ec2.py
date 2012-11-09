@@ -303,7 +303,8 @@ class Ec2Inventory(object):
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
         
         # Inventory: Group by key pair
-        self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
+        if instance.key_name != None:
+            self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
         
         # Inventory: Group by security group
         try:
