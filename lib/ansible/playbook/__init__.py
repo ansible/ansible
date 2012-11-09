@@ -22,6 +22,7 @@ from ansible import utils
 from ansible import errors
 import ansible.callbacks
 import os
+import shlex
 import collections
 from play import Play
 
@@ -123,7 +124,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path):
+    def _load_playbook_from_file(self, path, vars={}):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
@@ -135,21 +136,45 @@ class PlayBook(object):
         if type(playbook_data) != list:
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
 
+        basedir = os.path.dirname(path)
         for play in playbook_data:
             if type(play) != dict:
                 raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
             if 'include' in play:
-                if len(play.keys()) == 1:
-                    included_path = utils.path_dwim(self.basedir, play['include'])
-                    (plays, basedirs) = self._load_playbook_from_file(included_path)
-                    accumulated_plays.extend(plays)
-                    play_basedirs.extend(basedirs)
+                if len(play.keys()) <= 2:
+                    tokens = shlex.split(play['include'])
+
+                    items = ['']
+                    for k in play.keys():
+                        if not k.startswith("with_"):
+                            continue
+                        plugin_name = k[5:]
+                        if plugin_name not in utils.plugins.lookup_loader:
+                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                        terms = utils.template_ds(basedir, play[k], vars)
+                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=basedir, runner=None).run(terms, inject=vars)
+                        break
+
+                    for item in items:
+                        incvars = vars.copy()
+                        incvars['item'] = item
+                        for t in tokens[1:]:
+                            (k,v) = t.split("=", 1)
+                            incvars[k] = utils.template_ds(basedir, v, incvars)
+                        included_path = utils.path_dwim(basedir, tokens[0])
+                        (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                        for p in plays:
+                            if 'vars' not in p:
+                                p['vars'] = {}
+                            p['vars'].update(incvars)
+                        accumulated_plays.extend(plays)
+                        play_basedirs.extend(basedirs)
 
                 else:
-                    raise errors.AnsibleError("parse error: top level includes cannot be used with other directives: %s" % play)
+                    raise errors.AnsibleError("parse error: playbook includes cannot be used with other directives: %s" % play)
             else:
                 accumulated_plays.append(play)
-                play_basedirs.append(os.path.dirname(path))
+                play_basedirs.append(basedir)
 
         return (accumulated_plays, play_basedirs)
 
