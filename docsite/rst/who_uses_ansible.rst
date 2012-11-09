@@ -24,4 +24,5 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
     * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
+    * `Action.IO <http://www.action.io/>`_ - Action.IO Cloud Development Platform
 
