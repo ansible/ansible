@@ -192,7 +192,7 @@ def main():
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db=connect_to_db)
         cursor = db_connection.cursor()
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
 
     changed = False
