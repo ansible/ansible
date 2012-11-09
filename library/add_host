@@ -1,0 +1,23 @@
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: add_host
+short_description: add a host (and alternatively a group) to the ansible-playbook in-memory inventory
+description:
+  - Use variables to create new hosts and groups in inventory for use in later plays of the same playbook
+version_added: 0.9
+options:
+  hostname:
+    description:
+    - The hostname/ip of the host to add to the inventory
+    required: true
+  groupname:
+    description:
+    - The groupname to add the hostname to.
+    required: false
+author: Seth Vidal
+examples:
+  - description: add host to group 'just_created'
+    code: add_host hostname=${ip_from_ec2create} groupname=just_created
+'''
