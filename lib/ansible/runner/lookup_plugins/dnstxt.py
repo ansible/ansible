@@ -20,6 +20,7 @@ import os
 HAVE_DNS=False
 try:
     import dns.resolver
+    from dns.exception import DNSException
     HAVE_DNS=True
 except ImportError:
     pass
@@ -43,9 +44,17 @@ class LookupModule(object):
 
         domain = terms.split()[0]
         string = []
-        answers = dns.resolver.query(domain, 'TXT')
-        for rdata in answers:
-            s = rdata.to_text()
-            string.append(s[1:-1])  # Strip outside quotes on TXT rdata
+        try:
+            answers = dns.resolver.query(domain, 'TXT')
+            for rdata in answers:
+                s = rdata.to_text()
+                string.append(s[1:-1])  # Strip outside quotes on TXT rdata
+
+        except dns.resolver.NXDOMAIN:
+            string = 'NXDOMAIN'
+        except dns.resolver.Timeout:
+            string = ''
+        except dns.exception.DNSException as e:
+            raise errors.AnsibleError("dns.resolver unhandled exception", e)
 
         return ''.join(string)
