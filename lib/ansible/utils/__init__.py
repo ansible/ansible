@@ -195,9 +195,8 @@ def parse_json(raw_data):
         results = {}
         try:
             tokens = shlex.split(data)
-        except:
-            print "failed to parse json: "+ data
-            raise
+        except Exception, e:
+            raise errors.AnsibleError("Failed to parse module output: %s (Module broken ? Network issues ? System died ?)\nJSON output: %s" % (str(e), data))
 
         for t in tokens:
             if t.find("=") == -1:
