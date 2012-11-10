@@ -551,7 +551,7 @@ class FreeBsdUser(User):
         # create the user
         (rc, out, err) = self.execute_command(cmd)
         if rc is not None and rc != 0:
-            module.fail_json(name=self.name, msg=err, rc=rc)
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # we have to set the password in a second command
         if self.password is not None:
@@ -600,7 +600,7 @@ class FreeBsdUser(User):
             groups = self.groups.split(',')
             for g in groups:
                 if not self.group_exists(g):
-                    module.fail_json(msg="Group %s does not exist" % (g))
+                    self.module.fail_json(msg="Group %s does not exist" % (g))
 
             group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
             groups_need_mod = False
@@ -618,14 +618,14 @@ class FreeBsdUser(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.append(current_groups)           
+                    new_groups.extend(current_groups)           
                 cmd.append(','.join(new_groups))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
             if rc is not None and rc != 0:
-                module.fail_json(name=self.name, msg=err, rc=rc)
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
         else:
             (rc, out, err) = (None, '', '')
 
