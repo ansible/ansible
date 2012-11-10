@@ -531,6 +531,11 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+            if is_new_style:
+                facility = C.DEFAULT_SYSLOG_FACILITY
+                if 'ansible_syslog_facility' in inject:
+                    facility = inject['ansible_syslog_facility']
+                module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
         # use the correct python interpreter for the host
         if 'ansible_python_interpreter' in inject:
