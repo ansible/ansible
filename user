@@ -638,7 +638,176 @@ class FreeBsdUser(User):
             return self.execute_command(cmd)
 
         return (rc, out, err)
+
+# ===========================================
+
+class SunOS(User):
+    """
+    This is a SunOS User manipulation class - The main difference between
+    this class and the generic user class is that Solaris-type distros
+    don't support the concept of a "system" account and we need to 
+    edit the /etc/shadow file manually to set a password. (Ugh)
     
+    This overrides the following methods from the generic class:-
+      - create_user()
+      - remove_user()
+      - modify_user()
+    """
+
+    platform = 'SunOS'
+    distribution = None
+    SHADOWFILE = '/etc/shadow'
+
+    def remove_user(self):
+        cmd = [self.module.get_bin_path('userdel', True)]
+        if self.remove:
+            cmd.append('-r')
+        cmd.append(self.name)
+
+        return self.execute_command(cmd)
+
+    def create_user(self):
+        cmd = [self.module.get_bin_path('useradd', True)]
+
+        if self.uid is not None:
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
+            cmd.append('-g')
+            cmd.append(self.group)
+
+        if self.groups is not None:
+            for g in self.groups.split(','):
+                if not self.group_exists(g):
+                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            cmd.append('-G')
+            cmd.append(self.groups)
+
+        if self.comment is not None:
+            cmd.append('-c')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-d')
+            cmd.append(self.home)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if self.createhome:
+            cmd.append('-m')
+
+        cmd.append(self.name)
+
+        (rc, out, err) = self.execute_command(cmd)
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # we have to set the password by editing the /etc/shadow file 
+        if self.password is not None:
+            try:
+                lines = []
+                for line in open(self.SHADOWFILE, 'rb').readlines():
+                    fields = line.strip().split(':')
+                    if not fields[0] == self.name:
+                        lines.append(line)
+                        continue
+                    fields[1] = self.password
+                    line = ':'.join(fields)
+                    lines.append('{0}\n'.format(line))
+                open(self.SHADOWFILE, 'w+').writelines(lines)        
+            except Exception, err:
+                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+
+        return (rc, out, err)
+
+    def modify_user_usermod(self):
+        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd_len = len(cmd)
+        info = self.user_info()
+
+        if self.uid is not None and info[2] != int(self.uid):
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
+            ginfo = self.group_info(self.group)
+            if info[3] != ginfo[2]:
+                cmd.append('-g')
+                cmd.append(self.group)
+
+        if self.groups is not None:
+            current_groups = self.user_group_membership()
+            groups = self.groups.split(',')
+            for g in groups:
+                if not self.group_exists(g):
+                    self.module.fail_json(msg="Group %s does not exist" % (g))
+
+            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+            groups_need_mod = False
+
+            if group_diff:
+                if self.append:
+                    for g in groups:
+                        if g in group_diff:
+                            groups_need_mod = True
+                            break
+                else:
+                    groups_need_mod = True
+
+            if groups_need_mod:
+                cmd.append('-G')
+                new_groups = groups
+                if self.append:
+                    new_groups.extend(current_groups)           
+                cmd.append(','.join(new_groups))
+
+        if self.comment is not None and info[4] != self.comment:
+                cmd.append('-c')
+                cmd.append(self.comment)
+
+        if self.home is not None and info[5] != self.home:
+            cmd.append('-d')
+            cmd.append(self.home)
+
+        if self.shell is not None and info[6] != self.shell:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            cmd.append(self.name)
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
+            (rc, out, err) = (None, '', '')
+
+        # we have to set the password by editing the /etc/shadow file 
+        if self.password is not None and info[1] != self.password:
+            try:
+                lines = []
+                for line in open(self.SHADOWFILE, 'rb').readlines():
+                    fields = line.strip().split(':')
+                    if not fields[0] == self.name:
+                        lines.append(line)
+                        continue
+                    fields[1] = self.password
+                    line = ':'.join(fields)
+                    lines.append('{0}\n'.format(line))
+                open(self.SHADOWFILE, 'w+').writelines(lines)        
+                rc = 0
+            except Exception, err:
+                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+
+        return (rc, out, err)
+
 # ===========================================
 
 def main():
