@@ -3,53 +3,67 @@ Ansible Changes By Release
 
 0.9 "Dreams" -- release pending
 
+Highlighted core changes:
+
 * various performance tweaks, ansible executes dramatically less SSH ops per unit of work
-* added 'script' module for pushing and running self-deleting remote scripts
-* relative paths now work for 'first_available_file'
-* fix for template calls when last character is '$'
-* postgresql module now takes role_attr_flags
-* ability to create SSH keys for users when using user module to create users
 * close paramiko SFTP connections less often on copy/template operations (speed increase)
 * change the way we use multiprocessing (speed/RAM usage improvements)
-* atomic replacement of files preserves permissions of original file
-* if ansible_*_interpreter is set on a delegated host, it now works as intended
-* authorized key module uses temp file now to prevent failure on full disk
-* MySQL module takes new grant options
-* user module can create SSH keys
-* yum module takes enablerepo= and disablerepo=
-* --limit can now take "," as well as ";" or ":"
-* various git module improvements/tweaks
-* EC2 inventory script now produces nicer failure message if AWS is down (or similar)
-* user module now works on FreeBSD, generic system for modules subclassed by OS platform/distro
-* plugin loading code now more streamlined
-* module options now sorted in documentation
 * able to set default for asking password & sudo password in config file
-* now installs nicely if running inside a virtualenv
-* msg is now displaced with newlines when a task fails
-* added a template lookup plugin (with_template: "{{ some_jinja2 }}")
-* if any with_ plugin has no results in a list, the task is now skipped
-* further upgrades to service module service status reporting
-* tweaks to get service module to play nice with BSD style service systems (rc.conf)
-* 'domain' fact now available
-* group_by module allows partitioning hosts based on group data
-* create= option on lineinfile can create the file when it does not exist
-* misc yum module fixing for various corner cases
-* lookup plugins for DNS text records, environment variables, and redis
-* user module now does Solaris!
-* new module for creating ec2 hosts
-* new module for adding a temporary host record (used for creating new guests)
-* solaris svr4pkg module
-* shell and command module now take an 'executable=' flag for specifying an alternate shell than /bin/sh
+* ansible now installs nicely if running inside a virtualenv
 * flag to allow SSH connection to move files by scp vs sftp (in config file)
-* various output formatting fixes/improvements
-* various tweaks to the EC2 inventory plugin 
 * additional RPM subpackages for easily installing fireball mode deps (server and node)
-* jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
-* in get_url module, thirsty is no longer required for directory destinations
-* various fixes to the git module
+* group_vars/host_vars now available to ansible, not just playbooks
+
+Other core changes:
+
+* fix for template calls when last character is '$'
+* if ansible_*_interpreter is set on a delegated host, it now works as intended
+* --limit can now take "," as seperator as well as ";" or ":"
+* msg is now displaced with newlines when a task fails
+* if any with_ plugin has no results in a list (empty with_items, etc), the task is now skipped
+* various output formatting fixes/improvements
 * fix for Xen dom0/domU detection in default facts
+* 'ansible_domain' fact now available (ex value: example.com)
+
+Playbook changes:
+
+* relative paths now work for 'first_available_file'
 * various templating engine fixes
-* user module supports BSD
+
+Module additions:
+
+* (addhost) new module for adding a temporary host record (used for creating new guests)
+* (group_by) module allows partitioning hosts based on group data
+* (ec2) new module for creating ec2 hosts
+* (script) added 'script' module for pushing and running self-deleting remote scripts
+* (svr4pkg) solaris svr4pkg module
+
+Modules changes:
+
+* (authorized key) module uses temp file now to prevent failure on full disk
+* (get_url) thirsty is no longer required for directory destinations
+* (git) various git module improvements/tweaks
+* (mysql_db) module takes new grant options
+* (lineinfile) create= option on lineinfile can create the file when it does not exist
+* (postgresql_db) module now takes role_attr_flags
+* (service) further upgrades to service module service status reporting
+* (service) tweaks to get service module to play nice with BSD style service systems (rc.conf)
+* (shell) and command module now take an 'executable=' flag for specifying an alternate shell than /bin/sh
+* (user) ability to create SSH keys for users when using user module to create users
+* (user) atomic replacement of files preserves permissions of original file
+* (user) module can create SSH keys
+* (user) module now does Solaris and BSD
+* (yum) module takes enablerepo= and disablerepo=
+* (yum) misc yum module fixing for various corner cases
+
+Plugin changes:
+
+* EC2 inventory script now produces nicer failure message if AWS is down (or similar)
+* plugin loading code now more streamlined
+* lookup plugins for DNS text records, environment variables, and redis
+* added a template lookup plugin (with_template: "{{ some_jinja2 }}")
+* various tweaks to the EC2 inventory plugin 
+* jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
 
 0.8 "Cathedral" -- Oct 19, 2012
 
