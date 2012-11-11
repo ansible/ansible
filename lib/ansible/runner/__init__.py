@@ -97,7 +97,7 @@ class Runner(object):
         forks=C.DEFAULT_FORKS,              # parallelism level
         timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
-        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
+        remote_user=None,  		    # ex: 'username' or None if using current user
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
@@ -351,6 +351,8 @@ class Runner(object):
         actual_port = port
         if self.transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
+            if inject.get('ansible_ssh_user',None) is not None:
+                self.remote_user = inject.get('ansible_ssh_user',None)
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
