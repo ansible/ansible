@@ -285,7 +285,7 @@ def main():
 
     # Set PS options here if 'ps auxww' will not work on
     # target platform
-    if platform.system() == 'SunOS':
+    if SYSTEM == 'SunOS':
         global PS_OPTIONS
         PS_OPTIONS = '-ef'
 
@@ -335,7 +335,7 @@ def main():
         # run change commands if we need to
         if changed:
 
-            if platform.system() == 'FreeBSD':
+            if SYSTEM == 'FreeBSD':
                 start = "onestart"
                 stop = "onestop"
                 reload = "onereload"
