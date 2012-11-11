@@ -29,6 +29,7 @@ Playbook changes:
 
 * relative paths now work for 'first_available_file'
 * various templating engine fixes
+* 'when' is an easier form of only if
 
 Module additions:
 
