@@ -34,6 +34,22 @@ Ansible Changes By Release
 * group_by module allows partitioning hosts based on group data
 * create= option on lineinfile can create the file when it does not exist
 * misc yum module fixing for various corner cases
+* lookup plugins for DNS text records, environment variables, and redis
+* user module now does Solaris!
+* new module for creating ec2 hosts
+* new module for adding a temporary host record (used for creating new guests)
+* solaris svr4pkg module
+* shell and command module now take an 'executable=' flag for specifying an alternate shell than /bin/sh
+* flag to allow SSH connection to move files by scp vs sftp (in config file)
+* various output formatting fixes/improvements
+* various tweaks to the EC2 inventory plugin 
+* additional RPM subpackages for easily installing fireball mode deps (server and node)
+* jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
+* in get_url module, thirsty is no longer required for directory destinations
+* various fixes to the git module
+* fix for Xen dom0/domU detection in default facts
+* various templating engine fixes
+* user module supports BSD
 
 0.8 "Cathedral" -- Oct 19, 2012
 
