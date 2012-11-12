@@ -57,22 +57,21 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        hosts = utils.template(basedir, hosts, playbook.extra_vars)
         self._ds          = ds
         self.playbook     = playbook
         self.basedir      = basedir
-        self.hosts        = hosts
-        self.name         = ds.get('name', self.hosts)
         self.vars         = ds.get('vars', {})
         self.vars_files   = ds.get('vars_files', [])
         self.vars_prompt  = ds.get('vars_prompt', {})
         self.vars         = self._get_vars()
+        self.hosts        = utils.template(basedir, hosts, self.vars)
+        self.name         = ds.get('name', self.hosts)
         self._tasks       = ds.get('tasks', [])
         self._handlers    = ds.get('handlers', [])
-        self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), playbook.extra_vars)
+        self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), self.vars)
         self.remote_port  = ds.get('port', self.playbook.remote_port)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), playbook.extra_vars)
+        self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), self.vars)
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', None)
