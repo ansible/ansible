@@ -296,7 +296,7 @@ class User(object):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -307,7 +307,7 @@ class User(object):
             groups = self.groups.split(',')
             for g in groups:
                 if not self.group_exists(g):
-                    module.fail_json(msg="Group %s does not exist" % (g))
+                    self.module.fail_json(msg="Group %s does not exist" % (g))
 
             group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
             groups_need_mod = False
