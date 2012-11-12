@@ -141,8 +141,8 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>FILE|PIPE|LOOKUP)\(([^\)]+)\)")
-def _varReplaceFilesAndPipes(basedir, raw, vars):
+_FILEPIPECRE = re.compile(r"\$(?P<special>[A-Z]+)\(([^\)]*)\)")
+def _varReplaceLookups(basedir, raw, vars):
     from ansible import utils
     done = [] # Completed chunks to return
 
@@ -152,7 +152,7 @@ def _varReplaceFilesAndPipes(basedir, raw, vars):
             done.append(raw)
             break
 
-        # Determine replacement value (if unknown variable then preserve
+        # Determine replacement value (if unknown lookup plugin then preserve
         # original)
 
         replacement = m.group()
@@ -165,10 +165,16 @@ def _varReplaceFilesAndPipes(basedir, raw, vars):
         elif m.group(1) == "LOOKUP":
             module_name, args = m.group(2).split(",", 1)
             args = args.strip()
+        else:
+            module_name = m.group(1).lower()
+            args = m.group(2)
         instance = utils.plugins.lookup_loader.get(module_name, basedir=basedir)
-        replacement = instance.run(args, inject=vars)
-        if not isinstance(replacement, basestring):
-            replacement = ",".join(replacement)
+        if instance is not None:
+            replacement = instance.run(args, inject=vars)
+            if not isinstance(replacement, basestring):
+                replacement = ",".join(replacement)
+        else:
+            replacement = m.group(0)
 
         start, end = m.span()
         done.append(raw[:start])    # Keep stuff leading up to token
@@ -209,7 +215,7 @@ def template(basedir, text, vars, expand_lists=False):
     except UnicodeEncodeError:
         pass # already unicode
     text = varReplace(unicode(text), vars, expand_lists=expand_lists)
-    text = _varReplaceFilesAndPipes(basedir, text, vars)
+    text = _varReplaceLookups(basedir, text, vars)
     return text
 
 def template_from_file(basedir, path, vars):
