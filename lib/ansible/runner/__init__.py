@@ -351,8 +351,9 @@ class Runner(object):
         actual_port = port
         if self.transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
-            if inject.get('ansible_ssh_user',None) is not None:
-                self.remote_user = inject.get('ansible_ssh_user',None)
+        actual_user = inject.get('ansible_ssh_user', C.DEFAULT_REMOTE_USER)
+        if self.transport in [ 'paramiko', 'ssh' ]:
+                self.remote_user = actual_user
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
