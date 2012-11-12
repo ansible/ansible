@@ -183,8 +183,8 @@ def _varReplaceLookups(basedir, raw, vars):
 
     return ''.join(done)
 
-def varReplaceWithItems(basedir, varname, vars):
-    ''' helper function used by with_items '''
+def template_ds(basedir, varname, vars):
+    ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
         m = _varFind(varname, vars)
@@ -192,17 +192,17 @@ def varReplaceWithItems(basedir, varname, vars):
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             if m['replacement'] is not None:
-                return varReplaceWithItems(basedir, m['replacement'], vars)
+                return template_ds(basedir, m['replacement'], vars)
             else:
                 return varname
         else:
             return template(basedir, varname, vars)
     elif isinstance(varname, (list, tuple)):
-        return [varReplaceWithItems(basedir, v, vars) for v in varname]
+        return [template_ds(basedir, v, vars) for v in varname]
     elif isinstance(varname, dict):
         d = {}
         for (k, v) in varname.iteritems():
-            d[k] = varReplaceWithItems(basedir, v, vars)
+            d[k] = template_ds(basedir, v, vars)
         return d
     else:
         return varname
