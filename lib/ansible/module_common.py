@@ -539,7 +539,7 @@ class AnsibleModule(object):
             journal.sendv(*journal_args)
         else:
             msg = ''
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.openlog('ansible-%s' % os.path.basename(__file__), 0, syslog.LOG_USER)
             for arg in log_args:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
             if msg:
