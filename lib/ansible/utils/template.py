@@ -215,7 +215,8 @@ def template(basedir, text, vars, expand_lists=False):
     except UnicodeEncodeError:
         pass # already unicode
     text = varReplace(unicode(text), vars, expand_lists=expand_lists)
-    text = _varReplaceLookups(basedir, text, vars)
+    if basedir is not None:
+        text = _varReplaceLookups(basedir, text, vars)
     return text
 
 def template_from_file(basedir, path, vars):
