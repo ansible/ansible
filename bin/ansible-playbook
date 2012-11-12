@@ -20,6 +20,7 @@
 
 import sys
 import getpass
+import os
 
 import ansible.playbook
 import ansible.constants as C
@@ -82,6 +83,12 @@ def main(args):
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
+
+    for playbook in args:
+        if not os.path.exists(playbook):
+            raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
+        if not os.path.isfile(playbook):
+            raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     # run all playbooks specified on the command line
     for playbook in args:
