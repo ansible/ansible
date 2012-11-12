@@ -133,7 +133,7 @@ def _varFind(text, vars, depth=0):
         if text[var_end] != '}' or brace_level != 0:
             return None
     if var_end == part_start[0]:
-        return None
+        return {'replacement': '$', 'start': start, 'end': end}
     space = _varFindLimitSpace(vars, space, text[part_start[0]:var_end], depth)
     return {'replacement': space, 'start': start, 'end': end}
 
