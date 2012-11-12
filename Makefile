@@ -29,7 +29,7 @@ SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; pri
 # VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
 
-### Get the branch information from git
+# Get the branch information from git
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 endif
@@ -164,16 +164,16 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
 
 modulejson:
 	mkdir -p docs/json
-	hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
 
 modulejs:
 	mkdir -p docs/js
 	make modulejson
-	hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
 
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 
