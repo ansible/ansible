@@ -463,7 +463,7 @@ class Runner(object):
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,
-            "(/usr/bin/digest -a md5 -v %s 2>/dev/null)" % path
+            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path
         ]
 
         cmd = " || ".join(md5s)
