@@ -238,6 +238,18 @@ def template(basedir, text, vars, expand_lists=False):
     text = varReplace(basedir, unicode(text), vars, expand_lists=expand_lists)
     return text
 
+class _jinja2_vars(object):
+    ''' helper class to template all variable content before jinja2 sees it '''
+    def __init__(self, basedir, vars):
+        self.basedir = basedir
+        self.vars = vars
+    def __contains__(self, k):
+        return k in self.vars
+    def __getitem__(self, varname):
+        if varname not in self.vars:
+            raise KeyError("undefined variable: %s" % varname)
+        return template_ds(self.basedir, self.vars[varname], self.vars)
+
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
@@ -276,7 +288,11 @@ def template_from_file(basedir, path, vars):
     vars['ansible_managed'] = time.strftime(managed_str,
                                 time.localtime(os.path.getmtime(realpath)))
 
-    res = t.render(vars)
+    # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
+    # Ideally, this could use some API where setting shared=True and the object won't get
+    # passed through dict(o), but I have not found that yet.
+    res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars), shared=True)))
+
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
     return template(basedir, res, vars)
