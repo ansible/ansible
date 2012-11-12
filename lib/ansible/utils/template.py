@@ -34,14 +34,22 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
 
 def _varFindLimitSpace(vars, space, part, depth):
+    ''' limits the search space of space to part
+    
+    basically does space.get(part, None), but with
+    templating for part and a few more things
+    '''
 
-    # TODO: comments
-
+    # Previous part couldn't be found, nothing to limit to
     if space is None:
         return space
+    # A part with escaped .s in it is compounded by { and }, remove them
     if part[0] == '{' and part[-1] == '}':
         part = part[1:-1]
+    # Template part to resolve variables within (${var$var2})
     part = varReplace(part, vars, depth=depth + 1)
+
+    # Now find it
     if part in space:
         space = space[part]
     elif "[" in part:
@@ -55,11 +63,30 @@ def _varFindLimitSpace(vars, space, part, depth):
                 return None
     else:
         return None
+
     return space
 
 def _varFind(text, vars, depth=0):
+    ''' Searches for a variable in text and finds its replacement in vars
 
-    # TODO: comments
+    The variables can have two formats;
+    - simple, $ followed by alphanumerics and/or underscores
+    - complex, ${ followed by alphanumerics, underscores, periods, braces and brackets, ended by a }
+
+    Examples:
+    - $variable: simple variable that will have vars['variable'] as its replacement
+    - ${variable.complex}: complex variable that will have vars['variable']['complex'] as its replacement
+    - $variable.complex: simple variable, identical to the first, .complex ignored
+
+    Complex variables are broken into parts by separating on periods, except if enclosed in {}.
+    ${variable.{fully.qualified.domain}} would be parsed as two parts, variable and fully.qualified.domain,
+    whereas ${variable.fully.qualified.domain} would be parsed as four parts.
+
+    Returns a dict(replacement=<value in vars>, start=<index into text where the variable stated>,
+        end=<index into text where the variable ends>)
+    or None if no variable could be found in text. If replacement is None, it should be replaced with the
+    original data in the caller.
+    '''
 
     start = text.find("$")
     if start == -1:
@@ -80,6 +107,8 @@ def _varFind(text, vars, depth=0):
         is_complex = False
         brace_level = 0
     end = var_start
+    # part_start is a tuple of where the current part started and its current brace_level
+    # brace_level is used to implement .-escaping
     part_start = (var_start, brace_level)
     space = vars
     while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
