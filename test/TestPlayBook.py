@@ -202,7 +202,7 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
-       assert len(EVENTS) == 44
+       assert len(EVENTS) == 60
 
    def test_includes(self):
        pb = os.path.join(self.test_dir, 'playbook-includer.yml')
