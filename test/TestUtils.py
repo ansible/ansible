@@ -15,14 +15,14 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
     def test_varReplace_trailing_dollar(self):
         template = '$what $who $'
         vars = dict(what='hello', who='world')
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'hello world $'
 
     def test_varReplace_multiple(self):
@@ -32,7 +32,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
@@ -42,7 +42,7 @@ class TestUtils(unittest.TestCase):
             'whoVar': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         print res
         assert res == 'hello world'
 
@@ -52,7 +52,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world!'
 
@@ -62,7 +62,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
@@ -72,7 +72,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world}'
 
@@ -82,7 +82,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == template
 
@@ -92,7 +92,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world }'
 
@@ -104,7 +104,7 @@ class TestUtils(unittest.TestCase):
             },
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         print res
         assert res == template
@@ -117,7 +117,7 @@ class TestUtils(unittest.TestCase):
             },
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
@@ -130,7 +130,7 @@ class TestUtils(unittest.TestCase):
             'what': 'hello',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello 2'
 
@@ -140,7 +140,7 @@ class TestUtils(unittest.TestCase):
             'who': u'wórld',
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == u'hello wórld'
 
@@ -150,7 +150,7 @@ class TestUtils(unittest.TestCase):
             'data': [ 'no-one', 'world' ]
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
@@ -160,7 +160,7 @@ class TestUtils(unittest.TestCase):
             'data': [ 'no-one', 'world' ]
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == template
 
@@ -170,7 +170,7 @@ class TestUtils(unittest.TestCase):
             'data': [ 'no-one', 'world' ]
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == template
 
@@ -180,7 +180,7 @@ class TestUtils(unittest.TestCase):
             'data': { 'no-one': 0, 'world': 1 }
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == template
 
@@ -190,7 +190,7 @@ class TestUtils(unittest.TestCase):
             'data': [ 'no-one', {'msg': [ 'world'] } ]
         }
 
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
 
         assert res == 'hello world'
 
@@ -201,7 +201,7 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${foo}${bar}'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'foobar'
 
     def test_varReplace_escape_dot(self):
@@ -214,7 +214,7 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${hostvars.{test.example.com}.foo}'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'bar'
 
     def test_varReplace_list_join(self):
@@ -227,7 +227,7 @@ class TestUtils(unittest.TestCase):
         }
 
         template = 'yum pkg=${list} state=installed'
-        res = ansible.utils.varReplace(template, vars, expand_lists=True)
+        res = ansible.utils.varReplace(None, template, vars, expand_lists=True)
         assert res == 'yum pkg=foo,bar,baz state=installed'
 
     def test_varReplace_escaped_var(self):
@@ -235,7 +235,7 @@ class TestUtils(unittest.TestCase):
             'foo': 'bar',
         }
         template = 'action \$foo'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'action $foo'
 
     def test_varReplace_var_part(self):
@@ -246,7 +246,7 @@ class TestUtils(unittest.TestCase):
             'key': 'bar',
         }
         template = 'test ${foo.$key}'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'test result'
 
     def test_varReplace_var_partial_part(self):
@@ -257,7 +257,7 @@ class TestUtils(unittest.TestCase):
             'key': 'bar',
         }
         template = 'test ${foo.${key}baz}'
-        res = ansible.utils.varReplace(template, vars)
+        res = ansible.utils.varReplace(None, template, vars)
         assert res == 'test result'
 
     def test_template_varReplace_iterated(self):
@@ -274,14 +274,14 @@ class TestUtils(unittest.TestCase):
     def test_varReplace_include(self):
         template = 'hello $FILE(world) $LOOKUP(file, world)'
 
-        res = ansible.utils.template("test", template, {})
+        res = ansible.utils.template("test", template, {}, expand_lists=True)
 
         assert res == u'hello world world'
 
     def test_varReplace_include_script(self):
         template = 'hello $PIPE(echo world) $LOOKUP(pipe, echo world)'
 
-        res = ansible.utils.template("test", template, {})
+        res = ansible.utils.template("test", template, {}, expand_lists=True)
 
         assert res == u'hello world world'
 
