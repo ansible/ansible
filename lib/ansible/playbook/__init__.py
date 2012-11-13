@@ -166,7 +166,10 @@ class PlayBook(object):
                         for p in plays:
                             if 'vars' not in p:
                                 p['vars'] = {}
-                            p['vars'].update(incvars)
+                            if isinstance(p['vars'], dict):
+                                p['vars'].update(incvars)
+                            elif isinstance(p['vars'], list):
+                                p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
                         accumulated_plays.extend(plays)
                         play_basedirs.extend(basedirs)
 
