@@ -33,7 +33,7 @@ import pwd
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 
 
-def _varFindLimitSpace(vars, space, part, depth):
+def _varFindLimitSpace(basedir, vars, space, part, depth):
     ''' limits the search space of space to part
     
     basically does space.get(part, None), but with
@@ -47,7 +47,7 @@ def _varFindLimitSpace(vars, space, part, depth):
     if part[0] == '{' and part[-1] == '}':
         part = part[1:-1]
     # Template part to resolve variables within (${var$var2})
-    part = varReplace(part, vars, depth=depth + 1)
+    part = varReplace(basedir, part, vars, depth=depth + 1)
 
     # Now find it
     if part in space:
@@ -66,7 +66,7 @@ def _varFindLimitSpace(vars, space, part, depth):
 
     return space
 
-def _varFind(text, vars, depth=0):
+def _varFind(basedir, text, vars, depth=0):
     ''' Searches for a variable in text and finds its replacement in vars
 
     The variables can have two formats;
@@ -105,14 +105,27 @@ def _varFind(text, vars, depth=0):
         var_start += 1
     else:
         is_complex = False
-        brace_level = 0
+        brace_level = 1
+    # is_lookup is true for $FILE(...) and friends
+    is_lookup = False
+    lookup_plugin_name = None
     end = var_start
-    # part_start is a tuple of where the current part started and its current brace_level
-    # brace_level is used to implement .-escaping
-    part_start = (var_start, brace_level)
+    # part_start is an index of where the current part started
+    part_start = var_start
     space = vars
-    while end < len(text) and ((is_complex and brace_level > 0) or not is_complex):
+    while end < len(text) and (((is_lookup or is_complex) and brace_level > 0) or (not is_complex and not is_lookup)):
         if text[end].isalnum() or text[end] == '_':
+            pass
+        elif not is_complex and not is_lookup and text[end] == '(' and text[part_start:end].isupper():
+            is_lookup = True
+            lookup_plugin_name = text[part_start:end]
+            part_start = end + 1
+        elif is_lookup and text[end] == '(':
+            brace_level += 1
+        elif is_lookup and text[end] == ')':
+            brace_level -= 1
+        elif is_lookup:
+            # lookups are allowed arbitrary contents
             pass
         elif is_complex and text[end] == '{':
             brace_level += 1
@@ -121,23 +134,44 @@ def _varFind(text, vars, depth=0):
         elif is_complex and text[end] in ('$', '[', ']'):
             pass
         elif is_complex and text[end] == '.':
-            if brace_level == part_start[1]:
-                space = _varFindLimitSpace(vars, space, text[part_start[0]:end], depth)
-                part_start = (end + 1, brace_level)
+            if brace_level == 1:
+                space = _varFindLimitSpace(basedir, vars, space, text[part_start:end], depth)
+                part_start = end + 1
         else:
+            # This breaks out of the loop on non-variable name characters
             break
         end += 1
     var_end = end
+    # Handle "This has $ in it"
+    if var_end == part_start:
+        return {'replacement': None, 'start': start, 'end': end}
+
+    # Handle lookup plugins
+    if is_lookup:
+        # When basedir is None, handle lookup plugins later
+        if basedir is None:
+            return {'replacement': None, 'start': start, 'end': end}
+        var_end -= 1
+    	from ansible import utils
+        args = text[part_start:var_end]
+        if lookup_plugin_name == 'LOOKUP':
+            lookup_plugin_name, args = args.split(",", 1)
+            args = args.strip()
+        instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
+        if instance is not None:
+            replacement = instance.run(args, inject=vars)
+        else:
+            replacement = None
+        return {'replacement': replacement, 'start': start, 'end': end}
+
     if is_complex:
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
-    if var_end == part_start[0]:
-        return {'replacement': '$', 'start': start, 'end': end}
-    space = _varFindLimitSpace(vars, space, text[part_start[0]:var_end], depth)
+    space = _varFindLimitSpace(basedir, vars, space, text[part_start:var_end], depth)
     return {'replacement': space, 'start': start, 'end': end}
 
-def varReplace(raw, vars, depth=0, expand_lists=False):
+def varReplace(basedir, raw, vars, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
@@ -147,7 +181,7 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
     done = [] # Completed chunks to return
 
     while raw:
-        m = _varFind(raw, vars, depth)
+        m = _varFind(basedir, raw, vars, depth)
         if not m:
             done.append(raw)
             break
@@ -159,7 +193,7 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
         if expand_lists and isinstance(replacement, (list, tuple)):
             replacement = ",".join(replacement)
         if isinstance(replacement, (str, unicode)):
-            replacement = varReplace(replacement, vars, depth=depth+1, expand_lists=expand_lists)
+            replacement = varReplace(basedir, replacement, vars, depth=depth+1, expand_lists=expand_lists)
         if replacement is None:
             replacement = raw[m['start']:m['end']]
 
@@ -170,53 +204,11 @@ def varReplace(raw, vars, depth=0, expand_lists=False):
 
     return ''.join(done)
 
-_FILEPIPECRE = re.compile(r"\$(?P<special>[A-Z]+)\(([^\)]*)\)")
-def _varReplaceLookups(basedir, raw, vars):
-    from ansible import utils
-    done = [] # Completed chunks to return
-
-    while raw:
-        m = _FILEPIPECRE.search(raw)
-        if not m:
-            done.append(raw)
-            break
-
-        # Determine replacement value (if unknown lookup plugin then preserve
-        # original)
-
-        replacement = m.group()
-        if m.group(1) == "FILE":
-            module_name = "file"
-            args = m.group(2)
-        elif m.group(1) == "PIPE":
-            module_name = "pipe"
-            args = m.group(2)
-        elif m.group(1) == "LOOKUP":
-            module_name, args = m.group(2).split(",", 1)
-            args = args.strip()
-        else:
-            module_name = m.group(1).lower()
-            args = m.group(2)
-        instance = utils.plugins.lookup_loader.get(module_name, basedir=basedir)
-        if instance is not None:
-            replacement = instance.run(args, inject=vars)
-            if not isinstance(replacement, basestring):
-                replacement = ",".join(replacement)
-        else:
-            replacement = m.group(0)
-
-        start, end = m.span()
-        done.append(raw[:start])    # Keep stuff leading up to token
-        done.append(replacement.rstrip())    # Append replacement value
-        raw = raw[end:]             # Continue with remainder of string
-
-    return ''.join(done)
-
 def template_ds(basedir, varname, vars):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
-        m = _varFind(varname, vars)
+        m = _varFind(basedir, varname, vars)
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
@@ -243,9 +235,7 @@ def template(basedir, text, vars, expand_lists=False):
         text = text.decode('utf-8')
     except UnicodeEncodeError:
         pass # already unicode
-    text = varReplace(unicode(text), vars, expand_lists=expand_lists)
-    if basedir is not None:
-        text = _varReplaceLookups(basedir, text, vars)
+    text = varReplace(basedir, unicode(text), vars, expand_lists=expand_lists)
     return text
 
 def template_from_file(basedir, path, vars):
