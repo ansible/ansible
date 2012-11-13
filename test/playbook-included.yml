@@ -3,3 +3,10 @@
   gather_facts: False
   tasks:
   - action: debug msg="$variable"
+
+- hosts: all
+  vars:
+  - ugly: var
+  gather_facts: False
+  tasks:
+  - action: debug msg="$variable"
