@@ -87,7 +87,7 @@ class Task(object):
             raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
         # Both are NOT defined
         elif (not 'action' in ds) and (not 'local_action' in ds):
-            raise errors.AnsibleError("task missing an 'action' attribute")
+            raise errors.AnsibleError("'action' or 'local_action' attribute missing in task \"%s\"" % ds.get('name', '<Unnamed>'))
         # Only one of them is defined
         elif 'local_action' in ds:
             self.action      = ds.get('local_action', '')
