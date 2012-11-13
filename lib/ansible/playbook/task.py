@@ -208,7 +208,7 @@ class Task(object):
         if tokens[0] in [ 'set', 'unset' ]:
             if len(tokens) != 2:
                 raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
-            return "is_%s('%s')" % (tokens[0], tokens[1])
+            return "is_%s('''%s''')" % (tokens[0], tokens[1])
 
         # when_integer / when_float / when_string
         elif tokens[0] in [ 'integer', 'float', 'string' ]:
@@ -223,7 +223,7 @@ class Task(object):
             for (i,t) in enumerate(tokens[1:]):
                 if t.find("$") != -1:
                     # final variable substitution will happen in Runner code
-                    tcopy[i] = "%s('%s')" % (cast, t)
+                    tcopy[i] = "%s('''%s''')" % (cast, t)
                 else:
                     tcopy[i] = t
             return " ".join(tcopy)
