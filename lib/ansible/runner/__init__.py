@@ -461,9 +461,12 @@ class Runner(object):
 
         test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1" % (path,path)
         md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,
-            "(/sbin/md5sum -q %s 2>/dev/null)" % path,
-            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path
+            "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
+            "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
+            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
+            "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
+            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
+            "(/bin/md5 -q %s 2>/dev/null)" % path       # Openbsd
         ]
 
         cmd = " || ".join(md5s)
