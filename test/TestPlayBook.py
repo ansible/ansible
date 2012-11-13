@@ -114,6 +114,7 @@ class TestPlaybook(unittest.TestCase):
    def _run(self, test_playbook, host_list='test/ansible_hosts'):
        ''' run a module and get the localhost results '''
        # This ensures tests are independent of eachother
+       global EVENTS
        ansible.playbook.SETUP_CACHE.clear()
        EVENTS = []
 
@@ -202,7 +203,8 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
-       assert len(EVENTS) == 60
+       print "len(EVENTS) = %d" % len(EVENTS)
+       assert len(EVENTS) == 26
 
    def test_includes(self):
        pb = os.path.join(self.test_dir, 'playbook-includer.yml')
