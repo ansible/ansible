@@ -248,7 +248,12 @@ class _jinja2_vars(object):
     def __getitem__(self, varname):
         if varname not in self.vars:
             raise KeyError("undefined variable: %s" % varname)
-        return template_ds(self.basedir, self.vars[varname], self.vars)
+        var = self.vars[varname]
+        # HostVars is special, return it as-is
+        if isinstance(var, dict) and type(var) != dict:
+            return var
+        else:
+            return template_ds(self.basedir, var, self.vars)
 
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
