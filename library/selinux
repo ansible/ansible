@@ -54,6 +54,7 @@ author: Derek Carter <goozbach@friocorte.com>
 
 import os
 import re
+import sys
 
 try:
     import selinux
