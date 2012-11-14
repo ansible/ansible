@@ -59,7 +59,7 @@ import sys
 try:
     import selinux
 except ImportError:
-    print "failed=True msg='python-selinux required for this module'"
+    print json.dumps(failed=True, msg='python-selinux required for this module')
     sys.exit(1)
 
 # getter subroutines
