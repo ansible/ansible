@@ -647,10 +647,12 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
       connection: ssh
       tasks:
           - action: easy_install name=pip
-          - action: pip name=pyzmq state=present
-          - action: pip name=pyasn1
-          - action: pip name=PyCrypto
-          - action: pip name=python-keyczar
+          - action: pip name=$item state=present
+            with_items:
+              - pyzmq
+              - pyasn1
+              - PyCrypto
+              - python-keyczar
 
 For more information about fireball, see the module documentation section.
 
