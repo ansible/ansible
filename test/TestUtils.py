@@ -272,9 +272,9 @@ class TestUtils(unittest.TestCase):
         assert res == u'hello oh great one'
 
     def test_varReplace_include(self):
-        template = 'hello $FILE(world) $LOOKUP(file, world)'
+        template = 'hello $FILE(world) $LOOKUP(file, $filename)'
 
-        res = ansible.utils.template("test", template, {}, expand_lists=True)
+        res = ansible.utils.template("test", template, {'filename': 'world'}, expand_lists=True)
 
         assert res == u'hello world world'
 
