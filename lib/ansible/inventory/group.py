@@ -50,11 +50,11 @@ class Group(object):
 
     def get_hosts(self):
 
-        hosts = []
+        hosts = set()
         for kid in self.child_groups:
-            hosts.extend(kid.get_hosts())
-        hosts.extend(self.hosts)
-        return hosts
+            hosts.update(kid.get_hosts())
+        hosts.update(self.hosts)
+        return list(hosts)
 
     def get_variables(self):
 
