@@ -17,6 +17,7 @@
 
 import json
 import os
+import base64
 from ansible.callbacks import vvv
 from ansible import utils
 from ansible import errors
@@ -97,8 +98,10 @@ class Connection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         data = file(in_path).read()
-        
+        data = base64.b64encode(data)
+
         data = dict(mode='put', data=data, out_path=out_path)
+        # TODO: support chunked file transfer
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
@@ -113,7 +116,7 @@ class Connection(object):
         ''' save a remote file to the specified path '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
 
-        data = dict(mode='fetch', file=in_path)
+        data = dict(mode='fetch', in_path=in_path)
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
@@ -122,6 +125,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
         response = response['data']
+        response = base64.b64decode(response)        
 
         fh = open(out_path, "w")
         fh.write(response)

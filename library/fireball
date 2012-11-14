@@ -162,13 +162,15 @@ def command(data):
     return dict(stdout=stdout, stderr=stderr)
   
 def fetch(data):
-    if 'data' not in data:
-        return dict(failed=True, msg='internal error: data is required')
     if 'in_path' not in data:
-        return dict(failed=True, msg='internal error: out_path is required')
+        return dict(failed=True, msg='internal error: in_path is required')
+
+    # FIXME: should probably support chunked file transfer for binary files
+    # at some point.  For now, just base64 encodes the file
+    # so don't use it to move ISOs, use rsync.
 
     fh = open(data['in_path'])
-    data = fh.read()
+    data =  base64.b64encode(fh.read())
     return dict(data=data)
 
 def put(data):
@@ -177,9 +179,13 @@ def put(data):
         return dict(failed=True, msg='internal error: data is required')
     if 'out_path' not in data:
         return dict(failed=True, msg='internal error: out_path is required')
+    
+    # FIXME: should probably support chunked file transfer for binary files
+    # at some point.  For now, just base64 encodes the file
+    # so don't use it to move ISOs, use rsync.
 
     fh = open(data['out_path'], 'w')
-    fh.write(data['data'])
+    fh.write(base64.b64decode(data['data']))
     fh.close()
 
     return dict()
