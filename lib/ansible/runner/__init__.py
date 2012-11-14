@@ -540,20 +540,17 @@ class Runner(object):
                     facility = inject['ansible_syslog_facility']
                 module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
-        # use the correct python interpreter for the host
-        if 'ansible_python_interpreter' in inject:
-            interpreter = inject['ansible_python_interpreter']
-            module_lines = module_data.split('\n')
-            if '#!' and 'python' in module_lines[0]:
-                module_lines[0] = "#!%s" % interpreter
-            module_data = "\n".join(module_lines)
-
-        self._transfer_str(conn, tmp, module_name, module_data)
-
         lines = module_data.split("\n")
         shebang = None
         if lines[0].startswith("#!"):
             shebang = lines[0]
+            interpreter_config = 'ansible_%s_interpreter' % os.path.basename(shebang)
+
+            if interpreter_config in inject:
+                lines[0] = shebang = "#!%s" % inject[interpreter_config]
+                module_data = "\n".join(lines)
+
+        self._transfer_str(conn, tmp, module_name, module_data)
 
         return (out_path, is_new_style, shebang)
 
