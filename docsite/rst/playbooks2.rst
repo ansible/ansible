@@ -623,7 +623,7 @@ if you have a large number of hosts::
     # set up the fireball transport
     - hosts: all
       gather_facts: False
-      connection: ssh
+      connection: ssh # or paramiko
       sudo: True
       tasks:
           - action: fireball
@@ -631,7 +631,6 @@ if you have a large number of hosts::
     # these operations will occur over the fireball transport
     - hosts: all
       connection: fireball
-      sudo: True
       tasks:
           - action: shell echo "Hello ${item}"
             with_items:
