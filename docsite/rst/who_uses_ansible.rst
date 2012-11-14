@@ -21,6 +21,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
     * `Skylines.io <http://skylines.io>`_ - Real time photo search engine
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
+    * `Tranquil Hosting <http://tranquilhosting.com>`_ - Managed Linux Hosting Services
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
     * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
