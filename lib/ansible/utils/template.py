@@ -157,6 +157,8 @@ def _varFind(basedir, text, vars, depth=0):
         if lookup_plugin_name == 'LOOKUP':
             lookup_plugin_name, args = args.split(",", 1)
             args = args.strip()
+        # args have to be templated
+        args = varReplace(basedir, args, vars, depth=depth+1, expand_lists=True)
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
         if instance is not None:
             replacement = instance.run(args, inject=vars)
