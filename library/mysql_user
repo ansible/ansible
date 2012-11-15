@@ -169,12 +169,19 @@ def privileges_get(cursor, user,host):
     output = {}
     cursor.execute("SHOW GRANTS FOR %s@%s", (user,host))
     grants = cursor.fetchall()
+
+    def pick(x):
+        if x == 'ALL PRIVILEGES':
+            return 'ALL'
+        else:
+            return x
+
     for grant in grants:
         res = re.match("GRANT (.+) ON (.+) TO '.+'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
         if res is None:
             module.fail_json(msg="unable to parse the MySQL grant string")
         privileges = res.group(1).split(", ")
-        privileges = ['ALL' if x=='ALL PRIVILEGES' else x for x in privileges]
+        privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
         db = res.group(2).replace('`', '')
