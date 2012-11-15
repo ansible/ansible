@@ -119,6 +119,7 @@ def main(args):
         )
         
         if options.listhosts:
+            print 'playbook: %s' % playbook
             playnum = 0
             for play in pb.playbook:
                 playnum += 1
@@ -126,11 +127,11 @@ def main(args):
                     label = 'unnamed'
                     if 'name' in play:
                         label = play['name']
-                    print 'hosts in play %s: %s' % (playnum, label)
-                    for host in pb.inventory.list_hosts(play['hosts']):
-                        print '  %s' % host
-                    print '\n'
-            return 0
+                    hosts = pb.inventory.list_hosts(play['hosts'])
+                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+            continue
 
         if options.syntax:
             # if we've not exited by now then we are fine.
