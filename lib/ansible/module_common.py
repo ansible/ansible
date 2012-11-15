@@ -123,7 +123,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     if subclass is None:
         subclass = cls
 
-    return super(cls, subclass).__new__(subclass, *args, **kwargs)
+    return super(cls, subclass).__new__(subclass)
 
 
 class AnsibleModule(object):
