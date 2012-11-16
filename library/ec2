@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on the external euca2ools package.
 version_added: "0.9"
 options:
   keypair:
@@ -66,7 +66,7 @@ options:
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to ec2 or your cloud
+      - url to use to connect to ec2 or your cloud (for example https://ec2.amazonaws.com when using Amazon ec2 directly and not Eucalyptus)
     required: False
     default: null
     aliases: []
