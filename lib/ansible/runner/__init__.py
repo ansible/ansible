@@ -148,8 +148,6 @@ class Runner(object):
             # don't override subset when passed from playbook
             self.inventory.subset(subset)
 
-        if self.transport == 'ssh' and remote_pass:
-            raise errors.AnsibleError("SSH transport does not support passwords, only keys or agents")
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
 
