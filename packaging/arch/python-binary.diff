@@ -1,0 +1,30 @@
+Les fichiers binaires ansible.orig/.git/index et ansible/.git/index sont différents
+diff -uNr ansible.orig/Makefile ansible/Makefile
+--- ansible.orig/Makefile	2012-11-16 09:30:00.232106580 +0100
++++ ansible/Makefile	2012-11-16 09:31:06.606482546 +0100
+@@ -24,7 +24,7 @@
+ ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
+ MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1
+ 
+-SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
++SITELIB = $(shell python2 -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+ 
+ # VERSION file provides one place to update the software version
+ VERSION := $(shell cat VERSION)
+@@ -111,13 +111,13 @@
+ 	rm -rf docs/js
+ 
+ python:
+-	python setup.py build
++	python2 setup.py build
+ 
+ install:
+-	python setup.py install
++	python2 setup.py install
+ 
+ sdist: clean docs
+-	python setup.py sdist -t MANIFEST.in
++	python2 setup.py sdist -t MANIFEST.in
+ 
+ rpmcommon: sdist
+ 	@mkdir -p rpm-build
