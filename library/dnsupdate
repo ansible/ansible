@@ -1,0 +1,179 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: dnsupdate
+short_description: Perform Dynamic DNS Updates (RFC 2136)
+description:
+     - This module performs dynamic DNS updates as per RFC 2136.
+version_added: "0.9"
+options:
+  keyname:
+    description:
+      - name of the TSIG key required to perform updates
+    required: true
+    default: null
+    aliases: []
+  secret:
+    description:
+      - secret TSIG key blob (base-64 encoded)
+    required: true
+    default: null
+    aliases: []
+  mname:
+    description:
+      - address of the master server to which to send the update to.
+        This module does not currently determine the I(mname) from
+        the zone's SOA record.
+    required: true
+    default: null
+    aliases: []
+  zone:
+    description:
+      - name of the authoritative zone (e.g. C(example.com))
+    required: true
+    default: null
+    aliases: []
+  domain:
+    description:
+      - domain name to update (e.g. C(www))
+    required: true
+    default: null
+    aliases: []
+  a_rdata:
+    description:
+      - The I(rdata) for the A resource record type (i.e. an IPv4 address)
+    required: true
+    default: null
+    aliases: []
+  txt_rdata:
+    description:
+      - The I(rdata) for the TXT resource record type. Space-separated strings
+        are encoded as per DNS rules.
+    required: false
+    default: null
+    aliases: []
+  ttl:
+    description:
+      - Time to Live for the RR.
+    required: true
+    default: 3600
+    aliases: []
+examples:
+   - code: |
+       local_action: dnsupdate keyname="mykey1"
+                  secret="xxxxxxxxxx=="
+                  mname=192.168.1.10
+                  zone=example.org
+                  domain=www
+                  a_rdata=${ec2_ip_address}
+     description: "Example from Ansible Playbooks"
+notes:
+  - This module requires I(dnspython) (U(http://www.dnspython.org/)), and it will
+    typically be run as a C(local_action) so as to not push the secret TSIG key
+    all over the show.
+# informational: requirements for nodes
+requirements: [ dnspython ]
+author: Jan-Piet Mens
+'''
+
+HAS_DNSPYTHON=True
+try:
+    import dns.update
+    import dns.query
+    import dns.tsigkeyring
+except ImportError:
+    HAS_DNSPYTHON=False
+
+def dns_update(keyname, secret, mname, zone, domain, a_rdata, txt_rdata=None, ttl=3600):
+
+    success=False
+    msg = ''
+
+    keyring = dns.tsigkeyring.from_text({
+            keyname : secret })
+
+    update = dns.update.Update(zone,
+                    keyring=keyring,
+                    keyname=keyname)
+    update.replace(domain, ttl, 'A', a_rdata)
+    if txt_rdata is not None:
+        update.replace(domain, ttl, 'TXT', txt_rdata)
+
+    try:
+        response = dns.query.udp(update, mname, timeout=10)
+        success = True
+    except dns.tsig.PeerBadKey:
+        return False, 'BADKEY'
+        pass
+    except dns.exception.Timeout:
+        return False, 'TIMEOUT'
+        pass
+
+    if success:
+        msg = dns.rcode.to_text(response.rcode())
+    return True, msg
+
+
+# ==============================================================
+# main
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+                keyname = dict(required=True),
+                secret = dict(required=True),
+                mname = dict(required=True),
+                zone = dict(required=True),
+                domain = dict(required=True),
+                a_rdata = dict(required=True),
+                txt_rdata = dict(required=False),
+                ttl = dict(default=60, required=False)
+        )
+    )
+
+    if not HAS_DNSPYTHON:
+        module.fail_json(msg="dnspython is not installed")
+
+    keyname  = module.params['keyname']
+    secret   = module.params['secret']
+    mname   = module.params['mname']
+    zone   = module.params['zone']
+    domain   = module.params['domain']
+    a_rdata   = module.params['a_rdata']
+    txt_rdata   = module.params['txt_rdata']
+    ttl   = module.params['ttl']
+
+    changed=False
+
+    r, msg = dns_update(keyname, secret, mname, zone, domain, a_rdata, txt_rdata)
+
+    if r == False or msg == 'NOTAUTH':
+        module.fail_json(msg='DNS update on %s failed: %s (%s)' % (mname, msg, zone))
+
+    # Mission complete
+    changed=True
+    module.exit_json(changed=changed, msg="OK", dnsupdate=msg)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
