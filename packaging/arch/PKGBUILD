@@ -1,13 +1,16 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20120419
+pkgver=20121116
 pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
 url="https://github.com/ansible/ansible"
 license=('GPL3')
-depends=('python2' 'python2-yaml' 'python-paramiko>=1.7.7' 'python2-jinja' 'python-simplejson')
+depends=('python2' 'python2-yaml' 'python2-paramiko' 'python2-jinja' 'python-simplejson' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
+conflicts=('ansible')
+source=("python-binary.diff")
+md5sums=("8f1eb942a01bbf206dbe32bded8725c6")
 
 _gitroot="https://github.com/ansible/ansible"
 _gitname="ansible"
@@ -25,7 +28,9 @@ build() {
 
   msg "GIT checkout done or server timeout"
 
+
   cd "$srcdir/$_gitname"
+  patch -p1 -i $srcdir/python-binary.diff
   make
 }
 
@@ -34,9 +39,11 @@ package() {
 
   mkdir -p ${pkgdir}/usr/share/ansible
   cp ./library/* ${pkgdir}/usr/share/ansible/
-  python setup.py install -O1 --root=${pkgdir}
+  python2 setup.py install -O1 --root=${pkgdir}
 
-  install docs/man/man1/*.1 ${pkgdir}/usr/share/man/man1/
+  install -D docs/man/man1/ansible.1 ${pkgdir}/usr/share/man/man1/ansible.1
+  install -D docs/man/man1/ansible-playbook.1 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
 
-  gzip -9 ${pkgdir}/usr/share/man/man1/*.1
+  gzip -9 ${pkgdir}/usr/share/man/man1/ansible.1
+  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
 }
