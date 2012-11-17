@@ -55,59 +55,90 @@ examples:
 '''
 
 import grp
+import syslog
+import platform
 
-def group_del(module, group):
-    cmd = [module.get_bin_path('groupdel', True), group]
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = p.communicate()
-    rc = p.returncode
-    return (rc, out, err)
+class Group(object):
+    """
+    This is a generic Group manipulation class that is subclassed
+    based on platform.  
+    
+    A subclass may wish to override the following action methods:-
+      - group_del()
+      - group_add()
+      - group_mod()
 
-def group_add(module, group, **kwargs):
-    cmd = [module.get_bin_path('groupadd', True)]
-    for key in kwargs:
-        if key == 'gid' and kwargs[key] is not None:
-            cmd.append('-g')
-            cmd.append(kwargs[key])
-        elif key == 'system' and kwargs[key] == 'yes':
-            cmd.append('-r')
-    cmd.append(group)
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = p.communicate()
-    rc = p.returncode
-    return (rc, out, err)
+    All subclasses MUST define platform and distribution (which may be None).
+    """
 
-def group_mod(module, group, **kwargs):
-    cmd = [module.get_bin_path('groupmod', True)]
-    info = group_info(group)
-    for key in kwargs:
-        if key == 'gid':
-            if kwargs[key] is not None and info[2] != int(kwargs[key]):
+    platform = 'Generic'
+    distribution = None
+    GROUPFILE = '/etc/group'
+
+    def __new__(cls, *args, **kwargs):
+        return load_platform_subclass(Group, args, kwargs)
+
+    def __init__(self, module):
+        self.module     = module
+        self.state      = module.params['state']
+        self.name       = module.params['name']
+        self.gid        = module.params['gid']
+        self.system     = module.params['system']
+        self.syslogging = False
+
+    def execute_command(self, cmd):
+        if self.syslogging:
+            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
+
+        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (out, err) = p.communicate()
+        rc = p.returncode
+        return (rc, out, err)
+
+    def group_del(self):
+        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        return self.execute_command(cmd)
+ 
+    def group_add(self, **kwargs):
+        cmd = [self.module.get_bin_path('groupadd', True)]
+        for key in kwargs:
+            if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-    if len(cmd) == 1:
-        return (None, '', '')
-    cmd.append(group)
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = p.communicate()
-    rc = p.returncode
-    return (rc, out, err)
-
-def group_exists(group):
-    try:
-        if grp.getgrnam(group):
-            return True
-    except KeyError:
-        return False
-
-def group_info(group):
-    if not group_exists(group):
-        return False
-    try:
-        info = list(grp.getgrnam(group))
-    except KeyError:
-        return False
-    return info
+            elif key == 'system' and kwargs[key] == 'yes':
+                cmd.append('-r')
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+ 
+    def group_mod(self, **kwargs):
+        cmd = [self.module.get_bin_path('groupmod', True)]
+        info = self.group_info()
+        for key in kwargs:
+            if key == 'gid':
+                if kwargs[key] is not None and info[2] != int(kwargs[key]):
+                    cmd.append('-g')
+                    cmd.append(kwargs[key])
+        if len(cmd) == 1:
+            return (None, '', '')
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+ 
+    def group_exists(self):
+        try:
+            if grp.getgrnam(self.name):
+                return True
+        except KeyError:
+            return False
+    
+    def group_info(self):
+        if not self.group_exists():
+            return False
+        try:
+            info = list(grp.getgrnam(self.name))
+        except KeyError:
+            return False
+        return info
 
 # ===========================================
 
@@ -121,29 +152,33 @@ def main():
         )
     )
 
-    state = module.params['state']
-    name = module.params['name']
-    gid = module.params['gid']
-    system = module.params['system']
+    group = Group(module)
+
+    if group.syslogging:
+        syslog.openlog('ansible-%s' % os.path.basename(__file__))
+        syslog.syslog(syslog.LOG_NOTICE, 'Group instantiated - platform %s' % group.platform)
+        if user.distribution:
+            syslog.syslog(syslog.LOG_NOTICE, 'Group instantiated - distribution %s' % group.distribution)
+
     rc = None
     out = ''
     err = ''
     result = {}
-    result['name'] = name
-    result['state'] = state
-    if state == 'absent':
-        if group_exists(name):
-            (rc, out, err) = group_del(module, name)
+    result['name'] = group.name
+    result['state'] = group.state
+    if group.state == 'absent':
+        if group.group_exists():
+            (rc, out, err) = group.group_del()
             if rc != 0:
                 module.fail_json(name=name, msg=err)
-    elif state == 'present':
-        if not group_exists(name):
-            (rc, out, err) = group_add(module, name, gid=gid, system=system)
+    elif group.state == 'present':
+        if not group.group_exists():
+            (rc, out, err) = group.group_add(gid=group.gid, system=group.system)
         else:
-            (rc, out, err) = group_mod(module, name, gid=gid)
+            (rc, out, err) = group.group_mod(gid=group.gid)
 
         if rc is not None and rc != 0:
-            module.fail_json(name=name, msg=err)
+            module.fail_json(name=group.name, msg=err)
 
     if rc is None:
         result['changed'] = False
@@ -154,9 +189,9 @@ def main():
     if err:
         result['stderr'] = err
 
-    if group_exists(name):
-        info = group_info(name)
-        result['system'] = system
+    if group.group_exists():
+        info = group.group_info()
+        result['system'] = group.system
         result['gid'] = info[2]
 
     module.exit_json(**result)
