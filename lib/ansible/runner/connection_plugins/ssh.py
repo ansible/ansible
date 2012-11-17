@@ -57,10 +57,30 @@ class Connection(object):
 
         return self
 
+    def _password_cmd(self):
+        if self.runner.remote_pass:
+            try:
+                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.communicate()
+            except OSError:
+                raise errors.AnsibleError("to use -c ssh with passwords, you must install the sshpass program")
+            (self.rfd, self.wfd) = os.pipe()
+            return ["sshpass", "-d%d" % self.rfd]
+        return []
+
+    def _send_password(self):
+        if self.runner.remote_pass:
+            os.close(self.rfd)
+            os.write(self.wfd, "%s\n" % self.runner.remote_pass)
+            os.close(self.wfd)
+
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False):
         ''' run a command on the remote host '''
 
-        ssh_cmd = ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd = self._password_cmd()
+        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+
         if self.runner.sudo and sudoable:
             # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required.
@@ -75,30 +95,31 @@ class Connection(object):
                 prompt, sudo_user, pipes.quote(cmd))
             sudo_output = ''
             ssh_cmd.append(sudocmd)
-            vvv("EXEC %s" % ssh_cmd, host=self.host)
-            p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            if self.runner.sudo_pass:
-                fcntl.fcntl(p.stdout, fcntl.F_SETFL,
-                            fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-                while not sudo_output.endswith(prompt):
-                    rfd, wfd, efd = select.select([p.stdout], [],
-                                                  [p.stdout], self.runner.timeout)
-                    if p.stdout in rfd:
-                        chunk = p.stdout.read()
-                        if not chunk:
-                            raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
-                        sudo_output += chunk
-                    else:
-                        stdout = p.communicate()
-                        raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-                p.stdin.write(self.runner.sudo_pass + '\n')
-                fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         else:
             ssh_cmd.append(cmd)
-            vvv("EXEC %s" % ssh_cmd, host=self.host)
-            p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        vvv("EXEC %s" % ssh_cmd, host=self.host)
+        p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        self._send_password()
+
+        if self.runner.sudo and sudoable and self.runner.sudo_pass:
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL,
+                        fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            while not sudo_output.endswith(prompt):
+                rfd, wfd, efd = select.select([p.stdout], [],
+                                              [p.stdout], self.runner.timeout)
+                if p.stdout in rfd:
+                    chunk = p.stdout.read()
+                    if not chunk:
+                        raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                    sudo_output += chunk
+                else:
+                    stdout = p.communicate()
+                    raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
+            p.stdin.write(self.runner.sudo_pass + '\n')
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         stdout = ''
@@ -124,34 +145,42 @@ class Connection(object):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+        cmd = self._password_cmd()
+
         if C.DEFAULT_SCP_IF_SSH:
-            ft_cmd = ["scp"] + self.common_args
-            ft_cmd += [in_path,self.host + ":" + out_path]
-            p = subprocess.Popen(ft_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
+            cmd += ["scp"] + self.common_args
+            cmd += [in_path,self.host + ":" + out_path]
+            indata = None
         else:
-            sftp_cmd = ["sftp"] + self.common_args + [self.host]
-            p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate("put %s %s\n" % (in_path, out_path))
+            cmd += ["sftp"] + self.common_args + [self.host]
+            indata = "put %s %s\n" % (in_path, out_path)
+
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self._send_password()
+        stdout, stderr = p.communicate(indata)
+
         if p.returncode != 0:
             raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        cmd = self._password_cmd()
+
         if C.DEFAULT_SCP_IF_SSH:
-            ft_cmd = ["scp"] + self.common_args
-            ft_cmd += [self.host + ":" + in_path, out_path]
-            p = subprocess.Popen(ft_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
+            cmd += ["scp"] + self.common_args
+            cmd += [self.host + ":" + in_path, out_path]
+            indata = None
         else:
-            sftp_cmd = ["sftp"] + self.common_args + [self.host]
-            p = subprocess.Popen(sftp_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate("get %s %s\n" % (in_path, out_path))
+            cmd += ["sftp"] + self.common_args + [self.host]
+            indata = "get %s %s\n" % (in_path, out_path)
+
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self._send_password()
+        stdout, stderr = p.communicate(indata)
+
         if p.returncode != 0:
             raise errors.AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
 
