@@ -82,7 +82,13 @@ options:
     required: False
     default: null
     aliases: []
-  
+  user_data:
+    version_added: "0.9"
+    description:
+      - opaque blob of data which is made available to the ec2 instance
+    required: False
+    default: null
+    aliases: []
 examples:
    - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
      description: "Examples from Ansible Playbooks"
@@ -115,6 +121,7 @@ def main():
             ec2_url = dict(aliases=['EC2_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            user_data = dict(),
         )
     )
 
@@ -129,6 +136,7 @@ def main():
     ec2_url = module.params.get('ec2_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
+    user_data = module.params.get('user_data')
     
     if ec2_url:
         os.environ['EC2_URL'] = ec2_url
@@ -151,7 +159,8 @@ def main():
                                security_groups=[group],
                                instance_type=instance_type,
                                kernel_id=kernel,
-                               ramdisk_id=ramdisk)
+                               ramdisk_id=ramdisk,
+                               user_data=user_data)
 
     instids = [ i.id for i in res.instances ]
 
