@@ -142,6 +142,31 @@ class Group(object):
 
 # ===========================================
 
+class SunOS(Group):
+    """
+    This is a SunOS Group manipulation class. Solaris doesnt have
+    the 'system' group concept.
+
+    This overrides the following methods from the generic class:-
+        - group_add()
+    """ 
+
+    platform = 'SunOS'
+    distribution = None
+    GROUPFILE = '/etc/group'
+
+    def group_add(self, **kwargs):
+        cmd = [self.module.get_bin_path('groupadd', True)]
+        for key in kwargs:
+            if key == 'gid' and kwargs[key] is not None:
+                cmd.append('-g')
+                cmd.append(kwargs[key])
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+         
+
+# ===========================================
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
