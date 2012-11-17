@@ -1,0 +1,173 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Afterburn
+# Written by Matthew Williams <matthew@flowroute.com>
+# Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: pacman
+short_description: Package manager for Archlinux
+description:
+    - Manages Archlinux packages
+
+version_added: "0.0.1"
+options:
+    update:
+        description:
+            - Update (no install) the package db
+        required: false
+        default: null
+
+    upgrade:
+        description:
+            - Upgrade the package db and install updated packages
+        required: false
+        default: null
+
+    pkg:
+        description:
+            - Define the state of a package (install/remove)
+        required: false
+        default: null
+
+author: Afterburn
+notes:  []
+examples:
+    - code: "pacman: pkg=foo update"
+      description: update package db and install package foo
+    - code: "pacman: remove=foo"
+      description: remove package 
+    - code: "upgrade"
+      description: update and upgrade all installed packages
+    - code: "pacman: pkgs=foo,bar state=absent
+      description: remove packages foo and bar (if installed)
+      
+'''
+
+
+import json
+import shlex
+import os
+import sys
+
+PACMAN_PATH = "/usr/bin/pacman"
+
+def query_package(name):
+    rc = os.system("pacman -Q %s" % name)
+
+    if rc == 0:
+        return True
+
+    return False
+
+def update_packages(module):
+    rc = os.system("pacman -Syy")
+
+    if rc != 0:
+        module.fail_json(msg="could not update package db")
+
+    module.exit_json(changed=True) 
+
+def upgrade_packages(module):
+    rc = os.system("pacman -Syu --noconfirm")
+
+    if rc != 0:
+        module.fail_json(msg="could not upgrade packages")
+
+    module.exit_json(changed=True)
+
+def remove_packages(module, packages):
+    
+    remove_c = 0
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        # Query the package first, to see if we even need to remove
+        if not query_package(package):
+            continue
+        rc = os.system("pacman -R %s --noconfirm" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+    
+        remove_c += 1
+
+    if remove_c > 0:
+        module.exit_json(changed=True, msg="removed %s packages" % (remove_c))
+
+    module.exit_json(changed=False, msg="all packages are already absent")
+
+
+def install_packages(module, packages):
+
+    install_c = 0
+
+    for package in packages:
+        if query_package(package):
+            continue
+
+        rc = os.system("pacman -S %s --noconfirm" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s" % (package))
+
+        install_c += 1
+    
+    if install_c > 0:
+        module.exit_json(changed=True, msg="installed %s packages" % (install_c))
+
+    module.exit_json(changed=False, msg="all packages already installed")
+
+
+def main():
+    module = AnsibleModule(
+            # I chose to leave upgrade and update out,
+            # that way you can just specify "upgrade" or "update" 
+            # and not "upgrade=yes or "update=yes"
+            argument_spec = dict(
+                state = dict(default="present", choices=["present", "absent"]),
+                pkg   = dict(default=None, aliases=["pkgs"])))
+                
+
+    if not os.path.exists(PACMAN_PATH):
+        module.fail_json(msg="cannot find pacman, looking for %s" % (PACMAN_PATH))
+
+    p = module.params
+
+    if "upgrade" in p:
+        upgrade_packages()
+
+    elif "update" in p: 
+        update_packages()
+
+    if p["pkg"] == None:
+        module.fail_json(msg="no packages specified")
+
+    pkgs = p["pkg"].split(",")
+
+    # Only one mode per line, pkg=vim,firefox state=present
+    if p["state"] == "present":
+        install_packages(module, pkgs)
+     
+    elif p["state"] == "absent":
+        remove_packages(module, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+    
+main()        
