@@ -42,6 +42,7 @@ class PluginLoader(object):
         self.subdir = subdir
         self.aliases = aliases
         self._module_cache = {}
+        self._extra_dirs = []
 
     def _get_package_path(self):
         """Gets the path of a Python package"""
@@ -55,7 +56,14 @@ class PluginLoader(object):
         """Return a list of paths to search for plugins in
 
         The list is searched in order."""
-        return [os.path.join(basedir, self.subdir) for basedir in _basedirs] + self.config.split(os.pathsep) + [self._get_package_path()]
+        return self._extra_dirs +
+            [os.path.join(basedir, self.subdir) for basedir in _basedirs] +
+            self.config.split(os.pathsep) +
+            [self._get_package_path()]
+
+    def add_directory(self, directory):
+        """Adds an additional directory to the search path"""
+        self._extra_dirs.append(directory)
 
     def find_plugin(self, name):
         """Find a plugin named name"""
