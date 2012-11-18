@@ -68,7 +68,7 @@ class Inventory(object):
                 host_list = [ h for h in host_list if h and h.strip() ]
 
         else:
-            utils.plugins.push_basedir(self.basedir())
+            utils.plugins.vars_loader.add_directory(self.basedir())
 
         if type(host_list) == list:
             all = Group('all')
