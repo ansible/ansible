@@ -52,17 +52,23 @@ options:
         choices: [ "yes", "no" ]
         description:
         - Whether the service should start on boot.
+    arguments:
+        description:
+        - Additional arguments provided on the command line
+        aliases: [ 'args' ]
 examples:
-    - code: "service: name=httpd state=started"
-      description: Example action from Ansible Playbooks
-    - code: "service: name=httpd state=stopped"
-      description: Example action from Ansible Playbooks
-    - code: "service: name=httpd state=restarted"
-      description: Example action from Ansible Playbooks
-    - code: "service: name=httpd state=reloaded"
-      description: Example action from Ansible Playbooks
-    - code: "service: name=foo pattern=/usr/bin/foo state=started"
-      description: Example action from Ansible Playbooks
+    - description: Example action to start service httpd, if not running
+      code: "service: name=httpd state=started"
+    - description: Example action to stop service httpd, if running
+      code: "service: name=httpd state=stopped"
+    - description: Example action to restart service httpd, in all cases
+      code: "service: name=httpd state=restarted"
+    - description: Example action to reload service httpd, in all cases
+      code: "service: name=httpd state=reloaded"
+    - description: Example action to start service foo, based on running process /usr/bin/foo
+      code: "service: name=foo pattern=/usr/bin/foo state=started"
+    - description: Example action to restart network service for interface eth0
+      code: "service: name=network state=restarted args=eth0"
 '''
 
 import platform
@@ -123,8 +129,8 @@ def _find_binaries(m,name):
     else:
         INITCTL = None
 
-def _get_service_status(name, pattern):
-    rc, status_stdout, status_stderr = _run("%s %s status" % (SERVICE, name))
+def _get_service_status(name, pattern, arguments):
+    rc, status_stdout, status_stderr = _run("%s %s status %s" % (SERVICE, name, arguments))
 
     # set the running state to None because we don't know it yet
     running = None
@@ -258,7 +264,8 @@ def main():
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
-            enabled = dict(choices=BOOLEANS)
+            enabled = dict(choices=BOOLEANS),
+            arguments = dict(aliases=['args']),
         )
     )
 
@@ -266,6 +273,7 @@ def main():
     state = module.params['state']
     pattern = module.params['pattern']
     enable = module.boolean(module.params.get('enabled', None))
+    arguments = module.params.get('arguments', '')
 
     # Set PS options here if 'ps auxww' will not work on
     # target platform
@@ -279,7 +287,7 @@ def main():
 
     # ===========================================
     # get service status
-    running = _get_service_status(name, pattern)
+    running = _get_service_status(name, pattern, arguments)
 
     # ===========================================
     # Some common variables
@@ -329,14 +337,14 @@ def main():
                 reload = "reload"
 
             if state in ['started', 'running']:
-                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,start))
+                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, start, arguments))
             elif state == 'stopped':
-                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,stop))
+                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, stop, arguments))
             elif state == 'reloaded':
-                rc_state, stdout, stderr = _run("%s %s" % (svc_cmd,reload))
+                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, reload, arguments))
             elif state == 'restarted':
-                rc1, stdout1, stderr1 = _run("%s %s" % (svc_cmd,stop))
-                rc2, stdout2, stderr2 = _run("%s %s" % (svc_cmd,start))
+                rc1, stdout1, stderr1 = _run("%s %s %s" % (svc_cmd, stop, arguments))
+                rc2, stdout2, stderr2 = _run("%s %s %s" % (svc_cmd, start, arguments))
                 if rc1 != 0 and rc2 == 0:
                     rc_state = rc + rc2
                     stdout = stdout2
@@ -359,7 +367,7 @@ def main():
     if state:
         result['state'] = state
 
-    rc, stdout, stderr = _run("%s status" % (svc_cmd))
+    rc, stdout, stderr = _run("%s status %s" % (svc_cmd, arguments))
     module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
