@@ -44,7 +44,7 @@ class Task(object):
         for x in ds.keys():
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
-            if x in play.playbook.modules_list:
+            if x in utils.plugins.module_finder:
                 ds['action'] = x + " " + ds[x]
                 ds.pop(x)
 

@@ -463,20 +463,6 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
-def get_available_modules(dirname=None):
-    """
-    returns a list of modules available based on current directory
-    looks in DEFAULT_MODULE_PATH, all subfolders named library and
-    -M option"""
-    modules_list = set()
-    if dirname is None:
-        dirname = C.DEFAULT_MODULE_PATH
-    for path in dirname.split(os.pathsep):
-        if os.path.exists(path):
-            modules_list.update(os.listdir(path))
-    modules_list = list(modules_list)
-    return modules_list
-
 def boolean(value):
     val = str(value)
     if val.lower() in [ "true", "t", "y", "1", "yes" ]:
