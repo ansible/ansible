@@ -91,7 +91,7 @@ class Runner(object):
 
     def __init__(self,
         host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
-        module_path=C.DEFAULT_MODULE_PATH,  # ex: /usr/share/ansible
+        module_path=None,                   # ex: /usr/share/ansible
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
         module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
         forks=C.DEFAULT_FORKS,              # parallelism level
@@ -128,7 +128,6 @@ class Runner(object):
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
-        self.module_path      = module_path
         self.module_name      = module_name
         self.forks            = int(forks)
         self.pattern          = pattern
@@ -150,6 +149,10 @@ class Runner(object):
 
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
+
+        if module_path is not None:
+            for i in module_path.split(os.pathsep):
+                utils.plugins.module_finder.add_directory(i)
 
         utils.plugins.push_basedir(self.basedir)
 
@@ -513,12 +516,9 @@ class Runner(object):
             raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
 
         # Search module path(s) for named module.
-        for module_path in self.module_path.split(os.pathsep):
-            in_path = os.path.expanduser(os.path.join(module_path, module_name))
-            if os.path.exists(in_path):
-                break
-        else:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, self.module_path))
+        in_path = utils.plugins.module_finder.find_plugin(module_name)
+        if in_path is None:
+            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
 
         out_path = os.path.join(tmp, module_name)
 
