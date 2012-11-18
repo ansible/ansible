@@ -42,25 +42,47 @@ class PluginLoader(object):
         self.subdir = subdir
         self.aliases = aliases
         self._module_cache = {}
+        self._extra_dirs = []
 
     def _get_package_path(self):
         """Gets the path of a Python package"""
+        if not self.package:
+            return []
         if not hasattr(self, 'package_path'):
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-        return self.package_path
+        return [self.package_path]
 
     def _get_paths(self):
         """Return a list of paths to search for plugins in
 
         The list is searched in order."""
-        return [os.path.join(basedir, self.subdir) for basedir in _basedirs] + self.config.split(os.pathsep) + [self._get_package_path()]
+        return self._extra_dirs + \
+            [os.path.join(basedir, self.subdir) for basedir in _basedirs] + \
+            self.config.split(os.pathsep) + \
+            self._get_package_path()
+
+    def add_directory(self, directory):
+        """Adds an additional directory to the search path"""
+        self._extra_dirs.append(directory)
+
+    def print_paths(self):
+        """Returns a string suitable for printing of the search path"""
+        # Uses a list to get the order right
+        ret = []
+        for i in self._get_paths():
+            if i not in ret:
+                ret.append(i)
+        return os.pathsep.join(ret)
 
     def find_plugin(self, name):
         """Find a plugin named name"""
+        suffix = ".py"
+        if not self.class_name:
+            suffix = ""
         for i in self._get_paths():
-            path = os.path.join(i, "%s.py" % name)
+            path = os.path.join(i, "%s%s" % (name, suffix))
             if os.path.exists(path):
                 return path
         return None
@@ -93,6 +115,7 @@ class PluginLoader(object):
 action_loader     = PluginLoader('ActionModule',   'ansible.runner.action_plugins',     C.DEFAULT_ACTION_PLUGIN_PATH,     'action_plugins')
 callback_loader   = PluginLoader('CallbackModule', 'ansible.callback_plugins',          C.DEFAULT_CALLBACK_PLUGIN_PATH,   'callback_plugins')
 connection_loader = PluginLoader('Connection',     'ansible.runner.connection_plugins', C.DEFAULT_CONNECTION_PLUGIN_PATH, 'connection_plugins', aliases={'paramiko': 'paramiko_ssh'})
+module_finder     = PluginLoader('',               '',                                  C.DEFAULT_MODULE_PATH,            'library')
 lookup_loader     = PluginLoader('LookupModule',   'ansible.runner.lookup_plugins',     C.DEFAULT_LOOKUP_PLUGIN_PATH,     'lookup_plugins')
 vars_loader       = PluginLoader('VarsModule',     'ansible.inventory.vars_plugins',    C.DEFAULT_VARS_PLUGIN_PATH,       'vars_plugins')
 filter_loader     = PluginLoader('FilterModule',   'ansible.runner.filter_plugins',     C.DEFAULT_FILTER_PLUGIN_PATH,     'filter_plugins')
