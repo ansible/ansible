@@ -44,7 +44,7 @@ class PlayBook(object):
     def __init__(self,
         playbook         = None,
         host_list        = C.DEFAULT_HOST_LIST,
-        module_path      = C.DEFAULT_MODULE_PATH,
+        module_path      = None,
         forks            = C.DEFAULT_FORKS,
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
@@ -110,17 +110,11 @@ class PlayBook(object):
         self.inventory           = ansible.inventory.Inventory(host_list)
         self.inventory.subset(subset)
 
-        self.modules_list        = utils.get_available_modules(self.module_path)
-
         if not self.inventory._is_script:
             self.global_vars.update(self.inventory.get_group_variables('all'))
 
         self.basedir     = os.path.dirname(playbook)
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
-        self.module_path = self.module_path + os.pathsep + os.path.join(self.basedir, "library")
-
-        for i in self.play_basedirs:
-            utils.plugins.push_basedir(i)
 
     # *****************************************************
 
@@ -137,6 +131,7 @@ class PlayBook(object):
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
 
         basedir = os.path.dirname(path)
+        utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
                 raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
