@@ -261,6 +261,13 @@ def parse_kv(args):
                 options[k]=v
     return options
 
+def md5s(data):
+    ''' Return MD5 hex digest of data. '''
+
+    digest = _md5()
+    digest.update(data)
+    return digest.hexdigest()
+
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
 

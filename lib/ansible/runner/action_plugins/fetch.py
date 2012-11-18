@@ -20,6 +20,7 @@ import pwd
 import random
 import traceback
 import tempfile
+import base64
 
 import ansible.constants as C
 from ansible import utils
@@ -43,17 +44,22 @@ class ActionModule(object):
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
 
-        # apply templating to source argument
-        source = utils.template(self.runner.basedir, source, inject)
-        # apply templating to dest argument
-        dest = utils.template(self.runner.basedir, dest, inject)
-
         # files are saved in dest dir, with a subdir for each host, then the filename
         dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)
+
+        # use slurp if sudo and permissions are lacking
+        remote_data = None
+        if remote_md5 in ('1', '2') and self.runner.sudo:
+            slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
+            if slurpres.is_successful():
+                if slurpres.result['encoding'] == 'base64':
+                    remote_data = base64.b64decode(slurpres.result['content'])
+                if remote_data is not None:
+                    remote_md5 = utils.md5s(remote_data)
 
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files
@@ -76,7 +82,12 @@ class ActionModule(object):
                 os.makedirs(os.path.dirname(dest))
 
             # fetch the file and check for changes
-            conn.fetch_file(source, dest)
+            if remote_data is None:
+                conn.fetch_file(source, dest)
+            else:
+                f = open(dest, 'w')
+                f.write(remote_data)
+                f.close()
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source)
