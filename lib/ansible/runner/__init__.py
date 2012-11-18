@@ -151,6 +151,8 @@ class Runner(object):
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
 
+        utils.plugins.push_basedir(self.basedir)
+
         # ensure we are using unique tmp paths
         random.seed()
 
