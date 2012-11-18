@@ -25,7 +25,10 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, **kwargs):
-        return [ f for f in glob.glob(utils.path_dwim(self.basedir, terms)) if os.path.isfile(f) ]
+        dwimterms = utils.path_dwim(self.basedir, terms)
+        # This skips whatever prefix the dwim added, leaving just the filename for the item
+        dwim_prefix_len = len(dwimterms) - len(terms)
+        return [ f[dwim_prefix_len:] for f in glob.glob(dwimterms) if os.path.isfile(f) ]
 
 
 
