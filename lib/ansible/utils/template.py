@@ -277,7 +277,7 @@ def template_from_file(basedir, path, vars):
     # Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
-        line = data[5:eol]
+        line = data[len(JINJA2_OVERRIDE):eol]
         data = data[eol+1:]
         for pair in line.split(','):
             (key,val) = pair.split(':')
