@@ -11,16 +11,14 @@ Ansible Modules
 Ansible modules are a way of adding new client-side logic to ansible.
 They can be written in any language.
 
--  `Official "core" ansible
-   modules <http://ansible.cc/docs/modules.html>`_ - various
--  `mercurial <https://github.com/bradobro/ansible-module-mercurial>`_ -
-   bradobro
--  `zypper (bash module
-   example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
+-  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
+-  `mercurial <https://github.com/bradobro/ansible-module-mercurial>`_ - bradobro
+-  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `homebrew <https://gist.github.com/3170079>`_ - swehack
--  `Ansible-Provisioning <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
+-  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
+-  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
 
-Python modules using 0.6 and later can use the common "AnsibleModule"
+Python modules using 0.6 and later can and should use the common "AnsibleModule"
 class to dramatically reduce the amount of boilerplate code required.
 Not all modules above yet take advantage of this feature. See the
 official documentation for more details.
@@ -34,19 +32,12 @@ from scratch for most applications, but it's always helpful to look at
 what others have done for reference.
 
 -  `Hadoop <https://github.com/jkleint/ansible-hadoop>`_ - jkleint
--  `LAMP <https://github.com/fourkitchens/server-playbooks>`_ - `Four
-   Kitchens <http://fourkitchens.com>`_
--  `Ganglia (demo) <https://github.com/mpdehaan/ansible-examples>`_ -
-   mpdehaan
--  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_
-   - cocoy
+-  `LAMP <https://github.com/fourkitchens/server-playbooks>`_ - `Four Kitchens <http://fourkitchens.com>`_
+-  `Ganglia (demo) <https://github.com/mpdehaan/ansible-examples>`_ - mpdehaan
+-  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_ - cocoy
 -  `OpenStack <http://github.com/lorin/openstack-ansible>`_ - lorin
--  `Systems
-   Configuration <https://github.com/cegeddin/ansible-contrib>`_ -
-   cegeddin
--  `Fedora
-   Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_
-   - `Fedora <http://fedoraproject.org>`_
+-  `Systems Configuration <https://github.com/cegeddin/ansible-contrib>`_ - cegeddin
+-  `Fedora Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_ - `Fedora <http://fedoraproject.org>`_
 
 Callbacks and Plugins
 `````````````````````
@@ -70,6 +61,7 @@ integrations with other interesting pieces of software.
 -  `virt-install <http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/start-prov-boot.py>`_ - skvidal
 -  `rebooting hosts <http://fedorapeople.org/cgit/skvidal/public_git/scripts.git/tree/ansible/host-reboot>`_ - skvidal
 -  `uptime (API demo) <https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py>`_ - mpdehaan
+-  `vim snippet generator <https://github.com/bleader/ansible_snippet_generator>`_ - bleader
 
 Blogs & Articles
 ````````````````
