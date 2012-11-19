@@ -76,7 +76,7 @@ Plugin changes:
 * EC2 inventory script now produces nicer failure message if AWS is down (or similar)
 * plugin loading code now more streamlined
 * lookup plugins for DNS text records, environment variables, and redis
-* added a template lookup plugin (with_template: "{{ some_jinja2 }}")
+* added a template lookup plugin (with_template: "filename.j2")
 * various tweaks to the EC2 inventory plugin 
 * jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
 
