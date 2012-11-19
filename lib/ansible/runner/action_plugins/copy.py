@@ -61,7 +61,7 @@ class ActionModule(object):
                     break
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
-                return ReturnData(conn=conn, results=results)
+                return ReturnData(conn=conn, result=results)
 
         source = utils.template(self.runner.basedir, source, inject)
         source = utils.path_dwim(self.runner.basedir, source)
