@@ -24,12 +24,22 @@ Other core changes:
 * various output formatting fixes/improvements
 * fix for Xen dom0/domU detection in default facts
 * 'ansible_domain' fact now available (ex value: example.com)
+* native ssh connection type (-c ssh) now supports passwords as well as keys
+* configured remote temp location is now always used even for root
+* 'register'-ed variables are not recorded for skipped hosts (for example, using only_if/when)
+* duplicate host records for the same host can no longer result when a host is listed in multiple groups
+* ansible-pull now passes --limit to prevent running on multiple hosts when used with generic playbooks
+* remote md5sum check fixes for Solaris 10
+* ability to configure syslog facility used by remote module calls
+* in templating, stray '$' characters are now handled more correctly
 
 Playbook changes:
 
 * relative paths now work for 'first_available_file'
 * various templating engine fixes
 * 'when' is an easier form of only if
+* --list-hosts on the playbook command now supports multiple playbooks on the same command line
+* playbook includes can now be parameterized
 
 Module additions:
 
@@ -42,13 +52,17 @@ Module additions:
 Modules changes:
 
 * (authorized key) module uses temp file now to prevent failure on full disk
+* (fetch) now uses the 'slurp' internal code to work as you would expect under sudo'ed accounts
+* (fetch) internal usage of md5 sums fixed for BSD
 * (get_url) thirsty is no longer required for directory destinations
 * (git) various git module improvements/tweaks
+* (group) now subclassed for various platforms, includes SunOS support
 * (mysql_db) module takes new grant options
 * (lineinfile) create= option on lineinfile can create the file when it does not exist
 * (postgresql_db) module now takes role_attr_flags
 * (service) further upgrades to service module service status reporting
 * (service) tweaks to get service module to play nice with BSD style service systems (rc.conf)
+* (service) possible to pass additional arguments to services
 * (shell) and command module now take an 'executable=' flag for specifying an alternate shell than /bin/sh
 * (user) ability to create SSH keys for users when using user module to create users
 * (user) atomic replacement of files preserves permissions of original file
