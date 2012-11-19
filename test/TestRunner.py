@@ -35,6 +35,7 @@ class TestRunner(unittest.TestCase):
             forks=1,
             background=0,
             pattern='all',
+            transport='local',
         )
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')

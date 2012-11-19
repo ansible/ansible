@@ -1,5 +1,6 @@
 ---
 - hosts: aliasgroup
+  connection: local
   vars:
     test_file: /tmp/ansible-alias-test
   tasks:
@@ -9,6 +10,7 @@
   - action: command removes=$test_file rm -f $test_file
 
 - hosts: all
+  connection: local
   gather_facts: False
   tasks:
   - action: command true

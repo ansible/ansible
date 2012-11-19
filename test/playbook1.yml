@@ -1,6 +1,7 @@
 # extremely simple test of the most basic of playbook engine/functions
 ---
 - hosts: all
+  connection: local
 
 # the 'weasels' string should show up in the output
 
