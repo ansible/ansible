@@ -1,4 +1,4 @@
-#env: variable_end_string: @@, variable_start_string: @@
+#jinja2: variable_end_string: @@, variable_start_string: @@
 
 {% raw %}
  if this succeeds you should see '{{ ansible_hostname }}' with the hostname on the line above
