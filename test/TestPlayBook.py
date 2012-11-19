@@ -163,28 +163,6 @@ class TestPlaybook(unittest.TestCase):
        print data
        assert data.find("ears") != -1, "template success"
 
-   def test_aliased_node(self):
-       pb = os.path.join(self.test_dir, 'alias_playbook.yml')
-       actual = self._run(pb, 'test/alias_hosts')
-       expected = {
-           "alias-node.example.com": {
-                "changed": 5,
-                "failures": 0,
-                "ok": 6,
-                "skipped": 1,
-                "unreachable": 0,
-            },
-            "other-alias-node.example.com": {
-                "changed": 1,
-                "failures": 0,
-                "ok": 1,
-                "skipped": 0,
-                "unreachable": 1,
-            },
-       }
-
-       assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
-
    def test_lookups(self):
        pb = os.path.join(self.test_dir, 'lookup_plugins.yml')
        actual = self._run(pb)
