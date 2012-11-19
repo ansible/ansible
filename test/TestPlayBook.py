@@ -22,6 +22,9 @@ class TestCallbacks(object):
     def set_playbook(self, playbook):
         self.playbook = playbook
 
+    def on_no_hosts_remaining(self):
+        pass
+
     def on_start(self):
         EVENTS.append('start')
 

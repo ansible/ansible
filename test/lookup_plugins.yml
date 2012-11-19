@@ -1,6 +1,7 @@
 # simple test of lookup plugins in with_*
 ---
 - hosts: all
+  connection: local
   vars:
     empty_list: []
   tasks:
