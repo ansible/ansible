@@ -90,11 +90,11 @@ class ActionModule(object):
                 f.close()
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
-                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source)
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest)
                 return ReturnData(conn=conn, result=result)
-            result = dict(changed=True, md5sum=new_md5)
+            result = dict(changed=True, md5sum=new_md5, dest=dest)
             return ReturnData(conn=conn, result=result)
         else:
-            result = dict(changed=False, md5sum=local_md5, file=source)
+            result = dict(changed=False, md5sum=local_md5, file=source, dest=dest)
             return ReturnData(conn=conn, result=result)
 
