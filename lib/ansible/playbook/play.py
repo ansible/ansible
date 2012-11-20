@@ -69,7 +69,7 @@ class Play(object):
         self._tasks       = ds.get('tasks', [])
         self._handlers    = ds.get('handlers', [])
         self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), self.vars)
-        self.remote_port  = ds.get('port', self.playbook.remote_port)
+        self.remote_port  = utils.template(basedir, ds.get('port', self.playbook.remote_port), self.vars)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
         self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), self.vars)
         self.transport    = ds.get('connection', self.playbook.transport)
