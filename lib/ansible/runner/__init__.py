@@ -222,7 +222,7 @@ class Runner(object):
             raise errors.AnsibleError("module is missing interpreter line")
 
         cmd = shebang.replace("#!","") + " " + cmd
-        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES == '1':
+        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         return ReturnData(conn=conn, result=res)
