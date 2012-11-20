@@ -48,7 +48,7 @@ class Connection(object):
             cmd = "sudo -u {0} -s {1}".format(sudo_user, cmd)
 
         vvv("EXEC %s" % cmd, host=self.host)
-        p = subprocess.Popen(cmd, shell=True, stdin=None,
+        p = subprocess.Popen(cmd, cwd=self.runner.basedir, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         return ("", stdout, stderr)
