@@ -382,6 +382,11 @@ class Runner(object):
         try:
             if actual_port is not None:
                 actual_port = int(actual_port)
+        except ValueError, e:
+            result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
+            return ReturnData(host=host, comm_ok=False, result=result)
+
+        try:
             conn = self.connector.connect(actual_host, actual_port)
             if delegate_to or host != actual_host:
                 conn.delegate = host
