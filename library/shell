@@ -24,9 +24,10 @@ options:
     default: null
   chdir:
     description:
-      - cd into this directory before running the command (0.6 and later)
+      - cd into this directory before running the command
     required: false
     default: null
+    version_added: "0.6"
   executable:
     description:
       - change the shell used to execute the command. Should be an absolute path to the executable.
@@ -37,7 +38,7 @@ examples:
    - code: "shell: somescript.sh >> somelog.txt"
      description: Execute the command in remote shell
 notes:
-   -  If you want to execute a command securely and predicably, it may be
+   -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
       playbooks will follow the trend of using M(command) unless M(shell) is
       explicitly required. When running ad-hoc commands, use your best

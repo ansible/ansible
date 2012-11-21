@@ -61,7 +61,7 @@ options:
     
   disablerepo:
     description:
-      - Repoid of repositories to disable for the install/update operation
+      - I(repoid) of repositories to disable for the install/update operation
         These repos will not persist beyond the transaction
         Multiple repos separated with a ','
         New in version 0.9.      

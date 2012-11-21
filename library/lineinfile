@@ -54,7 +54,7 @@ options:
     required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
-        file. Must match the value given to C(regexp).
+        file. Must match the value given to I(regexp).
   insertafter:
     required: false
     default: EOF

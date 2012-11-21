@@ -12,7 +12,7 @@ version_added: "0.2"
 options:
   src:
     description:
-      - The file on the remote system to fetch. This must be a file, not a
+      - The file on the remote system to fetch. This I(must) be a file, not a
         directory. Recursive fetching may be supported in a later release.
     required: true
     default: null
@@ -20,7 +20,7 @@ options:
   dest:
     description:
       - A directory to save the file into. For example, if the I(dest)
-        directory is C(/backup) a src file named C(/etc/profile) on host
+        directory is C(/backup) a I(src) file named C(/etc/profile) on host
         C(host.example.com), would be saved into
         C(/backup/host.example.com/etc/profile)
     required: true

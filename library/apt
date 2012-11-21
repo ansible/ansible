@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: apt
 short_description: Manages apt-packages
 description:
-  - Manages apt-packages (such as for Debian/Ubuntu).
+  - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
   pkg:
@@ -40,13 +40,13 @@ options:
     choices: [ "latest", "absent", "present" ]
   update_cache:
     description:
-      - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a seperate step
+      - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   purge:
     description:
-     - Will force purging of configuration files if the module state is set to C(absent).
+     - Will force purging of configuration files if the module state is set to I(absent).
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -81,7 +81,7 @@ examples:
     - code: "apt: pkg=nginx state=latest default-release=squeeze-backports update-cache=yes"
       description: Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)
     - code: "apt: pkg=openjdk-6-jdk state=latest install-recommends=no"
-      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-recomands)
+      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
 '''
 
 import traceback
