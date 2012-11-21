@@ -69,13 +69,16 @@ class Play(object):
         self._tasks       = ds.get('tasks', [])
         self._handlers    = ds.get('handlers', [])
         self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), self.vars)
-        self.remote_port  = utils.template(basedir, ds.get('port', self.playbook.remote_port), self.vars)
+        self.remote_port  = ds.get('port', self.playbook.remote_port)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
         self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), self.vars)
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
+
+        if self.remote_port is not None:
+            self.remote_port = utils.template(basedir, self.remote_port, self.vars)
 
         self._update_vars_files_for_host(None)
 
