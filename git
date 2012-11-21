@@ -25,13 +25,13 @@ author: Michael DeHaan
 version_added: 0.0.1
 short_description: Deploy software (or files) from git checkouts
 description:
-    - Manage git checkouts of repositories to deploy files or software.
+    - Manage I(git) checkouts of repositories to deploy files or software.
 options:
     repo:
         required: true
         aliases: [ name ]
         description:
-            - git, ssh, or http protocol address of the git repository.
+            - git, SSH, or HTTP protocol address of the git repository.
     dest:
         required: true
         description:
@@ -41,7 +41,7 @@ options:
         default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
-              git I(SHA), the literal string I(HEAD), branch name, or a tag name.
+              git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
     remote:
         required: false
         default: "origin"
@@ -51,8 +51,9 @@ options:
         required: false
         default: "yes"
         choices: [ yes, no ]
+        version_added: "0.7"
         description:
-            - (New in 0.7)  If yes, any modified files in the working
+            - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
               'yes' and could not be disabled.
 examples:

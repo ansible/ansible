@@ -44,10 +44,10 @@ notes:
       with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
-      remote systems.
+      remote systems. (See also M(facter) and M(ohai).)
 examples:
     - code: ansible all -m setup --tree /tmp/facts
-      description: Obtain facts from all hosts and store them indexed by hostname at /tmp/facts.
+      description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
 author: Michael DeHaan
 '''
 

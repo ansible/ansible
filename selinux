@@ -28,7 +28,7 @@ version_added: "0.7"
 options:
   policy:
     description:
-      - "name of the SELinux policy to use (example: 'targeted') will be required if state is not 'disabled'"
+      - "name of the SELinux policy to use (example: C(targeted)) will be required if state is not C(disabled)"
     required: false
     default: null
   state:
