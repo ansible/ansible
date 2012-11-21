@@ -28,7 +28,7 @@ description:
 options:
   src:
     description:
-      - The file on the remote system to fetch. This must be a file, not a
+      - The file on the remote system to fetch. This I(must) be a file, not a
         directory.
     required: true
     default: null

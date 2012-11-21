@@ -347,6 +347,13 @@ Include it in your module file like this::
           description: Optional words describing this example
     '''
 
+The ``description``, ``notes`` and ``description`` within ``examples``
+support formatting in some of the output formats (e.g. ``rst``, ``man``).
+These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
+for URL, module, italic, and constant-width respectively. It is suggested
+to use ``C()`` for file and option names, and ``I()`` when referencing
+parameters; module names should be specifies as ``M(module)``.
+
 Building & Testing
 ++++++++++++++++++
 

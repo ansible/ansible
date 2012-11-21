@@ -24,12 +24,12 @@ DOCUMENTATION = '''
 module: supervisorctl
 short_description: Manage the state of a program or group of programs running via Supervisord
 description:
-     - Manage the state of a program or group of programs running via Supervisord
+     - Manage the state of a program or group of programs running via I(Supervisord)
 version_added: "0.7"
 options:
   name:
     description:
-      - The name of the supervisord program/process to manage
+      - The name of the I(supervisord) program/process to manage
     required: true
     default: null
   state:

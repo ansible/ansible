@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 module: command
 short_description: Executes a command on a remote node
 description:
-     - The command module takes the command name followed by a list of space-delimited arguments.
+     - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work. As such, all
@@ -70,7 +70,7 @@ examples:
    - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
    - code: "command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
-     description: "I(creates), I(removes), and I(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+     description: "C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
