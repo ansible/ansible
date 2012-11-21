@@ -40,7 +40,7 @@ options:
   state:
     description:
       - Whether to install (C(present)), or remove (C(absent)) a package.
-      - If the package is to be installed, then C(src) is required.
+      - If the package is to be installed, then I(src) is required.
       - The SVR4 package system doesn't provide an upgrade operation. You need to uninstall the old, then install the new package.
     required: true
     choices: ["present", "absent"]
@@ -49,7 +49,7 @@ options:
     description:
       - Specifies the location to install the package from. Required when C(state=present).
       - "Can be any path acceptable to the C(pkgadd) command's C(-d) option. e.g.: C(somefile.pkg), C(/dir/with/pkgs), C(http:/server/mypkgs.pkg)."
-      - If using a file or directory, they must already be accessible by the host. See the I(copy) module for a way to get them there.
+      - If using a file or directory, they must already be accessible by the host. See the M(copy) module for a way to get them there.
   proxy:
     description:
       - HTTP[s] proxy to be used if C(src) is a URL.

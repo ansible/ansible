@@ -28,12 +28,12 @@ description:
        the playbook. Useful for debugging together with the only_if directive.
 
        In order to see the debug message, you need to run ansible in verbose
-       mode (using the -v option).
+       mode (using the C(-v) option).
 version_added: "0.8"
 options:
   msg:
     description:
-      - The customized message that is printed. If ommited, prints a generic
+      - The customized message that is printed. If omitted, prints a generic
         message.
     required: false
     default: "Hello world!"

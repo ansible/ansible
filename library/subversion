@@ -38,7 +38,7 @@ options:
     default: null
   force:
     description:
-      - If yes, any modified files in the working repository will be discarded. If no, this module will fail if it encounters modified files.
+      - If C(yes), any modified files in the working repository will be discarded. If C(no), this module will fail if it encounters modified files.
     required: false
     default: yes
     choices: [ "yes", "no" ]
@@ -46,7 +46,7 @@ examples:
    - code: "subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout"
      description: Export subversion repository in a specified folder
 notes:
-   - Requires subversion and grep on the client.
+   - Requires I(subversion) and I(grep) on the client.
 requirements: [ ]
 author: Dane Summers
 '''

@@ -543,10 +543,12 @@ code, pre {
   -moz-border-radius: 3px;
   border-radius: 3px;
 }
+.module {
+  font-family: Monaco, Andale Mono, Courier New, monospace;
+  font-size: 12px;
+}
 code {
-  background-color: #fee9cc;
   color: rgba(0, 0, 0, 0.75);
-  padding: 1px 3px;
 }
 pre {
   background-color: #f5f5f5;
