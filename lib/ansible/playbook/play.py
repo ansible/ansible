@@ -77,7 +77,7 @@ class Play(object):
         self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
 
-        if self.remote_port is not None:
+        if isinstance(self.remote_port, basestring):
             self.remote_port = utils.template(basedir, self.remote_port, self.vars)
 
         self._update_vars_files_for_host(None)
