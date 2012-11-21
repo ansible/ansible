@@ -265,7 +265,7 @@ def main():
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS),
-            arguments = dict(aliases=['args']),
+            arguments = dict(aliases=['args'], default=''),
         )
     )
 
