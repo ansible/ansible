@@ -357,7 +357,7 @@ class PlayBook(object):
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
-            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True
+            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
         ).run()
         self.stats.compute(setup_results, setup=True)
 
