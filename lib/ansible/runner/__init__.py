@@ -351,9 +351,9 @@ class Runner(object):
 
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
-        actual_port = port
+        actual_port = utils.template(self.basedir, port, inject)
         if self.transport in [ 'paramiko', 'ssh' ]:
-            actual_port = inject.get('ansible_ssh_port', port)
+            actual_port = inject.get('ansible_ssh_port', actual_port)
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
