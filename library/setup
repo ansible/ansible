@@ -708,6 +708,7 @@ class LinuxVirtual(Virtual):
         self.get_virtual_facts()
         return self.facts
 
+    # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
@@ -716,40 +717,104 @@ class LinuxVirtual(Virtual):
                 for line in open('/proc/xen/capabilities'):
                     if "control_d" in line:
                         self.facts['virtualization_role'] = 'host'
-                    
-        elif os.path.exists('/proc/vz'):
+            return
+ 
+        if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
-            if os.path.exists('/proc/vz/version'):
+            if os.path.exists('/proc/bc'):
                 self.facts['virtualization_role'] = 'host'
             else:
                 self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/product_name') in ['KVM','Bochs']:
+        product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
+
+        if product_name in ['KVM', 'Bochs']:
             self.facts['virtualization_type'] = 'kvm'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'VMware, Inc.':
+        if product_name == 'VMware Virtual Platform':
             self.facts['virtualization_type'] = 'VMware'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'Microsoft Corporation':
+        bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
+
+        if bios_vendor == 'Xen':
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        if bios_vendor == 'innotek GmbH':
+            self.facts['virtualization_type'] = 'virtualbox'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
+
+        # FIXME: This does also match hyperv
+        if sys_vendor == 'Microsoft Corporation':
             self.facts['virtualization_type'] = 'VirtualPC'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif os.path.exists("/proc/modules"):
+        if sys_vendor == 'Parallels Software International Inc.':
+            self.facts['virtualization_type'] = 'parallels'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        for line in open('/proc/self/status').readlines():
+            if re.match('^VxID: \d+', line):
+                self.facts['virtualization_type'] = 'linux_vserver'
+                if re.match('^VxID: 0', line):
+                    self.facts['virtualization_role'] = 'host'
+                else:
+                    self.facts['virtualization_role'] = 'guest'
+                return
+
+        for line in open('/proc/cpuinfo').readlines():
+            if re.match('^model name.*QEMU Virtual CPU', line):
+                self.facts['virtualization_type'] = 'kvm'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+            if re.match('^vendor_id.*User Mode Linux', line):
+                self.facts['virtualization_type'] = 'uml'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+            if re.match('^model name.*UML', line):
+                self.facts['virtualization_type'] = 'uml'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+            if re.match('^vendor_id.*PowerVM Lx86', line):
+                self.facts['virtualization_type'] = 'powervm_lx86'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+            if re.match('^vendor_id.*IBM/S390', line):
+                self.facts['virtualization_type'] = 'ibm_systemz'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+        # Beware that we can have both kvm and virtualbox running on a single system
+        if os.path.exists("/proc/modules"):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
                 modules.append(data[0])
+
             if 'kvm' in modules:
                 self.facts['virtualization_type'] = 'kvm'
                 self.facts['virtualization_role'] = 'host'
-            elif 'vboxdrv' in modules:
+                return
+
+            if 'vboxdrv' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'host'
-            elif 'vboxguest' in modules:
-                self.facts['virtualization_type'] = 'virtualbox'
-                self.facts['virtualization_role'] = 'guest'
+                return
 
 class SunOSVirtual(Virtual):
     """
