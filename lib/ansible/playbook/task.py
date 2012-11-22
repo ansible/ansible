@@ -227,6 +227,14 @@ class Task(object):
                 else:
                     tcopy[i] = t
             return " ".join(tcopy)
+
+        # when_boolean
+        elif tokens[0] in [ 'bool', 'boolean' ]:
+            tcopy = tokens[1:]
+            for (i, t) in enumerate(tcopy):
+                if t.find("$") != -1:
+                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'none', '0', ''))" % (t, t)
+            return " ".join(tcopy)
  
         else:
             raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
