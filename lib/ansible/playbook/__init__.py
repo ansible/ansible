@@ -110,9 +110,6 @@ class PlayBook(object):
         self.inventory           = ansible.inventory.Inventory(host_list)
         self.inventory.subset(subset)
 
-        if not self.inventory._is_script:
-            self.global_vars.update(self.inventory.get_group_variables('all'))
-
         self.basedir     = os.path.dirname(playbook)
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
 
