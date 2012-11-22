@@ -57,13 +57,7 @@ class Group(object):
         return list(hosts)
 
     def get_variables(self):
-
-        vars = {}
-        # FIXME: verify this variable override order is what we want
-        for ancestor in self.get_ancestors():
-            vars.update(ancestor.get_variables())
-        vars.update(self.vars)
-        return vars
+        return self.vars.copy()
 
     def _get_ancestors(self):
 
