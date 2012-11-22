@@ -28,7 +28,7 @@ description:
      step, which works on one database at a time. This allows for the module to
      be called several times in the same module to modify the permissions on
      different databases, or to grant permissions to already existing users.
-   - A user cannot be removed untill all the privileges have been stripped from
+   - A user cannot be removed until all the privileges have been stripped from
      the user. In such situation, if the module tries to remove the user it
      will fail. To avoid this from happening the fail_on_user option signals
      the module to try to remove the user, but if not possible keep going; the
@@ -53,7 +53,7 @@ options:
     default: null
   fail_on_user:
     description:
-      - if yes, fail when user can't be removed. Otherwise just log and continue
+      - if C(yes), fail when user can't be removed. Otherwise just log and continue
     required: false
     default: yes
     choices: [ "yes", "no" ]

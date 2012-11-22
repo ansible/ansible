@@ -100,13 +100,9 @@ def rst_ify(text):
 
     t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
     t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    # mdehaan is disabling because he finds all the Sphinx orange distracting
-    #t = _MODULE.sub(r'``' + r"\1" + r"``", t)
-    t = _MODULE.sub(r"\1", t)
+    t = _MODULE.sub(r'``' + r"\1" + r"``", t)
     t = _URL.sub(r"\1", t)
-    # ditto
-    # t = _CONST.sub(r'``' + r"\1" + r"``", t)
-    t = _CONST.sub(r"\1", t)
+    t = _CONST.sub(r'``' + r"\1" + r"``", t)
 
     return t
 

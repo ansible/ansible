@@ -31,7 +31,7 @@ short_description: Manage crontab entries.
 description:
   - Use this module to manage crontab entries. This module allows you to create named
     crontab entries, update, or delete them.
-  - 'The module include one line with the description of the crontab entry "#Ansible: <name>"
+  - 'The module includes one line with the description of the crontab entry C("#Ansible: <name>")
     corresponding to the "name" passed to the module, which is used by future ansible/module calls
     to find/check the state.'
 version_added: "0.9"
@@ -64,7 +64,7 @@ options:
   backup:
     description:
       - If set, then create a backup of the crontab before it is modified.
-      - The location of the backup is returned in the 'backup' variable by this module.
+      - The location of the backup is returned in the C(backup) variable by this module.
     required: false
     default: false
     aliases: []

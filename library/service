@@ -35,10 +35,9 @@ options:
         required: false
         choices: [ started, stopped, restarted, reloaded ]
         description:
-        - I(started), I(stopped), I(reloaded), I(restarted).
-          I(Started)/I(stopped) are idempotent actions that will not run
-          commands unless necessary.  I(restarted) will always bounce the
-          service.  I(reloaded) will always reload.
+          C(Started)/C(stopped) are idempotent actions that will not run
+          commands unless necessary.  C(restarted) will always bounce the
+          service.  C(reloaded) will always reload.
     pattern:
         required: false
         version_added: "0.7"
