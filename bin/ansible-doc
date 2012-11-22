@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 #
 # This file is part of Ansible
@@ -33,11 +34,7 @@ from ansible import errors
 from ansible.utils import module_docs
 import ansible.constants as C
 
-
-# Get parent directory of the directory this script lives in
-MODULEDIR=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
-    ))
+MODULEDIR = C.DEFAULT_MODULE_PATH
 
 T_LISTING = '''{{ "%-20s" | format(module) }}  {{ short_description | jpfunc | truncate(70) }}'''
 
@@ -58,10 +55,10 @@ T_MODULEDOC = '''
 {% endfor %}
 
 {% if options %}
-   Options:
+   Options (= is mandatory):
 {% for k in option_keys %}
 {% set v = options[k] %}
-   o {{ k }}
+    {% if v.get('required', False) %}={% else %}-{% endif %} {{ k }}
 {% for desc in v.description %}{{ desc|jpfunc| wordwrap(width=60)|indent(10,indentfirst=True) }}
 {% endfor %}
          {% if v.get('choices') %} Choices : {% for choice in v.get('choices',[]) %}{{ choice }}{% if not loop.last %},{%else%}.{%endif%}{% endfor %}
@@ -85,9 +82,6 @@ Note: {% for note in notes %}
 {% endif %}
 '''
 
-# There is a better way of doing this!
-# TODO: somebody add U(text, http://foo.bar/) as described by Tim in #991
-
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
@@ -96,11 +90,11 @@ _CONST  = re.compile(r"C\(([^)]+)\)")
 
 def tty_ify(text):
 
-    t = _ITALIC.sub("_" + r"\1" + "_", text)
-    t = _BOLD.sub("*" + r"\1" + "*", t)
-    t = _MODULE.sub("[" + r"\1" + "]", t)
-    t = _URL.sub(r"\1", t)
-    t = _CONST.sub("`" + r"\1" + "'", t)
+    t = _ITALIC.sub("`" + r"\1" + "'", text)    # `word'
+    t = _BOLD.sub("*" + r"\1" + "*", t)         # *word*
+    t = _MODULE.sub("[" + r"\1" + "]", t)       # [word]
+    t = _URL.sub(r"\1", t)                      # word
+    t = _CONST.sub("`" + r"\1" + "'", t)        # `word'
 
     return t
 
@@ -148,9 +142,12 @@ def main():
         # list all modules
         ls_templ = env.from_string(T_LISTING)
         paths = utils.plugins.module_finder._get_paths()
+	module_list = []
         for path in paths:
             # os.system("ls -C %s" % (path))
             for module in os.listdir(path):
+	    	module_list.append(module)
+	for module in sorted(module_list):
                 filename = utils.plugins.module_finder.find_plugin(module)
 
                 try:
@@ -159,10 +156,10 @@ def main():
                     print text.rstrip()
                 except:
                     pass
-            
+
         sys.exit()
 
-    tmpl = env.from_string(T_SNIPPET)
+    snip_tmpl = env.from_string(T_SNIPPET)
     full_tmpl = env.from_string(T_MODULEDOC)
 
     for module_name in options.module_list:
@@ -187,14 +184,14 @@ def main():
             for (k,v) in doc['options'].iteritems():
                 all_keys.append(k)
             all_keys = sorted(all_keys)
-            doc['option_keys'] = all_keys 
+            doc['option_keys'] = all_keys
 
             doc['filename']         = filename
             doc['docuri']           = doc['module'].replace('_', '-')
             doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
 
         if options.show_snippet:
-            text = tmpl.render(doc)
+            text = snip_tmpl.render(doc)
             print text.rstrip()
         else:
             text = full_tmpl.render(doc)
