@@ -93,10 +93,8 @@ class Connection(object):
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
-            sudo_output = ''
-            ssh_cmd.append(sudocmd)
-        else:
-            ssh_cmd.append(cmd)
+            cmd = sudocmd
+        ssh_cmd.append('/bin/sh -c ' + pipes.quote(cmd))
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
         p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
@@ -107,6 +105,7 @@ class Connection(object):
         if self.runner.sudo and sudoable and self.runner.sudo_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            sudo_output = ''
             while not sudo_output.endswith(prompt):
                 rfd, wfd, efd = select.select([p.stdout], [],
                                               [p.stdout], self.runner.timeout)

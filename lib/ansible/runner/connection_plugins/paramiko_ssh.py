@@ -125,10 +125,11 @@ class Connection(object):
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
             sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
-            vvv("EXEC %s" % sudocmd, host=self.host)
+            shcmd = '/bin/sh -c ' + pipes.quote(sudocmd)
+            vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
-                chan.exec_command(sudocmd)
+                chan.exec_command(shcmd)
                 if self.runner.sudo_pass:
                     while not sudo_output.endswith(prompt):
                         chunk = chan.recv(bufsize)
