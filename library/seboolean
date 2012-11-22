@@ -32,7 +32,7 @@ options:
     default: null
   persistent:
     description:
-      - Set to 'yes' if the boolean setting should survive a reboot
+      - Set to C(yes) if the boolean setting should survive a reboot
     required: false
     default: no
     choices: [ "yes", "no" ]

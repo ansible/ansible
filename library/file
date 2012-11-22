@@ -35,11 +35,11 @@ short_description: Sets attributes of files
 description: 
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
-       the file module - including M(copy), M(template), and M(assmeble).
+       the file module - including M(copy), M(template), and M(assemble).
 options:
   path:
     description:
-      - defines the file being managed, unless when used with I(state=link), and then sets the destination to create a symbolic link to using I(src)
+      - defines the file being managed, unless when used with C(state=link), and then sets the destination to create a symbolic link to using I(src)
     required: true
     default: []
     aliases: []
@@ -59,7 +59,7 @@ options:
     default: null
     choices: []
     description:
-      - mode the file or directory should be, such as 0644 as would be fed to
+      - mode the file or directory should be, such as 0644 as would be fed to I(chmod)
   owner:
     required: false
     default: null
@@ -85,7 +85,7 @@ options:
     description:
       - user part of SELinux file context. Will default to system policy, if
         applicable. If set to C(_default), it will use the C(user) portion of the
-        the policy if available
+        policy if available
   serole:
     required: false
     default: null
