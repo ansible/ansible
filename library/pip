@@ -34,7 +34,7 @@ options:
     default: null
   version:
     description:
-      - The version number to install of the Python library specified in the 'name' parameter
+      - The version number to install of the Python library specified in the I(name) parameter
     required: false
     default: null
   requirements:
@@ -44,7 +44,7 @@ options:
     default: null
   virtualenv:
     description:
-      - An optional path to a virtualenv directory to install into
+      - An optional path to a I(virtualenv) directory to install into
     required: false
     default: null
   state:
@@ -63,7 +63,7 @@ examples:
    - code: "pip: requirements=/srv/webapps/my_app/src/requirements.txt"
      description: Install specified python requirements.
    - code: "pip: requirements=/srv/webapps/my_app/src/requirements.txt virtualenv=/srv/webapps/my_app/venv"
-     description: Install specified python requirements in indicated virtualenv.
+     description: Install specified python requirements in indicated I(virtualenv).
 notes:
    - Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ "virtualenv", "pip" ]

@@ -30,7 +30,7 @@ module: get_url
 short_description: Downloads files from HTTP, HTTPS, or FTP to node
 description:
      - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
-       server must have direct access to the remote resource.
+       server I(must) have direct access to the remote resource.
 version_added: "0.6"
 options:
   url:
@@ -42,13 +42,13 @@ options:
   dest:
     description:
       - absolute path of where to download the file to.
-      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, I(thirsty=yes) must also be set.
+      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, C(thirsty=yes) must also be set.
     required: true
     default: null
   thirsty:
     description:
       - if C(yes), will download the file every time and replace the
-        file if the contents change. if C(no), the file will only be downloaded if
+        file if the contents change. If C(no), the file will only be downloaded if
         the destination does not exist. Generally should be C(yes) only for small
         local files. prior to 0.6, acts if C(yes) by default.
     version_added: "0.7"
