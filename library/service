@@ -74,163 +74,312 @@ import platform
 import os
 import re
 
-SERVICE = None
-CHKCONFIG = None
-INITCTL = None
-INITSCRIPT = None
-RCCONF = None
+class Service(object):
+    """
+    This is the generic Service manipulation class that is subclassed
+    based on platform.
 
-PS_OPTIONS = 'auxww'
+    A subclass should override the following action methods:-
+      - get_service_tools
+      - service_enable
+      - get_service_status
+      - service_control
 
-def _find_binaries(m,name):
-    # list of possible paths for service/chkconfig binaries
-    # with the most probable first
-    global SERVICE
-    global CHKCONFIG
-    global INITCTL
-    global INITSCRIPT
-    global RCCONF
-    paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl']
-    initpaths = [ '/etc/init.d','/etc/rc.d','/usr/local/etc/rc.d' ]
-    rcpaths = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
-    location = dict()
+    All subclasses MUST define platform and distribution (which may be None).
+    """
 
-    for binary in binaries:
-        location[binary] = None
+    platform = 'Generic'
+    distribution = None
 
-    for binary in binaries:
-        location[binary] = m.get_bin_path(binary)
+    def __new__(cls, *args, **kwargs):
+        return load_platform_subclass(Service, args, kwargs)
 
-    if location.get('systemctl', None):
-        CHKCONFIG = location['systemctl']
-    elif location.get('chkconfig', None):
-        CHKCONFIG = location['chkconfig']
-    elif location.get('update-rc.d', None):
-        CHKCONFIG = location['update-rc.d']
-    else:
-        for rcfile in rcpaths:
-            if os.path.isfile(rcfile):
-                RCCONF = rcfile
-    if not CHKCONFIG and not RCCONF:
-        m.fail_json(msg='unable to find chkconfig or update-rc.d binary')
-    if location.get('service', None):
-        SERVICE = location['service']
-    else:
-        for rcdir in initpaths:
-            initscript = "%s/%s" % (rcdir,name)
-            if os.path.isfile(initscript):
-                INITSCRIPT = initscript
-    if not SERVICE and not INITSCRIPT:
-        m.fail_json(msg='unable to find service binary nor initscript')
-    if location.get('initctl', None):
-        INITCTL = location['initctl']
-    else:
-        INITCTL = None
+    def __init__(self, module):
+        self.module         = module
+        self.name           = module.params['name']
+        self.state          = module.params['state']
+        self.pattern        = module.params['pattern']
+        self.enable         = module.boolean(module.params.get('enabled', None))
+        self.changed        = False
+        self.running        = None
+        self.action         = None
+        self.svc_cmd        = None
+        self.svc_initscript = None
+        self.svc_initctl    = None
+        self.enable_cmd     = None
+        self.arguments      = module.params.get('arguments', '')
 
-def _get_service_status(name, pattern, arguments):
-    rc, status_stdout, status_stderr = _run("%s %s status %s" % (SERVICE, name, arguments))
+        # select whether we dump additional debug info through syslog
+        self.syslogging = False
 
-    # set the running state to None because we don't know it yet
-    running = None
+# ===========================================
+# Platform specific methods (must be replaced by subclass).
 
-    # If pattern is provided, search for that
-    # before checking initctl, service output, and other tricks
-    if pattern is not None:
+    def get_service_tools(self):
+        self.module.fail_json(msg="get_service_tools not implemented on target platform")
 
-        psbin = '/bin/ps'
-        if not os.path.exists(psbin):
-            if os.path.exists('/usr/bin/ps'):
-                psbin = '/usr/bin/ps'
+    def service_enable(self):
+        self.module.fail_json(msg="service_enable not implemented on target platform")
+
+    def get_service_status(self):
+        self.module.fail_json(msg="get_service_status not implemented on target platform")
+
+    def service_control(self):
+        self.module.fail_json(msg="service_control not implemented on target platform")
+
+# ===========================================
+# Generic methods that should be used on all platforms.
+
+    def execute_command(self, cmd):
+        if self.syslogging:
+            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
+
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (out, err) = p.communicate()
+        rc = p.returncode
+        return (rc, out, err)
+
+    def check_ps(self):
+        # Set ps flags
+        if platform.system() == 'SunOS':
+            psflags = '-ef'
+        else:
+            psflags = 'auxww'
+
+        # Find ps binary
+        psbin = self.module.get_bin_path('ps', True)
+
+        (rc, psout, pserr) = self.execute_command('%s %s' % (psbin, psflags))
+        # If rc is 0, set running as appropriate
+        if rc == 0:
+            self.running = False
+            lines = psout.split("\n")
+            for line in lines:
+                if self.pattern in line and not "pattern=" in line:
+                    # so as to not confuse ./hacking/test-module
+                    self.running = True
+                    break
+
+    def check_service_changed(self):
+        if self.state and self.running == None:
+            self.module.fail_json(msg="failed determining the current service state => state stays unchanged")
+        # Find out if state has changed
+        if not self.running and self.state in ["started", "running"]:
+            self.changed = True
+        elif self.running and self.state in ["stopped","reloaded"]:
+            self.changed = True
+        elif self.state == "restarted":
+            self.changed = True
+
+    def modify_service_state(self):
+        # Only do something if state will change
+        if self.changed:
+            # Control service
+            if self.state in ['started', 'running']:
+                self.action = "start"
+            elif self.state == 'stopped':
+                self.action = "stop"
+            elif self.state == 'reloaded':
+                self.action = "reload"
+            elif self.state == 'restarted':
+                self.action = "restart"
+
+            return self.service_control()
+
+        else:
+            # If nothing needs to change just say all is well
+            rc = 0
+            err = ''
+            out = ''
+            return rc, out, err
+
+# ===========================================
+# Subclass: Linux
+
+class LinuxService(Service):
+    """
+    This is the Linux Service manipulation class - it is currently supporting
+    a mixture of binaries and init scripts for controlling services started at
+    boot, as well as for controlling the current state.
+    """
+
+    platform = 'Linux'
+    distribution = None
+
+    def get_service_tools(self):
+        paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl' ]
+        initpaths = [ '/etc/init.d' ]
+        location = dict()
+
+        for binary in binaries:
+            location[binary] = None
+
+        for binary in binaries:
+            location[binary] = self.module.get_bin_path(binary)
+
+        # Locate a tool for enable options
+        if location.get('systemctl', None):
+            self.enable_cmd = location['systemctl']
+        elif location.get('chkconfig', None):
+            self.enable_cmd = location['chkconfig']
+        elif location.get('update-rc.d', None):
+            self.enable_cmd = location['update-rc.d']
+
+        if self.enable_cmd is None:
+            self.module.fail_json(msg='unable to find enable binary')
+
+        # Locate a tool for runtime service management (start, stop etc.)
+        if location.get('service', None):
+            self.svc_cmd = location['service']
+        else:
+            for initdir in initpaths:
+                initscript = "%s/%s" % (initdir,self.name)
+                if os.path.isfile(initscript):
+                    self.svc_initscript = initscript
+
+        if not self.svc_cmd and not self.svc_initscript:
+            self.module.fail_json(msg='unable to find service binary nor initscript')
+
+        if location.get('initctl', None):
+            self.svc_initctl = location['initctl']
+
+    def get_service_status(self):
+        rc, status_stdout, status_stderr = self.execute_command("%s %s status %s" % (self.svc_cmd, self.name, self.arguments))
+
+        # Check if we got upstart on the system and then the job state
+        if self.svc_initctl != None and self.running is None:
+            # check the job status by upstart response
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
+            if initctl_status_stdout.find("stop/waiting") != -1:
+                self.running = False
+            elif initctl_status_stdout.find("start/running") != -1:
+                self.running = True
+
+        # if the job status is still not known check it by response code
+        if self.running == None:
+            if rc == 3:
+                self.running = False
+            if rc == 2:
+                self.running = False
+            elif rc == 0:
+                self.running = True
+
+        # if the job status is still not known check it by status output keywords
+        if self.running == None:
+            # first tranform the status output that could irritate keyword matching
+            cleanout = status_stdout.lower().replace(self.name.lower(), '')
+            if "stop" in cleanout:
+                self.running = False
+            elif "run" in cleanout and "not" in cleanout:
+                self.running = False
+            elif "run" in cleanout and "not" not in cleanout:
+                self.running = True
+            elif "start" in cleanout and "not" not in cleanout:
+                self.running = True
+            elif 'could not access pid file' in cleanout:
+                self.running = False
+            elif 'is dead and pid file exists' in cleanout:
+                self.running = False
+            elif 'dead but subsys locked' in cleanout:
+                self.running = False
+            elif 'dead but pid file exists' in cleanout:
+                self.running = False
+
+        # if the job status is still not known check it by special conditions
+        if self.running == None:
+            if self.name == 'iptables' and status_stdout.find("ACCEPT") != -1:
+                # iptables status command output is lame
+                # TODO: lookup if we can use a return code for this instead?
+                self.running = True
+
+    def service_enable(self):
+        # we change argument depending on real binary used
+        # update-rc.d wants enable/disable while
+        # chkconfig wants on/off
+        # also, systemctl needs the arguments reversed
+        if self.enable:
+            on_off = "on"
+            enable_disable = "enable"
+        else:
+            on_off = "off"
+            enable_disable = "disable"
+
+        if self.enable_cmd.endswith("update-rc.d"):
+            args = (self.enable_cmd, self.name, enable_disable)
+        elif self.enable_cmd.endswith("systemctl"):
+            args = (self.enable_cmd, enable_disable, self.name + ".service")
+        else:
+            args = (self.enable_cmd, self.name, on_off)
+
+        if self.enable is not None:
+            return self.execute_command("%s %s %s" % args)
+
+    def service_control(self):
+
+        # Decide what command to run
+        if self.svc_cmd:
+            svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+        elif self.svc_initscript:
+            svc_cmd = "%s" % self.svc_initscript
+
+        if self.action is not "restart":
+            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments))
+        else:
+            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, stop, self.arguments))
+            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, start, self.arguments))
+            if rc1 != 0 and rc2 == 0:
+                rc_state = rc + rc2
+                stdout = stdout2
+                stderr = stderr2
             else:
-                psbin = None
+                rc_state = rc + rc1 + rc2
+                stdout = stdout1 + stdout2
+                stderr = stderr1 + stderr2
 
-        if psbin is not None:
-            (rc, psout, pserr) = _run('%s %s' % (psbin, PS_OPTIONS))
-            # If rc is 0, set running as appropriate
-            # If ps command fails, fall back to other means.
-            if rc == 0:
-                running = False
-                lines = psout.split("\n")
-                for line in lines:
-                    if pattern in line and not "pattern=" in line:
-                        # so as to not confuse ./hacking/test-module
-                        running = True
-                        break
+        return(rc_state, stdout, stderr)
 
-    # Check if we got upstart on the system and then the job state
-    if INITCTL != None and running is None:
-        # check the job status by upstart response
-        initctl_rc, initctl_status_stdout, initctl_status_stderr = _run("%s status %s" % (INITCTL, name))
-        if initctl_status_stdout.find("stop/waiting") != -1:
-            running = False
-        elif initctl_status_stdout.find("start/running") != -1:
-            running = True
+# ===========================================
+# Subclass: FreeBSD
 
-    # if the job status is still not known check it by response code
-    if running == None:
-        if rc == 3:
-            running = False
-        if rc == 2:
-            running = False
+class FreeBsdService(Service):
+    """
+    This is the FreeBSD Service manipulation class - it uses the /etc/rc.conf
+    file for controlling services started at boot and the 'service' binary to
+    check status and perform direct service manipulation.
+    """
+
+    platform = 'FreeBSD'
+    distribution = None
+
+    def get_service_tools(self):
+        self.svc_cmd = self.module.get_bin_path('service', True)
+
+        if not self.svc_cmd:
+            self.module.fail_json(msg='unable to find service binary')
+
+    def get_service_status(self):
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svc_cmd, self.name, 'onestatus'))
+        if rc == 1:
+            self.running = False
         elif rc == 0:
-            running = True
+            self.running = True
 
-    # if the job status is still not known check it by status output keywords
-    if running == None:
-        # first tranform the status output that could irritate keyword matching
-        cleanout = status_stdout.lower().replace(name.lower(), '')
-        if "stop" in cleanout:
-            running = False
-        elif "run" in cleanout and "not" in cleanout:
-            running = False
-        elif "run" in cleanout and "not" not in cleanout:
-            running = True
-        elif "start" in cleanout and "not" not in cleanout:
-            running = True
-        elif 'could not access pid file' in cleanout:
-            running = False
-        elif 'is dead and pid file exists' in cleanout:
-            running = False
-        elif 'dead but subsys locked' in cleanout:
-            running = False
-        elif 'dead but pid file exists' in cleanout:
-            running = False
+    def service_enable(self):
+        if self.enable:
+            rc = "YES"
+        else:
+            rc = "NO"
 
-    # if the job status is still not known check it by special conditions
-    if running == None:
-        if name == 'iptables' and status_stdout.find("ACCEPT") != -1:
-            # iptables status command output is lame
-            # TODO: lookup if we can use a return code for this instead?
-            running = True
+        rcfiles = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
+        for rcfile in rcfiles:
+            if os.path.isfile(rcfile):
+                rcconf = rcfile
 
-    return running
-
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
-
-def _do_enable(name, enable):
-    # we change argument depending on real binary used
-    # update-rc.d wants enable/disable while
-    # chkconfig wants on/off
-    # also, systemctl needs the arguments reversed
-    if enable:
-        on_off = "on"
-        enable_disable = "enable"
-        rc = "YES"
-    else:
-        on_off = "off"
-        enable_disable = "disable"
-        rc = "NO"
-
-    if RCCONF:
-        entry = "%s_enable" % name
+        entry = "%s_enable" % self.name
         full_entry = '%s="%s"' % (entry,rc)
-        rc = open(RCCONF,"r+")
+        rc = open(rcconf,"r+")
         rctext = rc.read()
         if re.search("^%s" % full_entry,rctext,re.M) is None:
             if re.search("^%s" % entry,rctext,re.M) is None:
@@ -242,20 +391,52 @@ def _do_enable(name, enable):
             rc.write(rctext)
         rc.close()
 
-        rc=0
-        stderr=stdout=''
-    else:
-        if CHKCONFIG.endswith("update-rc.d"):
-            args = (CHKCONFIG, name, enable_disable)
-        elif CHKCONFIG.endswith("systemctl"):
-            args = (CHKCONFIG, enable_disable, name + ".service")
-        else:
-            args = (CHKCONFIG, name, on_off)
+    def service_control(self):
+        if self.action is "start":
+            self.action = "onestart"
+        if self.action is "stop":
+            self.action = "onestop"
+        if self.action is "reload":
+            self.action = "onereload"
 
-        if enable is not None:
-            rc, stdout, stderr = _run("%s %s %s" % args)
+        return self.execute_command("%s %s %s" % (self.svc_cmd, self.name, self.action))
 
-    return rc, stdout, stderr
+# ===========================================
+# Subclass: OpenBSD
+
+class OpenBsdService(Service):
+    """
+    This is the OpenBSD Service manipulation class - it uses /etc/rc.d for
+    service control. Enabling a service is currently not supported because the
+    <service>_flags variable is not boolean, you should supply a rc.conf.local
+    file in some other way.
+    """
+
+    platform = 'OpenBSD'
+    distribution = None
+
+    def get_service_tools(self):
+        rcdir = '/etc/rc.d'
+
+        rc_script = "%s/%s" % (rcdir, self.name)
+        if os.path.isfile(rc_script):
+            self.svc_cmd = rc_script
+
+        if not self.svc_cmd:
+            self.module.fail_json(msg='unable to find rc.d script')
+
+    def get_service_status(self):
+        rc, stdout, stderr = self.execute_command("%s %s" % (self.svc_cmd, 'check'))
+        if rc == 1:
+            self.running = False
+        elif rc == 0:
+            self.running = True
+
+    def service_control(self):
+        return self.execute_command("%s %s" % (self.svc_cmd, self.action))
+
+# ===========================================
+# Main control flow
 
 def main():
     module = AnsibleModule(
@@ -268,105 +449,51 @@ def main():
         )
     )
 
-    name = module.params['name']
-    state = module.params['state']
-    pattern = module.params['pattern']
-    enable = module.boolean(module.params.get('enabled', None))
-    arguments = module.params.get('arguments', '')
+    service = Service(module)
 
-    # Set PS options here if 'ps auxww' will not work on
-    # target platform
-    if platform.system() == 'SunOS':
-        global PS_OPTIONS
-        PS_OPTIONS = '-ef'
+    if service.syslogging:
+        syslog.openlog('ansible-%s' % os.path.basename(__file__))
+        syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - platform %s' % service.platform)
+        if service.distribution:
+            syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - distribution %s' % service.distribution)
 
-    # ===========================================
-    # find binaries locations on minion
-    _find_binaries(module,name)
-
-    # ===========================================
-    # get service status
-    running = _get_service_status(name, pattern, arguments)
-
-    # ===========================================
-    # Some common variables
-    changed = False
     rc = 0
-    err = ''
     out = ''
+    err = ''
+    result = {}
+    result['name'] = service.name
+    result['state'] = service.state
 
-    # set command to run
-    if SERVICE:
-        svc_cmd = "%s %s" % (SERVICE, name)
-    elif INITSCRIPT:
-        svc_cmd = "%s" % INITSCRIPT
+    # Find service management tools
+    service.get_service_tools()
 
-    if module.params['enabled']:
-        rc_enable, out_enable, err_enable = _do_enable(name, enable)
-        rc += rc_enable
-        out += out_enable
-        err += err_enable
+    # Enable/disable service startup at boot if requested
+    if service.module.params['enabled']:
+        service.service_enable()
 
-    if state and running == None:
-        module.fail_json(msg="failed determining the current service state => state stays unchanged", changed=False)
+    # Collect service status
+    if service.pattern:
+        service.check_ps()
+    service.get_service_status()
 
-    elif state:
-        # a state change command has been requested
+    # Calculate if request will change service state
+    service.check_service_changed()
 
-        # ===========================================
-        # determine if we are going to change anything
-        if not running and state in ["started", "running"]:
-            changed = True
-        elif running and state in ["stopped","reloaded"]:
-            changed = True
-        elif state == "restarted":
-            changed = True
-
-        # ===========================================
-        # run change commands if we need to
-        if changed:
-
-            if platform.system() == 'FreeBSD':
-                start = "onestart"
-                stop = "onestop"
-                reload = "onereload"
-            else:
-                start = "start"
-                stop = "stop"
-                reload = "reload"
-
-            if state in ['started', 'running']:
-                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, start, arguments))
-            elif state == 'stopped':
-                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, stop, arguments))
-            elif state == 'reloaded':
-                rc_state, stdout, stderr = _run("%s %s %s" % (svc_cmd, reload, arguments))
-            elif state == 'restarted':
-                rc1, stdout1, stderr1 = _run("%s %s %s" % (svc_cmd, stop, arguments))
-                rc2, stdout2, stderr2 = _run("%s %s %s" % (svc_cmd, start, arguments))
-                if rc1 != 0 and rc2 == 0:
-                    rc_state = rc + rc2
-                    stdout = stdout2
-                    stderr = stderr2
-                else:
-                    rc_state = rc + rc1 + rc2
-                    stdout = stdout1 + stdout2
-                    stderr = stderr1 + stderr2
-
-            out += stdout
-            err += stderr
-            rc = rc + rc_state
+    # Modify service state if necessary
+    (rc, out, err) = service.modify_service_state()
 
     if rc != 0:
-        module.fail_json(msg=err)
+        if err:
+            module.fail_json(msg=err)
+        else:
+            module.fail_json(msg=out)
 
-    result = {"changed": changed}
-    if module.params['enabled']:
-        result['enabled'] = module.params['enabled']
-    if state:
-        result['state'] = state
+    result['changed'] = service.changed
+    if service.module.params['enabled']:
+        result['enabled'] = service.module.params['enabled']
+    if service.state:
+        result['state'] = service.state
 
-    rc, stdout, stderr = _run("%s status %s" % (svc_cmd, arguments))
     module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
