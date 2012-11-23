@@ -17,6 +17,7 @@
 #
 
 import os
+import pty
 import subprocess
 import shlex
 import pipes
@@ -98,8 +99,11 @@ class Connection(object):
         else:
             ssh_cmd.append(cmd)
 
+        master, slave = pty.openpty()
+        stdin = os.fdopen(master, 'w', 0)
+
         vvv("EXEC %s" % ssh_cmd, host=self.host)
-        p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
+        p = subprocess.Popen(ssh_cmd, stdin=slave,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         self._send_password()
@@ -118,7 +122,7 @@ class Connection(object):
                 else:
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-            p.stdin.write(self.runner.sudo_pass + '\n')
+            stdin.write(self.runner.sudo_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
@@ -133,7 +137,8 @@ class Connection(object):
                     break
             elif p.poll() is not None:
                 break
-        p.stdin.close()  # close stdin after we read from stdout (see also issue #848)
+
+        stdin.close()
 
         if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
