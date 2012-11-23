@@ -66,8 +66,7 @@ def html_ify(text):
     t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
     t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
     t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
-    #t = _CONST.sub("<code>" + r"\1" + "</code>", t)
-    t = _CONST.sub(r"\1", t)
+    t = _CONST.sub("<code>" + r"\1" + "</code>", t)
     return t
 
 def json_ify(text):
