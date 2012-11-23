@@ -54,8 +54,8 @@ options:
       - Repoid of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction
         multiple repos separated with a ','
-        New in version 0.9.
     required: false
+    version_added: "0.9"
     default: null
     aliases: []
     
@@ -64,8 +64,8 @@ options:
       - I(repoid) of repositories to disable for the install/update operation
         These repos will not persist beyond the transaction
         Multiple repos separated with a ','
-        New in version 0.9.      
     required: false
+    version_added: "0.9"
     default: null
     aliases: []
     
