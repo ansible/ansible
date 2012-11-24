@@ -41,10 +41,9 @@ class InventoryScript(object):
     def _parse(self):
         all_hosts = {}
 
-        groups = {}
         self.raw = utils.parse_json(self.data)
         all=Group('all')
-        self.groups = dict(all=all)
+        groups = dict(all=all)
         group = None
         for (group_name, hosts) in self.raw.items():
             group = groups[group_name] = Group(group_name)
