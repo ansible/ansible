@@ -270,8 +270,8 @@ will still be shown in Ansible, but the command will not succeed.
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
 
-Conventions/Recomendations
-``````````````````````````
+Conventions/Recommendations
+```````````````````````````
 
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
