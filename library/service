@@ -327,8 +327,8 @@ class LinuxService(Service):
         if self.action is not "restart":
             rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments))
         else:
-            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, stop, self.arguments))
-            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, start, self.arguments))
+            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments))
+            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments))
             if rc1 != 0 and rc2 == 0:
                 rc_state = rc + rc2
                 stdout = stdout2
