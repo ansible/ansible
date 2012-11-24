@@ -137,6 +137,9 @@ def main():
 
     pip = module.get_bin_path('python-pip', False, ['%s/bin' % env])
     if not pip:
+        pip = module.get_bin_path('pip-python', True, ['%s/bin' % env])
+
+    if not pip:
         pip = module.get_bin_path('pip', True, ['%s/bin' % env])
 
     state = module.params['state']
