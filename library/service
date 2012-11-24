@@ -73,6 +73,7 @@ examples:
 import platform
 import os
 import re
+import tempfile
 
 class Service(object):
     """
@@ -108,6 +109,9 @@ class Service(object):
         self.svc_initctl    = None
         self.enable_cmd     = None
         self.arguments      = module.params.get('arguments', '')
+        self.rcconf_file    = None
+        self.rcconf_key     = None
+        self.rcconf_value   = None
 
         # select whether we dump additional debug info through syslog
         self.syslogging = False
@@ -193,6 +197,60 @@ class Service(object):
             err = ''
             out = ''
             return rc, out, err
+
+    def service_enable_rcconf(self):
+        if self.rcconf_file is None or self.rcconf_key is None or self.rcconf_value is None:
+            self.module.fail_json(msg="service_enable_rcconf() requires rcconf_file, rcconf_key and rcconf_value")
+
+        changed = None
+        entry = '%s="%s"\n' % (self.rcconf_key, self.rcconf_value)
+        RCFILE = open(self.rcconf_file, "r")
+        new_rc_conf = []
+
+        # Build a list containing the possibly modified file. 
+        for rcline in RCFILE:
+            # Only parse non-comment and non-empty lines.
+            if not re.search('^(#.*)?$', rcline):
+                key = rcline.split('=')[0]
+                # We need to strip any newline and " signs from the value.
+                value = rcline.split('=')[1].strip('\n"')
+                if key == self.rcconf_key:
+                    if value == self.rcconf_value:
+                        # Since the proper entry already exists we can stop iterating.
+                        changed = False
+                        break
+                    else: 
+                        # We found the key but the value is wrong, replace with new entry.
+                        rcline = entry
+                        changed = True
+
+            # Add line to the list.
+            new_rc_conf.append(rcline)
+
+        # We are done with reading the current rc.conf, close it.
+        RCFILE.close()
+
+        # If we did not see any trace of our entry we need to add it.
+        if changed is None:
+            new_rc_conf.append(entry)
+            changed = True
+
+        if changed is True:
+            # Create a temporary file next to the current rc.conf (so we stay on the same filesystem).
+            # This way the replacement operation is atomic.
+            rcconf_dir = os.path.dirname(self.rcconf_file)
+            rcconf_base = os.path.basename(self.rcconf_file)
+            (TMP_RCCONF, tmp_rcconf_file) = tempfile.mkstemp(dir=rcconf_dir, prefix="%s-" % rcconf_base)
+
+            # Write out the contents of the list into our temporary file.
+            for rcline in new_rc_conf:
+                os.write(TMP_RCCONF, rcline)
+
+            # Close temporary file.
+            os.close(TMP_RCCONF)
+
+            # Replace previous rc.conf.
+            self.module.atomic_replace(tmp_rcconf_file, self.rcconf_file)
 
 # ===========================================
 # Subclass: Linux
@@ -368,28 +426,18 @@ class FreeBsdService(Service):
 
     def service_enable(self):
         if self.enable:
-            rc = "YES"
+            self.rcconf_value = "YES"
         else:
-            rc = "NO"
+            self.rcconf_value = "NO"
 
         rcfiles = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
-                rcconf = rcfile
+                self.rcconf_file = rcfile
+        
+        self.rcconf_key = "%s_enable" % self.name
 
-        entry = "%s_enable" % self.name
-        full_entry = '%s="%s"' % (entry,rc)
-        rc = open(rcconf,"r+")
-        rctext = rc.read()
-        if re.search("^%s" % full_entry,rctext,re.M) is None:
-            if re.search("^%s" % entry,rctext,re.M) is None:
-                rctext += "\n%s" % full_entry
-            else:
-                rctext = re.sub("^%s.*" % entry,full_entry,rctext,1,re.M)
-            rc.truncate(0)
-            rc.seek(0)
-            rc.write(rctext)
-        rc.close()
+        return self.service_enable_rcconf()
 
     def service_control(self):
         if self.action is "start":
