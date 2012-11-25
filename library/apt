@@ -156,7 +156,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
 
         rc, out, err = run_apt(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
+            m.fail_json(msg="Failed to run \"apt-get install %s\"; %s" % (packages, err))
         else:
             m.exit_json(changed=True)
     else:
