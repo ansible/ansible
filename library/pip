@@ -135,10 +135,7 @@ def main():
         out += out_venv
         err += err_venv
 
-    pip = module.get_bin_path('python-pip', False, ['%s/bin' % env])
-    if not pip:
-        pip = module.get_bin_path('pip-python', False, ['%s/bin' % env])
-
+    pip = module.get_bin_path('pip-python', False, ['%s/bin' % env])
     if not pip:
         pip = module.get_bin_path('pip', True, ['%s/bin' % env])
 
