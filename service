@@ -72,8 +72,8 @@ examples:
 
 import platform
 import os
-import re
 import tempfile
+import shlex
 
 class Service(object):
     """
@@ -209,11 +209,10 @@ class Service(object):
 
         # Build a list containing the possibly modified file. 
         for rcline in RCFILE:
-            # Only parse non-comment and non-empty lines.
-            if not re.search('^(#.*)?$', rcline):
-                key = rcline.split('=')[0]
-                # We need to strip any newline and " signs from the value.
-                value = rcline.split('=')[1].strip('\n"')
+            # Parse line removing whitespaces, quotes, etc.
+            rcarray = shlex.split(rcline, comments=True)
+            if len(rcarray) >= 1 and '=' in rcarray[0]:
+                (key, value) = rcarray[0].split("=", 1)
                 if key == self.rcconf_key:
                     if value == self.rcconf_value:
                         # Since the proper entry already exists we can stop iterating.
