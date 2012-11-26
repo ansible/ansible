@@ -278,6 +278,7 @@ class Inventory(object):
             if updated is not None:
                 vars.update(updated)
 
+        vars.update(host.get_variables())
         if self._is_script:
             cmd = [self.host_list,"--host",hostname]
             try:
@@ -287,14 +288,7 @@ class Inventory(object):
             (out, err) = sp.communicate()
             results = utils.parse_json(out)
 
-            # FIXME: this is a bit redundant with host.py and should share code
-            results['inventory_hostname'] = hostname
-            results['inventory_hostname_short'] = hostname.split('.')[0]
-            groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
-            results['group_names'] = sorted(groups)
             vars.update(results)
-        else:
-            vars.update(host.get_variables())
         return vars
 
     def add_group(self, group):
