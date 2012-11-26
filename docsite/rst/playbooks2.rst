@@ -288,6 +288,47 @@ While `only_if` is a pretty good option for advanced users, it exposes more guts
 we can do better.  In 0.9, we will be adding `when`, which will be like a syntactic sugar for `only_if` and hide
 this level of complexity -- it will numerous built in operators.
 
+Conditional Execution (Simplified)
+``````````````````````````````````
+
+In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
+to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
+to be quoted or casted to specify types, but you should seperate any variables used with whitespace.  In
+most cases users will be able to use 'when', but for more complex cases, only_if may still be required.
+
+Here are various examples of 'when' in use.  'when' is incompatible with 'only_if' in the same task::
+
+    - name: "do this if my favcolor is blue, and my dog is named fido"
+      action: shell /bin/false
+      when_string: $favcolor == 'blue' and $dog == 'fido'
+
+    - name: "do this if my favcolor is not blue, and my dog is named fido"
+      action: shell /bin/true
+      when_string: $favcolor != 'blue' and $dog == 'fido'
+
+    - name: "do this if my SSN is over 9000"
+      action: shell /bin/true
+      when_integer: $ssn > 9000
+
+    - name: "do this if I have one of these SSNs"
+      action: shell /bin/true
+      when_integer:  $ssn in [ 8675309, 8675310, 8675311 ]
+
+    - name: "do this if a variable named hippo is NOT defined"
+      action: shell /bin/true
+      when_unset: $hippo
+
+    - name: "do this if a variable named hippo is defined"
+      action: shell /bin/true
+      when_set: $hippo
+
+    - name: "do this if a variable named hippo is true"
+      action: shell /bin/true
+      when_boolean: $hippo
+
+The when_boolean check will look for variables that look to be true as well, such as the string 'True' or
+'true', non-zero numbers, and so on.
+
 Conditional Imports
 ```````````````````
 
