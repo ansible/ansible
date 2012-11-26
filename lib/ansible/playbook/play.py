@@ -161,7 +161,7 @@ class Play(object):
         if type(self.vars) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
 
-        vars = self.playbook.global_vars
+        vars = {}
 
         # translate a list of vars into a dict
         if type(self.vars) == list:
