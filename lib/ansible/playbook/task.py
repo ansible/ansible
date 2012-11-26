@@ -232,7 +232,7 @@ class Task(object):
             tcopy = tokens[1:]
             for (i, t) in enumerate(tcopy):
                 if t.find("$") != -1:
-                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'none', '0', ''))" % (t, t)
+                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
             return " ".join(tcopy)
  
         else:
