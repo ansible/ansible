@@ -283,7 +283,8 @@ def main():
         fname = os.path.join(options.module_dir, module)
         extra = os.path.join("inc", "%s.tex" % module)
 
-        if fname.endswith(".swp"):
+        # probably could just throw out everything with extensions
+        if fname.endswith(".swp") or fname.endswith(".orig") or fname.endswith(".rej"):
             continue
 
         print " processing module source ---> %s" % fname
