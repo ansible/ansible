@@ -604,7 +604,7 @@ Fireball Mode
 
 .. versionadded:: 0.8
 
-Paramiko's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 by a new extra-fast
+Ansible's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 and later by a new extra-fast
 connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
 outside the lines of ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
 to use Ansible, though some users may appreciate it.
@@ -654,7 +654,10 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
               - PyCrypto
               - python-keyczar
 
-For more information about fireball, see the module documentation section.
+Fedora and EPEL also have Ansible RPM subpackages available for fireball-dependencies.
+
+Also see the module documentation section.
+
 
 Understanding Variable Precedence
 `````````````````````````````````
