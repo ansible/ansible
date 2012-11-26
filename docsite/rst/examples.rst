@@ -226,6 +226,8 @@ also works with ``ansible-playbook``::
 
     $ ansible webservers:dbservers -m command -a "/bin/foo xyz" --limit region
 
+As with other host patterns, values to limit can be seperated with ";", ":", or ",".
+
 Now let's talk about range selection.   Suppose you have 1000 servers in group 'datacenter', but only want to target one at a time.  This is also easy::
 
     $ ansible webservers[0-99] -m command -a "/bin/foo xyz"
