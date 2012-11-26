@@ -45,6 +45,8 @@ class Task(object):
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+                if 'action' in ds:
+                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
                 ds['action'] = x + " " + ds[x]
                 ds.pop(x)
 
