@@ -303,7 +303,19 @@ directory.
 Lookup Plugins
 --------------
 
-Language constructs like "with_fileglob" are implemnted via lookup plugins.  Just like other plugin types, you can write your own.
+Language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.  Just like other plugin types, you can write your own.
+
+Vars Plugins
+------------
+
+Playbook constructs like 'host_vars' and 'group_vars' work via 'vars' plugins.  They inject additional variable
+data into ansible runs that did not come from an inventory, playbook, or command line.  Note that variables
+can also be returned from inventory, so in most cases, you won't need to write or understand vars_plugins.
+
+Filter Plugins
+--------------
+
+If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.
 
 Distributing Plugins
 --------------------
@@ -317,6 +329,8 @@ to /usr/share/ansible/plugins, in a subfolder for each plugin type::
     * lookup_plugins
     * callback_plugins
     * connection_plugins
+    * filter_plugins
+    * vars_plugins
 
 To change this path, edit the ansible configuration file.
 
