@@ -19,6 +19,7 @@
 
 import fnmatch
 import os
+import re
 
 import subprocess
 import ansible.constants as C
@@ -92,7 +93,10 @@ class Inventory(object):
                 raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
 
     def _match(self, str, pattern_str):
-        return fnmatch.fnmatch(str, pattern_str)
+        if pattern_str.startswith('~'):
+            return re.search(pattern_str[1:], str)
+        else:
+            return fnmatch.fnmatch(str, pattern_str)
 
     def get_hosts(self, pattern="all"):
         """ 
@@ -164,7 +168,7 @@ class Inventory(object):
         a tuple of (start, stop) or None
         """
 
-        if not "[" in pattern:
+        if not "[" in pattern or pattern.startswith('~'):
             return (pattern, None)
         (first, rest) = pattern.split("[")
         rest = rest.replace("]","")
