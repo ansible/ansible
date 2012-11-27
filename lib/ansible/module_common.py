@@ -17,12 +17,14 @@
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
+REPLACER_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
 
 MODULE_COMMON = """
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
 MODULE_ARGS = <<INCLUDE_ANSIBLE_MODULE_ARGS>>
+MODULE_LANG = <<INCLUDE_ANSIBLE_MODULE_LANG>>
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
@@ -143,6 +145,7 @@ class AnsibleModule(object):
         if add_file_common_args:
             self.argument_spec.update(FILE_COMMON_ARGUMENTS)
 
+        os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = []
