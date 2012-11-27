@@ -19,6 +19,7 @@
 
 import fnmatch
 import os
+import re
 
 import subprocess
 import ansible.constants as C
@@ -164,7 +165,7 @@ class Inventory(object):
         a tuple of (start, stop) or None
         """
 
-        if not "[" in pattern:
+        if not "[" in pattern or '~' in pattern:
             return (pattern, None)
         (first, rest) = pattern.split("[")
         rest = rest.replace("]","")
@@ -201,11 +202,18 @@ class Inventory(object):
         hosts = {}
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","")
+        is_re = False
+        if '~' in pattern:
+            is_re = True
+            hostregex = pattern.split('~', 1)[1]
 
         groups = self.get_groups()
         for group in groups:
             for host in group.get_hosts():
-                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
+                if pattern == 'all' \
+                    or self._match(group.name, pattern) \
+                    or self._match(host.name, pattern) \
+                    or (is_re and re.search(hostregex, host.name)):
                     hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
