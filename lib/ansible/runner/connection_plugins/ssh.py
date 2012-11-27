@@ -53,6 +53,12 @@ class Connection(object):
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
+        if self.runner.remote_pass:
+            self.common_args += ["-o", "GSSAPIAuthentication=no",
+                                 "-o", "PubkeyAuthentication=no"]
+        else:
+            self.common_args += ["-o", "KbdInteractiveAuthentication=no",
+                                 "-o", "PasswordAuthentication=no"]
         self.common_args += ["-o", "User="+self.runner.remote_user]
 
         return self
