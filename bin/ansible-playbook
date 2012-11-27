@@ -105,7 +105,7 @@ def main(args):
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             module_path=options.module_path,
-            host_list=options.inventory,
+            inventory=inventory,
             forks=options.forks,
             remote_user=options.remote_user,
             remote_pass=sshpass,
@@ -120,7 +120,6 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
-            subset=options.subset,
         )
         
         if options.listhosts:

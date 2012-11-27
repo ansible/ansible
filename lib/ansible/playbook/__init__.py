@@ -60,7 +60,8 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
-        subset           = C.DEFAULT_SUBSET):
+        subset           = C.DEFAULT_SUBSET,
+        inventory        = None):
 
         """
         playbook:         path to a playbook file
@@ -77,6 +78,7 @@ class PlayBook(object):
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occuring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
+        inventory:        can be specified instead of host_list to use a pre-existing inventory object
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -107,8 +109,11 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
-        self.inventory           = ansible.inventory.Inventory(host_list)
-        self.inventory.subset(subset)
+        if inventory is None:
+            self.inventory    = ansible.inventory.Inventory(host_list)
+            self.inventory.subset(subset)
+        else:
+            self.inventory    = inventory
 
         self.basedir     = os.path.dirname(playbook)
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
