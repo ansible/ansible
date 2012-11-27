@@ -308,13 +308,13 @@ class PlayBook(object):
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
-                        self._flag_handler(play.handlers(), utils.template(play.basedir, handler_name, task.module_vars), host)
+                        self._flag_handler(play, utils.template(play.basedir, handler_name, task.module_vars), host)
 
         return hosts_remaining
 
     # *****************************************************
 
-    def _flag_handler(self, handlers, handler_name, host):
+    def _flag_handler(self, play, handler_name, host):
         '''
         if a task has any notify elements, flag handlers for run
         at end of execution cycle for hosts that have indicated
@@ -322,8 +322,8 @@ class PlayBook(object):
         '''
 
         found = False
-        for x in handlers:
-            if handler_name == x.name:
+        for x in play.handlers():
+            if handler_name == utils.template(play.basedir, x.name, x.module_vars):
                 found = True
                 self.callbacks.on_notify(host, x.name)
                 x.notified_by.append(host)

@@ -45,6 +45,8 @@ class Task(object):
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+                if 'action' in ds:
+                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
                 ds['action'] = x + " " + ds[x]
                 ds.pop(x)
 
@@ -149,9 +151,6 @@ class Task(object):
             # allow the user to list comma delimited tags
             import_tags = import_tags.split(",")
 
-        self.name = utils.template(None, self.name, self.module_vars)
-        self.action = utils.template(None, self.action, self.module_vars)
-
         # handle mutually incompatible options
         incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
         if len(incompatibles) > 1:
@@ -233,7 +232,7 @@ class Task(object):
             tcopy = tokens[1:]
             for (i, t) in enumerate(tcopy):
                 if t.find("$") != -1:
-                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'none', '0', ''))" % (t, t)
+                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
             return " ".join(tcopy)
  
         else:
