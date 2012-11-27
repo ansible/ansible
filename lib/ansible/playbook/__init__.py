@@ -390,7 +390,8 @@ class PlayBook(object):
 
         # now with that data, handle contentional variable file imports!
 
-        all_hosts = self.inventory.list_hosts(play.hosts)
+        all_hosts = [ h for h in self.inventory.list_hosts(play.hosts)
+                    if not (h in self.stats.failures or h in self.stats.dark) ]
         play.update_vars_files(all_hosts)
 
         serialized_batch = []
