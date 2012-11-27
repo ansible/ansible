@@ -28,6 +28,7 @@ import collections
 import socket
 import base64
 import sys
+import shlex
 
 import ansible.constants as C
 import ansible.inventory
@@ -542,10 +543,12 @@ class Runner(object):
         shebang = None
         if lines[0].startswith("#!"):
             shebang = lines[0]
-            interpreter_config = 'ansible_%s_interpreter' % os.path.basename(shebang)
+            args = shlex.split(str(shebang[2:]))
+            interpreter = args[0]
+            interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
             if interpreter_config in inject:
-                lines[0] = shebang = "#!%s" % inject[interpreter_config]
+                lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
                 module_data = "\n".join(lines)
 
         self._transfer_str(conn, tmp, module_name, module_data)
