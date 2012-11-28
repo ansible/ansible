@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: subversion
 short_description: Deploys a subversion repository.
 description:
-   - This module is really simple: It checks out from the given branch of a repo or at a particular tag.
+   - This module is really simple, it checks out from the given branch of a repo or at a particular tag.
 version_added: "0.7"
 options:
   repo:
