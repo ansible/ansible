@@ -239,10 +239,10 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _list_available_hosts(self):
+    def _list_available_hosts(self, *args):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts() if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in self.inventory.list_hosts(*args) if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
@@ -347,7 +347,7 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        host_list = self._list_available_hosts()
+        host_list = self._list_available_hosts(play.hosts)
 
         if play.gather_facts is False:
             return {}
@@ -396,7 +396,7 @@ class PlayBook(object):
 
         # now with that data, handle contentional variable file imports!
 
-        all_hosts = self._list_available_hosts()
+        all_hosts = self._list_available_hosts(play.hosts)
         play.update_vars_files(all_hosts)
 
         serialized_batch = []
@@ -431,7 +431,7 @@ class PlayBook(object):
                         # just didn't match anything and that's ok
                         return False
 
-                host_list = self._list_available_hosts()
+                host_list = self._list_available_hosts(play.hosts)
 
                 # if no hosts remain, drop out
                 if not host_list:
