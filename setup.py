@@ -40,7 +40,8 @@ setup(name='ansible',
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
-         'bin/ansible-pull'
+         'bin/ansible-pull',
+         'bin/ansible-doc'
       ],
       data_files=data_files
 )
