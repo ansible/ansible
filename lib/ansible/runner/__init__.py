@@ -328,13 +328,6 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
-        # special non-user/non-fact variables:
-        # 'groups' variable is a list of host name in each group
-        # 'hostvars' variable contains variables for each host name
-        #  ... and is set elsewhere
-        # 'inventory_hostname' is also set elsewhere
-        inject['groups'] = self.inventory.groups_list()
-
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
@@ -342,6 +335,18 @@ class Runner(object):
             for (k,v) in module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
+
+        module_name = utils.template(self.basedir, module_name, inject)
+        module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
+
+        if module_name in utils.plugins.action_loader:
+            if self.background != 0:
+                raise errors.AnsibleError("async mode is not supported with the %s module" % module_name)
+            handler = utils.plugins.action_loader.get(module_name, self)
+        elif self.background == 0:
+            handler = utils.plugins.action_loader.get('normal', self)
+        else:
+            handler = utils.plugins.action_loader.get('async', self)
 
         conditional = utils.template(self.basedir, self.conditional, inject)
         if not utils.check_conditional(conditional):
@@ -396,24 +401,12 @@ class Runner(object):
             result = dict(failed=True, msg="FAILED: %s" % str(e))
             return ReturnData(host=host, comm_ok=False, result=result)
 
-        module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
-
         tmp = ''
-        if self.module_name != 'raw':
+        # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
+        if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
-        result = None
 
-        if module_name in utils.plugins.action_loader:
-            if self.background != 0:
-                raise errors.AnsibleError("async mode is not supported with the %s module" % module_name)
-            handler = utils.plugins.action_loader.get(module_name, self)
-            result = handler.run(conn, tmp, module_name, module_args, inject)
-        else:
-            if self.background == 0:
-                result = utils.plugins.action_loader.get('normal', self).run(conn, tmp, module_name, module_args, inject)
-            else:
-                result = utils.plugins.action_loader.get('async', self).run(conn, tmp, module_name, module_args, inject)
+        result = handler.run(conn, tmp, module_name, module_args, inject)
 
         conn.close()
 

@@ -23,6 +23,8 @@ from ansible.runner.return_data import ReturnData
 class ActionModule(object):
     ''' Print statements during execution '''
 
+    NEEDS_TMPPATH = False
+
     def __init__(self, runner):
         self.runner = runner
 
