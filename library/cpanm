@@ -25,6 +25,7 @@ module: cpanm
 short_description: Manages Perl library dependencies.
 description:
   - Manage Perl library dependencies.
+version_added: "1.0"
 options:
   name:
     description:
@@ -46,6 +47,11 @@ options:
       - Specify the install base to install modules
     required: false
     default: false
+  mirror:
+    description:
+      - Specifies the base URL for the CPAN mirror to use
+    required: false
+    default: false
 examples:
    - code: "cpanm: name=Dancer"
      description: Install I(Dancer) perl package.
@@ -55,10 +61,40 @@ examples:
      description: Install perl dependencies from local directory.
    - code: "cpanm: name=Dancer notest=True locallib=/srv/webapps/my_app/extlib"
      description: Install I(Dancer) perl package without running the unit tests in indicated I(locallib).
+   - code: "cpanm: name=Dancer mirror=http://cpan.cpantesters.org/"
+     description: Install I(Dancer) perl package from a specific mirror
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: Franck Cuny
 '''
+
+def _is_package_installed(name, locallib, cpanm):
+    cmd = ""
+    if locallib:
+        cmd = "PERL5LIB={locallib}/lib/perl5".format(locallib=locallib)
+    cmd = "{cmd} perl -M{name} -e '1'".format(cmd=cmd, name=name)
+    res, stdout, stderr = _run(cmd)
+    installed = True if res == 0 else False
+    return installed
+
+
+def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
+    if from_path:
+        cmd = "{cpanm} {path}".format(cpanm=cpanm, path=from_path)
+    else:
+        cmd = "{cpanm} {name}".format(cpanm=cpanm, name=name)
+
+    if notest is True:
+        cmd = "{cmd} -n".format(cmd=cmd)
+
+    if locallib is not None:
+        cmd = "{cmd} -l {locallib}".format(cmd=cmd, locallib=locallib)
+
+    if mirror is not None:
+        cmd = "{cmd} --mirror {mirror}".format(cmd=cmd, mirror=mirror)
+
+    return cmd
+
 
 def _run(cmd):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -71,8 +107,9 @@ def main():
     arg_spec = dict(
         name=dict(default=None, required=False),
         from_path=dict(default=None, required=False),
-        notest=dict(default=False, required=False),
+        notest=dict(default=False, choices=BOOLEANS),
         locallib=dict(default=None, required=False),
+        mirror=dict(default=None, required=False)
     )
 
     module = AnsibleModule(
@@ -84,31 +121,24 @@ def main():
 
     name = module.params['name']
     from_path = module.params['from_path']
-    notest = module.params['notest']
+    notest = module.boolean(module.params.get('notest', False))
     locallib = module.params['locallib']
 
     changed = False
-    out_cpanm = ''
-    err_cpanm = ''
 
-    if from_path:
-        cmd = "{cpanm} {path}".format(cpanm=cpanm, path=from_path)
-    else:
-        cmd = "{cpanm} {name}".format(cpanm=cpanm, name=name)
+    installed = _is_package_installed(name, locallib, cpanm)
 
-    if notest is True:
-        cmd = "{cmd} -n".format(cmd=cmd)
+    if not installed:
+        out_cpanm = err_cpanm = ''
+        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm)
 
-    if locallib is not None:
-        cmd = "{cmd} -l {locallib}".format(cmd=cmd, locallib=locallib)
+        rc_cpanm, out_cpanm, err_cpanm = _run(cmd)
 
-    rc_cpanm, out_cpanm, err_cpanm = _run(cmd)
+        if rc_cpanm != 0:
+            module.fail_json(msg=err_cpanm, cmd=cmd)
 
-    if rc_cpanm != 0:
-        module.fail_json(msg=err_cpanm, cmd=cmd)
-
-    if err_cpanm and 'is up to date' not in err_cpanm:
-        changed = True
+        if err_cpanm and 'is up to date' not in err_cpanm:
+            changed = True
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
 
