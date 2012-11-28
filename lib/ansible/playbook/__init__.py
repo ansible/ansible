@@ -444,6 +444,7 @@ class PlayBook(object):
                     self.inventory.restrict_to(handler.notified_by)
                     self._run_task(play, handler, True)
                     self.inventory.lift_restriction()
+                    handler.notified_by = []
 
             self.inventory.lift_also_restriction()
 
