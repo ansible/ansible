@@ -32,6 +32,7 @@ options:
       - The name of the Perl library to install
     required: false
     default: null
+    aliases: ["pkg"]
   from_path:
     description:
       - The local directory from where to install
@@ -105,7 +106,7 @@ def _run(cmd):
 
 def main():
     arg_spec = dict(
-        name=dict(default=None, required=False),
+        name=dict(default=None, required=False, aliases=['pkg']),
         from_path=dict(default=None, required=False),
         notest=dict(default=False, choices=BOOLEANS),
         locallib=dict(default=None, required=False),
