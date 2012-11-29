@@ -45,6 +45,7 @@ def get_docstring(filename, verbose=False):
                     doc = yaml.load(child.value.s)
 
     except:
-        traceback.print_exc()
-        print "unable to parse %s" % filename
+        if verbose == True:
+            traceback.print_exc()
+            print "unable to parse %s" % filename
     return doc
