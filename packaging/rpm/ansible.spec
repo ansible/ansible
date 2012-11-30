@@ -14,6 +14,9 @@ Source0: https://github.com/downloads/ansible/ansible/%{name}-%{version}.tar.gz
 Url: http://ansible.github.com
 
 BuildArch: noarch
+BuildRequires: PyYAML
+BuildRequires: asciidoc
+BuildRequires: python-jinja2
 BuildRequires: python2-devel
 
 Requires: PyYAML
