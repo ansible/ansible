@@ -36,14 +36,14 @@ class ActionModule(object):
         ''' handler for template operations '''
         debug = False
         
-        if not self.runner.is_playbook:
-            debug = True
-
         # load up options
         options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
 
+        if dest is None:
+            debug = True
+        
         if not debug and dest.endswith("/"):
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
