@@ -34,20 +34,21 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for template operations '''
-
+        debug = False
+        
         if not self.runner.is_playbook:
-            raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
+            debug = True
 
         # load up options
         options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
 
-        if dest.endswith("/"):
+        if not debug and dest.endswith("/"):
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 
-        if (source is None and 'first_available_file' not in inject) or dest is None:
+        if not debug and ((source is None and 'first_available_file' not in inject) or dest is None):
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
@@ -74,15 +75,23 @@ class ActionModule(object):
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
+        
+        # If we run the template module with ansible CLI we get the template on stdout.
+        if debug:
+            print "############## Template ##############"
+            print resultant
+            print "########### End of Template ##########"
 
-        xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
-        # fix file permissions when the copy is done as a different user
-        if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
-                tmp)
+            return ReturnData(conn=conn, comm_ok=True, result=dict(msg=resultant))
+        else:        
+            xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
+            # fix file permissions when the copy is done as a different user
+            if self.runner.sudo and self.runner.sudo_user != 'root':
+                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
+                    tmp)
 
-        # run the copy module
-        module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
-        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+            # run the copy module
+            module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
+            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
 
 
