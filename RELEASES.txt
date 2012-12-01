@@ -1,7 +1,8 @@
 Ansible Releases at a Glance
 ============================
 
-0.9 "Dreams" ---------- pending
+1.0 "Eruption" -------- pending
+0.9 "Dreams" ---------- 11-30-2012
 0.8 "Cathedral" ------- 10-19-2012
 0.7 "Panama" ---------- 09-06-2012
 0.6 "Cabo" ------------ 08-06-2012
