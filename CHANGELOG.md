@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-0.9 "Dreams" -- release pending
+1.0 "Eruption" -- release pending
+
+* ...
+
+0.9 "Dreams" -- Nov 30 2012
 
 Highlighted core changes:
 
@@ -14,6 +18,7 @@ Highlighted core changes:
 * additional RPM subpackages for easily installing fireball mode deps (server and node)
 * group_vars/host_vars now available to ansible, not just playbooks
 * native ssh connection type (-c ssh) now supports passwords as well as keys
+* ansible-doc program to show details
 
 Other core changes:
 
