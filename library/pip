@@ -153,10 +153,20 @@ def main():
         out += out_venv
         err += err_venv
 
-    pip = module.get_bin_path('python-pip', False, ['%s/bin' % env])
-    if not pip:
-        pip = module.get_bin_path('pip-python', False, ['%s/bin' % env])
+    # On Debian and Ubuntu, pip is pip.
+    # On Fedora18 and up, pip is python-pip.
+    # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
+    # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
+    # There, pip is just pip.
+    # Try pip with the virtualenv directory first.
+    pip = module.get_bin_path('pip', False, ['%s/bin' % env])
 
+    for p in ['python-pip', 'pip-python']:
+        if not pip:
+            pip = module.get_bin_path(p, False, ['%s/bin' % env])
+
+    # pip should have been found by now.  The final call to get_bin_path
+    # will trigger fail_json.
     if not pip:
         pip = module.get_bin_path('pip', True, ['%s/bin' % env])
 
