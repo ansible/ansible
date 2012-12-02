@@ -47,6 +47,15 @@ options:
       - An optional path to a I(virtualenv) directory to install into
     required: false
     default: null
+  use_mirrors:
+    description:
+      - Whether to use mirrors when installing python libraries.  If using
+        an older version of pip (< 1.0), you should set this to no because
+        older versions of pip do not support I(--use-mirrors).
+    required: false
+    default: yes
+    choices: [ "yes", "no" ]
+    version_added: "1.0"
   state:
     description:
       - The state of module
@@ -119,7 +128,8 @@ def main():
         name=dict(default=None, required=False),
         version=dict(default=None, required=False),
         requirements=dict(default=None, required=False),
-        virtualenv=dict(default=None, required=False)
+        virtualenv=dict(default=None, required=False),
+        use_mirrors=dict(default='yes', choices=BOOLEANS)
     )
 
     module = AnsibleModule(
@@ -154,6 +164,7 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
+    use_mirrors = module.boolean(module.params['use_mirrors'])
     command_map = dict(present='install', absent='uninstall', latest='install')
 
     if state == 'latest' and version is not None:
@@ -198,7 +209,7 @@ def main():
 
             if state == 'absent':
                 cmd = cmd + ' -y'
-            else:
+            elif use_mirrors:
                 cmd = cmd + ' --use-mirrors'
 
             rc_pip, out_pip, err_pip = _run(cmd)
