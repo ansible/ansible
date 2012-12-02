@@ -31,7 +31,7 @@ import pwd
 # TODO: refactor this file
 
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
-
+JINJA2_OVERRIDE='#jinja2:'
 
 def _varFindLimitSpace(basedir, vars, space, part, depth):
     ''' limits the search space of space to part
@@ -275,6 +275,16 @@ def template_from_file(basedir, path, vars):
         raise errors.AnsibleError("unable to process as utf-8: %s" % realpath)
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
+
+    # Get jinja env overrides from template
+    if data.startswith(JINJA2_OVERRIDE):
+        eol = data.find('\n')
+        line = data[len(JINJA2_OVERRIDE):eol]
+        data = data[eol+1:]
+        for pair in line.split(','):
+            (key,val) = pair.split(':')
+            setattr(environment,key.strip(),val.strip())
+
     t = environment.from_string(data)
     vars = vars.copy()
     try:
