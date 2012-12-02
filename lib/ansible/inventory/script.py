@@ -45,15 +45,25 @@ class InventoryScript(object):
         all=Group('all')
         groups = dict(all=all)
         group = None
-        for (group_name, hosts) in self.raw.items():
+        for (group_name, data) in self.raw.items():
             group = groups[group_name] = Group(group_name)
             host = None
-            for hostname in hosts:
-                if not hostname in all_hosts:
-                    all_hosts[hostname] = Host(hostname)
-                host = all_hosts[hostname]
-                group.add_host(host)
-                # FIXME: hack shouldn't be needed
-                all.add_host(host)
+            if not isinstance(data, dict):
+                data = {'hosts': data}
+            if 'hosts' in data:
+                for hostname in data['hosts']:
+                    if not hostname in all_hosts:
+                        all_hosts[hostname] = Host(hostname)
+                    host = all_hosts[hostname]
+                    group.add_host(host)
+            if 'vars' in data:
+                for k, v in data['vars'].iteritems():
+                    group.set_variable(k, v)
             all.add_child_group(group)
+        # Separate loop to ensure all groups are defined
+        for (group_name, data) in self.raw.items():
+            if isinstance(data, dict) and 'children' in data:
+                for child_name in data['children']:
+                    if child_name in groups:
+                        groups[group_name].add_child_group(groups[child_name])
         return groups
