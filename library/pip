@@ -84,8 +84,16 @@ def _ensure_virtualenv(module, env, virtualenv):
         return _run('%s %s' % (virtualenv, env))
 
 
-def _is_package_installed(name, pip, version=None):
-    rc, status_stdout, status_stderr = _run('%s freeze' % pip)
+def _is_package_installed(name, pip, version=None, requirements=None):
+    cmd = '%s freeze' % pip
+    if requirements is not None:
+        cmd += ' -r %s' % requirements
+    rc, status_stdout, status_stderr = _run(cmd)
+    if requirements is not None:
+        if 'not installed' in status_stderr:
+            return False
+        else:
+            return True
     return _get_full_name(name, version).lower() in status_stdout.lower()
 
 
@@ -160,18 +168,6 @@ def main():
     cmd = None
     installed = None
 
-    if requirements:
-
-        cmd = '%s %s -r %s --use-mirrors' % (pip, command_map[state], requirements)
-        rc_pip, out_pip, err_pip = _run(cmd)
-
-        rc += rc_pip
-        out += out_pip
-        err += err_pip
-
-        changed = ((_did_install(out) and state == 'present') or
-                   (not _did_install(out) and state == 'absent'))
-
     if name and state == 'latest':
 
         cmd = '%s %s %s --upgrade' % (pip, command_map[state], name)
@@ -183,19 +179,22 @@ def main():
 
         changed = 'Successfully installed' in out_pip
 
-    elif name:
+    elif name or requirements:
 
-        installed = _is_package_installed(name, pip, version)
+        installed = _is_package_installed(name, pip, version, requirements)
         changed = ((installed and state == 'absent') or
                    (not installed and state == 'present'))
 
         if changed:
-            if state == 'present':
-                full_name = _get_full_name(name, version)
-            else:
-                full_name = name
-
-            cmd = '%s %s %s' % (pip, command_map[state], full_name)
+            cmd = '%s %s ' % (pip, command_map[state])
+            if name:
+                if state == 'present':
+                    full_name = _get_full_name(name, version)
+                else:
+                    full_name = name
+                cmd += '%s' % full_name
+            elif requirements:
+                cmd += ' -r %s' % requirements
 
             if state == 'absent':
                 cmd = cmd + ' -y'
@@ -206,6 +205,10 @@ def main():
             rc  += rc_pip
             out += out_pip
             err += err_pip
+
+            if requirements:
+                changed = ((_did_install(out) and state == 'present') or
+                           (not _did_install(out) and state == 'absent'))
 
     if rc != 0:
         if not out:
