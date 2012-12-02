@@ -4,6 +4,8 @@
   connection: local
   vars:
     empty_list: []
+    list1: [1, 2, 3]
+    list2: [4, 5, 6]
   tasks:
   - name: test with_items
     action: command true
@@ -36,3 +38,9 @@
     action: copy src=sample.j2 dest=/tmp/ansible-test-with_lines-data
   - name: cleanup test file
     action: file path=/tmp/ansible-test-with_lines-data state=absent
+
+  - name: test flatten
+    action: debug msg="$item"
+    with_flatten:
+    - $list1
+    - $list2

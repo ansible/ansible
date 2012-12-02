@@ -174,7 +174,7 @@ class TestPlaybook(unittest.TestCase):
            "localhost": {
                "changed": 7,
                "failures": 0,
-               "ok": 9,
+               "ok": 10,
                "skipped": 1,
                "unreachable": 0
            }   
@@ -185,7 +185,7 @@ class TestPlaybook(unittest.TestCase):
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
        print "len(EVENTS) = %d" % len(EVENTS)
-       assert len(EVENTS) == 26
+       assert len(EVENTS) == 33
 
    def test_includes(self):
        pb = os.path.join(self.test_dir, 'playbook-includer.yml')
