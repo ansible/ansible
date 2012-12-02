@@ -100,16 +100,35 @@ It's possible to write an external inventory script in any language.  If you are
 Script Conventions
 ``````````````````
 
-When the external node script is called with the single argument '--list', the script must return a JSON hash/dictionary of all the groups to be managed, with a list of each host/IP as the value for each hash/dictionary element, like so::
+When the external node script is called with the single argument '--list', the script must return a JSON hash/dictionary of all the groups to be managed.
+Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or
+simply a list of host/IP addresses, like so::
 
     {
-        'databases'  : [ 'host1.example.com', 'host2.example.com' ],
-        'webservers' : [ 'host2.example.com', 'host3.example.com' ],
-        'atlanta'    : [ 'host1.example.com', 'host4.example.com', 'host5.example.com' ] 
+        'databases'   : {
+            'hosts'   : [ 'host1.example.com', 'host2.example.com' ],
+            'vars'    : {
+                'a'   : true
+            }
+        },
+        'webservers'  : [ 'host2.example.com', 'host3.example.com' ],
+        'atlanta'     : {
+            'hosts'   : [ 'host1.example.com', 'host4.example.com', 'host5.example.com' ],
+            'vars'    : {
+                'b'   : false
+            },
+            'children': [ 'marietta', '5points' ],
+        },
+        'marietta'    : [ 'host6.example.com' ],
+        '5points'     : [ 'host7.example.com' ]
     }
 
+.. versionadded: 1.0
+
+Before version 1.0, each group could only have a list of hostnames/IP addresses, like the webservers, marietta, and 5points groups above.
+
 When called with the arguments '--host <hostname>' (where <hostname> is a host from above), the script must return either an empty JSON
-hash/dictionary, or a list of key/value variables to make available to templates or playbooks.  Returning variables is optional,
+hash/dictionary, or a hash/dictionary of variables to make available to templates and playbooks.  Returning variables is optional,
 if the script does not wish to do this, returning an empty hash/dictionary is the way to go::
 
     {
