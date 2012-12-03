@@ -1,0 +1,194 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2
+short_description: create an instance in ec2, return instanceid
+description:
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on the external I(euca2ools) package.
+version_added: "0.9"
+options:
+  keypair:
+    description:
+      - key pair to use on the instance
+    required: true
+    default: null
+    aliases: []
+  group:
+    description:
+      - security group to use on the instance
+    required: false
+    default: 'default'
+    aliases: []
+  instance_type:
+    description:
+      - instance type to use for the instance
+    required: true
+    default: null
+    aliases: []
+  image:
+    description:
+       - I(emi) (or I(ami)) to use for the instance
+    required: true
+    default: null
+    aliases: []
+  kernel:
+    description:
+      - kernel I(eki) to use for the instance
+    required: false
+    default: null
+    aliases: []
+  ramdisk:
+    description:
+      - ramdisk I(eri) to use for the instance
+    required: false
+    default: null
+    aliases: []
+  wait:
+    description:
+      - wait for the instance to be in state 'running' before returning
+    required: False
+    default: False
+    aliases: []
+  ec2_url:
+    description:
+      - url to use to connect to ec2 or your cloud (for example U(https://ec2.amazonaws.com) when using Amazon ec2 directly and not Eucalyptus)
+    required: False
+    default: null
+    aliases: []
+  ec2_secret_key:
+    description:
+      - ec2 secret key
+    required: False
+    default: null
+    aliases: []
+  ec2_access_key:
+    description:
+      - ec2 access key
+    required: False
+    default: null
+    aliases: []
+  user_data:
+    version_added: "0.9"
+    description:
+      - opaque blob of data which is made available to the ec2 instance
+    required: False
+    default: null
+    aliases: []
+examples:
+   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
+     description: "Examples from Ansible Playbooks"
+requirements: [ "euca2ools" ]
+author: Seth Vidal
+'''
+
+import euca2ools.commands.euca.runinstances
+import time
+
+def _run(cmd):
+    # returns (rc, stdout, stderr) from shell command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    return (process.returncode, stdout, stderr)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            keypair = dict(required=True),
+            group = dict(default='default'),
+            instance_type = dict(aliases=['type']),
+            image = dict(required=True),
+            kernel = dict(),
+            #count = dict(default='1'), # maybe someday
+            ramdisk = dict(),
+            wait = dict(choices=BOOLEANS, default=False),
+            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
+            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            user_data = dict(),
+        )
+    )
+
+    keypair = module.params.get('keypair')
+    group = module.params.get('group')
+    instance_type = module.params.get('instance_type')
+    image = module.params.get('image')
+    #count = module.params.get('count') 
+    kernel = module.params.get('kernel')
+    ramdisk = module.params.get('ramdisk')
+    wait = module.params.get('wait')
+    ec2_url = module.params.get('ec2_url')
+    ec2_secret_key = module.params.get('ec2_secret_key')
+    ec2_access_key = module.params.get('ec2_access_key')
+    user_data = module.params.get('user_data')
+    
+    if ec2_url:
+        os.environ['EC2_URL'] = ec2_url
+    if ec2_secret_key:
+        os.environ['EC2_SECRET_KEY'] = ec2_secret_key
+    if ec2_access_key:
+        os.environ['EC2_ACCESS_KEY'] = ec2_access_key
+
+        
+    # yes I recognize how hacky this is - but it is easier than rewriting
+    # all the try/except's myself.
+    sys.argv.append(image)
+    eri = euca2ools.commands.euca.runinstances.RunInstances()
+    conn = eri.make_connection()
+    res = eri.make_request_cli(conn, 'run_instances',
+                               image_id=image,
+                               min_count=1,
+                               max_count=1,
+                               key_name=keypair,
+                               security_groups=[group],
+                               instance_type=instance_type,
+                               kernel_id=kernel,
+                               ramdisk_id=ramdisk,
+                               user_data=user_data)
+
+    instids = [ i.id for i in res.instances ]
+
+    res_list = res.connection.get_all_instances(instids)
+    this_res = res_list[0]
+    if wait:
+        # wait here until the instances are up
+        num_running = 0
+        while num_running != len(instids):
+            res_list = res.connection.get_all_instances(instids)
+            this_res = res_list[0]
+            num_running = len([ i for i in this_res.instances if i.state=='running' ])
+            time.sleep(2)
+    
+    # there's only one - but maybe one day there could be more
+    instances = []
+    for inst in this_res.instances:
+        d = {
+           'id': inst.id,
+           'public_ip': inst.ip_address,
+            }
+        instances.append(d)
+
+    result = {"changed": True,
+              "instances": instances }
+    module.exit_json(**result)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

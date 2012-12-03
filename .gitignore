@@ -1,12 +1,30 @@
+# build products...
 *.py[co]
 build
 # Emacs backup files...
 *~
 .\#*
-# (s)rpm building stuff
+# RPM stuff...
 MANIFEST
 dist
 rpm-build
 # Eclipse/PyDev stuff...
 .project
 .pydevproject
+# PyCharm stuff...
+.idea
+# Mac OS X stuff...
+.DS_Store
+# manpage build stuff...
+docs/man/man3/*
+# Sublime stuff
+*.sublime-project
+*.sublime-workspace
+# docsite stuff...
+docsite/rst/modules
+docsite/*.html
+docsite/_static/*.gif
+docsite/_static/*.png
+docsite/_static/websupport.js
+# deb building stuff...
+debian/

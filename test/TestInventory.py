@@ -142,7 +142,7 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='100002', rga='1', rgb='2', rgc='3',
+            a='1', b='2', c='3', d='10002', rga='1', rgb='2', rgc='3',
             inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
@@ -238,3 +238,21 @@ class TestInventory(unittest.TestCase):
                         'group_names': ['norse'],
                         'inventory_hostname': 'thor',
                         'inventory_hostname_short': 'thor'}
+
+    def test_hosts_list(self):
+        """Test the case when playbook 'hosts' var is a list."""
+        inventory = self.script_inventory()
+        host_names = sorted(['thor', 'loki', 'odin'])       # Not sure if sorting is in the contract or not
+        actual_hosts = inventory.get_hosts(host_names)
+        actual_host_names = [host.name for host in actual_hosts]
+        assert host_names == actual_host_names
+
+    def test_script_multiple_groups(self):
+        inventory = self.script_inventory()
+        vars = inventory.get_variables('zeus')
+
+        print "VARS=%s" % vars
+        
+        assert vars == {'inventory_hostname': 'zeus',
+                        'inventory_hostname_short': 'zeus',
+                        'group_names': ['greek', 'major-god']}

@@ -29,7 +29,8 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks'
+       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
+       'basedir'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -42,7 +43,7 @@ class Play(object):
 
     # *************************************************
 
-    def __init__(self, playbook, ds):
+    def __init__(self, playbook, ds, basedir):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -56,26 +57,28 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        hosts = utils.template(hosts, playbook.extra_vars)
-
         self._ds          = ds
         self.playbook     = playbook
-        self.hosts        = hosts
-        self.name         = ds.get('name', self.hosts)
+        self.basedir      = basedir
         self.vars         = ds.get('vars', {})
         self.vars_files   = ds.get('vars_files', [])
         self.vars_prompt  = ds.get('vars_prompt', {})
-        self.vars         = self._get_vars(self.playbook.basedir)
+        self.vars         = self._get_vars()
+        self.hosts        = utils.template(basedir, hosts, self.vars)
+        self.name         = ds.get('name', self.hosts)
         self._tasks       = ds.get('tasks', [])
         self._handlers    = ds.get('handlers', [])
-        self.remote_user  = utils.template(ds.get('user', self.playbook.remote_user), playbook.extra_vars)
+        self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), self.vars)
         self.remote_port  = ds.get('port', self.playbook.remote_port)
         self.sudo         = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user    = ds.get('sudo_user', self.playbook.sudo_user)
+        self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), self.vars)
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
-        self.gather_facts = ds.get('gather_facts', True)
+        self.gather_facts = ds.get('gather_facts', None)
         self.serial       = ds.get('serial', 0)
+
+        if isinstance(self.remote_port, basestring):
+            self.remote_port = utils.template(basedir, self.remote_port, self.vars)
 
         self._update_vars_files_for_host(None)
 
@@ -100,22 +103,34 @@ class Play(object):
         tasks = ds.get(keyname, [])
         results = []
         for x in tasks:
-            task_vars = self.vars.copy()
             if 'include' in x:
+                task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
-                for t in tokens[1:]:
-                    (k,v) = t.split("=", 1)
-                    task_vars[k] = utils.template(v, task_vars)
-                include_file = utils.template(tokens[0], task_vars)
-                data = utils.parse_yaml_from_file(utils.path_dwim(self.playbook.basedir, include_file))
+                items = ['']
+                for k in x:
+                    if not k.startswith("with_"):
+                        continue
+                    plugin_name = k[5:]
+                    if plugin_name not in utils.plugins.lookup_loader:
+                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                    terms = utils.template_ds(self.basedir, x[k], task_vars)
+                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+
+                for item in items:
+                    mv = task_vars.copy()
+                    mv['item'] = item
+                    for t in tokens[1:]:
+                        (k,v) = t.split("=", 1)
+                        mv[k] = utils.template_ds(self.basedir, v, mv)
+                    include_file = utils.template(self.basedir, tokens[0], mv)
+                    data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
+                    for y in data:
+                        results.append(Task(self,y,module_vars=mv.copy()))
             elif type(x) == dict:
-                data = [x]
+                task_vars = self.vars.copy()
+                results.append(Task(self,x,module_vars=task_vars))
             else:
                 raise Exception("unexpected task type")
-
-            for y in data:
-                mv = task_vars.copy()
-                results.append(Task(self,y,module_vars=mv))
 
         for x in results:
             if self.tags is not None:
@@ -135,7 +150,7 @@ class Play(object):
 
     # *************************************************
 
-    def _get_vars(self, dirname):
+    def _get_vars(self):
         ''' load the vars section from a play, accounting for all sorts of variable features
         including loading from yaml files, prompting, and conditional includes of the first
         file found in a list. '''
@@ -146,7 +161,7 @@ class Play(object):
         if type(self.vars) not in [dict, list]:
             raise errors.AnsibleError("'vars' section must contain only key/value pairs")
 
-        vars = self.playbook.global_vars
+        vars = {}
 
         # translate a list of vars into a dict
         if type(self.vars) == list:
@@ -164,7 +179,7 @@ class Play(object):
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
 
                 vname = var['name']
-                prompt = "%s: " % var.get("prompt", vname)
+                prompt = var.get("prompt", vname)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
@@ -172,12 +187,14 @@ class Play(object):
                 salt_size = var.get("salt_size", None)
                 salt = var.get("salt", None)
 
-                vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
+                if vname not in self.playbook.extra_vars:
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
 
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
                 prompt_msg = "%s: " % prompt
-                vars[vname] = self.playbook.callbacks.on_vars_prompt(varname=vname, private=False, prompt=prompt_msg)
+                if vname not in self.playbook.extra_vars:
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt(varname=vname, private=False, prompt=prompt_msg)
 
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
@@ -229,29 +246,6 @@ class Play(object):
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
-        if (host is not None):
-            self.playbook.SETUP_CACHE[host].update(self.vars)
-
-            inventory = self.playbook.inventory
-            hostrec = inventory.get_host(host)
-            groupz = sorted(inventory.groups_for_host(host), key=lambda g: g.depth)
-            groups = [ g.name for g in groupz ]
-            basedir = inventory.basedir()
-            if basedir is not None:
-                for x in groups:
-                    path = os.path.join(basedir, "group_vars/%s" % x)
-                    if os.path.exists(path):
-                        data = utils.parse_yaml_from_file(path)
-                        if type(data) != dict:
-                            raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                        self.playbook.SETUP_CACHE[host].update(data)
-                path = os.path.join(basedir, "host_vars/%s" % hostrec.name)
-                if os.path.exists(path):
-                    data = utils.parse_yaml_from_file(path)
-                    if type(data) != dict:
-                        raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                    self.playbook.SETUP_CACHE[host].update(data)
-
         for filename in self.vars_files:
 
             if type(filename) == list:
@@ -260,11 +254,11 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = utils.template(real_filename, self.vars)
+                    filename2 = utils.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
-                    filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                        filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                    filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
@@ -285,7 +279,7 @@ class Play(object):
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
                         break
-                if not found:
+                if not found and host is not None:
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
@@ -293,13 +287,13 @@ class Play(object):
             else:
                 # just one filename supplied, load it!
 
-                filename2 = utils.template(filename, self.vars)
+                filename2 = utils.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(filename2, self.playbook.SETUP_CACHE[host])
-                filename4 = utils.path_dwim(self.playbook.basedir, filename3)
+                    filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
-                    return
+                    continue
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:

@@ -1,0 +1,2 @@
+# Cron job to git clone/pull a repo and then run locally
+{{ schedule }} {{ cron_user }} ansible-pull -d {{ workdir }} -U {{ repo_url }} >>{{ logfile }} 2>&1

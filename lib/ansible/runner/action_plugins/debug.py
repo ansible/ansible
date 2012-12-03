@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright 2012, Dag Wieers <dag@wieers.com>
 #
 # This file is part of Ansible
 #
@@ -15,29 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
+import ansible
 
-import ansible.constants as C
 from ansible import utils
-from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
+    ''' Print statements during execution '''
+
+    NEEDS_TMPPATH = False
 
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, inject=None):
-        ''' handler for assemble operations '''
+    def run(self, conn, tmp, module_name, module_args, inject):
+        args = utils.parse_kv(module_args)
+        if not 'msg' in args:
+            args['msg'] = 'Hello world!'
 
-        # FIXME: since assemble is ported over to the use the new common logic, this method
-        # is actually unneccessary as it can decide to daisychain via it's own module returns.
-        # make assemble return daisychain_args and this will go away.
+        if 'fail' in args and utils.boolean(args['fail']):
+            result = dict(failed=True, msg=args['msg'])
+        else:
+            result = dict(msg=str(args['msg']))
 
-        return self.runner._execute_module(conn, tmp, 'assemble', self.runner.module_args, inject=inject).daisychain('file')
-
+        return ReturnData(conn=conn, result=result)

@@ -16,6 +16,104 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: postgresql_user
+short_description: Adds or removes a users (roles) from a PostgreSQL database.
+description:
+   - Add or remove PostgreSQL users (roles) from a remote host and, optionally,
+     grant the users access to an existing database or tables.
+   - The fundamental function of the module is to create, or delete, roles from
+     a PostgreSQL cluster. Privilege assignment, or removal, is an optional
+     step, which works on one database at a time. This allows for the module to
+     be called several times in the same module to modify the permissions on
+     different databases, or to grant permissions to already existing users.
+   - A user cannot be removed until all the privileges have been stripped from
+     the user. In such situation, if the module tries to remove the user it
+     will fail. To avoid this from happening the fail_on_user option signals
+     the module to try to remove the user, but if not possible keep going; the
+     module will report if changes happened and separately if the user was
+     removed or not.
+version_added: "0.6"
+options:
+  name:
+    description:
+      - name of the user (role) to add or remove
+    required: true
+    default: null
+  password:
+    description:
+      - set the user's password
+    required: true
+    default: null
+  db:
+    description:
+      - name of database where permissions will be granted
+    required: false
+    default: null
+  fail_on_user:
+    description:
+      - if C(yes), fail when user can't be removed. Otherwise just log and continue
+    required: false
+    default: yes
+    choices: [ "yes", "no" ]
+  login_user:
+    description:
+      - User (role) used to authenticate with PostgreSQL
+    required: false
+    default: postgres
+  login_password:
+    description:
+      - Password used to authenticate with PostgreSQL
+    required: false
+    default: null
+  login_host:
+    description:
+      - Host running PostgreSQL.
+    required: false
+    default: localhost
+  priv:
+    description:
+      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
+    required: false
+    default: null
+  role_attr_flags:
+    description:
+      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
+    required: false
+    default: null
+    choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
+                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
+  state:
+    description:
+      - The database state
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+examples:
+   - code: "postgresql_user: db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL"
+     description: Create django user and grant access to database and products table
+   - code: "postgresql_user: user=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER"
+     description: Create rails user, grant privilege to create other databases and demote rails from super user status
+   - code: "postgresql_user: db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no"
+     description: Remove test user privileges from acme
+   - code: "postgresql_user: db=test user=test priv=ALL state=absent"
+     description: Remove test user from test database and the cluster
+   - code: INSERT,UPDATE/table:SELECT/anothertable:ALL
+     description: Example privileges string format
+notes:
+   - The default authentication assumes that you are either logging in as or
+     sudo'ing to the postgres account on the host.
+   - This module uses psycopg2, a Python PostgreSQL database adapter. You must
+     ensure that psycopg2 is installed on the host before using this module. If
+     the remote host is the PostgreSQL server (which is the default case), then
+     PostgreSQL must also be installed on the remote host. For Ubuntu-based
+     systems, install the postgresql, libpq-dev, and python-psycopg2 packages
+     on the remote host before using this module.
+requirements: [ psycopg2 ]
+author: Lorin Hochstein
+'''
+
 import re
 
 try:
@@ -36,29 +134,45 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password):
+def user_add(cursor, user, password, role_attr_flags):
     """Create a new user with write access to the database"""
-    query = "CREATE USER %(user)s with PASSWORD '%(password)s'"
-    cursor.execute(query % {"user": user, "password": password})
+    query = "CREATE USER %(user)s with PASSWORD '%(password)s' %(role_attr_flags)s"
+    cursor.execute(query % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
     return True
 
-def user_chpass(cursor, user, password):
+def user_alter(cursor, user, password, role_attr_flags):
     """Change user password"""
     changed = False
 
     # Handle passwords.
-    if password is not None:
-        select = "SELECT rolpassword FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"user": user})
-        current_pass_hash = cursor.fetchone()[0]
-        # Not sure how to hash the new password, so we just initiate the
-        # change and check if the hash changed
-        alter = "ALTER USER %(user)s WITH PASSWORD '%(password)s'"
-        cursor.execute(alter % {"user": user, "password": password})
-        cursor.execute(select, {"user": user})
-        new_pass_hash = cursor.fetchone()[0]
-        if current_pass_hash != new_pass_hash:
-            changed = True
+    if password is not None or role_attr_flags is not None:
+        # Define columns for select.
+        columns = 'rolpassword,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication'
+        # Select password and all flag-like columns in order to verify changes.
+        # rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcatupdate |
+        # rolcanlogin | rolreplication | rolconnlimit | rolpassword | rolvaliduntil
+        # Not sure how to interpolate properly in python yet...
+        select = "SELECT " + columns + " FROM pg_authid where rolname=%(user)s"
+        cursor.execute(select, {"columns": columns, "user": user})
+        # Grab current role attributes.
+        current_role_attrs = cursor.fetchone()
+
+        if password is not None:
+            # Update the role attributes, including password.
+            alter = "ALTER USER %(user)s WITH PASSWORD '%(password)s' %(role_attr_flags)s"
+            cursor.execute(alter % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
+        else:
+            # Update the role attributes, excluding password.
+            alter = "ALTER USER %(user)s WITH %(role_attr_flags)s"
+            cursor.execute(alter % {"user": user, "role_attr_flags": role_attr_flags})
+        # Grab new role attributes.
+        cursor.execute(select, {"columns": columns, "user": user})
+        new_role_attrs = cursor.fetchone()
+
+        # Detect any differences between current_ and new_role_attrs.
+        for i in range(len(current_role_attrs)):
+            if current_role_attrs[i] != new_role_attrs[i]:
+                changed = True
 
     return changed
 
@@ -71,7 +185,7 @@ def user_delete(cursor, user):
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
         return False
-    
+
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
 
@@ -89,7 +203,7 @@ def get_table_privileges(cursor, user, table):
     WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
     cursor.execute(query, (user, table, schema))
     return set([x[0] for x in cursor.fetchall()])
-    
+
 
 def grant_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
@@ -115,6 +229,8 @@ def get_database_privileges(cursor, user, db):
     query = 'SELECT datacl FROM pg_database WHERE datname = %s'
     cursor.execute(query, (db,))
     datacl = cursor.fetchone()[0]
+    if datacl is None:
+        return []
     r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
     if r is None:
         return []
@@ -176,6 +292,23 @@ def grant_privileges(cursor, user, privs):
 
     return changed
 
+def parse_role_attrs(role_attr_flags):
+    """
+    Parse role attributes string for user creation.
+    Format:
+
+        attributes[,attributes,...]
+
+    Where:
+
+        attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
+    """
+    if ',' not in role_attr_flags:
+        return role_attr_flags
+    flag_set = role_attr_flags.split(",")
+    o_flags = " ".join(flag_set)
+    return o_flags
+
 def parse_privs(privs, db):
     """
     Parse privilege string to determine permissions for database db.
@@ -204,9 +337,9 @@ def parse_privs(privs, db):
             type_ = 'table'
             name, privileges = token.split(':', 1)
             priv_set = set(x.strip() for x in privileges.split(','))
-        
+
         o_privs[type_][name] = priv_set
-    
+
     return o_privs
 
 # ===========================================
@@ -225,7 +358,8 @@ def main():
             priv=dict(default=None),
             db=dict(default=''),
             port=dict(default='5432'),
-            fail_on_user=dict(default='yes')
+            fail_on_user=dict(default='yes'),
+            role_attr_flags=dict(default='')
         )
     )
     user = module.params["user"]
@@ -237,39 +371,40 @@ def main():
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
     port = module.params["port"]
+    role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
-    
-    # To use defaults values, keyword arguments must be absent, so 
+
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
-    params_map =  {
+    params_map = {
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
         "port":"port",
-        "db":"database" 
+        "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
               if k in params_map and v != "" )
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
-    
+
     kw = dict(user=user)
     changed = False
     user_removed = False
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_chpass(cursor, user, password)
+            changed = user_alter(cursor, user, password, role_attr_flags)
         else:
             if password is None:
                 msg = "password parameter required when adding a user"
                 module.fail_json(msg=msg)
-            changed = user_add(cursor, user, password)
+            changed = user_add(cursor, user, password, role_attr_flags)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
         if user_exists(cursor, user):

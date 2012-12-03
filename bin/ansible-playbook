@@ -18,9 +18,9 @@
 
 #######################################################
 
-import os
 import sys
 import getpass
+import os
 
 import ansible.playbook
 import ansible.constants as C
@@ -59,6 +59,8 @@ def main(args):
         help="only run plays and tasks tagged with these values")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help="dump out a list of hosts, each play will run against, does not run playbook!")
+    parser.add_option('--syntax-check', dest='syntax', action='store_true',
+        help="do a playbook syntax check on the playbook, do not execute the playbook")
 
     options, args = parser.parse_args(args)
 
@@ -66,11 +68,18 @@ def main(args):
         parser.print_help(file=sys.stderr)
         return 1
 
+    inventory = ansible.inventory.Inventory(options.inventory)
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0:
+        raise errors.AnsibleError("provided hosts list is empty")
+
     sshpass = None
     sudopass = None
     if not options.listhosts:
+        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
+        options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         if options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
             options.sudo = True
@@ -79,6 +88,12 @@ def main(args):
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
+
+    for playbook in args:
+        if not os.path.exists(playbook):
+            raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
+        if not os.path.isfile(playbook):
+            raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -90,7 +105,7 @@ def main(args):
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
             module_path=options.module_path,
-            host_list=options.inventory,
+            inventory=inventory,
             forks=options.forks,
             remote_user=options.remote_user,
             remote_pass=sshpass,
@@ -105,10 +120,10 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
-            subset=options.subset,
         )
         
         if options.listhosts:
+            print 'playbook: %s' % playbook
             playnum = 0
             for play in pb.playbook:
                 playnum += 1
@@ -116,15 +131,22 @@ def main(args):
                     label = 'unnamed'
                     if 'name' in play:
                         label = play['name']
-                    print 'hosts in play %s: %s' % (playnum, label)
-                    for host in pb.inventory.list_hosts(play['hosts']):
-                        print '  %s' % host
-                    print '\n'
+                    hosts = pb.inventory.list_hosts(play['hosts'])
+                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+            continue
+
+        if options.syntax:
+            # if we've not exited by now then we are fine.
+            print 'Playbook Syntax is fine'
             return 0
             
+
         try:
 
             pb.run()
+
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
@@ -138,6 +160,10 @@ def main(args):
                     colorize('failed', t['failures'], 'red'))
 
             print "\n"
+            for h in hosts:
+                stats = pb.stats.summarize(h)
+                if stats['failures'] != 0 or stats['unreachable'] != 0:
+                    return 2
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e

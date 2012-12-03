@@ -26,11 +26,12 @@ class ReturnData(object):
 
         # which host is this ReturnData about?
         if conn is not None:
-            delegate_for = getattr(conn, '_delegate_for', None)
-            if delegate_for:
-                self.host = delegate_for
-            else:
-                self.host = conn.host
+            self.host = conn.host
+            delegate = getattr(conn, 'delegate', None)
+            if delegate is not None:
+                self.host = delegate
+
+
         else:
             self.host = host
 
@@ -39,6 +40,7 @@ class ReturnData(object):
 
         if type(self.result) in [ str, unicode ]:
             self.result = utils.parse_json(self.result)
+
 
         if self.host is None:
             raise Exception("host not set")
@@ -49,11 +51,5 @@ class ReturnData(object):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
-
-    def daisychain(self, module_name):
-        ''' request a module call follow this one '''
-        if self.is_successful():
-            self.result['daisychain'] = module_name
-        return self
+        return self.comm_ok and (self.result.get('failed', False) == False) and (self.result.get('rc',0) == 0)
 

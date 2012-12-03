@@ -75,8 +75,10 @@ class Cli(object):
 
         sshpass = None
         sudopass = None
+        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
+        options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         if options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
             options.sudo = True
@@ -127,6 +129,11 @@ if __name__ == '__main__':
     (options, args) = cli.parse()
     try:
         (runner, results) = cli.run(options, args)
+        for result in results['contacted'].values():
+            if 'failed' in result or result.get('rc', 0) != 0:
+                sys.exit(2)
+        if results['dark']:
+            sys.exit(2)
     except errors.AnsibleError, e:
         # Generic handler for ansible specific errors
         print "ERROR: %s" % str(e)

@@ -33,19 +33,37 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
+# keep connection objects on a per host basis to avoid repeated attempts to reconnect
+
+SSH_CONNECTION_CACHE = {}
+SFTP_CONNECTION_CACHE = {}
+
+
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
     def __init__(self, runner, host, port=None):
 
         self.ssh = None
+        self.sftp = None
         self.runner = runner
         self.host = host
         self.port = port
         if port is None:
             self.port = self.runner.remote_port
 
+    def _cache_key(self):
+        return "%s__%s__" % (self.host, self.runner.remote_user)
+
     def connect(self):
+        cache_key = self._cache_key()
+        if cache_key in SSH_CONNECTION_CACHE:
+            self.ssh = SSH_CONNECTION_CACHE[cache_key]
+        else:
+            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+        return self
+
+    def _connect_uncached(self):
         ''' activates the connection object '''
 
         if not HAVE_PARAMIKO:
@@ -53,13 +71,16 @@ class Connection(object):
 
         user = self.runner.remote_user
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s" % user, host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        allow_agent = True
+        if self.runner.remote_pass is not None:
+            allow_agent = False
         try:
-            ssh.connect(self.host, username=user, allow_agent=True, look_for_keys=True,
+            ssh.connect(self.host, username=user, allow_agent=allow_agent, look_for_keys=True,
                 key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
                 timeout=self.runner.timeout, port=self.port)
         except Exception, e:
@@ -73,8 +94,7 @@ class Connection(object):
             else:
                 raise errors.AnsibleConnectionFailed(msg)
 
-        self.ssh = ssh
-        return self
+        return ssh
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
         ''' run a command on the remote host '''
@@ -90,7 +110,7 @@ class Connection(object):
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
-            quoted_command = '"$SHELL" -c ' + pipes.quote(cmd)
+            quoted_command = '/bin/sh -c ' + pipes.quote(cmd)
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
@@ -103,12 +123,13 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s "$SHELL" -c %s' % (
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
                 prompt, sudo_user, pipes.quote(cmd))
-            vvv("EXEC %s" % sudocmd, host=self.host)
+            shcmd = '/bin/sh -c ' + pipes.quote(sudocmd)
+            vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
-                chan.exec_command(sudocmd)
+                chan.exec_command(shcmd)
                 if self.runner.sudo_pass:
                     while not sudo_output.endswith(prompt):
                         chunk = chan.recv(bufsize)
@@ -132,29 +153,40 @@ class Connection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
-            sftp = self.ssh.open_sftp()
+            self.sftp = self.ssh.open_sftp()
         except:
             raise errors.AnsibleError("failed to open a SFTP connection")
         try:
-            sftp.put(in_path, out_path)
+            self.sftp.put(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-        sftp.close()
+
+    def _connect_sftp(self):
+        cache_key = "%s__%s__" % (self.host, self.runner.remote_user)
+        if cache_key in SFTP_CONNECTION_CACHE:
+            return SFTP_CONNECTION_CACHE[cache_key]
+        else:
+            result = SFTP_CONNECTION_CACHE[cache_key] = self.connect().ssh.open_sftp()
+            return result
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
-            sftp = self.ssh.open_sftp()
+            self.sftp = self._connect_sftp()
         except:
             raise errors.AnsibleError("failed to open a SFTP connection")
         try:
-            sftp.get(in_path, out_path)
+            self.sftp.get(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
-        sftp.close()
 
     def close(self):
         ''' terminate the connection '''
+        cache_key = self._cache_key()
+        SSH_CONNECTION_CACHE.pop(cache_key, None)
+        SFTP_CONNECTION_CACHE.pop(cache_key, None)
+        if self.sftp is not None:
+            self.sftp.close()
         self.ssh.close()
-
+        

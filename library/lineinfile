@@ -21,14 +21,88 @@
 import re
 import os
 
-def present(module, name, regexp, line, insertafter, backup):
-    f = open(name, 'rb')
-    lines = f.readlines()
-    f.close()
+DOCUMENTATION = '''
+---
+module: lineinfile
+author: Daniel Hokka Zakrisson
+short_description: Ensure a particular line is in a file
+description:
+  - This module will search a file for a line, and ensure that it is present or absent.
+  - This is primarily useful when you want to change a single line in a
+    file only. For other cases, see the M(copy) or M(template) modules.
+version_added: "0.7"
+options:
+  dest:
+    required: true
+    aliases: [ name, destfile ]
+    description:
+      - The file to modify
+  regexp:
+    required: true
+    description:
+      - The regular expression to look for in the file. For C(state=present),
+        the pattern to replace. For C(state=absent), the pattern of the line
+        to remove.
+  state:
+    required: false
+    choices: [ present, absent ]
+    default: "present"
+    aliases: []
+    description:
+      - Whether the line should be there or not.
+  line:
+    required: false
+    description:
+      - Required for C(state=present). The line to insert/replace into the
+        file. Must match the value given to I(regexp).
+  insertafter:
+    required: false
+    default: EOF
+    description:
+      - Used with C(state=present). If specified, the line will be inserted
+        after the specified regular expression. Two special values are
+        available; C(BOF) for inserting the line at the beginning of the
+        file, and C(EOF) for inserting the line at the end of the file.
+    choices: [ BOF, EOF ]
+    default: EOF
+  create:
+    required: false
+    choices: [ yes, no ]
+    default: no
+    description:
+      - Used with C(state=present). If specified, the file will be created
+        if it does not already exist. By default it will fail if the file
+        is missing.
+  backup:
+     required: false
+     default: no
+     description:
+       - Create a backup file including the timestamp information so you can
+         get the original file back if you somehow clobbered it incorrectly.
+examples:
+   - code: "lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled"
+   - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
+'''
+
+def present(module, dest, regexp, line, insertafter, create, backup):
+
+    if os.path.isdir(dest):
+        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    elif not os.path.exists(dest):
+        if not create:
+            module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+        destpath = os.path.dirname(dest)
+        if not os.path.exists(destpath):
+            os.makedirs(destpath)
+        lines = []
+    else:
+        f = open(dest, 'rb')
+        lines = f.readlines()
+        f.close()
 
     mre = re.compile(regexp)
-    if not mre.match(line):
-        module.fail_json(msg="line= doesn't match regexp=")
+    if not mre.search(line):
+        module.fail_json(msg="usage error: line= doesn't match regexp (%s)" % regexp)
 
     if insertafter in ('BOF', 'EOF'):
         iare = None
@@ -37,9 +111,9 @@ def present(module, name, regexp, line, insertafter, backup):
 
     index = [-1, -1]
     for lineno in range(0, len(lines)):
-        if mre.match(lines[lineno]):
+        if mre.search(lines[lineno]):
             index[0] = lineno
-        elif iare is not None and iare.match(lines[lineno]):
+        elif iare is not None and iare.search(lines[lineno]):
             # + 1 for the next line
             index[1] = lineno + 1
 
@@ -69,32 +143,34 @@ def present(module, name, regexp, line, insertafter, backup):
         changed = True
 
     if changed:
-        if backup:
-            module.backup_local(name)
-        f = open(name, 'wb')
+        if backup and os.path.exists(dest):
+            module.backup_local(dest)
+        f = open(dest, 'wb')
         f.writelines(lines)
         f.close()
 
     module.exit_json(changed=changed, msg=msg)
 
-def absent(module, name, regexp, backup):
-    f = open(name, 'rb')
+def absent(module, dest, regexp, backup):
+    f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
     cre = re.compile(regexp)
     found = []
+
     def matcher(line):
-        if cre.match(line):
+        if cre.search(line):
             found.append(line)
             return False
         else:
             return True
+
     lines = filter(matcher, lines)
     changed = len(found) > 0
     if changed:
         if backup:
-            module.backup_local(name)
-        f = open(name, 'wb')
+            module.backup_local(dest)
+        f = open(dest, 'wb')
         f.writelines(lines)
         f.close()
     module.exit_json(changed=changed, found=len(found))
@@ -102,25 +178,27 @@ def absent(module, name, regexp, backup):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True, aliases=['dest', 'destfile']),
+            dest=dict(required=True, aliases=['name', 'destfile']),
             state=dict(default='present', choices=['absent', 'present']),
             regexp=dict(required=True),
             line=dict(aliases=['value']),
             insertafter=dict(default='EOF'),
+            create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
     )
 
     params = module.params
+    create = module.boolean(module.params.get('create', False))
     backup = module.boolean(module.params.get('backup', False))
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
-        present(module, params['name'], params['regexp'], params['line'],
-                params['insertafter'], backup)
+        present(module, params['dest'], params['regexp'], params['line'],
+                params['insertafter'], create, backup)
     else:
-        absent(module, params['name'], params['regexp'], backup)
+        absent(module, params['dest'], params['regexp'], backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

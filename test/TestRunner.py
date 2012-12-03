@@ -35,6 +35,7 @@ class TestRunner(unittest.TestCase):
             forks=1,
             background=0,
             pattern='all',
+            transport='local',
         )
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
@@ -132,11 +133,25 @@ class TestRunner(unittest.TestCase):
         result = self._run('command', [ "/usr/bin/this_does_not_exist", "splat" ])
         assert 'msg' in result
         assert 'failed' in result
-        assert 'rc' not in result
 
         result = self._run('shell', [ "/bin/echo", "$HOME" ])
         assert 'failed' not in result
         assert result['rc'] == 0
+
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "chdir=/tmp", "touch", "'ansible command test'" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "false" ])
+        assert 'skipped' in result
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+        assert result['stdout'] == '0'
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "false" ])
+        assert 'skipped' in result
 
     def test_git(self):
         self._run('file',['path=/tmp/gitdemo','state=absent'])
@@ -157,6 +172,59 @@ class TestRunner(unittest.TestCase):
         # test the force option when set
         result = self._run('git', [ "repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes" ])
         assert result['changed']
+    
+    def test_file(self):
+        filedemo = tempfile.mkstemp()[1]
+        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
+        assert os.path.isfile(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
+        assert os.path.isfile(filedemo)
+
+        res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
+        print res
+        assert res['changed']
+        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+
+
+        filedemo = tempfile.mkdtemp()
+        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
+        assert os.path.isdir(filedemo)
+
+        # this used to fail but will now make a 'null' symlink in the directory pointing to dev/null.
+        # I feel this is ok but don't want to enforce it with a test.
+        #result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])
+        #assert result['failed']
+        #assert os.path.isdir(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory'])['changed']
+        assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+
+
+        tmp_dir = tempfile.mkdtemp()
+        filedemo = os.path.join(tmp_dir, 'link')
+        os.symlink('/dev/zero', filedemo)
+        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
+        assert os.path.islink(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
+        assert os.path.islink(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['changed']
+        assert os.path.islink(filedemo) and os.path.realpath(filedemo) == '/dev/null'
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        os.rmdir(tmp_dir)
 
     def test_large_output(self):
         large_path = "/usr/share/dict/words"
@@ -205,6 +273,7 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert os.path.exists(output)
         out = file(output).read()
         assert out.find("first") != -1
@@ -217,4 +286,5 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert result['changed'] == False

@@ -20,14 +20,10 @@
 
 from ansible import utils
 from ansible.errors import AnsibleError
+import ansible.constants as C
 
+import os
 import os.path
-dirname = os.path.dirname(__file__)
-modules = utils.import_plugins(os.path.join(dirname, 'connection_plugins'))
-
-# rename this module
-modules['paramiko'] = modules['paramiko_ssh']
-del modules['paramiko_ssh']
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''
@@ -35,12 +31,13 @@ class Connection(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port=None):
+    def connect(self, host, port):
         conn = None
         transport = self.runner.transport
-        module = modules.get(transport, None)
-        if module is None:
+        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port)
+        if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
-        conn = module.Connection(self.runner, host, port)
-        return conn.connect()
+        self.active = conn.connect()
+        return self.active
+
 

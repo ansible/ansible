@@ -9,7 +9,7 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests
-#   make pyflakes, make pep8 -- source code checks  
+#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -22,14 +22,14 @@ OS = $(shell uname -s)
 # directory of the target file ($@), kinda like `dirname`.
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
-MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1
+MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1
 
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
 
-### Get the branch information from git
+# Get the branch information from git
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 endif
@@ -37,7 +37,11 @@ endif
 ifeq ($(OS), FreeBSD)
 DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%s"  "$(GIT_DATE)" +%Y%m%d%H%M)
 else
-DATE := $(shell date --date="$(GIT_DATE)" +%Y%m%d%H%M)
+ifeq ($(OS), Darwin)
+DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%S"  "$(GIT_DATE)" +%Y%m%d%H%M)
+else
+DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
+endif
 endif
 
 # RPM build parameters
@@ -54,11 +58,11 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
 all: clean python
 
-tests: 
-	PYTHONPATH=./lib nosetests -v
+tests:
+	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES)
+docs: $(MANPAGES) modulepages
 
 # Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
 # recently than %.1.asciidoc.
@@ -92,9 +96,10 @@ clean:
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
-	@echo "Cleaning up asciidoc to man transformations and results"
+	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete
 	find ./docs/man -type f -name "*.asciidoc" -delete
+	find ./docs/man/man3 -type f -name "*.3" -delete
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
@@ -102,6 +107,8 @@ clean:
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
+	rm -rf docs/json
+	rm -rf docs/js
 
 python:
 	python setup.py build
@@ -109,7 +116,7 @@ python:
 install:
 	python setup.py install
 
-sdist: clean
+sdist: clean docs
 	python setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
@@ -138,7 +145,7 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
+	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -155,4 +162,21 @@ deb: debian
 	fakeroot debian/rules binary
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+
+modulepages:
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+
+modulejson:
+	mkdir -p docs/json
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+
+modulejs:
+	mkdir -p docs/js
+	make modulejson
+	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
+
+# because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
+
+webdocs:
+	(cd docsite; make docs)
 

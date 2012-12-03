@@ -10,20 +10,19 @@
   tasks:
 
       # it is possible to save the result of any command in a named register.  This variable will be made
-      # available to tasks and templates made further down in the execution flow.  Here we save the result
-      # of a simple 'cat' command in a variable called 'motd_contents'
+      # available to tasks and templates made further down in the execution flow.  
 
-      - action: shell cat /etc/motd
-        register: motd_contents
+      - action: shell grep hi /etc/motd
+        ignore_errors: True
+        register: motd_result
 
-      # and here we access the register.  Note that motd_contents as a variable is structured data because
+      # and here we access the register.  Note that variable is structured data because
       # it is a return from the command module.   The shell module makes available variables such as
-      # as 'stdout', 'stderr', and 'rc'.  Here's a rather trivial example that runs an arbitrary step
-      # if and only if the motd file contained the word 'hi'.   Remember that only_if statements are
-      # Python expressions.  This is as complicated as Ansible syntax is going to get, and the only
-      # time python really seeps into ansible's language.
- 
+      # as 'stdout', 'stderr', and 'rc'.  
+
+      # here we run the next action only if the previous grep returned true
+
       - action: shell echo "motd contains the word hi"
-        only_if: "'${motd_contents.stdout}'.find('hi') != -1"
+        only_if: "${motd_result.rc} == 0"
 
 

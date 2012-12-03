@@ -1,0 +1,38 @@
+# simple test of lookup plugins in with_*
+---
+- hosts: all
+  connection: local
+  vars:
+    empty_list: []
+  tasks:
+  - name: test with_items
+    action: command true
+    with_items:
+    - 1
+    - 2
+    - 3
+  - name: test with_items with empty list
+    action: command true
+    with_items: $empty_list
+
+  - name: test with_file and FILE
+    action: command test "$item" = "$FILE(sample.j2)"
+    with_file: sample.j2
+
+  - name: test with_pipe
+    action: command test "$item" = "$PIPE(cat sample.j2)"
+    with_pipe: cat sample.j2
+
+  - name: test LOOKUP and PIPE
+    action: command test "$LOOKUP(pipe, cat sample.j2)" = "$PIPE(cat sample.j2)"
+
+  - name: ensure test file doesnt exist
+    # command because file will return differently
+    action: command rm -f /tmp/ansible-test-with_lines-data
+  - name: test with_lines
+    action: shell echo "$item" >> /tmp/ansible-test-with_lines-data
+    with_lines: cat sample.j2
+  - name: verify with_lines
+    action: copy src=sample.j2 dest=/tmp/ansible-test-with_lines-data
+  - name: cleanup test file
+    action: file path=/tmp/ansible-test-with_lines-data state=absent

@@ -26,6 +26,31 @@ import re
 import socket
 import struct
 
+DOCUMENTATION = '''
+---
+module: setup
+short_description: Gathers facts about remote hosts
+options: {}
+description: 
+     - This module is automatically called by playbooks to gather useful
+       variables about remote hosts that can be used in playbooks. It can also be
+       executed directly by C(/usr/bin/ansible) to check what variables are
+       available to a host. Ansible provides many I(facts) about the system,
+       automatically.
+notes: 
+    - More ansible facts will be added with successive releases. If I(facter) or
+      I(ohai) are installed, variables from these programs will also be snapshotted
+      into the JSON file for usage in templating. These variables are prefixed
+      with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
+      bubbled up to the caller. Using the ansible facts and choosing to not
+      install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
+      remote systems. (See also M(facter) and M(ohai).)
+examples:
+    - code: ansible all -m setup --tree /tmp/facts
+      description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+author: Michael DeHaan
+'''
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -54,6 +79,13 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
+    # A list of dicts.  If there is a platform with more than one
+    # package manager, put the preferred one last.  If there is an
+    # ansible module, use that as the value for the 'name' key.
+    PKG_MGRS = [ { 'path' : '/usr/bin/yum',     'name' : 'yum' },
+                 { 'path' : '/usr/bin/apt-get', 'name' : 'apt' },
+                 { 'path' : '/usr/bin/zypper',  'name' : 'zypper' } ]
+
     def __init__(self):
         self.facts = {}
         self.get_platform_facts()
@@ -61,6 +93,8 @@ class Facts(object):
         self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
+        self.get_pkg_mgr_facts()
+        self.get_lsb_facts()
 
     def populate(self):
         return self.facts
@@ -74,6 +108,7 @@ class Facts(object):
         self.facts['python_version'] = platform.python_version()
         self.facts['fqdn'] = socket.getfqdn()
         self.facts['hostname'] = self.facts['fqdn'].split('.')[0]
+        self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         if self.facts['machine'] == 'x86_64':
             self.facts['architecture'] = self.facts['machine']
         elif Facts._I386RE.search(self.facts['machine']):
@@ -132,6 +167,38 @@ class Facts(object):
             rsa = 'NA'
         else:
             self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+
+    def get_pkg_mgr_facts(self):
+        self.facts['pkg_mgr'] = 'unknown'
+        for pkg in Facts.PKG_MGRS:
+            if os.path.exists(pkg['path']):
+                self.facts['pkg_mgr'] = pkg['name']
+
+    def get_lsb_facts(self):
+        lsb_path = module.get_bin_path('lsb_release')
+        if lsb_path is None:
+            return self.facts
+        cmd = subprocess.Popen([lsb_path, "-a"], shell=False,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        if cmd.returncode == 0:
+            self.facts['lsb'] = {}
+        for line in out.split('\n'):
+            if len(line) < 1:
+                continue
+            value = line.split(':', 1)[1].strip()
+            if 'LSB Version:' in line:
+                self.facts['lsb']['release'] = value
+            elif 'Distributor ID:' in line:
+                self.facts['lsb']['id'] = value
+            elif 'Description:' in line:
+                self.facts['lsb']['description'] = value
+            elif 'Release:' in line:
+                self.facts['lsb']['release'] = value
+            elif 'Codename:' in line:
+                self.facts['lsb']['codename'] = value
+        if 'lsb' in self.facts and 'release' in self.facts['lsb']:
+            self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
@@ -373,12 +440,21 @@ class FreeBSDHardware(Hardware):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = cmd.communicate()
         self.facts['processor_count'] = out.strip()
-        for line in open(FreeBSDHardware.DMESG_BOOT).readlines():
+
+        try:
+            dmesg_boot = open(FreeBSDHardware.DMESG_BOOT)
+        except IOError:
+            dmesg_cmd = subprocess.Popen("/sbin/dmesg", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            dmesg_boot = dmesg_cmd.stdout
+
+        for line in dmesg_boot.readlines():
             if 'CPU:' in line:
                 cpu = re.sub(r'CPU:\s+', r"", line)
                 self.facts['processor'].append(cpu.strip())
             if 'Logical CPUs per core' in line:
                 self.facts['processor_cores'] = line.split()[4]
+
 
     def get_memory_facts(self):
         cmd = subprocess.Popen("/sbin/sysctl vm.stats", shell=True,
@@ -537,9 +613,9 @@ class LinuxNetwork(Network):
                     # interface name for each address
                     if iface in interfaces:
                         i = 0
-                        while '{0}_{1}'.format(iface, i) in interfaces:
+                        while str(iface) + "_" + str(i) in interfaces:
                             i += 1
-                        iface = '{0}_{1}'.format(iface, i)
+                        iface = str(iface) + "_" + str(i)
 
                     interfaces[iface] = {}
                     interfaces[iface]['macaddress'] = macaddress
@@ -599,6 +675,7 @@ class Virtual(Facts):
     you should define:
     - virtualization_type
     - virtualization_role
+    - container (e.g. solaris zones, freebsd jails, linux containers)
 
     All subclasses MUST define platform.
     """
@@ -631,47 +708,160 @@ class LinuxVirtual(Virtual):
         self.get_virtual_facts()
         return self.facts
 
+    # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
             if os.path.exists('/proc/xen/capabilities'):
-                self.facts['virtualization_role'] = 'host'
-            else:
-                self.facts['virtualization_role'] = 'guest'
-
-        elif os.path.exists('/proc/vz'):
+                for line in open('/proc/xen/capabilities'):
+                    if "control_d" in line:
+                        self.facts['virtualization_role'] = 'host'
+            return
+ 
+        if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
-            if os.path.exists('/proc/vz/version'):
+            if os.path.exists('/proc/bc'):
                 self.facts['virtualization_role'] = 'host'
             else:
                 self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/product_name') in ['KVM','Bochs']:
+        product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
+
+        if product_name in ['KVM', 'Bochs']:
             self.facts['virtualization_type'] = 'kvm'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'VMware, Inc.':
+        if product_name == 'VMware Virtual Platform':
             self.facts['virtualization_type'] = 'VMware'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif get_file_content('/sys/devices/virtual/dmi/id/sys_vendor') == 'Microsoft Corporation':
+        bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
+
+        if bios_vendor == 'Xen':
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        if bios_vendor == 'innotek GmbH':
+            self.facts['virtualization_type'] = 'virtualbox'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
+
+        # FIXME: This does also match hyperv
+        if sys_vendor == 'Microsoft Corporation':
             self.facts['virtualization_type'] = 'VirtualPC'
             self.facts['virtualization_role'] = 'guest'
+            return
 
-        elif os.path.exists("/proc/modules"):
+        if sys_vendor == 'Parallels Software International Inc.':
+            self.facts['virtualization_type'] = 'parallels'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        for line in open('/proc/self/status').readlines():
+            if re.match('^VxID: \d+', line):
+                self.facts['virtualization_type'] = 'linux_vserver'
+                if re.match('^VxID: 0', line):
+                    self.facts['virtualization_role'] = 'host'
+                else:
+                    self.facts['virtualization_role'] = 'guest'
+                return
+
+        for line in open('/proc/cpuinfo').readlines():
+            if re.match('^model name.*QEMU Virtual CPU', line):
+                self.facts['virtualization_type'] = 'kvm'
+            elif re.match('^vendor_id.*User Mode Linux', line):
+                self.facts['virtualization_type'] = 'uml'
+            elif re.match('^model name.*UML', line):
+                self.facts['virtualization_type'] = 'uml'
+            elif re.match('^vendor_id.*PowerVM Lx86', line):
+                self.facts['virtualization_type'] = 'powervm_lx86'
+            elif re.match('^vendor_id.*IBM/S390', line):
+                self.facts['virtualization_type'] = 'ibm_systemz'
+            else:
+                continue
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        # Beware that we can have both kvm and virtualbox running on a single system
+        if os.path.exists("/proc/modules"):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
                 modules.append(data[0])
+
             if 'kvm' in modules:
                 self.facts['virtualization_type'] = 'kvm'
                 self.facts['virtualization_role'] = 'host'
-            elif 'vboxdrv' in modules:
+                return
+
+            if 'vboxdrv' in modules:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'host'
-            elif 'vboxguest' in modules:
+                return
+
+class SunOSVirtual(Virtual):
+    """
+    This is a SunOS-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    - container
+    """
+    platform = 'SunOS'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        cmd = subprocess.Popen("/usr/sbin/prtdiag", shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        for line in out.split('\n'):
+            if 'VMware' in line:
+                self.facts['virtualization_type'] = 'vmware'
+                self.facts['virtualization_role'] = 'guest'
+            if 'Parallels' in line:
+                self.facts['virtualization_type'] = 'parallels'
+                self.facts['virtualization_role'] = 'guest'
+            if 'VirtualBox' in line:
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'guest'
+            if 'HVM domU' in line:
+                self.facts['virtualization_type'] = 'xen'
+                self.facts['virtualization_role'] = 'guest'
+        # Check if it's a zone
+        if os.path.exists("/usr/bin/zonename"):
+            cmd = subprocess.Popen("/usr/bin/zonename", shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            if out.rstrip() != "global":
+                self.facts['container'] = 'zone'
+        # Check if it's a branded zone (i.e. Solaris 8/9 zone)
+        if os.path.isdir('/.SUNWnative'):
+            self.facts['container'] = 'zone'
+        # If it's a zone check if we can detect if our global zone is itself virtualized.
+        # Relies on the "guest tools" (e.g. vmware tools) to be installed
+        if 'container' in self.facts and self.facts['container'] == 'zone':
+            cmd = subprocess.Popen("/usr/sbin/modinfo", shell=True,
+                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            for line in out.split('\n'):
+                if 'VMware' in line:
+                    self.facts['virtualization_type'] = 'vmware'
+                    self.facts['virtualization_role'] = 'guest'
+                if 'VirtualBox' in line:
+                    self.facts['virtualization_type'] = 'virtualbox'
+                    self.facts['virtualization_role'] = 'guest'
 
 def get_file_content(path):
     data = None
@@ -720,19 +910,19 @@ def run_setup(module):
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-       cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-       out, err = cmd.communicate()
-       ohai = True
-       try:
-           ohai_ds = json.loads(out)
-       except:
-           ohai = False
-       if ohai:
-           for (k,v) in ohai_ds.items():
-               if type(v) == str or type(v) == unicode:
-                   k2 = "ohai_%s" % k.replace('-', '_')
-                   setup_options[k2] = v
+        cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = cmd.communicate()
+        ohai = True
+        try:
+            ohai_ds = json.loads(out)
+        except:
+            ohai = False
+        if ohai:
+            for (k,v) in ohai_ds.items():
+                if type(v) == str or type(v) == unicode:
+                    k2 = "ohai_%s" % k.replace('-', '_')
+                    setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options

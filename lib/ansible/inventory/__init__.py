@@ -35,7 +35,7 @@ class Inventory(object):
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache' ]
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -49,6 +49,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
+        self._groups_list    = {} 
 
         # the inventory object holds a list of groups
         self.groups = []
@@ -66,6 +67,9 @@ class Inventory(object):
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
+        else:
+            utils.plugins.vars_loader.add_directory(self.basedir())
+
         if type(host_list) == list:
             all = Group('all')
             self.groups = [ all ]
@@ -75,7 +79,7 @@ class Inventory(object):
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
-        elif os.access(host_list, os.X_OK):
+        elif utils.is_executable(host_list):
             self._is_script = True
             self.parser = InventoryScript(filename=host_list)
             self.groups = self.parser.groups.values()
@@ -96,7 +100,9 @@ class Inventory(object):
         applied subsets.
         """
 
-        # process patterns        
+        # process patterns
+        if isinstance(pattern, list):
+            pattern = ';'.join(pattern)
         patterns = pattern.replace(";",":").split(":")
         positive_patterns = [ p for p in patterns if not p.startswith("!") ]
         negative_patterns = [ p for p in patterns if p.startswith("!") ]
@@ -106,8 +112,8 @@ class Inventory(object):
 
         # exclude hosts mentioned in a negative pattern
         if len(negative_patterns):
-            exclude_hosts = self._get_hosts(negative_patterns)
-            hosts = [ h for h in hosts if h not in exclude_hosts ]
+            exclude_hosts = [ h.name for h in self._get_hosts(negative_patterns) ]
+            hosts = [ h for h in hosts if h.name not in exclude_hosts ]
 
         # exclude hosts not in a subset, if defined
         if self._subset:
@@ -213,6 +219,17 @@ class Inventory(object):
                     continue
         return results
 
+    def groups_list(self):
+        if not self._groups_list:
+            groups = {}
+            for g in self.groups:
+                groups[g.name] = [h.name for h in g.get_hosts()]
+                ancestors = g.get_ancestors()
+                for a in ancestors:
+                    groups[a.name] = [h.name for h in a.get_hosts()]
+            self._groups_list = groups
+        return self._groups_list
+
     def get_groups(self):
         return self.groups
 
@@ -252,28 +269,27 @@ class Inventory(object):
 
     def _get_variables(self, hostname):
 
-        if self._is_script:
-            host = self.get_host(hostname)
-            cmd = subprocess.Popen(
-                [self.host_list,"--host",hostname],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            (out, err) = cmd.communicate()
-            results = utils.parse_json(out)
-
-            # FIXME: this is a bit redundant with host.py and should share code
-            results['inventory_hostname'] = hostname
-            results['inventory_hostname_short'] = hostname.split('.')[0]
-            groups = [ g.name for g in host.get_groups() if g.name != 'all' ]
-            results['group_names'] = sorted(groups)
-
-            return results
-
         host = self.get_host(hostname)
         if host is None:
-            raise Exception("host not found: %s" % hostname)
-        return host.get_variables()
+            raise errors.AnsibleError("host not found: %s" % hostname)
+
+        vars = {}
+        for updated in map(lambda x: x.run(host), utils.plugins.vars_loader.all(self)):
+            if updated is not None:
+                vars.update(updated)
+
+        vars.update(host.get_variables())
+        if self._is_script:
+            cmd = [self.host_list,"--host",hostname]
+            try:
+                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError, e:
+                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            (out, err) = sp.communicate()
+            results = utils.parse_json(out)
+
+            vars.update(results)
+        return vars
 
     def add_group(self, group):
         self.groups.append(group)
@@ -317,6 +333,7 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
+            subset_pattern = subset_pattern.replace(',',':')
             self._subset = subset_pattern.replace(";",":").split(":")
 
     def lift_restriction(self):

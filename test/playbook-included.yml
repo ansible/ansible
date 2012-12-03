@@ -1,0 +1,14 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: False
+  tasks:
+  - action: debug msg="$variable"
+
+- hosts: all
+  connection: local
+  vars:
+  - ugly: var
+  gather_facts: False
+  tasks:
+  - action: debug msg="$variable"
