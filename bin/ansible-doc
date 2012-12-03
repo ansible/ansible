@@ -32,8 +32,11 @@ from ansible import utils
 from ansible import errors
 from ansible.utils import module_docs
 import ansible.constants as C
+from ansible.utils import version
 
 MODULEDIR = C.DEFAULT_MODULE_PATH
+
+BLACKLIST_EXTS = ('.swp', '.bak', '~', '.rpm')
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
@@ -60,7 +63,8 @@ def print_man(doc):
 
     print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  ")
     
-    print "Options (= is mandatory):\n"
+    if 'option_keys' in doc and len(doc['option_keys']) > 0:
+        print "Options (= is mandatory):\n"
 
     for o in doc['option_keys']:
         opt = doc['options'][o]
@@ -74,7 +78,7 @@ def print_man(doc):
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
-            choices = ", ".join(opt['choices'])
+            choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
         print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
                             subsequent_indent=opt_indent)
@@ -98,12 +102,12 @@ def print_snippet(doc):
         opt = doc['options'][o]
         desc = tty_ify("".join(opt['description']))
         s = o + "="
-        print "      %-20s   # %s" % (s, desc[0:60])
+        print "      %-20s   # %s" % (s, desc)
 
 def main():
 
     p = optparse.OptionParser(
-        version='%prog 1.0',
+        version=version("%prog"),
         usage='usage: %prog [options] [module...]',
         description='Show Ansible module documentation',
     )
@@ -128,7 +132,8 @@ def main():
     (options, args) = p.parse_args()
 
     if options.module_path is not None:
-        utils.plugins.vars_loader.add_directory(options.module_path)
+        for i in options.module_path.split(os.pathsep):
+            utils.plugins.module_finder.add_directory(i)
 
     if options.list_dir:
         # list all modules
@@ -138,16 +143,18 @@ def main():
             # os.system("ls -C %s" % (path))
             if os.path.isdir(path):
                 for module in os.listdir(path):
+                    if any(module.endswith(x) for x in BLACKLIST_EXTS):
+                        continue
                     module_list.append(module)
 
-        for module in sorted(module_list):
+        for module in sorted(set(module_list)):
 
             if module in module_docs.BLACKLIST_MODULES:
                 continue
 
             filename = utils.plugins.module_finder.find_plugin(module)
             try:
-                doc = utils.module_docs.get_docstring(filename)
+                doc = module_docs.get_docstring(filename)
                 desc = tty_ify(doc.get('short_description', '?'))
                 if len(desc) > 55:
                     desc = desc + '...'
@@ -157,8 +164,6 @@ def main():
                 pass
 
         sys.exit()
-
-    module_list = []
 
     if len(args) == 0:
         p.print_help()
@@ -171,11 +176,11 @@ def main():
                     utils.plugins.module_finder.print_paths()))
             continue
 
-        if filename.endswith(".swp"):
+        if any(filename.endswith(x) for x in BLACKLIST_EXTS):
             continue
 
         try:
-            doc = utils.module_docs.get_docstring(filename)
+            doc = module_docs.get_docstring(filename)
         except:
             sys.stderr.write("ERROR: module %s missing documentation\n" % module)
             continue
