@@ -56,6 +56,7 @@ import stat
 import grp
 import pwd
 import platform
+import errno
 
 HAVE_SELINUX=False
 try:
