@@ -41,62 +41,89 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
-def tty_ify(text):
+def tty_ify(text, markdown):
 
-    t = _ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-    t = _BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-    t = _MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-    t = _URL.sub(r"\1", t)                      # U(word) => word
-    t = _CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+    if markdown == False:
+        t = _ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
+        t = _BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
+        t = _MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = _URL.sub(r"\1", t)                      # U(word) => word
+        t = _CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+    else:
+        t = _ITALIC.sub("*" + r"\1" + "*", text)    # I(word) => *word*
+        t = _BOLD.sub("**" + r"\1" + "**", t)       # B(word) => **word**
+        t = _MODULE.sub("[*" + r"\1" + "*]", t)     # M(word) => [*word*]
+        t = _URL.sub("[" + r"\1" + "](" + r"\1" + ")", t) # U(word) => [word](word)
+        t = _CONST.sub("`" + r"\1" + "`", t)        # C(word) => `word'
 
     return t
 
-def print_man(doc):
+def print_man(doc, markdown):
 
     opt_indent="        "
-    print "> %s\n" % doc['module'].upper()
+    if markdown == False:
+        print "> %s\n" % doc['module'].upper()
+    else:
+        print "# %s\n" % doc['module'].upper()
 
     desc = "".join(doc['description'])
 
-    print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  ")
-    
-    print "Options (= is mandatory):\n"
+    if not markdown:
+        print "%s\n" % textwrap.fill(tty_ify(desc, markdown), initial_indent="  ", subsequent_indent="  ")
+        print "Options (= is mandatory):\n"
+    else:
+        print "%s\n" % tty_ify(desc, markdown)
+        print "## Options (**bold** is mandatory):\n"
 
     for o in doc['option_keys']:
         opt = doc['options'][o]
 
         if opt.get('required', False):
-            opt_leadin = "="
+            print "%s %s" % ("-", o)
         else:
-            opt_leadin = "-"
+            if not markdown:
+                print "%s %s" % ("=", o)
+            else:
+                print "%s %s" % ("-", "**" + o + "**\n")
 
-        print "%s %s" % (opt_leadin, o)
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
             choices = ", ".join(opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
-        print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
-                            subsequent_indent=opt_indent)
+
+	if not markdown:
+            print "%s\n" % textwrap.fill(tty_ify(desc,markdown),
+	                        initial_indent=opt_indent,
+                                subsequent_indent=opt_indent)
+        else:
+            print "%s\n" % tty_ify(desc,markdown)
 
     if 'notes' in doc:
         notes = "".join(doc['notes'])
-        print "Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
-                            subsequent_indent=opt_indent)
+	if not markdown:
+            print "Notes:%s\n" % textwrap.fill(tty_ify(notes, markdown),
+	                        initial_indent="  ",
+                                subsequent_indent=opt_indent)
+        else:
+            print "## Notes\n\n%s\n" % tty_ify(notes, markdown)
 
+    if 'examples' in doc:
+	if markdown:
+	    print "## Examples\n"
 
-    for ex in doc['examples']:
-        print "%s%s" % (opt_indent, ex['code'])
+        for ex in doc['examples']:
+                print "%s%s" % (opt_indent, ex['code'])
 
-def print_snippet(doc):
+def print_snippet(doc, markdown):
 
-    desc = tty_ify("".join(doc['short_description']))
+    desc = tty_ify("".join(doc['short_description']), markdown)
     print "- name: %s" % (desc)
     print "  action: %s" % (doc['module'])
 
     for o in doc['options']:
         opt = doc['options'][o]
-        desc = tty_ify("".join(opt['description']))
+        desc = tty_ify("".join(opt['description']), markdown)
         s = o + "="
         print "      %-20s   # %s" % (s, desc[0:60])
 
@@ -123,6 +150,10 @@ def main():
             default=False,
             dest='show_snippet',
             help='Show playbook snippet for specified module(s)')
+    p.add_option("-d", "--markdown",
+            action="store_true",
+            default=False,
+            help='Generate Markdown syntax for the module(s) description')
     p.add_option('-v', action='version', help='Show version number and exit')
 
     (options, args) = p.parse_args()
@@ -148,7 +179,7 @@ def main():
             filename = utils.plugins.module_finder.find_plugin(module)
             try:
                 doc = utils.module_docs.get_docstring(filename)
-                desc = tty_ify(doc.get('short_description', '?'))
+                desc = tty_ify(doc.get('short_description', '?'), options.markdown)
                 if len(desc) > 55:
                     desc = desc + '...'
                 print "%-20s %-60.60s" % (module, desc)
@@ -162,7 +193,7 @@ def main():
 
     if len(args) == 0:
         p.print_help()
-    
+
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
@@ -193,9 +224,9 @@ def main():
             doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
 
             if options.show_snippet:
-                print_snippet(doc)
+                print_snippet(doc, options.markdown)
             else:
-                print_man(doc)
+                print_man(doc, options.markdown)
         else:
             sys.stderr.write("ERROR: module %s missing documentation\n" % module)
 
