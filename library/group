@@ -195,7 +195,7 @@ def main():
         if group.group_exists():
             (rc, out, err) = group.group_del()
             if rc != 0:
-                module.fail_json(name=name, msg=err)
+                module.fail_json(name=group.name, msg=err)
     elif group.state == 'present':
         if not group.group_exists():
             (rc, out, err) = group.group_add(gid=group.gid, system=group.system)
