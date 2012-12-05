@@ -146,14 +146,9 @@ def user_alter(cursor, user, password, role_attr_flags):
 
     # Handle passwords.
     if password is not None or role_attr_flags is not None:
-        # Define columns for select.
-        columns = 'rolpassword,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication'
         # Select password and all flag-like columns in order to verify changes.
-        # rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcatupdate |
-        # rolcanlogin | rolreplication | rolconnlimit | rolpassword | rolvaliduntil
-        # Not sure how to interpolate properly in python yet...
-        select = "SELECT " + columns + " FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"columns": columns, "user": user})
+        select = "SELECT * FROM pg_authid where rolname=%(user)s"
+        cursor.execute(select, {"user": user})
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
@@ -166,7 +161,7 @@ def user_alter(cursor, user, password, role_attr_flags):
             alter = "ALTER USER %(user)s WITH %(role_attr_flags)s"
             cursor.execute(alter % {"user": user, "role_attr_flags": role_attr_flags})
         # Grab new role attributes.
-        cursor.execute(select, {"columns": columns, "user": user})
+        cursor.execute(select, {"user": user})
         new_role_attrs = cursor.fetchone()
 
         # Detect any differences between current_ and new_role_attrs.
