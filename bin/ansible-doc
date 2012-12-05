@@ -41,9 +41,9 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
-def tty_ify(text, markdown):
+def tty_ify(text, doctype):
 
-    if markdown == False:
+    if doctype == "console":
         t = _ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
         t = _BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
         t = _MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
@@ -58,21 +58,21 @@ def tty_ify(text, markdown):
 
     return t
 
-def print_man(doc, markdown):
+def print_man(doc, doctype):
 
     opt_indent="        "
-    if markdown == False:
+    if doctype == "console":
         print "> %s\n" % doc['module'].upper()
     else:
         print "# %s\n" % doc['module'].upper()
 
     desc = "".join(doc['description'])
 
-    if not markdown:
-        print "%s\n" % textwrap.fill(tty_ify(desc, markdown), initial_indent="  ", subsequent_indent="  ")
+    if doctype == "console":
+        print "%s\n" % textwrap.fill(tty_ify(desc, doctype), initial_indent="  ", subsequent_indent="  ")
         print "Options (= is mandatory):\n"
     else:
-        print "%s\n" % tty_ify(desc, markdown)
+        print "%s\n" % tty_ify(desc, doctype)
         print "## Options (**bold** is mandatory):\n"
 
     for o in doc['option_keys']:
@@ -81,7 +81,7 @@ def print_man(doc, markdown):
         if opt.get('required', False):
             print "%s %s" % ("-", o)
         else:
-            if not markdown:
+            if doctype == "console":
                 print "%s %s" % ("=", o)
             else:
                 print "%s %s" % ("-", "**" + o + "**\n")
@@ -92,38 +92,38 @@ def print_man(doc, markdown):
             choices = ", ".join(opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
 
-	if not markdown:
-            print "%s\n" % textwrap.fill(tty_ify(desc,markdown),
+	if doctype == "console":
+            print "%s\n" % textwrap.fill(tty_ify(desc, doctype),
 	                        initial_indent=opt_indent,
                                 subsequent_indent=opt_indent)
         else:
-            print "%s\n" % tty_ify(desc,markdown)
+            print "%s\n" % tty_ify(desc, doctype)
 
     if 'notes' in doc:
         notes = "".join(doc['notes'])
-	if not markdown:
-            print "Notes:%s\n" % textwrap.fill(tty_ify(notes, markdown),
+	if doctype == "console":
+            print "Notes:%s\n" % textwrap.fill(tty_ify(notes, doctype),
 	                        initial_indent="  ",
                                 subsequent_indent=opt_indent)
         else:
-            print "## Notes\n\n%s\n" % tty_ify(notes, markdown)
+            print "## Notes\n\n%s\n" % tty_ify(notes, doctype)
 
     if 'examples' in doc:
-	if markdown:
+	if doctype == "markdown":
 	    print "## Examples\n"
 
         for ex in doc['examples']:
                 print "%s%s" % (opt_indent, ex['code'])
 
-def print_snippet(doc, markdown):
+def print_snippet(doc, doctype):
 
-    desc = tty_ify("".join(doc['short_description']), markdown)
+    desc = tty_ify("".join(doc['short_description']), doctype)
     print "- name: %s" % (desc)
     print "  action: %s" % (doc['module'])
 
     for o in doc['options']:
         opt = doc['options'][o]
-        desc = tty_ify("".join(opt['description']), markdown)
+        desc = tty_ify("".join(opt['description']), doctype)
         s = o + "="
         print "      %-20s   # %s" % (s, desc[0:60])
 
@@ -150,16 +150,23 @@ def main():
             default=False,
             dest='show_snippet',
             help='Show playbook snippet for specified module(s)')
-    p.add_option("-d", "--markdown",
-            action="store_true",
-            default=False,
-            help='Generate Markdown syntax for the module(s) description')
+    p.add_option("-d", "--doctype",
+            action="store",
+	    dest="doctype",
+	    type="string",
+            default="console",
+            help='Generate a special type of output (console|markdown). Default: console')
     p.add_option('-v', action='version', help='Show version number and exit')
 
     (options, args) = p.parse_args()
 
     if options.module_path is not None:
         utils.plugins.vars_loader.add_directory(options.module_path)
+
+    # If the doctype is not know, exit
+    if options.doctype != "markdown" and options.doctype != "console":
+        sys.stderr.write("ERROR: doctype %s is not supported!\n" % options.doctype)
+	sys.exit(1)
 
     if options.list_dir:
         # list all modules
@@ -179,7 +186,7 @@ def main():
             filename = utils.plugins.module_finder.find_plugin(module)
             try:
                 doc = utils.module_docs.get_docstring(filename)
-                desc = tty_ify(doc.get('short_description', '?'), options.markdown)
+                desc = tty_ify(doc.get('short_description', '?'), options.doctype)
                 if len(desc) > 55:
                     desc = desc + '...'
                 print "%-20s %-60.60s" % (module, desc)
@@ -224,9 +231,9 @@ def main():
             doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
 
             if options.show_snippet:
-                print_snippet(doc, options.markdown)
+                print_snippet(doc, options.doctype)
             else:
-                print_man(doc, options.markdown)
+                print_man(doc, options.doctype)
         else:
             sys.stderr.write("ERROR: module %s missing documentation\n" % module)
 
