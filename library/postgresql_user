@@ -127,7 +127,6 @@ else:
 # PostgreSQL module specific support methods.
 #
 
-
 def user_exists(cursor, user):
     query = "SELECT rolname FROM pg_roles WHERE rolname=%(user)s"
     cursor.execute(query, {'user': user})
@@ -143,17 +142,12 @@ def user_add(cursor, user, password, role_attr_flags):
 def user_alter(cursor, user, password, role_attr_flags):
     """Change user password"""
     changed = False
-
+     
     # Handle passwords.
     if password is not None or role_attr_flags is not None:
-        # Define columns for select.
-        columns = 'rolpassword,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication'
         # Select password and all flag-like columns in order to verify changes.
-        # rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcatupdate |
-        # rolcanlogin | rolreplication | rolconnlimit | rolpassword | rolvaliduntil
-        # Not sure how to interpolate properly in python yet...
-        select = "SELECT " + columns + " FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"columns": columns, "user": user})
+        select = "SELECT * FROM pg_authid WHERE rolname=%(user)s"
+        cursor.execute(select, {"user": user})
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
@@ -165,15 +159,14 @@ def user_alter(cursor, user, password, role_attr_flags):
             # Update the role attributes, excluding password.
             alter = "ALTER USER %(user)s WITH %(role_attr_flags)s"
             cursor.execute(alter % {"user": user, "role_attr_flags": role_attr_flags})
+        
         # Grab new role attributes.
-        cursor.execute(select, {"columns": columns, "user": user})
+        cursor.execute(select, {"user": user})
         new_role_attrs = cursor.fetchone()
 
         # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
-                changed = True
-
+        changed = current_role_attrs != new_role_attrs
+    
     return changed
 
 def user_delete(cursor, user):
@@ -303,11 +296,7 @@ def parse_role_attrs(role_attr_flags):
 
         attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
     """
-    if ',' not in role_attr_flags:
-        return role_attr_flags
-    flag_set = role_attr_flags.split(",")
-    o_flags = " ".join(flag_set)
-    return o_flags
+    return role_attr_flags.replace(',', ' ')
 
 def parse_privs(privs, db):
     """
@@ -370,7 +359,6 @@ def main():
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
-    port = module.params["port"]
     role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
 
     if not postgresqldb_found:
