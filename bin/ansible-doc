@@ -42,13 +42,6 @@ _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
 
-def check_outputtype(outputtype="console"):
-    # If the outputtype is not supported, exit
-    if outputtype != "markdown" and outputtype != "console":
-        sys.stderr.write("ERROR: Output type '%s' is not supported!\n" % outputtype)
-	sys.exit(1)
-
-
 def set_output_tags(outputtype="console"):
 
     tags = {}
@@ -73,6 +66,8 @@ def set_output_tags(outputtype="console"):
         tags["us"] = ""      # U(word) =>  word
         tags["ue"] = ""      # U(word) =>  word
 
+        return tags
+
     if outputtype == "markdown":
         tags["wrap"] = False # Wrap text
 
@@ -94,7 +89,9 @@ def set_output_tags(outputtype="console"):
         tags["us"] = "<"     # U(word) => <word>
         tags["ue"] = ">"     # U(word) => <word>
 
-    return tags
+        return tags
+
+    return None
 
 
 def tty_ify(text, outputtype="console"):
@@ -208,8 +205,13 @@ def main():
 
     (options, args) = p.parse_args()
 
-    check_outputtype(options.outputtype)
+    # Try to fill the tags dict
     tags = set_output_tags(options.outputtype)
+
+    # If the outputtype is not supported, exit
+    if tags is None:
+        sys.stderr.write("ERROR: Output type '%s' is not supported!\n" % options.outputtype)
+	sys.exit(1)
 
     if options.module_path is not None:
         utils.plugins.vars_loader.add_directory(options.module_path)
