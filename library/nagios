@@ -23,7 +23,7 @@ description:
   - "The M(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
   - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C($inventory_hostname) variable to refer to the host the playbook is currently running on.
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
-  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.)
+  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all services on particular host use keyword "all", e.g., C(service=all).
   - When using the M(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
 version_added: 0.7
 options:
@@ -71,6 +71,8 @@ examples:
       code: "nagios: action=downtime minutes=30 service=httpd host=$inventory_hostname"
     - description: schedule an hour of HOST downtime
       code: "nagios: action=downtime minutes=60 service=host host=$inventory_hostname"
+    - description: schedule downtime for ALL services on HOST
+      code: "nagios: action=downtime minutes=45 service=all host=$inventory_hostname"
     - description: schedule downtime for a few services
       code: "nagios: action=downtime services=frob,foobar,qeuz host=$inventory_hostname"
     - description: enable SMART disk alerts
@@ -211,7 +213,7 @@ class Nagios(object):
         self.minutes = int(kwargs['minutes'])
         self.cmdfile = kwargs['cmdfile']
 
-        if (kwargs['services'] is None) or (kwargs['services'] == 'host'):
+        if (kwargs['services'] is None) or (kwargs['services'] == 'host') or (kwargs['services'] == 'all'):
             self.services = kwargs['services']
         else:
             self.services = kwargs['services'].split(',')
@@ -339,6 +341,22 @@ class Nagios(object):
         """
 
         cmd = "SCHEDULE_HOST_DOWNTIME"
+        dt_cmd_str = self._fmt_dt_str(cmd, host, minutes)
+        self._write_command(dt_cmd_str)
+
+    def schedule_host_svc_downtime(self, host, minutes=30):
+        """
+        This command is used to schedule downtime for 
+	all services associated with a particular host.
+
+        During the specified downtime, Nagios will not send
+        notifications out about the host.
+
+	SCHEDULE_HOST_SVC_DOWNTIME;<host_name>;<start_time>;<end_time>;
+	<fixed>;<trigger_id>;<duration>;<author>;<comment>
+        """
+
+        cmd = "SCHEDULE_HOST_SVC_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, host, minutes)
         self._write_command(dt_cmd_str)
 
@@ -722,6 +740,8 @@ class Nagios(object):
         if self.action == 'downtime':
             if self.services == 'host':
                 self.schedule_host_downtime(self.host, self.minutes)
+            elif self.services == 'all':
+                self.schedule_host_svc_downtime(self.host, self.minutes)
             else:
                 self.schedule_svc_downtime(self.host,
                                            services=self.services,
