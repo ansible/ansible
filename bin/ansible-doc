@@ -41,64 +41,136 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
-def tty_ify(text):
 
-    t = _ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-    t = _BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-    t = _MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-    t = _URL.sub(r"\1", t)                      # U(word) => word
-    t = _CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+def set_output_tags(outputtype="console"):
+
+    tags = {}
+    if outputtype == "console":
+        tags["wrap"] = True  # Wrap text
+
+        tags["ch"] = ">"     # Chapter '>'
+        tags["pa"] = ""      # Paragraph ''
+        tags["ma"] = "="     # Mandatory tag
+        tags["mas"]= ""      # Mandatory start
+        tags["mae"]= ""      # Mandatory end
+        tags["lst"] = ""     # Unordered list tag
+
+        tags["is"] = "`"     # I(word) => `word'
+        tags["ie"] = "'"     # I(word) => `word'
+        tags["bs"] = "*"     # B(word) => *word*
+        tags["be"] = "*"     # B(word) => *word*
+        tags["ms"] = "["     # M(word) => [word]
+        tags["me"] = "]"     # M(word) => [word]
+        tags["cs"] = "`"     # C(word) => `word'
+        tags["ce"] = "'"     # C(word) => `word'
+        tags["us"] = ""      # U(word) =>  word
+        tags["ue"] = ""      # U(word) =>  word
+
+        return tags
+
+    if outputtype == "markdown":
+        tags["wrap"] = False # Wrap text
+
+        tags["ch"] = "# "    # Chapter '#'
+        tags["pa"] = "## "   # Paragraph '##'
+        tags["ma"] = "-"     # Mandatory tag
+        tags["mas"]= "**"    # Mandatory start
+        tags["mae"]= "**"    # Mandatory end
+        tags["lst"] = "* "   # Unordered list tag
+
+        tags["is"] = "*"     # I(word) => *word*
+        tags["ie"] = "*"     # I(word) => *word*
+        tags["bs"] = "**"    # B(word) => **word**
+        tags["be"] = "**"    # B(word) => **word**
+        tags["ms"] = "[*"    # M(word) => [*word*]
+        tags["me"] = "*]"    # M(word) => [*word*]
+        tags["cs"] = "`"     # C(word) => `word`
+        tags["ce"] = "`"     # C(word) => `word`
+        tags["us"] = "<"     # U(word) => <word>
+        tags["ue"] = ">"     # U(word) => <word>
+
+        return tags
+
+    return None
+
+
+def tty_ify(text, outputtype="console"):
+
+    tags = set_output_tags(outputtype)
+
+    t = _ITALIC.sub( tags["is"] + r"\1" + tags["ie"], text)
+    t = _BOLD.sub(   tags["bs"] + r"\1" + tags["be"], t)
+    t = _MODULE.sub( tags["ms"] + r"\1" + tags["me"], t)
+    t = _CONST.sub(  tags["cs"] + r"\1" + tags["ce"], t)
+    t = _URL.sub(    tags["us"] + r"\1" + tags["ue"], t)
 
     return t
 
-def print_man(doc):
+
+def print_man(doc, outputtype="console"):
+
+    tags = set_output_tags(outputtype)
 
     opt_indent="        "
-    print "> %s\n" % doc['module'].upper()
+    print "%s%s\n" % (tags["ch"], doc['module'].upper())
 
     desc = "".join(doc['description'])
 
-    print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  ")
-    
-    print "Options (= is mandatory):\n"
+    if tags["wrap"]:
+        print "%s\n" % textwrap.fill(tty_ify(desc, outputtype), initial_indent="  ", subsequent_indent="  ")
+    else:
+        print "%s\n" % tty_ify(desc, outputtype)
+    print "%sOptions (%s%s%s is mandatory):\n" % (tags["pa"], tags["mas"], tags["ma"], tags["mae"])
 
     for o in doc['option_keys']:
         opt = doc['options'][o]
 
         if opt.get('required', False):
-            opt_leadin = "="
+            print "%s %s" % ("-", o)
         else:
-            opt_leadin = "-"
+            print "%s %s%s%s" % (tags["ma"], tags["mas"], o, tags["mae"])
 
-        print "%s %s" % (opt_leadin, o)
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
             choices = ", ".join(opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
-        print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
-                            subsequent_indent=opt_indent)
+
+	if tags["wrap"]:
+            print "%s\n" % textwrap.fill(tty_ify(desc, outputtype),
+	                        initial_indent=opt_indent,
+                                subsequent_indent=opt_indent)
+        else:
+            print "%s\n" % tty_ify(desc, outputtype)
 
     if 'notes' in doc:
         notes = "".join(doc['notes'])
-        print "Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
-                            subsequent_indent=opt_indent)
+	if tags["wrap"]:
+            print "Notes:%s\n" % textwrap.fill(tty_ify(notes, outputtype),
+	                        initial_indent="  ",
+                                subsequent_indent=opt_indent)
+        else:
+            print "%sNotes\n\n%s\n" % (tags["pa"], tty_ify(notes, outputtype))
+
+    if 'examples' in doc:
+	print "%sExamples\n" % tags["pa"]
+
+        for ex in doc['examples']:
+                print "%s%s" % (opt_indent, ex['code'])
 
 
-    for ex in doc['examples']:
-        print "%s%s" % (opt_indent, ex['code'])
+def print_snippet(doc, outputtype):
 
-def print_snippet(doc):
-
-    desc = tty_ify("".join(doc['short_description']))
+    desc = tty_ify("".join(doc['short_description']), outputtype)
     print "- name: %s" % (desc)
     print "  action: %s" % (doc['module'])
 
     for o in doc['options']:
         opt = doc['options'][o]
-        desc = tty_ify("".join(opt['description']))
+        desc = tty_ify("".join(opt['description']), outputtype)
         s = o + "="
         print "      %-20s   # %s" % (s, desc[0:60])
+
 
 def main():
 
@@ -123,9 +195,23 @@ def main():
             default=False,
             dest='show_snippet',
             help='Show playbook snippet for specified module(s)')
+    p.add_option("-o", "--output-type",
+            action="store",
+	    dest="outputtype",
+	    type="string",
+            default="console",
+            help='Output type (console|markdown). Default: console')
     p.add_option('-v', action='version', help='Show version number and exit')
 
     (options, args) = p.parse_args()
+
+    # Try to fill the tags dict
+    tags = set_output_tags(options.outputtype)
+
+    # If the outputtype is not supported, exit
+    if tags is None:
+        sys.stderr.write("ERROR: Output type '%s' is not supported!\n" % options.outputtype)
+	sys.exit(1)
 
     if options.module_path is not None:
         utils.plugins.vars_loader.add_directory(options.module_path)
@@ -148,10 +234,13 @@ def main():
             filename = utils.plugins.module_finder.find_plugin(module)
             try:
                 doc = utils.module_docs.get_docstring(filename)
-                desc = tty_ify(doc.get('short_description', '?'))
-                if len(desc) > 55:
-                    desc = desc + '...'
-                print "%-20s %-60.60s" % (module, desc)
+                desc = tty_ify(doc.get('short_description', '?'), options.outputtype)
+		if tags["wrap"]:
+                    if len(desc) > 55:
+                        desc = desc + '...'
+                    print "%s%-20s %-60.60s" % (tags["lst"], module, desc)
+	        else:
+                    print "%s%-20s %s" % (tags["lst"], module, desc)
             except:
                 sys.stderr.write("ERROR: module %s missing documentation\n" % module)
                 pass
@@ -162,7 +251,7 @@ def main():
 
     if len(args) == 0:
         p.print_help()
-    
+
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
@@ -186,16 +275,16 @@ def main():
             for (k,v) in doc['options'].iteritems():
                 all_keys.append(k)
             all_keys = sorted(all_keys)
-            doc['option_keys'] = all_keys
 
-            doc['filename']         = filename
-            doc['docuri']           = doc['module'].replace('_', '-')
-            doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
+            doc['option_keys'] = all_keys
+            doc['filename']    = filename
+            doc['docuri']      = doc['module'].replace('_', '-')
+            doc['now_date']    = datetime.date.today().strftime('%Y-%m-%d')
 
             if options.show_snippet:
-                print_snippet(doc)
+                print_snippet(doc, outputtype=options.outputtype)
             else:
-                print_man(doc)
+                print_man(doc, outputtype=options.outputtype)
         else:
             sys.stderr.write("ERROR: module %s missing documentation\n" % module)
 
