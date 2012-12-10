@@ -20,8 +20,8 @@
 '''
 This module is for enhancing ansible's inventory parsing capability such
 that it can deal with hostnames specified using a simple pattern in the
-form of [beg:end], example: [1:5] where if beg is not specified, it
-defaults to 0.
+form of [beg:end], example: [1:5], [a:c], [D:G]. If beg is not specified,
+it defaults to 0.
 
 If beg is given and is left-zero-padded, e.g. '001', it is taken as a
 formatting hint when the range is expanded. e.g. [001:010] is to be
@@ -30,6 +30,7 @@ expanded into 001, 002 ...009, 010.
 Note that when beg is specified with left zero padding, then the length of
 end must be the same as that of beg, else a exception is raised.
 '''
+import string
 
 from ansible import errors
 
@@ -81,17 +82,23 @@ def expand_hostname_range(line = None):
             raise errors.AnsibleError("host range end value missing")
         if beg[0] == '0' and len(beg) > 1:
             rlen = len(beg) # range length formatting hint
+            if rlen != len(end):
+                raise errors.AnsibleError("host range format incorrectly specified!")
+            fill = lambda _: str(_).zfill(rlen)  # range sequence
         else:
-            rlen = None
-        if rlen > 1 and rlen != len(end):
-            raise errors.AnsibleError("host range format incorrectly specified!")
+            fill = str
 
-        for _ in range(int(beg), int(end)+1):
-            if rlen:
-                rseq = str(_).zfill(rlen) # range sequence
-            else:
-                rseq = str(_)
-            hname = ''.join((head, rseq, tail))
+        try:
+            i_beg = string.ascii_letters.index(beg)
+            i_end = string.ascii_letters.index(end)
+            if i_beg > i_end:
+                raise errors.AnsibleError("host range format incorrectly specified!")
+            seq = string.ascii_letters[i_beg:i_end+1]
+        except ValueError:  # not a alpha range
+            seq = range(int(beg), int(end)+1)
+
+        for rseq in seq:
+            hname = ''.join((head, fill(rseq), tail))
             all_hosts.append(hname)
 
         return all_hosts
