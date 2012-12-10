@@ -22,13 +22,16 @@ class Host(object):
 
     __slots__ = [ 'name', 'vars', 'groups' ]
 
-    def __init__(self, name=None, port=None):
+    def __init__(self, name=None, port=None, user=None):
 
         self.name = name
         self.vars = {}
         self.groups = []
         if port and port != C.DEFAULT_REMOTE_PORT:
             self.set_variable('ansible_ssh_port', int(port))
+            
+        if user:
+          self.set_variable('ansible_ssh_user', str(user))
 
         if self.name is None:
             raise Exception("host name is required")

@@ -260,6 +260,9 @@ class Runner(object):
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
+            user = host_variables.get('ansible_ssh_user', self.remote_user)
+            if user is None:
+                user = C.DEFAULT_REMOTE_USER
         else:
             # fireball, local, etc
             port = self.remote_port
@@ -290,7 +293,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
 
         if items is None:
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, user)
         elif len(items) > 0:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -301,7 +304,7 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, user)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -326,7 +329,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, user, is_chained=False):
         ''' decides how to invoke a module '''
 
         # allow module args to work as a dictionary
@@ -393,7 +396,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, actual_port, user)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 

@@ -81,6 +81,7 @@ class InventoryParser(object):
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
+                user = None
                 # Two cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
@@ -92,6 +93,11 @@ class InventoryParser(object):
                         tokens2  = hostname.rsplit(":", 1)
                         hostname = tokens2[0]
                         port     = tokens2[1]
+                       
+                if (hostname.find('@') != -1):
+                    tokens2  = hostname.split('@', 1)
+                    user     = tokens2[0]
+                    hostname = tokens2[1]
 
                 host = None
                 _all_hosts = []
@@ -102,11 +108,11 @@ class InventoryParser(object):
                     if detect_range(hostname):
                         _hosts = expand_hostname_range(hostname)
                         for _ in _hosts:
-                            host = Host(name=_, port=port)
+                            host = Host(name=_, port=port, user=user)
                             self.hosts[_] = host
                             _all_hosts.append(host)
                     else:
-                        host = Host(name=hostname, port=port)
+                        host = Host(name=hostname, port=port, user=user)
                         self.hosts[hostname] = host
                         _all_hosts.append(host)
                 if len(tokens) > 1:
