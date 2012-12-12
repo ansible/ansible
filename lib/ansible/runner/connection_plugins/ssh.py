@@ -30,15 +30,16 @@ from ansible import errors
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, user):
         self.runner = runner
         self.host = host
         self.port = port
+        self.user = user
 
     def connect(self):
         ''' connect to the remote host '''
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host)
 
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -59,7 +60,7 @@ class Connection(object):
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
-        self.common_args += ["-o", "User="+self.runner.remote_user]
+        self.common_args += ["-o", "User="+self.user]
 
         return self
 

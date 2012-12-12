@@ -42,7 +42,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port=None):
+    def __init__(self, runner, host, port=None, user=None):
 
         self.ssh = None
         self.sftp = None
@@ -51,9 +51,10 @@ class Connection(object):
         self.port = port
         if port is None:
             self.port = self.runner.remote_port
+        self.user = user
 
     def _cache_key(self):
-        return "%s__%s__" % (self.host, self.runner.remote_user)
+        return "%s__%s__" % (self.host, self.user)
 
     def connect(self):
         cache_key = self._cache_key()
@@ -69,7 +70,7 @@ class Connection(object):
         if not HAVE_PARAMIKO:
             raise errors.AnsibleError("paramiko is not installed")
 
-        user = self.runner.remote_user
+        user = self.user
 
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (user, self.port, self.host), host=self.host)
 
@@ -162,7 +163,7 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self):
-        cache_key = "%s__%s__" % (self.host, self.runner.remote_user)
+        cache_key = "%s__%s__" % (self.host, self.user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
