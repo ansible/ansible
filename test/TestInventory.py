@@ -177,6 +177,13 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts("nc[2-3]:florida[1-2]")
         self.compare(hosts, expected4, sort=False)
 
+    def test_complex_intersect(self):
+        inventory = self.complex_inventory()
+        hosts = inventory.list_hosts("nc:&redundantgroup:!rtp_c")
+        self.compare(hosts, ['rtp_a'])
+        hosts = inventory.list_hosts("nc:&triangle:!tri_c")
+        self.compare(hosts, ['tri_a', 'tri_b'])
+
 
     ###################################################
     ### Inventory API tests
