@@ -158,6 +158,14 @@ class TestInventory(unittest.TestCase):
         print "EXPECTED=%s" % sorted(expected_hosts)
         assert sorted(hosts) == sorted(expected_hosts)
 
+    def test_regex_exclude(self):
+        inventory = self.complex_inventory()
+        hosts = inventory.list_hosts("~rtp_[ac]")
+        expected_hosts = ['rtp_a', 'rtp_c']
+        print "HOSTS=%s" % sorted(hosts)
+        print "EXPECTED=%s" % sorted(expected_hosts)
+        assert sorted(hosts) == sorted(expected_hosts)
+
     def test_complex_enumeration(self):
 
 
