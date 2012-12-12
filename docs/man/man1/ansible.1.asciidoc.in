@@ -117,6 +117,10 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
 Further limits the selected host/group patterns.
 
+*-l* '\~REGEX', *--limit=*'~REGEX'::
+
+Further limits hosts with a regex pattern.
+
 INVENTORY
 ---------
 
