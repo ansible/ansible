@@ -396,6 +396,16 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     res['results'].append('%s providing %s is already installed' % (this, spec))
                     break
 
+            # if the version of the pkg you have installed is not in ANY repo, but there are
+            # other versions in the repos (both higher and lower) then the previous checks won't work.
+            # so we check one more time. This really only works for pkgname - not for file provides or virt provides
+            # but virt provides should be all caught in what_provides on its own.
+            # highly irritating
+            if not found:
+                if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                    found = True
+                    res['results'].append('package providing %s is already installed' % (spec))
+                    
             if found:
                 continue
             # if not - then pass in the spec as what to install
