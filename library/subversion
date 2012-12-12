@@ -70,8 +70,8 @@ import re
 
 
 class Subversion(object):
-    def __init__(self, fail_callback, dest, repo, revision, username, password):
-        self.fail_callback = fail_callback
+    def __init__(self, module, dest, repo, revision, username, password):
+        self.module = module
         self.dest = dest
         self.repo = repo
         self.revision = revision
@@ -89,7 +89,7 @@ class Subversion(object):
         out, err = cmd.communicate()
         rc = cmd.returncode
         if rc != 0:
-            self.fail_callback(msg=err)
+            self.module.fail_json(msg=err)
         return out.splitlines()
 
     def checkout(self):
@@ -146,7 +146,7 @@ def main():
     username = module.params['username']
     password = module.params['password']
 
-    svn = Subversion(module.fail_json, dest, repo, revision, username, password)
+    svn = Subversion(module, dest, repo, revision, username, password)
 
     if not os.path.exists(dest):
         before = None
