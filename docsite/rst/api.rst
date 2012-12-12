@@ -14,7 +14,7 @@ Python API
 ----------
 
 The Python API is very powerful, and is how the ansible CLI and ansible-playbook
-are implemented.  
+are implemented.
 
 It's pretty simple::
 
@@ -91,7 +91,7 @@ External Inventory Scripts
 --------------------------
 
 Often a user of a configuration management system will want to keep inventory
-in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_, 
+in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_,
 or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
 of these options via an external inventory system.  The plugins directory contains some of these already -- including options for EC2/Eucalyptus and OpenStack, which will be detailed below.
 
@@ -211,8 +211,8 @@ To successfully make an API call to AWS, you will need to configure Boto (the Py
 
 You can test the script by itself to make sure your config is correct
 
-    cd examples/scripts
-    ./ec2_external_inventory.py --list
+    cd plugins/inventory
+    ./ec2.py --list
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
 
@@ -226,7 +226,7 @@ Instance ID
   These are groups of one since instance IDs are unique.
   e.g.
   ``i-00112233``
-  ``i-a1b1c1d1`` 
+  ``i-a1b1c1d1``
 
 Region
   A group of all instances in an AWS region.
@@ -295,8 +295,8 @@ Both ``ec2_security_group_ids`` and ``ec2_security_group_names`` are comma-separ
 
 To see the complete list of variables available for an instance, run the script by itself::
 
-    cd examples/scripts
-    ./ec2_external_inventory.py --host ec2-12-12-12-12.compute-1.amazonaws.com
+    cd plugins/inventory
+    ./ec2.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
 Example: OpenStack Inventory Script
 ```````````````````````````````````
