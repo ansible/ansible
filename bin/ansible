@@ -52,6 +52,8 @@ class Cli(object):
         parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
+        parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+            help="dump out a list of hosts matching input pattern, does not execute any modules!")
         options, args = parser.parse_args()
         self.callbacks.options = options
 
@@ -71,6 +73,15 @@ class Cli(object):
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
             print >>sys.stderr, "No hosts matched"
+            sys.exit(1)
+
+        if options.listhosts:
+            for host in hosts:
+                print '    %s' % host
+            sys.exit(0)
+
+        if options.module_name == 'command' and not options.module_args:
+            print >>sys.stderr, "No argument passed to command module"
             sys.exit(1)
 
         sshpass = None
