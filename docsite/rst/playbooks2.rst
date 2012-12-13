@@ -443,7 +443,7 @@ This syntax will remain in future versions, though we will also will provide way
 is an example using the authorized_key module, which requires the actual text of the SSH key as a parameter::
 
     tasks:
-        - authorized_key name=$item key='$FILE(/keys/$item)'
+        - authorized_key: name=$item key='$FILE(/keys/$item)'
           with_items:
              - pinky
              - brain
