@@ -421,7 +421,7 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_notify', host, handler)
 
     def on_no_hosts_matched(self):
-        print stringc("no hosts matched", 'red')
+        print stringc("skipping: no hosts matched", 'cyan')
         call_callback_module('playbook_on_no_hosts_matched')
 
     def on_no_hosts_remaining(self):
