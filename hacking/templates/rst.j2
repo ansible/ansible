@@ -48,7 +48,7 @@
     {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
     <p>
     <pre>
-@{ example['code'] | indent(4, True) }@
+@{ example['code'] | escape | indent(4, True) }@
     </pre>
     </p>
 {% endfor %}
