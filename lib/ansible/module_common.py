@@ -275,6 +275,12 @@ class AnsibleModule(object):
             group = str(gid)
         return (user, group)
 
+    def set_default_selinux_context(self, path, changed):
+        if not HAVE_SELINUX or not self.selinux_enabled():
+            return changed
+        context = self.selinux_default_context(path)
+        return self.set_context_if_different(path, context, False)
+
     def set_context_if_different(self, path, context, changed):
 
         if not HAVE_SELINUX or not self.selinux_enabled():
@@ -657,6 +663,10 @@ class AnsibleModule(object):
                     raise
             if self.selinux_enabled():
                 context = self.selinux_context(dest)
+                self.set_context_if_different(src, context, False)
+        else:
+            if self.selinux_enabled():
+                context = self.selinux_default_context(dest)
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
