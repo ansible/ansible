@@ -28,16 +28,16 @@
   vars_prompt:
     - name: "some_password"
       prompt: "Enter password"
-      private: True
+      private: yes
     - name: "release_version"
       prompt: "Product release version"
-      private: False
+      private: no
    
     - name: "my_password2"
       prompt: "Enter password2"
-      private: True
+      private: yes
       encrypt: "md5_crypt" 
-      confirm: True
+      confirm: yes
       salt_size: 7
       salt: "foo" 
 

@@ -67,7 +67,7 @@ write a task that looks like this::
 
     - name: this will not be counted as a failure
       action: command /bin/false
-      ignore_errors: True
+      ignore_errors: yes
 
 Accessing Complex Variable Data
 ```````````````````````````````
@@ -190,10 +190,10 @@ some other options, but otherwise works equivalently::
    vars_prompt:
      - name: "some_password"
        prompt: "Enter password"
-       private: True
+       private: yes
      - name: "release_version"
        prompt: "Product release version"
-       private: False
+       private: no
 
 
 Passing Variables On The Command Line
@@ -543,7 +543,7 @@ can turn off fact gathering.  This has advantages in scaling ansible in push mod
 systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
 
     - hosts: whatever
-      gather_facts: False
+      gather_facts: no
 
 Pull-Mode Playbooks
 ```````````````````
@@ -663,9 +663,9 @@ if you have a large number of hosts::
 
     # set up the fireball transport
     - hosts: all
-      gather_facts: False
+      gather_facts: no
       connection: ssh # or paramiko
-      sudo: True
+      sudo: yes
       tasks:
           - action: fireball
 
@@ -683,8 +683,8 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
 
     ---
     - hosts: all
-      sudo: True
-      gather_facts: False
+      sudo: yes
+      gather_facts: no
       connection: ssh
       tasks:
           - action: easy_install name=pip
