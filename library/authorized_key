@@ -97,6 +97,8 @@ def keyfile(module, user, write=False):
 
     if not os.path.exists(sshdir):
         os.mkdir(sshdir, 0700)
+        if module.selinux_enabled():
+            module.set_default_selinux_context(sshdir, False)
     os.chown(sshdir, uid, gid)
     os.chmod(sshdir, 0700)
 
@@ -105,6 +107,8 @@ def keyfile(module, user, write=False):
             f = open(keysfile, "w") #touches file so we can set ownership and perms
         finally:
             f.close()
+        if module.selinux_enabled():
+            module.set_default_selinux_context(keysfile, False)
 
     os.chown(keysfile, uid, gid)
     os.chmod(keysfile, 0600)
