@@ -406,7 +406,7 @@ class PlayBook(object):
             # do N forks all the way through before moving to next
             while len(all_hosts) > 0:
                 play_hosts = []
-                for x in range(int(play.serial)):
+                for x in range(play.serial):
                     if len(all_hosts) > 0:
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
