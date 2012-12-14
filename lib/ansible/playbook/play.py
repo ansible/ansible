@@ -75,7 +75,7 @@ class Play(object):
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', None)
-        self.serial       = ds.get('serial', 0)
+        self.serial       = utils.template_ds(basedir, ds.get('serial', 0), self.vars)
 
         if isinstance(self.remote_port, basestring):
             self.remote_port = utils.template(basedir, self.remote_port, self.vars)
