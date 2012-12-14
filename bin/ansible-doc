@@ -89,8 +89,10 @@ def print_man(doc):
                             subsequent_indent=opt_indent)
 
 
-    for ex in doc['examples']:
-        print "%s%s" % (opt_indent, ex['code'])
+    if 'examples' in doc and len(doc['examples']) > 0:
+        print "Example%s:\n" % ('' if len(doc['examples']) < 2 else 's')
+        for ex in doc['examples']:
+            print "%s\n" % (ex['code'])
 
 def print_snippet(doc):
 
