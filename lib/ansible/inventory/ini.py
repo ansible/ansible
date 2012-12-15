@@ -93,28 +93,24 @@ class InventoryParser(object):
                         hostname = tokens2[0]
                         port     = tokens2[1]
 
-                host = None
-                _all_hosts = []
-                if hostname in self.hosts:
-                    host = self.hosts[hostname]
-                    _all_hosts.append(host)
+                hostnames = []
+                if detect_range(hostname):
+                    hostnames = expand_hostname_range(hostname)
                 else:
-                    if detect_range(hostname):
-                        _hosts = expand_hostname_range(hostname)
-                        for _ in _hosts:
-                            host = Host(name=_, port=port)
-                            self.hosts[_] = host
-                            _all_hosts.append(host)
+                    hostnames = [hostname]
+
+                for hn in hostnames:
+                    host = None
+                    if hn in self.hosts:
+                        host = self.hosts[hn]
                     else:
-                        host = Host(name=hostname, port=port)
-                        self.hosts[hostname] = host
-                        _all_hosts.append(host)
-                if len(tokens) > 1:
-                    for t in tokens[1:]:
-                        (k,v) = t.split("=")
-                        host.set_variable(k,v)
-                for _ in _all_hosts:
-                    self.groups[active_group_name].add_host(_)
+                        host = Host(name=hn, port=port)
+                        self.hosts[hn] = host
+                    if len(tokens) > 1:
+                        for t in tokens[1:]:
+                            (k,v) = t.split("=")
+                            host.set_variable(k,v)
+                    self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
     # atlanta
