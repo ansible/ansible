@@ -4,12 +4,13 @@ DOCUMENTATION = """
 module: script
 short_description: Runs a local script on a remote node
 description:
-     - The command module takes the script name followed by a list of space-delimited arguments.
-     - The given command will be processed through the shell environment.
+     - The M(script) module takes the script name followed by a list of space-delimited arguments.
+     - The given script will be processed through the shell environment.
+     - See also the M(command) and M(shell) modules.
 options:
   free_form:
     description:
-      - the command module takes a free form command to run
+      - path to the local script file followed by optional arguments.
     required: true
     default: null
     aliases: []
