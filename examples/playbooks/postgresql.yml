@@ -7,8 +7,8 @@
 #
 ---
 - hosts: webservers
-  sudo: True
-  gather_facts: False
+  sudo: yes
+  gather_facts: no
 
   tasks:
   - name: ensure apt cache is up to date
@@ -21,9 +21,9 @@
         - python-psycopg2
 
 - hosts: webservers
-  sudo: True
+  sudo: yes
   sudo_user: postgres
-  gather_facts: False
+  gather_facts: no
 
   vars:
     dbname: myapp

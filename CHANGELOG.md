@@ -256,13 +256,13 @@ playbooks:
 * error reporting if with_items value is unbound
 * with_items no longer creates lots of tasks, creates one task that makes multiple calls
 * can use host_specific facts inside with_items (see above)
-* at the top level of a playbook, set 'gather_facts: False' to skip fact gathering
+* at the top level of a playbook, set 'gather_facts: no' to skip fact gathering
 * first_available_file and with_items used together will now raise an error
 * to catch typos, like 'var' for 'vars', playbooks and tasks now yell on invalid parameters
 * automatically load (directory_of_inventory_file)/group_vars/groupname and /host_vars/hostname in vars_files
 * playbook is now colorized, set ANSIBLE_NOCOLOR=1 if you do not like this, does not colorize if not a TTY
 * hostvars now preserved between plays (regression in 0.5 from 0.4), useful for sharing vars in multinode configs
-* ignore_errors: True on a task can be used to allow a task to fail and not stop the play
+* ignore_errors: yes on a task can be used to allow a task to fail and not stop the play
 * with_items with the apt/yum module will install/remove/update everything in a single command
 
 inventory:

@@ -13,7 +13,7 @@
       # available to tasks and templates made further down in the execution flow.  
 
       - action: shell grep hi /etc/motd
-        ignore_errors: True
+        ignore_errors: yes
         register: motd_result
 
       # and here we access the register.  Note that variable is structured data because
