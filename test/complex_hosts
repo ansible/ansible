@@ -73,4 +73,9 @@ d=100002
 [us:vars]
 c=1000000
 
+[role1]
+host[1:2]
+
+[role2]
+host[2:3]
 
