@@ -88,14 +88,14 @@ Support for running things from sudo is also available::
     ---
     - hosts: webservers
       user: yourname
-      sudo: True
+      sudo: yes
 
 You can also login as you, and then sudo to different users than root::
 
     ---
     - hosts: webservers
       user: yourname
-      sudo: True
+      sudo: yes
       sudo_user: postgres
 
 If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).

@@ -6,7 +6,7 @@
 # see lib/ansible/runner/lookup_plugins/fileglob.py -- they can do basically anything!
 
 - hosts: all
-  gather_facts: False
+  gather_facts: no
 
   tasks:
 
