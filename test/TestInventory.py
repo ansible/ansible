@@ -150,6 +150,17 @@ class TestInventory(unittest.TestCase):
         print expected
         assert vars == expected
 
+    def test_complex_group_names(self):
+        inventory = self.complex_inventory()
+        tests = {
+            'host1': [ 'role1' ],
+            'host2': [ 'role1', 'role2' ],
+            'host3': [ 'role2' ]
+        }
+        for host, roles in tests.iteritems():
+            group_names = inventory.get_variables(host)['group_names']
+            assert sorted(group_names) == sorted(roles)
+
     def test_complex_exclude(self):
         inventory = self.complex_inventory()
         hosts = inventory.list_hosts("nc:florida:!triangle:!orlando")
