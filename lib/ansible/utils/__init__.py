@@ -143,7 +143,10 @@ def check_conditional(conditional):
     def is_unset(var):
         return var.startswith("$")
 
-    return eval(conditional.replace("\n", "\\n"))
+    try:
+        return eval(conditional.replace("\n", "\\n"))
+    except SyntaxError as e:
+        raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
 
 def is_executable(path):
     '''is the given path executable?'''
