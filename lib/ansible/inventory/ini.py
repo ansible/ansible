@@ -169,7 +169,9 @@ class InventoryParser(object):
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]
+                    # When the value is a single-quoted or double-quoted string
                     if re.match(r"^(['\"]).*\1$", v):
+                        # Unquote the string
                         group.set_variable(k, re.sub(r"^['\"]|['\"]$", '', v))
                     else:
                         group.set_variable(k, v)
