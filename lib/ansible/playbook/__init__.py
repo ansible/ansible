@@ -138,40 +138,45 @@ class PlayBook(object):
             if type(play) != dict:
                 raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
             if 'include' in play:
-                if len(play.keys()) <= 2:
-                    tokens = shlex.split(play['include'])
+                tokens = shlex.split(play['include'])
 
-                    items = ['']
-                    for k in play.keys():
-                        if not k.startswith("with_"):
+                items = ['']
+                for k in play.keys():
+                    if not k.startswith("with_"):
+                        # These are the keys allowed to be mixed with playbook includes
+                        if k in ("include", "vars"):
                             continue
-                        plugin_name = k[5:]
-                        if plugin_name not in utils.plugins.lookup_loader:
-                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                        terms = utils.template_ds(basedir, play[k], vars)
-                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=basedir, runner=None).run(terms, inject=vars)
-                        break
+                        else:
+                            raise errors.AnsibleError("parse error: playbook includes cannot be used with other directives: %s" % play)
+                    plugin_name = k[5:]
+                    if plugin_name not in utils.plugins.lookup_loader:
+                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                    terms = utils.template_ds(basedir, play[k], vars)
+                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=basedir, runner=None).run(terms, inject=vars)
 
-                    for item in items:
-                        incvars = vars.copy()
-                        incvars['item'] = item
-                        for t in tokens[1:]:
-                            (k,v) = t.split("=", 1)
-                            incvars[k] = utils.template_ds(basedir, v, incvars)
-                        included_path = utils.path_dwim(basedir, tokens[0])
-                        (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
-                        for p in plays:
-                            if 'vars' not in p:
-                                p['vars'] = {}
-                            if isinstance(p['vars'], dict):
-                                p['vars'].update(incvars)
-                            elif isinstance(p['vars'], list):
-                                p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
-                        accumulated_plays.extend(plays)
-                        play_basedirs.extend(basedirs)
-
-                else:
-                    raise errors.AnsibleError("parse error: playbook includes cannot be used with other directives: %s" % play)
+                for item in items:
+                    incvars = vars.copy()
+                    incvars['item'] = item
+                    if 'vars' in play:
+                        if isinstance(play['vars'], dict):
+                            incvars.update(play['vars'])
+                        elif isinstance(play['vars'], list):
+                            for v in play['vars']:
+                                incvars.update(v)
+                    for t in tokens[1:]:
+                        (k,v) = t.split("=", 1)
+                        incvars[k] = utils.template_ds(basedir, v, incvars)
+                    included_path = utils.path_dwim(basedir, tokens[0])
+                    (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                    for p in plays:
+                        if 'vars' not in p:
+                            p['vars'] = {}
+                        if isinstance(p['vars'], dict):
+                            p['vars'].update(incvars)
+                        elif isinstance(p['vars'], list):
+                            p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+                    accumulated_plays.extend(plays)
+                    play_basedirs.extend(basedirs)
             else:
                 accumulated_plays.append(play)
                 play_basedirs.append(basedir)
