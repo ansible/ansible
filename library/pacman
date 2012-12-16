@@ -28,20 +28,32 @@ description:
 
 version_added: "0.0.9"
 options:
-    pkg:
+    name:
         description:
-            - Define the state of a package (install/remove)
+            - name of package to install/remove
         required: true
+
+    state:
+        description:
+            - state of the package installed or absent. 
+        required: false
+
+    update_cache:
+        description:
+            - update the package db first (pacman -Syy)
+        required: false
 
 author: Afterburn
 notes:  []
 examples:
-    - code: "pacman: name=foo state=latest"
-      description: update package db and install package foo
+    - code: "pacman: name=foo state=installed"
+      description: install package foo"
     - code: "pacman: name=foo state=absent"
       description: remove package foo
     - code: "pacman: name=foo,bar state=absent
-      description: remove packages foo and bar (if installed)
+      description: remove packages foo and bar 
+    - code: "pacman: name=bar, state=installed, update_cache=yes"
+      description: update the package db (pacman -Syy) then install bar (bar will be the updated if a newer version exists) 
       
 '''
 
@@ -55,11 +67,6 @@ PACMAN_PATH = "/usr/bin/pacman"
 
 def query_package(module, name, state="installed"):
 
-    # query_package returns True if the package does not
-    # need to be installed/upgraded. Otherwise it returns 
-    # False 
-
-
     # pacman -Q returns 0 if the package is installed,
     # 1 if it is not installed
     if state == "installed":
@@ -70,26 +77,12 @@ def query_package(module, name, state="installed"):
 
         return False
 
-    
-    # pacman -Qu return 0 if update is needed
-    # otherwise it returns 1
-    rc = os.system("pacman -Qu %s" % (name))
-
-    if rc == 1:
-        return True
-
-    return False
-
-        
-        
-
 
 def update_package_db(module):
     rc = os.system("pacman -Syy")
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
-
          
 
 def remove_packages(module, packages):
@@ -136,13 +129,13 @@ def install_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already installed")
 
 
+
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
-                state = dict(default="installed", choices=["latest",
-                                                           "installed",
-                                                           "absent"]),
-                name   = dict(default=None, aliases=["pkg"])))
+            argument_spec    = dict(
+                state        = dict(default="installed", choices=["installed","absent"]),
+                update_cache = dict(default="no", choices=["yes","no"], aliases=["update-cache"]),
+                name         = dict(aliases=["pkg"], required=True)))
                 
 
     if not os.path.exists(PACMAN_PATH):
@@ -151,20 +144,14 @@ def main():
     p = module.params
 
 
-    if p["name"] == None:
-        module.fail_json(msg="no packages specified")
+    if module.boolean(p["update_cache"]):
+        update_package_db(module)
 
     pkgs = p["name"].split(",")
 
     if p["state"] == "installed":
         install_packages(module, pkgs)
 
-    # To have the packages at "latest" we need
-    # to update the package db first
-    elif p["state"] == "latest":
-        update_package_db(module)
-        install_packages(module, pkgs)
-     
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
 
