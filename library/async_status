@@ -49,7 +49,6 @@ author: Michael DeHaan
 
 import datetime
 import traceback
-import sys
 
 def main():
 
@@ -90,13 +89,10 @@ def main():
     if not 'started' in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
-	
-	# Fix error: TypeError: exit_json() keywords must be strings
-	if sys.version_info[0] == 2 and sys.version_info[1] < 6:
-		for k in data.keys():
-			v = data[k]
-			del data[k]
-			data[str(k)] = v
+
+    # Fix error: TypeError: exit_json() keywords must be strings
+    data = dict([(str(k), v) for k, v in data.iteritems()])
+
     module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py
