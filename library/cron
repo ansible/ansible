@@ -98,11 +98,22 @@ options:
     required: false
     default: "*"
     aliases: []
+
+  reboot:
+    description:
+      - If the job should be run at reboot, will ignore minute, hour, day, and month settings in favour of @reboot
+    required: false
+    default: False
+    aliases: []
+
 examples:
    - code: 'cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"'
      description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
    - code: 'cron: name="an old job" cron job="/some/dir/job.sh" state=absent'
      description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
+   - code: 'cron: name="a job for reboot" reboot=True job="/some/job.sh"'
+     description: 'Creates an entry like '@reboot /some/job.sh'
+
 requirements: cron
 author: Dane Summers
 '''
@@ -221,7 +232,8 @@ def main():
             hour=dict(default='*'),
             day=dict(default='*'),
             month=dict(default='*'),
-            weekday=dict(default='*')
+            weekday=dict(default='*'),
+            reboot=dict(required=False, default=False)
         )
     )
 
@@ -234,9 +246,13 @@ def main():
     day        = module.params['day']
     month      = module.params['month']
     weekday    = module.params['weekday']
+    reboot     = module.params['reboot']
     do_install = module.params['state'] == 'present'
     changed    = False
-    job = "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+    if reboot:
+        job = "@reboot %s" % (job)
+    else:
+        job = "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
 
     if not user:
         user = ""
@@ -288,3 +304,4 @@ def main():
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
+
