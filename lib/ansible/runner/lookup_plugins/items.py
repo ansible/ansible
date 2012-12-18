@@ -21,7 +21,6 @@ class LookupModule(object):
         pass
 
     def run(self, terms, **kwargs):
-        return terms
-
-
-
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        return [term for term in terms]
