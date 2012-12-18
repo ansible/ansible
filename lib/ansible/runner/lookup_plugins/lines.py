@@ -24,9 +24,14 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, **kwargs):
-        p = subprocess.Popen(terms, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        if p.returncode == 0:
-            return stdout.splitlines()
-        else:
-            raise errors.AnsibleError("lookup_plugin.lines(%s) returned %d" % (terms, p.returncode))
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        ret = []
+        for term in terms:
+            p = subprocess.Popen(term, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if p.returncode == 0:
+                ret.extend(stdout.splitlines())
+            else:
+                raise errors.AnsibleError("lookup_plugin.lines(%s) returned %d" % (term, p.returncode))
+        return ret

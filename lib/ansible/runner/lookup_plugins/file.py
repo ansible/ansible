@@ -24,7 +24,12 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, **kwargs):
-        path = utils.path_dwim(self.basedir, terms)
-        if not os.path.exists(path):
-            raise errors.AnsibleError("%s does not exist" % path)
-        return [open(path).read().rstrip()]
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        ret = []
+        for term in terms:
+            path = utils.path_dwim(self.basedir, term)
+            if not os.path.exists(path):
+                raise errors.AnsibleError("%s does not exist" % path)
+            ret.append(open(path).read().rstrip())
+        return ret

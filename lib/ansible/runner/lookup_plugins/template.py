@@ -23,5 +23,9 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        return utils.template_from_file(self.basedir, terms, inject)
-
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        ret = []
+        for term in terms:
+            ret.append(utils.template_from_file(self.basedir, term, inject))
+        return ret

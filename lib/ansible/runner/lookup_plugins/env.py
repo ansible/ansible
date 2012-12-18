@@ -24,6 +24,10 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, **kwargs):
-
-        var = terms.split()[0]
-        return os.getenv(var, '')
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        ret = []
+        for term in terms:
+            var = term.split()[0]
+            ret.append(os.getenv(var, ''))
+        return ret
