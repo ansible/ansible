@@ -24,6 +24,7 @@ from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
+import re
 
 class InventoryParser(object):
     """
@@ -163,5 +164,10 @@ class InventoryParser(object):
                 if line.find("=") == -1:
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
-                    (k,v) = line.split("=",1)
-                    group.set_variable(k,v)
+                    (k, v) = [e.strip() for e in line.split("=", 1)]
+                    # When the value is a single-quoted or double-quoted string
+                    if re.match(r"^(['\"]).*\1$", v):
+                        # Unquote the string
+                        group.set_variable(k, re.sub(r"^['\"]|['\"]$", '', v))
+                    else:
+                        group.set_variable(k, v)
