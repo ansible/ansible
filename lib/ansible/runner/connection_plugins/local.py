@@ -49,8 +49,6 @@ class Connection(object):
 
         vvv("EXEC %s" % cmd, host=self.host)
         basedir = self.runner.basedir
-        if basedir == '':
-            basedir = '.'
         p = subprocess.Popen(cmd, cwd=basedir, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
