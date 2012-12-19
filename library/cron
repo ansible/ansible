@@ -250,7 +250,7 @@ def main():
     do_install = module.params['state'] == 'present'
     changed    = False
 
-    if reboot and (len(set([minute, hour, day, month, weekday, '*'])) != 1):
+    if reboot and (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify either reboot=True or any of minute, hour, day, month, weekday")
 
     if reboot:
