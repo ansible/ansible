@@ -9,9 +9,10 @@ class TestInventory(unittest.TestCase):
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
 
-        self.inventory_file         = os.path.join(self.test_dir, 'simple_hosts')
-        self.complex_inventory_file = os.path.join(self.test_dir, 'complex_hosts')
-        self.inventory_script       = os.path.join(self.test_dir, 'inventory_api.py')
+        self.inventory_file             = os.path.join(self.test_dir, 'simple_hosts')
+        self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
+        self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
+        self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -29,11 +30,23 @@ class TestInventory(unittest.TestCase):
     def simple_inventory(self):
         return Inventory(self.inventory_file)
 
+    def large_range_inventory(self):
+        return Inventory(self.large_range_inventory_file)
+
     def script_inventory(self):
         return Inventory(self.inventory_script)
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
+
+    all_simple_hosts=['jupiter', 'saturn', 'zeus', 'hera',
+            'cerberus001','cerberus002','cerberus003',
+            'cottus99', 'cottus100',
+            'poseidon', 'thor', 'odin', 'loki',
+            'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
+            'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5',
+            'Hotep-a', 'Hotep-b', 'Hotep-c',
+            'BastC', 'BastD', ]
 
     #####################################
     ### Simple inventory format tests
@@ -41,26 +54,12 @@ class TestInventory(unittest.TestCase):
     def test_simple(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts()
-
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
-                        'cerberus001','cerberus002','cerberus003',
-                        'cottus99', 'cottus100',
-                        'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
+        self.assertEqual(sorted(hosts), sorted(self.all_simple_hosts))
 
     def test_simple_all(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
-
-        expected_hosts=['jupiter', 'saturn', 'zeus', 'hera',
-                        'cerberus001','cerberus002','cerberus003',
-                        'cottus99', 'cottus100',
-                        'poseidon', 'thor', 'odin', 'loki',
-                        'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
-                        'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5']
-        assert sorted(hosts) == sorted(expected_hosts)
+        self.assertEqual(sorted(hosts), sorted(self.all_simple_hosts))
 
     def test_simple_norse(self):
         inventory = self.simple_inventory()
@@ -132,6 +131,11 @@ class TestInventory(unittest.TestCase):
         print expected
         assert vars == expected
 
+    def test_large_range(self):
+        inventory = self.large_range_inventory()
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts),  sorted('bob%03i' %i  for i in range(0, 143)))
+
     ###################################################
     ### INI file advanced tests
 
@@ -142,7 +146,9 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='10002', rga='1', rgb='2', rgc='3',
+            a='1', b='2', c='3', d='10002', e='10003', f='10004 != 10005',
+            g='  g  ', h='  h  ', i="'  i  \"", j='"  j',
+            rga='1', rgb='2', rgc='3',
             inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
@@ -278,7 +284,7 @@ class TestInventory(unittest.TestCase):
         vars = inventory.get_variables('zeus')
 
         print "VARS=%s" % vars
-        
+
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god']}

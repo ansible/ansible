@@ -115,7 +115,7 @@ class PlayBook(object):
         else:
             self.inventory    = inventory
 
-        self.basedir     = os.path.dirname(playbook)
+        self.basedir     = os.path.dirname(playbook) or '.'
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
 
     # *****************************************************
@@ -132,7 +132,7 @@ class PlayBook(object):
         if type(playbook_data) != list:
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
 
-        basedir = os.path.dirname(path)
+        basedir = os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
@@ -294,7 +294,7 @@ class PlayBook(object):
     def _run_task(self, play, task, is_handler):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
-        self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars), is_handler)
+        self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
