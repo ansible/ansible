@@ -60,11 +60,11 @@ The acme/setup.yml playbook would be as simple as::
 
       vars_files:
         - ../global_vars.yml
-        - vars/main.yml
+        - ../vars/main.yml
       tasks:
-        - include: tasks/setup.yml
+        - include: ../tasks/setup.yml
       handlers:
-        - include: handlers/main.yml
+        - include: ../handlers/main.yml
 
 The tasks are individually broken out in 'acme/tasks/setup.yml', and handlers, which are common to all task files,
 are contained in 'acme/handlers/main.yml'.  As a reminder, handlers are mostly just used to notify services to restart
