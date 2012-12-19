@@ -233,7 +233,7 @@ def main():
             day=dict(default='*'),
             month=dict(default='*'),
             weekday=dict(default='*'),
-            reboot=dict(required=False, default=False)
+            reboot=dict(required=False, default=False, choices=BOOLEANS)
         )
     )
 
@@ -246,9 +246,13 @@ def main():
     day        = module.params['day']
     month      = module.params['month']
     weekday    = module.params['weekday']
-    reboot     = module.params['reboot']
+    reboot     = module.boolean(module.params.get('reboot', False))
     do_install = module.params['state'] == 'present'
     changed    = False
+
+    if reboot and (len(set([minute, hour, day, month, weekday, '*'])) != 1):
+        module.fail_json(msg="You must specify either reboot=True or any of minute, hour, day, month, weekday")
+
     if reboot:
         job = "@reboot %s" % (job)
     else:
