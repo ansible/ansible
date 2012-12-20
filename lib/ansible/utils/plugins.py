@@ -58,10 +58,15 @@ class PluginLoader(object):
         """Return a list of paths to search for plugins in
 
         The list is searched in order."""
-        return self._extra_dirs + \
-            [os.path.join(basedir, self.subdir) for basedir in _basedirs] + \
-            self.config.split(os.pathsep) + \
-            self._get_package_path()
+        ret = []
+        ret += self._extra_dirs
+        for basedir in _basedirs:
+            fullpath = os.path.join(basedir, self.subdir)
+            if fullpath not in ret:
+                ret.append(fullpath)
+        ret += self.config.split(os.pathsep)
+        ret += self._get_package_path()
+        return ret
 
     def add_directory(self, directory):
         """Adds an additional directory to the search path"""
