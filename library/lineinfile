@@ -42,7 +42,8 @@ options:
     description:
       - The regular expression to look for in the file. For C(state=present),
         the pattern to replace. For C(state=absent), the pattern of the line
-        to remove.
+        to remove.  Uses Python regular expressions; see
+        U(http://docs.python.org/2/library/re.html).
   state:
     required: false
     choices: [ present, absent ]
