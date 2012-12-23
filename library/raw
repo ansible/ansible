@@ -13,11 +13,11 @@ description:
        all core modules require it. Another is speaking to any devices such as
        routers that do not have any Python installed. In any other case, using
        the M(shell) or M(command) module is much more appropriate. Arguments
-       given to M(raw) are run directly through the configured remote shell and
-       only output is returned. There is no error detection or change handler
-       support for this module
+       given to M(raw) are run directly through the configured remote shell.
+       Standard output, error output and return code are returned when
+       available. There is no change handler support for this module.
 examples:
-    - code: ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
-      description: Example from C(/usr/bin/ansible) to bootstrap a legacy python 2.4 host
+    - description: Example from C(/usr/bin/ansible) to bootstrap a legacy python 2.4 host
+      code: ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
 author: Michael DeHaan
 '''

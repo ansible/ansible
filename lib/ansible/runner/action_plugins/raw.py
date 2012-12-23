@@ -34,7 +34,7 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        return ReturnData(conn=conn, result=dict(
-            stdout=self.runner._low_level_exec_command(conn, module_args.encode('utf-8'), tmp, sudoable=True)
-        ))
+        return ReturnData(conn=conn,
+            result=self.runner._low_level_exec_command(conn, module_args.encode('utf-8'), tmp, sudoable=True)
+        )
 

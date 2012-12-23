@@ -226,7 +226,7 @@ class Runner(object):
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        return ReturnData(conn=conn, result=res)
+        return ReturnData(conn=conn, result=res['stdout'])
 
     # *****************************************************
 
@@ -442,19 +442,22 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         sudo_user = self.sudo_user
-        stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
+        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
 
         if type(stdout) not in [ str, unicode ]:
-            out = "\n".join(stdout.readlines())
+            out = ''.join(stdout.readlines())
         else:
             out = stdout
 
         if type(stderr) not in [ str, unicode ]:
-            err = "\n".join(stderr.readlines())
+            err = ''.join(stderr.readlines())
         else:
             err = stderr
 
-        return out + err
+        if rc != None:
+            return dict(rc=rc, stdout=out, stderr=err )
+        else:
+            return dict(stdout=out, stderr=err )
 
     # *****************************************************
 
@@ -474,7 +477,7 @@ class Runner(object):
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
-        data2 = utils.last_non_blank_line(data)
+        data2 = utils.last_non_blank_line(data['stdout'])
         try:
             return data2.split()[0]
         except IndexError:
@@ -502,7 +505,7 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        rc = utils.last_non_blank_line(result).strip() + '/'
+        rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         return rc
 
 

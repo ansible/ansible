@@ -159,7 +159,7 @@ def command(data):
         stderr = ''
     log("got stdout: %s" % stdout)
 
-    return dict(stdout=stdout, stderr=stderr)
+    return dict(rc=p.returncode, stdout=stdout, stderr=stderr)
 
 def fetch(data):
     if 'in_path' not in data:
