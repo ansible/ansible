@@ -101,7 +101,7 @@ options:
 
   reboot:
     description:
-      - If the job should be run at reboot, will ignore minute, hour, day, and month settings in favour of @reboot
+      - If the job should be run at reboot, will ignore minute, hour, day, and month settings in favour of C(@reboot)
     version_added: "1.0"
     required: false
     default: False
@@ -113,7 +113,7 @@ examples:
    - code: 'cron: name="an old job" cron job="/some/dir/job.sh" state=absent'
      description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
    - code: 'cron: name="a job for reboot" reboot=True job="/some/job.sh"'
-     description: 'Creates an entry like '@reboot /some/job.sh'
+     description: 'Creates an entry like "@reboot /some/job.sh"'
 
 requirements: cron
 author: Dane Summers
