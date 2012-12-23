@@ -108,11 +108,11 @@ class Connection(object):
             import pty
             master, slave = pty.openpty()
             p = subprocess.Popen(ssh_cmd, stdin=slave,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = os.fdopen(master, 'w', 0)
         except:
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
 
         self._send_password()
@@ -137,11 +137,18 @@ class Connection(object):
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         stdout = ''
+        stderr = ''
         while True:
-            rfd, wfd, efd = select.select([p.stdout], [], [p.stdout], 1)
+            rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
                 stdout += dat
+                if dat == '':
+                    p.wait()
+                    break
+            elif p.stderr in rfd:
+                dat = os.read(p.stderr.fileno(), 9000)
+                stderr += dat
                 if dat == '':
                     p.wait()
                     break
@@ -149,10 +156,10 @@ class Connection(object):
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
 
-        if p.returncode != 0 and stdout.find('Bad configuration option: ControlPersist') != -1:
+        if p.returncode != 0 and stderr.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
 
-        return ('', stdout, '')
+        return (p.returncode, '', stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
