@@ -17,6 +17,7 @@
 
 import traceback
 import os
+import pipes
 import shutil
 import subprocess
 from ansible import errors
@@ -36,22 +37,37 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', pty=True):
         ''' run a command on the local host '''
 
-        if self.runner.sudo and sudoable:
+        if not self.runner.sudo or not sudoable:
+            local_cmd = [ executable, '-c', cmd]
+        else:
             if self.runner.sudo_pass:
                 # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
                 # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
                 # so this doesn't seem to be a huge priority
                 raise errors.AnsibleError("sudo with password is presently only supported on the 'paramiko' (SSH) and native 'ssh' connection types")
-            cmd = "sudo -u {0} -s {1}".format(sudo_user, cmd)
+            sudocmd = "sudo -u %s -s %s -c %s" % (sudo_user, executable, cmd)
+            local_cmd = ['/bin/sh', '-c', sudocmd]
 
-        vvv("EXEC %s" % cmd, host=self.host)
-        basedir = self.runner.basedir
-        p = subprocess.Popen(cmd, cwd=basedir, shell=True, stdin=None,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        vvv("EXEC %s" % local_cmd, host=self.host)
+        try:
+            if pty:
+                import pty
+                master, slave = pty.openpty()
+                p = subprocess.Popen(local_cmd, cwd=self.runner.basedir, executable=executable,
+                                     stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdin = os.fdopen(master, 'w', 0)
+            else:
+                raise # Make sure we fall back to no pty's if requested
+        except:
+            p = subprocess.Popen(local_cmd, cwd=self.runner.basedir, executable=executable,
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdin = p.stdin
+
         stdout, stderr = p.communicate()
+        stdin.close()
         return (p.returncode, '', stdout, stderr)
 
     def put_file(self, in_path, out_path):

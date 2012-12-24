@@ -4,7 +4,23 @@ DOCUMENTATION = '''
 ---
 module: raw
 short_description: Executes a low-down and dirty SSH command
-options: {}
+options:
+  free_form:
+    description:
+      - the raw module takes a free form command to run
+    required: true
+  executable:
+    description:
+      - change the shell used to execute the command. Should be an absolute path to the executable.
+    required: false
+    default: /bin/sh
+    version_added: "1.0"
+  pty:
+    description:
+      - enable or disable the use of pseudo tty's
+    required: false
+    default: false
+    version_added: "1.0"
 description: 
      - Executes a low-down and dirty SSH command, not going through the module
        subsystem. This is useful and should only be done in two cases. The
@@ -14,8 +30,7 @@ description:
        routers that do not have any Python installed. In any other case, using
        the M(shell) or M(command) module is much more appropriate. Arguments
        given to M(raw) are run directly through the configured remote shell.
-       Standard output, error output and return code are returned when
-       available. There is no change handler support for this module.
+       Standard output, error output and return code are returned.
 examples:
     - description: Example from C(/usr/bin/ansible) to bootstrap a legacy python 2.4 host
       code: ansible newhost.example.com -m raw -a "yum -y install python-simplejson"

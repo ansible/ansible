@@ -67,7 +67,7 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', pty=True):
         ''' run a command on the remote host '''
 
         vvv("EXEC COMMAND %s" % cmd)
@@ -79,6 +79,8 @@ class Connection(object):
             mode='command',
             cmd=cmd,
             tmp_path=tmp_path,
+            executable=executable,
+            pty=pty,
         )
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
