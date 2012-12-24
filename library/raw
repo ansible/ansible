@@ -16,8 +16,16 @@ description:
        given to M(raw) are run directly through the configured remote shell.
        Standard output, error output and return code are returned when
        available. There is no change handler support for this module.
+     - This module does not require python on the remote system, much like
+       the M(script) module.
 examples:
     - description: Example from C(/usr/bin/ansible) to bootstrap a legacy python 2.4 host
-      code: ansible newhost.example.com -m raw -a "yum -y install python-simplejson"
+      code: "action: raw yum -y install python-simplejson"
+notes:
+   -  If you want to execute a command securely and predictably, it may be
+      better to use the M(command) module instead. Best practices when writing
+      playbooks will follow the trend of using M(command) unless M(shell) is
+      explicitly required. When running ad-hoc commands, use your best
+      judgement.
 author: Michael DeHaan
 '''
