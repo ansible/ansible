@@ -33,6 +33,7 @@ what others have done for reference.
 
 -  `Hadoop <https://github.com/jkleint/ansible-hadoop>`_ - jkleint
 -  `LAMP <https://github.com/fourkitchens/server-playbooks>`_ - `Four Kitchens <http://fourkitchens.com>`_
+-  `LEMP <https://github.com/francisbesset/ansible-playbooks>`_ - francisbesset
 -  `Ganglia (demo) <https://github.com/mpdehaan/ansible-examples>`_ - mpdehaan
 -  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_ - cocoy
 -  `OpenStack <http://github.com/lorin/openstack-ansible>`_ - lorin
