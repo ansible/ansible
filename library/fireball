@@ -149,10 +149,25 @@ def command(data):
         return dict(failed=True, msg='internal error: cmd is required')
     if 'tmp_path' not in data:
         return dict(failed=True, msg='internal error: tmp_path is required')
+    if 'executable' not in data:
+        return dict(failed=True, msg='internal error: executable is required')
 
     log("executing: %s" % data['cmd'])
-    p = subprocess.Popen(data['cmd'], shell=True, stdout=subprocess.PIPE, close_fds=True)
+    try:
+        if data['pty']:
+            import pty
+            master, slave = pty.openpty()
+            p = subprocess.Popen(data['cmd'], executable=data['executable'], shell=True, close_fds=True,
+                                 stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdin = os.fdopen(master, 'w', 0)
+        else:
+            raise # Make sure we fall back to no pty's if requested
+    except:
+        p = subprocess.Popen(data['cmd'], executable=data['executable'], shell=True, close_fds=True,
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdin = p.stdin
     (stdout, stderr) = p.communicate()
+    stdin.close()
     if stdout is None:
         stdout = ''
     if stderr is None:

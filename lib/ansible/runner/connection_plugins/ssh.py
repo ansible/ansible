@@ -81,13 +81,19 @@ class Connection(object):
             os.write(self.wfd, "%s\n" % self.runner.remote_pass)
             os.close(self.wfd)
 
-    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', pty=True):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
 
-        if self.runner.sudo and sudoable:
+        if pty:
+            ssh_cmd += ['ssh', '-q', '-x', '-tt'] + self.common_args + [self.host]
+        else:
+            ssh_cmd += ['ssh', '-q', '-x', '-T'] + self.common_args + [self.host]
+
+        if not self.runner.sudo or not sudoable:
+            ssh_cmd += [executable + ' -c ' + pipes.quote(cmd)]
+        else:
             # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required.
             # Passing a quoted compound command to sudo (or sudo -s)
@@ -97,14 +103,14 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
-                prompt, sudo_user, pipes.quote(cmd))
-            cmd = sudocmd
-        ssh_cmd.append('/bin/sh -c ' + pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s %s -c %s' % (
+                prompt, sudo_user, executable, pipes.quote(cmd))
+            ssh_cmd += ['/bin/sh -c ' + pipes.quote(sudocmd)]
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
+            # (This is unrelated to the above pty option which affects pty _inside_ ssh)
             import pty
             master, slave = pty.openpty()
             p = subprocess.Popen(ssh_cmd, stdin=slave,
@@ -136,24 +142,23 @@ class Connection(object):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        stdout = ''
-        stderr = ''
-        while True:
-            rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
+        stdout = stderr = ''
+        fds = [p.stdout, p.stderr]
+        while fds:
+            rfd, wfd, efd = select.select(fds, [], [], 1)
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
                 stdout += dat
-                if dat == '':
-                    p.wait()
-                    break
-            elif p.stderr in rfd:
+                if not dat:
+                    fds.remove(p.stdout)
+            if p.stderr in rfd:
                 dat = os.read(p.stderr.fileno(), 9000)
                 stderr += dat
-                if dat == '':
-                    p.wait()
-                    break
-            elif p.poll() is not None:
+                if not dat:
+                    fds.remove(p.stderr)
+            if p.poll() is not None:
                 break
+        p.wait()
         stdin.close() # close stdin after we read from stdout (see also issue #848)
 
         if p.returncode != 0 and stderr.find('Bad configuration option: ControlPersist') != -1:
