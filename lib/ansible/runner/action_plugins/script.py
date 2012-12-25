@@ -16,14 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import traceback
 import shlex
 
-import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -51,18 +47,21 @@ class ActionModule(object):
 
         # fix file permissions when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
-            prepcmd = 'chmod a+rx %s' % tmp_src
+            prepcmd = 'chmod a+rx %s; ' % tmp_src
         else:
-            prepcmd = 'chmod +x %s' % tmp_src
+            prepcmd = 'chmod +x %s; ' % tmp_src
 
         # add preparation steps to one ssh roundtrip executing the script
-        module_args = prepcmd + '; ' + tmp_src + ' ' + args
+        module_args = prepcmd + tmp_src + ' ' + args
 
         handler = utils.plugins.action_loader.get('raw', self.runner)
         result = handler.run(conn, tmp, 'raw', module_args, inject)
 
         # clean up after
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
-            self.runner._low_level_exec_command(conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
+            cleanup = self.runner._low_level_exec_command(conn, 'rm -rf %s' % tmp, tmp, pty=False)
+            if cleanup['rc'] != 0 or cleanup['stderr'] != '':
+                raise errors.AnsibleError('FAILED: ' + cleanup['stderr'])
+
 
         return result

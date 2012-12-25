@@ -15,18 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
-
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import module_common
-from ansible.runner.return_data import ReturnData
-
 class ActionModule(object):
 
     def __init__(self, runner):
@@ -41,7 +29,6 @@ class ActionModule(object):
             module_args += " #USE_SHELL"
 
         (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject)
-        self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_path,
