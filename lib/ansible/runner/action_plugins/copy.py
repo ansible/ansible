@@ -16,15 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 
-import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -78,9 +72,12 @@ class ActionModule(object):
             # transfer the file to a remote tmp location
             tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
+
             # fix file permissions when the copy is done as a different user
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
+                chmod = self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp, pty=False)
+                if chmod['rc'] != 0 or chmod['stderr'] != '':
+                    raise errors.AnsibleError('FAILED: ' + chmod['stderr'])
 
             # run the copy module
             module_args = "%s src=%s" % (module_args, tmp_src)

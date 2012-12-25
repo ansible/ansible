@@ -16,15 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 
-import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -78,8 +72,9 @@ class ActionModule(object):
         xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
         # fix file permissions when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
-                tmp)
+            chmod = self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+            if chmod['rc'] != 0 or chmod['stderr'] != '':                                                                                                                                 
+                raise errors.AnsibleError('FAILED: ' + chmod['stderr'])
 
         # run the copy module
         module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)

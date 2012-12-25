@@ -199,11 +199,13 @@ class Runner(object):
 
         (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject)
 
-        cmd_mod = ""
+        # Collate additional commands in one ssh roundtrip
+        prepcmd = ""
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            cmd_chmod = "chmod a+r %s" % remote_module_path
-            self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
+            prepcmd += "chmod a+r %s; " % remote_module_path
+        if async_module:
+            prepcmd += "chmod a+rx %s" % async_module
 
         cmd = ""
         if not is_new_style:
@@ -222,11 +224,11 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = shebang.replace("#!","") + " " + cmd
+        cmd = prepcmd + shebang.replace("#!","") + " " + cmd
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        return ReturnData(conn=conn, result=res['stdout'])
+        result = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+        return ReturnData(conn=conn, result=result['stdout'])
 
     # *****************************************************
 
@@ -464,27 +466,29 @@ class Runner(object):
     def _remote_md5(self, conn, tmp, path):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1" % (path,path)
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; " % (path, path)
         md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
-            "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
-            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
-            "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
-            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path       # Openbsd
+            "/usr/bin/md5sum %s" % path,  # Linux
+            "/sbin/md5sum -q %s" % path,  # ?
+            "/usr/bin/digest -a md5 %s" % path,   # Solaris 10+
+            "/sbin/md5 -q %s" % path,     # Freebsd
+            "/usr/bin/md5 -n %s" % path,  # Netbsd
+            "/bin/md5 -q %s" % path,      # Openbsd
+            "echo \"${rc} %s\"" % path,
         ]
 
-        cmd = " || ".join(md5s)
-        cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
-        data2 = utils.last_non_blank_line(data['stdout'])
+        cmd = test + " || ".join(md5s)
+        result = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, pty=False)
+        md5line = utils.last_non_blank_line(result['stdout'])
         try:
-            return data2.split()[0]
+            if result['rc'] != 0 or result['stdout'] == '':
+                raise # Bail out if no md5 command worked or the output was empty
+            return md5line.split()[0]
         except IndexError:
             sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % md5s)
             sys.stderr.write("----\n")
-            sys.stderr.write("output: %s\n" % data)
+            sys.stderr.write("output: %s\n" % result)
             sys.stderr.write("----\n")
             # this will signal that it changed and allow things to keep going
             return "INVALIDMD5SUM"
@@ -499,14 +503,18 @@ class Runner(object):
         if self.sudo and self.sudo_user != 'root':
             basetmp = os.path.join('/tmp', basefile)
 
-        cmd = 'mkdir -p %s' % basetmp
+        cmds = [ 'mkdir -p %s' % basetmp ]
         if self.remote_user != 'root':
-            cmd += ' && chmod a+rx %s' % basetmp
-        cmd += ' && echo %s' % basetmp
+            cmds.append('chmod a+rx %s' % basetmp)
+        cmds.append('echo %s' % basetmp)
 
-        result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-        rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
-        return rc
+        cmd = ' && '.join(cmds)
+
+        result = self._low_level_exec_command(conn, cmd, None, sudoable=False, pty=False)
+        if result['rc'] != 0 or result['stderr'] != '':
+            raise errors.AnsibleError('FAILED: ' + result['stderr'])
+        tmppath = utils.last_non_blank_line(result['stdout']).strip() + '/'
+        return tmppath
 
 
     # *****************************************************
