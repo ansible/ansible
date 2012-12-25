@@ -34,7 +34,18 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        return ReturnData(conn=conn,
-            result=self.runner._low_level_exec_command(conn, module_args.encode('utf-8'), tmp, sudoable=True)
-        )
+        executable = None
+        pty = False
+        args = []
+        for arg in module_args.split(' '):
+            if arg.startswith('executable='):
+                executable = '='.join(arg.split('=')[1:])
+            elif arg.startswith('pty='):
+                pty = utils.boolean('='.join(arg.split('=')[1:]))
+            else:
+                args.append(arg)
+        module_args = ' '.join(args).encode('utf-8')
 
+        return ReturnData(conn=conn,
+            result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable, pty=pty)
+        )
