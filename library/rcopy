@@ -85,6 +85,9 @@ def main():
     md5sum_src = module.md5(src)
     md5sum_dest = None
 
+    if not os.path.exists(dest):
+        os.makedirs(dest)
+
     if os.path.exists(dest):
         if not os.access(dest, os.W_OK):
             module.fail_json(msg="Destination %s not writable" % (dest))
