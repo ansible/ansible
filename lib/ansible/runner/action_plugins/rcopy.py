@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import fnmatch
 import os
+import re
 import pwd
 import random
 import traceback
 import tempfile
 from collections import defaultdict
 
-import ansible.constants as C
+import ansible.constants as c
 from ansible import utils
 from ansible import errors
 from ansible import module_common
@@ -71,11 +73,16 @@ class ActionModule(object):
         else:
             source_base = utils.rreplace(os.path.basename(source), '', source)
 
+        # Prepare list of excluded files
+        excludes = c.DEFAULT_RCOPY_EXCLUDE.strip().split(',')
+        excludes = r'|'.join([fnmatch.translate(x) for x in excludes]) or r'$.'
+
         file_queue = defaultdict(list)
 
         if os.path.isdir(source):
             for directory, sub_folders, filenames in os.walk(source):
                 directory = utils.lreplace(source_base, '', directory)
+                filenames = [f for f in filenames if not re.match(excludes, f)]
                 file_queue[directory] = []
                 for filename in filenames:
                     file_queue[directory].append(filename)
