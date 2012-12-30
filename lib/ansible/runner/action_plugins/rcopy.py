@@ -107,8 +107,8 @@ class ActionModule(object):
 
                 remote_md5 = self.runner._remote_md5(conn, tmp, dest)
                 tmp_src = tmp + os.path.basename(source_file)
-                module_options.update({'src': tmp_src, 'dest': dest_file})
 
+                module_options.update({'src': '"%s"' % tmp_src, 'dest': '"%s"' % dest_file})
                 module_args = ' '.join(['%s=%s' % (key, value) for (key, value) in module_options.items()])
 
                 exec_rc = None
