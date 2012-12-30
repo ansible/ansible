@@ -12,7 +12,7 @@ notes:
 examples:
     - code: ansible all -m get_devices
       description: Obtain Devices information from all hosts.
-author: josefbacik , Kavin Kankeshwar
+author: josefbacik ,Brian Coca, Kavin Kankeshwar
 '''
 
 ##
