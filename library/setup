@@ -495,7 +495,8 @@ class LinuxHardware(Hardware):
                     except IOError:
                         pass
 
-                    part['size'] = float(part['sectors']) * float(part['sectorsize'])
+                    part['size'] = module.pretty_bytes((float(part['sectors']) *
+                    float(part['sectorsize'])))
                     d['partitions'][partname] = part
 
 

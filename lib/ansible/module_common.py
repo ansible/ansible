@@ -670,6 +670,23 @@ class AnsibleModule(object):
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
+    def pretty_bytes(self,size):
+
+        ranges = (
+            (1<<50L, 'ZB'),
+            (1<<50L, 'EB'),
+            (1<<50L, 'PB'),
+            (1<<40L, 'TB'),
+            (1<<30L, 'GB'),
+            (1<<20L, 'MB'),
+            (1<<10L, 'KB'),
+            (1, 'Bytes')
+        )
+        for limit, suffix in ranges:
+            if size >= limit:
+                break
+        return '%.2f %s' % (float(size)/ limit, suffix)
+
 # == END DYNAMICALLY INSERTED CODE ===
 
 """
