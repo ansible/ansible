@@ -53,9 +53,10 @@ class Connection(object):
             self.port = self.runner.remote_port
 
     def _cache_key(self):
-        return "%s__%s__" % (self.host, self.runner.remote_user)
+        return "%s__%s__" % (self.host, self.remote_user)
 
     def connect(self):
+        self.remote_user = self.runner.remote_user
         cache_key = self._cache_key()
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
@@ -69,27 +70,32 @@ class Connection(object):
         if not HAVE_PARAMIKO:
             raise errors.AnsibleError("paramiko is not installed")
 
-        user = self.runner.remote_user
+        # remote user and port set earlier to make caching work right
+        self.remote_pass = self.runner.remote_pass
+        self.sudo = self.runner.sudo
+        self.sudo_user = self.runner.sudo_user
+        self.private_key_file = self.runner.private_key_file
+        self.timeout = self.runner.timeout
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (user, self.port, self.host), host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.remote_user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         allow_agent = True
-        if self.runner.remote_pass is not None:
+        if self.remote_pass is not None:
             allow_agent = False
         try:
-            ssh.connect(self.host, username=user, allow_agent=allow_agent, look_for_keys=True,
-                key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
-                timeout=self.runner.timeout, port=self.port)
+            ssh.connect(self.host, username=self.remote_user, allow_agent=allow_agent, look_for_keys=True,
+                key_filename=self.private_key_file, password=self.remote_pass,
+                timeout=self.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif "Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    user, self.host, self.port, msg)
+                    self.remote_user, self.host, self.port, msg)
                 raise errors.AnsibleConnectionFailed(msg)
             else:
                 raise errors.AnsibleConnectionFailed(msg)
@@ -109,7 +115,7 @@ class Connection(object):
             raise errors.AnsibleConnectionFailed(msg)
         chan.get_pty()
 
-        if not self.runner.sudo or not sudoable:
+        if not self.sudo or not sudoable:
             quoted_command = '/bin/sh -c ' + pipes.quote(cmd)
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
@@ -130,7 +136,7 @@ class Connection(object):
             sudo_output = ''
             try:
                 chan.exec_command(shcmd)
-                if self.runner.sudo_pass:
+                if self.sudo_pass:
                     while not sudo_output.endswith(prompt):
                         chunk = chan.recv(bufsize)
                         if not chunk:
@@ -141,7 +147,7 @@ class Connection(object):
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
                         sudo_output += chunk
-                    chan.sendall(self.runner.sudo_pass + '\n')
+                    chan.sendall(self.sudo_pass + '\n')
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
@@ -162,7 +168,7 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self):
-        cache_key = "%s__%s__" % (self.host, self.runner.remote_user)
+        cache_key = "%s__%s__" % (self.host, self.remote_user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
