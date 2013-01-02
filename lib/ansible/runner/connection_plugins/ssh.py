@@ -40,8 +40,8 @@ class Connection(object):
     def connect(self):
         ''' connect to the remote host '''
 
-        self.remote_user = self.runner.remote_user
-        self.remote_pass = self.runner.remote_pass
+        self.remote_user = self.inject.get('ssh_user', self.runner.remote_user)
+        self.remote_pass = self.inject.get('ssh_pass', self.runner.remote_pass)
         self.sudo = self.runner.sudo
         self.sudo_user = self.runner.sudo_user
         self.private_key_file = self.runner.private_key_file
