@@ -39,7 +39,14 @@ class Connection(object):
     def connect(self):
         ''' connect to the remote host '''
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
+        self.remote_user = self.runner.remote_user
+        self.remote_pass = self.runner.remote_pass
+        self.sudo = self.runner.sudo
+        self.sudo_user = self.runner.sudo_user
+        self.private_key_file = self.runner.private_key_file
+        self.timeout = self.runner.timeout
+
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.remote_user, host=self.host)
 
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -52,20 +59,20 @@ class Connection(object):
         self.common_args += ["-o", "StrictHostKeyChecking=no"]
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
-        if self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+self.runner.private_key_file]
-        if self.runner.remote_pass:
+        if self.private_key_file is not None:
+            self.common_args += ["-o", "IdentityFile="+self.private_key_file]
+        if self.remote_pass:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
-        self.common_args += ["-o", "User="+self.runner.remote_user]
+        self.common_args += ["-o", "User="+self.remote_user]
 
         return self
 
     def _password_cmd(self):
-        if self.runner.remote_pass:
+        if self.remote_pass:
             try:
                 p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -77,9 +84,9 @@ class Connection(object):
         return []
 
     def _send_password(self):
-        if self.runner.remote_pass:
+        if self.remote_pass:
             os.close(self.rfd)
-            os.write(self.wfd, "%s\n" % self.runner.remote_pass)
+            os.write(self.wfd, "%s\n" % self.remote_pass)
             os.close(self.wfd)
 
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):
@@ -88,7 +95,7 @@ class Connection(object):
         ssh_cmd = self._password_cmd()
         ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
 
-        if not self.runner.sudo or not sudoable:
+        if not self.sudo or not sudoable:
             if executable:
                 ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
             else:
@@ -112,13 +119,13 @@ class Connection(object):
 
         self._send_password()
 
-        if self.runner.sudo and sudoable and self.runner.sudo_pass:
+        if self.sudo and sudoable and self.sudo_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             sudo_output = ''
             while not sudo_output.endswith(prompt):
                 rfd, wfd, efd = select.select([p.stdout], [],
-                                              [p.stdout], self.runner.timeout)
+                                              [p.stdout], self.timeout)
                 if p.stdout in rfd:
                     chunk = p.stdout.read()
                     if not chunk:
@@ -127,7 +134,7 @@ class Connection(object):
                 else:
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-            stdin.write(self.runner.sudo_pass + '\n')
+            stdin.write(self.sudo_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
