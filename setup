@@ -276,7 +276,7 @@ class LinuxHardware(Hardware):
     - processor_cores
     - processor_count
 
-    In addition, it also defines number of DMI facts.
+    In addition, it also defines number of DMI facts and device facts.
     """
 
     platform = 'Linux'
@@ -309,6 +309,8 @@ class LinuxHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_device_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_memory_facts(self):
@@ -365,6 +367,99 @@ class LinuxHardware(Hardware):
             else:
                 self.facts[key] = 'NA'
 
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        mtab = get_file_content('/etc/mtab')
+        for line in mtab.split('\n'):
+            if line.startswith('/'):
+                fields = line.rstrip('\n').split()
+                self.facts['mounts'].append({'mount': fields[1], 'device':fields[0], 'fstype': fields[2], 'options': fields[3]})
+
+    def get_device_facts(self):
+        self.facts['devices'] = {}
+        lspci = module.get_bin_path('lspci')
+        if lspci:
+            rc, pcidata, err = module.run_command(lspci)
+
+        for block in os.listdir("/sys/block"):
+            virtual = 0
+            sysfs_no_links = 0
+            try:
+                path = os.readlink(os.path.join("/sys/block/", block))
+            except OSError, e:
+                if e.errno == errno.EINVAL:
+                    path = block
+                    sysfs_no_links = 1
+                else:
+                    continue
+            if re.search("virtual", path):
+                continue
+            sysdir = os.path.join("/sys/block", path)
+            if sysfs_no_links == 1:
+                for folder in os.listdir(sysdir):
+                    if re.search("device", folder):
+                        virtual = 1
+                        break
+                if virtual:
+                    continue
+            d = {}
+            m = re.match(".*/(.+)$", sysdir)
+            diskname = m.group(1)
+            for key in ['vendor', 'model']:
+                d[key] = get_file_content(sysdir + "/device/" + key)
+
+            for key,test in [ ('removable','/removable'), \
+                              ('support_discard','/queue/discard_granularity'),
+                              ]:
+                d[key] = get_file_content(sysdir + test)
+
+            d['partitions'] = {}
+            for folder in os.listdir(sysdir):
+                m = re.search("(" + diskname + "\d+)", folder)
+                if m:
+                    part = {}
+                    partname = m.group(1)
+                    part_sysdir = sysdir + "/" + partname
+
+                    part['start'] = get_file_content(part_sysdir + "/start",0)
+                    part['sectors'] = get_file_content(part_sysdir + "/size",0)
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
+                    part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    d['partitions'][partname] = part
+
+            d['rotational'] = get_file_content(sysdir + "/queue/rotational")
+            d['scheduler_mode'] = ""
+            scheduler = get_file_content(sysdir + "/queue/scheduler")
+            m = re.match(".*?(\[(.*)\])", scheduler)
+            if m:
+                d['scheduler_mode'] = m.group(2)
+
+            d['sectors'] = get_file_content(sysdir + "/size")
+            d['sectors'] = d['sectors'] if d['sectors'] else 0
+            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = d['sectorsize'] if d['sectorsize'] else 512
+            d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
+
+            d['host'] = ""
+            m = re.match(".+/\d+:(\w+:\w+\.\w)/host\d+/\s*", sysdir)
+            if m:
+                pciid = m.group(1)
+                did = re.escape(pciid)
+                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                d['host'] = m.group(1)
+
+            d['holders'] = []
+            for folder in os.listdir(sysdir + "/holders"):
+                if re.search("^dm-.*", folder):
+                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    d['holders'].append(name)
+                else:
+                    d['holders'].append(folder)
+
+            self.facts['devices'][diskname] = d
+
+
 class SunOSHardware(Hardware):
     """
     In addition to the generic memory and cpu facts, this also sets
@@ -416,6 +511,7 @@ class FreeBSDHardware(Hardware):
     - processor (a list)
     - processor_cores
     - processor_count
+    - devices
     """
     platform = 'FreeBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
@@ -426,6 +522,8 @@ class FreeBSDHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_device_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -470,6 +568,30 @@ class FreeBSDHardware(Hardware):
         data = lines[-1].split()
         self.facts['swaptotal_mb'] = data[1]
         self.facts['swapfree_mb'] = data[3]
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        fstab = get_file_content('/etc/fstab')
+        for line in fstab.split('\n'):
+            if line.startswith('#') or line.strip() == '':
+                continue
+            fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+            self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+
+    def get_device_facts(self):
+        sysdir = '/dev'
+        self.facts['devices'] = {}
+        drives = re.compile('(ada?\d+|da\d+|a?cd\d+)') #TODO: rc, disks, err = module.run_command("/sbin/sysctl kern.disks")
+        slices = re.compile('(ada?\d+s\d+\w*|da\d+s\d+\w*)')
+        if os.path.isdir(sysdir):
+            dirlist = sorted(os.listdir(sysdir))
+            for device in dirlist:
+                d = drives.match(device)
+                if d:
+                    self.facts['devices'][d.group(1)] = []
+                s = slices.match(device)
+                if s:
+                    self.facts['devices'][d.group(1)].append(s.group(1))
 
 class Network(Facts):
     """
@@ -846,12 +968,12 @@ class SunOSVirtual(Virtual):
                     self.facts['virtualization_type'] = 'virtualbox'
                     self.facts['virtualization_role'] = 'guest'
 
-def get_file_content(path):
-    data = None
+def get_file_content(path, default=None):
+    data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
         data = open(path).read().strip()
         if len(data) == 0:
-            data = None
+            data = default
     return data
 
 def ansible_facts():
