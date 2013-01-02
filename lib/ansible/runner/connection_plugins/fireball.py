@@ -34,7 +34,7 @@ except ImportError:
 class Connection(object):
     ''' ZeroMQ accelerated connection '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, inject):
 
         self.runner = runner
 
@@ -51,6 +51,8 @@ class Connection(object):
             self.port = constants.ZEROMQ_PORT
         else:
             self.port = port
+
+        self.inject = inject.copy()
 
     def connect(self):
         ''' activates the connection object '''

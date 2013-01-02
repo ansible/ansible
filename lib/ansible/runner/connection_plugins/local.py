@@ -25,11 +25,12 @@ from ansible.callbacks import vvv
 class Connection(object):
     ''' Local based connections '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, inject):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
         self.port = port 
+        self.inject = inject.copy()
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
