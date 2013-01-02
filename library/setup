@@ -468,10 +468,19 @@ class LinuxHardware(Hardware):
                     if partname in mounts:
                         part = mounts[partname]
 
+                    # get start sector
+                    part['start'] = 0
+                    try:
+                        f = open(part_sysdir + "/start")
+                        part['start'] = f.read().rstrip()
+                        f.close()
+                    except IOError:
+                        pass
+
                     # populate sectors
                     part['sectors'] = 0
                     try:
-                        f = open(sysdir + "/size")
+                        f = open(part_sysdir + "/size")
                         part['sectors'] = f.read().rstrip()
                         f.close()
                     except IOError:
@@ -480,7 +489,7 @@ class LinuxHardware(Hardware):
                     # populate sector size
                     part['sectorsize'] = "512"
                     try:
-                        f = open(sysdir + "/queue/hw_sector_size")
+                        f = open(part_sysdir + "/queue/hw_sector_size")
                         part['sectorsize'] = f.read().rstrip()
                         f.close()
                     except IOError:
