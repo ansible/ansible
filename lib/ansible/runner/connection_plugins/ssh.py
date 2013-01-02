@@ -31,10 +31,11 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, inject):
         self.runner = runner
         self.host = host
         self.port = port
+        self.inject = inject.copy()
 
     def connect(self):
         ''' connect to the remote host '''

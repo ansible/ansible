@@ -43,7 +43,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port=None):
+    def __init__(self, runner, host, port=None, inject={}):
 
         self.ssh = None
         self.sftp = None
@@ -52,6 +52,7 @@ class Connection(object):
         self.port = port
         if port is None:
             self.port = self.runner.remote_port
+        self.inject = inject.copy()
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.remote_user)

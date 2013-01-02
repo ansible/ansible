@@ -393,7 +393,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, actual_port, inject)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
