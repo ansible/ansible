@@ -57,7 +57,7 @@ class Connection(object):
         return "%s__%s__" % (self.host, self.remote_user)
 
     def connect(self):
-        self.remote_user = self.runner.remote_user
+        self.remote_user = self.inject.get('ssh_user', self.runner.remote_user)
         cache_key = self._cache_key()
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
@@ -72,7 +72,7 @@ class Connection(object):
             raise errors.AnsibleError("paramiko is not installed")
 
         # remote user and port set earlier to make caching work right
-        self.remote_pass = self.runner.remote_pass
+        self.remote_pass = self.inject.get('ssh_pass', self.runner.remote_pass)
         self.sudo = self.runner.sudo
         self.sudo_user = self.runner.sudo_user
         self.private_key_file = self.runner.private_key_file
