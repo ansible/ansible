@@ -1,10 +1,9 @@
-Les fichiers binaires ansible.orig/.git/index et ansible/.git/index sont différents
-diff -uNr ansible.orig/Makefile ansible/Makefile
---- ansible.orig/Makefile	2012-11-16 09:30:00.232106580 +0100
-+++ ansible/Makefile	2012-11-16 09:31:06.606482546 +0100
+diff -x .git -x build -uNr ansible.orig/Makefile ansible/Makefile
+--- ansible.orig/Makefile	2012-12-18 14:45:02.474655411 -0500
++++ ansible/Makefile	2012-12-18 14:42:42.091195468 -0500
 @@ -24,7 +24,7 @@
  ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
- MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1
+ MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1
  
 -SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 +SITELIB = $(shell python2 -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
@@ -28,3 +27,567 @@ diff -uNr ansible.orig/Makefile ansible/Makefile
  
  rpmcommon: sdist
  	@mkdir -p rpm-build
+diff -x .git -x build -uNr ansible.orig/bin/ansible ansible/bin/ansible
+--- ansible.orig/bin/ansible	2012-12-18 14:45:02.474655411 -0500
++++ ansible/bin/ansible	2012-12-18 14:42:42.054528761 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+ #
+diff -x .git -x build -uNr ansible.orig/bin/ansible-doc ansible/bin/ansible-doc
+--- ansible.orig/bin/ansible-doc	2012-12-18 14:45:02.474655411 -0500
++++ ansible/bin/ansible-doc	2012-12-18 14:42:42.057862098 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+ #
+diff -x .git -x build -uNr ansible.orig/bin/ansible-playbook ansible/bin/ansible-playbook
+--- ansible.orig/bin/ansible-playbook	2012-12-18 14:45:02.474655411 -0500
++++ ansible/bin/ansible-playbook	2012-12-18 14:42:42.057862098 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+ 
+ # This file is part of Ansible
+diff -x .git -x build -uNr ansible.orig/bin/ansible-pull ansible/bin/ansible-pull
+--- ansible.orig/bin/ansible-pull	2012-12-18 14:45:02.474655411 -0500
++++ ansible/bin/ansible-pull	2012-12-18 14:42:42.057862098 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+ #
+diff -x .git -x build -uNr ansible.orig/docsite/build-site.py ansible/docsite/build-site.py
+--- ansible.orig/docsite/build-site.py	2012-12-18 14:45:02.481322085 -0500
++++ ansible/docsite/build-site.py	2012-12-18 14:42:42.051195425 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+ #
+ # This file is part of the Ansible Documentation
+diff -x .git -x build -uNr ansible.orig/docsite/rst/api.rst ansible/docsite/rst/api.rst
+--- ansible.orig/docsite/rst/api.rst	2012-12-18 14:45:02.481322085 -0500
++++ ansible/docsite/rst/api.rst	2012-12-18 14:42:42.037862078 -0500
+@@ -49,7 +49,7 @@
+ 
+ The following script prints out the uptime information for all hosts::
+ 
+-    #!/usr/bin/python
++    #!/usr/bin/python2
+ 
+     import ansible.runner
+     import sys
+diff -x .git -x build -uNr ansible.orig/docsite/rst/moduledev.rst ansible/docsite/rst/moduledev.rst
+--- ansible.orig/docsite/rst/moduledev.rst	2012-12-18 14:45:02.481322085 -0500
++++ ansible/docsite/rst/moduledev.rst	2012-12-18 14:42:42.034528741 -0500
+@@ -36,7 +36,7 @@
+ 
+ Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time`::
+ 
+-    #!/usr/bin/python
++    #!/usr/bin/python2
+ 
+     import datetime
+     import json
+@@ -88,7 +88,7 @@
+ is highly verbose because it's intended as an educational example.  You can write modules
+ a lot shorter than this::
+ 
+-    #!/usr/bin/python
++    #!/usr/bin/python2
+ 
+     # import some python modules that we'll use.  These are all
+     # available in Python's core
+@@ -334,7 +334,7 @@
+ 
+ Include it in your module file like this::
+ 
+-    #!/usr/bin/env python
++    #!/usr/bin/env python2
+     # Copyright header....
+ 
+     DOCUMENTATION = '''
+diff -x .git -x build -uNr ansible.orig/examples/scripts/uptime.py ansible/examples/scripts/uptime.py
+--- ansible.orig/examples/scripts/uptime.py	2012-12-18 14:45:02.484655421 -0500
++++ ansible/examples/scripts/uptime.py	2012-12-18 14:42:42.134528847 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+ # example of getting the uptime of all hosts, 10 at a time
+ 
+diff -x .git -x build -uNr ansible.orig/hacking/module_formatter.py ansible/hacking/module_formatter.py
+--- ansible.orig/hacking/module_formatter.py	2012-12-18 14:45:02.484655421 -0500
++++ ansible/hacking/module_formatter.py	2012-12-18 14:42:42.061195435 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+ #
+ # This file is part of Ansible
+diff -x .git -x build -uNr ansible.orig/hacking/test-module ansible/hacking/test-module
+--- ansible.orig/hacking/test-module	2012-12-18 14:45:02.484655421 -0500
++++ ansible/hacking/test-module	2012-12-18 14:42:42.057862098 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+ #
+diff -x .git -x build -uNr ansible.orig/lib/ansible/utils/module_docs.py ansible/lib/ansible/utils/module_docs.py
+--- ansible.orig/lib/ansible/utils/module_docs.py	2012-12-18 14:45:02.487988758 -0500
++++ ansible/lib/ansible/utils/module_docs.py	2012-12-18 14:42:42.247862299 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+ #
+ # This file is part of Ansible
+diff -x .git -x build -uNr ansible.orig/library/apt ansible/library/apt
+--- ansible.orig/library/apt	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/apt	2012-12-18 14:42:42.067862109 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python -tt
++#!/usr/bin/python2 -tt
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Flowroute LLC
+diff -x .git -x build -uNr ansible.orig/library/apt_repository ansible/library/apt_repository
+--- ansible.orig/library/apt_repository	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/apt_repository	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Matt Wright <matt@nobien.net>
+diff -x .git -x build -uNr ansible.orig/library/assemble ansible/library/assemble
+--- ansible.orig/library/assemble	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/assemble	2012-12-18 14:42:42.071195445 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/async_status ansible/library/async_status
+--- ansible.orig/library/async_status	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/async_status	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+diff -x .git -x build -uNr ansible.orig/library/async_wrapper ansible/library/async_wrapper
+--- ansible.orig/library/async_wrapper	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/async_wrapper	2012-12-18 14:42:42.077862120 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+diff -x .git -x build -uNr ansible.orig/library/authorized_key ansible/library/authorized_key
+--- ansible.orig/library/authorized_key	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/authorized_key	2012-12-18 14:42:42.087862131 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ """
+diff -x .git -x build -uNr ansible.orig/library/command ansible/library/command
+--- ansible.orig/library/command	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/command	2012-12-18 14:42:42.071195445 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+diff -x .git -x build -uNr ansible.orig/library/copy ansible/library/copy
+--- ansible.orig/library/copy	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/copy	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/cron ansible/library/cron
+--- ansible.orig/library/cron	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/cron	2012-12-18 14:42:42.061195435 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ #
+ # (c) 2012, Dane Summers <dsummers@pinedesk.biz>
+diff -x .git -x build -uNr ansible.orig/library/debug ansible/library/debug
+--- ansible.orig/library/debug	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/debug	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # Copyright 2012 Dag Wieers <dag@wieers.com>
+diff -x .git -x build -uNr ansible.orig/library/easy_install ansible/library/easy_install
+--- ansible.orig/library/easy_install	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/easy_install	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Matt Wright <matt@nobien.net>
+diff -x .git -x build -uNr ansible.orig/library/ec2 ansible/library/ec2
+--- ansible.orig/library/ec2	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/ec2	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python -tt
++#!/usr/bin/python2 -tt
+ # This file is part of Ansible
+ #
+ # Ansible is free software: you can redistribute it and/or modify
+diff -x .git -x build -uNr ansible.orig/library/facter ansible/library/facter
+--- ansible.orig/library/facter	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/facter	2012-12-18 14:42:42.067862109 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/fail ansible/library/fail
+--- ansible.orig/library/fail	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/fail	2012-12-18 14:42:42.071195445 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # Copyright 2012 Dag Wieers <dag@wieers.com>
+diff -x .git -x build -uNr ansible.orig/library/file ansible/library/file
+--- ansible.orig/library/file	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/file	2012-12-18 14:42:42.067862109 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/fireball ansible/library/fireball
+--- ansible.orig/library/fireball	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/fireball	2012-12-18 14:42:42.077862120 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/get_url ansible/library/get_url
+--- ansible.orig/library/get_url	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/get_url	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/git ansible/library/git
+--- ansible.orig/library/git	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/git	2012-12-18 14:42:42.067862109 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/group ansible/library/group
+--- ansible.orig/library/group	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/group	2012-12-18 14:42:42.064528772 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/ini_file ansible/library/ini_file
+--- ansible.orig/library/ini_file	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/ini_file	2012-12-18 14:42:42.081195457 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/lineinfile ansible/library/lineinfile
+--- ansible.orig/library/lineinfile	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/lineinfile	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+diff -x .git -x build -uNr ansible.orig/library/mail ansible/library/mail
+--- ansible.orig/library/mail	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/mail	2012-12-18 14:42:42.064528772 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # Copyright 2012 Dag Wieers <dag@wieers.com>
+diff -x .git -x build -uNr ansible.orig/library/mount ansible/library/mount
+--- ansible.orig/library/mount	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/mount	2012-12-18 14:42:42.061195435 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Red Hat, inc
+diff -x .git -x build -uNr ansible.orig/library/mysql_db ansible/library/mysql_db
+--- ansible.orig/library/mysql_db	2012-12-18 14:45:02.487988758 -0500
++++ ansible/library/mysql_db	2012-12-18 14:42:42.087862131 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/mysql_user ansible/library/mysql_user
+--- ansible.orig/library/mysql_user	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/mysql_user	2012-12-18 14:42:42.081195457 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ # (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+ # Sponsored by Four Kitchens http://fourkitchens.com.
+diff -x .git -x build -uNr ansible.orig/library/nagios ansible/library/nagios
+--- ansible.orig/library/nagios	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/nagios	2012-12-18 14:42:42.081195457 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ #
+ # This file is largely copied from the Nagios module included in the
+diff -x .git -x build -uNr ansible.orig/library/ohai ansible/library/ohai
+--- ansible.orig/library/ohai	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/ohai	2012-12-18 14:42:42.061195435 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/ping ansible/library/ping
+--- ansible.orig/library/ping	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/ping	2012-12-18 14:42:42.087862131 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/pip ansible/library/pip
+--- ansible.orig/library/pip	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/pip	2012-12-18 14:42:42.077862120 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Matt Wright <matt@nobien.net>
+diff -x .git -x build -uNr ansible.orig/library/postgresql_db ansible/library/postgresql_db
+--- ansible.orig/library/postgresql_db	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/postgresql_db	2012-12-18 14:42:42.087862131 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # This file is part of Ansible
+diff -x .git -x build -uNr ansible.orig/library/postgresql_user ansible/library/postgresql_user
+--- ansible.orig/library/postgresql_user	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/postgresql_user	2012-12-18 14:42:42.091195468 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # This file is part of Ansible
+diff -x .git -x build -uNr ansible.orig/library/seboolean ansible/library/seboolean
+--- ansible.orig/library/seboolean	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/seboolean	2012-12-18 14:42:42.064528772 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+ #
+diff -x .git -x build -uNr ansible.orig/library/selinux ansible/library/selinux
+--- ansible.orig/library/selinux	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/selinux	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Derek Carter<goozbach@friocorte.com>
+diff -x .git -x build -uNr ansible.orig/library/service ansible/library/service
+--- ansible.orig/library/service	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/service	2012-12-18 14:42:42.064528772 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/setup ansible/library/setup
+--- ansible.orig/library/setup	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/setup	2012-12-18 14:42:42.071195445 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/slurp ansible/library/slurp
+--- ansible.orig/library/slurp	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/slurp	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/subversion ansible/library/subversion
+--- ansible.orig/library/subversion	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/subversion	2012-12-18 14:42:42.077862120 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/supervisorctl ansible/library/supervisorctl
+--- ansible.orig/library/supervisorctl	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/supervisorctl	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Matt Wright <matt@nobien.net>
+diff -x .git -x build -uNr ansible.orig/library/svr4pkg ansible/library/svr4pkg
+--- ansible.orig/library/svr4pkg	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/svr4pkg	2012-12-18 14:42:42.061195435 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Boyd Adamson <boyd () boydadamson.com>
+diff -x .git -x build -uNr ansible.orig/library/user ansible/library/user
+--- ansible.orig/library/user	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/user	2012-12-18 14:42:42.087862131 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Stephen Fromm <sfromm@gmail.com>
+diff -x .git -x build -uNr ansible.orig/library/virt ansible/library/virt
+--- ansible.orig/library/virt	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/virt	2012-12-18 14:42:42.067862109 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ """
+diff -x .git -x build -uNr ansible.orig/library/wait_for ansible/library/wait_for
+--- ansible.orig/library/wait_for	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/wait_for	2012-12-18 14:42:42.084528794 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+diff -x .git -x build -uNr ansible.orig/library/yum ansible/library/yum
+--- ansible.orig/library/yum	2012-12-18 14:45:02.491322095 -0500
++++ ansible/library/yum	2012-12-18 14:42:42.074528782 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python -tt
++#!/usr/bin/python2 -tt
+ # -*- coding: utf-8 -*-
+ 
+ # (c) 2012, Red Hat, Inc
+diff -x .git -x build -uNr ansible.orig/plugins/inventory/cobbler.py ansible/plugins/inventory/cobbler.py
+--- ansible.orig/plugins/inventory/cobbler.py	2012-12-18 14:45:02.491322095 -0500
++++ ansible/plugins/inventory/cobbler.py	2012-12-18 14:42:42.131195510 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ """
+ Cobbler external inventory script
+diff -x .git -x build -uNr ansible.orig/plugins/inventory/ec2.py ansible/plugins/inventory/ec2.py
+--- ansible.orig/plugins/inventory/ec2.py	2012-12-18 14:45:02.491322095 -0500
++++ ansible/plugins/inventory/ec2.py	2012-12-18 14:42:42.131195510 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ '''
+ EC2 external inventory script
+diff -x .git -x build -uNr ansible.orig/plugins/inventory/nova.py ansible/plugins/inventory/nova.py
+--- ansible.orig/plugins/inventory/nova.py	2012-12-18 14:45:02.491322095 -0500
++++ ansible/plugins/inventory/nova.py	2012-12-18 14:42:42.127862173 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ # (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
+ #
+diff -x .git -x build -uNr ansible.orig/plugins/inventory/yaml.py ansible/plugins/inventory/yaml.py
+--- ansible.orig/plugins/inventory/yaml.py	2012-12-18 14:45:02.491322095 -0500
++++ ansible/plugins/inventory/yaml.py	2012-12-18 14:42:42.131195510 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ # Support a YAML file hosts.yml as external inventory in Ansible
+ 
+ # Copyright (C) 2012  Jeroen Hoekx <jeroen@hoekx.be>
+diff -x .git -x build -uNr ansible.orig/setup.py ansible/setup.py
+--- ansible.orig/setup.py	2012-12-18 14:45:02.491322095 -0500
++++ ansible/setup.py	2012-12-18 14:42:42.134528847 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ import os
+ import sys
+diff -x .git -x build -uNr ansible.orig/test/inventory_api.py ansible/test/inventory_api.py
+--- ansible.orig/test/inventory_api.py	2012-12-18 14:45:02.494655432 -0500
++++ ansible/test/inventory_api.py	2012-12-18 14:42:42.097862141 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python2
+ 
+ import json
+ import sys
