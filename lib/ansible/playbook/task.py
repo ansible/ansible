@@ -97,7 +97,7 @@ class Task(object):
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
-            self.transport   = ds.get('transport', play.transport)
+            self.transport   = ds.get('connection', ds.get('transport', play.transport))
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
