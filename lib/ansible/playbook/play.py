@@ -244,6 +244,10 @@ class Play(object):
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+        if host is not None:
+            inject = self.playbook.SETUP_CACHE[host].copy()
+            inject.update(self.playbook.inventory.get_variables(host))
+
         for filename in self.vars_files:
 
             if type(filename) == list:
@@ -255,7 +259,7 @@ class Play(object):
                     filename2 = utils.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                        filename3 = utils.template(self.basedir, filename2, inject)
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -288,7 +292,7 @@ class Play(object):
                 filename2 = utils.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                    filename3 = utils.template(self.basedir, filename2, inject)
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue
