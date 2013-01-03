@@ -97,7 +97,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars={}):
+    def _load_tasks(self, tasks, vars={}, additional_conditions=[]):
         ''' handle task and handler include statements '''
 
         results = []
@@ -107,20 +107,25 @@ class Play(object):
             if 'include' in x:
                 tokens = shlex.split(x['include'])
                 items = ['']
+                included_additional_conditions = list(additional_conditions)
                 for k in x:
-                    if not k.startswith("with_"):
-                        if k in ("include", "vars"):
-                            continue
-                        else:
-                            raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
-                    plugin_name = k[5:]
-                    if plugin_name not in utils.plugins.lookup_loader:
-                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.template_ds(self.basedir, x[k], task_vars)
-                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    if k.startswith("with_"):
+                        plugin_name = k[5:]
+                        if plugin_name not in utils.plugins.lookup_loader:
+                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                        terms = utils.template_ds(self.basedir, x[k], task_vars)
+                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    elif k.startswith("when_"):
+                        included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                    elif k in ("include", "vars", "only_if"):
+                        pass
+                    else:
+                        raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
 
                 if 'vars' in x:
                     task_vars.update(x['vars'])
+                if 'only_if' in x:
+                    included_additional_conditions.append(x['only_if'])
 
                 for item in items:
                     mv = task_vars.copy()
@@ -130,9 +135,9 @@ class Play(object):
                         mv[k] = utils.template_ds(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    results += self._load_tasks(data, mv)
+                    results += self._load_tasks(data, mv, included_additional_conditions)
             elif type(x) == dict:
-                results.append(Task(self,x,module_vars=task_vars))
+                results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
                 raise Exception("unexpected task type")
 
