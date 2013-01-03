@@ -82,8 +82,8 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        self._tasks      = self._load_tasks(self._ds, 'tasks')
-        self._handlers   = self._load_tasks(self._ds, 'handlers')
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []))
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []))
 
         if self.tags is None:
             self.tags = []
@@ -97,14 +97,14 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, ds, keyname):
+    def _load_tasks(self, tasks, vars={}):
         ''' handle task and handler include statements '''
 
-        tasks = ds.get(keyname, [])
         results = []
         for x in tasks:
+            task_vars = self.vars.copy()
+            task_vars.update(vars)
             if 'include' in x:
-                task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
                 items = ['']
                 for k in x:
@@ -124,10 +124,8 @@ class Play(object):
                         mv[k] = utils.template_ds(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    for y in data:
-                        results.append(Task(self,y,module_vars=mv.copy()))
+                    results += self._load_tasks(data, mv)
             elif type(x) == dict:
-                task_vars = self.vars.copy()
                 results.append(Task(self,x,module_vars=task_vars))
             else:
                 raise Exception("unexpected task type")
