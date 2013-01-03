@@ -418,7 +418,7 @@ class LinuxHardware(Hardware):
 
             # populate metadata
             for key in ['vendor', 'model']:
-                d[key] = get_file_content("/device/" + key)
+                d[key] = get_file_content(sysdir + "/device/" + key)
 
             for key,test in [ ('removable','/removable'), \
                               ('support_discard','/queue/discard_granularity'),
