@@ -109,12 +109,18 @@ class Play(object):
                 items = ['']
                 for k in x:
                     if not k.startswith("with_"):
-                        continue
+                        if k in ("include", "vars"):
+                            continue
+                        else:
+                            raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
                     plugin_name = k[5:]
                     if plugin_name not in utils.plugins.lookup_loader:
                         raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
                     terms = utils.template_ds(self.basedir, x[k], task_vars)
                     items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+
+                if 'vars' in x:
+                    task_vars.update(x['vars'])
 
                 for item in items:
                     mv = task_vars.copy()
