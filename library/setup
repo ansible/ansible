@@ -276,7 +276,7 @@ class LinuxHardware(Hardware):
     - processor_cores
     - processor_count
 
-    In addition, it also defines number of DMI facts.
+    In addition, it also defines number of DMI facts and device facts.
     """
 
     platform = 'Linux'
@@ -379,14 +379,11 @@ class LinuxHardware(Hardware):
 
         # get mount data to use later
         mounts = {}
-        try:
-            mtab = open('/etc/mtab')
-            for line in mtab.readlines():
-                if line.startswith('/'):
-                    fields = line.rstrip('\n').split(' ')
-                    mounts[os.path.basename(fields[0])] = { 'mount':fields[1], 'fstype' : fields[2], 'mount_opts': fields[3] }
-        except IOError, e:
-                module.fail_json( msg="failed to open mtab: %s" % e)
+        mtab = get_file_content('/etc/mtab')
+        for line in mtab.split('\n'):
+            if line.startswith('/'):
+                fields = line.rstrip('\n').split(' ')
+                mounts[os.path.basename(fields[0])] = { 'mount':fields[1], 'fstype' : fields[2], 'mount_opts': fields[3] }
 
         sysfs_no_links = 0
         for block in os.listdir("/sys/block"):
@@ -421,37 +418,23 @@ class LinuxHardware(Hardware):
 
             # populate metadata
             for key in ['vendor', 'model']:
-                try:
-                    f = open(sysdir + "/device/%s" % key)
-                    d[key] = f.read().rstrip()
-                    f.close()
-                except IOError:
-                    pass
+                d[key] = get_file_content("/device/" + key)
 
             for key,test in [ ('removable','/removable'), \
                               ('support_discard','/queue/discard_granularity'),
                               ]:
                 d[key] = "No"
-                try:
-                    f = open(sysdir + test)
-                    results = f.read().rstrip()
-                    f.close()
-                    if results:
-                        d[key] = "Yes"
-                except IOError:
-                    d[key] = "Could not determine"
+                results = get_file_content(sysdir + test)
+                if results:
+                    d[key] = "Yes"
 
             # populate holders
             d['holders'] = []
             for folder in os.listdir(sysdir + "/holders"):
                 if re.search("^dm-.*", folder):
-                    try:
-                        f = open(sysdir + "/holders/" + folder + "/dm/name")
-                        name = f.read().rstrip()
-                        f.close()
-                        d['holders'].append(name)
-                    except IOError:
-                        d['holders'].append(folder)
+                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    d['holders'].append(name)
                 else:
                     d['holders'].append(folder)
 
@@ -468,79 +451,37 @@ class LinuxHardware(Hardware):
                     if partname in mounts:
                         part = mounts[partname]
 
-                    # get start sector
-                    part['start'] = 0
-                    try:
-                        f = open(part_sysdir + "/start")
-                        part['start'] = f.read().rstrip()
-                        f.close()
-                    except IOError:
-                        pass
+                    # populate geometry
+                    part['start'] = get_file_content(part_sysdir + "/start")
+                    part['start'] = part['start'] if part['start'] else 0
+                    part['sectors'] = get_file_content(part_sysdir + "/size")
+                    part['sectors'] = part['sectors'] if part['sectors'] else 0
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size")
+                    part['sectorsize'] = part['sectorsize'] if part['sectorsize'] else 512
+                    part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
 
-                    # populate sectors
-                    part['sectors'] = 0
-                    try:
-                        f = open(part_sysdir + "/size")
-                        part['sectors'] = f.read().rstrip()
-                        f.close()
-                    except IOError:
-                        pass
-
-                    # populate sector size
-                    part['sectorsize'] = "512"
-                    try:
-                        f = open(part_sysdir + "/queue/hw_sector_size")
-                        part['sectorsize'] = f.read().rstrip()
-                        f.close()
-                    except IOError:
-                        pass
-
-                    part['size'] = module.pretty_bytes((float(part['sectors']) *
-                    float(part['sectorsize'])))
                     d['partitions'][partname] = part
 
-
             # populate rotational
-            d['rotational'] = "SDD"
-            try:
-                f = open(sysdir + "/queue/rotational")
-                rotation = f.read().rstrip()
-                f.close()
-                if rotation == "1":
-                    d['rotational'] = "Spinning disk"
-            except IOError:
-                d['rotational'] = "Could not determine"
+            rotation = get_file_content(sysdir + "/queue/rotational")
+            if rotation == "1":
+                d['rotational'] = "Spinning disk"
+            else:
+                d['rotational'] = "SDD"
 
             # populate schedule
-            d['scheduler_mode'] = ""
-            try:
-                f = open(sysdir + "/queue/scheduler")
-                scheduler = f.read().rstrip()
-                f.close()
-                m = re.match(".*?(\[(.*)\])", scheduler)
-                if m:
-                    d['scheduler_mode'] = m.group(2)
-            except IOError:
-                d['scheduler_mode'] = "Could not determine"
+            scheduler = get_file_content(sysdir + "/queue/scheduler")
+            m = re.match(".*?(\[(.*)\])", scheduler)
+            if m:
+                d['scheduler_mode'] = m.group(2)
+            else:
+                d['scheduler_mode'] = ""
 
-            # populate sectors
-            d['sectors'] = 0
-            try:
-                f = open(sysdir + "/size")
-                d['sectors'] = f.read().rstrip()
-                f.close()
-            except IOError:
-                pass
-
-            # populate sector size
-            d['sectorsize'] = "512"
-            try:
-                f = open(sysdir + "/queue/hw_sector_size")
-                d['sectorsize'] = f.read().rstrip()
-                f.close()
-            except IOError:
-                pass
-
+            # populate geometry
+            d['sectors'] = get_file_content(sysdir + "/size")
+            d['sectors'] = d['sectors'] if d['sectors'] else 0
+            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = d['sectorsize'] if d['sectorsize'] else 512
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             # set host info
