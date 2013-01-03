@@ -262,6 +262,7 @@ class AnsibleModule(object):
         return context
 
     def user_and_group(self, filename):
+        filename = os.path.expanduser(filename)
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
@@ -338,6 +339,8 @@ class AnsibleModule(object):
         return changed
 
     def set_mode_if_different(self, path, mode, changed):
+        path = os.path.expanduser(path)
+
         if mode is None:
             return changed
         try:
