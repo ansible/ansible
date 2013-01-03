@@ -49,12 +49,10 @@ class Connection(object):
 
         vvv("EXEC %s" % cmd, host=self.host)
         basedir = self.runner.basedir
-        if basedir == '':
-            basedir = '.'
         p = subprocess.Popen(cmd, cwd=basedir, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        return ("", stdout, stderr)
+        return (p.returncode, '', stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
