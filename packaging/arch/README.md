@@ -8,6 +8,8 @@ You should use AUR to install [ansible-git][1], using `yaourt` for instance :
 
 You can also find a stable AUR package for the stable version of [ansible][1].
 
+Thanks to Mr Brown for Arch-node related patches.
+
   [1]: https://github.com/ramaze/ramaze
   [2]: https://github.com/paulasmuth/fnordmetric
 

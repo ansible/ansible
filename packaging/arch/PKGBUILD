@@ -1,6 +1,6 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20121116
+pkgver=20130103
 pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
@@ -10,7 +10,7 @@ depends=('python2' 'python2-yaml' 'python2-paramiko' 'python2-jinja' 'python-sim
 makedepends=('git' 'asciidoc' 'fakeroot')
 conflicts=('ansible')
 source=("python-binary.diff")
-md5sums=("8f1eb942a01bbf206dbe32bded8725c6")
+md5sums=("bec138eb631d4f2725c844f0eea3d51a")
 
 _gitroot="https://github.com/ansible/ansible"
 _gitname="ansible"
@@ -39,6 +39,8 @@ package() {
 
   mkdir -p ${pkgdir}/usr/share/ansible
   cp ./library/* ${pkgdir}/usr/share/ansible/
+  cp -r ./examples ${pkgdir}/usr/share/ansible
+
   python2 setup.py install -O1 --root=${pkgdir}
 
   install -D docs/man/man1/ansible.1 ${pkgdir}/usr/share/man/man1/ansible.1
