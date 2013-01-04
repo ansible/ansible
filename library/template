@@ -9,12 +9,13 @@ description:
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
        formatting can be found in the Template Designer Documentation
        (U(http://jinja.pocoo.org/docs/templates/)).
-     - "Four additional variables can be used in templates: C(ansible_managed) 
+     - "Six additional variables can be used in templates: C(ansible_managed) 
        (configurable via the C(defaults) section of C(ansible.cfg)) contains a string
        which can be used to describe the template name, host, modification time of the
        template file and the owner uid, C(template_host) contains the node name of 
-       the template's machine, C(template_uid) the owner, and C(template_path) the
-       file name."
+       the template's machine, C(template_uid) the owner, C(template_path) the
+       relative path of the template, C(template_fullpath) is the absolute path of the 
+       template, and C(template_run_date) is the date that the template was rendered."
 options:
   src:
     description:
