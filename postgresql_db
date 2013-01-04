@@ -78,7 +78,7 @@ else:
 #
 
 def set_owner(cursor, db, owner):
-    query = "ALTER DATABASE %s OWNER TO %s" % (db, owner)
+    query = "ALTER DATABASE \"%s\" OWNER TO \"%s\"" % (db, owner)
     cursor.execute(query)
     return True
 
@@ -95,7 +95,7 @@ def db_exists(cursor, db):
 
 def db_delete(cursor, db):
     if db_exists(cursor, db):
-        query = "DROP DATABASE %s" % db
+        query = "DROP DATABASE \"%s\"" % db
         cursor.execute(query)
         return True
     else:
@@ -104,9 +104,9 @@ def db_delete(cursor, db):
 def db_create(cursor, db, owner, template, encoding):
     if not db_exists(cursor, db):
         if owner:
-            owner = " OWNER %s" % owner
+            owner = " OWNER \"%s\"" % owner
         if template:
-            template = " TEMPLATE %s" % template
+            template = " TEMPLATE \"%s\"" % template
         if encoding:
             encoding = " ENCODING '%s'" % encoding
         query = "CREATE DATABASE %s%s%s%s" % (db, owner, template, encoding)
