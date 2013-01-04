@@ -46,8 +46,30 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
+  path:
+    description:
+      - the path to the authorized_keys file (AuthorizedKeysFile option in sshd_config)
+    required: false
+    default: .ssh/authorized_keys
+  uid:
+    description:
+      - the uid of the directory and file if required
+    default: -1 (which means the uid of the user)
+  gid:
+    description:
+      - the gid of the directory and file if required
+    default: -1 (which means the gid of the user)
+  dir_perm:
+    description:
+      - the octal permissions for the directory containing the authorized_keys file
+    default: 0600
+  file_perm:
+    description:
+      - the octal permissions for the authorized_keys file
+    default: 0700
 examples:
    - code: 'authorized_key: user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"'
+   - code: 'authorized_key: uid=0 gid=0 file_perm=0444 dir_perm=0755 path=/etc/ssh/%u-authorized_keys user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"'
      description: "Example from Ansible Playbooks"
    - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)'"
      description: "Shorthand available in Ansible 0.8 and later"
@@ -61,6 +83,11 @@ author: Brad Olson
 #    user = username
 #    key = line to add to authorized_keys for user
 #    state = absent|present (default: present)
+#    path = path to authorized_keys file
+#    uid = uid the authorized_keys should be set to
+#    gid = gid the authorized_keys should be set to
+#    file_perm = perms the authorized_keys file should be set to
+#    dir_perm = perms the directory containing the authorized_keys file should be set to
 #
 # see example in examples/playbooks
 
@@ -70,8 +97,10 @@ import pwd
 import os.path
 import tempfile
 import shutil
+import re
+import string
 
-def keyfile(module, user, write=False):
+def keyfile(module, user, path, uid, gid, file_perm, dir_perm, write=False):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
@@ -86,21 +115,32 @@ def keyfile(module, user, write=False):
     except KeyError, e:
         module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
     homedir    = user_entry.pw_dir
-    sshdir     = os.path.join(homedir, ".ssh")
-    keysfile   = os.path.join(sshdir, "authorized_keys")
+
+    # See AuthorizedKeysFile in sshd_config(5)
+    keysfile = re.sub(r'%u', user, path);
+    keysfile = re.sub(r'%h', user, keysfile);
+    keysfile = re.sub(r'%%', '%', keysfile);
+
+    if not keysfile.startswith('/'):
+        keysfile = os.path.join(homedir, keysfile)
+
+    sshdir  = os.path.dirname(keysfile)
 
     if not write:
         return keysfile
 
-    uid = user_entry.pw_uid
-    gid = user_entry.pw_gid
+    # Update these if they haven't been manually set
+    if uid < 0:
+        uid = user_entry.pw_uid
+    if gid < 0:
+        gid = user_entry.pw_gid
 
     if not os.path.exists(sshdir):
-        os.mkdir(sshdir, 0700)
+        os.mkdir(sshdir, dir_perm)
         if module.selinux_enabled():
             module.set_default_selinux_context(sshdir, False)
     os.chown(sshdir, uid, gid)
-    os.chmod(sshdir, 0700)
+    os.chmod(sshdir, dir_perm)
 
     if not os.path.exists( keysfile):
         try:
@@ -111,7 +151,7 @@ def keyfile(module, user, write=False):
             module.set_default_selinux_context(keysfile, False)
 
     os.chown(keysfile, uid, gid)
-    os.chmod(keysfile, 0600)
+    os.chmod(keysfile, file_perm)
     return keysfile
 
 def readkeys(filename):
@@ -142,9 +182,14 @@ def enforce_state(module, params):
     user  = params["user"]
     key   = params["key"]
     state = params.get("state", "present")
+    path  = params["path"]
+    uid   = string.atoi(params["uid"], 8)
+    gid   = string.atoi(params["gid"], 8)
+    file_perm = string.atoi(params["file_perm"], 8)
+    dir_perm = string.atoi(params["dir_perm"], 8)
 
     # check current state -- just get the filename, don't create file
-    params["keyfile"] = keyfile(module, user, write=False)
+    params["keyfile"] = keyfile(module, user, path, uid, gid, file_perm, dir_perm, write=False)
     keys = readkeys(params["keyfile"])
     present = key in keys
 
@@ -153,13 +198,13 @@ def enforce_state(module, params):
         if present:
             module.exit_json(changed=False)
         keys.append(key)
-        writekeys(module, keyfile(module, user,write=True), keys)
+        writekeys(module, keyfile(module, user, path, uid, gid, file_perm, dir_perm, write=True), keys)
 
     elif state=="absent":
         if not present:
             module.exit_json(changed=False)
         keys.remove(key)
-        writekeys(module, keyfile(module, user,write=True), keys)
+        writekeys(module, keyfile(module, user, path, uid, gid, file_perm, dir_perm, write=True), keys)
 
     params['changed'] = True
     return params
@@ -170,7 +215,12 @@ def main():
         argument_spec = dict(
            user  = dict(required=True),
            key   = dict(required=True),
-           state = dict(default='present', choices=['absent','present'])
+           state = dict(default='present', choices=['absent','present']),
+           path  = dict(default='.ssh/authorized_keys'),
+           uid   = dict(default='-1'),
+           gid   = dict(default='-1'),
+           file_perm = dict(default='0600'),
+           dir_perm = dict(default='0700'),
         )
     )
 
