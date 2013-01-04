@@ -303,6 +303,8 @@ def template_from_file(basedir, path, vars):
     vars['template_path']   = realpath
     vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
     vars['template_uid']    = template_uid
+    vars['template_fullpath'] = os.path.abspath(realpath)
+    vars['template_run_date'] = datetime.datetime.now()
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
