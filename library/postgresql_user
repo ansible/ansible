@@ -185,7 +185,7 @@ def user_delete(cursor, user):
     return True
 
 def has_table_privilege(cursor, user, table, priv):
-    query = 'SELECT has_table_privilege(\'%s\', \'%s\', \'%s\')'
+    query = 'SELECT has_table_privilege(%s, %s, %s)'
     cursor.execute(query, (user, table, priv))
     return cursor.fetchone()[0]
 
@@ -235,7 +235,7 @@ def get_database_privileges(cursor, user, db):
     return o
 
 def has_database_privilege(cursor, user, db, priv):
-    query = 'SELECT has_database_privilege(\'%s\', \'%s\', \'%s\')'
+    query = 'SELECT has_database_privilege(%s, %s, %s)'
     cursor.execute(query, (user, db, priv))
     return cursor.fetchone()[0]
 
