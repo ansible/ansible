@@ -1,10 +1,10 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130103
-pkgrel=3
+pkgver=20130105
+pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
-url="https://github.com/ansible/ansible"
+url="http://ansible.cc"
 license=('GPL3')
 depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-simplejson' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
