@@ -35,7 +35,7 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when'
+         'sudo_pass', 'when', 'connection'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
