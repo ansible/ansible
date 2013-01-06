@@ -677,6 +677,52 @@ class AnsibleModule(object):
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
+    def run_command(self, args, **kwargs):
+        '''
+        Execute a command, returns rc, stdout, and stderr.
+        args is the command to run
+        kwargs is a dict of keyword arguments:
+        - shell (boolean) Whether to invoke a shell.  Default is True.
+        - fail_on_rc_non_zero (boolean) Whether to call fail_json in case of
+                                        non zero RC.  Default is False.
+        - close_fds (boolean) See documentation for subprocess.Popen().
+                              Default is False.
+        - executable (string) See documentation for subprocess.Popen().
+                              Default is None.
+        '''
+        if 'shell' not in kwargs:
+            kwargs['shell'] = True
+        if 'fail_on_rc_non_zero' not in kwargs:
+            kwargs['fail_on_rc_non_zero'] = False
+        if 'close_fds' not in kwargs:
+            kwargs['close_fds'] = False
+        if 'executable' not in kwargs:
+            kwargs['executable'] = None
+        rc = 0
+        msg = None
+        if not kwargs['shell']:
+            args = shlex.split(args)
+        try:
+            cmd = subprocess.Popen(args,
+                                   executable=kwargs['executable'],
+                                   shell=kwargs['shell'],
+                                   close_fds=kwargs['close_fds'],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            rc = cmd.returncode
+        except (OSError, IOError), e:
+            rc = e.errno
+            msg = str(e)
+        except:
+            rc = 257
+            msg = traceback.format_exc()
+        if rc != 0:
+            if msg is None:
+                msg = err.rstrip()
+            if kwargs['fail_on_rc_non_zero']:
+                self.fail_json(rc=rc, msg=msg, cmd=args, stdout=out, stderr=err)
+        return (rc, out, err)
+
 # == END DYNAMICALLY INSERTED CODE ===
 
 """
