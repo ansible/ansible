@@ -265,6 +265,7 @@ class AnsibleModule(object):
         return context
 
     def user_and_group(self, filename):
+        filename = os.path.expanduser(filename)
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
@@ -309,6 +310,7 @@ class AnsibleModule(object):
         return changed
 
     def set_owner_if_different(self, path, owner, changed):
+        path = os.path.expanduser(path)
         if owner is None:
             return changed
         user, group = self.user_and_group(path)
@@ -325,6 +327,7 @@ class AnsibleModule(object):
         return changed
 
     def set_group_if_different(self, path, group, changed):
+        path = os.path.expanduser(path)
         if group is None:
             return changed
         old_user, old_group = self.user_and_group(path)
@@ -341,6 +344,7 @@ class AnsibleModule(object):
         return changed
 
     def set_mode_if_different(self, path, mode, changed):
+        path = os.path.expanduser(path)
         if mode is None:
             return changed
         try:
