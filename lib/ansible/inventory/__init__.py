@@ -165,10 +165,11 @@ class Inventory(object):
             return (pattern, None)
         (first, rest) = pattern.split("[")
         rest = rest.replace("]","")
-        if not "-" in rest:
-            raise errors.AnsibleError("invalid pattern: %s" % pattern)
-        (left, right) = rest.split("-",1)
-        return (first, (left, right))
+        if "-" in rest:
+            (left, right) = rest.split("-",1)
+            return (first, (left, right))
+        else:
+            return (first, (rest, rest))
 
     def _apply_ranges(self, pat, hosts):
         """
