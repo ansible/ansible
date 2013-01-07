@@ -54,6 +54,11 @@ options:
       - Template used to create the database
     required: false
     default: null
+  encoding:
+    description:
+      - Encoding of the database
+    required: false
+    default: null
   state:
     description:
       - The database state
