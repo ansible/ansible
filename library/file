@@ -139,7 +139,7 @@ def main():
 
     params = module.params
     state  = params['state']
-    path   = os.path.expanduser(params['path'])
+    params['path'] = path = os.path.expanduser(params['path'])
 
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things

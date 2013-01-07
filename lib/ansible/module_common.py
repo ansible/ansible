@@ -254,8 +254,11 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon(path)
-        except:
-            self.fail_json(path=path, msg='failed to retrieve selinux context')
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                self.fail_json(path=path, msg='path %s does not exist' % path)
+            else:
+                self.fail_json(path=path, msg='failed to retrieve selinux context')
         if ret[0] == -1:
             return context
         context = ret[1].split(':')
