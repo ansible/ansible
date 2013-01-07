@@ -46,7 +46,7 @@ options:
         required: false
         default: "origin"
         description:
-            - Name of the remote branch.
+            - Name of the remote.
     force:
         required: false
         default: "yes"

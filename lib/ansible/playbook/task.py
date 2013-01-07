@@ -35,10 +35,10 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when'
+         'sudo_pass', 'when', 'connection'
     ]
 
-    def __init__(self, play, ds, module_vars=None):
+    def __init__(self, play, ds, module_vars=None, additional_conditions=None):
         ''' constructor loads from a task or handler datastructure '''
 
         for x in ds.keys():
@@ -97,7 +97,7 @@ class Task(object):
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
-            self.transport   = ds.get('transport', play.transport)
+            self.transport   = ds.get('connection', ds.get('transport', play.transport))
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
@@ -182,63 +182,8 @@ class Task(object):
         if self.when is not None:
             if self.only_if != 'True':
                 raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
-            self.only_if = self.compile_when_to_only_if(self.when)
+            self.only_if = utils.compile_when_to_only_if(self.when)
 
-    def compile_when_to_only_if(self, expression):
-        ''' 
-        when is a shorthand for writing only_if conditionals.  It requires less quoting
-        magic.  only_if is retained for backwards compatibility.
-        '''
-
-        # when: set $variable
-        # when: unset $variable
-        # when: int $x >= $z and $y < 3
-        # when: int $x in $alist
-        # when: float $x > 2 and $y <= $z
-        # when: str $x != $y
-
-        if type(expression) not in [ str, unicode ]:
-            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-        tokens = expression.split()
-        if len(tokens) < 2:
-            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-
-        # when_set / when_unset
-        if tokens[0] in [ 'set', 'unset' ]:
-            if len(tokens) != 2:
-                raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
-            return "is_%s('''%s''')" % (tokens[0], tokens[1])
-
-        # when_integer / when_float / when_string
-        elif tokens[0] in [ 'integer', 'float', 'string' ]:
-            cast = None
-            if tokens[0] == 'integer':
-                cast = 'int'
-            elif tokens[0] == 'string':
-                cast = 'str'
-            elif tokens[0] == 'float':
-                cast = 'float'
-            tcopy = tokens[1:]
-            for (i,t) in enumerate(tokens[1:]):
-                if t.find("$") != -1:
-                    # final variable substitution will happen in Runner code
-                    tcopy[i] = "%s('''%s''')" % (cast, t)
-                else:
-                    tcopy[i] = t
-            return " ".join(tcopy)
-
-        # when_boolean
-        elif tokens[0] in [ 'bool', 'boolean' ]:
-            tcopy = tokens[1:]
-            for (i, t) in enumerate(tcopy):
-                if t.find("$") != -1:
-                    tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
-            return " ".join(tcopy)
- 
-        else:
-            raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
- 
-
-
-
+        if additional_conditions:
+            self.only_if = '(' + self.only_if + ') and (' + ' ) and ('.join(additional_conditions) + ')'
 
