@@ -51,7 +51,6 @@ class Connection(object):
                 return (p.returncode, '', stdout, stderr)
             else:
                 cmd = "sudo -u {0} -s {1}".format(sudo_user, cmd)
-
         p = subprocess.Popen(cmd, cwd=basedir, shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
