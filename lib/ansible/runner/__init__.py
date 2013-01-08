@@ -441,7 +441,7 @@ class Runner(object):
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
         ''' execute a command string over SSH, return the output '''
 
-        if not executable:
+        if executable is None:
             executable = '/bin/sh'
 
         sudo_user = self.sudo_user

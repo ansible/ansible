@@ -110,7 +110,10 @@ class Connection(object):
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
-            quoted_command = executable + ' -c ' + pipes.quote(cmd)
+            if executable:
+                quoted_command = executable + ' -c ' + pipes.quote(cmd)
+            else:
+                quoted_command = cmd
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
@@ -123,8 +126,12 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s %s -c %s' % (
-                prompt, sudo_user, executable, pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s ' % (
+                prompt, sudo_user)
+            if executable:
+                sudocmd += "%s -c %s" % (executable, pipes.quote(cmd))
+            else:
+                sudocmd += cmd
             shcmd = '/bin/sh -c ' + pipes.quote(sudocmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
