@@ -415,8 +415,8 @@ More Loops
 .. versionadded: 0.8
 
 Various 'lookup plugins' allow additional ways to iterate over data.  Ansible will have more of these
-over time.  In 0.8, the only lookup plugin that comes stock is 'with_fileglob', but you can also write
-your own.
+over time.  In 0.8, the only lookup plugins that comes stock are 'with_fileglob' and 'with_sequence', but
+you can also write your own.
 
 'with_fileglob' matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
@@ -432,6 +432,52 @@ be used like this::
         # copy each file over that matches the given pattern
         - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
           with_fileglob: /playbooks/files/fooapp/*
+
+.. versionadded: 1.0
+
+'with_sequence' generates a sequence of items in ascending numerical order. You
+can specify a 'start', an 'end' value (inclusive), and a 'stride' value (to skip
+some numbers of values), and a printf-style 'format' string.  It accepts
+arguments both as key-value pairs and in a shortcut of the form
+"[start-]end[/stride][:format]".  All numerical values can be specified in
+hexadecimal (i.e. 0x3f8) or octal (i.e. 0644).  Negative numbers are not
+supported.  Here is an example that leverages most of its features::
+
+    ----
+    - hosts: all
+
+      tasks:
+
+        # create groups
+        - group: name=evens state=present
+
+        - group: name=odds state=present
+
+        # create 32 test users
+        - user: name=$item state=present groups=odds
+          with_sequence: 32/2:testuser%02x
+
+        - user: name=$item state=present groups=evens
+          with_sequence: 2-32/2:testuser%02x
+
+        # create a series of directories for some reason
+        - file: dest=/var/stuff/$item state=directory
+          with_sequence: start=4 end=16
+
+The key-value form also supports a 'count' option, which always generates
+'count' entries regardless of the stride. The count option is mostly useful for
+avoiding off-by-one errors and errors calculating the number of entries in a
+sequence when a stride is specified.  The shortcut form cannot be used to
+specify a count.  As an example::
+
+    ----
+    - hosts: all
+
+      tasks:
+
+        # create 4 groups
+        - group: name=group${item} state=present
+          with_sequence: count=4
 
 Getting values from files
 `````````````````````````
@@ -466,7 +512,7 @@ The following example shows how to template out a configuration file that was ve
         - /srv/templates/myapp/${ansible_distribution}.conf
         - /srv/templates/myapp/default.conf
 
-first_available_file is only available to the copy and template modules.  
+first_available_file is only available to the copy and template modules.
 
 Asynchronous Actions and Polling
 ````````````````````````````````
