@@ -96,7 +96,7 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
         bufsize = 4096
@@ -110,7 +110,7 @@ class Connection(object):
         chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
-            quoted_command = '/bin/sh -c ' + pipes.quote(cmd)
+            quoted_command = executable + ' -c ' + pipes.quote(cmd)
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
@@ -123,8 +123,8 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
-                prompt, sudo_user, pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s %s -c %s' % (
+                prompt, sudo_user, executable, pipes.quote(cmd))
             shcmd = '/bin/sh -c ' + pipes.quote(sudocmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
