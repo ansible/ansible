@@ -15,16 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
+import shlex
 
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -36,12 +31,12 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject):
         executable = None
         args = []
-        for arg in module_args.split(' '):
+        for arg in shlex.split(module_args.encode("utf-8")):
             if arg.startswith('executable='):
-                executable = '='.join(arg.split('=')[1:])
+                executable = arg.split('=', 1)[1]
             else:
                 args.append(arg)
-        module_args = ' '.join(args).encode('utf-8')
+        module_args = ' '.join(args)
 
         return ReturnData(conn=conn,
             result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable)

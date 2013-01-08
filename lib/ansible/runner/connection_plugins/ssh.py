@@ -88,7 +88,10 @@ class Connection(object):
         ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
 
         if not self.runner.sudo or not sudoable:
-            ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
+            if executable:
+                ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
+            else:
+                ssh_cmd.append(cmd)
         else:
             # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required.
@@ -99,8 +102,12 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s %s -c %s' % (
-                prompt, sudo_user, executable, pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s ' % (
+                prompt, sudo_user)
+            if executable:
+                sudocmd += "%s -c %s" % (executable, pipes.quote(cmd))
+            else:
+                sudocmd += cmd
             ssh_cmd.append('/bin/sh -c ' + pipes.quote(sudocmd))
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
