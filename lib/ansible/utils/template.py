@@ -64,6 +64,10 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth):
     else:
         return None
 
+    # if space is a string, check if it's a reference to another variable
+    if isinstance(space, basestring):
+        space = template_ds(basedir, space, vars, lookup_fatal, depth)
+
     return space
 
 def _varFind(basedir, text, vars, lookup_fatal, depth=0):
@@ -210,26 +214,26 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
 
     return ''.join(done)
 
-def template_ds(basedir, varname, vars, lookup_fatal=True):
+def template_ds(basedir, varname, vars, lookup_fatal=True, depth=0):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
-        m = _varFind(basedir, varname, vars, lookup_fatal)
+        m = _varFind(basedir, varname, vars, lookup_fatal, depth)
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             if m['replacement'] is not None:
-                return template_ds(basedir, m['replacement'], vars, lookup_fatal)
+                return template_ds(basedir, m['replacement'], vars, lookup_fatal, depth)
             else:
                 return varname
         else:
             return template(basedir, varname, vars, lookup_fatal)
     elif isinstance(varname, (list, tuple)):
-        return [template_ds(basedir, v, vars, lookup_fatal) for v in varname]
+        return [template_ds(basedir, v, vars, lookup_fatal, depth) for v in varname]
     elif isinstance(varname, dict):
         d = {}
         for (k, v) in varname.iteritems():
-            d[k] = template_ds(basedir, v, vars, lookup_fatal)
+            d[k] = template_ds(basedir, v, vars, lookup_fatal, depth)
         return d
     else:
         return varname
