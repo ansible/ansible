@@ -711,16 +711,12 @@ class AnsibleModule(object):
             out, err = cmd.communicate()
             rc = cmd.returncode
         except (OSError, IOError), e:
-            rc = e.errno
-            msg = str(e)
+            self.fail_json(rc=e.errno, msg=str(e), cmd=args)
         except:
-            rc = 257
-            msg = traceback.format_exc()
-        if rc != 0:
-            if msg is None:
-                msg = err.rstrip()
-            if kwargs['fail_on_rc_non_zero']:
-                self.fail_json(rc=rc, msg=msg, cmd=args, stdout=out, stderr=err)
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+        if rc != 0 and kwargs['fail_on_rc_non_zero']:
+            msg = err.rstrip()
+            self.fail_json(cmd=args, rc=rc, stdout=out, stderr=err, msg=msg)
         return (rc, out, err)
 
 # == END DYNAMICALLY INSERTED CODE ===
