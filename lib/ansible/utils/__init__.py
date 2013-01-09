@@ -170,7 +170,6 @@ def prepare_writeable_dir(tree):
 def path_dwim(basedir, given):
     '''
     make relative paths work like folks expect.
-    if a relative path is provided, convert it to an absolute path.
     '''
 
     if given.startswith("/"):
@@ -178,7 +177,7 @@ def path_dwim(basedir, given):
     elif given.startswith("~/"):
         return os.path.expanduser(given)
     else:
-        return os.path.abspath(os.path.join(basedir, given))
+        return os.path.join(basedir, given)
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
