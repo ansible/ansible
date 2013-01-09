@@ -135,7 +135,7 @@ class Cli(object):
 
 ########################################################
 
-if __name__ == '__main__':
+def entry_point():
     cli = Cli()
     (options, args) = cli.parse()
     try:

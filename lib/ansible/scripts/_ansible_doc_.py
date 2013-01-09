@@ -206,5 +206,5 @@ def main():
         else:
             sys.stderr.write("ERROR: module %s missing documentation\n" % module)
 
-if __name__ == '__main__':
+def entry_point():
     main()

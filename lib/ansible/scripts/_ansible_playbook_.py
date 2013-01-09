@@ -173,7 +173,7 @@ def main(args):
     return 0
 
 
-if __name__ == "__main__":
+def entry_point():
     try:
         sys.exit(main(sys.argv[1:]))
     except errors.AnsibleError, e:
