@@ -1,0 +1,5 @@
+#!/usr/bin/python
+
+if __name__ == "__main__":
+    from ansible.scripts import ansible_pull
+    ansible_pull()
