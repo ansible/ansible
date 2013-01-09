@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import shlex
+import re
 
 import ansible.constants as C
 from ansible import utils
@@ -30,13 +30,13 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         executable = None
-        args = []
-        for arg in shlex.split(module_args.encode("utf-8")):
-            if arg.startswith('executable='):
-                executable = arg.split('=', 1)[1]
-            else:
-                args.append(arg)
-        module_args = ' '.join(args)
+        # From library/command, keep in sync
+        r = re.compile(r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
+        for m in r.finditer(module_args):
+            v = m.group(4).replace("\\", "")
+            if m.group(2) == "executable":
+                executable = v
+        module_args = r.sub("", module_args)
 
         return ReturnData(conn=conn,
             result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable)
