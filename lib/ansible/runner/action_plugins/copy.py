@@ -16,15 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 
-import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -62,9 +56,9 @@ class ActionModule(object):
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, result=results)
-
-        source = utils.template(self.runner.basedir, source, inject)
-        source = utils.path_dwim(self.runner.basedir, source)
+        else:
+            source = utils.template(self.runner.basedir, source, inject)
+            source = utils.path_dwim(self.runner.basedir, source)
 
         local_md5 = utils.md5(source)
         if local_md5 is None:

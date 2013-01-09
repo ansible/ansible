@@ -82,8 +82,8 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        self._tasks      = self._load_tasks(self._ds, 'tasks')
-        self._handlers   = self._load_tasks(self._ds, 'handlers')
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []))
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []))
 
         if self.tags is None:
             self.tags = []
@@ -97,24 +97,35 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, ds, keyname):
+    def _load_tasks(self, tasks, vars={}, additional_conditions=[]):
         ''' handle task and handler include statements '''
 
-        tasks = ds.get(keyname, [])
         results = []
         for x in tasks:
+            task_vars = self.vars.copy()
+            task_vars.update(vars)
             if 'include' in x:
-                task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
                 items = ['']
+                included_additional_conditions = list(additional_conditions)
                 for k in x:
-                    if not k.startswith("with_"):
-                        continue
-                    plugin_name = k[5:]
-                    if plugin_name not in utils.plugins.lookup_loader:
-                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.template_ds(self.basedir, x[k], task_vars)
-                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    if k.startswith("with_"):
+                        plugin_name = k[5:]
+                        if plugin_name not in utils.plugins.lookup_loader:
+                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                        terms = utils.template_ds(self.basedir, x[k], task_vars)
+                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    elif k.startswith("when_"):
+                        included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                    elif k in ("include", "vars", "only_if"):
+                        pass
+                    else:
+                        raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
+
+                if 'vars' in x:
+                    task_vars.update(x['vars'])
+                if 'only_if' in x:
+                    included_additional_conditions.append(x['only_if'])
 
                 for item in items:
                     mv = task_vars.copy()
@@ -124,11 +135,9 @@ class Play(object):
                         mv[k] = utils.template_ds(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    for y in data:
-                        results.append(Task(self,y,module_vars=mv.copy()))
+                    results += self._load_tasks(data, mv, included_additional_conditions)
             elif type(x) == dict:
-                task_vars = self.vars.copy()
-                results.append(Task(self,x,module_vars=task_vars))
+                results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
                 raise Exception("unexpected task type")
 
@@ -246,6 +255,10 @@ class Play(object):
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+        if host is not None:
+            inject = self.playbook.SETUP_CACHE[host].copy()
+            inject.update(self.playbook.inventory.get_variables(host))
+
         for filename in self.vars_files:
 
             if type(filename) == list:
@@ -257,7 +270,7 @@ class Play(object):
                     filename2 = utils.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                        filename3 = utils.template(self.basedir, filename2, inject)
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -290,7 +303,7 @@ class Play(object):
                 filename2 = utils.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                    filename3 = utils.template(self.basedir, filename2, inject)
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue

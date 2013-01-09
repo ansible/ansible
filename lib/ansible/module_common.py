@@ -254,8 +254,11 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon(path)
-        except:
-            self.fail_json(path=path, msg='failed to retrieve selinux context')
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                self.fail_json(path=path, msg='path %s does not exist' % path)
+            else:
+                self.fail_json(path=path, msg='failed to retrieve selinux context')
         if ret[0] == -1:
             return context
         context = ret[1].split(':')
@@ -307,6 +310,7 @@ class AnsibleModule(object):
         return changed
 
     def set_owner_if_different(self, path, owner, changed):
+        path = os.path.expanduser(path)
         if owner is None:
             return changed
         user, group = self.user_and_group(path)
@@ -323,6 +327,7 @@ class AnsibleModule(object):
         return changed
 
     def set_group_if_different(self, path, group, changed):
+        path = os.path.expanduser(path)
         if group is None:
             return changed
         old_user, old_group = self.user_and_group(path)
@@ -340,7 +345,6 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed):
         path = os.path.expanduser(path)
-
         if mode is None:
             return changed
         try:
@@ -552,7 +556,7 @@ class AnsibleModule(object):
             journal.sendv(*journal_args)
         else:
             msg = ''
-            syslog.openlog('ansible-%s' % os.path.basename(__file__), 0, syslog.LOG_USER)
+            syslog.openlog('ansible-%s' % str(os.path.basename(__file__)), 0, syslog.LOG_USER)
             for arg in log_args:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
             if msg:

@@ -81,13 +81,18 @@ class Connection(object):
             os.write(self.wfd, "%s\n" % self.runner.remote_pass)
             os.close(self.wfd)
 
-    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
         ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
 
-        if self.runner.sudo and sudoable:
+        if not self.runner.sudo or not sudoable:
+            if executable:
+                ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
+            else:
+                ssh_cmd.append(cmd)
+        else:
             # Rather than detect if sudo wants a password this time, -k makes
             # sudo always ask for a password if one is required.
             # Passing a quoted compound command to sudo (or sudo -s)
@@ -97,10 +102,13 @@ class Connection(object):
             # the -p option.
             randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s /bin/sh -c %s' % (
-                prompt, sudo_user, pipes.quote(cmd))
-            cmd = sudocmd
-        ssh_cmd.append('/bin/sh -c ' + pipes.quote(cmd))
+            sudocmd = 'sudo -k && sudo -p "%s" -u %s ' % (
+                prompt, sudo_user)
+            if executable:
+                sudocmd += "%s -c %s" % (executable, pipes.quote(cmd))
+            else:
+                sudocmd += cmd
+            ssh_cmd.append('/bin/sh -c ' + pipes.quote(sudocmd))
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
         try:
