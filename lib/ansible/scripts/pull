@@ -1,0 +1,152 @@
+#!/usr/bin/env python
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# ansible-pull is a script that runs ansible in local mode
+# after checking out a playbooks directory from git.  There is an
+# example playbook to bootstrap this script in the examples/ dir which
+# installs ansible and sets it up to run on cron.
+
+# usage:
+#   ansible-pull -d /var/lib/ansible \
+#                -U http://example.net/content.git [-C production] \
+#                [path/playbook.yml]
+#
+# the -d and -U arguments are required; the -C argument is optional.
+#
+# ansible-pull accepts an optional argument to specify a playbook
+# location underneath the workdir and then searches the git repo
+# for playbooks in the following order, stopping at the first match:
+#
+# 1. $workdir/path/playbook.yml, if specified
+# 2. $workdir/$hostname.yml
+# 3. $workdir/local.yml
+#
+# the git repo must contain at least one of these playbooks.
+
+import os
+import shutil
+import subprocess
+import sys
+import datetime
+import socket
+from optparse import OptionParser
+
+DEFAULT_PLAYBOOK = 'local.yml'
+PLAYBOOK_ERRORS = { 1: 'File does not exist',
+                    2: 'File is not readable' }
+
+def _run(cmd):
+    print >>sys.stderr, "Running: '%s'" % cmd
+    cmd = subprocess.Popen(cmd, shell=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    print out
+    if cmd.returncode != 0:
+        print >>sys.stderr, err
+    return cmd.returncode
+
+def try_playbook(path):
+    if not os.path.exists(path):
+        return 1
+    if not os.access(path, os.R_OK):
+        return 2
+    return 0
+
+def select_playbook(path, args):
+    playbook = None
+    if len(args) > 0 and args[0] is not None:
+        playbook = "%s/%s" % (path, args[0])
+        rc = try_playbook(playbook)
+        if rc != 0:
+            print >>sys.stderr, "%s: %s" % (playbook, PLAYBOOK_ERRORS[rc])
+            return None
+        return playbook
+    else:
+        hostpb = "%s/%s.yml" % (path, socket.getfqdn())
+        localpb = "%s/%s" % (path, DEFAULT_PLAYBOOK)
+        errors = []
+        for pb in [hostpb, localpb]:
+            rc = try_playbook(pb)
+            if rc == 0:
+                playbook = pb
+                break
+            else:
+                errors.append("%s: %s" % (pb, PLAYBOOK_ERRORS[rc]))
+        if playbook is None:
+            print >>sys.stderr, "\n".join(errors)
+        return playbook
+
+def main(args):
+    """ Set up and run a local playbook """
+    usage = "%prog [options] [playbook.yml]"
+    parser = OptionParser(usage=usage)
+    parser.add_option('--purge', default=False, action='store_true',
+                      help='Purge git checkout after playbook run')
+    parser.add_option('-d', '--directory', dest='dest', default=None,
+                      help='Directory to clone git repository to')
+    parser.add_option('-U', '--url', dest='url', default=None,
+                      help='URL of git repository')
+    parser.add_option('-C', '--checkout', dest='checkout',
+                      default="HEAD",
+                      help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+    options, args = parser.parse_args(args)
+
+    if not options.dest:
+        parser.error("Missing required directory argument")
+        return 1
+
+    if not options.url:
+        parser.error("URL for git repo not specified, use -h for help")
+        return 1
+
+    now = datetime.datetime.now()
+    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
+
+    limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
+    git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
+    cmd = 'ansible all -c local --limit "%s" -m git -a "%s"' % (limit_opts, git_opts)
+    rc = _run(cmd)
+    if rc != 0:
+        return rc
+
+    playbook = select_playbook(options.dest, args)
+
+    if playbook is None:
+        print >>sys.stderr, "Could not find a playbook to run."
+        return 1
+
+    cmd = 'ansible-playbook -c local --limit "%s" %s' % (limit_opts, playbook)
+    os.chdir(options.dest)
+    rc = _run(cmd)
+
+    if options.purge:
+        os.chdir('/')
+        try:
+            shutil.rmtree(options.dest)
+        except Exception, e:
+            print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
+
+    return rc
+
+def entry_point():
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt, e:
+        print >>sys.stderr, "Exit on user request.\n"
+        sys.exit(1)
+
+if __name__ == '__main__':
+    entry_point()

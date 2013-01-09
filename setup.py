@@ -37,11 +37,9 @@ setup(name='ansible',
          'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
       ],
-      scripts=[
-         'bin/ansible',
-         'bin/ansible-playbook',
-         'bin/ansible-pull',
-         'bin/ansible-doc'
-      ],
+      entry_points=dict(console_scripts=["ansible=ansible.scripts.ansible:main",
+                                         "ansible-doc=ansible.scripts.doc:main",
+                                         "ansible-playbook=ansible.scripts.playbook:entry_point",
+                                         "ansible-ppull=ansible.scripts.pull:entry_point"]),
       data_files=data_files
 )
