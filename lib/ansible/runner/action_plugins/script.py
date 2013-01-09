@@ -18,6 +18,7 @@
 import os
 import shlex
 
+import ansible.constants as C
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
