@@ -93,22 +93,6 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 APT_PATH = "/usr/bin/apt-get"
 APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
 
-def run_apt(command):
-    try:
-        cmd = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-    except (OSError, IOError), e:
-        rc = 1
-        err = str(e)
-        out = ''
-    except:
-        rc = 1
-        err = traceback.format_exc()
-        out = ''
-    else:
-        rc = cmd.returncode
-        return rc, out, err
-
 def package_split(pkgspec):
     parts = pkgspec.split('=')
     if len(parts) > 1:
@@ -154,7 +138,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
         if not install_recommends:
             cmd += " --no-install-recommends"
 
-        rc, out, err = run_apt(cmd)
+        rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
         else:
@@ -175,7 +159,7 @@ def remove(m, pkgspec, cache, purge=False):
     else:
         purge = '--purge' if purge else ''
         cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
-        rc, out, err = run_apt(cmd)
+        rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)

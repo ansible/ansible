@@ -45,24 +45,6 @@ requirements: [ ]
 author: Matt Wright
 '''
 
-def _is_present(name, supervisorctl):
-    rc, out, err = _run('%s status' % supervisorctl)
-    return name in out
-
-
-def _is_running(name, supervisorctl):
-    rc, out, err = _run('%s status %s' % (supervisorctl, name))
-    return 'RUNNING' in out
-
-
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
-
 def main():
     arg_spec = dict(
         name=dict(required=True),
@@ -76,12 +58,13 @@ def main():
 
     SUPERVISORCTL = module.get_bin_path('supervisorctl', True)
 
-    present = _is_present(name, SUPERVISORCTL)
+    rc, out, err = module.run_command('%s status' % supervisorctl)
+    present = name in out
 
     if state == 'present':
         if not present:
-            _run('%s reread' % SUPERVISORCTL)
-            rc, out, err = _run('%s add %s' % (SUPERVISORCTL, name))
+            module.run_command('%s reread' % SUPERVISORCTL, fail_on_rc_non_zero=True)
+            rc, out, err = module.run_command('%s add %s' % (SUPERVISORCTL, name))
 
             if '%s: added process group' % name in out:
                 module.exit_json(changed=True, name=name, state=state)
@@ -90,13 +73,14 @@ def main():
 
         module.exit_json(changed=False, name=name, state=state)
 
-    running = _is_running(name, SUPERVISORCTL)
+    rc, out, err = module.run_command('%s status %s' % (supervisorctl, name))
+    running = 'RUNNING' in out
 
     if running and state == 'started':
         module.exit_json(changed=False, name=name, state=state)
 
     if running and state == 'stopped':
-        rc, out, err = _run('%s stop %s' % (SUPERVISORCTL, name))
+        rc, out, err = module.run_command('%s stop %s' % (SUPERVISORCTL, name))
 
         if '%s: stopped' % name in out:
             module.exit_json(changed=True, name=name, state=state)
@@ -104,8 +88,8 @@ def main():
         module.fail_json(msg=out)
 
     elif running and state == 'restarted':
-        rc, out, err = _run('%s update %s' % (SUPERVISORCTL, name))
-        rc, out, err = _run('%s restart %s' % (SUPERVISORCTL, name))
+        rc, out, err = module.run_command('%s update %s' % (SUPERVISORCTL, name))
+        rc, out, err = module.run_command('%s restart %s' % (SUPERVISORCTL, name))
 
         if '%s: stopped' % name in out and '%s: started' % name in out:
             module.exit_json(changed=True, name=name, state=state)
@@ -113,7 +97,7 @@ def main():
         module.fail_json(msg=out)
 
     elif not running and state == 'started':
-        rc, out, err = _run('%s start %s' % (SUPERVISORCTL, name))
+        rc, out, err = module.run_command('%s start %s' % (SUPERVISORCTL, name))
 
         if '%s: started' % name in out:
             module.exit_json(changed=True, name=name, state=state)
