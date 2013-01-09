@@ -20,6 +20,22 @@ import glob
 from ansible import errors
 from ansible import utils
 
+
+# _add_dict_entry allows an existing hierarchical dictionary to 
+# have a newer dictionary layered on top. Newest wins. 
+# This means that parent group vars are set first, and then overridden
+# by child group variables and then host variables
+
+def _add_dict_entry(props, hash):
+    for (key, value) in hash.items():
+        if type(value) != dict:
+            props[key] = value
+        else:
+            if not key in props:
+                props[key] = dict()
+            _add_dict_entry(props[key], value)
+
+
 class VarsModule(object):
 
     def __init__(self, inventory):
@@ -48,7 +64,7 @@ class VarsModule(object):
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                results.update(data)
+                _add_dict_entry(results, data)
 
         # load vars in playbook_dir/group_vars/name_of_host
         path = os.path.join(basedir, "host_vars/%s" % host.name)
@@ -56,7 +72,7 @@ class VarsModule(object):
             data = utils.parse_yaml_from_file(path)
             if type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-            results.update(data)
+            _add_dict_entry(results, data)
 
         return results
 

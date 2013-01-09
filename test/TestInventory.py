@@ -13,6 +13,7 @@ class TestInventory(unittest.TestCase):
         self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
         self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
+        self.hash_inventory_file = os.path.join(self.test_dir, 'test_playbook_vars', 'hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -38,6 +39,9 @@ class TestInventory(unittest.TestCase):
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
+
+    def hash_inventory(self):
+        return Inventory(self.hash_inventory_file)
 
     all_simple_hosts=['jupiter', 'saturn', 'zeus', 'hera',
             'cerberus001','cerberus002','cerberus003',
@@ -288,3 +292,33 @@ class TestInventory(unittest.TestCase):
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god']}
+
+    def test_hash_overrides(self):
+        """Test the case where two groups define the same hashes with 
+        different keys"""
+        inventory = self.hash_inventory()
+        vars = inventory.get_variables('host1')
+
+        print "VARS=%s" % vars
+
+        assert 'properties' in vars
+        assert 'keyA' in vars['properties']
+        assert 'keyB' in vars['properties']
+        assert 'keyC' in vars['properties']
+
+        assert vars['properties']['keyB'] == 'the override value'
+
+    def test_hash_siblings(self):
+        """One host can be in multiple groups that should be able to 
+        handle hashes with same names as long as keys differ (the case
+        of clashing keys is undefined)"""
+
+        inventory = self.hash_inventory()
+        vars = inventory.get_variables('host1')
+
+        print "VARS=%s" % vars
+
+        assert 'sibling' in vars
+        assert 'key1' in vars['sibling']
+        assert 'key2' in vars['sibling']
+

@@ -1,0 +1,4 @@
+---
+properties:
+  keyA: this will remain default
+  keyB: this will be overridden
