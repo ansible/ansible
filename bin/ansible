@@ -20,6 +20,6 @@
 ########################################################
 
 
-from ansible.scripts.ansible import main
+from ansible.scripts.main import main
 if __name__ == '__main__':
     main()
