@@ -56,9 +56,9 @@ class ActionModule(object):
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, result=results)
-
-        source = utils.template(self.runner.basedir, source, inject)
-        source = utils.path_dwim(self.runner.basedir, source)
+        else:
+            source = utils.template(self.runner.basedir, source, inject)
+            source = utils.path_dwim(self.runner.basedir, source)
 
         local_md5 = utils.md5(source)
         if local_md5 is None:
