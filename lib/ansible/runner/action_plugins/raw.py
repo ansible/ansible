@@ -29,7 +29,7 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        executable = None
+        executable = ''
         # From library/command, keep in sync
         r = re.compile(r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
         for m in r.finditer(module_args):
