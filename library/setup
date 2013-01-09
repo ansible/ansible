@@ -276,7 +276,7 @@ class LinuxHardware(Hardware):
     - processor_cores
     - processor_count
 
-    In addition, it also defines number of DMI facts.
+    In addition, it also defines number of DMI facts and device facts.
     """
 
     platform = 'Linux'
@@ -309,6 +309,7 @@ class LinuxHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_device_facts()
         return self.facts
 
     def get_memory_facts(self):
@@ -364,6 +365,142 @@ class LinuxHardware(Hardware):
                     self.facts[key] = data
             else:
                 self.facts[key] = 'NA'
+
+    def get_device_facts(self):
+        self.facts['devices'] = {}
+        lspci = module.get_bin_path('lspci')
+        if lspci:
+            p = subprocess.Popen([lspci], stdout=subprocess.PIPE)
+            err = p.wait()
+            if err:
+                print "Error running lspci"
+            else:
+                pcidata = p.stdout.read()
+
+        # get mount data to use later
+        mounts = {}
+        mtab = get_file_content('/etc/mtab')
+        for line in mtab.split('\n'):
+            if line.startswith('/'):
+                fields = line.rstrip('\n').split(' ')
+                mounts[os.path.basename(fields[0])] = { 'mount':fields[1], 'fstype' : fields[2], 'mount_opts': fields[3] }
+
+        sysfs_no_links = 0
+        for block in os.listdir("/sys/block"):
+            try:
+                if sysfs_no_links == 0:
+                    path = os.readlink(os.path.join("/sys/block/", block))
+                else:
+                    path = block
+            except OSError, e:
+                if e.errno == errno.EINVAL:
+                    path = block
+                    sysfs_no_links = 1
+                else:
+                    continue
+            if re.search("virtual", path):
+                continue
+            if sysfs_no_links == 1:
+                sysdir = os.path.join("/sys/block", path)
+                virtual = 0
+                for folder in os.listdir(sysdir):
+                    if re.search("device", folder):
+                        virtual = 1
+                        break
+                if virtual:
+                    continue
+
+            # start getting device info
+            d = {}
+            sysdir = os.path.join("/sys/block", path)
+            m = re.match(".*/(.+)$", sysdir)
+            diskname = m.group(1)
+
+            # populate metadata
+            for key in ['vendor', 'model']:
+                d[key] = get_file_content(sysdir + "/device/" + key)
+
+            for key,test in [ ('removable','/removable'), \
+                              ('support_discard','/queue/discard_granularity'),
+                              ]:
+                d[key] = "No"
+                results = get_file_content(sysdir + test)
+                if results:
+                    d[key] = "Yes"
+
+            # populate holders
+            d['holders'] = []
+            for folder in os.listdir(sysdir + "/holders"):
+                if re.search("^dm-.*", folder):
+                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if name:
+                    d['holders'].append(name)
+                else:
+                    d['holders'].append(folder)
+
+            #self.populate_partitions()
+            d['partitions'] = {}
+            for folder in os.listdir(sysdir):
+                m = re.search("(" + diskname + "\d+)", folder)
+                if m:
+                    part = {}
+                    partname = m.group(1)
+                    part_sysdir = sysdir + "/" + partname
+
+                    # get mount points
+                    if partname in mounts:
+                        part = mounts[partname]
+
+                    # populate geometry
+                    part['start'] = get_file_content(part_sysdir + "/start")
+                    part['start'] = part['start'] if part['start'] else 0
+                    part['sectors'] = get_file_content(part_sysdir + "/size")
+                    part['sectors'] = part['sectors'] if part['sectors'] else 0
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size")
+                    part['sectorsize'] = part['sectorsize'] if part['sectorsize'] else 512
+                    part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+
+                    d['partitions'][partname] = part
+
+            # populate rotational
+            rotation = get_file_content(sysdir + "/queue/rotational")
+            if rotation == "1":
+                d['rotational'] = "Spinning disk"
+            else:
+                d['rotational'] = "SDD"
+
+            # populate schedule
+            scheduler = get_file_content(sysdir + "/queue/scheduler")
+            m = re.match(".*?(\[(.*)\])", scheduler)
+            if m:
+                d['scheduler_mode'] = m.group(2)
+            else:
+                d['scheduler_mode'] = ""
+
+            # populate geometry
+            d['sectors'] = get_file_content(sysdir + "/size")
+            d['sectors'] = d['sectors'] if d['sectors'] else 0
+            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = d['sectorsize'] if d['sectorsize'] else 512
+            d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
+
+            # set host info
+            d['host'] = ""
+            if sysfs_no_links == 1:
+                try:
+                    sysdir = os.readlink(os.path.join(sysdir, "device"))
+                except:
+                    pass
+            m = re.match(".+/\d+:(\w+:\w+\.\w)/host\d+/\s*", sysdir)
+            if m:
+                pciid = m.group(1)
+                did = re.escape(pciid)
+                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                d['host'] = m.group(1)
+
+            # Add device to list
+            self.facts['devices'][diskname] = d
+
 
 class SunOSHardware(Hardware):
     """
