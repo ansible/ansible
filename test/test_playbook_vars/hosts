@@ -4,3 +4,15 @@ host2
 [group]
 host1
 host2
+
+[hash_default:children]
+hash_override
+hash_sibling
+
+[hash_override]
+host1
+host2
+
+[hash_sibling]
+host1
+host2

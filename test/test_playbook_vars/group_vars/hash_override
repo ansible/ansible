@@ -1,0 +1,7 @@
+---
+properties:
+  keyB: the override value
+  keyC: a new value
+
+sibling:
+  key1: as long as the siblings dont clash, the hashes should be merged
