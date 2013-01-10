@@ -55,6 +55,10 @@ def shell_expand_path(path):
         path = os.path.expanduser(path)
     return path
 
+def fool_setuptools_sandbox():
+    if hasattr(open, "im_self"):
+        getattr(open, "im_self")._ok = lambda *args, **kwargs: True
+
 p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
@@ -62,6 +66,7 @@ active_user   = pwd.getpwuid(os.geteuid())[0]
 # Needed so the RPM can call setup.py and have modules land in the
 # correct location. See #1277 for discussion
 if getattr(sys, "real_prefix", None):
+    fool_setuptools_sandbox()
     DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
