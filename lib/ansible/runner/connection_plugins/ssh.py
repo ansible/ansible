@@ -26,6 +26,7 @@ import fcntl
 import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
+from ansible import utils
 
 class Connection(object):
     ''' ssh based connections '''
@@ -93,22 +94,8 @@ class Connection(object):
             else:
                 ssh_cmd.append(cmd)
         else:
-            # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required.
-            # Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote()
-            # and pass the quoted string to the user's shell.  We loop reading
-            # output until we see the randomly-generated sudo prompt set with
-            # the -p option.
-            randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-            prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s ' % (
-                prompt, sudo_user)
-            if executable:
-                sudocmd += "%s -c %s" % (executable, pipes.quote(cmd))
-            else:
-                sudocmd += cmd
-            ssh_cmd.append('/bin/sh -c ' + pipes.quote(sudocmd))
+            sudocmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            ssh_cmd.append(sudocmd)
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
         try:

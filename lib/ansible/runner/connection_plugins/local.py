@@ -21,6 +21,7 @@ import pipes
 import shutil
 import subprocess
 from ansible import errors
+from ansible import utils
 from ansible.callbacks import vvv
 
 class Connection(object):
@@ -48,11 +49,11 @@ class Connection(object):
                 # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
                 # so this doesn't seem to be a huge priority
                 raise errors.AnsibleError("sudo with password is presently only supported on the 'paramiko' (SSH) and native 'ssh' connection types")
-            sudocmd = "sudo -u %s -s %s -c %s" % (sudo_user, executable, cmd)
-            local_cmd = ['/bin/sh', '-c', sudocmd]
+            local_cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
         vvv("EXEC %s" % local_cmd, host=self.host)
-        p = subprocess.Popen(local_cmd, cwd=self.runner.basedir, executable=executable,
+        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
+                             cwd=self.runner.basedir, executable=executable,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)
