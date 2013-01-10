@@ -44,13 +44,16 @@ class Connection(object):
         ''' run a command on the local host '''
 
         if not self.runner.sudo or not sudoable:
-            local_cmd = [ executable, '-c', cmd]
+            if executable:
+                local_cmd = [executable, '-c', cmd]
+            else:
+                local_cmd = cmd
         else:
             local_cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
-                             cwd=self.runner.basedir, executable=executable,
+                             cwd=self.runner.basedir, executable=executable or None,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
