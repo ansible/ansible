@@ -718,7 +718,7 @@ class SunOS(User):
                         continue
                     fields[1] = self.password
                     line = ':'.join(fields)
-                    lines.append('{0}\n'.format(line))
+                    lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)        
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
@@ -800,7 +800,7 @@ class SunOS(User):
                         continue
                     fields[1] = self.password
                     line = ':'.join(fields)
-                    lines.append('{0}\n'.format(line))
+                    lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)        
                 rc = 0
             except Exception, err:
