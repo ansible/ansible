@@ -20,6 +20,8 @@ import os
 import pipes
 import shutil
 import subprocess
+import select
+import fcntl
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
@@ -44,17 +46,38 @@ class Connection(object):
         if not self.runner.sudo or not sudoable:
             local_cmd = [ executable, '-c', cmd]
         else:
-            if self.runner.sudo_pass:
-                # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
-                # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
-                # so this doesn't seem to be a huge priority
-                raise errors.AnsibleError("sudo with password is presently only supported on the 'paramiko' (SSH) and native 'ssh' connection types")
             local_cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
-        vvv("EXEC %s" % local_cmd, host=self.host)
+        vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir, executable=executable,
+                             stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if self.runner.sudo and sudoable and self.runner.sudo_pass:
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL,
+                        fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL,
+                        fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+            sudo_output = ''
+            while not sudo_output.endswith(prompt):
+                rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
+                                              [p.stdout, p.stderr], self.runner.timeout)
+                if p.stdout in rfd:
+                    chunk = p.stdout.read()
+                elif p.stderr in rfd:
+                    chunk = p.stderr.read()
+                else:
+                    stdout, stderr = p.communicate()
+                    raise errors.AnsibleError('timeout waiting for sudo password prompt:\n' + sudo_output)
+                if not chunk:
+                    stdout, stderr = p.communicate()
+                    raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
+                sudo_output += chunk
+            p.stdin.write(self.runner.sudo_pass + '\n')
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)
 
