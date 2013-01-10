@@ -1,7 +1,7 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130105
-pkgrel=1
+pkgver=20130109
+pkgrel=2
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
 url="http://ansible.cc"
@@ -45,7 +45,11 @@ package() {
 
   install -D docs/man/man1/ansible.1 ${pkgdir}/usr/share/man/man1/ansible.1
   install -D docs/man/man1/ansible-playbook.1 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
+  install -D docs/man/man1/ansible-pull.1 ${pkgdir}/usr/share/man/man1/ansible-pull.1
+  install -D docs/man/man1/ansible-doc.1 ${pkgdir}/usr/share/man/man1/ansible-doc.1
 
   gzip -9 ${pkgdir}/usr/share/man/man1/ansible.1
   gzip -9 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
+  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-pull.1
+  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-doc.1
 }
