@@ -44,10 +44,12 @@ class Connection(object):
             local_cmd = [ executable, '-c', cmd]
         else:
             if self.runner.sudo_pass:
-                # NOTE: if someone wants to add sudo w/ password to the local connection type, they are welcome
-                # to do so.  The primary usage of the local connection is for crontab and kickstart usage however
-                # so this doesn't seem to be a huge priority
-                raise errors.AnsibleError("sudo with password is presently only supported on the 'paramiko' (SSH) and native 'ssh' connection types")
+                sudocmd = "sudo -S -u %s -s %s -c %s" % (sudo_user, executable, pipes.quote(cmd))
+                vvv("EXEC %s" % sudocmd, host=self.host)
+                p = subprocess.Popen(sudocmd, cwd=self.runner.basedir, shell=True,
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = p.communicate(input=self.runner.sudo_pass + '\n') # sudo requires \n
+                return (p.returncode, '', stdout, stderr)
             sudocmd = "sudo -u %s -s %s -c %s" % (sudo_user, executable, cmd)
             local_cmd = ['/bin/sh', '-c', sudocmd]
 
