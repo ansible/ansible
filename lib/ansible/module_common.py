@@ -96,10 +96,10 @@ def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            distribution = platform.linux_distribution()[0].capitalize
+            distribution = platform.linux_distribution()[0].capitalize()
         except:
             # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize
+            distribution = platform.dist()[0].capitalize()
     else:
         distribution = None
     return distribution
