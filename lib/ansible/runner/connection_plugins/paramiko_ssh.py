@@ -22,6 +22,7 @@ import socket
 import random
 from ansible.callbacks import vvv
 from ansible import errors
+from ansible import utils
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -117,22 +118,7 @@ class Connection(object):
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
-            # Rather than detect if sudo wants a password this time, -k makes
-            # sudo always ask for a password if one is required. 
-            # Passing a quoted compound command to sudo (or sudo -s)
-            # directly doesn't work, so we shellquote it with pipes.quote()
-            # and pass the quoted string to the user's shell.  We loop reading
-            # output until we see the randomly-generated sudo prompt set with
-            # the -p option.
-            randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-            prompt = '[sudo via ansible, key=%s] password: ' % randbits
-            sudocmd = 'sudo -k && sudo -p "%s" -u %s ' % (
-                prompt, sudo_user)
-            if executable:
-                sudocmd += "%s -c %s" % (executable, pipes.quote(cmd))
-            else:
-                sudocmd += cmd
-            shcmd = '/bin/sh -c ' + pipes.quote(sudocmd)
+            shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
