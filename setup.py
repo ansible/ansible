@@ -6,7 +6,10 @@ from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
-from distutils.core import setup
+try:
+   from setuptools import setup
+except ImportError:
+   from distutils.core import setup
 
 # find library modules
 from ansible.constants import DIST_MODULE_PATH
@@ -25,6 +28,7 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.scripts',
          'ansible.utils',
          'ansible.inventory',
          'ansible.inventory.vars_plugins',
@@ -37,6 +41,12 @@ setup(name='ansible',
          'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
       ],
+      entry_points = dict(console_scripts=[
+         'ansible=ansible.scripts:ansible',
+         'ansible-playbook=ansible.scripts:ansible_playbook',
+         'ansible-pull=ansible.scripts:ansible_pull',
+         'ansible-doc=ansible.scripts:ansible_doc'
+      ]),
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
