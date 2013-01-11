@@ -40,6 +40,8 @@ e =   10003
    h = '  h  '
     i = '  i  "
     j  = "  j  
+array_var[] = Hello
+array_var[] = World
 
 [rtp]
 rtp_a
