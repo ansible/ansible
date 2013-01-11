@@ -48,6 +48,14 @@ class Group(object):
 
         self.vars[key] = value
 
+    def append_variable(self, key, value):
+
+        arr = self.vars.get(key, [])
+        if not type(arr) is list:
+            raise Exception("unexpected array variable: %s" % key)
+        arr.append(value)
+        self.vars[key] = arr
+
     def get_hosts(self):
 
         hosts = set()
