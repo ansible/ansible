@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 import sys
 import datetime
 import traceback
@@ -100,13 +99,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    try:
-        cmd = subprocess.Popen(args, executable=executable, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-    except (OSError, IOError), e:
-        module.fail_json(rc=e.errno, msg=str(e), cmd=args)
-    except:
-        module.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+    rc, out, err = module.run_command(args, shell=shell, executable=executable)
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -120,7 +113,7 @@ def main():
         cmd     = args,
         stdout  = out.rstrip("\r\n"),
         stderr  = err.rstrip("\r\n"),
-        rc      = cmd.returncode,
+        rc      = rc,
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
