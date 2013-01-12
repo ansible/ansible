@@ -114,14 +114,6 @@ def _get_pip(module, env):
     return pip
 
 
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
-
 def _fail(module, cmd, out, err):
     msg = ''
     if out:
@@ -173,7 +165,7 @@ def main():
         virtualenv = module.get_bin_path('virtualenv', True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             cmd = '%s %s' % (virtualenv, env)
-            rc, out_venv, err_venv = _run(cmd)
+            rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
             if rc != 0:
@@ -191,7 +183,7 @@ def main():
     elif requirements:
         cmd += ' -r %s' % requirements
 
-    rc, out_pip, err_pip = _run(cmd)
+    rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip
     if rc == 1 and state == 'absent' and 'not installed' in out_pip:
