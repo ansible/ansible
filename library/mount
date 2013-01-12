@@ -196,12 +196,11 @@ def mount(**kwargs):
     else:
         cmd = [ '/bin/mount', name ]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(" ".join(cmd), shell=False)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
 def umount(**kwargs):
     """ unmount a path """
@@ -209,12 +208,11 @@ def umount(**kwargs):
     name = kwargs['name']
     cmd = ['/bin/umount', name]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(" ".join(cmd), shell=False)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
 def main():
 
