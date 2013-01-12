@@ -178,10 +178,8 @@ class Facts(object):
         lsb_path = module.get_bin_path('lsb_release')
         if lsb_path is None:
             return self.facts
-        cmd = subprocess.Popen([lsb_path, "-a"], shell=False,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        if cmd.returncode == 0:
+        rc, out, err = module.run_command([lsb_path, "-a"])
+        if rc == 0:
             self.facts['lsb'] = {}
         for line in out.split('\n'):
             if len(line) < 1:
@@ -381,9 +379,7 @@ class SunOSHardware(Hardware):
         return self.facts
 
     def get_cpu_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/psrinfo -v", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/sbin/psrinfo -v")
         self.facts['processor'] = []
         for line in out.split('\n'):
             if 'processor operates' in line:
@@ -394,15 +390,11 @@ class SunOSHardware(Hardware):
         self.facts['processor_count'] = len(self.facts['processor'])
 
     def get_memory_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/prtconf", shell=False,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command(["/usr/sbin/prtconf"])
         for line in out.split('\n'):
             if 'Memory size' in line:
                 self.facts['memtotal_mb'] = line.split()[2]
-        cmd = subprocess.Popen("/usr/sbin/swap -s", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/sbin/swap -s")
         allocated = long(out.split()[1][:-1])
         reserved = long(out.split()[5][:-1])
         used = long(out.split()[8][:-1])
@@ -436,17 +428,14 @@ class FreeBSDHardware(Hardware):
 
     def get_cpu_facts(self):
         self.facts['processor'] = []
-        cmd = subprocess.Popen("/sbin/sysctl -n hw.ncpu", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/sbin/sysctl -n hw.ncpu")
         self.facts['processor_count'] = out.strip()
 
         try:
             dmesg_boot = open(FreeBSDHardware.DMESG_BOOT)
         except IOError:
-            dmesg_cmd = subprocess.Popen("/sbin/dmesg", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            dmesg_boot = dmesg_cmd.stdout
+            rc, out, err = module.run_command("/sbin/dmesg")
+            dmesg_boot = out
 
         for line in dmesg_boot.readlines():
             if 'CPU:' in line:
@@ -457,9 +446,7 @@ class FreeBSDHardware(Hardware):
 
 
     def get_memory_facts(self):
-        cmd = subprocess.Popen("/sbin/sysctl vm.stats", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/sbin/sysctl vm.stats")
         for line in out.split('\n'):
             data = line.split()
             if 'vm.stats.vm.v_page_size' in line:
@@ -474,9 +461,7 @@ class FreeBSDHardware(Hardware):
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
         #
-        cmd = subprocess.Popen("/usr/sbin/swapinfo -m", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -m")
         lines = out.split('\n')
         if len(lines[-1]) == 0:
             lines.pop()
@@ -557,12 +542,12 @@ class LinuxNetwork(Network):
         for v in 'v4', 'v6':
             if v == 'v6' and not socket.has_ipv6:
                 continue
-            output = subprocess.Popen(command[v], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-            if not output:
+            rc, out, err = module.run_command(command[v])
+            if not out:
                 # v6 routing may result in 
                 #   RTNETLINK answers: Invalid argument
                 continue
-            words = output.split('\n')[0].split()
+            words = out.split('\n')[0].split()
             # A valid output starts with the queried address on the first line
             if len(words) > 0 and words[0] == command[v][-1]:
                 for i in range(len(words) - 1):
@@ -580,8 +565,8 @@ class LinuxNetwork(Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
-        output = subprocess.Popen([ip_path, 'addr', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-        for line in output.split('\n'):
+        rc, out, err = module.run_command([ip_path, 'addr', 'show'])
+        for line in out.split('\n'):
             if line:
                 words = line.split()
                 if not line.startswith(' '):
@@ -825,9 +810,7 @@ class SunOSVirtual(Virtual):
         return self.facts
 
     def get_virtual_facts(self):
-        cmd = subprocess.Popen("/usr/sbin/prtdiag", shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/sbin/prtdiag")
         for line in out.split('\n'):
             if 'VMware' in line:
                 self.facts['virtualization_type'] = 'vmware'
@@ -843,9 +826,7 @@ class SunOSVirtual(Virtual):
                 self.facts['virtualization_role'] = 'guest'
         # Check if it's a zone
         if os.path.exists("/usr/bin/zonename"):
-            cmd = subprocess.Popen("/usr/bin/zonename", shell=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = cmd.communicate()
+            rc, out, err = module.run_command("/usr/bin/zonename")
             if out.rstrip() != "global":
                 self.facts['container'] = 'zone'
         # Check if it's a branded zone (i.e. Solaris 8/9 zone)
@@ -854,9 +835,7 @@ class SunOSVirtual(Virtual):
         # If it's a zone check if we can detect if our global zone is itself virtualized.
         # Relies on the "guest tools" (e.g. vmware tools) to be installed
         if 'container' in self.facts and self.facts['container'] == 'zone':
-            cmd = subprocess.Popen("/usr/sbin/modinfo", shell=True,
-                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = cmd.communicate()
+            rc, out, err = module.run_command("/usr/sbin/modinfo")
             for line in out.split('\n'):
                 if 'VMware' in line:
                     self.facts['virtualization_type'] = 'vmware'
@@ -895,9 +874,7 @@ def run_setup(module):
     # ruby-json is ALSO installed, include facter data in the JSON
 
     if os.path.exists("/usr/bin/facter"):
-        cmd = subprocess.Popen("/usr/bin/facter --json", shell=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/bin/facter --json")
         facter = True
         try:
             facter_ds = json.loads(out)
@@ -912,9 +889,7 @@ def run_setup(module):
     # templating w/o making a nicer key for it (TODO)
 
     if os.path.exists("/usr/bin/ohai"):
-        cmd = subprocess.Popen("/usr/bin/ohai", shell=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
+        rc, out, err = module.run_command("/usr/bin/ohai")
         ohai = True
         try:
             ohai_ds = json.loads(out)
