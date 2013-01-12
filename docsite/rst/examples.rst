@@ -22,7 +22,7 @@ Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 a
 set up SSH-agent so it can remember our credentials::
 
     $ ssh-agent bash
-    $ ssh-add ~/.ssh/id_rsa.pub
+    $ ssh-add ~/.ssh/id_rsa
 
 If you don't want to use ssh-agent and want to instead SSH with a
 password instead of keys, you can with ``--ask-pass`` (``-k``), but
