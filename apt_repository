@@ -59,15 +59,10 @@ import platform
 APT = "/usr/bin/apt-get"
 ADD_APT_REPO = 'add-apt-repository'
 
-def _run(cmd):
+def check_cmd_needs_y():
     if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
-        cmd = cmd + ' -y'
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
+        return True
+    return False
 
 def main():
     add_apt_repository = None
@@ -80,11 +75,14 @@ def main():
     module = AnsibleModule(argument_spec=arg_spec)
 
     add_apt_repository = module.get_bin_path(ADD_APT_REPO, True)
+    if check_cmd_needs_y():
+        add_apt_repository += ' -y'
 
     repo = module.params['repo']
     state = module.params['state']
 
-    rc, out, err = _run('%s "%s" --remove' % (add_apt_repository, repo))
+    cmd = '%s "%s" --remove' % (add_apt_repository, repo)
+    rc, out, err = module.run_command(cmd)
     existed = 'Error' not in out
 
     if state == 'absent':
@@ -95,7 +93,7 @@ def main():
 
     cmd = '%s "%s"' % (add_apt_repository, repo)
 
-    rc, out, err = _run(cmd)
+    rc, out, err = module.run_command(cmd)
 
     changed = rc == 0 and not existed
 
@@ -103,7 +101,7 @@ def main():
         module.fail_json(msg=err)
 
     if changed:
-        rc, out, err = _run('%s update' % APT)
+        rc, out, err = module.run_command('%s update' % APT)
 
     module.exit_json(changed=changed, repo=repo, state=state)
 
