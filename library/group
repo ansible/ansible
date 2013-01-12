@@ -91,10 +91,7 @@ class Group(object):
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
 
-        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate()
-        rc = p.returncode
-        return (rc, out, err)
+        return self.module.run_command(cmd)
 
     def group_del(self):
         cmd = [self.module.get_bin_path('groupdel', True), self.name]
