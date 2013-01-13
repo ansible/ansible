@@ -85,11 +85,7 @@ class Subversion(object):
         if self.password:
             bits.append("--password '%s'" % self.password)
         bits.append(args)
-        cmd = subprocess.Popen(' '.join(bits), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-        rc = cmd.returncode
-        if rc != 0:
-            self.module.fail_json(msg=err)
+        rc, out, err = self.module.run_command(' '.join(bits), fail_on_rc_non_zero=True)
         return out.splitlines()
 
     def checkout(self):
