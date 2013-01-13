@@ -99,7 +99,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, shell=shell, executable=executable)
+    rc, out, err = module.run_command(args, executable=executable)
 
     endd = datetime.datetime.now()
     delta = endd - startd

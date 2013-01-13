@@ -85,7 +85,7 @@ class Subversion(object):
         if self.password:
             bits.append("--password '%s'" % self.password)
         bits.append(args)
-        rc, out, err = self.module.run_command(' '.join(bits), fail_on_rc_non_zero=True)
+        rc, out, err = self.module.run_command(' '.join(bits), check_rc=True)
         return out.splitlines()
 
     def checkout(self):
