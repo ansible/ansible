@@ -63,7 +63,7 @@ def main():
 
     if state == 'present':
         if not present:
-            module.run_command('%s reread' % SUPERVISORCTL, fail_on_rc_non_zero=True)
+            module.run_command('%s reread' % SUPERVISORCTL, check_rc=True)
             rc, out, err = module.run_command('%s add %s' % (SUPERVISORCTL, name))
 
             if '%s: added process group' % name in out:
