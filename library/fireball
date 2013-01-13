@@ -70,7 +70,6 @@ import base64
 import syslog
 import signal
 import time
-import subprocess
 import signal
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
@@ -153,15 +152,14 @@ def command(data):
         return dict(failed=True, msg='internal error: executable is required')
 
     log("executing: %s" % data['cmd'])
-    p = subprocess.Popen(data['cmd'], executable=data['executable'], shell=True, stdout=subprocess.PIPE, close_fds=True)
-    (stdout, stderr) = p.communicate()
+    rc, stdout, stderr = module.run_command(data['cmd'], executable=data['executable'], close_fds=True)
     if stdout is None:
         stdout = ''
     if stderr is None:
         stderr = ''
     log("got stdout: %s" % stdout)
 
-    return dict(rc=p.returncode, stdout=stdout, stderr=stderr)
+    return dict(rc=rc, stdout=stdout, stderr=stderr)
 
 def fetch(data):
     if 'in_path' not in data:

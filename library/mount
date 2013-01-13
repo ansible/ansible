@@ -187,7 +187,7 @@ def unset_mount(**kwargs):
     return (args['name'], changed)
 
 
-def mount(**kwargs):
+def mount(module, **kwargs):
     """ mount up a path or remount if needed """
 
     name = kwargs['name']
@@ -196,25 +196,23 @@ def mount(**kwargs):
     else:
         cmd = [ '/bin/mount', name ]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(cmd)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
-def umount(**kwargs):
+def umount(module, **kwargs):
     """ unmount a path """
 
     name = kwargs['name']
     cmd = ['/bin/umount', name]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(cmd)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
 def main():
 
@@ -258,7 +256,7 @@ def main():
         name, changed = unset_mount(**args)
         if changed:
             if os.path.ismount(name):
-                res,msg  = umount(**args)
+                res,msg  = umount(module, **args)
                 if res:
                     module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
 
@@ -272,7 +270,7 @@ def main():
 
     if state == 'unmounted':
         if os.path.ismount(name):
-            res,msg  = umount(**args)
+            res,msg  = umount(module, **args)
             if res:
                 module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
@@ -291,10 +289,10 @@ def main():
             res = 0
             if os.path.ismount(name):
                 if changed:
-                    res,msg = mount(**args)
+                    res,msg = mount(module, **args)
             else:
                 changed = True
-                res,msg = mount(**args)
+                res,msg = mount(module, **args)
 
             if res:
                 module.fail_json(msg="Error mounting %s: %s" % (name, msg))

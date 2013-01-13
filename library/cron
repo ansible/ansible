@@ -122,19 +122,13 @@ author: Dane Summers
 import re
 import tempfile
 
-def get_jobs_file(user,tmpfile):
+def get_jobs_file(module, user, tmpfile):
     cmd = "crontab -l %s > %s" % (user,tmpfile)
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
+    return module.run_command(cmd)
 
-def install_jobs(user,tmpfile):
+def install_jobs(module, user, tmpfile):
     cmd = "crontab %s %s" % (user,tmpfile)
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
+    return module.run_command(cmd)
 
 def get_jobs(tmpfile):
     lines = open(tmpfile).read().splitlines()
@@ -155,13 +149,9 @@ def find_job(name,tmpfile):
             return j
     return []
 
-def add_job(name,job,tmpfile):
+def add_job(module,name,job,tmpfile):
     cmd = "echo \"#Ansible: %s\n%s\" >> %s" % (name,job,tmpfile)
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
-
+    return module.run_command(cmd)
 
 def update_job(name,job,tmpfile):
     return _update_job(name,job,tmpfile,do_add_job)
@@ -269,17 +259,17 @@ def main():
     if job is None and do_install:
         module.fail_json(msg="You must specify 'job' to install a new cron job")
     tmpfile = tempfile.NamedTemporaryFile()
-    (rc, out, err) = get_jobs_file(user,tmpfile.name)
+    (rc, out, err) = get_jobs_file(module,user,tmpfile.name)
     if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
         module.fail_json(msg=err)
     (handle,backupfile) = tempfile.mkstemp(prefix='crontab')
-    (rc, out, err) = get_jobs_file(user,backupfile)
+    (rc, out, err) = get_jobs_file(module,user,backupfile)
     if rc != 0 and rc != 1:
         module.fail_json(msg=err)
     old_job = find_job(name,backupfile)
     if do_install:
         if len(old_job) == 0:
-            (rc, out, err) = add_job(name,job,tmpfile.name)
+            (rc, out, err) = add_job(module,name,job,tmpfile.name)
             changed = True
         if len(old_job) > 0 and old_job[1] != job:
             (rc, out, err) = update_job(name,job,tmpfile.name)
@@ -293,7 +283,7 @@ def main():
     if changed:
         if backup:
             module.backup_local(backupfile)
-        (rc, out, err) = install_jobs(user,tmpfile.name)
+        (rc, out, err) = install_jobs(module,user,tmpfile.name)
         if (rc != 0):
             module.fail_json(msg=err)
 
