@@ -81,7 +81,7 @@ def clone(module, repo, dest, remote):
         pass
     os.chdir(dest_dirname)
     return module.run_command("git clone -o %s %s %s" % (remote, repo, dest),
-                              fail_on_rc_non_zero=True)
+                              check_rc=True)
 
 def has_local_mods(dest):
     os.chdir(dest)
@@ -99,7 +99,7 @@ def reset(module,dest,force):
     os.chdir(dest)
     if not force and has_local_mods(dest):
         module.fail_json(msg="Local modifications exist in repository (force=no).")
-    return module.run_command("git reset --hard HEAD", fail_on_rc_non_zero=True)
+    return module.run_command("git reset --hard HEAD", check_rc=True)
 
 def get_branches(module, dest):
     os.chdir(dest)
@@ -210,7 +210,7 @@ def switch_version(module, dest, remote, version):
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch)
         cmd = "git reset --hard %s" % remote
-    return module.run_command(cmd, fail_on_rc_non_zero=True)
+    return module.run_command(cmd, check_rc=True)
 
 # ===========================================
 

@@ -43,7 +43,7 @@ def main():
         argument_spec = dict()
     )
     cmd = ["/usr/bin/env", "ohai"]
-    rc, out, err = module.run_command(cmd, fail_on_rc_non_zero=True)
+    rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))
 
 # this is magic, see lib/ansible/module_common.py
