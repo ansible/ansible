@@ -143,6 +143,9 @@ def enforce_state(module, params):
     key   = params["key"]
     state = params.get("state", "present")
 
+    if '\n' in key:
+        module.fail_json(msg="key= can only contain a single key")
+
     # check current state -- just get the filename, don't create file
     params["keyfile"] = keyfile(module, user, write=False)
     keys = readkeys(params["keyfile"])
@@ -174,7 +177,6 @@ def main():
         )
     )
 
-    params = module.params
     results = enforce_state(module, module.params)
     module.exit_json(**results)
 
