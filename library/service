@@ -300,7 +300,8 @@ class LinuxService(Service):
             self.svc_initctl = location['initctl']
 
     def get_service_status(self):
-        rc, status_stdout, status_stderr = self.execute_command("%s %s status %s" % (self.svc_cmd, self.name, self.arguments))
+        self.action = "status"
+        rc, status_stdout, status_stderr = self.service_control()
 
         # Check if we got upstart on the system and then the job state
         if self.svc_initctl != None and self.running is None:
