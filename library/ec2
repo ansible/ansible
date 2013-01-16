@@ -115,6 +115,7 @@ def main():
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
+            zone = dict(),
             #count = dict(default='1'), # maybe someday
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
@@ -130,6 +131,7 @@ def main():
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     #count = module.params.get('count') 
+    zone = module.params.get('zone')
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
@@ -158,6 +160,7 @@ def main():
                                key_name=keypair,
                                security_groups=[group],
                                instance_type=instance_type,
+                               placement=zone,
                                kernel_id=kernel,
                                ramdisk_id=ramdisk,
                                user_data=user_data)
