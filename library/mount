@@ -37,7 +37,7 @@ options:
   src:
     description:
       - device to be mounted on I(name).
-    required: true
+    required: false
     default: null
   fstype:
     description:
@@ -75,7 +75,6 @@ requirements: []
 author: Seth Vidal
 '''
 
-
 def write_fstab(lines, dest):
 
     fs_w = open(dest, 'w')
@@ -84,6 +83,34 @@ def write_fstab(lines, dest):
 
     fs_w.flush()
     fs_w.close()
+
+def read_fstab(args):
+    """ read mount points in fstab """
+
+    fstab = []
+    exists = False
+    for line in open(args['fstab'], 'r').readlines():
+        if line.strip().startswith('#'):
+            fstab.append(line)
+            continue
+        if len(line.split()) != 6:
+            # not sure what this is or why it is here
+            # but it is not our fault so leave it be
+            fstab.append(line)
+            continue
+        ld = {}
+        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+        if ld['name'] == args['name']:
+           # Fill 'src' arg if it is empty
+           if args['src'] is None:
+               args['src'] = ld['src']
+           # And yes, a line matches the name pattern
+           exists = True
+           fstab.append(line)
+        else:
+           fstab.append(line)
+    
+    return (args, exists, fstab)
 
 def set_mount(**kwargs):
     """ set/change a mount point location in fstab """
@@ -99,44 +126,35 @@ def set_mount(**kwargs):
 
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
-    to_write = []
-    exists = False
     changed = False
-    for line in open(args['fstab'], 'r').readlines():
-        if not line.strip():
-            to_write.append(line)
-            continue
-        if line.strip().startswith('#'):
-            to_write.append(line)
-            continue
-        if len(line.split()) != 6:
-            # not sure what this is or why it is here
-            # but it is not our fault so leave it be
-            to_write.append(line)
-            continue
-
-        ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
-
-        if ld['name'] != args['name']:
-            to_write.append(line)
-            continue
-
-        # it exists - now see if what we have is different
-        exists = True
-        for t in ('src', 'fstype','opts', 'dump', 'passno'):
-            if ld[t] != args[t]:
-                changed = True
-                ld[t] = args[t]
-
-        if changed:
-            to_write.append(new_line % ld)
-        else:
-            to_write.append(line)
+    args, exists, current = read_fstab(args)
+    if not exists and args['src'] is None:
+        msg="Error: no 'src' provided but '%s' not found in fstab. Can't add mount point without all required parameters." % (args['name'])
+        return 1, msg
+    to_write = []
 
     if not exists:
+    # Not found, write new line and final point.
+        for line in current:
+            to_write.append(line)
         to_write.append(new_line % args)
         changed = True
+    else:
+        for line in current:
+            if len(line.split()) != 6:
+                to_write.append(line)
+                continue
+            ld = {}
+            ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+            if ld['name'] != args['name']:
+                to_write.append(line)
+            else:
+                for t in ('src', 'fstype','opts', 'dump', 'passno'):
+                    if ld[t] != args[t]:
+                        changed = True
+                        ld[t] = args[t]
+                if changed:
+                    to_write.append(new_line % ld)
 
     if changed:
         write_fstab(to_write, args['fstab'])
@@ -156,30 +174,29 @@ def unset_mount(**kwargs):
     )
     args.update(kwargs)
 
-    to_write = []
     changed = False
-    for line in open(args['fstab'], 'r').readlines():
-        if not line.strip():
-            to_write.append(line)
-            continue
-        if line.strip().startswith('#'):
-            to_write.append(line)
-            continue
-        if len(line.split()) != 6:
-            # not sure what this is or why it is here
-            # but it is not our fault so leave it be
-            to_write.append(line)
-            continue
+    args, exists, current = read_fstab(args)
+    to_write = []
 
-        ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+    # If not found, no need to go further. Otherwise:
+    if exists:
+        for line in current:
+            if len(line.split()) != 6:
+                to_write.append(line)
+                continue
+            ld = {}
+            ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
-        if ld['name'] != args['name']:
-            to_write.append(line)
-            continue
+            if ld['name'] != args['name']:
+                to_write.append(line)
+                continue
 
-        # if we got here we found a match - continue and mark changed
-        changed = True
+            # name matches, src too ?
+            if ld['src'] != args['src']:
+                continue
+
+            # if we got here we found a match - continue and mark changed
+            changed = True
 
     if changed:
         write_fstab(to_write, args['fstab'])
@@ -223,19 +240,24 @@ def main():
             opts   = dict(default=None),
             passno = dict(default=None),
             dump   = dict(default=None),
-            src    = dict(required=True),
+            src    = dict(default=None),
             fstype = dict(required=True),
-            fstab  = dict(default=None)
+            fstab  = dict(default=None),
+            delmp  = dict(default=None)
         )
     )
 
     changed = False
+    exists = False
     rc = 0
     args = {
         'name': module.params['name'],
-        'src': module.params['src'],
         'fstype': module.params['fstype']
     }
+    if module.params['src'] is not None:
+        args['src'] = module.params['src']
+    else:
+        args['src'] = None
     if module.params['passno'] is not None:
         args['passno'] = module.params['passno']
     if module.params['opts'] is not None:
@@ -260,7 +282,7 @@ def main():
                 if res:
                     module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
 
-            if os.path.exists(name):
+            if os.path.exists(name) and module.params['delmp'] is not None:
                 try:
                     os.rmdir(name)
                 except (OSError, IOError), e:
@@ -279,6 +301,8 @@ def main():
 
     if state in ['mounted', 'present']:
         name, changed = set_mount(**args)
+        if name == 1:
+            module.fail_json(msg=changed)
         if state == 'mounted':
             if not os.path.exists(name):
                 try:
