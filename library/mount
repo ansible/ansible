@@ -63,9 +63,9 @@ options:
     description:
       - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
         as well as just configured in I(fstab). C(absent) and C(present) only deal with
-        I(fstab).
+        I(fstab). C(only_if_present) and C(only_if_mounted) only deal if the line already exists in I(fstab).
     required: true
-    choices: [ "present", "absent", "mounted", "unmounted" ]
+    choices: [ "present", "absent", "mounted", "unmounted", "only_if_present", "only_if_mounted" ]
     default: null
 examples:
    - code: "mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present"
