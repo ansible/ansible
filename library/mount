@@ -136,7 +136,7 @@ def set_mount(**kwargs):
             return 1, msg
         if args['state'] in ['only_if_mounted', 'only_if_present']: 
             msg="Error: %s not found in fstab." % (args['name'])
-            return 1, msg
+            return 0, msg
 
     # Not found and line valid, write new line and final point.
         for line in current:
@@ -308,6 +308,8 @@ def main():
 
     if state in ['mounted', 'present', 'only_if_mounted', 'only_if_present']:
         name, changed = set_mount(**args)
+        if name == 0:
+            module.exit_json(changed=changed, **args)
         if name == 1:
             module.fail_json(msg=changed)
         if state == 'mounted':
