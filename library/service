@@ -313,9 +313,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by response code
         if self.running == None:
-            if rc == 3:
-                self.running = False
-            if rc == 2:
+            if rc in [2, 3, 69]:
                 self.running = False
             elif rc == 0:
                 self.running = True
