@@ -131,7 +131,7 @@ def set_mount(**kwargs):
     to_write = []
 
     if not exists:
-        if args['src'] is None:
+        if args['src'] is None and args['state'] not in ['only_if_mounted', 'only_if_present']:
             msg="Error: no 'src' provided but '%s' not found in fstab. Can't add mount point without all required parameters." % (args['name'])
             return 1, msg
         if args['state'] in ['only_if_mounted', 'only_if_present']: 
