@@ -223,10 +223,7 @@ class User(object):
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
 
-        p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate()
-        rc = p.returncode
-        return (rc, out, err)
+        return self.module.run_command(cmd)
 
     def remove_user_userdel(self):
         cmd = [self.module.get_bin_path('userdel', True)]
@@ -718,7 +715,7 @@ class SunOS(User):
                         continue
                     fields[1] = self.password
                     line = ':'.join(fields)
-                    lines.append('{0}\n'.format(line))
+                    lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)        
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
@@ -800,7 +797,7 @@ class SunOS(User):
                         continue
                     fields[1] = self.password
                     line = ':'.join(fields)
-                    lines.append('{0}\n'.format(line))
+                    lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)        
                 rc = 0
             except Exception, err:

@@ -96,10 +96,10 @@ def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            distribution = platform.linux_distribution()[0].capitalize
+            distribution = platform.linux_distribution()[0].capitalize()
         except:
             # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize
+            distribution = platform.dist()[0].capitalize()
     else:
         distribution = None
     return distribution
@@ -676,6 +676,46 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
+
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None):
+        '''
+        Execute a command, returns rc, stdout, and stderr.
+        args is the command to run
+        If args is a list, the command will be run with shell=False.
+        Otherwise, the command will be run with shell=True when args is a string.
+        Other arguments:
+        - check_rc (boolean)  Whether to call fail_json in case of
+                              non zero RC.  Default is False.
+        - close_fds (boolean) See documentation for subprocess.Popen().
+                              Default is False.
+        - executable (string) See documentation for subprocess.Popen().
+                              Default is None.
+        '''
+        if isinstance(args, list):
+            shell = False
+        elif isinstance(args, basestring):
+            shell = True
+        else:
+            msg = "Argument 'args' to run_command must be list or string"
+            self.fail_json(rc=257, cmd=args, msg=msg)
+        rc = 0
+        msg = None
+        try:
+            cmd = subprocess.Popen(args,
+                                   executable=executable,
+                                   shell=shell,
+                                   close_fds=close_fds,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            rc = cmd.returncode
+        except (OSError, IOError), e:
+            self.fail_json(rc=e.errno, msg=str(e), cmd=args)
+        except:
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+        if rc != 0 and check_rc:
+            msg = err.rstrip()
+            self.fail_json(cmd=args, rc=rc, stdout=out, stderr=err, msg=msg)
+        return (rc, out, err)
 
 # == END DYNAMICALLY INSERTED CODE ===
 

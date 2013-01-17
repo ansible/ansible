@@ -69,8 +69,8 @@ def package_installed(module, name):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
     cmd.append(name)
-    res = subprocess.call(cmd)
-    if res == 0:
+    rc, out, err = module.run_command(' '.join(cmd), shell=False)
+    if rc == 0:
         return True
     else:
         return False
@@ -102,10 +102,7 @@ basedir=default
 def run_command(module, cmd):
     progname = cmd[0]
     cmd[0] = module.get_bin_path(progname, True)
-    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = p.communicate()
-    rc = p.returncode
-    return (rc, out, err)
+    return module.run_command(cmd)
 
 def package_install(module, name, src, proxy):
     adminfile = create_admin_file()

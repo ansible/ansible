@@ -26,6 +26,25 @@
   - name: test LOOKUP and PIPE
     action: command test "$LOOKUP(pipe, cat sample.j2)" = "$PIPE(cat sample.j2)"
 
+  - name: test with_sequence, generate
+    command: touch /tmp/seq-${item}
+    with_sequence: 0-16/2:%02x
+
+  - name: test with_sequence, fenceposts 1
+    copy: src=/tmp/seq-00 dest=/tmp/seq-10
+
+  - name: test with_sequence, fenceposts 2
+    file: dest=/tmp/seq-${item} state=absent
+    with_items: [11, 12]
+
+  - name: test with_sequence, missing
+    file: dest=/tmp/seq-${item} state=absent
+    with_sequence: 0x10/02:%02x
+
+  - name: test with_sequence,remove
+    file: dest=/tmp/seq-${item} state=absent
+    with_sequence: 0-0x10/02:%02x
+
   - name: ensure test file doesnt exist
     # command because file will return differently
     action: command rm -f /tmp/ansible-test-with_lines-data

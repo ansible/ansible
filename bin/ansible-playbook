@@ -131,7 +131,10 @@ def main(args):
                     label = 'unnamed'
                     if 'name' in play:
                         label = play['name']
-                    tmp_hosts = utils.template(pb.basedir, play['hosts'], extra_vars)
+                    tmp_hosts = play['hosts']
+                    if isinstance(tmp_hosts, list):
+                        tmp_hosts = ':'.join(tmp_hosts)
+                    tmp_hosts = utils.template(pb.basedir, tmp_hosts, extra_vars)
                     hosts = pb.inventory.list_hosts(tmp_hosts)
                     print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
                     for host in hosts:
