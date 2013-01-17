@@ -128,13 +128,17 @@ def set_mount(**kwargs):
 
     changed = False
     args, exists, current = read_fstab(args)
-    if not exists and args['src'] is None:
-        msg="Error: no 'src' provided but '%s' not found in fstab. Can't add mount point without all required parameters." % (args['name'])
-        return 1, msg
     to_write = []
 
     if not exists:
-    # Not found, write new line and final point.
+        if args['src'] is None:
+            msg="Error: no 'src' provided but '%s' not found in fstab. Can't add mount point without all required parameters." % (args['name'])
+            return 1, msg
+        if args['state'] in ['only_if_mounted', 'only_if_present']: 
+            msg="Error: %s not found in fstab." % (args['name'])
+            return 1, msg
+
+    # Not found and line valid, write new line and final point.
         for line in current:
             to_write.append(line)
         to_write.append(new_line % args)
@@ -235,7 +239,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
+            state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted', 'only_if_present', 'only_if_mounted']),
             name   = dict(required=True),
             opts   = dict(default=None),
             passno = dict(default=None),
@@ -252,7 +256,8 @@ def main():
     rc = 0
     args = {
         'name': module.params['name'],
-        'fstype': module.params['fstype']
+        'fstype': module.params['fstype'],
+        'state': module.params['state']
     }
     if module.params['src'] is not None:
         args['src'] = module.params['src']
@@ -271,6 +276,8 @@ def main():
     # unmounted == do not change fstab state, but unmount
     # present == add to fstab, do not change mount state
     # mounted == add to fstab if not there and make sure it is mounted, if it has changed in fstab then remount it
+    # only_if_present == modify line in fstab, only if present, do not change mount state
+    # only_if_mounted == modify line in fstab, only if present, if it has changed then remount it.
 
     state = module.params['state']
     name  = module.params['name']
@@ -299,7 +306,7 @@ def main():
 
         module.exit_json(changed=changed, **args)
 
-    if state in ['mounted', 'present']:
+    if state in ['mounted', 'present', 'only_if_mounted', 'only_if_present']:
         name, changed = set_mount(**args)
         if name == 1:
             module.fail_json(msg=changed)
