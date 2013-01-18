@@ -137,6 +137,11 @@ def is_failed(result):
 
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
+def is_changed(result):
+    ''' is a given JSON result a changed result? '''
+
+    return (result.get('changed', False) in [ True, 'True', 'true'])
+
 def check_conditional(conditional):
 
     def is_set(var):
@@ -485,6 +490,8 @@ def compile_when_to_only_if(expression):
 
     # when: set $variable
     # when: unset $variable
+    # when: failed $json_result
+    # when: changed $json_result
     # when: int $x >= $z and $y < 3
     # when: int $x in $alist
     # when: float $x > 2 and $y <= $z
@@ -498,9 +505,27 @@ def compile_when_to_only_if(expression):
 
     # when_set / when_unset
     if tokens[0] in [ 'set', 'unset' ]:
-        if len(tokens) != 2:
-            raise errors.AnsibleError("usage: when: <set|unset> <$variableName>")
-        return "is_%s('''%s''')" % (tokens[0], tokens[1])
+        tcopy = tokens[1:]
+        for (i,t) in enumerate(tokens[1:]):
+            if t.find("$") != -1:
+                tcopy[i] = "is_%s('''%s''')" % (tokens[0], t)
+            else:
+                tcopy[i] = t
+        return " ".join(tcopy)
+
+
+
+    # when_failed / when_changed
+    elif tokens[0] in [ 'failed', 'changed' ]:
+        tcopy = tokens[1:]
+        for (i,t) in enumerate(tokens[1:]):
+            if t.find("$") != -1:
+                tcopy[i] = "is_%s(%s)" % (tokens[0], t)
+            else:
+                tcopy[i] = t
+        return " ".join(tcopy)
+
+
 
     # when_integer / when_float / when_string
     elif tokens[0] in [ 'integer', 'float', 'string' ]:
