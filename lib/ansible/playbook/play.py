@@ -189,6 +189,7 @@ class Play(object):
 
                 vname = var['name']
                 prompt = var.get("prompt", vname)
+                default = var.get("default", None)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
@@ -197,13 +198,17 @@ class Play(object):
                 salt = var.get("salt", None)
 
                 if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt (
+                                     vname, default, private, prompt, encrypt, confirm, salt_size, salt
+                                  )
 
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
                 prompt_msg = "%s: " % prompt
                 if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(varname=vname, private=False, prompt=prompt_msg)
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt(
+                                     varname=vname, default=None, private=False, prompt=prompt_msg
+                                  )
 
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
