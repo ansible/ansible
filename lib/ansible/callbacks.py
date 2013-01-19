@@ -435,7 +435,7 @@ class PlaybookCallbacks(object):
         print banner(msg)
         call_callback_module('playbook_on_task_start', name, is_conditional)
 
-    def on_vars_prompt(self, varname, default=None, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
+    def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
         if prompt:
             msg = "%s: " % prompt
@@ -466,8 +466,8 @@ class PlaybookCallbacks(object):
         if encrypt:
             result = utils.do_encrypt(result,encrypt,salt_size,salt)
 
-        call_callback_module( 'playbook_on_vars_prompt', varname, default=default, private=private,
-                               prompt=prompt, encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None
+        call_callback_module( 'playbook_on_vars_prompt', varname, private=private, prompt=prompt,
+                               encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None, default=default
                             )
 
         return result

@@ -199,7 +199,7 @@ class Play(object):
 
                 if vname not in self.playbook.extra_vars:
                     vars[vname] = self.playbook.callbacks.on_vars_prompt (
-                                     vname, default, private, prompt, encrypt, confirm, salt_size, salt
+                                     vname, private, prompt, encrypt, confirm, salt_size, salt, default
                                   )
 
         elif type(self.vars_prompt) == dict:
@@ -207,7 +207,7 @@ class Play(object):
                 prompt_msg = "%s: " % prompt
                 if vname not in self.playbook.extra_vars:
                     vars[vname] = self.playbook.callbacks.on_vars_prompt(
-                                     varname=vname, default=None, private=False, prompt=prompt_msg
+                                     varname=vname, private=False, prompt=prompt_msg, default=None
                                   )
 
         else:
