@@ -46,6 +46,7 @@ Ansible Changes By Release
 * SELinux fix for files created by authorized_key module
 * "template override" ??
 * lots of documentation tweaks
+* handle tilde shell character for --private-key
 
 * ...
 
