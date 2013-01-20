@@ -85,7 +85,7 @@ def key_for_hostname(hostname):
         return key
     else:
         fh = open(key_path)
-        key = AesKey.Read(fh.read())  
+        key = AesKey.Read(fh.read())
         fh.close()
         return key
 
@@ -157,8 +157,8 @@ def check_conditional(conditional):
 
 def is_executable(path):
     '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] 
-            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] 
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 def prepare_writeable_dir(tree):
@@ -193,7 +193,7 @@ def json_loads(data):
 
 def parse_json(raw_data):
     ''' this version for module return data only '''
- 
+
     orig_data = raw_data
 
     # ignore stuff like tcgetattr spewage or other warnings
@@ -483,7 +483,7 @@ def boolean(value):
         return False
 
 def compile_when_to_only_if(expression):
-    ''' 
+    '''
     when is a shorthand for writing only_if conditionals.  It requires less quoting
     magic.  only_if is retained for backwards compatibility.
     '''
@@ -569,6 +569,6 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     # the -p option.
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-    sudocmd = '%s -k && %s -S -p "%s" -i -u %s %s -c %s' % (
+    sudocmd = '%s -k && %s -S -p "%s" -u %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
