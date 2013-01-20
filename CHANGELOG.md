@@ -1,7 +1,51 @@
 Ansible Changes By Release
 ==========================
 
-1.0 "Eruption" -- release pending
+1.0 "Eruption" -- release pending -- changes unsorted for now
+
+* default_sudo_exe parameter can be set in config to use sudo alternatives
+* new sysctl module
+* new pacman module (Arch linux)
+* added when_failed and when_changed
+* when_set and when_unset can take more than one var (when_set: $a and $b and $c)
+* new apt_key module
+* fix for service status checking on Ubuntu
+* service module now responds to additional exit code for SERVICE_UNAVAILABLE
+* usage of run_command standardized between module implementations
+* fix for raw module with '-c local'
+* fixes to git module
+* ec2 module now reports the public DNS name
+* added the with_sequence lookup plugin
+* various fixes for variable resolution in playbooks
+* task includes can now be of infinite depth
+* can pass executable= to the raw module to specify alternative shells
+* fixes for handling of "~" in some paths
+* can override "connection:" on an indvidual task
+* fix for postgres module when user contains a "-"
+* various other database module fixes
+* added additional template variables -- $template_fullpath and $template_run_date
+* raise errors on invalid arguments used with a task include statement
+* making inventory variables available for use in vars_files paths
+* various fixes to DWIM'ing of relative paths
+* ability to use raw module without python on remote system
+* shell/command module takes a executable= parameter to specify a different shell than /bin/sh
+* added return code and error output to the raw module
+* added support for @reboot to the cron module
+* hostname patterns in the inventory file can now use alphabetic ranges
+* whitespace is now allowed around group variables in the inventory file
+* parameterized playbook includes can now define complex variables (not just all on one line)
+* misc fixes to the pip module
+* inventory scripts can now define groups of groups and group vars (need example for docs?)
+* nagios module can schedule downtime for all services on the host
+* various patterns can now take a regex vs a glob if they start with "~" (need docs on which!)
+* /bin/ansible now takes a --list-hosts just like ansible-playbook did
+* various subversion module improvements
+* various mail module improvements
+* allow intersecting host patterns by using "&" ("webservers:!debian:&datacenter1")
+* messages when skipping plays are now more clear
+* SELinux fix for files created by authorized_key module
+* "template override" ??
+* lots of documentation tweaks
 
 * ...
 
