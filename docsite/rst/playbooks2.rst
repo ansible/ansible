@@ -329,6 +329,26 @@ Here are various examples of 'when' in use.  'when' is incompatible with 'only_i
 The when_boolean check will look for variables that look to be true as well, such as the string 'True' or
 'true', non-zero numbers, and so on.
 
+We also added when_changed and when_failed so users can execute tasks based on the status of previously
+registered tasks.  As an example::
+
+    - name: "register a task that might fail"
+      action: shell /bin/false
+      register: result
+      ignore_errors: True
+
+    - name: "do this if the registered task failed"
+      action: shell /bin/true
+      when_failed: $result
+
+    - name: "register a task that might change"
+      action: yum pkg=httpd state=latest
+      register: result
+
+    - name: "do this if the registered task changed"
+      action: shell /bin/true
+      when_changed: $result
+
 Conditional Imports
 ```````````````````
 
