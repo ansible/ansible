@@ -1,0 +1,199 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Pepe Barbe <dev@antropoide.net> 
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+'''
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import httplib
+import base64
+
+class HttpError(Exception): pass
+
+USER_PATH = '/api/users'
+PERMISSIONS_PATH = '/api/permissions'
+VHOST_PATH = '/api/vhosts'
+
+j = lambda *a: '/'.join(a)
+
+def http_call(host, port, method, url, headers, body=None):
+    if body is not None:
+        headers = headers.copy()
+        headers['content-type'] = 'application/json'
+        body = json.dumps(body)
+    conn = httplib.HTTPConnection(host, port)
+    conn.request(method, url, body, headers)
+    response = conn.getresponse()
+    if response.status not in set([200, 204]):
+        raise HttpError(response.status, response.reason)
+    if response.status != 204:
+        body = response.read()
+        if 'application/json' == response.getheader('content-type'):
+            body = json.loads(body)
+        return body
+    return
+
+def add_user(call, user, password, tags):
+    path = j(USER_PATH, user)
+    try:
+        prev_user = call('GET', path)
+    except HttpError, e:
+        if e[0] != 404:
+            raise
+        call('PUT', path, body={
+            'password':password,
+            'tags':tags
+                
+        })
+        return True
+
+    prev_user.pop('password_hash')
+    prev_user['password'] = password
+    if tags != prev_user['tags']:
+        changed = True
+        prev_user['tags'] = tags
+    else:
+        changed = False
+
+    call('PUT', path, prev_user)
+    return changed
+
+def delete_user(call, user):
+    try:
+        call('DELETE', j(USER_PATH, user), user)
+    except HttpError, e:
+        if e[0] == 404:
+            return False
+        raise
+    return True
+
+def set_permissions(call, user, permissions, vhost, create_vhost):
+    if not vhost_exists(call, vhost):
+        if create_vhost:
+            add_vhost(call, vhost)
+        else:
+            module.fail_json(msg='Unknown vhost %s' % vhost)
+
+    new_perms = {'user':user, 'vhost':vhost}
+    new_perms.update(permissions)
+
+    path = j(PERMISSIONS_PATH, vhost, user)
+    try:
+        old_perms = call('GET', path)
+    except HttpError, e:
+        if e[0] == 404:
+            old_perms = {}
+
+    if old_perms != new_perms:
+        call('PUT', path, new_perms)
+        return True
+
+    return False
+
+def vhost_exists(call, vhost):
+    path = j(VHOST_PATH, vhost)
+    try:
+        call('GET', path)
+    except HttpError, e:
+        if e[0] == 404:
+            return False
+        raise
+    return True
+
+def add_vhost(call, vhost):
+    path = j(VHOST_PATH, vhost)
+    call('PUT', path, {'name':vhost})
+    return True
+
+def delete_vhost(call, vhost):
+    path = j(VHOST_PATH, vhost)
+    try:
+        call('DELETE', path, {'name':vhost})
+    except HttpError, e:
+        if e[0] == 404:
+            return False
+        raise
+    return True
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(required=True),
+            port=dict(default=15672),
+            login_user=dict(default=None, required=True),
+            login_password=dict(default=''),
+            user=dict(default=None, required=True),
+            password=dict(default=''),
+            tags=dict(default=''),
+            configure_priv=dict(default='^$'),
+            write_priv=dict(default='^$'),
+            read_priv=dict(default='^$'),
+            vhost=dict(default=None),
+            create_vhost=dict(default='no', choices=BOOLEANS),
+            state=dict(default="present", choices=["absent", "present"]),
+        )
+    )
+
+    b64_hash = base64.b64encode('%(login_user)s:%(login_password)s' % \
+                                module.params)
+    headers = {"Authorization": "Basic %s" % b64_hash}
+
+    host = module.params['host']
+    port= int(module.params['port'])
+    user = module.params['user']
+    password = module.params['password']
+    tags = module.params['tags']
+    vhost = module.params['vhost']
+    create_vhost = module.boolean(module.params['create_vhost'])
+    permissions = {
+        'configure':module.params['configure_priv'], 
+        'write':module.params['write_priv'],
+        'read':module.params['read_priv']
+    }
+
+    call = lambda method, url, body=None: http_call(host, port, method, 
+                                                    url, headers, body=body)
+
+    changed = False
+    try:
+        if module.params['state'] == "present":
+            changed = add_user(call, user, password, tags) or changed
+            if vhost is not None:
+                changed = set_permissions(call, user, permissions, vhost,
+                                          create_vhost) or changed
+        else:
+            changed = delete_user(call, user)
+    except HttpError, e:
+        module.fail_json(msg='%i: %s' % tuple(e))
+
+    kwargs = {'changed':changed, 'user':user}
+    if vhost is not None:
+        kwargs['vhost'] = vhost
+        kwargs['permissions'] = repr(permissions)
+    module.exit_json(**kwargs)
+        
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
