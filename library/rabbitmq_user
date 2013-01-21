@@ -20,7 +20,139 @@
 
 DOCUMENTATION = '''
 ---
-'''
+module: rabbitmq_user 
+short_description: Adds or removes users to RabbitMQ 
+description:
+    - Add or remote users to RabbitMQ, optionally setting up permission 
+      access to vhosts and creating them in the process if missing.
+version_added: 1.0
+author: Pepe Barbe 
+notes:
+    - A vhost will only be created if explecitly requested.
+    - vhosts are not deleted when users are deleted.
+requirements:
+    - simplejson for Python < 2.6
+    - RabbitMQ with the management Plugin enabled.
+    - A user with the management role
+    - See http://www.rabbitmq.com/management.html
+options:
+    host:
+        description:
+            - Host running RabbitMQ
+        required: true
+        default: null
+        choices: []
+        aliases: []
+        version_added: 1.0
+    port:
+        description:
+            - Port of RabbitMQ Management HTTP API
+        required: false
+        default: 15672
+        choices: []
+        aliases: []
+        version_added: 1.0
+    login_user:
+        description:
+            - User with management privileges
+        required: true
+        default: null
+        choices: [] 
+        aliases: []
+        version_added: 1.0
+    login_password:
+        description:
+            - Password for management user
+        required: true
+        default: null
+        choices: [] 
+        aliases: []
+        version_added: 1.0
+    user:
+        description:
+            - Name of user to add
+        required: true 
+        default: null 
+        choices: []
+        aliases: []
+        version_added: 1.0
+    password:
+        description:
+            - Password of user to add 
+        required: false
+        default: '' 
+        choices: [] 
+        aliases: [] 
+        version_added: 1.0
+    tags:
+        description:
+            - User tags specified as comma delimited
+        required: false
+        default: '' 
+        choices: [] 
+        aliases: []
+        version_added: 1.0
+    vhost:
+        description:
+            - vhost to apply access privileges. 
+            - If vhost is missing, module will error out unless the option
+              to create a vhost is enabled.
+        required: false 
+        default: null 
+        choices: [] 
+        aliases: [] 
+        version_added: 1.0
+    create_vhost:
+        description:
+            - If specified vhost does not exist, create it. 
+        required: false 
+        default: no 
+        choices: [yes, no] 
+        aliases: [] 
+        version_added: 1.0
+        configure_priv:
+        description:
+            - Regular expression to restrict configure actions on a resource
+              for the specified vhost.
+            - By default all actions are restricted.
+        required: false 
+        default: ^$
+        choices: [] 
+        aliases: [] 
+        version_added: 1.0
+    write_priv:
+        description:
+            - Regular expression to restrict configure actions on a resource
+              for the specified vhost.
+            - By default all actions are restricted.
+        required: false 
+        default: ^$
+        choices: [] 
+        aliases: [] 
+        version_added: 1.0
+    read_priv:
+        description:
+            - Regular expression to restrict configure actions on a resource
+              for the specified vhost.
+            - By default all actions are restricted.
+        required: false 
+        default: ^$
+        choices: [] 
+        aliases: [] 
+        version_added: 1.0
+    state:
+        description:
+            - Specify if user is to be added or removed
+        required: false 
+        default: present 
+        choices: [present, absent] 
+        aliases: [] 
+        version_added: 1.0
+examples:
+# One or more of the following:
+    - code: rabbitmq_user login_user=bugs user=bunny user=daffy password=duck vhost=duck_season create_vhost=yes configure_priv="^.*$" read_priv="^.*$" write_priv="^.*$" state=present
+      description: Add user daffy to server, create vhost if missing and assign full access control
+      '''
 
 try:
     import json
