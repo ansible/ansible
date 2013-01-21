@@ -115,8 +115,8 @@ systems that contain python 2.4 or higher.
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also use the ``make rpm`` command to build an RPM you can
-distribute and install:
+You can also use the ``make rpm`` command to build an RPM you can distribute and install. 
+Make sure you've ``rpmbuild`` and ``make`` installed.
 
 .. code-block:: bash
 
