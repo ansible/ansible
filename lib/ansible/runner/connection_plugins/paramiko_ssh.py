@@ -81,8 +81,12 @@ class Connection(object):
         if self.runner.remote_pass is not None:
             allow_agent = False
         try:
+            if self.runner.private_key_file:
+                key_filename = os.path.expanduser(self.runner.private_key_file)
+            else:
+                key_filename = None
             ssh.connect(self.host, username=user, allow_agent=allow_agent, look_for_keys=True,
-                key_filename=os.path.expanduser(self.runner.private_key_file), password=self.runner.remote_pass,
+                key_filename=key_filename, password=self.runner.remote_pass,
                 timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
