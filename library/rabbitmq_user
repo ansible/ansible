@@ -30,6 +30,7 @@ import httplib
 import base64
 
 class HttpError(Exception): pass
+class FailJson(Exception): pass
 
 USER_PATH = '/api/users'
 PERMISSIONS_PATH = '/api/permissions'
@@ -93,8 +94,8 @@ def set_permissions(call, user, permissions, vhost, create_vhost):
         if create_vhost:
             add_vhost(call, vhost)
         else:
-            module.fail_json(msg='Unknown vhost %s' % vhost)
-
+            raise FailJson('Unknown vhost %s' % vhost)
+    
     new_perms = {'user':user, 'vhost':vhost}
     new_perms.update(permissions)
 
@@ -137,7 +138,6 @@ def delete_vhost(call, vhost):
     return True
 
 def main():
-    global module
     module = AnsibleModule(
         argument_spec=dict(
             host=dict(required=True),
@@ -187,6 +187,8 @@ def main():
             changed = delete_user(call, user)
     except HttpError, e:
         module.fail_json(msg='%i: %s' % tuple(e))
+    except FailJson, e:
+        module.fail_json(msg=e[0])
 
     kwargs = {'changed':changed, 'user':user}
     if vhost is not None:
