@@ -82,7 +82,7 @@ class Connection(object):
             allow_agent = False
         try:
             ssh.connect(self.host, username=user, allow_agent=allow_agent, look_for_keys=True,
-                key_filename=self.runner.private_key_file, password=self.runner.remote_pass,
+                key_filename=os.path.expanduser(self.runner.private_key_file), password=self.runner.remote_pass,
                 timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
