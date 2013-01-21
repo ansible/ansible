@@ -197,7 +197,7 @@ Set up SSH agent to avoid retyping passwords:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to ansible's --private-key-file option to specify a pem file instead)
+(Depending on your setup, you may wish to ansible's --private-key option to specify a pem file instead)
 
 Now ping all your nodes:
 
