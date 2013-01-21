@@ -116,7 +116,7 @@ systems that contain python 2.4 or higher.
     $ sudo yum install ansible
 
 You can also use the ``make rpm`` command to build an RPM you can distribute and install. 
-Make sure you've ``rpmbuild`` and ``make`` installed.
+Make sure you've ``rpm-build`` ``make`` and ``python2-devel`` installed.
 
 .. code-block:: bash
 
