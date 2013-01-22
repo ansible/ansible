@@ -98,7 +98,6 @@ author: Seth Vidal
 
 import boto
 import time
-from urlparse import urlparse
 
 def main():
     module = AnsibleModule(
@@ -139,15 +138,10 @@ def main():
     if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
-    if ec2_url: # if we have an URL set, assume Eucalyptus 
-        url = urlparse(ec2_url)
-        ec2 = boto.connect_euca(host = url.netloc.split(":")[0],
-                                aws_access_key_id = ec2_access_key,
-                                aws_secret_access_key = ec2_secret_key,
-                                port = url.port,
-                                path = url.path)
+    if ec2_url: # if we have an URL set, connect to the specified endpoint 
+        ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
     else: # otherwise it's Amazon.
-        ec2 = boto.connect_ec2()
+        ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
         
     try:
         res = ec2.run_instances(image, key_name = key_name,
