@@ -17,6 +17,7 @@ They can be written in any language.
 -  `homebrew <https://gist.github.com/3170079>`_ - swehack
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
+-  `RabbitMQ <https://github.com/elventear/ansible-rabbitmq>`_ - elventear
 
 Python modules using 0.6 and later can and should use the common "AnsibleModule"
 class to dramatically reduce the amount of boilerplate code required.
