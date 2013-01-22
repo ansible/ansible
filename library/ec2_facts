@@ -84,7 +84,6 @@ def main():
                     "changed" : True,
                     "ansible_facts" : ec2_facts
                 }
-
     module = AnsibleModule(
         argument_spec = dict()
     )
