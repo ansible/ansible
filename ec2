@@ -93,11 +93,17 @@ examples:
    - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
-author: Seth Vidal
+author: Seth Vidal, Tim Gerla
 '''
 
-import boto
+import sys
 import time
+
+try:
+    import boto 
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
 
 def main():
     module = AnsibleModule(
