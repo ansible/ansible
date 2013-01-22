@@ -391,7 +391,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
-        default=constants.DEFAULT_MODULE_PATH)
+        default=None)
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
