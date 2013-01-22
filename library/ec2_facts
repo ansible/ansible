@@ -1,0 +1,95 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: ec2_facts
+short_description: Gathers facts about remote hosts within ec2 (aws)
+options: {}
+description: 
+     - This module fetches data from the metadata servers in ec2 (aws).
+notes: 
+    - The module can add parameters to filter ec2_facts based on it.
+    Some of the facts are not returned ( like mapping of the devices - but 
+    can be add it on).
+examples:
+    - code: ansible all -m ec2_facts --tree /tmp/facts
+      description: Obtain facts from ec2 metatdata servers. You will need to
+      run an instance within ec2.
+author: Silviu Dicu
+'''
+
+import urllib2
+import socket
+
+socket.setdefaulttimeout(5)
+
+class Ec2Metadata(object):
+    
+    ec2_metadata_server = 'http://169.254.169.254/latest/meta-data/'
+    ec2_sshdata_server = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
+    ec2_userdata_server = 'http://169.254.169.254/latest/user-data/'
+
+    def __init__(self, ec2_metadata_server=None, ec2_sshdata_server=None, ec2_userdata_server=None):
+        self.url_meta = ec2_metadata_server or self.ec2_metadata_server
+        self.url_user = ec2_userdata_server or self.ec2_userdata_server
+        self.url_ssh =  ec2_sshdata_server or self.ec2_sshdata_server
+
+    def _fetch(self, url):
+        try:
+            return urllib2.urlopen(url).read()
+        except urllib2.HTTPError:
+            return
+        except urllib2.URLError:
+            return
+
+    def run(self, field=None):
+        data = {}
+        raw_fields = self._fetch(self.url_meta)
+        if not raw_fields:
+            return data
+        fields = raw_fields.split('\n')
+        for field in fields:
+            if field.endswith('/'): continue # deal with this later
+            field_data = self._fetch(self.url_meta + field)
+            if field == 'security-groups':
+                sg_fields = ",".join(field_data.split('\n'))
+                data['ansible_ec2_%s' % field]  = sg_fields
+            else:
+                data['ansible_ec2_%s' % field] = field_data
+        data['ansible_ec2_%s' % 'user-data'] = self._fetch(self.url_user)
+        data['ensible_ec2_%s' % 'public-keys'] = self._fetch(self.url_ssh)
+        return data
+
+
+def main():
+    ec2_facts = Ec2Metadata().run()
+    ec2_facts_result = { 
+                    "changed" : True,
+                    "ansible_facts" : ec2_facts
+                }
+    module = AnsibleModule(
+        argument_spec = dict()
+    )
+    module.exit_json(**ec2_facts_result)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
