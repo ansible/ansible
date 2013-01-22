@@ -56,6 +56,11 @@ def shell_expand_path(path):
     return path
 
 def fool_setuptools_sandbox():
+    ''' easy_install wraps some functions in the 'os' module to inspect
+        that files are not being installed out-side of the package directory,
+        although python's distutils permits this. we work-around these inspection by overriding
+        one of its methods '''
+
     if hasattr(open, "im_self"):
         getattr(open, "im_self")._ok = lambda *args, **kwargs: True
 
