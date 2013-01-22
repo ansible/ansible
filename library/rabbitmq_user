@@ -160,6 +160,7 @@ except ImportError:
     import simplejson as json
 import httplib
 import base64
+import socket
 
 class HttpError(Exception): pass
 class FailJson(Exception): pass
@@ -318,9 +319,11 @@ def main():
         else:
             changed = delete_user(call, user)
     except HttpError, e:
-        module.fail_json(msg='%i: %s' % tuple(e))
+        module.fail_json(msg='HTTP Error %i: %s' % tuple(e))
     except FailJson, e:
         module.fail_json(msg=e[0])
+    except socket.error, e:
+        module.fail_json(msg='Connection Error %i: %s' % tuple(e))
 
     kwargs = {'changed':changed, 'user':user}
     if vhost is not None:
