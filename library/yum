@@ -297,7 +297,7 @@ def pkg_to_dict(pkgstr):
 
     return d
 
-def repolist(repoq, qf="%{repoid}"):
+def repolist(module, repoq, qf="%{repoid}"):
 
     cmd = repoq + ["--qf", qf, "-a"]
     rc,out,err = module.run_command(cmd)
@@ -320,7 +320,7 @@ def list_stuff(module, conf_file, stuff):
     elif stuff == 'available':
         return [ pkg_to_dict(p) for p in is_available(module, repoq, '-a', conf_file, qf=qf) if p.strip() ]
     elif stuff == 'repos':
-        return [ dict(repoid=name, state='enabled') for name in repolist(repoq) if name.strip() ]
+        return [ dict(repoid=name, state='enabled') for name in repolist(module, repoq) if name.strip() ]
     else:
         return [ pkg_to_dict(p) for p in is_installed(module, repoq, stuff, conf_file, qf=qf) + is_available(module, repoq, stuff, conf_file, qf=qf) if p.strip() ]
 
