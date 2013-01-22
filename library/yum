@@ -262,7 +262,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     return []
 
-def local_nvra(path):
+def local_nvra(module, path):
     """return nvra of a local rpm passed in"""
     
     cmd = ['/bin/rpm', '-qp' ,'--qf', 
@@ -343,7 +343,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 res['msg'] += "No Package file matching '%s' found on system" % spec
                 module.fail_json(**res)
 
-            nvra = local_nvra(spec)
+            nvra = local_nvra(module, spec)
             # look for them in the rpmdb
             if is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                 # if they are there, skip it
