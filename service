@@ -74,6 +74,7 @@ import platform
 import os
 import tempfile
 import shlex
+import select
 
 class Service(object):
     """
@@ -134,12 +135,83 @@ class Service(object):
 # ===========================================
 # Generic methods that should be used on all platforms.
 
-    def execute_command(self, cmd):
+    def execute_command(self, cmd, daemonize=False):
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
+            syslog.syslog(syslog.LOG_NOTICE, 'Command %s, daemonize %r' % (cmd, daemonize))
 
-        return self.module.run_command(cmd)
+        # Most things don't need to be daemonized
+        if not daemonize:
+            return self.module.run_command(cmd)
+
+        # This is complex because daemonization is hard for people.
+        # What we do is daemonize a part of this module, the daemon runs the
+        # command, picks up the return code and output, and returns it to the
+        # main process.
+        pipe = os.pipe()
+        pid = os.fork()
+        if pid == 0:
+            os.close(pipe[0])
+            # Set stdin/stdout/stderr to /dev/null
+            fd = os.open(os.devnull, os.O_RDWR)
+            if fd != 0:
+                os.dup2(fd, 0)
+            if fd != 1:
+                os.dup2(fd, 1)
+            if fd != 2:
+                os.dup2(fd, 2)
+            if fd not in (0, 1, 2):
+                os.close(fd)
+
+            # Make us a daemon. Yes, that's all it takes.
+            pid = os.fork()
+            if pid > 0:
+                os._exit(0)
+            os.setsid()
+            os.chdir("/")
+            pid = os.fork()
+            if pid > 0:
+                os._exit(0)
+
+            # Start the command
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            stdout = ""
+            stderr = ""
+            fds = [p.stdout, p.stderr]
+            # Wait for all output, or until the main process is dead and its output is done.
+            while fds:
+                rfd, wfd, efd = select.select(fds, [], fds, 1)
+                if not (rfd + wfd + efd) and p.poll() is not None:
+                    break
+                if p.stdout in rfd:
+                    dat = os.read(p.stdout.fileno(), 4096)
+                    if not dat:
+                        fds.remove(p.stdout)
+                if p.stderr in rfd:
+                    dat = os.read(p.stderr.fileno(), 4096)
+                    if not dat:
+                        fds.remove(p.stderr)
+                    stderr += dat
+            p.wait()
+            # Return a JSON blob to parent
+            os.write(pipe[1], json.dumps([p.returncode, stdout, stderr]))
+            os.close(pipe[1])
+            os._exit(0)
+        elif pid == -1:
+            self.module.fail_json(msg="unable to fork")
+        else:
+            os.close(pipe[1])
+            os.waitpid(pid, 0)
+            # Wait for data from daemon process and process it.
+            data = ""
+            while True:
+                rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
+                if pipe[0] in rfd:
+                    dat = os.read(pipe[0], 4096)
+                    if not dat:
+                        break
+                    data += dat
+            return json.loads(data)
 
     def check_ps(self):
         # Set ps flags
@@ -378,10 +450,10 @@ class LinuxService(Service):
             svc_cmd = "%s" % self.svc_initscript
 
         if self.action is not "restart":
-            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments))
+            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
         else:
-            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments))
-            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments))
+            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
+            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
             if rc1 != 0 and rc2 == 0:
                 rc_state = rc2
                 stdout = stdout2
