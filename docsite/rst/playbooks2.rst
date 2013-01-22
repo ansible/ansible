@@ -777,11 +777,11 @@ to determine which place sets the value of the variable.
 
 1.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
 
-2.  'vars' as defined in the playbook.
+2.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
 
-3.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
+3.  variables passed to parameterized task include statements.
 
-4.  variables passed to parameterized task include statements.
+4.  'vars' as defined in the playbook.
 
 5.  Host variables from inventory.
 
