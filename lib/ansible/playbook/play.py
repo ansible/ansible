@@ -261,8 +261,9 @@ class Play(object):
             self.vars_files = [ self.vars_files ]
 
         if host is not None:
-            inject = self.playbook.SETUP_CACHE[host].copy()
+            inject = {}
             inject.update(self.playbook.inventory.get_variables(host))
+            inject.update(self.playbook.SETUP_CACHE[host])
 
         for filename in self.vars_files:
 
