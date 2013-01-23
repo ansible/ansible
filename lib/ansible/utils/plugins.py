@@ -70,7 +70,8 @@ class PluginLoader(object):
 
     def add_directory(self, directory):
         """Adds an additional directory to the search path"""
-        self._extra_dirs.append(directory)
+        if directory is not None:
+            self._extra_dirs.append(directory)
 
     def print_paths(self):
         """Returns a string suitable for printing of the search path"""
