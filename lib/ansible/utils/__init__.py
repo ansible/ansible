@@ -280,21 +280,19 @@ def merge_hash(a, b):
     which value comes from b
     said differently, all key/value combination from b will override a's '''
 
-    # let's create a deep copy of a
-    result = copy.deepcopy(a)
     # and iterate over b keys
     for k, v in b.iteritems():
-        if k in result and isinstance(result[k], dict):
+        if k in a and isinstance(a[k], dict):
             # if this key is a hash and exists in a
             # we recursively call ourselves with 
             # the key value of b
-            result[k] = merge_hash(result[k], v)
+            a[k] = merge_hash(a[k], v)
         else:
             # k is not in a, no need to merge b, we just deecopy
             # or k is not a dictionnary, no need to merge b either, we just deecopy it
-            result[k] = copy.deepcopy(v)
+            a[k] = v
     # finally, return the resulting hash when we're done iterating keys
-    return result
+    return a
 
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
