@@ -31,20 +31,20 @@ Playbooks should be organized like this::
 
     # root of source control repository
     ├── acme/
+    │   ├── files/
+    │   │   └── some_file_path_foo.conf
+    │   ├── handlers/
+    │   │   └── main.yml
+    │   ├── tasks/
+    │   │   ├── setup.yml
+    │   │   └── stop.yml
+    │   ├── templates/
+    │   │   ├── etc_acme_conf_acme.conf
+    │   │   └── etc_other_conf_other.conf
+    │   ├── vars/
+    │   │   └── main.yml
     │   ├── setup.yml
     │   └── stop.yml
-    ├── files/
-    │   └── some_file_path_foo.conf
-    ├── handlers/
-    │   └── main.yml
-    ├── tasks/
-    │   ├── setup.yml
-    │   └── stop.yml
-    ├── templates/
-    │   ├── etc_acme_conf_acme.conf
-    │   └── etc_other_conf_other.conf
-    ├── vars/
-    │   └── main.yml
     └── global_vars.yml
 
 Any directories or files not needed can be omitted.  Not all modules
