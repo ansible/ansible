@@ -10,7 +10,12 @@ else
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=`python -c "import os; print os.path.realpath('$HACKING_DIR')"`
+if type python5 >/dev/null 2>&1 ; then
+    FULL_PATH=`python2 -c "import os; print os.path.realpath('$HACKING_DIR')"`
+else
+    FULL_PATH=`python -c "import os; print os.path.realpath('$HACKING_DIR')"`
+fi
+
 ANSIBLE_HOME=`dirname $FULL_PATH`
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
