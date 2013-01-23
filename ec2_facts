@@ -25,9 +25,9 @@ options: {}
 description: 
      - This module fetches data from the metadata servers in ec2 (aws).
 notes: 
-    - The module can add parameters to filter ec2_facts based on it.
+    - Parameters to filter on ec2_facts may be added later.
     Some of the facts are not returned ( like mapping of the devices - but 
-    can be add it on).
+    may be added later).
 examples:
     - code: ansible all -m ec2_facts --tree /tmp/facts
       description: Obtain facts from ec2 metatdata servers. You will need to
@@ -42,14 +42,14 @@ socket.setdefaulttimeout(5)
 
 class Ec2Metadata(object):
     
-    ec2_metadata_server = 'http://169.254.169.254/latest/meta-data/'
-    ec2_sshdata_server = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
-    ec2_userdata_server = 'http://169.254.169.254/latest/user-data/'
+    ec2_metadata_url = 'http://169.254.169.254/latest/meta-data/'
+    ec2_sshdata_url  = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
+    ec2_userdata_url = 'http://169.254.169.254/latest/user-data/'
 
-    def __init__(self, ec2_metadata_server=None, ec2_sshdata_server=None, ec2_userdata_server=None):
-        self.url_meta = ec2_metadata_server or self.ec2_metadata_server
-        self.url_user = ec2_userdata_server or self.ec2_userdata_server
-        self.url_ssh =  ec2_sshdata_server or self.ec2_sshdata_server
+    def __init__(self, ec2_metadata_url=None, ec2_sshdata_url=None, ec2_userdata_url=None):
+        self.url_meta = ec2_metadata_url or self.ec2_metadata_url
+        self.url_user = ec2_userdata_url or self.ec2_userdata_url
+        self.url_ssh  =  ec2_sshdata_url or self.ec2_sshdata_url
 
     def _fetch(self, url):
         try:
@@ -81,7 +81,7 @@ class Ec2Metadata(object):
 def main():
     ec2_facts = Ec2Metadata().run()
     ec2_facts_result = { 
-                    "changed" : True,
+                    "changed" : False,
                     "ansible_facts" : ec2_facts
                 }
     module = AnsibleModule(
