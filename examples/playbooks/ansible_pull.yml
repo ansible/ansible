@@ -1,4 +1,4 @@
-# ansibple-pull setup
+# ansible-pull setup
 #
 # on remote hosts, set up ansible to run periodically using the latest code
 # from a particular checkout, in pull based fashion, inverting Ansible's
