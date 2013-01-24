@@ -100,6 +100,29 @@ def url_do_get(module, url, dest):
     USERAGENT = 'ansible-httpget'
     info = dict(url=url, dest=dest)
     r = None
+    parsed = urlparse.urlparse(url)
+    if '@' in parsed.netloc:
+        credentials = parsed.netloc.split('@')[0]
+        if ':' in credentials:
+            username, password = credentials.split(':')
+        netloc = parsed.netloc.split('@')[1]
+        parsed = list(parsed)
+        parsed[1] = netloc
+
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        # this creates a password manager
+        passman.add_password(None, netloc, username, password)
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `theurl` is a super-url
+
+        authhandler = urllib2.HTTPBasicAuthHandler(passman)
+        # create the AuthHandler
+
+        opener = urllib2.build_opener(authhandler)
+        urllib2.install_opener(opener)
+        #reconstruct url without credentials
+        url = urlparse.urlunparse(parsed)
 
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
