@@ -82,10 +82,11 @@ class Facts(object):
     # A list of dicts.  If there is a platform with more than one
     # package manager, put the preferred one last.  If there is an
     # ansible module, use that as the value for the 'name' key.
-    PKG_MGRS = [ { 'path' : '/usr/bin/yum',     'name' : 'yum' },
-                 { 'path' : '/usr/bin/apt-get', 'name' : 'apt' },
-                 { 'path' : '/usr/bin/zypper',  'name' : 'zypper' },
-                 { 'path' : '/usr/bin/pacman',  'name' : 'pacman' } ]
+    PKG_MGRS = [ { 'path' : '/usr/bin/yum',         'name' : 'yum' },
+                 { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
+                 { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
+                 { 'path' : '/usr/bin/pacman',      'name' : 'pacman' }, 
+                 { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' } ]
 
     def __init__(self):
         self.facts = {}
