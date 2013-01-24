@@ -35,7 +35,8 @@ version_added: "0.6"
 options:
   url:
     description:
-      - HTTP, HTTPS, or FTP URL
+        - HTTP, HTTPS, or FTP URL.
+        (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
     default: null
     aliases: []
@@ -63,18 +64,18 @@ examples:
    - code: "get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440"
      description: "Example from Ansible Playbooks"
 notes:
-    - This module doesn't yet support configuration for proxies or passwords.
+    - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens
 '''
 
-HAS_URLLIB2=True
+HAS_URLLIB2 = True
 try:
     import urllib2
 except ImportError:
-    HAS_URLLIB2=False
-HAS_URLPARSE=True
+    HAS_URLLIB2 = False
+HAS_URLPARSE = True
 
 try:
     import urlparse
@@ -255,8 +256,8 @@ def main():
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
-        changed=changed, msg=info.get('msg',''),
-        daisychain="file", daisychain_args=info.get('daisychain_args',''))
+        changed=changed, msg=info.get('msg', ''),
+        daisychain="file", daisychain_args=info.get('daisychain_args', ''))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
