@@ -52,9 +52,17 @@ examples:
   description: Add nginx stable repository from PPA
 - code: "apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner'"
   description: Add specified repository into sources.
+requirements: [ python-apt ]
 '''
 
 import platform
+
+try:
+    import apt
+    import apt_pkg
+    HAVE_PYAPT = True
+except ImportError:
+    HAVE_PYAPT = False
 
 APT = "/usr/bin/apt-get"
 ADD_APT_REPO = 'add-apt-repository'
@@ -63,6 +71,16 @@ def check_cmd_needs_y():
     if platform.dist()[0] == 'debian' or float(platform.dist()[1]) >= 11.10:
         return True
     return False
+
+def repo_exists(module, repo):
+    configured = False
+    slist = apt_pkg.SourceList()
+    if not slist.read_main_list():
+        module.fail_json(msg="Failed to parse sources.list")
+    for metaindex in slist.list:
+        if repo in metaindex.uri:
+            configured = True
+    return configured
 
 def main():
     add_apt_repository = None
@@ -74,6 +92,9 @@ def main():
 
     module = AnsibleModule(argument_spec=arg_spec)
 
+    if not HAVE_PYAPT:
+        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+
     add_apt_repository = module.get_bin_path(ADD_APT_REPO, True)
     if check_cmd_needs_y():
         add_apt_repository += ' -y'
@@ -81,29 +102,41 @@ def main():
     repo = module.params['repo']
     state = module.params['state']
 
-    cmd = '%s "%s" --remove' % (add_apt_repository, repo)
-    rc, out, err = module.run_command(cmd)
-    existed = 'Error' not in out
+    repo_url = repo
+    if 'ppa' in repo_url:
+        # looks like ppa:nginx/stable
+        repo_url = repo.split(':')[1]
+    elif len(repo_url.split(' ')) > 1:
+        # could be:
+        # http://myserver/path/to/repo free non-free
+        # deb http://myserver/path/to/repo free non-free
+        for i in repo_url.split():
+            if 'http' in i:
+                repo_url = i
+    exists = repo_exists(module, repo_url)
 
-    if state == 'absent':
-        if not existed:
-            module.exit_json(changed=False, repo=repo, state=state)
-        else:
-            module.exit_json(changed=True, repo=repo, state=state)
-
-    cmd = '%s "%s"' % (add_apt_repository, repo)
-
-    rc, out, err = module.run_command(cmd)
-
-    changed = rc == 0 and not existed
+    rc = 0
+    out = ''
+    err = ''
+    if state == 'absent' and exists:
+        cmd = '%s "%s" --remove' % (add_apt_repository, repo)
+        rc, out, err = module.run_command(cmd)
+    elif state == 'present' and not exists:
+        cmd = '%s "%s"' % (add_apt_repository, repo)
+        rc, out, err = module.run_command(cmd)
+    else:
+        module.exit_json(changed=False, repo=repo, state=state)
 
     if rc != 0:
         module.fail_json(msg=err)
+    else:
+        changed = True
 
-    if changed:
+    if state == 'present' and changed:
         rc, out, err = module.run_command('%s update' % APT)
 
     module.exit_json(changed=changed, repo=repo, state=state)
+
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
