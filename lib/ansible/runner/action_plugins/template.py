@@ -37,10 +37,6 @@ class ActionModule(object):
         source   = options.get('src', None)
         dest     = options.get('dest', None)
 
-        if dest.endswith("/"):
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
@@ -61,6 +57,10 @@ class ActionModule(object):
                 return ReturnData(conn=conn, comm_ok=False, result=result)
         else:
             source = utils.template(self.runner.basedir, source, inject)
+
+        if dest.endswith("/"):
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
 
         # template the source data locally & transfer
         try:
