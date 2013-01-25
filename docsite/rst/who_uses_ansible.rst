@@ -13,6 +13,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `D square NV <http://dsquare.be>`_ - Process industry data mining, Belgium
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
+    * `Eucalyptus Systems Inc. <http://www.eucalyptus.com>`_ - Makers of the AWS-compatible private cloud platform 
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
     * `Four Kitchens <http://fourkitchens.com>`_ - The Drupal Experts
     * `HP (Germany) <http://hp.com>`_ - HP
