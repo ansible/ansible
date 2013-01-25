@@ -249,15 +249,34 @@ def template(basedir, text, vars, lookup_fatal=True, expand_lists=False):
     return text
 
 class _jinja2_vars(object):
-    ''' helper class to template all variable content before jinja2 sees it '''
-    def __init__(self, basedir, vars, globals):
+    '''
+    Helper class to template all variable content before jinja2 sees it.
+    This is done by hijacking the variable storage that jinja2 uses, and
+    overriding __contains__ and __getitem__ to look like a dict. Added bonus
+    is avoiding duplicating the large hashes that inject tends to be.
+    To facilitate using builtin jinja2 things like range, globals are handled
+    here.
+    extras is a list of locals to also search for variables. 
+    '''
+    def __init__(self, basedir, vars, globals, *extras):
         self.basedir = basedir
         self.vars = vars
         self.globals = globals
+        self.extras = extras
     def __contains__(self, k):
-        return k in self.vars or k in self.globals
+        if k in self.vars:
+            return True
+        for i in self.extras:
+            if k in i:
+                return True
+        if k in self.globals:
+            return True
+        return False
     def __getitem__(self, varname):
         if varname not in self.vars:
+            for i in self.extras:
+                if varname in i:
+                    return i[varname]
             if varname in self.globals:
                 return self.globals[varname]
             else:
@@ -268,6 +287,24 @@ class _jinja2_vars(object):
             return var
         else:
             return template_ds(self.basedir, var, self.vars)
+    def add_locals(self, locals):
+        '''
+        If locals are provided, create a copy of self containing those
+        locals in addition to what is already in this variable proxy.
+        '''
+        if locals is None:
+            return self
+        return _jinja2_vars(self.basedir, self.vars, self.globals, locals, *self.extras)
+
+class J2Template(jinja2.environment.Template):
+    '''
+    This class prevents Jinja2 from running _jinja2_vars through dict()
+    Without this, {% include %} and similar will create new contexts unlike
+    the special one created in template_from_file. This ensures they are all
+    alike, with the exception of potential locals.
+    '''
+    def new_context(self, vars=None, shared=False, locals=None):
+        return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
@@ -297,6 +334,7 @@ def template_from_file(basedir, path, vars):
             (key,val) = pair.split(':')
             setattr(environment,key.strip(),val.strip())
 
+    environment.template_class = J2Template
     t = environment.from_string(data)
     vars = vars.copy()
     try:
