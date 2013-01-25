@@ -63,7 +63,7 @@ def query_package(module, name, state="installed"):
 
     if state == "installed":
 
-        (rc, stdout, stderr) = module.run_command("%s list | grep ^%s" % (PKGIN_PATH, name))
+        rc, out, err = module.run_command("%s list | grep ^%s" % (PKGIN_PATH, name))
 
         if rc == 0:
             return True
@@ -80,10 +80,10 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        module.run_command("%s -y remove %s" % (PKGIN_PATH, package))
+        rc, out, err = module.run_command("%s -y remove %s" % (PKGIN_PATH, package))
 
         if query_package(module, package):
-            module.fail_json(msg="failed to remove %s" % (package))
+            module.fail_json(msg="failed to remove %s: %s" % (package, out))
     
         remove_c += 1
 
@@ -102,10 +102,10 @@ def install_packages(module, packages):
         if query_package(module, package):
             continue
 
-        module.run_command("%s -y install %s" % (PKGIN_PATH, package))
+        rc, out, err = module.run_command("%s -y install %s" % (PKGIN_PATH, package))
 
         if not query_package(module, package):
-            module.fail_json(msg="failed to install %s" % (package))
+            module.fail_json(msg="failed to install %s: %s" % (package, out))
 
         install_c += 1
     
