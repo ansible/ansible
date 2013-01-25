@@ -160,7 +160,7 @@ def main():
         
     try:
         res = ec2.run_instances(image, key_name = key_name,
-                                min_count = 1, max_count = count,
+                                min_count = count, max_count = count,
                                 security_groups = [group],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
