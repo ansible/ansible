@@ -82,7 +82,7 @@ def remove_packages(module, packages):
 
         rc = os.system("%s -y remove %s" % (PKGIN_PATH, package))
 
-        if rc != 0:
+        if query_package(module, package):
             module.fail_json(msg="failed to remove %s" % (package))
     
         remove_c += 1
@@ -104,7 +104,7 @@ def install_packages(module, packages):
 
         rc = os.system("%s -y install %s" % (PKGIN_PATH, package))
 
-        if rc != 0:
+        if not query_package(module, package):
             module.fail_json(msg="failed to install %s" % (package))
 
         install_c += 1
