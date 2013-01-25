@@ -47,10 +47,10 @@ author: Afterburn
 notes:  []
 examples:
     - code: "pacman: name=foo state=installed"
-      description: install package foo"
+      description: install package foo
     - code: "pacman: name=foo state=absent"
       description: remove package foo
-    - code: "pacman: name=foo,bar state=absent
+    - code: "pacman: name=foo,bar state=absent"
       description: remove packages foo and bar 
     - code: "pacman: name=bar, state=installed, update_cache=yes"
       description: update the package db (pacman -Syy) then install bar (bar will be the updated if a newer version exists) 
