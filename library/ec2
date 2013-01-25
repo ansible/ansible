@@ -22,12 +22,12 @@ description:
      - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on the external I(euca2ools) package.
 version_added: "0.9"
 options:
-  keypair:
+  key_name:
     description:
       - key pair to use on the instance
     required: true
     default: null
-    aliases: []
+    aliases: ['keypair']
   group:
     description:
       - security group to use on the instance
@@ -92,25 +92,23 @@ options:
 examples:
    - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
      description: "Examples from Ansible Playbooks"
-requirements: [ "euca2ools" ]
-author: Seth Vidal
+requirements: [ "boto" ]
+author: Seth Vidal, Tim Gerla
 '''
 
-import euca2ools.commands.euca.runinstances
+import sys
 import time
 
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
+try:
+    import boto 
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            keypair = dict(required=True),
+            key_name = dict(required=True, aliases = ['keypair']),
             group = dict(default='default'),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
@@ -125,7 +123,7 @@ def main():
         )
     )
 
-    keypair = module.params.get('keypair')
+    key_name = module.params.get('key_name')
     group = module.params.get('group')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
@@ -138,29 +136,29 @@ def main():
     ec2_access_key = module.params.get('ec2_access_key')
     user_data = module.params.get('user_data')
     
-    if ec2_url:
-        os.environ['EC2_URL'] = ec2_url
-    if ec2_secret_key:
-        os.environ['EC2_SECRET_KEY'] = ec2_secret_key
-    if ec2_access_key:
-        os.environ['EC2_ACCESS_KEY'] = ec2_access_key
+    # allow eucarc environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
+    if ec2_url: # if we have an URL set, connect to the specified endpoint 
+        ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+    else: # otherwise it's Amazon.
+        ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
         
-    # yes I recognize how hacky this is - but it is easier than rewriting
-    # all the try/except's myself.
-    sys.argv.append(image)
-    eri = euca2ools.commands.euca.runinstances.RunInstances()
-    conn = eri.make_connection()
-    res = eri.make_request_cli(conn, 'run_instances',
-                               image_id=image,
-                               min_count=1,
-                               max_count=1,
-                               key_name=keypair,
-                               security_groups=[group],
-                               instance_type=instance_type,
-                               kernel_id=kernel,
-                               ramdisk_id=ramdisk,
-                               user_data=user_data)
+    try:
+        res = ec2.run_instances(image, key_name = key_name,
+                                min_count = 1, max_count = 1,
+                                security_groups = [group],
+                                instance_type = instance_type,
+                                kernel_id = kernel,
+                                ramdisk_id = ramdisk,
+                                user_data = user_data)
+    except boto.exception.EC2ResponseError as e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     instids = [ i.id for i in res.instances ]
 
