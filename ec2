@@ -66,7 +66,7 @@ options:
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to ec2 or your cloud (for example U(https://ec2.amazonaws.com) when using Amazon ec2 directly and not Eucalyptus)
+      - url to use to connect to ec2 or your Eucalyptus cloud (for example (https://ec2.amazonaws.com) when using Amazon ec2 directly and not Eucalyptus)
     required: False
     default: null
     aliases: []
@@ -82,6 +82,12 @@ options:
     required: False
     default: null
     aliases: []
+  count:
+    description:
+      - number of instances to launch
+    required: False
+    default: 1
+    aliases: []
   user_data:
     version_added: "0.9"
     description:
@@ -90,10 +96,10 @@ options:
     default: null
     aliases: []
 examples:
-   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver"
+   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3"
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
-author: Seth Vidal, Tim Gerla
+author: Seth Vidal, Tim Gerla, Lester Wade
 '''
 
 import sys
@@ -113,7 +119,7 @@ def main():
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
-            #count = dict(default='1'), # maybe someday
+            count = dict(default='1'), 
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
             ec2_url = dict(aliases=['EC2_URL']),
@@ -127,7 +133,7 @@ def main():
     group = module.params.get('group')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
-    #count = module.params.get('count') 
+    count = module.params.get('count') 
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
@@ -148,10 +154,13 @@ def main():
         ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
     else: # otherwise it's Amazon.
         ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+
+# Note min_count is static in value. Since we aren't interested in addressing an autoscaling use-case. 
+# Autoscaling means more instances are launched on a triggered event, so this is post-play/run stuff.
         
     try:
         res = ec2.run_instances(image, key_name = key_name,
-                                min_count = 1, max_count = 1,
+                                min_count = 1, max_count = count,
                                 security_groups = [group],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
@@ -171,9 +180,8 @@ def main():
             res_list = res.connection.get_all_instances(instids)
             this_res = res_list[0]
             num_running = len([ i for i in this_res.instances if i.state=='running' ])
-            time.sleep(2)
+            time.sleep(5)
     
-    # there's only one - but maybe one day there could be more
     instances = []
     for inst in this_res.instances:
         d = {
