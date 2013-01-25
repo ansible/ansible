@@ -105,7 +105,7 @@ def download_key(url):
 
 
 def add_key(key):
-    return call("apt-key add -", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    p = Popen("apt-key add -", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     (_, _) = p.communicate(key)
 
     return p.returncode == 0
@@ -163,12 +163,12 @@ if 'ANSIBLE_TEST_APT_KEY' in environ:
         return extra
 
 
-if environ.get('ANSIBLE_TEST_APT_KEY') == 'none':
-    def key_present(key_id):
-        return False
-else:
-    def key_present(key_id):
-        return key_id == environ['ANSIBLE_TEST_APT_KEY']
+    if environ.get('ANSIBLE_TEST_APT_KEY') == 'none':
+        def key_present(key_id):
+            return False
+    else:
+        def key_present(key_id):
+            return key_id == environ['ANSIBLE_TEST_APT_KEY']
 
 
 def main():
