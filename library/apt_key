@@ -121,56 +121,6 @@ def return_values(tb=False):
     else:
         return {}
 
-
-# use cues from the environment to mock out functions for testing
-if 'ANSIBLE_TEST_APT_KEY' in environ:
-    orig_download_key = download_key
-    KEY_ADDED=0
-    KEY_REMOVED=0
-    KEY_DOWNLOADED=0
-
-
-    def download_key(url):
-        global KEY_DOWNLOADED
-        KEY_DOWNLOADED += 1
-        return orig_download_key(url)
-
-
-    def find_missing_binaries():
-        return []
-
-
-    def add_key(key):
-        global KEY_ADDED
-        KEY_ADDED += 1
-        return True
-
-
-    def remove_key(key_id):
-        global KEY_REMOVED
-        KEY_REMOVED += 1
-        return True
-
-
-    def return_values(tb=False):
-        extra = dict(
-            added=KEY_ADDED,
-            removed=KEY_REMOVED,
-            downloaded=KEY_DOWNLOADED
-        )
-        if tb:
-            extra['exception'] = format_exc()
-        return extra
-
-
-    if environ.get('ANSIBLE_TEST_APT_KEY') == 'none':
-        def key_present(key_id):
-            return False
-    else:
-        def key_present(key_id):
-            return key_id == environ['ANSIBLE_TEST_APT_KEY']
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
