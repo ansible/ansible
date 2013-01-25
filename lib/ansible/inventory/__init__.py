@@ -296,7 +296,7 @@ class Inventory(object):
         return [ h.name for h in self.get_hosts(pattern) ]
 
     def list_groups(self):
-        return sorted([ g.name for g in self.groups ], key=lambda x: x.name)
+        return sorted([ g.name for g in self.groups ], key=lambda x: x)
 
     # TODO: remove this function
     def get_restriction(self):
