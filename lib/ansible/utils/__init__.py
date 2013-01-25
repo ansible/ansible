@@ -19,6 +19,7 @@ import sys
 import os
 import shlex
 import yaml
+import copy
 import optparse
 import operator
 from ansible import errors
@@ -272,6 +273,26 @@ def parse_kv(args):
                 k, v = x.split("=",1)
                 options[k]=v
     return options
+
+def merge_hash(a, b):
+    ''' merges hash b into a
+    this means that if b has key k, the resulting has will have a key k
+    which value comes from b
+    said differently, all key/value combination from b will override a's '''
+
+    # and iterate over b keys
+    for k, v in b.iteritems():
+        if k in a and isinstance(a[k], dict):
+            # if this key is a hash and exists in a
+            # we recursively call ourselves with 
+            # the key value of b
+            a[k] = merge_hash(a[k], v)
+        else:
+            # k is not in a, no need to merge b, we just deecopy
+            # or k is not a dictionnary, no need to merge b either, we just deecopy it
+            a[k] = v
+    # finally, return the resulting hash when we're done iterating keys
+    return a
 
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
