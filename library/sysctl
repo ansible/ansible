@@ -30,7 +30,8 @@ version_added: "0.6"
 options:
     name:
         description:
-            - also known as "key",
+            - |
+              also known as "key",
               this is the short path, point separated to the sysctl entry eg: C(vm.swappiness)"
         required: true
         default: null
