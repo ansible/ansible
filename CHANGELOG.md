@@ -47,6 +47,17 @@ Ansible Changes By Release
 * "template override" ??
 * lots of documentation tweaks
 * handle tilde shell character for --private-key
+* get_url module can now send user/password authorization
+* new ec2_facts module
+* hg module now in core
+* ec2 module can now deploy multiple simultaneous instances
+* fix for apt_key modules stalling in some situations
+* hash merging policy is now selectable in the config file, can choose to override or merge
+* ec2 module is now powered by Boto
+* fix to enable Jinja2 {% include %} to work again
+* added pkgin module for Joyent SmartOS
+* setup module can now detect if package manager is using pacman
+
 
 * ...
 
