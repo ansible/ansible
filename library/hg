@@ -1,0 +1,267 @@
+#!/usr/bin/python
+#-*- coding: utf-8 -*-
+
+# (c) 2013, Yeukhon Wong <yeukhon@acm.org>
+#
+# This module was originally inspired by Brad Olson's ansible-module-mercurial
+# <https://github.com/bradobro/ansible-module-mercurial>.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import shutil
+import ConfigParser
+from subprocess import Popen, PIPE
+
+DOCUMENTATION = '''
+---
+module: hg
+short_description: Manages Mercurial (hg) repositories.
+description:
+    - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
+version_added: "1.0"
+author: Yeukhon Wong
+options:
+    repo:
+        description:
+            - The repository location.
+        required: true
+        default: null
+    dest:
+        description:
+            - Absolute path of where the repository should be cloned to.
+        required: true
+        default: null
+    state:
+        description:
+            - C(hg clone) is performed when state is set to C(present). C(hg pull) and C(hg update) is
+              performed when state is set to C(latest). If you want the latest copy of the repository,
+              just rely on C(present). C(latest) assumes the repository is already on disk.
+        required: false
+        default: present
+        choices: [ "present", "absent", "latest" ]
+    revision:
+        description:
+            - Equivalent C(-r) option in hg command, which can either be a changeset number or a branch
+              name.
+        required: false
+        default: "default"
+    force:
+        description:
+            - Whether to discard uncommitted changes and remove untracked files or not. Basically, it
+              combines C(hg up -C) and C(hg purge).
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+
+examples:
+    - code: "hg: repo=https://bitbucket.org/user/repo_name dest=/home/user/repo_name"
+      description: Clone the default branch of repo_name.
+
+    - code: "hg: repo=https://bitbucket.org/user/repo_name dest=/home/user/repo_name force=yes state=latest"
+      description: Ensure the repository at dest is latest and discard any uncommitted and/or untracked files.
+
+notes:
+    - If the task seems to be hanging, first verify remote host is in C(known_hosts).
+      SSH will prompt user to authorize the first contact with a remote host. One solution is to add
+      C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
+      on behalf of the user. However, if you run as a different user such as setting sudo to True),
+      for example, root will not look at the user .ssh/config setting.
+
+requirements: [ ]
+'''
+
+class HgError(Exception):
+    """  Custom exception class to report hg command error. """
+
+    def __init__(self, msg, stderr=''):
+        self.msg = msg + \
+                  "\n\nExtra information on this error: \n" + \
+                   stderr
+    def __str__(self):
+        return self.msg
+
+def _set_hgrc(hgrc, vals):
+    # val is a list of triple-tuple of the form [(section, option, value),...]
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(hgrc)
+
+    for each in vals:
+        section,option, value = each
+        if not parser.has_section(section):
+            parser.add_section(section)
+        parser.set(section, option, value)
+    
+    f = open(hgrc, 'w')
+    parser.write(f)
+    f.close()
+
+def _undo_hgrc(hgrc, vals):
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(hgrc)
+    
+    for each in vals:
+        section, option, value = each
+        if parser.has_section(section):
+            parser.remove_option(section, option)
+
+    f = open(hgrc, 'w')
+    parser.write(f)
+    f.close()
+
+def _hg_command(args_list):
+    cmd = ['hg'] + args_list
+    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    return out, err, p.returncode
+
+def _hg_discard(dest):
+    out, err, code = _hg_command(['up', '-C', '-R', dest])
+    if code != 0:
+        raise HgError(err)
+
+def _hg_purge(dest):
+    hgrc = os.path.join(dest, '.hg/hgrc')
+    purge_option = [('extensions', 'purge', '')]
+    _set_hgrc(hgrc, purge_option)
+    out, err, code = _hg_command(['purge', '-R', dest])
+    if code == 0:
+        _undo_hgrc(hgrc, purge_option)
+    else:
+        raise HgError(err)
+ 
+def _hg_verify(dest):
+    error1 = "hg verify failed."
+    error2 = "{dest} is not a repository.".format(dest=dest)
+
+    out, err, code = _hg_command(['verify', '-R', dest])
+    if code == 1:
+        raise HgError(error1, stderr=err)
+    elif code == 255:
+        raise HgError(error2, stderr=err)
+    elif code == 0:
+        return True
+
+def _post_op_hg_revision_check(dest, revision):
+    """
+    Verify the tip is the same as `revision`.
+
+    This function is usually called after some hg operations
+    such as `clone`. However, this check is skipped if `revision`
+    is the string `default` since it will result an error. 
+    Instead, pull is performed.
+
+    """
+
+    err1 = "Unable to perform hg tip."
+    err2 = "tip is different from %s. See below for extended summary." % revision
+
+    if revision == 'default':
+        out, err, code = _hg_command(['pull', '-R', dest])
+        if "no changes found" in out:
+            return True
+        else:
+            raise HgError(err2, stderr=out)
+    else:
+        out, err, code = _hg_command(['tip', '-R', dest])
+        if revision in out:   # revision should be part of the output (changeset: $revision ...)
+            return True
+        else:
+            if code != 0: # something went wrong with hg tip
+                raise HgError(err1, stderr=err)
+            else: # hg tip is fine, but tip != revision
+                raise HgError(err2, stderr=out)
+
+def force_and_clean(dest):
+    _hg_discard(dest)
+    _hg_purge(dest)
+
+def pull_and_update(repo, dest, revision, force):
+    if force == 'yes':
+        force_and_clean(dest)
+
+    if _hg_verify(dest):
+        cmd1 = ['pull', '-R', dest, '-r', revision]
+        out, err, code = _hg_command(cmd1)
+
+        if code == 1:
+            raise HgError("Unable to perform pull on %s" % dest, stderr=err)
+        elif code == 0:        
+            cmd2 = ['update', '-R', dest, '-r', revision]
+            out, err, code = _hg_command(cmd2)
+            if code == 1:
+                raise HgError("There are unresolved files in %s" % dest, stderr=err)
+            elif code == 0:
+                # so far pull and update seems to be working, check revision and $revision are equal
+                _post_op_hg_revision_check(dest, revision)
+                return True
+        # when code aren't 1 or 0 in either command
+        raise HgError("", stderr=err)
+
+def clone(repo, dest, revision, force):
+    if os.path.exists(dest):
+        if _hg_verify(dest):  # make sure it's a real repo
+            if _post_op_hg_revision_check(dest, revision): # make sure revision and $revision are equal
+                if force == 'yes':
+                    force_and_clean(dest)
+                return False
+
+    cmd = ['clone', repo, dest, '-r', revision]
+    out, err, code = _hg_command(cmd)
+    if code == 0:
+        _hg_verify(dest)
+        _post_op_hg_revision_check(dest, revision)
+        return True
+    else:
+        raise HgError(err, stderr='')
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            repo = dict(required=True),	    
+            dest = dict(required=True),
+            state = dict(default='present', choices=['present', 'absent', 'latest']),
+            revision = dict(default="default"),
+            force = dict(default='yes', choices=['yes', 'no']),
+        ),
+    )
+    repo = module.params['repo']
+    state = module.params['state']
+    dest = module.params['dest']
+    revision = module.params['revision']
+    force = module.params['force']
+
+    try:
+        if state == 'absent':
+            if not os.path.exists(dest):
+                shutil.rmtree(dest)
+            changed = True
+        elif state == 'present':
+            changed = clone(repo, dest, revision, force)
+        elif state == 'latest':
+            changed = pull_and_update(repo, dest, revision, force)
+
+        module.exit_json(dest=dest, changed=changed)
+    #except HgError as e:
+    #    module.fail_json(msg=str(e), params=module.params)
+    #except IOError as e:
+    #    module.fail_json(msg=str(e), params=module.params)
+    except Exception as e:
+        module.fail_json(msg=str(e), params=module.params)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
