@@ -33,6 +33,7 @@ from ansible import errors
 from ansible.utils import module_docs
 import ansible.constants as C
 from ansible.utils import version
+import traceback
 
 MODULEDIR = C.DEFAULT_MODULE_PATH
 
@@ -162,7 +163,8 @@ def main():
                     desc = desc + '...'
                 print "%-20s %-60.60s" % (module, desc)
             except:
-                sys.stderr.write("ERROR: module %s missing documentation\n" % module)
+                traceback.print_exc()
+                sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
                 pass
 
         sys.exit()
@@ -184,10 +186,11 @@ def main():
         try:
             doc = module_docs.get_docstring(filename)
         except:
-            sys.stderr.write("ERROR: module %s missing documentation\n" % module)
+            traceback.print_exc()
+            sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
             continue
 
-        if not doc is None:
+        if doc is not None:
 
             all_keys = []
             for (k,v) in doc['options'].iteritems():
