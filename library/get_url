@@ -35,8 +35,7 @@ version_added: "0.6"
 options:
   url:
     description:
-        - HTTP, HTTPS, or FTP URL.
-        (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
     default: null
     aliases: []
