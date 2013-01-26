@@ -65,6 +65,7 @@ Core fixes and new behaviors:
 * allow intersecting host patterns by using "&" ("webservers:!debian:&datacenter1")
 * handle tilde shell character for --private-key
 * hash merging policy is now selectable in the config file, can choose to override or merge
+* environment variables now available for setting all plugin paths (ANSIBLE_CALLBACK_PLUGINS, etc)
 
 Inventory files/scripts:
 
