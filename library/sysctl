@@ -29,7 +29,7 @@ version_added: "0.6"
 options:
     name:
         description:
-            - "this is the short path, decimal seperated, to the sysctl entry, ex: C(vm.swappiness)"
+            - this is the short path, decimal seperated, to the sysctl entry
         required: true
         default: null
         aliases: [ 'key' ]
