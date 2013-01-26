@@ -155,9 +155,8 @@ def main():
     else: # otherwise it's Amazon.
         ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
 
-# Note min_count is static in value. Since we aren't interested in addressing an autoscaling use-case. 
-# Autoscaling means more instances are launched on a triggered event, so this is post-play/run stuff.
-        
+    # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
+   
     try:
         res = ec2.run_instances(image, key_name = key_name,
                                 min_count = count, max_count = count,
