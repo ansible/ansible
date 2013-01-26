@@ -336,6 +336,24 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if changed:
             ok_or_changed = 'changed'
 
+        def indent(string, indent='    '):
+            return '\n'.join('%s%s' % (indent, line) for line in string.split('\n'))
+
+        # Pretty print the values such that each key / value pair gets one line
+        # unless the value is a multi-line string, in which case put the value
+        # in an indented block.
+        def pprint_json(json):
+            result = []
+            for key, value in json.iteritems():
+                value = str(value)
+                # For values that only have \n's on the edges, strip the whitespace
+                # and put the value next to the key. Otherwise, make a new block.
+                if value.count('\n') == 0 or (value.strip().count('\n') == 0):
+                    result.append('%-10s  %s' % (key, value.strip()))
+                else:
+                    result.append('%s\n\n%s\n' % (key, indent(value)))
+            return '\n'.join(result)
+
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
         if not self.verbose or host_result2.get("verbose_override",None) is not None:
@@ -346,12 +364,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                     msg = "%s: [%s]" % (ok_or_changed, host)
         else:
             # verbose ...
+            formatted_host_results = indent(pprint_json(host_result2))
             if item:
-                msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2))
+                msg = "%s: [%s] => (item=%s) => \n%s" % (ok_or_changed, host, item, formatted_host_results)
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2))
+                    msg = "%s: [%s] => \n%s" % (ok_or_changed, host, formatted_host_results)
 
+        print
         if msg != '':
             if not changed:
                 print stringc(msg, 'green')
