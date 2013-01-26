@@ -26,29 +26,27 @@ module: pkgin
 short_description: Package manager for SmartOS
 description:
     - Manages SmartOS packages
-
 version_added: "1.0"
 options:
     name:
         description:
             - name of package to install/remove
         required: true
-
     state:
         description:
-            - state of the package installed or absent. 
+            - state of the package
+        choices: [ 'present', 'absent' ]
         required: false
-
+        default: present
 author: Shaun Zinck
 notes:  []
 examples:
-    - code: "pkgin: name=foo state=installed"
+    - code: "pkgin: name=foo state=present"
       description: install package foo"
     - code: "pkgin: name=foo state=absent"
       description: remove package foo
-    - code: "pkgin: name=foo,bar state=absent
+    - code: "pkgin: name=foo,bar state=absent"
       description: remove packages foo and bar 
-      
 '''
 
 
@@ -59,9 +57,9 @@ import sys
 
 PKGIN_PATH = "/opt/local/bin/pkgin"
 
-def query_package(module, name, state="installed"):
+def query_package(module, name, state="present"):
 
-    if state == "installed":
+    if state == "present":
 
         rc, out, err = module.run_command("%s list | grep ^%s" % (PKGIN_PATH, name))
 
@@ -110,16 +108,16 @@ def install_packages(module, packages):
         install_c += 1
     
     if install_c > 0:
-        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
+        module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
 
-    module.exit_json(changed=False, msg="package(s) already installed")
+    module.exit_json(changed=False, msg="package(s) already present")
 
 
 
 def main():
     module = AnsibleModule(
             argument_spec    = dict(
-                state        = dict(default="installed", choices=["installed","absent"]),
+                state        = dict(default="present", choices=["present","absent"]),
                 name         = dict(aliases=["pkg"], required=True)))
                 
 
@@ -130,7 +128,7 @@ def main():
 
     pkgs = p["name"].split(",")
 
-    if p["state"] == "installed":
+    if p["state"] == "present":
         install_packages(module, pkgs)
 
     elif p["state"] == "absent":

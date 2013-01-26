@@ -180,3 +180,7 @@ modulejs:
 webdocs:
 	(cd docsite; make docs)
 
+# just for quick testing of all the module docs
+webdocs2:
+	(cd docsite; make modules)
+
