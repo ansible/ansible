@@ -76,6 +76,7 @@ def print_man(doc):
             opt_leadin = "-"
 
         print "%s %s" % (opt_leadin, o)
+
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
