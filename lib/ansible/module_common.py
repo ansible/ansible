@@ -481,7 +481,7 @@ class AnsibleModule(object):
         if spec is None:
             return
         for check in spec:
-            counts = [ self.count_terms([field]) for field in check ]
+            counts = [ self._count_terms([field]) for field in check ]
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
