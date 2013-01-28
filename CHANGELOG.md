@@ -14,11 +14,12 @@ New modules:
 
 New config settings:
 
-* default_sudo_exe parameter can be set in config to use sudo alternatives
-* added when_failed and when_changed
+* sudo_exe parameter can be set in config to use sudo alternatives
+* sudo_flags parameter can alter the flags used with sudo
 
 New playbook/language features:
 
+* added when_failed and when_changed
 * task includes can now be of infinite depth
 * when_set and when_unset can take more than one var (when_set: $a and $b and $c)
 * added the with_sequence lookup plugin
