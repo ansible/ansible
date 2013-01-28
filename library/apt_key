@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: Jayson Vantuyl
+author: Jayson Vantuyl & others
 version_added: 1.0
 short_description: Add or remove an apt key
 description:
@@ -59,145 +59,116 @@ examples:
       description: Remove a Apt specific signing key
 '''
 
+# FIXME: standardize into module_common
 from urllib2 import urlopen, URLError
 from traceback import format_exc
-from subprocess import Popen, PIPE, call
 from re import compile as re_compile
+# FIXME: standardize into module_common
 from distutils.spawn import find_executable
 from os import environ
 from sys import exc_info
+import traceback
 
 match_key = re_compile("^gpg:.*key ([0-9a-fA-F]+):.*$")
 
 REQUIRED_EXECUTABLES=['gpg', 'grep', 'apt-key']
 
 
-def find_missing_binaries():
-    return [missing for missing in REQUIRED_EXECUTABLES if not find_executable(missing)]
+def check_missing_binaries(module):
+    missing = [e for e in REQUIRED_EXECUTABLES if not find_executable(e)]
+    if len(missing):
+        module.fail_json(msg="binaries are missing", names=all)
 
+def all_keys(module):
+    (rc, out, err) = module.run_command("apt-key list")
+    results = []
+    lines = out.split('\n')
+    for line in lines:
+       if line.startswith("pub"):
+          tokens = line.split()
+          code = tokens[1]
+          (len_type, real_code) = code.split("/")
+          results.append(real_code)
+    return results
 
-def get_key_ids(key_data):
-    p = Popen("gpg --list-only --import -", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    (stdo, stde) = p.communicate(key_data)
+def key_present(module, key_id):
+    (rc, out, err) = module.run_command("apt-key list | 2>&1 grep -q %s" % key_id)
+    return rc == 0
 
-    if p.returncode > 0:
-        raise Exception("error running GPG to retrieve keys")
-
-    output = stdo + stde
-
-    for line in output.split('\n'):
-        match = match_key.match(line)
-        if match:
-            yield match.group(1)
-
-
-def key_present(key_id):
-    return call("apt-key list | 2>&1 grep -q %s" % key_id, shell=True) == 0
-
-
-def download_key(url):
+def download_key(module, url):
+    # FIXME: move get_url code to common, allow for in-memory D/L, support proxies
+    # and reuse here
     if url is None:
-        raise Exception("Needed URL but none specified")
-    connection = urlopen(url)
-    if connection is None:
-        raise Exception("error connecting to download key from %r" % url)
-    return connection.read()
+        module.fail_json(msg="needed a URL but was not specified")
+    try:
+        connection = urlopen(url)
+        if connection is None:
+            module.fail_json("error connecting to download key from url")
+        data = connection.read()
+        return data
+    except:
+        module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
-def add_key(key):
-    p = Popen("apt-key add -", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    (_, _) = p.communicate(key)
-
-    return p.returncode == 0
-
+def add_key(module, key):
+    cmd = "apt-key add -"
+    (rc, out, err) = module.run_command(cmd, data=key, check_rc=True)
+    return True
 
 def remove_key(key_id):
-    return call('apt-key del %s' % key_id, shell=True) == 0
-
-
-def return_values(tb=False):
-    if tb:
-        return {'exception': format_exc()}
-    else:
-        return {}
+    # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
+    cmd = 'apt-key del %s' 
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    return True
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             id=dict(required=False, default=None),
             url=dict(required=False),
+            data=dict(required=False),
+            key=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
-        )
+        ),
     )
 
-    expected_key_id = module.params['id']
-    url = module.params['url']
-    state = module.params['state']
-    changed = False
+    key_id          = module.params['id']
+    url             = module.params['url']
+    data            = module.params['data']
+    state           = module.params['state']
+    changed         = False
+    
+    # FIXME: I think we have a common facility for this, if not, want
+    check_missing_binaries(module)
 
-    missing = find_missing_binaries()
-
-    if missing:
-        module.fail_json(msg="can't find needed binaries to run", missing=missing,
-            **return_values())
+    keys = all_keys(module)
 
     if state == 'present':
-        if expected_key_id and key_present(expected_key_id):
-            # key is present, nothing to do
-            pass
+        if key_id and key_id in keys:
+            module.exit_json(changed=False)
         else:
-            # download key
-            try:
-                key = download_key(url)
-                (key_id,) = tuple(get_key_ids(key))  # TODO: support multiple key ids?
-            except Exception:
-                module.fail_json(
-                    msg="error getting key id from url",
-                    **return_values(True)
-                )
-
-            # sanity check downloaded key
-            if expected_key_id and key_id != expected_key_id:
-                module.fail_json(
-                    msg="expected key id %s, got key id %s" % (expected_key_id, key_id),
-                    **return_values()
-                )
-
-            # actually add key
-            if key_present(key_id):
-                changed=False
-            elif add_key(key):
-                changed=True
+            if not data:
+                data = download_key(module, url)
+            if key_id and key_id in keys:
+                module.exit_json(changed=False)
             else:
-                module.fail_json(
-                    msg="failed to add key id %s" % key_id,
-                    **return_values()
-                )
+                add_key(module, data)
+                changed=False
+                keys2 = all_keys(module)
+                if len(keys) != len(keys2):
+                    changed=True
+                if key_id and not key_id in keys2:
+                    module.fail_json(msg="key does not seem to have been added", id=key_id)
+                module.exit_json(changed=changed)
     elif state == 'absent':
-        # optionally download the key and get the id
-        if not expected_key_id:
-            try:
-                key = download_key(url)
-                (key_id,) = tuple(get_key_ids(key))  # TODO: support multiple key ids?
-            except Exception:
-                module.fail_json(
-                    msg="error getting key id from url",
-                    **return_values(True)
-                )
-        else:
-            key_id = expected_key_id
-
-        # actually remove key
-        if key_present(key_id):
+        if not key_id:
+            module.fail_json(msg="key is required")
+        if key_id in keys:
             if remove_key(key_id):
                 changed=True
             else:
+                # FIXME: module.fail_json  or exit-json immediately at point of failure
                 module.fail_json(msg="error removing key_id", **return_values(True))
-    else:
-        module.fail_json(
-            msg="unexpected state: %s" % state,
-            **return_values()
-        )
 
     module.exit_json(changed=changed, **return_values())
 
