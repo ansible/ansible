@@ -632,7 +632,7 @@ Register Variables
 
 .. versionadded:: 0.7
 
-Often in a playbook it may be useful to store the result of a given command in a variable and access
+Often in a play it may be useful to store the result of a given command in a variable and access
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existance of a particular program.
 
