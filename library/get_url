@@ -35,7 +35,7 @@ version_added: "0.6"
 options:
   url:
     description:
-      - HTTP, HTTPS, or FTP URL
+      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
     default: null
     aliases: []
@@ -63,18 +63,18 @@ examples:
    - code: "get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440"
      description: "Example from Ansible Playbooks"
 notes:
-    - This module doesn't yet support configuration for proxies or passwords.
+    - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens
 '''
 
-HAS_URLLIB2=True
+HAS_URLLIB2 = True
 try:
     import urllib2
 except ImportError:
-    HAS_URLLIB2=False
-HAS_URLPARSE=True
+    HAS_URLLIB2 = False
+HAS_URLPARSE = True
 
 try:
     import urlparse
@@ -100,6 +100,29 @@ def url_do_get(module, url, dest):
     USERAGENT = 'ansible-httpget'
     info = dict(url=url, dest=dest)
     r = None
+    parsed = urlparse.urlparse(url)
+    if '@' in parsed.netloc:
+        credentials = parsed.netloc.split('@')[0]
+        if ':' in credentials:
+            username, password = credentials.split(':')
+        netloc = parsed.netloc.split('@')[1]
+        parsed = list(parsed)
+        parsed[1] = netloc
+
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        # this creates a password manager
+        passman.add_password(None, netloc, username, password)
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `theurl` is a super-url
+
+        authhandler = urllib2.HTTPBasicAuthHandler(passman)
+        # create the AuthHandler
+
+        opener = urllib2.build_opener(authhandler)
+        urllib2.install_opener(opener)
+        #reconstruct url without credentials
+        url = urlparse.urlunparse(parsed)
 
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
@@ -232,8 +255,7 @@ def main():
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
-        changed=changed, msg=info.get('msg',''),
-        daisychain="file", daisychain_args=info.get('daisychain_args',''))
+        changed=changed, msg=info.get('msg', ''))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
