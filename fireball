@@ -143,7 +143,7 @@ def daemonize_self(module, password, port, minutes):
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
     log("daemonizing successful (%s,%s)" % (password, port))
 
-def command(data):
+def command(module, data):
     if 'cmd' not in data:
         return dict(failed=True, msg='internal error: cmd is required')
     if 'tmp_path' not in data:
@@ -220,7 +220,7 @@ def serve(module, password, port, minutes):
         response = {}
 
         if mode == 'command':
-            response = command(data)
+            response = command(module, data)
         elif mode == 'put':
             response = put(data)
         elif mode == 'fetch':
