@@ -3,52 +3,76 @@ Ansible Changes By Release
 
 1.0 "Eruption" -- release pending -- changes unsorted for now
 
-* default_sudo_exe parameter can be set in config to use sudo alternatives
+New modules:
+
 * new sysctl module
 * new pacman module (Arch linux)
-* added when_failed and when_changed
-* when_set and when_unset can take more than one var (when_set: $a and $b and $c)
 * new apt_key module
+* hg module now in core
+* new ec2_facts module
+* added pkgin module for Joyent SmartOS
+
+New config settings:
+
+* sudo_exe parameter can be set in config to use sudo alternatives
+* sudo_flags parameter can alter the flags used with sudo
+
+New playbook/language features:
+
+* added when_failed and when_changed
+* task includes can now be of infinite depth
+* when_set and when_unset can take more than one var (when_set: $a and $b and $c)
+* added the with_sequence lookup plugin
+* can override "connection:" on an indvidual task
+* parameterized playbook includes can now define complex variables (not just all on one line)
+* making inventory variables available for use in vars_files paths
+* messages when skipping plays are now more clear
+
+Module fixes and new flags:
+
+* ability to use raw module without python on remote system
 * fix for service status checking on Ubuntu
 * service module now responds to additional exit code for SERVICE_UNAVAILABLE
-* usage of run_command standardized between module implementations
 * fix for raw module with '-c local'
-* fixes to git module
+* various fixes to git module
 * ec2 module now reports the public DNS name
-* added the with_sequence lookup plugin
-* various fixes for variable resolution in playbooks
-* task includes can now be of infinite depth
 * can pass executable= to the raw module to specify alternative shells
-* fixes for handling of "~" in some paths
-* can override "connection:" on an indvidual task
 * fix for postgres module when user contains a "-"
-* various other database module fixes
 * added additional template variables -- $template_fullpath and $template_run_date
 * raise errors on invalid arguments used with a task include statement
-* making inventory variables available for use in vars_files paths
-* various fixes to DWIM'ing of relative paths
-* ability to use raw module without python on remote system
 * shell/command module takes a executable= parameter to specify a different shell than /bin/sh
 * added return code and error output to the raw module
 * added support for @reboot to the cron module
-* hostname patterns in the inventory file can now use alphabetic ranges
-* whitespace is now allowed around group variables in the inventory file
-* parameterized playbook includes can now define complex variables (not just all on one line)
 * misc fixes to the pip module
-* inventory scripts can now define groups of groups and group vars (need example for docs?)
 * nagios module can schedule downtime for all services on the host
-* various patterns can now take a regex vs a glob if they start with "~" (need docs on which!)
-* /bin/ansible now takes a --list-hosts just like ansible-playbook did
 * various subversion module improvements
 * various mail module improvements
-* allow intersecting host patterns by using "&" ("webservers:!debian:&datacenter1")
-* messages when skipping plays are now more clear
 * SELinux fix for files created by authorized_key module
 * "template override" ??
-* lots of documentation tweaks
-* handle tilde shell character for --private-key
+* get_url module can now send user/password authorization
+* ec2 module can now deploy multiple simultaneous instances
+* fix for apt_key modules stalling in some situations
+* fix to enable Jinja2 {% include %} to work again in template
+* ec2 module is now powered by Boto
+* setup module can now detect if package manager is using pacman
 
-* ...
+Core fixes and new behaviors:
+
+* various fixes for variable resolution in playbooks
+* fixes for handling of "~" in some paths
+* various fixes to DWIM'ing of relative paths
+* /bin/ansible now takes a --list-hosts just like ansible-playbook did
+* various patterns can now take a regex vs a glob if they start with "~" (need docs on which!) - also /usr/bin/ansible
+* allow intersecting host patterns by using "&" ("webservers:!debian:&datacenter1")
+* handle tilde shell character for --private-key
+* hash merging policy is now selectable in the config file, can choose to override or merge
+* environment variables now available for setting all plugin paths (ANSIBLE_CALLBACK_PLUGINS, etc)
+
+Inventory files/scripts:
+
+* hostname patterns in the inventory file can now use alphabetic ranges
+* whitespace is now allowed around group variables in the inventory file
+* inventory scripts can now define groups of groups and group vars (need example for docs?)
 
 0.9 "Dreams" -- Nov 30 2012
 

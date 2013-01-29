@@ -1,7 +1,7 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130109
-pkgrel=2
+pkgver=20130123
+pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
 url="http://ansible.cc"

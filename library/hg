@@ -122,32 +122,30 @@ def _undo_hgrc(hgrc, vals):
     parser.write(f)
     f.close()
 
-def _hg_command(args_list):
-    cmd = ['hg'] + args_list
-    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
-    out, err = p.communicate()
-    return out, err, p.returncode
+def _hg_command(module, args_list):
+    (rc, out, err) = module.run_command(['hg'] + args_list)
+    return (out, err, rc)
 
-def _hg_discard(dest):
-    out, err, code = _hg_command(['up', '-C', '-R', dest])
+def _hg_discard(module, dest):
+    out, err, code = _hg_command(module, ['up', '-C', '-R', dest])
     if code != 0:
         raise HgError(err)
 
-def _hg_purge(dest):
+def _hg_purge(module, dest):
     hgrc = os.path.join(dest, '.hg/hgrc')
     purge_option = [('extensions', 'purge', '')]
     _set_hgrc(hgrc, purge_option)
-    out, err, code = _hg_command(['purge', '-R', dest])
+    out, err, code = _hg_command(module, ['purge', '-R', dest])
     if code == 0:
         _undo_hgrc(hgrc, purge_option)
     else:
         raise HgError(err)
  
-def _hg_verify(dest):
+def _hg_verify(module, dest):
     error1 = "hg verify failed."
     error2 = "{dest} is not a repository.".format(dest=dest)
 
-    out, err, code = _hg_command(['verify', '-R', dest])
+    out, err, code = _hg_command(module, ['verify', '-R', dest])
     if code == 1:
         raise HgError(error1, stderr=err)
     elif code == 255:
@@ -155,7 +153,7 @@ def _hg_verify(dest):
     elif code == 0:
         return True
 
-def _post_op_hg_revision_check(dest, revision):
+def _post_op_hg_revision_check(module, dest, revision):
     """
     Verify the tip is the same as `revision`.
 
@@ -170,13 +168,13 @@ def _post_op_hg_revision_check(dest, revision):
     err2 = "tip is different from %s. See below for extended summary." % revision
 
     if revision == 'default':
-        out, err, code = _hg_command(['pull', '-R', dest])
+        out, err, code = _hg_command(module, ['pull', '-R', dest])
         if "no changes found" in out:
             return True
         else:
             raise HgError(err2, stderr=out)
     else:
-        out, err, code = _hg_command(['tip', '-R', dest])
+        out, err, code = _hg_command(module, ['tip', '-R', dest])
         if revision in out:   # revision should be part of the output (changeset: $revision ...)
             return True
         else:
@@ -185,45 +183,45 @@ def _post_op_hg_revision_check(dest, revision):
             else: # hg tip is fine, but tip != revision
                 raise HgError(err2, stderr=out)
 
-def force_and_clean(dest):
-    _hg_discard(dest)
-    _hg_purge(dest)
+def force_and_clean(module, dest):
+    _hg_discard(module, dest)
+    _hg_purge(module, dest)
 
-def pull_and_update(repo, dest, revision, force):
+def pull_and_update(module, repo, dest, revision, force):
     if force == 'yes':
-        force_and_clean(dest)
+        force_and_clean(module, dest)
 
-    if _hg_verify(dest):
+    if _hg_verify(module, dest):
         cmd1 = ['pull', '-R', dest, '-r', revision]
-        out, err, code = _hg_command(cmd1)
+        out, err, code = _hg_command(module, cmd1)
 
         if code == 1:
             raise HgError("Unable to perform pull on %s" % dest, stderr=err)
         elif code == 0:        
             cmd2 = ['update', '-R', dest, '-r', revision]
-            out, err, code = _hg_command(cmd2)
+            out, err, code = _hg_command(module, cmd2)t
             if code == 1:
                 raise HgError("There are unresolved files in %s" % dest, stderr=err)
             elif code == 0:
                 # so far pull and update seems to be working, check revision and $revision are equal
-                _post_op_hg_revision_check(dest, revision)
+                _post_op_hg_revision_check(module, dest, revision)
                 return True
         # when code aren't 1 or 0 in either command
         raise HgError("", stderr=err)
 
-def clone(repo, dest, revision, force):
+def clone(module, repo, dest, revision, force):
     if os.path.exists(dest):
-        if _hg_verify(dest):  # make sure it's a real repo
-            if _post_op_hg_revision_check(dest, revision): # make sure revision and $revision are equal
+        if _hg_verify(module, dest):  # make sure it's a real repo
+            if _post_op_hg_revision_check(module, dest, revision): # make sure revision and $revision are equal
                 if force == 'yes':
-                    force_and_clean(dest)
+                    force_and_clean(module, dest)
                 return False
 
     cmd = ['clone', repo, dest, '-r', revision]
-    out, err, code = _hg_command(cmd)
+    out, err, code = _hg_command(module, cmd)
     if code == 0:
-        _hg_verify(dest)
-        _post_op_hg_revision_check(dest, revision)
+        _hg_verify(module, dest)
+        _post_op_hg_revision_check(module, dest, revision)
         return True
     else:
         raise HgError(err, stderr='')
@@ -250,15 +248,11 @@ def main():
                 shutil.rmtree(dest)
             changed = True
         elif state == 'present':
-            changed = clone(repo, dest, revision, force)
+            changed = clone(module, repo, dest, revision, force)
         elif state == 'latest':
-            changed = pull_and_update(repo, dest, revision, force)
+            changed = pull_and_update(module, repo, dest, revision, force)
 
         module.exit_json(dest=dest, changed=changed)
-    #except HgError as e:
-    #    module.fail_json(msg=str(e), params=module.params)
-    #except IOError as e:
-    #    module.fail_json(msg=str(e), params=module.params)
     except Exception as e:
         module.fail_json(msg=str(e), params=module.params)
 

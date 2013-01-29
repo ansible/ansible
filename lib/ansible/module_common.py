@@ -481,7 +481,7 @@ class AnsibleModule(object):
         if spec is None:
             return
         for check in spec:
-            counts = [ self.count_terms([field]) for field in check ]
+            counts = [ self._count_terms([field]) for field in check ]
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
@@ -677,7 +677,7 @@ class AnsibleModule(object):
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -700,12 +700,20 @@ class AnsibleModule(object):
             self.fail_json(rc=257, cmd=args, msg=msg)
         rc = 0
         msg = None
+        st_in = None
+        if data:
+            st_in = subprocess.PIPE
         try:
             cmd = subprocess.Popen(args,
                                    executable=executable,
                                    shell=shell,
                                    close_fds=close_fds,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                   stdin=st_in,
+                                   stdout=subprocess.PIPE, 
+                                   stderr=subprocess.PIPE)
+            if data:
+                cmd.stdin.write(data)
+                cmd.stdin.write('\\n')
             out, err = cmd.communicate()
             rc = cmd.returncode
         except (OSError, IOError), e:

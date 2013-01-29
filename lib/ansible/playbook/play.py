@@ -101,6 +101,10 @@ class Play(object):
         ''' handle task and handler include statements '''
 
         results = []
+        if tasks is None:
+            # support empty handler files, and the like.
+            tasks = []
+
         for x in tasks:
             task_vars = self.vars.copy()
             task_vars.update(vars)
