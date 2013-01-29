@@ -101,11 +101,13 @@ def url_do_get(module, url, dest):
     info = dict(url=url, dest=dest)
     r = None
     parsed = urlparse.urlparse(url)
-    if '@' in parsed.netloc:
-        credentials = parsed.netloc.split('@')[0]
+    if '@' in parsed[1]:
+        credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
-            username, password = credentials.split(':')
-        netloc = parsed.netloc.split('@')[1]
+            username, password = credentials.split(':', 1)
+        else:
+            username = credentials
+            password = ''
         parsed = list(parsed)
         parsed[1] = netloc
 
