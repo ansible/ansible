@@ -170,6 +170,8 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
             except errors.AnsibleError:
                 if not lookup_fatal:
                     replacement = None
+                else:
+                    raise
         else:
             replacement = None
         return {'replacement': replacement, 'start': start, 'end': end}
