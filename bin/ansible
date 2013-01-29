@@ -135,7 +135,7 @@ class Cli(object):
 
 ########################################################
 
-if __name__ == '__main__':
+def main():
     cli = Cli()
     (options, args) = cli.parse()
     try:
@@ -150,3 +150,5 @@ if __name__ == '__main__':
         print "ERROR: %s" % str(e)
         sys.exit(1)
 
+if __name__ == '__main__':
+    main()

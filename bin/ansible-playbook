@@ -176,10 +176,12 @@ def main(args):
     return 0
 
 
-if __name__ == "__main__":
+def outer_main():
     try:
         sys.exit(main(sys.argv[1:]))
     except errors.AnsibleError, e:
         print >>sys.stderr, "ERROR: %s" % e
         sys.exit(1)
 
+if __name__ == "__main__":
+    outer_main()

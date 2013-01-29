@@ -14,6 +14,19 @@ data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
 
 print "DATA FILES=%s" % data_files
 
+scripts = [
+   'bin/ansible',
+   'bin/ansible-playbook',
+   'bin/ansible-pull',
+   'bin/ansible-doc'
+]
+
+if sys.platform == 'win32':
+   scripts += [
+      'bin/ansible-win.py',
+      'bin/ansible-playbook.py',
+   ]
+
 setup(name='ansible',
       version=__version__,
       description='Minimal SSH command and control',
@@ -37,11 +50,6 @@ setup(name='ansible',
          'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
       ],
-      scripts=[
-         'bin/ansible',
-         'bin/ansible-playbook',
-         'bin/ansible-pull',
-         'bin/ansible-doc'
-      ],
+      scripts=scripts,
       data_files=data_files
 )

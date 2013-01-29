@@ -18,7 +18,7 @@
 import multiprocessing
 import signal
 import os
-import pwd
+import getpass
 import Queue
 import random
 import traceback
@@ -46,12 +46,10 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-multiprocessing_runner = None
-
 ################################################
 
 
-def _executor_hook(job_queue, result_queue):
+def _executor_hook(job_queue, result_queue, multiprocessing_runner):
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
@@ -149,7 +147,7 @@ class Runner(object):
             self.inventory.subset(subset)
 
         if self.transport == 'local':
-            self.remote_user = pwd.getpwuid(os.geteuid())[0]
+            self.remote_user = getpass.getuser()
 
         if module_path is not None:
             for i in module_path.split(os.pathsep):
@@ -576,7 +574,7 @@ class Runner(object):
         workers = []
         for i in range(self.forks):
             prc = multiprocessing.Process(target=_executor_hook,
-                args=(job_queue, result_queue))
+                args=(job_queue, result_queue, self))
             prc.start()
             workers.append(prc)
 
@@ -631,8 +629,6 @@ class Runner(object):
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
 
-        global multiprocessing_runner
-        multiprocessing_runner = self
         results = None
 
         # Check if this is an action plugin. Some of them are designed
