@@ -95,15 +95,15 @@ options:
     required: False
     default: null
     aliases: []
-  amitags:
+  instance_tags:
     version_added: "1.0"
     description:
-      - list of tags to add to the ec2 instance
+      - list of tags, in json format, to add to the new instance
     required: False
     default: null
     aliases: []
 examples:
-   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3"
+   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 instance_tags='{"Name":"My Server"}'"
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -138,7 +138,7 @@ def main():
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
             user_data = dict(),
-            amitags = dict(),
+            instance_tags = dict(),
         )
     )
 
@@ -154,7 +154,7 @@ def main():
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
     user_data = module.params.get('user_data')
-    amitags = module.params.get('amitags')
+    instance_tags = module.params.get('instance_tags')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -184,9 +184,9 @@ def main():
 
     instids = [ i.id for i in res.instances ]
 
-    if amitags:
+    if instance_tags:
         try:
-            ec2.create_tags(instids, json.loads(amitags))
+            ec2.create_tags(instids, json.loads(instance_tags))
         except boto.exception.EC2ResponseError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
