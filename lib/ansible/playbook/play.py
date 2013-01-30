@@ -186,6 +186,9 @@ class Play(object):
         else:
             vars.update(self.vars)
 
+        if type(self.playbook.extra_vars) == dict:
+            vars.update(self.playbook.extra_vars)
+
         if type(self.vars_prompt) == list:
             for var in self.vars_prompt:
                 if not 'name' in var:
