@@ -274,7 +274,7 @@ class Ec2Inventory(object):
         addressable '''
 
         # Only want running instances
-        if instance.state == 'terminated':
+        if instance.state != 'running':
             return
 
         # Select the best destination address
