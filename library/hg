@@ -37,7 +37,7 @@ author: Yeukhon Wong
 options:
     repo:
         description:
-            - The repository location.
+            - The repository address.
         required: true
         default: null
     dest:
@@ -53,28 +53,12 @@ options:
         default: "default"
     force:
         description:
-    	    - Discards uncommited changes. Runs c(hg update -c).
+    	    - Discards uncommited changes. Runs C(hg update -c).
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
 
-    purge:
-        description:
-            - Deletes untracked files. C(hg purge) is the same as C(hg clean).
-              To use this option, the C(purge = ) extension must be enabled.
-              This module can edit the hgrc file on behalf of the user and 
-              undo the edit for you. Remember deleting untracked files is
-              an irreversible action.
-        required: false
-        default: "no"
-        choices: ["yes", "no" ]
-examples:
-    - code: "hg: repo=https://bitbucket.org/user/repo_name dest=/home/user/repo_name"
-      description: Clone the latest default branch from repo_name repository on Bitbucket.
-    - code: "hg: repo=ssh://hg@bitbucket.org/user/repo_name dest=/home/user/repo_name"
-      description: Similar to the previous one, except this uses SSH protocol.
-    - code: "hg: repo=https://bitbucket.org/user/repo_name dest=/home/user/repo_name -r BRANCH_NAME
-      description: Clone the repo and set the working copy to be at BRANCH_NAME
+
 
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
@@ -92,7 +76,7 @@ def _set_hgrc(hgrc, vals):
 
     # val is a list of triple-tuple of the form [(section, option, value),...]
     for each in vals:
-        section, option, value = each
+        (section, option, value) = each
         if not parser.has_section(section):
             parser.add_section(section)
         parser.set(section, option, value)
@@ -106,7 +90,7 @@ def _undo_hgrc(hgrc, vals):
     parser.read(hgrc)
      
     for each in vals:
-        section, option, value = each
+        (section, option, value) = each
         if parser.has_section(section):
             parser.remove_option(section, option)
 
@@ -130,25 +114,26 @@ def determine_changed(module, before, after, expecting):
     """
 
     # some custom error messages
-    err1 = "no changes found. You supplied {0} but repo is \
-currently at {1}".format(expecting, after)
+    err1 = "no changes found. You supplied %s but repo is \
+currently at %s" %(expecting, after)
 
-    err2 = "Unknown error. The state before operation was {0},\
-after the operation was {1}, but we were expecting \
-{2} as part of the state.".format(before, after, expecting)
+    err2 = "Unknown error. The state before operation was %s,\
+after the operation was %s, but we were expecting \
+%s as part of the state." %(before, after, expecting)
 
     # if before and after are equal, only two possible explainations
     # case one: when current working copy is already what user want
     # case two: when current working copy is ahead of what user want
-    # in case two, hg will exist successfully
+    # in case two, hg will exist successfully although that contradict
+    # user assumption. Therefore, alert the user by failing the task.
     if before == after and expecting in after:
-        return module.exit_json(changed=False, before=before, after=after)
+        module.exit_json(changed=False, before=before, after=after)
     elif before == after and not expecting in after: # this is case two
-        return module.fail_json(msg=err2) 
-    elif before != after and expecting in after: # bingo. pull and update to expecting
-        return module.exit_json(changed=True, before=before, after=after)
+        module.fail_json(msg=err2) 
+    elif before != after and expecting in after: # updated to expecting
+        module.exit_json(changed=True, before=before, after=after)
     else:
-        return module.fail_json(msg=err2)
+        module.fail_json(msg=err2)
 
 def get_revision(module, dest):
     """
@@ -161,23 +146,22 @@ def get_revision(module, dest):
     Read the full description via hg id --help
     """
     (rc, out, err) = _hg_command(module, ['id', '-b', '-i', '-t', '-R', dest])
-    return out.strip('\n')
+    if rc != 0:
+        module.fail_json(msg=err)
+    else:
+        return out.strip('\n')
 
 def has_local_mods(module, dest):
-    (rc, out, err) = get_revision(module, dest)
-    if rc == 0:
-        if '+' in out:
-            return True
-        else:
-            return False
+    out = get_revision(module, dest)
+    if '+' in out:
+        return True
     else:
-        module.fail_json(msg=err)
+        return False
 
 def hg_discard(module, dest, force):
     if not force and has_local_mods(module, dest):
         module.fail_json(msg="Respository has uncommited changes.")
-    (rc, out, err) = _hg_command(module, ['update', '-C', '-R', dest])
-    return (rc, out, err)
+    return _hg_command(module, ['update', '-C', '-R', dest])
 
 def hg_purge(module, dest):
     hgrc = os.path.join(dest, '.hg/hgrc')
@@ -191,12 +175,10 @@ def hg_purge(module, dest):
         module.fail_json(msg=err)
 
 def hg_pull(module, dest, revision):
-    (rc, out, err) = _hg_command(module, ['pull', '-r', revision, '-R', dest])
-    return (rc, out, err)
+    return _hg_command(module, ['pull', '-r', revision, '-R', dest])
 
 def hg_update(module, dest, revision):
-    (rc, out, err) = _hg_command(module, ['update', '-R', dest])
-    return (rc, out, err)
+    return _hg_command(module, ['update', '-R', dest])
 
 def hg_clone(module, repo, dest, revision):
     return _hg_command(module, ['clone', repo, dest, '-r', revision])
