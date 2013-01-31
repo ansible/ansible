@@ -43,7 +43,12 @@ examples:
    - code: "template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644"
      description: "Example from Ansible Playbooks"
 notes:
-  - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
+   - Some fact contain characters, such as hyphens and colons, that cannot be used as Jinja2
+     variables. One example is C(ansible_ec2_public-ipv4). These cannot be
+     interpolated directly by Jinja, so doing C({{ ansible_ec2_public-ipv4 }}) results in an
+     error. Instead, access these through hostvars. For example: 
+     C({{ hostvars[inventory_hostname]['ansible_ec2_public-ipv4'] }}).
+   - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
 requirements: null
 author: Michael DeHaan
 '''
