@@ -101,7 +101,7 @@ def yum_base(conf_file=None, cachedir=False):
             cachedir = yum.misc.getCacheDir()
             my.repos.setCacheDir(cachedir)
             my.conf.cache = 0 
-    
+
     return my
 
 def po_to_nevra(po):
@@ -174,7 +174,7 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
         if rc == 0:
             return [ p for p in out.split('\n') if p.strip() ]
         else:
-            module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
+            module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
 
             
     return []
@@ -216,7 +216,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
         if rc == 0:
             return set([ p for p in out.split('\n') if p.strip() ])
         else:
-            module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
+            module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
             
     return []
 
@@ -548,6 +548,22 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo):
 
         if repoq:
             repoq.extend(r_cmd)
+
+    if state in ['installed', 'present', 'latest']:
+        my = yum_base(conf_file)
+        try:
+            for r in dis_repos:
+                my.repos.disableRepo(r)
+
+            for r in en_repos:
+                try:
+                    my.repos.enableRepo(r)
+                    rid = my.repos.getRepo(r)
+                    a = rid.repoXML.repoid
+                except yum.Errors.YumBaseError, e:
+                    module.fail_json(msg="Error setting/accessing repo %s: %s" % (r, e))
+        except yum.Errors.YumBaseError, e:
+            module.fail_json(msg="Error accessing repos: %s" % e)
 
     if state in ['installed', 'present']:
         install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
