@@ -392,7 +392,6 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         self.callbacks.on_play_start(play.name)
-        self.SETUP_CACHE.update(play.vars)
         # if no hosts matches this play, drop out
         if not self.inventory.list_hosts(play.hosts):
             self.callbacks.on_no_hosts_matched()
