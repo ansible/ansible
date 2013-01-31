@@ -315,6 +315,8 @@ class PlayBook(object):
                 continue
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
+            # extra vars need to always trump - so update  again following the facts
+            self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
                 if 'stdout' in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
@@ -390,7 +392,6 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         self.callbacks.on_play_start(play.name)
-
         # if no hosts matches this play, drop out
         if not self.inventory.list_hosts(play.hosts):
             self.callbacks.on_no_hosts_matched()
