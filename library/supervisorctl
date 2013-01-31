@@ -58,7 +58,7 @@ def main():
 
     SUPERVISORCTL = module.get_bin_path('supervisorctl', True)
 
-    rc, out, err = module.run_command('%s status' % supervisorctl)
+    rc, out, err = module.run_command('%s status' % SUPERVISORCTL)
     present = name in out
 
     if state == 'present':
@@ -73,7 +73,7 @@ def main():
 
         module.exit_json(changed=False, name=name, state=state)
 
-    rc, out, err = module.run_command('%s status %s' % (supervisorctl, name))
+    rc, out, err = module.run_command('%s status %s' % (SUPERVISORCTL, name))
     running = 'RUNNING' in out
 
     if running and state == 'started':
