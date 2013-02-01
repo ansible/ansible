@@ -118,11 +118,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -186,7 +181,7 @@ def main():
 
     if instance_tags:
         try:
-            ec2.create_tags(instids, json.loads(instance_tags))
+            ec2.create_tags(instids, module.jsonify(instance_tags))
         except boto.exception.EC2ResponseError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
