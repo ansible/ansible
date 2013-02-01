@@ -56,6 +56,25 @@ all of your systems like this::
 This concept works great with tags to rapidly select exactly what plays you want to run, and exactly
 what parts of those plays.
 
+You can limit the hosts of an included playbook using the following idiom.
+In the child playbook, append  ``:&$hosts`` to the hosts field in your playbook.
+For example::
+
+    ---
+    # configure-webservers.yaml
+    - name: configure the webservers
+      hosts: webservers:&$hosts
+      tasks:
+        ...
+
+In the parent playbook, pass the "hosts" variable which specifies a group
+of hosts::
+
+    ---
+    # Configure staging server
+    - include: configure-webservers.yaml hosts=staging
+
+
 Ignoring Failed Commands
 ````````````````````````
 

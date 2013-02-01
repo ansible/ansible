@@ -121,7 +121,7 @@ def main(args):
             private_key_file=options.private_key_file,
             only_tags=only_tags,
         )
-        
+
         if options.listhosts:
             print 'playbook: %s' % playbook
             playnum = 0
@@ -134,7 +134,9 @@ def main(args):
                     tmp_hosts = play['hosts']
                     if isinstance(tmp_hosts, list):
                         tmp_hosts = ':'.join(tmp_hosts)
-                    tmp_hosts = utils.template(pb.basedir, tmp_hosts, extra_vars)
+                    hostvars = play.get('vars', {}).copy()
+                    hostvars.update(extra_vars)
+                    tmp_hosts = utils.template(pb.basedir, tmp_hosts, hostvars)
                     hosts = pb.inventory.list_hosts(tmp_hosts)
                     print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
                     for host in hosts:
@@ -145,7 +147,7 @@ def main(args):
             # if we've not exited by now then we are fine.
             print 'Playbook Syntax is fine'
             return 0
-            
+
 
         try:
 
