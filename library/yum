@@ -168,6 +168,13 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
         return [ po_to_nevra(p) for p in pkgs ]
 
     else:
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            repoq.extend(r_cmd)
+    
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            repoq.extend(r_cmd)
 
         cmd = repoq + ["--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -209,6 +216,14 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
         return set([ po_to_nevra(p) for p in retpkgs ])
 
     else:
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            repoq.extend(r_cmd)
+    
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            repoq.extend(r_cmd)
+
 
         cmd = repoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -246,6 +261,14 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
         return set([ po_to_nevra(p) for p in pkgs ])
 
     else:
+
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            repoq.extend(r_cmd)
+    
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            repoq.extend(r_cmd)
 
         cmd = repoq + ["--qf", qf, "--whatprovides", req_spec]
         rc,out,err = module.run_command(cmd)
@@ -539,15 +562,9 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo):
         r_cmd = ['--enablerepo', repoid]
         yum_basecmd.extend(r_cmd)
         
-        if repoq:
-            repoq.extend(r_cmd)
-    
     for repoid in dis_repos:
         r_cmd = ['--disablerepo', repoid]
         yum_basecmd.extend(r_cmd)
-
-        if repoq:
-            repoq.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
         my = yum_base(conf_file)
