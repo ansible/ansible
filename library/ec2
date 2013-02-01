@@ -98,7 +98,7 @@ options:
   instance_tags:
     version_added: "1.0"
     description:
-      - list of tags, in json format, to add to the new instance
+      - string of tags, in json format, to add to the new instance
     required: False
     default: null
     aliases: []
@@ -181,7 +181,7 @@ def main():
 
     if instance_tags:
         try:
-            ec2.create_tags(instids, module.jsonify(instance_tags))
+            ec2.create_tags(instids, module.from_json(instance_tags))
         except boto.exception.EC2ResponseError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
