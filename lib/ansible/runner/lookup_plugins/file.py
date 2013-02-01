@@ -32,4 +32,4 @@ class LookupModule(object):
             if not os.path.exists(path):
                 raise errors.AnsibleError("%s does not exist" % path)
             ret.append(open(path).read().rstrip())
-        return ret
+        return [ r for r in ret ]
