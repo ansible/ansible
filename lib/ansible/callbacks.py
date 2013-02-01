@@ -429,6 +429,15 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_no_hosts_remaining')
 
     def on_task_start(self, name, is_conditional):
+        split_name = name.split()
+        for index, item in enumerate(split_name):
+            if '=' not in item:
+                continue
+            split_item = item.split('=',1)
+            if 'password' not in split_item[0] and '_pw' not in split_item[0]:
+                continue
+            split_name[index] = split_item[0] + '=HIDDEN'
+        name = ' '.join(split_name)
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
