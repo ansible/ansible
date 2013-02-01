@@ -21,11 +21,11 @@ DOCUMENTATION="""
 module: ec2_facts
 short_description: Gathers facts about remote hosts within ec2 (aws)
 options: {}
-description: 
+description:
      - This module fetches data from the metadata servers in ec2 (aws).
        Eucalyptus cloud provides a similar service and this module should
-       work this cloud provider as well. 
-notes: 
+       work this cloud provider as well.
+notes:
     - Parameters to filter on ec2_facts may be added later.
 examples:
     - code: ansible all -m ec2_facts
@@ -40,7 +40,7 @@ import re
 socket.setdefaulttimeout(5)
 
 class Ec2Metadata(object):
-    
+
     ec2_metadata_uri = 'http://169.254.169.254/latest/meta-data/'
     ec2_sshdata_uri  = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
     ec2_userdata_uri = 'http://169.254.169.254/latest/user-data/'
@@ -49,8 +49,8 @@ class Ec2Metadata(object):
         self.uri_meta = ec2_metadata_uri or self.ec2_metadata_uri
         self.uri_user = ec2_userdata_uri or self.ec2_userdata_uri
         self.uri_ssh  =  ec2_sshdata_uri or self.ec2_sshdata_uri
-        self._data     = {} 
-        self._prefix   = 'ansible_ec2_%s' 
+        self._data     = {}
+        self._prefix   = 'ansible_ec2_%s'
 
     def _fetch(self, url):
         try:
@@ -96,18 +96,27 @@ class Ec2Metadata(object):
                 else:
                     self._data['%s' % (new_uri)] = content
 
+    def fix_invalid_varnames(self, data):
+        """Change ':'' and '-' to '_' to ensure valid template variable names"""
+        for (key, value) in data.items():
+            if ':' in key or '-' in key:
+                newkey = key.replace(':','_').replace('-','_')
+                data[newkey] = value
+
+
     def run(self):
         self.fetch(self.uri_meta) # populate _data
         data =  self._mangle_fields(self._data,
                                 self.uri_meta)
         data[self._prefix % 'user-data'] = self._fetch(self.uri_user)
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
+        self.fix_invalid_varnames(data)
         return data
 
 
 def main():
     ec2_facts = Ec2Metadata().run()
-    ec2_facts_result = { 
+    ec2_facts_result = {
                     "changed" : False,
                     "ansible_facts" : ec2_facts
                 }
