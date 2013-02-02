@@ -213,19 +213,19 @@ def main():
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
-	recurse = module.boolean(params['recurse'])
-	if recurse:
-		for root,dirs,files in os.walk( file_args['path'] ):
-			for dir in dirs:
-				dirname=os.path.join(root,dir)
-				tmp_file_args = file_args.copy()
-				tmp_file_args['path']=dirname
-				changed = module.set_directory_attributes_if_different(tmp_file_args, changed)
-			for file in files:
-				filename=os.path.join(root,file)
-				tmp_file_args = file_args.copy()
-				tmp_file_args['path']=filename
-				changed = module.set_file_attributes_if_different(tmp_file_args, changed)
+    recurse = module.boolean(params['recurse'])
+    if recurse:
+        for root,dirs,files in os.walk( file_args['path'] ):
+            for dir in dirs:
+                dirname=os.path.join(root,dir)
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=dirname
+                changed = module.set_directory_attributes_if_different(tmp_file_args, changed)
+            for file in files:
+                filename=os.path.join(root,file)
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=filename
+                changed = module.set_file_attributes_if_different(tmp_file_args, changed)
         module.exit_json(path=path, changed=changed)
 
     elif state == 'link':
