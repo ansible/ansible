@@ -97,7 +97,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.md PKG-INFO COPYING
 
 %changelog
-* Fri Nov 30 2012 Michael DeHaan <michael.dehaan@gmail.com> - 1.0-0
+* Fri Feb 1 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.0-0
 - Release pending
 
 * Fri Nov 30 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.9-0
