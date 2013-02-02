@@ -14,11 +14,11 @@ Ansible is written for Python 2.6.  If you are running Python 2.5 on an "Enterpr
 your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
 of Linux and OS X should already have 2.6.
 
-In additon to Python 2.6, you will want the following packages:
+In additon to Python 2.6, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
 * ``paramiko``
 * ``PyYAML``
-* ``python-jinja2``
+* ``jinja2``
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
