@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-1.0 "Eruption" -- release pending -- changes unsorted for now
+1.1 "Mean Street" -- Release pending
+
+* ...
+
+1.0 "Eruption" -- Feb 1 2013
 
 New modules:
 
