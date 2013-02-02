@@ -1,0 +1,52 @@
+# $Id$
+
+PortSystem         1.0
+PortGroup          python27 1.0
+
+name               ansible
+version            devel
+categories         python
+platforms          darwin
+supported_archs    noarch
+license            GPL-3
+maintainers        nomaintainer
+
+description        Model-driven configuration management, multi-node deployment, and remote task execution system.
+long_description   Ansible is a radically simple configuration-management, deployment, task-execution, and multinode orchestration framework.
+
+homepage           http://www.ansible.cc
+
+fetch.type         git
+git.url            https://github.com/ansible/ansible.git
+git.branch         ${version}
+
+depends_lib-append port:py27-yaml \
+                   port:py27-paramiko \
+                   port:py27-jinja2
+
+python.link_binaries_suffix
+
+post-patch {
+  reinplace "s|/usr/share/ansible|${prefix}/share/ansible|g" ${worksrcpath}/lib/ansible/constants.py ${worksrcpath}/examples/ansible.cfg
+  reinplace "s|/etc/ansible/ansible.cfg|${prefix}/etc/ansible/ansible.cfg|g" ${worksrcpath}/lib/ansible/constants.py ${worksrcpath}/examples/ansible.cfg
+  reinplace "s|/etc/ansible/hosts|${prefix}/etc/ansible/hosts|g" ${worksrcpath}/lib/ansible/constants.py ${worksrcpath}/examples/ansible.cfg
+  reinplace "s|/usr/share/ansible_plugins|${prefix}/${prefix}/share/ansible_plugins|g" ${worksrcpath}/lib/ansible/constants.py ${worksrcpath}/examples/ansible.cfg
+}
+
+post-destroot {
+  xinstall -m 644 -W ${worksrcpath} README.md CHANGELOG.md CONTRIBUTING.md COPYING  \
+    ${destroot}${prefix}/share/doc/${name}
+
+  xinstall -m 755 -d ${destroot}${prefix}/share/doc/examples
+  xinstall -m 755 ${worksrcpath}/examples/ansible.cfg ${destroot}${prefix}/share/doc/${name}/examples
+  xinstall -m 755 ${worksrcpath}/examples/ansible.cfg ${worksrcpath}/examples/hosts ${destroot}${prefix}/share/doc/${name}/examples
+  file copy ${worksrcpath}/examples/playbooks ${destroot}${prefix}/share/doc/${name}/examples/
+
+  xinstall -d 644 ${destroot}${prefix}/share/man/man1
+  eval xinstall -m 755 [glob ${worksrcpath}/docs/man/man1/*] ${destroot}${prefix}/share/man/man1
+
+  # install sample config and hosts file
+  xinstall -m 755 -d ${destroot}${prefix}/etc/ansible
+  xinstall -m 755 ${worksrcpath}/examples/ansible.cfg ${destroot}${prefix}/etc/ansible/ansible.cfg
+  xinstall -m 755 ${worksrcpath}/examples/hosts ${destroot}${prefix}/etc/ansible/hosts
+}
