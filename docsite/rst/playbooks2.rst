@@ -500,6 +500,14 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
            with_template:
               - ./some_template.j2
 
+You can also assign these to variables, should you wish to do this instead, that will be evaluated
+when they are used in a task (or template)::
+
+    vars:
+        redis_value: msg=$LOOKUP(redis,redis://localhost:6379,info_${inventory_hostname})
+    tasks:
+        - debug: msg=Redis value for host is $redis_value
+
 .. versionadded: 1.0
 
 'with_sequence' generates a sequence of items in ascending numerical order. You
