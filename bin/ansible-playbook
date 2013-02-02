@@ -125,20 +125,14 @@ def main(args):
         if options.listhosts:
             print 'playbook: %s' % playbook
             playnum = 0
-            for play in pb.playbook:
+            for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
-                if 'hosts' in play:
-                    label = 'unnamed'
-                    if 'name' in play:
-                        label = play['name']
-                    tmp_hosts = play['hosts']
-                    if isinstance(tmp_hosts, list):
-                        tmp_hosts = ':'.join(tmp_hosts)
-                    tmp_hosts = utils.template(pb.basedir, tmp_hosts, extra_vars)
-                    hosts = pb.inventory.list_hosts(tmp_hosts)
-                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
+                play = ansible.playbook.Play(pb, play_ds, play_basedir)
+                label = play.name
+                hosts = pb.inventory.list_hosts(play.hosts)
+                print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                for host in hosts:
+                    print '    %s' % host
             continue
 
         if options.syntax:
