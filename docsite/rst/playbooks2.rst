@@ -291,6 +291,8 @@ this level of complexity.  See more on this below.
 Conditional Execution (Simplified)
 ``````````````````````````````````
 
+.. versionadded: 0.8
+
 In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
 to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
 to be quoted or casted to specify types, but you should seperate any variables used with whitespace.  In
@@ -329,7 +331,9 @@ Here are various examples of 'when' in use.  'when' is incompatible with 'only_i
 The when_boolean check will look for variables that look to be true as well, such as the string 'True' or
 'true', non-zero numbers, and so on.
 
-We also added when_changed and when_failed so users can execute tasks based on the status of previously
+.. versionadded: 1.0
+
+In 1.0, we also added when_changed and when_failed so users can execute tasks based on the status of previously
 registered tasks.  As an example::
 
     - name: "register a task that might fail"
