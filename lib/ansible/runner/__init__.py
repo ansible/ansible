@@ -277,7 +277,7 @@ class Runner(object):
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.template_ds(self.basedir, items_terms, inject)
+            items_terms = utils.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)

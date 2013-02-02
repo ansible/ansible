@@ -151,7 +151,7 @@ class PlayBook(object):
                     plugin_name = k[5:]
                     if plugin_name not in utils.plugins.lookup_loader:
                         raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.template_ds(basedir, play[k], vars)
+                    terms = utils.template(basedir, play[k], vars)
                     items = utils.plugins.lookup_loader.get(plugin_name, basedir=basedir, runner=None).run(terms, inject=vars)
 
                 for item in items:
@@ -165,7 +165,7 @@ class PlayBook(object):
                                 incvars.update(v)
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
-                        incvars[k] = utils.template_ds(basedir, v, incvars)
+                        incvars[k] = utils.template(basedir, v, incvars)
                     included_path = utils.path_dwim(basedir, tokens[0])
                     (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
                     for p in plays:
