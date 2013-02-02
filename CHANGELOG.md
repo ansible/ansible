@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 1.1 "Mean Street" -- Release pending
 
-* ...
+* added 'with_random_choice' filter plugin
 
 1.0 "Eruption" -- Feb 1 2013
 
