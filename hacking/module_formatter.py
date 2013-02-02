@@ -30,8 +30,7 @@ import time
 import datetime
 import subprocess
 import ansible.utils
-from ansible.utils import module_docs
-
+import ansible.utils.module_docs as module_docs
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
