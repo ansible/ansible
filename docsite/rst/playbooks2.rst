@@ -822,22 +822,27 @@ Understanding Variable Precedence
 You have already learned about inventory host and group variables, 'vars', and 'vars_files'.
 
 If a variable name is defined in more than one place with the same name, priority is as follows
-to determine which place sets the value of the variable.
+to determine which place sets the value of the variable.  Lower numbered items have the highest
+priority.
 
-1.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
+1.  Any variables specified with --extra-vars (-e) on the ansible-playbook command line.
 
-2.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
+2.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
 
-3.  variables passed to parameterized task include statements.
+3.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
 
-4.  'vars' as defined in the playbook.
+4.  variables passed to parameterized task include statements.
 
-5.  Host variables from inventory.
+5.  'vars' as defined in the playbook.
 
-6.  Group variables from inventory, in order of least specific group to most specific.
+6.  Host variables from inventory.
+
+7.  Group variables from inventory in inheritance order.  This means if a group includes a sub-group, the variables
+in the subgroup have higher precedence.
 
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
-place to set such a default is in a group variable.
+place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
+variables that are true across your entire site, since everything has higher priority than these values.
 
 Style Points
 ````````````
