@@ -508,7 +508,9 @@ You can also assign these to variables, should you wish to do this instead, that
 when they are used in a task (or template)::
 
     vars:
-        redis_value: msg=$LOOKUP(redis,redis://localhost:6379,info_${inventory_hostname})
+        redis_value: $LOOKUP(redis,redis://localhost:6379,info_${inventory_hostname})
+        auth_key_value: $FILE(/home/mdehaan/.ssh/id_rsa.pub)
+
     tasks:
         - debug: msg=Redis value for host is $redis_value
 
