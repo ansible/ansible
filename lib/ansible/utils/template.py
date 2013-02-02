@@ -66,7 +66,7 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth):
 
     # if space is a string, check if it's a reference to another variable
     if isinstance(space, basestring):
-        space = template_ds(basedir, space, vars, lookup_fatal, depth)
+        space = template(basedir, space, vars, lookup_fatal, depth)
 
     return space
 
@@ -187,6 +187,9 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
+    if not isinstance(raw, unicode):
+        raw = raw.decode("utf-8")
+
     if (depth > 20):
         raise errors.AnsibleError("template recursion depth exceeded")
 
@@ -216,7 +219,7 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
 
     return ''.join(done)
 
-def template_ds(basedir, varname, vars, lookup_fatal=True, depth=0):
+def template(basedir, varname, vars, lookup_fatal=True, expand_lists=True, depth=0):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
@@ -225,30 +228,20 @@ def template_ds(basedir, varname, vars, lookup_fatal=True, depth=0):
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             if m['replacement'] is not None:
-                return template_ds(basedir, m['replacement'], vars, lookup_fatal, depth)
+                return template(basedir, m['replacement'], vars, lookup_fatal, expand_lists, depth)
             else:
                 return varname
         else:
-            return template(basedir, varname, vars, lookup_fatal)
+            return varReplace(basedir, varname, vars, lookup_fatal, depth=depth, expand_lists=expand_lists)
     elif isinstance(varname, (list, tuple)):
-        return [template_ds(basedir, v, vars, lookup_fatal, depth) for v in varname]
+        return [template(basedir, v, vars, lookup_fatal, expand_lists, depth) for v in varname]
     elif isinstance(varname, dict):
         d = {}
         for (k, v) in varname.iteritems():
-            d[k] = template_ds(basedir, v, vars, lookup_fatal, depth)
+            d[k] = template(basedir, v, vars, lookup_fatal, expand_lists, depth)
         return d
     else:
         return varname
-
-def template(basedir, text, vars, lookup_fatal=True, expand_lists=False):
-    ''' run a text buffer through the templating engine until it no longer changes '''
-
-    try:
-        text = text.decode('utf-8')
-    except UnicodeEncodeError:
-        pass # already unicode
-    text = varReplace(basedir, unicode(text), vars, lookup_fatal=lookup_fatal, expand_lists=expand_lists)
-    return text
 
 class _jinja2_vars(object):
     '''
@@ -288,7 +281,7 @@ class _jinja2_vars(object):
         if isinstance(var, dict) and type(var) != dict:
             return var
         else:
-            return template_ds(self.basedir, var, self.vars)
+            return template(self.basedir, var, self.vars)
     def add_locals(self, locals):
         '''
         If locals are provided, create a copy of self containing those
