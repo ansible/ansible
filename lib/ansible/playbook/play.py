@@ -186,6 +186,9 @@ class Play(object):
         else:
             vars.update(self.vars)
 
+        if type(self.playbook.extra_vars) == dict:
+            vars.update(self.playbook.extra_vars)
+
         if type(self.vars_prompt) == list:
             for var in self.vars_prompt:
                 if not 'name' in var:
@@ -320,7 +323,7 @@ class Play(object):
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
-                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % filename4)
+                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename4, type(new_vars)))
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache

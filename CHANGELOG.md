@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-1.0 "Eruption" -- release pending -- changes unsorted for now
+1.1 "Mean Street" -- Release pending
+
+* added 'with_random_choice' filter plugin
+
+1.0 "Eruption" -- Feb 1 2013
 
 New modules:
 
@@ -27,6 +31,7 @@ New playbook/language features:
 * parameterized playbook includes can now define complex variables (not just all on one line)
 * making inventory variables available for use in vars_files paths
 * messages when skipping plays are now more clear
+* --extra-vars now has maximum precedence (as intended)
 
 Module fixes and new flags:
 
@@ -55,6 +60,7 @@ Module fixes and new flags:
 * fix to enable Jinja2 {% include %} to work again in template
 * ec2 module is now powered by Boto
 * setup module can now detect if package manager is using pacman
+* fix for yum module with enablerepo in use on EL 6
 
 Core fixes and new behaviors:
 
@@ -67,6 +73,10 @@ Core fixes and new behaviors:
 * handle tilde shell character for --private-key
 * hash merging policy is now selectable in the config file, can choose to override or merge
 * environment variables now available for setting all plugin paths (ANSIBLE_CALLBACK_PLUGINS, etc)
+* added packaging file for macports (not upstreamed yet)
+* hacking/test-module script now uses /usr/bin/env properly
+* fixed error formatting for certain classes of playbook syntax errors
+* fix for processing returns with large volumes of output
 
 Inventory files/scripts:
 

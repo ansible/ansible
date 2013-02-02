@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -14,5 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__version__ = '1.1'
-__author__ = 'Michael DeHaan'
+
+import random
+
+# useful for introducing chaos ... or just somewhat reasonably fair selection
+# amongst available mirrors
+#
+#    tasks:
+#        - debug: msg=$item
+#          with_random_choice:
+#             - one
+#             - two 
+#             - three
+
+class LookupModule(object):
+
+    def __init__(self, basedir=None, **kwargs):
+        self.basedir = basedir
+
+    def run(self, terms, **kwargs):
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        return [ random.choice(terms) ]
+

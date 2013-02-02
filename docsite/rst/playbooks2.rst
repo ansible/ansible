@@ -276,20 +276,22 @@ In Ansible 0.8, a few shortcuts are available for testing whether a variable is 
 
 There is a matching 'is_unset' that works the same way.  Quoting the variable inside the function is mandatory.
 
-When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed for each item.
-This is a deliberate design::
+When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed seperately for each item.
+This is by design::
 
     tasks:
         - action: command echo $item
           with_item: [ 0, 2, 4, 6, 8, 10 ]
           only_if: "$item > 5"
 
-While `only_if` is a pretty good option for advanced users, it exposes more guts of the engine than we'd like, and
-we can do better.  In 0.9, we will be adding `when`, which will be like a syntactic sugar for `only_if` and hide
-this level of complexity -- it will numerous built in operators.
+While `only_if` is a pretty good option for advanced users, it exposes more guts than we'd like, and
+we can do better.  In 1.0, we added 'when', which is like syntactic sugar for `only_if` and hides
+this level of complexity.  See more on this below.
 
 Conditional Execution (Simplified)
 ``````````````````````````````````
+
+.. versionadded: 0.8
 
 In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
 to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
@@ -329,7 +331,9 @@ Here are various examples of 'when' in use.  'when' is incompatible with 'only_i
 The when_boolean check will look for variables that look to be true as well, such as the string 'True' or
 'true', non-zero numbers, and so on.
 
-We also added when_changed and when_failed so users can execute tasks based on the status of previously
+.. versionadded: 1.0
+
+In 1.0, we also added when_changed and when_failed so users can execute tasks based on the status of previously
 registered tasks.  As an example::
 
     - name: "register a task that might fail"
@@ -429,14 +433,14 @@ If you have a list of hashes, you can reference subkeys using things like::
 
     ${item.subKeyName}
 
-More Loops
-``````````
+Lookup Plugins - Accessing Outside Data
+```````````````````````````````````````
 
 .. versionadded: 0.8
 
 Various 'lookup plugins' allow additional ways to iterate over data.  Ansible will have more of these
-over time.  In 0.8, the only lookup plugins that comes stock are 'with_fileglob' and 'with_sequence', but
-you can also write your own.
+over time.  You can write your own, as is covered in the API section.  Each typically takes a list and
+can accept more than one parameter.
 
 'with_fileglob' matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
@@ -451,26 +455,83 @@ be used like this::
 
         # copy each file over that matches the given pattern
         - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
-          with_fileglob: /playbooks/files/fooapp/*
+          with_fileglob: 
+            - /playbooks/files/fooapp/*
+
+'with_file' loads data in from a file directly::
+
+        - action: authorized_key user=foo key=$item
+          with_file:
+             - /home/foo/.ssh/id_rsa.pub
+
+As an alternative, lookup plugins can also be accessed in variables like so::
+
+        vars:
+            motd_value: $FILE(/etc/motd)
+            hosts_value: $LOOKUP(file,/etc/hosts)
+
+.. versionadded: 0.9
+
+Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the "controlling" machine::
+
+    ---
+    - hosts: all
+
+      tasks:
+
+         - action: debug msg="$item is an environment variable"
+           with_env: 
+             - HOME
+             - LANG
+
+         - action: debug msg="$item is a line from the result of this command"
+           with_lines:
+             - cat /etc/motd
+
+         - action: debug msg="$item is the raw result of running this command"
+           with_pipe:
+              - date
+
+         - action: debug msg="$item is value in Redis for somekey"
+           with_redis_kv:
+             - redis://localhost:6379,somekey
+
+         - action: debug msg="$item is a DNS TXT record for example.com"
+           with_dnstxt:
+             - example.com
+
+         - action: debug msg="$item is a value from evaluation of this template"
+           with_template:
+              - ./some_template.j2
+
+You can also assign these to variables, should you wish to do this instead, that will be evaluated
+when they are used in a task (or template)::
+
+    vars:
+        redis_value: $LOOKUP(redis,redis://localhost:6379,info_${inventory_hostname})
+        auth_key_value: $FILE(/home/mdehaan/.ssh/id_rsa.pub)
+
+    tasks:
+        - debug: msg=Redis value for host is $redis_value
 
 .. versionadded: 1.0
 
 'with_sequence' generates a sequence of items in ascending numerical order. You
-can specify a 'start', an 'end' value (inclusive), and a 'stride' value (to skip
-some numbers of values), and a printf-style 'format' string.  It accepts
-arguments both as key-value pairs and in a shortcut of the form
-"[start-]end[/stride][:format]".  All numerical values can be specified in
-hexadecimal (i.e. 0x3f8) or octal (i.e. 0644).  Negative numbers are not
-supported.  Here is an example that leverages most of its features::
+can specify a start, end, and an optional step value.
 
-    ----
+Arguments can be either key-value pairs or as a shortcut in the format
+"[start-]end[/stride][:format]".  The format is a printf style string.
+
+Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600). 
+Negative numbers are not supported.  This works as follows::
+
+    ---
     - hosts: all
 
       tasks:
 
         # create groups
         - group: name=evens state=present
-
         - group: name=odds state=present
 
         # create 32 test users
@@ -484,17 +545,7 @@ supported.  Here is an example that leverages most of its features::
         - file: dest=/var/stuff/$item state=directory
           with_sequence: start=4 end=16
 
-The key-value form also supports a 'count' option, which always generates
-'count' entries regardless of the stride. The count option is mostly useful for
-avoiding off-by-one errors and errors calculating the number of entries in a
-sequence when a stride is specified.  The shortcut form cannot be used to
-specify a count.  As an example::
-
-    ----
-    - hosts: all
-
-      tasks:
-
+        # a simpler way to use the sequence plugin
         # create 4 groups
         - group: name=group${item} state=present
           with_sequence: count=4
@@ -773,22 +824,27 @@ Understanding Variable Precedence
 You have already learned about inventory host and group variables, 'vars', and 'vars_files'.
 
 If a variable name is defined in more than one place with the same name, priority is as follows
-to determine which place sets the value of the variable.
+to determine which place sets the value of the variable.  Lower numbered items have the highest
+priority.
 
-1.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
+1.  Any variables specified with --extra-vars (-e) on the ansible-playbook command line.
 
-2.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
+2.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
 
-3.  variables passed to parameterized task include statements.
+3.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
 
-4.  'vars' as defined in the playbook.
+4.  variables passed to parameterized task include statements.
 
-5.  Host variables from inventory.
+5.  'vars' as defined in the playbook.
 
-6.  Group variables from inventory, in order of least specific group to most specific.
+6.  Host variables from inventory.
+
+7.  Group variables from inventory in inheritance order.  This means if a group includes a sub-group, the variables
+in the subgroup have higher precedence.
 
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
-place to set such a default is in a group variable.
+place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
+variables that are true across your entire site, since everything has higher priority than these values.
 
 Style Points
 ````````````
