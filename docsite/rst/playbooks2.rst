@@ -429,8 +429,8 @@ If you have a list of hashes, you can reference subkeys using things like::
 
     ${item.subKeyName}
 
-More Loops
-``````````
+Lookup Plugins - Accessing Outside Data
+```````````````````````````````````````
 
 .. versionadded: 0.8
 
@@ -460,10 +460,11 @@ be used like this::
           with_file:
              - /home/foo/.ssh/id_rsa.pub
 
-As an alternate (but less preferred) syntax, all lookup plugins can be inlined by uppercasing their name and 
-prefixing them with a dollar sign, like so::
+As an alternative, lookup plugins can also be accessed in variables like so::
 
-        - action: authorized_key user=foo key=$FILE(/home/foo/.ssh/id_rsa.pub)
+        vars:
+            motd_value: $FILE(/etc/motd)
+            hosts_value: $LOOKUP(file,/etc/hosts)
 
 .. versionadded: 0.9
 
