@@ -454,6 +454,17 @@ be used like this::
           with_fileglob: 
             - /playbooks/files/fooapp/*
 
+'with_file' loads data in from a file directly::
+
+        - action: authorized_key user=foo key=$item
+          with_file:
+             - /home/foo/.ssh/id_rsa.pub
+
+As an alternate (but less preferred) syntax, all lookup plugins can be inlined by uppercasing their name and 
+prefixing them with a dollar sign, like so::
+
+        - action: authorized_key user=foo key=$FILE(/home/foo/.ssh/id_rsa.pub)
+
 .. versionadded: 0.9
 
 Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the "controlling" machine::
