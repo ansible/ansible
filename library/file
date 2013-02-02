@@ -212,10 +212,9 @@ def main():
             os.makedirs(path)
             changed = True
 
+        changed = module.set_directory_attributes_if_different(file_args, changed)
 	recurse = module.boolean(params['recurse'])
-	if not recurse:
-        	changed = module.set_directory_attributes_if_different(file_args, changed)
-	else:
+	if recurse:
 		for root,dirs,files in os.walk( file_args['path'] ):
 			for dir in dirs:
 				dirname=os.path.join(root,dir)
