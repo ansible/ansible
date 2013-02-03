@@ -143,28 +143,30 @@ def enforce_state(module, params):
     key   = params["key"]
     state = params.get("state", "present")
 
-    if '\n' in key:
-        module.fail_json(msg="key= can only contain a single key")
+    key = key.split('\n')
 
     # check current state -- just get the filename, don't create file
     params["keyfile"] = keyfile(module, user, write=False)
     keys = readkeys(params["keyfile"])
-    present = key in keys
 
-    # handle idempotent state=present
-    if state=="present":
-        if present:
-            module.exit_json(changed=False)
-        keys.append(key)
-        writekeys(module, keyfile(module, user,write=True), keys)
+    # Check our new keys, if any of them exist we'll continue.
+    for new_key in key:
+        present = new_key in keys
+        # handle idempotent state=present
+        if state=="present":
+            if present:
+                continue
+            keys.append(new_key)
+            writekeys(module, keyfile(module, user,write=True), keys)
+            params['changed'] = True
 
-    elif state=="absent":
-        if not present:
-            module.exit_json(changed=False)
-        keys.remove(key)
-        writekeys(module, keyfile(module, user,write=True), keys)
+        elif state=="absent":
+            if not present:
+                continue
+            keys.remove(new_key)
+            writekeys(module, keyfile(module, user,write=True), keys)
+            params['changed'] = True
 
-    params['changed'] = True
     return params
 
 def main():
