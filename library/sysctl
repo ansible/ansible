@@ -25,7 +25,7 @@ module: sysctl
 short_description: Permit to handle sysctl.conf entries
 description:
     - This module manipulates sysctl entries and performs a I(/sbin/sysctl -p) after changing them.
-version_added: "0.6"
+version_added: "1.0"
 options:
     name:
         description:
