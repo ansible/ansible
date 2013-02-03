@@ -577,7 +577,7 @@ class AnsibleModule(object):
         for d in opt_dirs:
             if d is not None and os.path.exists(d):
                 paths.append(d)
-        paths += os.environ.get('PATH', '').split(':')
+        paths += os.environ.get('PATH', '').split(os.pathsep)
         bin_path = None
         # mangle PATH to include /sbin dirs
         for p in sbin_paths:
