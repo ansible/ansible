@@ -143,16 +143,14 @@ def enforce_state(module, params):
     key   = params["key"]
     state = params.get("state", "present")
 
-    # If multiple keys split on the newline
-    if '\n' in key:
-        new_keys = key.split('\n')
+    key = key.split('\n')
 
     # check current state -- just get the filename, don't create file
     params["keyfile"] = keyfile(module, user, write=False)
     keys = readkeys(params["keyfile"])
 
     # Check our new keys, if any of them exist we'll continue.
-    for new_key in new_keys:
+    for new_key in key:
         present = new_key in keys
         # handle idempotent state=present
         if state=="present":
