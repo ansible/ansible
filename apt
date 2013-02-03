@@ -70,6 +70,7 @@ options:
   upgrade:
     description:
       - If yes, performs an apt-get upgrade. If dist, performs an apt-get dist-upgrade.
+    version_added: "1.1"
     required: false
     default: no
     choices: [ "yes", "no", "dist"]
