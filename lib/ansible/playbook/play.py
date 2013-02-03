@@ -326,6 +326,7 @@ class Play(object):
                         # running a host specific pass and has host specific variables
                         # load into setup cache
                         self.playbook.SETUP_CACHE[host].update(new_vars)
+                        self.playbook.callbacks.on_import_for_host(host, filename4)
                     elif host is None:
                         # running a non-host specific pass and we can update the global vars instead
                         self.vars.update(new_vars)
