@@ -21,6 +21,7 @@
 import sys
 import getpass
 import os
+import tempfile
 
 import ansible.playbook
 import ansible.constants as C
@@ -63,6 +64,11 @@ def main(args):
         help="dump out a list of hosts, each play will run against, does not run playbook!")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
         help="do a playbook syntax check on the playbook, do not execute the playbook")
+
+    if not sys.stdin.isatty():
+        (stdin_pb, stdin_pbname) = tempfile.mkstemp(dir='.')
+        os.write(stdin_pb,sys.stdin.read())
+        args.append(stdin_pbname)
 
     options, args = parser.parse_args(args)
 
@@ -169,6 +175,12 @@ def main(args):
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
+
+    if stdin_pbname:
+        try:
+            os.remove(stdin_pbname)
+        except OSError:
+            pass
 
     return 0
 
