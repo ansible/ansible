@@ -134,7 +134,8 @@ def main():
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
         ),
-        add_file_common_args=True
+        add_file_common_args=True,
+        supports_check_mode=True
     )
 
     params = module.params
