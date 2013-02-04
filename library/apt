@@ -69,7 +69,7 @@ options:
     choices: [ "yes", "no" ]
   upgrade:
     description:
-      - If yes, performs an apt-get upgrade. If dist, performs an apt-get dist-upgrade.
+      - If yes, performs an apt-get upgrade. If dist, performs an apt-get dist-upgrade. Note: This does not upgrade a specific package, use state=latest for that.
     version_added: "1.1"
     required: false
     default: no
@@ -230,6 +230,8 @@ def main():
 
     if p['upgrade'] != 'no' and p['package'] is None:
         upgrade(module, p['upgrade'])
+    elif p['upgrade'] != 'no' and p['package'] != None:
+        module.fail_json(msg="Upgrade should not be used in conjunction with other options.")
 
     packages = p['package'].split(',')
     latest = p['state'] == 'latest'
