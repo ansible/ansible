@@ -25,7 +25,7 @@ class FilterModule(object):
         return {
             'to_json': json.dumps,
             'from_json': json.loads,
-            'to_yaml': yaml.dump,
+            'to_yaml': yaml.safe_dump,
             'from_yaml': yaml.load,
         }
     
