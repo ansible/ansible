@@ -33,6 +33,10 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
+
+        # the group_by module does not need to pay attention to check mode.
+        # it always runs.
+
         args = parse_kv(self.runner.module_args)
         if not 'key' in args:
             raise ae("'key' is a required argument.")

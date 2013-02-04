@@ -69,7 +69,7 @@ def main():
             dest=dict(required=True),
             backup=dict(default=False, choices=BOOLEANS),
         ),
-        add_file_common_args=True
+        add_file_common_args=True,
     )
 
     src  = os.path.expanduser(module.params['src'])

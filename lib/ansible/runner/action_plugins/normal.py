@@ -36,6 +36,13 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
+        if self.runner.check:
+            if module_name in [ 'shell', 'command' ]:
+                return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
+            # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
+            # python modules for now
+            module_args += " CHECKMODE=True"
+
         # shell and command are the same module
         if module_name == 'shell':
             module_name = 'command'

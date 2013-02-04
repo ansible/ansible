@@ -61,7 +61,8 @@ class PlayBook(object):
         extra_vars       = None,
         only_tags        = None,
         subset           = C.DEFAULT_SUBSET,
-        inventory        = None):
+        inventory        = None,
+        check            = False):
 
         """
         playbook:         path to a playbook file
@@ -79,6 +80,7 @@ class PlayBook(object):
         stats:            holds aggregrate data about events occuring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
+        check:            don't change anything, just try to detect some potential changes
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -91,6 +93,7 @@ class PlayBook(object):
         if only_tags is None:
             only_tags = [ 'all' ]
 
+        self.check            = check
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -267,7 +270,8 @@ class PlayBook(object):
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
-            transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True
+            transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
+            check=self.check
         )
 
         if task.async_seconds == 0:
@@ -373,6 +377,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
+            check=self.check
         ).run()
         self.stats.compute(setup_results, setup=True)
 
