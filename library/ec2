@@ -103,7 +103,7 @@ options:
     default: null
     aliases: []
 examples:
-   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 instance_tags='{"Name":"My Server"}'"
+   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 instance_tags='{"KEY":"VALUE"}'"
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
