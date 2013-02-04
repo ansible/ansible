@@ -69,6 +69,12 @@ class ActionModule(object):
 
         exec_rc = None
         if local_md5 != remote_md5:
+
+            if self.runner.check:
+                # TODO: if the filesize is small, include a nice pretty-printed diff by 
+                # calling a (new) diff callback
+                return ReturnData(conn=conn, result=dict(changed=True))
+
             # transfer the file to a remote tmp location
             tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
@@ -86,5 +92,7 @@ class ActionModule(object):
 
             tmp_src = tmp + os.path.basename(source)
             module_args = "%s src=%s" % (module_args, tmp_src)
+            if self.runner.check:
+                module_args = "%s CHECKMODE=True" % module_args
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
 

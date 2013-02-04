@@ -29,6 +29,10 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject):
+
+        # note: the fail module does not need to pay attention to check mode
+        # it always runs.
+
         args = utils.parse_kv(module_args)
         if not 'msg' in args:
             args['msg'] = 'Failed as requested from task'
