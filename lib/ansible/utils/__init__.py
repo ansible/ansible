@@ -145,6 +145,9 @@ def is_changed(result):
 
 def check_conditional(conditional):
 
+    if not isinstance(conditional, basestring):
+        return conditional
+
     def is_set(var):
         return not var.startswith("$")
 
