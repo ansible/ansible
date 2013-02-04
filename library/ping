@@ -36,7 +36,8 @@ author: Michael DeHaan
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec = dict(),
+        supports_check_mode = True
     )
     module.exit_json(ping='pong')
 

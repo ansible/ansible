@@ -133,7 +133,7 @@ class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False):
 
         '''
         common code for quickly building an ansible module in Python
@@ -142,6 +142,8 @@ class AnsibleModule(object):
         '''
 
         self.argument_spec = argument_spec
+        self.supports_check_mode = supports_check_mode
+        self.check_mode = False
 
         if add_file_common_args:
             self.argument_spec.update(FILE_COMMON_ARGUMENTS)
@@ -149,7 +151,7 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = []
+        self._legal_inputs = [ 'CHECKMODE' ]
         self._handle_aliases()
 
         if check_invalid_arguments:
@@ -300,7 +302,9 @@ class AnsibleModule(object):
             if context[i] is None:
                 new_context[i] = cur_context[i]
         if cur_context != new_context:
-            try:    
+            try:
+                if self.check_mode:
+                    return True
                 rc = selinux.lsetfilecon(path, ':'.join(new_context))
             except OSError:
                 self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
@@ -319,6 +323,8 @@ class AnsibleModule(object):
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
+            if self.check_mode:
+                return True
             try:
                 os.chown(path, uid, -1)
             except OSError:
@@ -332,6 +338,8 @@ class AnsibleModule(object):
             return changed
         old_user, old_group = self.user_and_group(path)
         if old_group != group:
+            if self.check_mode:
+                return True
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
@@ -357,6 +365,8 @@ class AnsibleModule(object):
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
         if prev_mode != mode:
+            if self.check_mode:
+                return True
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
@@ -451,6 +461,11 @@ class AnsibleModule(object):
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
+            if k == 'CHECKMODE':
+                if not self.supports_check_mode:
+                    self.exit_json(skipped=True, msg="remote module does not support check mode")
+                if self.supports_check_mode:
+                    self.check_mode = True
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
@@ -577,7 +592,7 @@ class AnsibleModule(object):
         for d in opt_dirs:
             if d is not None and os.path.exists(d):
                 paths.append(d)
-        paths += os.environ.get('PATH', '').split(':')
+        paths += os.environ.get('PATH', '').split(os.pathsep)
         bin_path = None
         # mangle PATH to include /sbin dirs
         for p in sbin_paths:

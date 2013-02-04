@@ -52,11 +52,13 @@ def main(args):
 
     # create parser for CLI options
     usage = "%prog playbook.yml"
-    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True, subset_opts=True)
+    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, 
+        runas_opts=True, subset_opts=True, check_opts=True)
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
+    # FIXME: list hosts is a common option and can be moved to utils/__init__.py
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help="dump out a list of hosts, each play will run against, does not run playbook!")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
@@ -120,25 +122,20 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
+            check=options.check
         )
         
         if options.listhosts:
             print 'playbook: %s' % playbook
             playnum = 0
-            for play in pb.playbook:
+            for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
-                if 'hosts' in play:
-                    label = 'unnamed'
-                    if 'name' in play:
-                        label = play['name']
-                    tmp_hosts = play['hosts']
-                    if isinstance(tmp_hosts, list):
-                        tmp_hosts = ':'.join(tmp_hosts)
-                    tmp_hosts = utils.template(pb.basedir, tmp_hosts, extra_vars)
-                    hosts = pb.inventory.list_hosts(tmp_hosts)
-                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
+                play = ansible.playbook.Play(pb, play_ds, play_basedir)
+                label = play.name
+                hosts = pb.inventory.list_hosts(play.hosts)
+                print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                for host in hosts:
+                    print '    %s' % host
             continue
 
         if options.syntax:

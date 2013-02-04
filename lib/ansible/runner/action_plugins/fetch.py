@@ -36,6 +36,9 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for fetch operations '''
 
+        if self.runner.check:
+            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
+
         # load up options
         options = utils.parse_kv(module_args)
         source = options.get('src', None)

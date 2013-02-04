@@ -392,7 +392,7 @@ def increment_debug(option, opt, value, parser):
     VERBOSITY += 1
 
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
-    async_opts=False, connect_opts=False, subset_opts=False):
+    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -448,6 +448,11 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
             help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds (default=N/A)')
+
+    if check_opts:
+        parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
+            help="don't make any changes, instead try to predict some of the changes that may occur"
+        )
 
     return parser
 

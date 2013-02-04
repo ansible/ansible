@@ -29,6 +29,9 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' handler for template operations '''
 
+        # note: since this module just calls the copy module, the --check mode support
+        # can be implemented entirely over there
+
         if not self.runner.is_playbook:
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
 
@@ -62,21 +65,32 @@ class ActionModule(object):
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 
-        # template the source data locally & transfer
+        # template the source data locally & get ready to transfer
         try:
             resultant = utils.template_from_file(self.runner.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
-        # fix file permissions when the copy is done as a different user
-        if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, 
-                tmp)
+        local_md5 = utils.md5s(resultant)
+        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
 
-        # run the copy module
-        module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
-        return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+        if local_md5 != remote_md5:
 
+             # template is different from the remote value
+
+             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
+             # fix file permissions when the copy is done as a different user
+             if self.runner.sudo and self.runner.sudo_user != 'root':
+                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+
+             # run the copy module
+             module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
+
+             if self.runner.check:
+                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True))
+             else:
+                 return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+        else:
+             return ReturnData(conn=conn, comm_ok=True, result=dict(changed=False))
 

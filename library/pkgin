@@ -55,13 +55,11 @@ import shlex
 import os
 import sys
 
-PKGIN_PATH = "/opt/local/bin/pkgin"
-
-def query_package(module, name, state="present"):
+def query_package(module, pkgin_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s list | grep ^%s" % (PKGIN_PATH, name))
+        rc, out, err = module.run_command("%s list | grep ^%s" % (pkgin_path, name))
 
         if rc == 0:
             return True
@@ -69,18 +67,18 @@ def query_package(module, name, state="present"):
         return False
 
 
-def remove_packages(module, packages):
+def remove_packages(module, pkgin_path, packages):
     
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, package):
+        if not query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s -y remove %s" % (PKGIN_PATH, package))
+        rc, out, err = module.run_command("%s -y remove %s" % (pkgin_path, package))
 
-        if query_package(module, package):
+        if query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
     
         remove_c += 1
@@ -92,17 +90,17 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, packages):
+def install_packages(module, pkgin_path, packages):
 
     install_c = 0
 
     for package in packages:
-        if query_package(module, package):
+        if query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s -y install %s" % (PKGIN_PATH, package))
+        rc, out, err = module.run_command("%s -y install %s" % (pkgin_path, package))
 
-        if not query_package(module, package):
+        if not query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
 
         install_c += 1
@@ -119,20 +117,18 @@ def main():
             argument_spec    = dict(
                 state        = dict(default="present", choices=["present","absent"]),
                 name         = dict(aliases=["pkg"], required=True)))
-                
 
-    if not os.path.exists(PKGIN_PATH):
-        module.fail_json(msg="cannot find pkgin, looking for %s" % (PKGIN_PATH))
+    pkgin_path = module.get_bin_path('pkgin', True, ['/opt/local/bin'])
 
     p = module.params
 
     pkgs = p["name"].split(",")
 
     if p["state"] == "present":
-        install_packages(module, pkgs)
+        install_packages(module, pkgin_path, pkgs)
 
     elif p["state"] == "absent":
-        remove_packages(module, pkgs)
+        remove_packages(module, pkgin_path, pkgs)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

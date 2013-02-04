@@ -914,7 +914,8 @@ def run_setup(module):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec = dict(),
+        supports_check_mode = True,
     )
     data = run_setup(module)
     module.exit_json(**data)

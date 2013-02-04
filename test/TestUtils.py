@@ -324,19 +324,19 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${data.var}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['var'])
 
         template = '${data.types}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['types'])
 
         template = '${data.alphas}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['alphas'])
 
         template = '${data.nonexisting}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert res == template
 
     #####################################

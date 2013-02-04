@@ -114,10 +114,12 @@ class Runner(object):
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
-        subset=None                         # subset pattern
+        subset=None,                        # subset pattern
+        check=False                         # don't make any changes, just try to probe for potential changes
         ):
 
         # storage & defaults
+        self.check            = check
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
@@ -207,6 +209,11 @@ class Runner(object):
 
         cmd = ""
         if not is_new_style:
+            if 'CHECKMODE=True' in args:
+                # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
+                # do --check mode, so to be safe we will not run it.
+                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
+
             args = utils.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
@@ -277,7 +284,7 @@ class Runner(object):
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.template_ds(self.basedir, items_terms, inject)
+            items_terms = utils.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
