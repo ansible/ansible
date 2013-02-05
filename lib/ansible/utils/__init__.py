@@ -301,7 +301,7 @@ def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
     digest = _md5()
-    digest.update(data)
+    digest.update(data.encode('utf-8'))
     return digest.hexdigest()
 
 def md5(filename):
