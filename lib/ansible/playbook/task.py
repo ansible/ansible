@@ -47,6 +47,8 @@ class Task(object):
             if x in utils.plugins.module_finder:
                 if 'action' in ds:
                     raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
+                if not isinstance(ds[x], basestring):
+                    raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
                 ds['action'] = x + " " + ds[x]
                 ds.pop(x)
 
