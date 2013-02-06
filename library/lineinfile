@@ -64,7 +64,7 @@ options:
         after the specified regular expression. Two special values are
         available; C(BOF) for inserting the line at the beginning of the
         file, and C(EOF) for inserting the line at the end of the file.
-    choices: [ BOF, EOF ]
+    choices: [ BOF, EOF, *regex* ]
     default: EOF
   create:
     required: false
@@ -83,6 +83,7 @@ options:
 examples:
    - code: "lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled"
    - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
+   - code: 'lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"'
 '''
 
 def present(module, dest, regexp, line, insertafter, create, backup):
