@@ -187,6 +187,7 @@ class Service(object):
                     dat = os.read(p.stdout.fileno(), 4096)
                     if not dat:
                         fds.remove(p.stdout)
+                    stdout += dat
                 if p.stderr in rfd:
                     dat = os.read(p.stderr.fileno(), 4096)
                     if not dat:
