@@ -70,6 +70,8 @@ class Cli(object):
         pattern = args[0]
 
         inventory_manager = inventory.Inventory(options.inventory)
+        if options.subset:
+            inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
             print >>sys.stderr, "No hosts matched"
