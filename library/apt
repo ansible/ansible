@@ -174,9 +174,9 @@ def remove(m, pkgspec, cache, purge=False):
         m.exit_json(changed=True)
 
 def upgrade(m, mode="yes"):
-    upgrade_command = "upgrade"
+    upgrade_command = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" upgrade'
     if mode == "dist":
-        upgrade_command = "dist-upgrade"
+        upgrade_command = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade'
     cmd = "%s -q -y %s" % (APT, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
