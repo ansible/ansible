@@ -61,6 +61,7 @@ class Connection(object):
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
         self.common_args += ["-o", "User="+self.runner.remote_user]
+        self.common_args += ["-o", "ConnectTimeout="+str(self.runner.timeout)]
 
         return self
 
