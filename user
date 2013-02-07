@@ -48,7 +48,9 @@ options:
     groups:
         required: false
         description:
-            - Puts the user in this comma-delimited list of groups.
+            - Puts the user in this comma-delimited list of groups. When set to
+              the empty string ('groups='), the user is removed from all groups
+              except the primary group.
     append:
         required: false
         description:
@@ -249,9 +251,10 @@ class User(object):
             cmd.append(self.group)
 
         if self.groups is not None:
-            for g in self.groups.split(','):
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            if self.groups != '':
+                for g in self.groups.split(','):
+                    if not self.group_exists(g):
+                        self.module.fail_json(msg="Group %s does not exist" % (g))
             cmd.append('-G')
             cmd.append(self.groups)
 
@@ -301,23 +304,29 @@ class User(object):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.groups.split(',')
-            for g in groups:
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
-
-            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
             groups_need_mod = False
+            groups = []
 
-            if group_diff:
-                if self.append:
-                    for g in groups:
-                        if g in group_diff:
-                            cmd.append('-a')
-                            groups_need_mod = True
-                            break
-                else:
+            if self.groups == '':
+                if current_groups and not self.append:
                     groups_need_mod = True
+            else:
+                groups = self.groups.split(',')
+                for g in groups:
+                    if not self.group_exists(g):
+                        self.module.fail_json(msg="Group %s does not exist" % (g))
+
+                group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+
+                if group_diff:
+                    if self.append:
+                        for g in groups:
+                            if g in group_diff:
+                                cmd.append('-a')
+                                groups_need_mod = True
+                                break
+                    else:
+                        groups_need_mod = True
 
             if groups_need_mod:
                 cmd.append('-G')
