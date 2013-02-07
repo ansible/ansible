@@ -310,6 +310,7 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_memory_facts(self):
@@ -366,21 +367,19 @@ class LinuxHardware(Hardware):
             else:
                 self.facts[key] = 'NA'
 
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        mtab = get_file_content('/etc/mtab')
+        for line in mtab.split('\n'):
+            if line.startswith('/'):
+                fields = line.rstrip('\n').split()
+                self.facts['mounts'].append({'mount': fields[1], 'device':fields[0], 'fstype': fields[2], 'options': fields[3]})
+
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = module.get_bin_path('lspci')
         if lspci:
             rc, pcidata, err = module.run_command(lspci)
-
-        mounts = {}
-        mtab = get_file_content('/etc/mtab')
-        for line in mtab.split('\n'):
-            if line.startswith('/'):
-                fields = line.rstrip('\n').split(' ')
-                device = os.path.basename(fields[0])
-                if not device in mounts:
-                    mounts[device] = {}
-                mounts[device][fields[1]] = {'fstype' : fields[2], 'mount_opts': fields[3]}
 
         for block in os.listdir("/sys/block"):
             virtual = 0
@@ -422,8 +421,6 @@ class LinuxHardware(Hardware):
                     partname = m.group(1)
                     part_sysdir = sysdir + "/" + partname
 
-                    if partname in mounts:
-                        part = mounts[partname]
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
@@ -526,6 +523,7 @@ class FreeBSDHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_device_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -571,45 +569,29 @@ class FreeBSDHardware(Hardware):
         self.facts['swaptotal_mb'] = data[1]
         self.facts['swapfree_mb'] = data[3]
 
-    def get_device_facts(self):
-        sysdir = '/dev'
-        #rc, disks, err = module.run_command("/sbin/sysctl kern.disks")
-        self.facts['devices'] = {}
-
-        # get mount data to use later #TODO: doesn't currently work with labels
-        mounts = {}
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
         for line in fstab.split('\n'):
-            if line.startswith('/'):
-                fields = re.sub(r'\s+',' ',line.rstrip('\n')).split(' ')
-                device = os.path.basename(fields[0])
-                if not device in mounts:
-                     mounts[device] = {}
-                mounts[device][fields[1]] = { 'fstype' : fields[2], 'options': fields[3] }
+            if line.startswith('#') or line.strip() == '':
+                continue
+            fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+            self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
-        # relies on device/slice being in same order
-        drives = re.compile('(ada?\d+|da\d+|a?cd\d+)')
+    def get_device_facts(self):
+        sysdir = '/dev'
+        self.facts['devices'] = {}
+        drives = re.compile('(ada?\d+|da\d+|a?cd\d+)') #TODO: rc, disks, err = module.run_command("/sbin/sysctl kern.disks")
         slices = re.compile('(ada?\d+s\d+\w*|da\d+s\d+\w*)')
         if os.path.isdir(sysdir):
-            for device in os.listdir(sysdir):
+            dirlist = sorted(os.listdir(sysdir))
+            for device in dirlist:
                 d = drives.match(device)
                 if d:
-                    if not d.group(1) in self.facts['devices']:
-                        if d.group(1) in mounts:
-                            self.facts['devices'][d.group(1)] = mounts[d.group(1)]
-                        else:
-                            self.facts['devices'][d.group(1)] = {}
-
+                    self.facts['devices'][d.group(1)] = []
                 s = slices.match(device)
                 if s:
-                    if not 'slices' in self.facts['devices'][d.group(1)]:
-                        self.facts['devices'][d.group(1)]['slices'] = {}
-
-                    if s.group(1) in mounts:
-                        self.facts['devices'][d.group(1)]['slices'][s.group(1)] = mounts[s.group(1)]
-                    else:
-                        self.facts['devices'][d.group(1)]['slices'][s.group(1)] = {}
-
+                    self.facts['devices'][d.group(1)].append(s.group(1))
 
 class Network(Facts):
     """
