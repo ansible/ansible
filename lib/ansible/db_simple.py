@@ -19,6 +19,7 @@ import json
 import datetime
 
 from sqlalchemy import *
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import TypeDecorator, Text
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -40,8 +41,8 @@ def now():
 
 Base = declarative_base()
 
-class AnsibleResult(Base):
-    __tablename__ = 'host_result'
+class AnsibleTask(Base):
+    __tablename__ = 'task'
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, default=now())
@@ -49,6 +50,7 @@ class AnsibleResult(Base):
     module = Column(String)
     result = Column(String)
     data = Column(JSONEncodedDict)
+    user_id = Column(Integer, ForeignKey('user.id'))
 
     def __init__(self, hostname, module, result, data, timestamp=now()):
         self.hostname = hostname
@@ -58,4 +60,20 @@ class AnsibleResult(Base):
         self.result = result
 
     def __repr__(self):
-        return "<AnsibleResult<'%s', '%s', '%s'>" % (self.hostname, self.module, self.result)
+        return "<AnsibleTask<'%s', '%s', '%s'>" % (self.hostname, self.module, self.result)
+
+class AnsibleUser(Base):
+    __tablename__ = 'user'
+
+    id = Column(Integer, primary_key=True)
+    user = Column(String)
+    euid = Column(Integer)
+
+    tasks = relationship("AnsibleTask", backref='task')
+
+    def __init__(self, user, euid):
+        self.user = user
+        self.euid = euid
+
+    def __repr__(self):
+        return "<AnsibleUser<'%s (effective %s)'>" % (self.user, self.euid)
