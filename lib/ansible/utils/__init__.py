@@ -156,7 +156,7 @@ def check_conditional(conditional):
 
     try:
         return eval(conditional.replace("\n", "\\n"))
-    except SyntaxError as e:
+    except (NameError, SyntaxError):
         raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
 
 def is_executable(path):
