@@ -87,11 +87,11 @@ def main():
 
         module.fail_json(msg=out)
 
-    elif running and state == 'restarted':
+    elif state == 'restarted':
         rc, out, err = module.run_command('%s update %s' % (SUPERVISORCTL, name))
         rc, out, err = module.run_command('%s restart %s' % (SUPERVISORCTL, name))
 
-        if '%s: stopped' % name in out and '%s: started' % name in out:
+        if '%s: started' % name in out:
             module.exit_json(changed=True, name=name, state=state)
 
         module.fail_json(msg=out)
@@ -103,9 +103,6 @@ def main():
             module.exit_json(changed=True, name=name, state=state)
 
         module.fail_json(msg=out)
-
-    elif not running and state == 'restarted':
-        module.fail_json(msg='Could not restart `%s` because it is not running' % name)
 
     module.exit_json(changed=False, name=name, state=state)
 
