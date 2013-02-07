@@ -125,6 +125,28 @@ Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
 
+Via MacPorts
+++++++++++++
+
+An OSX port is available via MacPorts, to install the stable version of
+Ansible from MacPorts (this is the recommended way), run:
+
+.. code-block:: bash
+
+    $ sudo port install ansible
+
+If you wish to install the latest build via the MacPorts system from a
+git checkout, run:
+
+.. code-block:: bash
+
+    $ git clone git://github.com/ansible/ansible.git
+    $ cd ./ansible/packaging/macports
+    $ sudo port install
+
+Please refer to the documentation at <http://www.macports.org> for
+further information on using Portfiles with MacPorts.
+
 Debian, Gentoo, Arch, Others
 ++++++++++++++++++++++++++++
 
