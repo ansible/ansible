@@ -63,6 +63,8 @@ class Task(object):
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
             elif x.startswith("when_"):
+                if 'when' in ds:
+                    raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
                 when_name = x.replace("when_","")
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
