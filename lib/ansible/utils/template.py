@@ -219,7 +219,7 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
 
     return ''.join(done)
 
-def template(basedir, varname, vars, lookup_fatal=True, expand_lists=True, depth=0):
+def template(basedir, varname, vars, lookup_fatal=True, expand_lists=False, depth=0):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
