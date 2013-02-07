@@ -184,8 +184,8 @@ def hg_cleanup(module, dest, force, purge):
     else:
         return False
 
-def hg_pull(module, dest, revision):
-    return _hg_command(module, ['pull', '-r', revision, '-R', dest])
+def hg_pull(module, dest, revision, repo):
+    return _hg_command(module, ['pull', '-r', revision, '-R', dest, repo])
 
 def hg_update(module, dest, revision):
     return _hg_command(module, ['update', '-R', dest])
@@ -233,7 +233,7 @@ def main():
         # can perform force and purge
         cleaned = hg_cleanup(module, dest, force, purge)
 
-        (rc, out, err) = hg_pull(module, dest, revision)
+        (rc, out, err) = hg_pull(module, dest, revision, repo)
         if rc != 0:
             module.fail_json(msg=err)
 
