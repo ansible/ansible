@@ -236,7 +236,10 @@ class Runner(object):
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        return ReturnData(conn=conn, result=res['stdout'])
+        data = utils.parse_json(res['stdout'])
+        if 'parsed' in data and data['parsed'] == False:
+            data['msg'] += res['stderr']
+        return ReturnData(conn=conn, result=data)
 
     # *****************************************************
 
