@@ -77,7 +77,7 @@ def main(args):
 
     sshpass = None
     sudopass = None
-    if not options.listhosts:
+    if not options.listhosts and not options.syntax:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
