@@ -85,6 +85,9 @@ class HostVars(dict):
             self.lookup[host] = result
         return self.lookup[host]
 
+    def __contains__(self, host):
+        return host in self.lookup or host in self.setup_cache or self.inventory.get_host(host)
+
 class Runner(object):
     ''' core API interface to ansible '''
 
