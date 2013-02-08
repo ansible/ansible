@@ -373,8 +373,8 @@ class Runner(object):
             module_args = new_args
 
         module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
-        self.remote_user = utils.template(self.basedir, self.remote_user, inject, expand_lists=True)
+        module_args = utils.template(self.basedir, module_args, inject)
+        self.remote_user = utils.template(self.basedir, self.remote_user, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -385,7 +385,7 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        conditional = utils.template(self.basedir, self.conditional, inject)
+        conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
         if not getattr(handler, 'BYPASS_HOST_LOOP', False) and not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
