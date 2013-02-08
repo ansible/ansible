@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2012, Dane Summers <dsummers@pinedesk.biz>
+# (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -58,8 +59,17 @@ options:
   state:
     description:
       - Whether to ensure the job is present or absent.
+      - If the cron_file setting is specified and the state is 'absent', if after the deletion
+        of the job the file is empty, the file is deleted
     required: false
     default: present
+    aliases: []
+  cron_file:
+    descrition:
+      - The file with appropriate job is created in /etc/cron.d directory. Also, you can store
+        multiple jobs in one file.         
+    required: fasle
+    default:
     aliases: []
   backup:
     description:
@@ -114,20 +124,30 @@ examples:
      description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
    - code: 'cron: name="a job for reboot" reboot=True job="/some/job.sh"'
      description: 'Creates an entry like "@reboot /some/job.sh"'
+   - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate
 
 requirements: cron
 author: Dane Summers
+updates: Mike Grozak
 '''
 
 import re
 import tempfile
 
-def get_jobs_file(module, user, tmpfile):
-    cmd = "crontab -l %s > %s" % (user,tmpfile)
+def get_jobs_file(module, user, tmpfile, cron_file):
+    if cron_file:
+        cmd = "cp -fp /etc/cron.d/%s %s" % (cron_file, tmpfile)
+    else:
+        cmd = "crontab -l %s > %s" % (user,tmpfile)
+    
     return module.run_command(cmd)
 
-def install_jobs(module, user, tmpfile):
-    cmd = "crontab %s %s" % (user,tmpfile)
+def install_jobs(module, user, tmpfile, cron_file):
+    if cron_file:
+        cmd = "ln -f %s /etc/cron.d/%s" % (tmpfile, cron_file) 
+    else:
+        cmd = "crontab %s %s" % (user, tmpfile)
+
     return module.run_command(cmd)
 
 def get_jobs(tmpfile):
@@ -166,6 +186,10 @@ def remove_job(name,tmpfile):
 def do_remove_job(lines,comment,job):
     return None
 
+def remove_job_file(cron_file):
+    fname = "/etc/cron.d/%s" % (cron_file)
+    os.unlink(fname)
+
 def _update_job(name,job,tmpfile,addlinesfunction):
     ansiblename="#Ansible: %s" % (name)
     f = open(tmpfile)
@@ -186,7 +210,25 @@ def _update_job(name,job,tmpfile,addlinesfunction):
         f.write(l)
         f.write('\n')
     f.close()
-    return (0,"","") # TODO add some more error testing 
+
+    if len(newlines) == 0:
+        return (0,"","",True)
+    else:
+        return (0,"","",False) # TODO add some more error testing 
+
+def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
+    if reboot:
+        if cron_file:
+            return "@reboot %s %s" % (user, job)
+        else:
+            return "@reboot %s" % (job)
+    else:
+        if cron_file:
+            return "%s %s %s %s %s %s %s" % (minute,hour,day,month,weekday,user,job)
+        else:
+            return  "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+
+    return None
 
 def main():
     # The following example playbooks:
@@ -217,6 +259,7 @@ def main():
             name=dict(required=True),
             user=dict(required=False),
             job=dict(required=False),
+            cron_file=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             backup=dict(default=False, choices=BOOLEANS),
             minute=dict(default='*'),
@@ -232,40 +275,45 @@ def main():
     name       = module.params['name']
     user       = module.params['user']
     job        = module.params['job']
+    cron_file  = module.params['cron_file']
     minute     = module.params['minute']
     hour       = module.params['hour']
     day        = module.params['day']
     month      = module.params['month']
     weekday    = module.params['weekday']
     reboot     = module.boolean(module.params.get('reboot', False))
+    state      = module.params['state']
     do_install = module.params['state'] == 'present'
     changed    = False
 
     if reboot and (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify either reboot=True or any of minute, hour, day, month, weekday")
 
-    if reboot:
-        job = "@reboot %s" % (job)
+    if cron_file:
+        if not user:
+            module.fail_json(msg="To use file=... parameter you must specify user=... as well")
     else:
-        job = "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+        if not user:
+            user = ""
+        else:
+            user = "-u %s" % (user)
 
-    if not user:
-        user = ""
-    else:
-        user = "-u %s" % (user)
-
-    rc, out, err, status = (0, None, None, None)
-
+    job = get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot)
+    rc, out, err, rm, status = (0, None, None, None, None)
     if job is None and do_install:
         module.fail_json(msg="You must specify 'job' to install a new cron job")
+
     tmpfile = tempfile.NamedTemporaryFile()
-    (rc, out, err) = get_jobs_file(module,user,tmpfile.name)
+    (rc, out, err) = get_jobs_file(module,user,tmpfile.name, cron_file)
+
     if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
         module.fail_json(msg=err)
+
     (handle,backupfile) = tempfile.mkstemp(prefix='crontab')
-    (rc, out, err) = get_jobs_file(module,user,backupfile)
+    (rc, out, err) = get_jobs_file(module,user,backupfile, cron_file)
     if rc != 0 and rc != 1:
         module.fail_json(msg=err)
+
     old_job = find_job(name,backupfile)
     if do_install:
         if len(old_job) == 0:
@@ -276,27 +324,45 @@ def main():
             changed = True
     else:
         if len(old_job) > 0:
-            (rc, out, err) = remove_job(name,tmpfile.name)
+            # if rm is true after the next line, file will be deleted afterwards
+            (rc, out, err, rm) = remove_job(name,tmpfile.name)
             changed = True
+        else:
+            # there is no old_jobs for deletion - we should leave everything
+            # as is. If the file is empty, it will be removed later
+            tmpfile.close()
+            # the file created by mks should be deleted explicitly
+            os.unlink(backupfile)
+            module.exit_json(changed=changed,cron_file=cron_file,state=state)
+
     if (rc != 0):
         module.fail_json(msg=err)
-    if changed:
-        if backup:
-            module.backup_local(backupfile)
-        (rc, out, err) = install_jobs(module,user,tmpfile.name)
-        if (rc != 0):
-            module.fail_json(msg=err)
 
+    if changed:
+        # If the file is empty - remove it
+        if rm:
+            remove_job_file(cron_file)
+        else:
+            if backup:
+                module.backup_local(backupfile)
+            (rc, out, err) = install_jobs(module,user,tmpfile.name, cron_file)
+            if (rc != 0):
+                module.fail_json(msg=err)
+
+    # get the list of jobs in file
     jobnames = []
     for j in get_jobs(tmpfile.name):
         jobnames.append(j[0])
     tmpfile.close()
+
     if not backup:
+        os.unlink(backupfile)
         module.exit_json(changed=changed,jobs=jobnames)
     else:
         module.exit_json(changed=changed,jobs=jobnames,backup=backupfile)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
 main()
 
