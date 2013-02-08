@@ -48,6 +48,16 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  thirsty:
+    description:
+      - if C(yes), will copy the file every time and replace the
+        file if the contents change. If C(no), the file will only be copied if
+        the destination does not exist.
+    version_added: "1.1"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+  others:
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -68,6 +78,7 @@ def main():
             src=dict(required=True),
             dest=dict(required=True),
             backup=dict(default=False, choices=BOOLEANS),
+            thirsty = dict(default='yes', choices=BOOLEANS),
         ),
         add_file_common_args=True,
     )
@@ -75,7 +86,7 @@ def main():
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
     backup = module.boolean(module.params.get('backup', False))
-    file_args = module.load_file_common_arguments(module.params)    
+    thirsty = module.boolean(module.params['thirsty'])
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -86,6 +97,8 @@ def main():
     md5sum_dest = None
 
     if os.path.exists(dest):
+        if not thirsty:
+            module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if not os.access(dest, os.W_OK):
             module.fail_json(msg="Destination %s not writable" % (dest))
         if not os.access(dest, os.R_OK):
