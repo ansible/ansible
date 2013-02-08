@@ -118,11 +118,13 @@ class Runner(object):
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
-        check=False                         # don't make any changes, just try to probe for potential changes
+        check=False,                        # don't make any changes, just try to probe for potential changes
+        diff=False
         ):
 
         # storage & defaults
         self.check            = check
+        self.diff             = diff
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
@@ -192,7 +194,7 @@ class Runner(object):
     # *****************************************************
 
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None):
+        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False):
 
         ''' runs a module that has already been transferred '''
 
@@ -233,7 +235,7 @@ class Runner(object):
             raise errors.AnsibleError("module is missing interpreter line")
 
         cmd = shebang.replace("#!","") + " " + cmd
-        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
+        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data = utils.parse_json(res['stdout'])

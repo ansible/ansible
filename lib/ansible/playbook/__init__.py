@@ -62,7 +62,8 @@ class PlayBook(object):
         only_tags        = None,
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
-        check            = False):
+        check            = False,
+        diff             = False):
 
         """
         playbook:         path to a playbook file
@@ -94,6 +95,7 @@ class PlayBook(object):
             only_tags = [ 'all' ]
 
         self.check            = check
+        self.diff             = diff
         self.module_path      = module_path
         self.forks            = forks
         self.timeout          = timeout
@@ -271,7 +273,7 @@ class PlayBook(object):
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check
+            check=self.check, diff=self.diff
         )
 
         if task.async_seconds == 0:
@@ -377,7 +379,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            check=self.check
+            check=self.check, diff=self.diff
         ).run()
         self.stats.compute(setup_results, setup=True)
 
