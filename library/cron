@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2012, Dane Summers <dsummers@pinedesk.biz>
+# (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -127,6 +128,7 @@ examples:
 
 requirements: cron
 author: Dane Summers
+updates: Mike Grozak
 '''
 
 import re
