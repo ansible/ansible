@@ -376,7 +376,7 @@ class LinuxService(Service):
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
-        # Check if we got upstart on the system and then the job state
+        # Check if we have upstart on the system and then the job state
         if self.svc_initctl != None and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
@@ -387,7 +387,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by response code
         if self.running == None:
-            if rc in [2, 3, 69]:
+            if rc in [2, 3, 4, 69]:
                 self.running = False
             elif rc == 0:
                 self.running = True
