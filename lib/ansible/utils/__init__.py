@@ -34,6 +34,7 @@ import termios
 import tty
 import pipes
 import random
+import difflib
 
 VERBOSITY=0
 
@@ -395,7 +396,7 @@ def increment_debug(option, opt, value, parser):
     VERBOSITY += 1
 
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
-    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False):
+    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -456,6 +457,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
             help="don't make any changes, instead try to predict some of the changes that may occur"
         )
+
+    if diff_opts:
+        parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
+            help="when changing (small) files and templates, show the differences in those files, works great with --check"
+        )
+
 
     return parser
 
@@ -602,3 +609,10 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
+
+def get_diff(before_string, after_string):
+    # called by --diff usage in playbook and runner via callbacks
+    # include names in diffs 'before' and 'after' and do diff -U 10
+    differ = difflib.unified_diff(before_string.split("\n"), after_string.split("\n"), 'before', 'after', '', '', 10)
+    return "\n".join(list(differ))
+ 

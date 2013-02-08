@@ -20,6 +20,7 @@ import os
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
+import base64
 
 class ActionModule(object):
 
@@ -46,6 +47,7 @@ class ActionModule(object):
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
+
         if 'first_available_file' in inject:
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
@@ -79,18 +81,35 @@ class ActionModule(object):
 
              # template is different from the remote value
 
-             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
+             # if showing diffs, we need to get the remote value
+             dest_contents = None    
+             if self.runner.diff:
+                 # using persist_files to keep the temp directory around to avoid needing to grab another
+                 dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
+                 dest_contents = dest_result.result['content']
+                 if dest_result.result['encoding'] == 'base64':
+                     dest_contents = base64.b64decode(dest_contents)
+                 else:
+                     raise Exception("unknown encoding, failed: %s" % dest_result.result)
+
+             xfered = self.runner._transfer_str(conn, tmp, source, resultant)
+
              # fix file permissions when the copy is done as a different user
              if self.runner.sudo and self.runner.sudo_user != 'root':
                  self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
 
              # run the copy module
              module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
-
+ 
              if self.runner.check:
+                 if self.runner.diff:
+                     self.runner.callbacks.on_file_diff(conn.host, dest_contents, resultant)
                  return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True))
              else:
-                 return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                 res =  self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                 if self.runner.diff:
+                     self.runner.callbacks.on_file_diff(conn.host, dest_contents, resultant)
+                 return res
         else:
              return ReturnData(conn=conn, comm_ok=True, result=dict(changed=False))
 

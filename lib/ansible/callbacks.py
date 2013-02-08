@@ -1,4 +1,4 @@
-# (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+# (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
 #
@@ -34,6 +34,15 @@ elif os.path.exists("/usr/games/cowsay"):
 elif os.path.exists("/usr/local/bin/cowsay"):
     # BSD path for cowsay
     cowsay = "/usr/local/bin/cowsay"
+
+
+# ****************************************************************************
+# 1.1 DEV NOTES
+# FIXME -- in order to make an ideal callback system, all of these should have
+# access to the current task and/or play and host objects.  We need to this
+# while keeping present callbacks functionally intact and will do so.
+# ****************************************************************************
+
 
 def call_callback_module(method_name, *args, **kwargs):
 
@@ -209,6 +218,9 @@ class DefaultRunnerCallbacks(object):
     def on_async_failed(self, host, res, jid):
         call_callback_module('runner_on_async_failed', host, res, jid)
 
+    def on_file_diff(self, host, before_string, after_string):
+        call_callback_module('runner_on_file_diff', before_string, after_string)
+
 ########################################################################
 
 class CliRunnerCallbacks(DefaultRunnerCallbacks):
@@ -272,6 +284,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         print host_report_msg(host, self.options.module_name, result2, self.options.one_line)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
+    
+    def on_file_diff(self, host, before_string, after_string):
+        if self.options.diff:
+            print utils.get_diff(before_string, after_string)
+        super(CliRunnerCallbacks, self).on_file_diff(host, before_string, after_string)
 
 ########################################################################
 
@@ -404,6 +421,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         print stringc(msg, 'red')
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
+    def on_file_diff(self, host, before_string, after_string):
+        print utils.get_diff(before_string, after_string)
+        super(PlaybookRunnerCallbacks, self).on_file_diff(host, before_string, after_string)
 
 ########################################################################
 
