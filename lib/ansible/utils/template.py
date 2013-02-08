@@ -33,7 +33,7 @@ import pwd
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
-def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth):
+def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
     
     basically does space.get(part, None), but with
@@ -47,7 +47,7 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth):
     if part[0] == '{' and part[-1] == '}':
         part = part[1:-1]
     # Template part to resolve variables within (${var$var2})
-    part = varReplace(basedir, part, vars, lookup_fatal, depth=depth + 1)
+    part = varReplace(basedir, part, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
 
     # Now find it
     if part in space:
@@ -66,11 +66,11 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth):
 
     # if space is a string, check if it's a reference to another variable
     if isinstance(space, basestring):
-        space = template(basedir, space, vars, lookup_fatal, depth)
+        space = template(basedir, space, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
 
     return space
 
-def _varFind(basedir, text, vars, lookup_fatal, depth=0):
+def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
     ''' Searches for a variable in text and finds its replacement in vars
 
     The variables can have two formats;
@@ -143,7 +143,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == 1:
-                space = _varFindLimitSpace(basedir, vars, space, text[part_start:end], lookup_fatal, depth)
+                space = _varFindLimitSpace(basedir, vars, space, text[part_start:end], lookup_fatal, depth, expand_lists)
                 part_start = end + 1
         else:
             # This breaks out of the loop on non-variable name characters
@@ -168,7 +168,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
             lookup_plugin_name, args = args.split(",", 1)
             args = args.strip()
         # args have to be templated
-        args = varReplace(basedir, args, vars, depth=depth+1, expand_lists=False)
+        args = varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
         if instance is not None:
             try:
@@ -186,7 +186,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
-    space = _varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth)
+    space = _varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
     return {'replacement': space, 'start': start, 'end': end}
 
 def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
@@ -202,7 +202,7 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
     done = [] # Completed chunks to return
 
     while raw:
-        m = _varFind(basedir, raw, vars, lookup_fatal, depth)
+        m = _varFind(basedir, raw, vars, lookup_fatal, depth, expand_lists)
         if not m:
             done.append(raw)
             break
@@ -225,26 +225,26 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
 
     return ''.join(done)
 
-def template(basedir, varname, vars, lookup_fatal=True, expand_lists=False, depth=0):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
-        m = _varFind(basedir, varname, vars, lookup_fatal, depth)
+        m = _varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             if m['replacement'] is not None:
-                return template(basedir, m['replacement'], vars, lookup_fatal, expand_lists, depth)
+                return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
             else:
                 return varname
         else:
-            return varReplace(basedir, varname, vars, lookup_fatal, depth=depth, expand_lists=expand_lists)
+            return varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
     elif isinstance(varname, (list, tuple)):
-        return [template(basedir, v, vars, lookup_fatal, expand_lists, depth) for v in varname]
+        return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
     elif isinstance(varname, dict):
         d = {}
         for (k, v) in varname.iteritems():
-            d[k] = template(basedir, v, vars, lookup_fatal, expand_lists, depth)
+            d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists)
         return d
     else:
         return varname
