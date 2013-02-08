@@ -4,6 +4,19 @@ Ansible Changes By Release
 1.1 "Mean Street" -- Release pending
 
 * added 'with_random_choice' filter plugin
+* added --check option for "dry run" mode
+* added --diff option to show how templates change, or might change
+* service status 4 is also 'not running'
+* stderr shown when commands fail to parse
+* uses yaml.safe_dump in filter plugins
+* authentication Q&A no longer happens before --syntax-check
+* ability to get hostvars data for nodes not in the setup cache yet
+* able to specify a different hg repo to pull from than the original set
+* SSH timeout now correctly passed to native SSH connection plugin
+* supervisorctl restart fix
+* raise an error when multiple when_ statements are provided
+* --list-hosts applies host limit selections better
+* (internals) template engine specifications to use template_ds everywhere
 
 1.0 "Eruption" -- Feb 1 2013
 
