@@ -82,7 +82,7 @@ class ActionModule(object):
              # template is different from the remote value
 
              # if showing diffs, we need to get the remote value
-             dest_contents = None    
+             dest_contents = None
              if self.runner.diff:
                  # using persist_files to keep the temp directory around to avoid needing to grab another
                  dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
@@ -92,7 +92,7 @@ class ActionModule(object):
                  else:
                      raise Exception("unknown encoding, failed: %s" % dest_result.result)
 
-             xfered = self.runner._transfer_str(conn, tmp, source, resultant)
+             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
              # fix file permissions when the copy is done as a different user
              if self.runner.sudo and self.runner.sudo_user != 'root':
@@ -100,7 +100,7 @@ class ActionModule(object):
 
              # run the copy module
              module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
- 
+
              if self.runner.check:
                  if self.runner.diff:
                      self.runner.callbacks.on_file_diff(conn.host, dest_contents, resultant)
