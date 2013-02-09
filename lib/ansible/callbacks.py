@@ -132,7 +132,7 @@ def regular_generic_msg(hostname, result, oneline, caption):
 
 def banner(msg):
 
-    if cowsay != None:
+    if cowsay is not None:
         cmd = subprocess.Popen([cowsay, "-W", "60", msg],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
