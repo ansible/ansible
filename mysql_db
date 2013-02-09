@@ -187,7 +187,7 @@ def main():
     else:
         connect_to_db = 'mysql'
     try:
-        if module.params["login_unix_socket"] != None:
+        if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db=connect_to_db)
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db=connect_to_db)

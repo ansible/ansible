@@ -322,7 +322,7 @@ class Virt(object):
         """
 
         conn = libvirt.openReadOnly(None)
-        if conn == None:
+        if not conn:
             return (-1,'Failed to open connection to the hypervisor')
         try:
             domV = conn.lookupByName(vmid)
