@@ -9,20 +9,17 @@ Ansible Modules
 ```````````````
 
 Ansible modules are a way of adding new client-side logic to ansible.
-They can be written in any language.
+They can be written in any language.  Generally our goal is to include most modules in core,
+though a few may remain outside of core depending on use cases and implementations.
 
 -  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
--  `mercurial <https://github.com/bradobro/ansible-module-mercurial>`_ - bradobro
 -  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `homebrew <https://gist.github.com/3170079>`_ - swehack
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
--  `RabbitMQ <https://github.com/elventear/ansible-rabbitmq>`_ - elventear
 
-Python modules using 0.6 and later can and should use the common "AnsibleModule"
-class to dramatically reduce the amount of boilerplate code required.
-Not all modules above yet take advantage of this feature. See the
-official documentation for more details.
+All python modules should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
+Not all modules above may take advantage of this feature. See the official documentation for more details.
 
 Selected Playbooks
 ``````````````````
