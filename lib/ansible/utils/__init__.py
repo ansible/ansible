@@ -236,6 +236,31 @@ def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
     return yaml.load(data)
 
+def process_yaml_error(exc, data, path=None):
+    if hasattr(exc, 'problem_mark'):
+        mark = exc.problem_mark
+        if mark.line -1 >= 0:
+            before_probline = data.split("\n")[mark.line-1]
+        else:
+            before_probline = ''
+        probline = data.split("\n")[mark.line]
+        arrow = " " * mark.column + "^"
+        msg = """Syntax Error while loading YAML script, %s
+Note: The error may actually appear before this position: line %s, column %s
+
+%s
+%s
+%s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
+    else:
+        # No problem markers means we have to throw a generic
+        # "stuff messed up" type message. Sry bud.
+        if path:
+            msg = "Could not parse YAML. Check over %s again." % path
+        else:
+            msg = "Could not parse YAML."
+    raise errors.AnsibleYAMLValidationFailed(msg)
+
+
 def parse_yaml_from_file(path):
     ''' convert a yaml file to a data structure '''
 
@@ -245,25 +270,7 @@ def parse_yaml_from_file(path):
     except IOError:
         raise errors.AnsibleError("file not found: %s" % path)
     except yaml.YAMLError, exc:
-        if hasattr(exc, 'problem_mark'):
-            mark = exc.problem_mark
-            if mark.line -1 >= 0:
-                before_probline = data.split("\n")[mark.line-1]
-            else:
-                before_probline = ''
-            probline = data.split("\n")[mark.line]
-            arrow = " " * mark.column + "^"
-            msg = """Syntax Error while loading YAML script, %s
-Note: The error may actually appear before this position: line %s, column %s
-
-%s
-%s
-%s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
-        else:
-            # No problem markers means we have to throw a generic
-            # "stuff messed up" type message. Sry bud.
-            msg = "Could not parse YAML. Check over %s again." % path
-        raise errors.AnsibleYAMLValidationFailed(msg)
+        process_yaml_error(exc, data, path)
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
