@@ -7,7 +7,7 @@ short_description: This is a sentence describing the module
 description:
     - Longer description of the module
     - You might include instructions
-version_added: 0.X
+version_added: X.Y
 author: Your AWESOME name here
 notes:
     - Other things consumers of your module should know
