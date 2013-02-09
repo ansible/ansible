@@ -136,7 +136,9 @@ def main(args):
         )
 
         if options.listhosts or options.listtasks:
+            print ''
             print 'playbook: %s' % playbook
+            print ''
             playnum = 0
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
@@ -144,7 +146,7 @@ def main(args):
                 label = play.name
                 if options.listhosts:
                     hosts = pb.inventory.list_hosts(play.hosts)
-                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
                         print '    %s' % host
                 if options.listtasks:
@@ -156,10 +158,11 @@ def main(args):
                         unknown = ','.join(sorted(unknown_tags))
                         unmatched = ','.join(sorted(unmatched_tags))
                         raise errors.AnsibleError(msg % (unknown, unmatched))
-                    print '  tasks in play %s (%s): #%d' % (playnum, label, len(play.tasks()))
+                    print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
                     for task in play.tasks():
                         if set(task.tags).intersection(pb.only_tags):
                             print '    %s' % task.name
+                print ''
             continue
 
         if options.syntax:
