@@ -28,6 +28,9 @@
   - name: remove default guest user
     rabbitmq_user: user=guest state=absent
 
+  - name: ensure vhost /test is present
+    rabbitmq_vhost: name=/test state=present
+
   handlers:
   - name: restart rabbitmq
     service: name=rabbitmq-server state=restarted
