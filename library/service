@@ -236,7 +236,7 @@ class Service(object):
                     break
 
     def check_service_changed(self):
-        if self.state and self.running == None:
+        if self.state and self.running is None:
             self.module.fail_json(msg="failed determining the current service state => state stays unchanged")
         # Find out if state has changed
         if not self.running and self.state in ["started", "running"]:
@@ -377,7 +377,7 @@ class LinuxService(Service):
         rc, status_stdout, status_stderr = self.service_control()
 
         # Check if we have upstart on the system and then the job state
-        if self.svc_initctl != None and self.running is None:
+        if self.svc_initctl and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
             if initctl_status_stdout.find("stop/waiting") != -1:
@@ -386,14 +386,14 @@ class LinuxService(Service):
                 self.running = True
 
         # if the job status is still not known check it by response code
-        if self.running == None:
+        if self.running is None:
             if rc in [2, 3, 4, 69]:
                 self.running = False
             elif rc == 0:
                 self.running = True
 
         # if the job status is still not known check it by status output keywords
-        if self.running == None:
+        if self.running is None:
             # first tranform the status output that could irritate keyword matching
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
@@ -414,7 +414,7 @@ class LinuxService(Service):
                 self.running = False
 
         # if the job status is still not known check it by special conditions
-        if self.running == None:
+        if self.running is None:
             if self.name == 'iptables' and status_stdout.find("ACCEPT") != -1:
                 # iptables status command output is lame
                 # TODO: lookup if we can use a return code for this instead?

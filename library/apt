@@ -202,7 +202,7 @@ def main():
     if module.boolean(p['update_cache']):
         cache.update()
         cache.open(progress=None)
-        if p['package'] == None:
+        if not p['package']:
             module.exit_json(changed=False)
 
     force_yes = module.boolean(p['force'])

@@ -501,7 +501,7 @@ class Runner(object):
         else:
             err = stderr
 
-        if rc != None:
+        if rc is not None:
             return dict(rc=rc, stdout=out, stderr=err )
         else:
             return dict(stdout=out, stderr=err )
