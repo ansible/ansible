@@ -17,6 +17,18 @@ Ansible Changes By Release
 * raise an error when multiple when_ statements are provided
 * --list-hosts applies host limit selections better
 * (internals) template engine specifications to use template_ds everywhere
+* rabbit_mq plugin module
+* rabbit_mq user module
+* rabbit_mq vhost module
+* mongodb_user module
+* increased error handling for ec2 module
+* can recursively set permissions on directories
+* change to the way AMI tags are handled
+* better error message when your host file can't be found
+* --list-tasks for the playbook will list the tasks without running them
+* block device facts for the setup module
+* cron module can now also manipulate cron.d files
+* virtualenv module can now inherit system site packages (or not)
 
 1.0 "Eruption" -- Feb 1 2013
 
