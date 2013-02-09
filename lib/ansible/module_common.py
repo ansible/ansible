@@ -623,6 +623,9 @@ class AnsibleModule(object):
     def jsonify(self, data):
         return json.dumps(data)
 
+    def from_json(self, data):
+        return json.loads(data)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
