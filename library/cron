@@ -25,7 +25,7 @@
 # describing the job so that it can be found later, which is required to be
 # present in order for this plugin to find/modify the job.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: cron
 short_description: Manage crontab entries.
@@ -58,17 +58,14 @@ options:
     aliases: []
   state:
     description:
-      - Whether to ensure the job is present or absent.
-      - If the cron_file setting is specified and the state is 'absent', if after the deletion
-        of the job the file is empty, the file is deleted
+      - Whether to ensure the job is present or absent.  
     required: false
     default: present
     aliases: []
   cron_file:
-    descrition:
-      - The file with appropriate job is created in /etc/cron.d directory. Also, you can store
-        multiple jobs in one file.         
-    required: fasle
+    description:
+      - If specified, uses this file in cron.d versus in the main crontab
+    required: false
     default:
     aliases: []
   backup:
@@ -124,12 +121,12 @@ examples:
      description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
    - code: 'cron: name="a job for reboot" reboot=True job="/some/job.sh"'
      description: 'Creates an entry like "@reboot /some/job.sh"'
-   - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate
+   - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate'
 
 requirements: cron
 author: Dane Summers
 updates: Mike Grozak
-'''
+"""
 
 import re
 import tempfile
