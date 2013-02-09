@@ -167,10 +167,14 @@ def main():
     if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
-    if ec2_url: # if we have an URL set, connect to the specified endpoint 
-        ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-    else: # otherwise it's Amazon.
-        ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+    try:
+        if ec2_url: # if we have an URL set, connect to the specified endpoint 
+            ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+        else: # otherwise it's Amazon.
+            ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
@@ -184,7 +188,7 @@ def main():
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
                                 user_data = user_data)
-    except boto.exception.EC2ResponseError as e:
+    except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     instids = [ i.id for i in res.instances ]
