@@ -113,6 +113,12 @@ options:
     description:
       - accepts only C(default) as value. This will restore a file's SELinux context
         in the policy. Does nothing if no default value is available.
+  recurse:
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    description:
+      - recursively set the specified file attributes (applies only to state=directory)
 examples:
    - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
      description: Example from Ansible Playbooks
@@ -133,6 +139,7 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
+            recurse  = dict(default='no', choices=BOOLEANS)
         ),
         add_file_common_args=True,
         supports_check_mode=True
@@ -202,12 +209,24 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
-
         if prev_state == 'absent':
             os.makedirs(path)
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
+        recurse = module.boolean(params['recurse'])
+        if recurse:
+            for root,dirs,files in os.walk( file_args['path'] ):
+                for dir in dirs:
+                    dirname=os.path.join(root,dir)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=dirname
+                    changed = module.set_directory_attributes_if_different(tmp_file_args, changed)
+                for file in files:
+                    filename=os.path.join(root,file)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=filename
+                    changed = module.set_file_attributes_if_different(tmp_file_args, changed)
         module.exit_json(path=path, changed=changed)
 
     elif state == 'link':
