@@ -104,12 +104,12 @@ options:
   instance_tags:
     version_added: "1.0"
     description:
-      - string of tags, in json format, to add to the new instance
+      - a hash/dictionary of tags, in quoted json format, to add to the new instance
     required: False
     default: null
     aliases: []
 examples:
-   - code: "local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 instance_tags='{"Name":"My Server"}'"
+   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3'
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
