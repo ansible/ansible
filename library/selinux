@@ -147,10 +147,10 @@ def main():
 
     # check to see if policy is set if state is not 'disabled'
     if (state != 'disabled'):
-        if (policy == '' or policy == None):
+        if (policy == '' or policy is None):
             module.fail_json(msg='policy is required if state is not \'disabled\'')
     else:
-        if (policy == '' or policy == None):
+        if (policy == '' or policy is None):
             policy = config_policy
 
     # check changed values and run changes
