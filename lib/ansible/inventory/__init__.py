@@ -93,7 +93,7 @@ class Inventory(object):
                 else:
                     raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
         else:
-            raise errors.AnsibleError("No valid hosts inventory file found")
+            raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
     def _match(self, str, pattern_str):
         if pattern_str.startswith('~'):
