@@ -39,27 +39,37 @@ class InventoryScript(object):
         self.groups = self._parse()
 
     def _parse(self):
-        all_hosts = {}
 
-        self.raw = utils.parse_json(self.data)
-        all=Group('all')
-        groups = dict(all=all)
-        group = None
+        all_hosts = {}
+        self.raw  = utils.parse_json(self.data)
+        all       = Group('all')
+        groups    = dict(all=all)
+        group     = None
+
+        if 'failed' in self.raw:
+            raise errors.AnsibleError("failed to parse executable inventory script results")
+
         for (group_name, data) in self.raw.items():
+
             group = groups[group_name] = Group(group_name)
             host = None
+
             if not isinstance(data, dict):
                 data = {'hosts': data}
+
             if 'hosts' in data:
+
                 for hostname in data['hosts']:
                     if not hostname in all_hosts:
                         all_hosts[hostname] = Host(hostname)
                     host = all_hosts[hostname]
                     group.add_host(host)
+
             if 'vars' in data:
                 for k, v in data['vars'].iteritems():
                     group.set_variable(k, v)
             all.add_child_group(group)
+
         # Separate loop to ensure all groups are defined
         for (group_name, data) in self.raw.items():
             if isinstance(data, dict) and 'children' in data:
