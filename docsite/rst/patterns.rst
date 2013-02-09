@@ -48,7 +48,7 @@ Adding a lot of hosts?  In 0.6 and later, if you have a lot of hosts following s
 
     [webservers]
     www[01:50].example.com
-    
+
 
 In 1.0 and later, you can also do this for alphabetic ranges::
 
@@ -94,6 +94,18 @@ with the aforementioned bracket headers in the inventory file::
 You can exclude groups as well, for instance, all webservers not in Phoenix::
 
     webservers:!phoenix
+
+You can also specify the intersection of two groups::
+
+    webservers:&staging
+
+You can do combinations::
+
+    webservers:dbservers:!phoenix:&staging
+
+You can also use variables::
+
+    webservers:!$excluded:&$required
 
 Individual host names (or IPs), but not groups, can also be referenced using
 wildcards::
