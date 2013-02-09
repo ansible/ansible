@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on the external I(euca2ools) package.
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on boto and m2crypt.
 version_added: "0.9"
 options:
   key_name:
@@ -66,7 +66,7 @@ options:
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to ec2 or your Eucalyptus cloud (for example (https://ec2.amazonaws.com) when using Amazon ec2 directly and not Eucalyptus)
+      - url to use to connect to ec2 or your Eucalyptus cloud (by default the module will use ec2 endpoints)
     required: False
     default: null
     aliases: []
@@ -87,6 +87,12 @@ options:
       - number of instances to launch
     required: False
     default: 1
+    aliases: []
+  monitor:
+    description:
+      - enable detailed monitoring (CloudWatch) for instance
+    required: False
+    default: null
     aliases: []
   user_data:
     version_added: "0.9"
@@ -127,6 +133,7 @@ def main():
             image = dict(required=True),
             kernel = dict(),
             count = dict(default='1'), 
+	    monitoring = dict(choices=BOOLEANS, default=False),
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
             ec2_url = dict(aliases=['EC2_URL']),
@@ -142,6 +149,7 @@ def main():
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
+    monitoring = module.params.get('monitoring')
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
@@ -168,7 +176,9 @@ def main():
 
     try:
         res = ec2.run_instances(image, key_name = key_name,
-                                min_count = count, max_count = count,
+                                min_count = count, 
+ 				max_count = count,
+				monitoring_enabled = monitoring,
                                 security_groups = [group],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
