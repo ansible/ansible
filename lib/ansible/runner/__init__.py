@@ -374,7 +374,6 @@ class Runner(object):
 
         module_name = utils.template(self.basedir, module_name, inject)
         module_args = utils.template(self.basedir, module_args, inject)
-        self.remote_user = utils.template(self.basedir, self.remote_user, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -394,6 +393,8 @@ class Runner(object):
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         actual_port = port
+        actual_user = inject.get('ansible_ssh_user', self.remote_user)
+        actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         if self.transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
@@ -414,12 +415,17 @@ class Runner(object):
                 delegate_info = inject['hostvars'][delegate_to]
                 actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
                 actual_port = delegate_info.get('ansible_ssh_port', port)
+                actual_user = delegate_info.get('ansible_ssh_user', actual_user)
+                actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
             except errors.AnsibleError:
                 actual_host = delegate_to
                 actual_port = port
+
+        actual_user = utils.template(self.basedir, actual_user, inject)
+        actual_pass = utils.template(self.basedir, actual_pass, inject)
 
         try:
             if actual_port is not None:
@@ -429,7 +435,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 

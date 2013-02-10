@@ -30,6 +30,7 @@ Ansible Changes By Release
 * cron module can now also manipulate cron.d files
 * virtualenv module can now inherit system site packages (or not)
 * able to set the environment by setting "environment:" as a dictionary on any task (go proxy support!)
+* added ansible_ssh_user and ansible_ssh_pass for per-host/group username and password
 
 1.0 "Eruption" -- Feb 1 2013
 
