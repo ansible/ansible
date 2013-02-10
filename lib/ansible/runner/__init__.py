@@ -119,7 +119,8 @@ class Runner(object):
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
         check=False,                        # don't make any changes, just try to probe for potential changes
-        diff=False
+        diff=False,                         # whether to show diffs for template files that change
+        environment=None                    # environment variables (as dict) to use inside the command
         ):
 
         # storage & defaults
@@ -149,6 +150,7 @@ class Runner(object):
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
+        self.environment      = environment
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -193,6 +195,22 @@ class Runner(object):
 
     # *****************************************************
 
+    def _compute_environment_string(self, inject=None):
+        ''' what environment variables to use when running the command? '''
+
+        if not self.environment:
+            return ""
+        enviro = utils.template(self.basedir, self.environment, inject)
+        print "DEBUG: vars=%s" % enviro
+        if type(enviro) != dict:
+            raise errors.AnsibleError("environment must be a dictionary, recieved %s" % enviro)
+        result = ""
+        for (k,v) in enviro.iteritems():
+            result = "%s=%s %s" % (k, str(v), result)       
+        return result
+
+    # *****************************************************
+
     def _execute_module(self, conn, tmp, module_name, args,
         async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False):
 
@@ -205,6 +223,8 @@ class Runner(object):
                 args += " port=%s" % C.ZEROMQ_PORT
 
         (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject)
+
+        environment_string = self._compute_environment_string(inject)
 
         cmd_mod = ""
         if self.sudo and self.sudo_user != 'root':
@@ -234,7 +254,7 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = shebang.replace("#!","") + " " + cmd
+        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
