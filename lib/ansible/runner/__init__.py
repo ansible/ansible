@@ -449,6 +449,8 @@ class Runner(object):
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
+                if self.diff:
+                    self.callbacks.on_file_diff(conn.host, result.before_diff_value, result.after_diff_value)
                 self.callbacks.on_ok(host, data)
         return result
 
