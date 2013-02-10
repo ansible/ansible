@@ -8,14 +8,13 @@
 
 
 - hosts: all
+  user: root
 
   # here we make a variable named "env" that is a dictionary
-
   vars:
     env: 
        HI: test2
        http_proxy=http://proxy.example.com:8080
-  user: root
 
   tasks:
 
