@@ -110,14 +110,18 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
     else:
         is_complex = False
         brace_level = 1
+
     # is_lookup is true for $FILE(...) and friends
     is_lookup = False
     lookup_plugin_name = None
     end = var_start
+
     # part_start is an index of where the current part started
     part_start = var_start
     space = vars
+
     while end < len(text) and (((is_lookup or is_complex) and brace_level > 0) or (not is_complex and not is_lookup)):
+
         if text[end].isalnum() or text[end] == '_':
             pass
         elif not is_complex and not is_lookup and text[end] == '(' and text[part_start:end].isupper():
@@ -145,7 +149,9 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
             # This breaks out of the loop on non-variable name characters
             break
         end += 1
+
     var_end = end
+
     # Handle "This has $ in it"
     if var_end == part_start:
         return {'replacement': None, 'start': start, 'end': end}
@@ -162,7 +168,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth=0):
             lookup_plugin_name, args = args.split(",", 1)
             args = args.strip()
         # args have to be templated
-        args = varReplace(basedir, args, vars, depth=depth+1, expand_lists=True)
+        args = varReplace(basedir, args, vars, depth=depth+1, expand_lists=False)
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
         if instance is not None:
             try:
