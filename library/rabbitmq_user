@@ -82,7 +82,7 @@ options:
     default: present
     choices: [present, absent]
 examples:
-  - code: rabbitmq_user user=joe password=changeme vhost="/" configure_priv=".*" read_priv=".*" write_priv=".*" state=present
+  - code: rabbitmq_user user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.* state=present
     description: Add user to server and assign full access control
 '''
 
@@ -106,15 +106,15 @@ class RabbitMqUser(object):
 
         self._tags = None
         self._permissions = None
-        self._rabbitmqctl = module.get_bin_path("rabbitmqctl", True)
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args):
-        cmd = [self._rabbitmqctl, "-q"]
+        cmd = [self._rabbitmqctl, '-q']
         rc, out, err = self.module.run_command(cmd + args, check_rc=True)
         return out.splitlines()
 
     def get(self):
-        users = self._exec(["list_users"])
+        users = self._exec(['list_users'])
 
         for user_tag in users:
             user, tags = user_tag.split('\t')
@@ -135,7 +135,7 @@ class RabbitMqUser(object):
         return False
 
     def _get_permissions(self):
-        perms_out = self._exec(["list_user_permissions", self.username])
+        perms_out = self._exec(['list_user_permissions', self.username])
 
         for perm in perms_out:
             vhost, configure_priv, write_priv, read_priv = perm.split('\t')
@@ -146,19 +146,19 @@ class RabbitMqUser(object):
 
     def add(self):
         if not self.module.check_mode:
-            self._exec(["add_user", self.username, self.password])
+            self._exec(['add_user', self.username, self.password])
 
     def delete(self):
         if not self.module.check_mode:
-            self._exec(["delete_user", self.username])
+            self._exec(['delete_user', self.username])
 
     def set_tags(self):
         if not self.module.check_mode:
-            self._exec(["set_user_tags", self.username] + self.tags)
+            self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
         if not self.module.check_mode:
-            cmd = ["set_permissions"]
+            cmd = ['set_permissions']
             cmd.append('-p')
             cmd.append(self.permissions['vhost'])
             cmd.append(self.username)
