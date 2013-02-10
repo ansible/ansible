@@ -106,6 +106,7 @@ class RabbitMqUser(object):
 
         self._tags = None
         self._permissions = None
+        self._rabbitmqctl = module.get_bin_path("rabbitmqctl", True)
 
     def _exec(self, args):
         cmd = ["rabbitmqctl", "-q"]
@@ -147,7 +148,6 @@ class RabbitMqUser(object):
         if not self.module.check_mode:
             self._exec(["add_user", self.username, self.password])
 
-
     def delete(self):
         if not self.module.check_mode:
             self._exec(["delete_user", self.username])
@@ -168,18 +168,7 @@ class RabbitMqUser(object):
             self._exec(cmd)
 
     def has_tags_modifications(self):
-        if (not self._tags and len(self.tags) > 0) or (not self.tags and len(self._tags) > 0):
-            return True
-        else:
-            for tag in self._tags:
-                if tag not in self.tags:
-                    return True
-
-            for tag in self.tags:
-                if tag not in self._tags:
-                    return True
-
-        return False
+        return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
         return self._permissions != self.permissions
@@ -238,7 +227,7 @@ def main():
         rabbitmq_user.set_permissions()
         changed = True
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, user=username, state=state)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
