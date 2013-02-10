@@ -31,15 +31,17 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, user, password):
         self.runner = runner
         self.host = host
         self.port = port
+        self.user = user
+        self.password = password
 
     def connect(self):
         ''' connect to the remote host '''
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.runner.remote_user, host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host)
 
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -54,19 +56,19 @@ class Connection(object):
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
-        if self.runner.remote_pass:
+        if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
-        self.common_args += ["-o", "User="+self.runner.remote_user]
-        self.common_args += ["-o", "ConnectTimeout="+str(self.runner.timeout)]
+        self.common_args += ["-o", "User="+self.user]
+        self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
 
     def _password_cmd(self):
-        if self.runner.remote_pass:
+        if self.password:
             try:
                 p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -78,9 +80,9 @@ class Connection(object):
         return []
 
     def _send_password(self):
-        if self.runner.remote_pass:
+        if self.password:
             os.close(self.rfd)
-            os.write(self.wfd, "%s\n" % self.runner.remote_pass)
+            os.write(self.wfd, "%s\n" % self.password)
             os.close(self.wfd)
 
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):

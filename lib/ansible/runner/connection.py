@@ -31,10 +31,10 @@ class Connection(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port):
+    def connect(self, host, port, user, password):
         conn = None
         transport = self.runner.transport
-        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port)
+        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
         self.active = conn.connect()
