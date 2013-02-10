@@ -354,6 +354,7 @@ class Runner(object):
 
         module_name = utils.template(self.basedir, module_name, inject)
         module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
+        self.remote_user = utils.template(self.basedir, self.remote_user, inject, expand_lists=True)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
