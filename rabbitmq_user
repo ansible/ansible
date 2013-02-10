@@ -108,13 +108,15 @@ class RabbitMqUser(object):
         self._permissions = None
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args):
-        cmd = [self._rabbitmqctl, '-q']
-        rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-        return out.splitlines()
+    def _exec(self, args, run_in_check_mode=False):
+        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+            cmd = [self._rabbitmqctl, '-q']
+            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            return out.splitlines()
+        return list()
 
     def get(self):
-        users = self._exec(['list_users'])
+        users = self._exec(['list_users'], True)
 
         for user_tag in users:
             user, tags = user_tag.split('\t')
@@ -129,13 +131,11 @@ class RabbitMqUser(object):
                     self._tags = list()
 
                 self._permissions = self._get_permissions()
-
                 return True
-
         return False
 
     def _get_permissions(self):
-        perms_out = self._exec(['list_user_permissions', self.username])
+        perms_out = self._exec(['list_user_permissions', self.username], True)
 
         for perm in perms_out:
             vhost, configure_priv, write_priv, read_priv = perm.split('\t')
@@ -145,27 +145,23 @@ class RabbitMqUser(object):
         return dict()
 
     def add(self):
-        if not self.module.check_mode:
-            self._exec(['add_user', self.username, self.password])
+        self._exec(['add_user', self.username, self.password])
 
     def delete(self):
-        if not self.module.check_mode:
-            self._exec(['delete_user', self.username])
+        self._exec(['delete_user', self.username])
 
     def set_tags(self):
-        if not self.module.check_mode:
-            self._exec(['set_user_tags', self.username] + self.tags)
+        self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        if not self.module.check_mode:
-            cmd = ['set_permissions']
-            cmd.append('-p')
-            cmd.append(self.permissions['vhost'])
-            cmd.append(self.username)
-            cmd.append(self.permissions['configure_priv'])
-            cmd.append(self.permissions['write_priv'])
-            cmd.append(self.permissions['read_priv'])
-            self._exec(cmd)
+        cmd = ['set_permissions']
+        cmd.append('-p')
+        cmd.append(self.permissions['vhost'])
+        cmd.append(self.username)
+        cmd.append(self.permissions['configure_priv'])
+        cmd.append(self.permissions['write_priv'])
+        cmd.append(self.permissions['read_priv'])
+        self._exec(cmd)
 
     def has_tags_modifications(self):
         return set(self.tags) != set(self._tags)
