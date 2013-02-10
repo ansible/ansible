@@ -78,6 +78,7 @@ Blogs & Articles
 -  `Deploying Flask/uWSGI, Nginx, and Supervisorctl <http://mattupstate.github.com/python/devops/2012/08/07/flask-wsgi-application-deployment-with-ubuntu-ansible-nginx-supervisor-and-uwsgi.html>`_ - mattupstate
 -  `Infracoders Presentation <http://www.danielhall.me/2012/10/ansible-talk-infra-coders/>`_ - Daniel Hall
 -  `Ansible - an introduction <https://speakerdeck.com/jpmens/ansible-an-introduction>`_ - jp\_mens
+-  `Using Ansible to setup complex networking - <http://exarv.nl/2013/02/using-ansible-to-setup-complex-networking/>`_ - Robert Verspuy
 
 Disclaimer
 ``````````
