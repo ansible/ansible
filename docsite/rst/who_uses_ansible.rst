@@ -18,12 +18,16 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
     * `Four Kitchens <http://fourkitchens.com>`_ - The Drupal Experts
+    * `Muck Rack <http://muckrack.com>`_ - "The destination for journalists on twitter & social media"
     * `HP (Germany) <http://hp.com>`_ - HP
+    * `Nimbis Services <http://nimbisservices.com>`_ - Technical Computing for the Cloud
     * `Lizenfrei.at <http://lizenzfrei.at/>`_ - Open Source consulting and development, Austria
     * `Schmooze Com <http://www.schmoozecom.com/>`_ - Creators of Industry Leading PBX Platforms
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
+    * `Shorty Awards <http://shortyawards.com>`_ - Honoring the best in social media
     * `Skylines.io <http://skylines.io>`_ - Real time photo search engine
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
+    * `Tent.is <http://tent.is>`_ 
     * `Tranquil Hosting <http://tranquilhosting.com>`_ - Managed Linux Hosting Services
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
