@@ -20,7 +20,7 @@
     - restart rabbitmq
 
   - name: add users
-    rabbitmq_user: user=$item password=changeme tags=monitoring,$item vhost="/" configure_priv=".*" write_priv=".*" read_priv=".*" state=present
+    rabbitmq_user: user=$item password=changeme tags=administrator,$item vhost=/ configure_priv=.* write_priv=.* read_priv=.* state=present
     with_items:
     - user1
     - user2
@@ -34,4 +34,3 @@
   handlers:
   - name: restart rabbitmq
     service: name=rabbitmq-server state=restarted
-
