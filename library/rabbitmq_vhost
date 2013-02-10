@@ -31,11 +31,13 @@ options:
       - The name of the vhost to manage
     required: true
     default: null
+    aliases: [vhost]
   tracing:
     description:
       Enable/disable tracing for a vhost
     default: no
     choices: [yes, no]
+    aliases: [trace]
   state:
     description:
       - The state of vhost
@@ -97,8 +99,8 @@ class RabbitMqVhost(object):
 
 def main():
     arg_spec = dict(
-        name=dict(required=True),
-        tracing=dict(default='off', choices=BOOLEANS),
+        name=dict(required=True, aliases=['vhost']),
+        tracing=dict(default='off', choices=BOOLEANS, aliases=['trace']),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
