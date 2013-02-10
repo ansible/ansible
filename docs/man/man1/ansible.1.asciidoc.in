@@ -102,7 +102,7 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 *-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
-Use this remote 'USERNAME' instead of root.
+Use this remote 'USERNAME' instead of the current user.
 
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
