@@ -83,15 +83,19 @@ class ActionModule(object):
 
              # if showing diffs, we need to get the remote value
              dest_contents = None
+
              if self.runner.diff:
                  # using persist_files to keep the temp directory around to avoid needing to grab another
                  dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
-                 dest_contents = dest_result.result['content']
-                 if dest_result.result['encoding'] == 'base64':
-                     dest_contents = base64.b64decode(dest_contents)
+                 if 'content' in dest_result.result:
+                     dest_contents = dest_result.result['content']
+                     if dest_result.result['encoding'] == 'base64':
+                         dest_contents = base64.b64decode(dest_contents)
+                     else:
+                         raise Exception("unknown encoding, failed: %s" % dest_result.result)
                  else:
-                     raise Exception("unknown encoding, failed: %s" % dest_result.result)
-
+                     dest_result = ''
+ 
              xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
              # fix file permissions when the copy is done as a different user
@@ -102,13 +106,11 @@ class ActionModule(object):
              module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
 
              if self.runner.check:
-                 if self.runner.diff:
-                     self.runner.callbacks.on_file_diff(conn.host, dest_contents, resultant)
-                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True))
+                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), before_diff_value=dest_contents, after_diff_value=resultant)
              else:
                  res =  self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
-                 if self.runner.diff:
-                     self.runner.callbacks.on_file_diff(conn.host, dest_contents, resultant)
+                 res.before_diff_value = dest_contents
+                 res.after_diff_value = resultant
                  return res
         else:
              return ReturnData(conn=conn, comm_ok=True, result=dict(changed=False))
