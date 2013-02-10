@@ -92,7 +92,7 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         if tags is None:
-            self.tags = []
+            self.tags = list()
         else:
             self.tags = tags.split(',')
 
@@ -109,7 +109,7 @@ class RabbitMqUser(object):
         self._rabbitmqctl = module.get_bin_path("rabbitmqctl", True)
 
     def _exec(self, args):
-        cmd = ["rabbitmqctl", "-q"]
+        cmd = [self._rabbitmqctl, "-q"]
         rc, out, err = self.module.run_command(cmd + args, check_rc=True)
         return out.splitlines()
 
@@ -126,7 +126,7 @@ class RabbitMqUser(object):
                 if tags != '':
                     self._tags = tags.split(',')
                 else:
-                    self._tags = []
+                    self._tags = list()
 
                 self._permissions = self._get_permissions()
 
