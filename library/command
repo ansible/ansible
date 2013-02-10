@@ -65,11 +65,31 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  rc_ok:
+    description:
+      - specify the list of I(okay) return codes
+    required: false
+    default: null
+    version_added: "1.1"
+  rc_changed:
+    description:
+      - specify the list of I(changed) return codes
+    required: false
+    default: null
+    version_added: "1.1"
+  rc_failed:
+    description:
+      - specify the list of I(failed) return codes
+    required: false
+    default: null
+    version_added: "1.1"
 examples:
    - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
    - code: "command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
      description: "C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+   - code: "command: /usr/bin/yum check-update rc_changed=100 rc_okay=0,100"
+     description: "C(rc_ok), C(rc_changed), C(rc_failed) can be used to let the command module know how to react to certain return codes."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
@@ -82,7 +102,8 @@ def main():
 
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
-    module = CommandModule(argument_spec=dict())
+    module = CommandModule(argument_spec=dict(),
+                mutually_exclusive=[['rc_ok', 'rc_failed']])
 
     shell = module.params['shell']
     chdir = module.params['chdir']
@@ -109,16 +130,48 @@ def main():
     if err is None:
         err = ''
 
-    module.exit_json(
-        cmd     = args,
-        stdout  = out.rstrip("\r\n"),
-        stderr  = err.rstrip("\r\n"),
-        rc      = rc,
-        start   = str(startd),
-        end     = str(endd),
-        delta   = str(delta),
+    try:
+        if rc in module.params['rc_changed']:
+           changed = True
+        else:
+           changed = False
+    except KeyError:
         changed = True
-    )
+    try:
+        module.params['rc_ok']
+    except KeyError:
+        module.params['rc_ok'] = None
+    try:
+        module.params['rc_failed']
+    except KeyError:
+        module.params['rc_failed'] = None
+
+    if module.params['rc_ok'] is not None and rc in module.params['rc_ok'] \
+        or module.params['rc_failed'] is not None and rc not in module.params['rc_failed'] \
+        or rc == 0 and module.params['rc_ok'] is None and module.params['rc_failed'] is None: 
+        
+        module.exit_json(
+            cmd     = args,
+            stdout  = out.rstrip("\r\n"),
+            stderr  = err.rstrip("\r\n"),
+            rc      = rc,
+            start   = str(startd),
+            end     = str(endd),
+            delta   = str(delta),
+            changed = changed
+        )
+    else:
+        module.exit_json(
+            cmd     = args,
+            stdout  = out.rstrip("\r\n"),
+            stderr  = err.rstrip("\r\n"),
+            rc      = rc,
+            start   = str(startd),
+            end     = str(endd),
+            delta   = str(delta),
+            changed = changed,
+            failed  = True
+        )
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
@@ -145,7 +198,7 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|rc_ok|rc_changed|rc_failed)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -190,6 +243,21 @@ class CommandModule(AnsibleModule):
                 elif v[0] != '/':
                     self.fail_json(rc=259, msg="the path for 'executable' argument must be fully qualified")
                 params['executable'] = v
+            elif m.group(2) == "rc_ok":
+                try:
+                    params['rc_ok'] = [int(x) for x in v.split(",")]
+                except ValueError:
+                    self.fail_json(rc=258, msg="return codes: %s must be integers" % v)
+            elif m.group(2) == "rc_changed":
+                try:
+                    params['rc_changed'] = [int(x) for x in v.split(",")]
+                except ValueError:
+                    self.fail_json(rc=258, msg="return codes: %s must be integers" % v)
+            elif m.group(2) == "rc_failed":
+                try:
+                    params['rc_failed'] = [int(x) for x in v.split(",")]
+                except ValueError:
+                    self.fail_json(rc=258, msg="return codes: %s must be integers" % v)
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
