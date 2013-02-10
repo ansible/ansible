@@ -5,6 +5,7 @@ Who Uses Ansible
 
 The following is an opt-in list of just some of the folks using Ansible -- to get your company details here, `Email Michael <mailto:michael.dehaan@gmail.com>`_.
 
+    * `Action.IO <http://www.action.io/>`_ - Action.IO Cloud Development Platform
     * `Alta Language Services <http://www.altalang.com>`_ - language testing, solutions, and translation services
     * `Aspiro TV <http://www.aspiro.com/en/TV/>`_ - Media Streaming
     * `Basho <http://basho.com>`_ - makers of NoSQL engine Riak
@@ -14,6 +15,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
     * `Eucalyptus Systems Inc. <http://www.eucalyptus.com>`_ - Makers of the AWS-compatible private cloud platform 
+    * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
     * `The Fedora Project <http://fedoraproject.org>`_ - Produces the Popular Linux Distribution
     * `Four Kitchens <http://fourkitchens.com>`_ - The Drupal Experts
     * `HP (Germany) <http://hp.com>`_ - HP
@@ -25,6 +27,4 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Tranquil Hosting <http://tranquilhosting.com>`_ - Managed Linux Hosting Services
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
-    * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
-    * `Action.IO <http://www.action.io/>`_ - Action.IO Cloud Development Platform
 
