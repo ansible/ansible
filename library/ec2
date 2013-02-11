@@ -191,7 +191,7 @@ def main():
                                 max_count = count,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group],
-                                security_group_ids = [group_id],
+                                security_group_ids = group_id,
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
