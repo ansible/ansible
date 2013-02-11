@@ -186,7 +186,7 @@ def path_dwim(basedir, given):
 
     if given.startswith("/"):
         return given
-    elif given.startswith("~/"):
+    elif given.startswith("~"):
         return os.path.expanduser(given)
     else:
         return os.path.join(basedir, given)
