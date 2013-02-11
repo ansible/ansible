@@ -381,7 +381,12 @@ class LinuxHardware(Hardware):
         if lspci:
             rc, pcidata, err = module.run_command(lspci)
 
-        for block in os.listdir("/sys/block"):
+        try:
+            block_devs = os.listdir("/sys/block")
+        except OSError:
+            return
+
+        for block in block_devs:
             virtual = 0
             sysfs_no_links = 0
             try:
