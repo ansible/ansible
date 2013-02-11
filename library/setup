@@ -381,7 +381,12 @@ class LinuxHardware(Hardware):
         if lspci:
             rc, pcidata, err = module.run_command(lspci)
 
-        for block in os.listdir("/sys/block"):
+        try:
+            block_devs = os.listdir("/sys/block")
+        except OSError:
+            return
+
+        for block in block_devs:
             virtual = 0
             sysfs_no_links = 0
             try:
@@ -435,9 +440,11 @@ class LinuxHardware(Hardware):
                 d['scheduler_mode'] = m.group(2)
 
             d['sectors'] = get_file_content(sysdir + "/size")
-            d['sectors'] = d['sectors'] if d['sectors'] else 0
+            if not d['sectors']:
+                d['sectors'] = 0
             d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
-            d['sectorsize'] = d['sectorsize'] if d['sectorsize'] else 512
+            if not d['sectorsize']:
+                d['sectorsize'] = 512
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""

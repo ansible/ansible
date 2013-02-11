@@ -31,7 +31,11 @@ class LookupModule(object):
         for term in terms:
             dwimterms = utils.path_dwim(self.basedir, term)
             # This skips whatever prefix the dwim added, leaving just the filename for the item
-            dwim_prefix_len = len(dwimterms) - len(term)
-            ret.extend([ f[dwim_prefix_len:]
+            i = -1
+            while dwimterms[i] == term[i] and -i < len(term) and -i < len(dwimterms):
+                i = i - 1
+            orig_prefix_len = i + 1
+            dwim_prefix_len = len(dwimterms) + i + 1
+            ret.extend([ term[:orig_prefix_len] + f[dwim_prefix_len:]
                          for f in glob.glob(dwimterms) if os.path.isfile(f) ])
         return ret
