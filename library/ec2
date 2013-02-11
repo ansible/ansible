@@ -30,9 +30,15 @@ options:
     aliases: ['keypair']
   group:
     description:
-      - security group to use on the instance
+      - security group to use with the instance
     required: false
     default: 'default'
+    aliases: []
+  group:
+    description:
+      - security group id to use with the instance (VPC)
+    required: false
+    default: null
     aliases: []
   instance_type:
     description:
@@ -129,6 +135,7 @@ def main():
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
             group = dict(default='default'),
+            group_id = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
@@ -146,6 +153,7 @@ def main():
 
     key_name = module.params.get('key_name')
     group = module.params.get('group')
+    group_id = module.params.get('group_id')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
@@ -175,7 +183,6 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
 
-
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
     try:
@@ -184,6 +191,7 @@ def main():
                                 max_count = count,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group],
+                                security_group_ids = [group_id],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
