@@ -184,9 +184,6 @@ class Play(object):
         else:
             vars.update(self.vars)
 
-        if type(self.playbook.extra_vars) == dict:
-            vars.update(self.playbook.extra_vars)
-
         if type(self.vars_prompt) == list:
             for var in self.vars_prompt:
                 if not 'name' in var:
@@ -218,9 +215,10 @@ class Play(object):
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
-        results = self.playbook.extra_vars.copy()
-        results.update(vars)
-        return results
+        if type(self.playbook.extra_vars) == dict:
+            vars.update(self.playbook.extra_vars)
+
+        return vars
 
     # *************************************************
 
