@@ -22,7 +22,7 @@ Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 a
 set up SSH-agent so it can remember our credentials::
 
     $ ssh-agent bash
-    $ ssh-add ~/.ssh/id_rsa.pub
+    $ ssh-add ~/.ssh/id_rsa
 
 If you don't want to use ssh-agent and want to instead SSH with a
 password instead of keys, you can with ``--ask-pass`` (``-k``), but
@@ -121,19 +121,19 @@ with yum.
 
 Ensure a package is installed, but don't update it::
 
-    $ ansible webservers -m yum -a "pkg=acme state=installed"
+    $ ansible webservers -m yum -a "name=acme state=installed"
 
 Ensure a package is installed to a specific version::
 
-    $ ansible webservers -m yum -a "pkg=acme-1.5 state=installed"
+    $ ansible webservers -m yum -a "name=acme-1.5 state=installed"
 
 Ensure a package is at the latest version::
 
-    $ ansible webservers -m yum -a "pkg=acme state=latest"
+    $ ansible webservers -m yum -a "name=acme state=latest"
 
 Ensure a package is not installed::
 
-    $ ansible webservers -m yum -a "pkg=acme state=removed"
+    $ ansible webservers -m yum -a "name=acme state=removed"
 
 Currently Ansible only has modules for managing packages with yum and apt.  You can install
 for other packages for now using the command module or (better!) contribute a module

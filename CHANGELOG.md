@@ -1,9 +1,115 @@
 Ansible Changes By Release
 ==========================
 
-1.0 "Eruption" -- release pending
+1.1 "Mean Street" -- Release pending
 
-* ...
+* added 'with_random_choice' filter plugin
+* added --check option for "dry run" mode
+* added --diff option to show how templates change, or might change
+* service status 4 is also 'not running'
+* stderr shown when commands fail to parse
+* uses yaml.safe_dump in filter plugins
+* authentication Q&A no longer happens before --syntax-check
+* ability to get hostvars data for nodes not in the setup cache yet
+* able to specify a different hg repo to pull from than the original set
+* SSH timeout now correctly passed to native SSH connection plugin
+* supervisorctl restart fix
+* raise an error when multiple when_ statements are provided
+* --list-hosts applies host limit selections better
+* (internals) template engine specifications to use template_ds everywhere
+* rabbit_mq plugin module
+* rabbit_mq user module
+* rabbit_mq vhost module
+* mongodb_user module
+* increased error handling for ec2 module
+* can recursively set permissions on directories
+* change to the way AMI tags are handled
+* better error message when your host file can't be found
+* --list-tasks for the playbook will list the tasks without running them
+* block device facts for the setup module
+* cron module can now also manipulate cron.d files
+* virtualenv module can now inherit system site packages (or not)
+* able to set the environment by setting "environment:" as a dictionary on any task (go proxy support!)
+* added ansible_ssh_user and ansible_ssh_pass for per-host/group username and password
+
+1.0 "Eruption" -- Feb 1 2013
+
+New modules:
+
+* new sysctl module
+* new pacman module (Arch linux)
+* new apt_key module
+* hg module now in core
+* new ec2_facts module
+* added pkgin module for Joyent SmartOS
+
+New config settings:
+
+* sudo_exe parameter can be set in config to use sudo alternatives
+* sudo_flags parameter can alter the flags used with sudo
+
+New playbook/language features:
+
+* added when_failed and when_changed
+* task includes can now be of infinite depth
+* when_set and when_unset can take more than one var (when_set: $a and $b and $c)
+* added the with_sequence lookup plugin
+* can override "connection:" on an indvidual task
+* parameterized playbook includes can now define complex variables (not just all on one line)
+* making inventory variables available for use in vars_files paths
+* messages when skipping plays are now more clear
+* --extra-vars now has maximum precedence (as intended)
+
+Module fixes and new flags:
+
+* ability to use raw module without python on remote system
+* fix for service status checking on Ubuntu
+* service module now responds to additional exit code for SERVICE_UNAVAILABLE
+* fix for raw module with '-c local'
+* various fixes to git module
+* ec2 module now reports the public DNS name
+* can pass executable= to the raw module to specify alternative shells
+* fix for postgres module when user contains a "-"
+* added additional template variables -- $template_fullpath and $template_run_date
+* raise errors on invalid arguments used with a task include statement
+* shell/command module takes a executable= parameter to specify a different shell than /bin/sh
+* added return code and error output to the raw module
+* added support for @reboot to the cron module
+* misc fixes to the pip module
+* nagios module can schedule downtime for all services on the host
+* various subversion module improvements
+* various mail module improvements
+* SELinux fix for files created by authorized_key module
+* "template override" ??
+* get_url module can now send user/password authorization
+* ec2 module can now deploy multiple simultaneous instances
+* fix for apt_key modules stalling in some situations
+* fix to enable Jinja2 {% include %} to work again in template
+* ec2 module is now powered by Boto
+* setup module can now detect if package manager is using pacman
+* fix for yum module with enablerepo in use on EL 6
+
+Core fixes and new behaviors:
+
+* various fixes for variable resolution in playbooks
+* fixes for handling of "~" in some paths
+* various fixes to DWIM'ing of relative paths
+* /bin/ansible now takes a --list-hosts just like ansible-playbook did
+* various patterns can now take a regex vs a glob if they start with "~" (need docs on which!) - also /usr/bin/ansible
+* allow intersecting host patterns by using "&" ("webservers:!debian:&datacenter1")
+* handle tilde shell character for --private-key
+* hash merging policy is now selectable in the config file, can choose to override or merge
+* environment variables now available for setting all plugin paths (ANSIBLE_CALLBACK_PLUGINS, etc)
+* added packaging file for macports (not upstreamed yet)
+* hacking/test-module script now uses /usr/bin/env properly
+* fixed error formatting for certain classes of playbook syntax errors
+* fix for processing returns with large volumes of output
+
+Inventory files/scripts:
+
+* hostname patterns in the inventory file can now use alphabetic ranges
+* whitespace is now allowed around group variables in the inventory file
+* inventory scripts can now define groups of groups and group vars (need example for docs?)
 
 0.9 "Dreams" -- Nov 30 2012
 

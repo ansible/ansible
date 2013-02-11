@@ -15,16 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
-
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -34,6 +24,9 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject):
         ''' transfer the given module name, plus the async module, then run it '''
+
+        if self.runner.check:
+            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
         # shell and command module are the same
         if module_name == 'shell':

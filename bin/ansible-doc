@@ -33,6 +33,7 @@ from ansible import errors
 from ansible.utils import module_docs
 import ansible.constants as C
 from ansible.utils import version
+import traceback
 
 MODULEDIR = C.DEFAULT_MODULE_PATH
 
@@ -75,6 +76,7 @@ def print_man(doc):
             opt_leadin = "-"
 
         print "%s %s" % (opt_leadin, o)
+
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
@@ -162,7 +164,8 @@ def main():
                     desc = desc + '...'
                 print "%-20s %-60.60s" % (module, desc)
             except:
-                sys.stderr.write("ERROR: module %s missing documentation\n" % module)
+                traceback.print_exc()
+                sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
                 pass
 
         sys.exit()
@@ -184,10 +187,11 @@ def main():
         try:
             doc = module_docs.get_docstring(filename)
         except:
-            sys.stderr.write("ERROR: module %s missing documentation\n" % module)
+            traceback.print_exc()
+            sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
             continue
 
-        if not doc is None:
+        if doc is not None:
 
             all_keys = []
             for (k,v) in doc['options'].iteritems():
@@ -204,7 +208,9 @@ def main():
             else:
                 print_man(doc)
         else:
-            sys.stderr.write("ERROR: module %s missing documentation\n" % module)
+            # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
+            # probably a quoting issue.
+            sys.stderr.write("ERROR: module %s missing documentation (or could not parse documentation)\n" % module)
 
 if __name__ == '__main__':
     main()

@@ -14,11 +14,11 @@ Ansible is written for Python 2.6.  If you are running Python 2.5 on an "Enterpr
 your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
 of Linux and OS X should already have 2.6.
 
-In additon to Python 2.6, you will want the following packages:
+In additon to Python 2.6, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
 * ``paramiko``
 * ``PyYAML``
-* ``python-jinja2``
+* ``jinja2``
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
@@ -115,8 +115,8 @@ systems that contain python 2.4 or higher.
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also use the ``make rpm`` command to build an RPM you can
-distribute and install:
+You can also use the ``make rpm`` command to build an RPM you can distribute and install. 
+Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
 
 .. code-block:: bash
 
@@ -124,6 +124,28 @@ distribute and install:
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+
+Via MacPorts
+++++++++++++
+
+An OSX port is available via MacPorts, to install the stable version of
+Ansible from MacPorts (this is the recommended way), run:
+
+.. code-block:: bash
+
+    $ sudo port install ansible
+
+If you wish to install the latest build via the MacPorts system from a
+git checkout, run:
+
+.. code-block:: bash
+
+    $ git clone git://github.com/ansible/ansible.git
+    $ cd ./ansible/packaging/macports
+    $ sudo port install
+
+Please refer to the documentation at <http://www.macports.org> for
+further information on using Portfiles with MacPorts.
 
 Debian, Gentoo, Arch, Others
 ++++++++++++++++++++++++++++
@@ -197,7 +219,7 @@ Set up SSH agent to avoid retyping passwords:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to ansible's --private-key-file option to specify a pem file instead)
+(Depending on your setup, you may wish to ansible's --private-key option to specify a pem file instead)
 
 Now ping all your nodes:
 
@@ -205,9 +227,8 @@ Now ping all your nodes:
 
    $ ansible all -m ping
 
-In Ansible 0.7 and later, ansible will attempt to remote connect to the machines using your current
-user name, just like SSH would.  In 0.6 and before, this actually defaults to 'root' (we liked the current
-user behavior better).  To override the remote user name, just use the '-u' parameter.
+Ansible will attempt to remote connect to the machines using your current
+user name, just like SSH would.  To override the remote user name, just use the '-u' parameter.
 
 If you would like to access sudo mode, there are also flags to do that:
 
@@ -219,6 +240,9 @@ If you would like to access sudo mode, there are also flags to do that:
     $ ansible all -m ping -u bruce --sudo 
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
+
+(The sudo implementation is changeable in ansbile's configuration file if you happen to want to use a sudo
+replacement.  Flags passed dot sudo can also be set.)
 
 Now run a live command on all of your nodes:
   

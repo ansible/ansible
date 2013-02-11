@@ -34,7 +34,7 @@ except ImportError:
 class Connection(object):
     ''' ZeroMQ accelerated connection '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, **kwargs):
 
         self.runner = runner
 
@@ -67,7 +67,7 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
         vvv("EXEC COMMAND %s" % cmd)
@@ -79,6 +79,7 @@ class Connection(object):
             mode='command',
             cmd=cmd,
             tmp_path=tmp_path,
+            executable=executable,
         )
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)

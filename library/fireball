@@ -70,7 +70,6 @@ import base64
 import syslog
 import signal
 import time
-import subprocess
 import signal
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
@@ -144,22 +143,23 @@ def daemonize_self(module, password, port, minutes):
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
     log("daemonizing successful (%s,%s)" % (password, port))
 
-def command(data):
+def command(module, data):
     if 'cmd' not in data:
         return dict(failed=True, msg='internal error: cmd is required')
     if 'tmp_path' not in data:
         return dict(failed=True, msg='internal error: tmp_path is required')
+    if 'executable' not in data:
+        return dict(failed=True, msg='internal error: executable is required')
 
     log("executing: %s" % data['cmd'])
-    p = subprocess.Popen(data['cmd'], shell=True, stdout=subprocess.PIPE, close_fds=True)
-    (stdout, stderr) = p.communicate()
+    rc, stdout, stderr = module.run_command(data['cmd'], executable=data['executable'], close_fds=True)
     if stdout is None:
         stdout = ''
     if stderr is None:
         stderr = ''
     log("got stdout: %s" % stdout)
 
-    return dict(rc=p.returncode, stdout=stdout, stderr=stderr)
+    return dict(rc=rc, stdout=stdout, stderr=stderr)
 
 def fetch(data):
     if 'in_path' not in data:
@@ -220,7 +220,7 @@ def serve(module, password, port, minutes):
         response = {}
 
         if mode == 'command':
-            response = command(data)
+            response = command(module, data)
         elif mode == 'put':
             response = put(data)
         elif mode == 'fetch':

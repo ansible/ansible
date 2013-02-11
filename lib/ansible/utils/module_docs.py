@@ -43,7 +43,6 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.load(child.value.s)
-
     except:
         if verbose == True:
             traceback.print_exc()

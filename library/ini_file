@@ -153,8 +153,6 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 def main():
 
     module = AnsibleModule(
-        # not checking because of daisy chain to file module
-        check_invalid_arguments = False,
         argument_spec = dict(
             dest = dict(required=True),
             section = dict(required=True),
@@ -162,7 +160,8 @@ def main():
             value = dict(required=False),
             backup = dict(default='no', choices=BOOLEANS),
             state = dict(default='present', choices=['present', 'absent'])
-        )
+        ),
+        add_file_common_args = True
     )
 
     info = dict()
@@ -176,14 +175,11 @@ def main():
 
     changed = do_ini(module, dest, section, option, value, state, backup)
 
-    info['daisychain_args'] = module.params
-    info['daisychain_args']['state'] = 'file'
-    info['daisychain_args']['dest'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    changed = module.set_file_attributes_if_different(file_args, changed)
 
     # Mission complete
-    module.exit_json(dest=dest, 
-        changed=changed, msg="OK",
-        daisychain="file", daisychain_args=info.get('daisychain_args',''))
+    module.exit_json(dest=dest, changed=changed, msg="OK")
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

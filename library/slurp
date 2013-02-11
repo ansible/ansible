@@ -50,7 +50,7 @@ author: Michael DeHaan
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            src = dict(required=True),
+            src = dict(required=True, aliases=['path']),
         )
     )
     source = module.params['src']

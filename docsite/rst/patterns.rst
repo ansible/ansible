@@ -48,6 +48,11 @@ Adding a lot of hosts?  In 0.6 and later, if you have a lot of hosts following s
 
     [webservers]
     www[01:50].example.com
+
+
+In 1.0 and later, you can also do this for alphabetic ranges::
+
+    [databases]
     db-[a:f].example.com
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.
@@ -89,6 +94,18 @@ with the aforementioned bracket headers in the inventory file::
 You can exclude groups as well, for instance, all webservers not in Phoenix::
 
     webservers:!phoenix
+
+You can also specify the intersection of two groups::
+
+    webservers:&staging
+
+You can do combinations::
+
+    webservers:dbservers:!phoenix:&staging
+
+You can also use variables::
+
+    webservers:!$excluded:&$required
 
 Individual host names (or IPs), but not groups, can also be referenced using
 wildcards::
@@ -196,19 +213,6 @@ is an excellent way to track changes to your inventory and host variables.
    If you ever have two python interpreters on a system, set a
    variable called 'ansible_python_interpreter' to the Python
    interpreter path you would like to use.
-
-YAML Inventory
-++++++++++++++
-
-.. deprecated:: 0.7
-
-Ansible's YAML inventory format is deprecated and will be removed in
-Ansible 0.7.  Ansible 0.6 includes a `conversion script
-<https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py>`_.
-
-Usage::
-
-    yaml_to_ini.py /etc/ansible/hosts
 
 .. seealso::
 

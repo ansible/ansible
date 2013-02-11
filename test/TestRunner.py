@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import tempfile
+import urllib2
 
 from nose.plugins.skip import SkipTest
 
@@ -288,3 +289,4 @@ class TestRunner(unittest.TestCase):
         ])
         print result
         assert result['changed'] == False
+

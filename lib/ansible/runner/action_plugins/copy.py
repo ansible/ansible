@@ -16,15 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 
-import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -62,9 +56,9 @@ class ActionModule(object):
             if not found:
                 results=dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, result=results)
-
-        source = utils.template(self.runner.basedir, source, inject)
-        source = utils.path_dwim(self.runner.basedir, source)
+        else:
+            source = utils.template(self.runner.basedir, source, inject)
+            source = utils.path_dwim(self.runner.basedir, source)
 
         local_md5 = utils.md5(source)
         if local_md5 is None:
@@ -75,6 +69,12 @@ class ActionModule(object):
 
         exec_rc = None
         if local_md5 != remote_md5:
+
+            if self.runner.check:
+                # TODO: if the filesize is small, include a nice pretty-printed diff by 
+                # calling a (new) diff callback
+                return ReturnData(conn=conn, result=dict(changed=True))
+
             # transfer the file to a remote tmp location
             tmp_src = tmp + os.path.basename(source)
             conn.put_file(source, tmp_src)
@@ -92,5 +92,7 @@ class ActionModule(object):
 
             tmp_src = tmp + os.path.basename(source)
             module_args = "%s src=%s" % (module_args, tmp_src)
+            if self.runner.check:
+                module_args = "%s CHECKMODE=True" % module_args
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
 

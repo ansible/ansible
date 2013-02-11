@@ -260,6 +260,17 @@ class TestUtils(unittest.TestCase):
         res = ansible.utils.varReplace(None, template, vars)
         assert res == 'test result'
 
+    def test_varReplace_var_complex_var(self):
+        vars = {
+            'x': '$y',
+            'y': {
+                'foo': 'result',
+            },
+        }
+        template = '${x.foo}'
+        res = ansible.utils.template(None, template, vars)
+        assert res == 'result'
+
     def test_template_varReplace_iterated(self):
         template = 'hello $who'
         vars = {
@@ -313,19 +324,19 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${data.var}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['var'])
 
         template = '${data.types}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['types'])
 
         template = '${data.alphas}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert sorted(res) == sorted(vars['alphas'])
 
         template = '${data.nonexisting}'
-        res = ansible.utils.template_ds(None, template, vars)
+        res = ansible.utils.template(None, template, vars)
         assert res == template
 
     #####################################

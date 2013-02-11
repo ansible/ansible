@@ -2,21 +2,12 @@
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 12/04/2012
+.\"      Date: 02/01/2013
 .\"    Manual: System administration commands
-.\"    Source: Ansible 0.9
+.\"    Source: Ansible 1.1
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "12/04/2012" "Ansible 0\&.9" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE" "1" "02/01/2013" "Ansible 1\&.1" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,7 +25,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -82,7 +73,7 @@ to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&.
 .RE
 .PP
-\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
+\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
 .RS 4
 The
 \fIARGUMENTS\fR
@@ -140,7 +131,7 @@ seconds\&. Requires
 .RS 4
 Use this remote
 \fIUSERNAME\fR
-instead of root\&.
+instead of the current user\&.
 .RE
 .PP
 \fB\-U\fR \fISUDO_USERNAME\fR, \fB\-\-sudo\-user=\fR\fISUDO_USERNAME\fR

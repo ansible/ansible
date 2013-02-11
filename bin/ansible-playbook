@@ -52,15 +52,26 @@ def main(args):
 
     # create parser for CLI options
     usage = "%prog playbook.yml"
-    parser = utils.base_parser(constants=C, usage=usage, connect_opts=True, runas_opts=True, subset_opts=True)
+    parser = utils.base_parser(
+        constants=C, 
+        usage=usage, 
+        connect_opts=True, 
+        runas_opts=True, 
+        subset_opts=True, 
+        check_opts=True,
+        diff_opts=True
+    )
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
+    # FIXME: list hosts is a common option and can be moved to utils/__init__.py
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help="dump out a list of hosts, each play will run against, does not run playbook!")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
         help="do a playbook syntax check on the playbook, do not execute the playbook")
+    parser.add_option('--list-tasks', dest='listtasks', action='store_true',
+        help="do list all tasks that would be executed")
 
     options, args = parser.parse_args(args)
 
@@ -75,7 +86,7 @@ def main(args):
 
     sshpass = None
     sudopass = None
-    if not options.listhosts:
+    if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
@@ -120,22 +131,38 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
+            check=options.check,
+            diff=options.diff
         )
-        
-        if options.listhosts:
+
+        if options.listhosts or options.listtasks:
+            print ''
             print 'playbook: %s' % playbook
+            print ''
             playnum = 0
-            for play in pb.playbook:
+            for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
-                if 'hosts' in play:
-                    label = 'unnamed'
-                    if 'name' in play:
-                        label = play['name']
-                    tmp_hosts = utils.template(pb.basedir, play['hosts'], extra_vars)
-                    hosts = pb.inventory.list_hosts(tmp_hosts)
-                    print '  hosts in play %s (%s): #%d' % (playnum, label, len(hosts))
+                play = ansible.playbook.Play(pb, play_ds, play_basedir)
+                label = play.name
+                if options.listhosts:
+                    hosts = pb.inventory.list_hosts(play.hosts)
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
                         print '    %s' % host
+                if options.listtasks:
+                    matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
+                    unmatched_tags.discard('all')
+                    unknown_tags = set(pb.only_tags) - (matched_tags | unmatched_tags)
+                    if unknown_tags:
+                        msg = 'tag(s) not found in playbook: %s.  possible values: %s'
+                        unknown = ','.join(sorted(unknown_tags))
+                        unmatched = ','.join(sorted(unmatched_tags))
+                        raise errors.AnsibleError(msg % (unknown, unmatched))
+                    print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
+                    for task in play.tasks():
+                        if set(task.tags).intersection(pb.only_tags):
+                            print '    %s' % task.name
+                print ''
             continue
 
         if options.syntax:

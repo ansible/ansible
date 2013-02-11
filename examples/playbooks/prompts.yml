@@ -29,8 +29,10 @@
     - name: "some_password"
       prompt: "Enter password"
       private: yes
+
     - name: "release_version"
       prompt: "Product release version"
+      default: "my_default_version"
       private: no
    
     - name: "my_password2"
@@ -48,7 +50,7 @@
   tasks:
 
   - name: imagine this did something interesting with $release_version
-    action: shell echo foo >> /tmp/$release_version-$alpha
+    action: shell echo foo >> /tmp/$release_version-alpha
 
   - name: look we crypted a password
     action: shell echo my password is $my_password2

@@ -36,7 +36,7 @@ class Group(object):
         if self == group:
             raise Exception("can't add group to itself")
         self.child_groups.append(group)
-        group.depth = group.depth + 1
+        group.depth = max([self.depth+1, group.depth])
         group.parent_groups.append(self)
 
     def add_host(self, host):

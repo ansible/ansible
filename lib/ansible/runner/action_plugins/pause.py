@@ -47,7 +47,11 @@ class ActionModule(object):
                        }
 
     def run(self, conn, tmp, module_name, module_args, inject):
-        ''' run the pause actionmodule '''
+        ''' run the pause action module '''
+
+        # note: this module does not need to pay attention to the 'check'
+        # flag, it always runs
+
         hosts = ', '.join(self.runner.host_set)
         args = parse_kv(template(self.runner.basedir, module_args, inject))
 

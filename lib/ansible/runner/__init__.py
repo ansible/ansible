@@ -85,6 +85,9 @@ class HostVars(dict):
             self.lookup[host] = result
         return self.lookup[host]
 
+    def __contains__(self, host):
+        return host in self.lookup or host in self.setup_cache or self.inventory.get_host(host)
+
 class Runner(object):
     ''' core API interface to ansible '''
 
@@ -114,10 +117,15 @@ class Runner(object):
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
-        subset=None                         # subset pattern
+        subset=None,                        # subset pattern
+        check=False,                        # don't make any changes, just try to probe for potential changes
+        diff=False,                         # whether to show diffs for template files that change
+        environment=None                    # environment variables (as dict) to use inside the command
         ):
 
         # storage & defaults
+        self.check            = check
+        self.diff             = diff
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
@@ -142,6 +150,7 @@ class Runner(object):
         self.sudo             = sudo
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
+        self.environment      = environment
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -186,8 +195,24 @@ class Runner(object):
 
     # *****************************************************
 
+    def _compute_environment_string(self, inject=None):
+        ''' what environment variables to use when running the command? '''
+
+        if not self.environment:
+            return ""
+        enviro = utils.template(self.basedir, self.environment, inject)
+        print "DEBUG: vars=%s" % enviro
+        if type(enviro) != dict:
+            raise errors.AnsibleError("environment must be a dictionary, recieved %s" % enviro)
+        result = ""
+        for (k,v) in enviro.iteritems():
+            result = "%s=%s %s" % (k, str(v), result)       
+        return result
+
+    # *****************************************************
+
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None):
+        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False):
 
         ''' runs a module that has already been transferred '''
 
@@ -199,6 +224,8 @@ class Runner(object):
 
         (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject)
 
+        environment_string = self._compute_environment_string(inject)
+
         cmd_mod = ""
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
@@ -207,6 +234,11 @@ class Runner(object):
 
         cmd = ""
         if not is_new_style:
+            if 'CHECKMODE=True' in args:
+                # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
+                # do --check mode, so to be safe we will not run it.
+                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
+
             args = utils.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
@@ -222,11 +254,14 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = shebang.replace("#!","") + " " + cmd
-        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
+        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
-        return ReturnData(conn=conn, result=res['stdout'])
+        data = utils.parse_json(res['stdout'])
+        if 'parsed' in data and data['parsed'] == False:
+            data['msg'] += res['stderr']
+        return ReturnData(conn=conn, result=data)
 
     # *****************************************************
 
@@ -277,7 +312,7 @@ class Runner(object):
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.template_ds(self.basedir, items_terms, inject)
+            items_terms = utils.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
@@ -338,7 +373,7 @@ class Runner(object):
             module_args = new_args
 
         module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject, expand_lists=True)
+        module_args = utils.template(self.basedir, module_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -349,7 +384,7 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        conditional = utils.template(self.basedir, self.conditional, inject)
+        conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
         if not getattr(handler, 'BYPASS_HOST_LOOP', False) and not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
@@ -358,6 +393,8 @@ class Runner(object):
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         actual_port = port
+        actual_user = inject.get('ansible_ssh_user', self.remote_user)
+        actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         if self.transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
@@ -378,12 +415,17 @@ class Runner(object):
                 delegate_info = inject['hostvars'][delegate_to]
                 actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
                 actual_port = delegate_info.get('ansible_ssh_port', port)
+                actual_user = delegate_info.get('ansible_ssh_user', actual_user)
+                actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
             except errors.AnsibleError:
                 actual_host = delegate_to
                 actual_port = port
+
+        actual_user = utils.template(self.basedir, actual_user, inject)
+        actual_pass = utils.template(self.basedir, actual_pass, inject)
 
         try:
             if actual_port is not None:
@@ -393,7 +435,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
@@ -433,16 +475,21 @@ class Runner(object):
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
+                if self.diff:
+                    self.callbacks.on_file_diff(conn.host, result.before_diff_value, result.after_diff_value)
                 self.callbacks.on_ok(host, data)
         return result
 
     # *****************************************************
 
-    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False):
+    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
         ''' execute a command string over SSH, return the output '''
 
+        if executable is None:
+            executable = '/bin/sh'
+
         sudo_user = self.sudo_user
-        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable)
+        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
         if type(stdout) not in [ str, unicode ]:
             out = ''.join(stdout.readlines())

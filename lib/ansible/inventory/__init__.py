@@ -80,17 +80,20 @@ class Inventory(object):
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
-        elif utils.is_executable(host_list):
-            self._is_script = True
-            self.parser = InventoryScript(filename=host_list)
-            self.groups = self.parser.groups.values()
-        else:
-            data = file(host_list).read()
-            if not data.startswith("---"):
-                self.parser = InventoryParser(filename=host_list)
+        elif os.path.exists(host_list):
+            if utils.is_executable(host_list):
+                self._is_script = True
+                self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
-                raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+                data = file(host_list).read()
+                if not data.startswith("---"):
+                    self.parser = InventoryParser(filename=host_list)
+                    self.groups = self.parser.groups.values()
+                else:
+                    raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+        else:
+            raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
     def _match(self, str, pattern_str):
         if pattern_str.startswith('~'):
@@ -165,10 +168,11 @@ class Inventory(object):
             return (pattern, None)
         (first, rest) = pattern.split("[")
         rest = rest.replace("]","")
-        if not "-" in rest:
-            raise errors.AnsibleError("invalid pattern: %s" % pattern)
-        (left, right) = rest.split("-",1)
-        return (first, (left, right))
+        if "-" in rest:
+            (left, right) = rest.split("-",1)
+            return (first, (left, right))
+        else:
+            return (first, (rest, rest))
 
     def _apply_ranges(self, pat, hosts):
         """
@@ -295,7 +299,7 @@ class Inventory(object):
         return [ h.name for h in self.get_hosts(pattern) ]
 
     def list_groups(self):
-        return sorted([ g.name for g in self.groups ], key=lambda x: x.name)
+        return sorted([ g.name for g in self.groups ], key=lambda x: x)
 
     # TODO: remove this function
     def get_restriction(self):

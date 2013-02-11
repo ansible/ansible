@@ -75,15 +75,13 @@ class Play(object):
         self.transport    = ds.get('connection', self.playbook.transport)
         self.tags         = ds.get('tags', None)
         self.gather_facts = ds.get('gather_facts', None)
-        self.serial       = int(utils.template_ds(basedir, ds.get('serial', 0), self.vars))
-
-        if isinstance(self.remote_port, basestring):
-            self.remote_port = utils.template(basedir, self.remote_port, self.vars)
+        self.serial       = int(utils.template(basedir, ds.get('serial', 0), self.vars))
+        self.remote_port  = utils.template(basedir, self.remote_port, self.vars)
 
         self._update_vars_files_for_host(None)
 
-        self._tasks      = self._load_tasks(self._ds, 'tasks')
-        self._handlers   = self._load_tasks(self._ds, 'handlers')
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []))
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []))
 
         if self.tags is None:
             self.tags = []
@@ -97,38 +95,51 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, ds, keyname):
+    def _load_tasks(self, tasks, vars={}, additional_conditions=[]):
         ''' handle task and handler include statements '''
 
-        tasks = ds.get(keyname, [])
         results = []
+        if tasks is None:
+            # support empty handler files, and the like.
+            tasks = []
+
         for x in tasks:
+            task_vars = self.vars.copy()
+            task_vars.update(vars)
             if 'include' in x:
-                task_vars = self.vars.copy()
                 tokens = shlex.split(x['include'])
                 items = ['']
+                included_additional_conditions = list(additional_conditions)
                 for k in x:
-                    if not k.startswith("with_"):
-                        continue
-                    plugin_name = k[5:]
-                    if plugin_name not in utils.plugins.lookup_loader:
-                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.template_ds(self.basedir, x[k], task_vars)
-                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    if k.startswith("with_"):
+                        plugin_name = k[5:]
+                        if plugin_name not in utils.plugins.lookup_loader:
+                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+                        terms = utils.template(self.basedir, x[k], task_vars)
+                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                    elif k.startswith("when_"):
+                        included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                    elif k in ("include", "vars", "only_if"):
+                        pass
+                    else:
+                        raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
+
+                if 'vars' in x:
+                    task_vars.update(x['vars'])
+                if 'only_if' in x:
+                    included_additional_conditions.append(x['only_if'])
 
                 for item in items:
                     mv = task_vars.copy()
                     mv['item'] = item
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
-                        mv[k] = utils.template_ds(self.basedir, v, mv)
+                        mv[k] = utils.template(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    for y in data:
-                        results.append(Task(self,y,module_vars=mv.copy()))
+                    results += self._load_tasks(data, mv, included_additional_conditions)
             elif type(x) == dict:
-                task_vars = self.vars.copy()
-                results.append(Task(self,x,module_vars=task_vars))
+                results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
                 raise Exception("unexpected task type")
 
@@ -173,6 +184,9 @@ class Play(object):
         else:
             vars.update(self.vars)
 
+        if type(self.playbook.extra_vars) == dict:
+            vars.update(self.playbook.extra_vars)
+
         if type(self.vars_prompt) == list:
             for var in self.vars_prompt:
                 if not 'name' in var:
@@ -180,6 +194,7 @@ class Play(object):
 
                 vname = var['name']
                 prompt = var.get("prompt", vname)
+                default = var.get("default", None)
                 private = var.get("private", True)
 
                 confirm = var.get("confirm", False)
@@ -188,13 +203,17 @@ class Play(object):
                 salt = var.get("salt", None)
 
                 if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(vname, private, prompt,encrypt, confirm, salt_size, salt)
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt (
+                                     vname, private, prompt, encrypt, confirm, salt_size, salt, default
+                                  )
 
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
                 prompt_msg = "%s: " % prompt
                 if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(varname=vname, private=False, prompt=prompt_msg)
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt(
+                                     varname=vname, private=False, prompt=prompt_msg, default=None
+                                  )
 
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
@@ -246,6 +265,11 @@ class Play(object):
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+        if host is not None:
+            inject = {}
+            inject.update(self.playbook.inventory.get_variables(host))
+            inject.update(self.playbook.SETUP_CACHE[host])
+
         for filename in self.vars_files:
 
             if type(filename) == list:
@@ -257,7 +281,7 @@ class Play(object):
                     filename2 = utils.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                        filename3 = utils.template(self.basedir, filename2, inject)
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -290,18 +314,19 @@ class Play(object):
                 filename2 = utils.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(self.basedir, filename2, self.playbook.SETUP_CACHE[host])
+                    filename3 = utils.template(self.basedir, filename2, inject)
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue
                 new_vars = utils.parse_yaml_from_file(filename4)
                 if new_vars:
                     if type(new_vars) != dict:
-                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % filename4)
+                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename4, type(new_vars)))
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache
                         self.playbook.SETUP_CACHE[host].update(new_vars)
+                        self.playbook.callbacks.on_import_for_host(host, filename4)
                     elif host is None:
                         # running a non-host specific pass and we can update the global vars instead
                         self.vars.update(new_vars)
