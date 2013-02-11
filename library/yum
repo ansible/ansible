@@ -68,11 +68,21 @@ options:
     version_added: "0.9"
     default: null
     aliases: []
+
+  upgrade:
+    description:
+      - If yes, performs an yum update. Note: This does not upgrade a specific package, use state=latest for that.
+    version_added: "1.1"
+    required: false
+    default: no
+    choices: [ "yes", "no"]  
     
 examples:
    - code: yum name=httpd state=latest
    - code: yum name=httpd state=removed
    - code: yum name=httpd enablerepo=testing state=installed
+   - code: "yum: upgrade=yes"
+     description: Update all packages to the latest version
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -595,6 +605,17 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo):
     # should be caught by AnsibleModule argument_spec
     return dict(changed=False, failed=True, results='', errors='unexpected state')
 
+def yum_upgrade(m, upgrade="no"):
+    yum_basecmd = yumbin + ' -d 1 -y'
+    upgrade_command = "update"
+    cmd = "%s %s" % (yum_basecmd, upgrade_command)
+    rc, out, err = m.run_command(cmd)
+    if rc:
+        m.fail_json(msg="'yum %s ' failed: %s" % (upgrade_command, err))
+    if out:
+        m.exit_json(changed=True)
+    m.exit_json(changed=False)
+
 def main():
 
     # state=installed name=pkgspec
@@ -617,14 +638,17 @@ def main():
             disablerepo=dict(),
             list=dict(),
             conf_file=dict(default=None),
+            upgrade=dict(default='no', choices=['yes','no'])
         ),
-        required_one_of = [['name','list']],
+        required_one_of = [['name','list', 'upgrade']],
         mutually_exclusive = [['name','list']]
     )
 
     params = module.params
 
     if params['list']:
+        if params['upgrade'] == "yes":
+            module.fail_json(msg="Upgrade should not be used in conjuction with other options.")
         if not repoquery:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = dict(results=list_stuff(module, params['conf_file'], params['list']))
@@ -635,6 +659,11 @@ def main():
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
+        upgrade = params['upgrade']
+        if upgrade == "yes" and pkg == None:
+            yum_upgrade(module, upgrade)
+        elif upgrade == "yes" and pkg != None:
+            module.fail_json(msg="Upgrade should not be used in conjuction with other options.")
         res = ensure(module, state, pkg, params['conf_file'], enablerepo, disablerepo)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
