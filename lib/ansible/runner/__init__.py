@@ -291,6 +291,10 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
+
+        if host.find(':') != -1:
+            host = host.split(':')[0]
+
         if self.transport in [ 'paramiko', 'ssh' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
