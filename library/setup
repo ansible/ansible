@@ -387,7 +387,7 @@ class LinuxHardware(Hardware):
             return
 
         for block in block_devs:
-            virtual = 0
+            virtual = 1
             sysfs_no_links = 0
             try:
                 path = os.readlink(os.path.join("/sys/block/", block))
@@ -403,7 +403,7 @@ class LinuxHardware(Hardware):
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
                     if re.search("device", folder):
-                        virtual = 1
+                        virtual = 0
                         break
                 if virtual:
                     continue
