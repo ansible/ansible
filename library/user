@@ -861,7 +861,7 @@ def main():
         if user.user_exists():
             (rc, out, err) = user.remove_user()
             if rc != 0:
-                module.fail_json(name=name, msg=err, rc=rc)
+                module.fail_json(name=user.name, msg=err, rc=rc)
             result['force'] = user.force
             result['remove'] = user.remove
     elif user.state == 'present':
