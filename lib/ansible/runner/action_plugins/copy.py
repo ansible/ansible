@@ -34,10 +34,6 @@ class ActionModule(object):
         source  = options.get('src', None)
         dest    = options.get('dest', None)
 
-        if dest.endswith("/"):
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
         if (source is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=result)
@@ -65,7 +61,15 @@ class ActionModule(object):
             result=dict(failed=True, msg="could not find src=%s" % source)
             return ReturnData(conn=conn, result=result)
 
+        if dest.endswith("/"):
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
+
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        if remote_md5 == '3':
+            # Destination is a directory
+            dest = os.path.join(dest, os.path.basename(source))
+            remote_md5 = self.runner._remote_md5(conn, tmp, dest)
 
         exec_rc = None
         if local_md5 != remote_md5:
