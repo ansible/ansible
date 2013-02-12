@@ -31,6 +31,7 @@ def log(host, category, data):
             # avoid logging extraneous data from facts
             data = 'omitted'
         else:
+            data = data.copy()
             invocation = data.pop('invocation', None)
             data = json.dumps(data)
             if invocation is not None:
