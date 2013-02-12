@@ -82,7 +82,7 @@ options:
     default: present
     choices: [present, absent]
 examples:
-  - code: rabbitmq_user user=joe password=changeme vhost="/" configure_priv=".*" read_priv=".*" write_priv=".*" state=present
+  - code: rabbitmq_user user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.* state=present
     description: Add user to server and assign full access control
 '''
 
@@ -92,7 +92,7 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         if tags is None:
-            self.tags = []
+            self.tags = list()
         else:
             self.tags = tags.split(',')
 
@@ -106,14 +106,17 @@ class RabbitMqUser(object):
 
         self._tags = None
         self._permissions = None
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args):
-        cmd = ["rabbitmqctl", "-q"]
-        rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-        return out.splitlines()
+    def _exec(self, args, run_in_check_mode=False):
+        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+            cmd = [self._rabbitmqctl, '-q']
+            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            return out.splitlines()
+        return list()
 
     def get(self):
-        users = self._exec(["list_users"])
+        users = self._exec(['list_users'], True)
 
         for user_tag in users:
             user, tags = user_tag.split('\t')
@@ -125,16 +128,14 @@ class RabbitMqUser(object):
                 if tags != '':
                     self._tags = tags.split(',')
                 else:
-                    self._tags = []
+                    self._tags = list()
 
                 self._permissions = self._get_permissions()
-
                 return True
-
         return False
 
     def _get_permissions(self):
-        perms_out = self._exec(["list_user_permissions", self.username])
+        perms_out = self._exec(['list_user_permissions', self.username], True)
 
         for perm in perms_out:
             vhost, configure_priv, write_priv, read_priv = perm.split('\t')
@@ -144,42 +145,26 @@ class RabbitMqUser(object):
         return dict()
 
     def add(self):
-        if not self.module.check_mode:
-            self._exec(["add_user", self.username, self.password])
-
+        self._exec(['add_user', self.username, self.password])
 
     def delete(self):
-        if not self.module.check_mode:
-            self._exec(["delete_user", self.username])
+        self._exec(['delete_user', self.username])
 
     def set_tags(self):
-        if not self.module.check_mode:
-            self._exec(["set_user_tags", self.username] + self.tags)
+        self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        if not self.module.check_mode:
-            cmd = ["set_permissions"]
-            cmd.append('-p')
-            cmd.append(self.permissions['vhost'])
-            cmd.append(self.username)
-            cmd.append(self.permissions['configure_priv'])
-            cmd.append(self.permissions['write_priv'])
-            cmd.append(self.permissions['read_priv'])
-            self._exec(cmd)
+        cmd = ['set_permissions']
+        cmd.append('-p')
+        cmd.append(self.permissions['vhost'])
+        cmd.append(self.username)
+        cmd.append(self.permissions['configure_priv'])
+        cmd.append(self.permissions['write_priv'])
+        cmd.append(self.permissions['read_priv'])
+        self._exec(cmd)
 
     def has_tags_modifications(self):
-        if (not self._tags and len(self.tags) > 0) or (not self.tags and len(self._tags) > 0):
-            return True
-        else:
-            for tag in self._tags:
-                if tag not in self.tags:
-                    return True
-
-            for tag in self.tags:
-                if tag not in self._tags:
-                    return True
-
-        return False
+        return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
         return self._permissions != self.permissions
@@ -238,7 +223,7 @@ def main():
         rabbitmq_user.set_permissions()
         changed = True
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, user=username, state=state)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

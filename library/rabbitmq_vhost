@@ -31,62 +31,105 @@ options:
       - The name of the vhost to manage
     required: true
     default: null
+    aliases: [vhost]
+  tracing:
+    description:
+      Enable/disable tracing for a vhost
+    default: no
+    choices: [yes, no]
+    aliases: [trace]
   state:
     description:
       - The state of vhost
-    required: true
-    default: null
-    choices: [ "present", "absent" ]
+    default: present
+    choices: [present, absent]
 examples:
-   - code: "rabbitmq_vhost: name=/test state=present"
+   - code: 'rabbitmq_vhost: name=/test state=present'
      description: Ensure that the vhost /test exists.
 author: Matt Cordial
 '''
 
+class RabbitMqVhost(object):
+    def __init__(self, module, name, tracing):
+        self.module = module
+        self.name = name
+        self.tracing = tracing
+
+        self._tracing = False
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+
+    def _exec(self, args, run_in_check_mode=False):
+        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+            cmd = [self._rabbitmqctl, '-q']
+            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            return out.splitlines()
+        return list()
+
+    def get(self):
+        vhosts = self._exec(['list_vhosts', 'name', 'tracing'], True)
+
+        for vhost in vhosts:
+            name, tracing = vhost.split('\t')
+            if name == self.name:
+                self._tracing = self.module.boolean(tracing)
+                return True
+        return False
+
+    def add(self):
+        return self._exec(['add_vhost', self.name])
+
+    def delete(self):
+        return self._exec(['delete_vhost', self.name])
+
+    def set_tracing(self):
+        if self.tracing != self._tracing:
+            if self.tracing:
+                self._enable_tracing()
+            else:
+                self._disable_tracing()
+            return True
+        return False
+
+    def _enable_tracing(self):
+        return self._exec(['trace_on', '-p', self.name])
+
+    def _disable_tracing(self):
+        return self._exec(['trace_off', '-p', self.name])
+
 
 def main():
     arg_spec = dict(
-        name=dict(required=True),
-        state=dict(required=False, choices=['present', 'absent'])
+        name=dict(required=True, aliases=['vhost']),
+        tracing=dict(default='off', choices=BOOLEANS, aliases=['trace']),
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        supports_check_mode=True
+    )
 
     name = module.params['name']
+    tracing = module.boolean(module.params['tracing'])
     state = module.params['state']
 
-    RABBITMQCTL = module.get_bin_path('rabbitmqctl', True)
+    rabbitmq_vhost = RabbitMqVhost(module, name, tracing)
 
-    present = False
-    rc, out, err = module.run_command('%s list_vhosts' % RABBITMQCTL)
-    for line in out.splitlines():
-        if line.strip() == name:
-            present = True
-            break
-
-    if state == 'present' and present:
-        module.exit_json(changed=False, name=name, state=state)
-
-    if state == 'present' and not present:
-        rc, out, err = module.run_command('%s add_vhost %s' % (RABBITMQCTL, name))
-        if '...done' in out:
-            module.exit_json(changed=True, name=name, state=state)
+    changed = False
+    if rabbitmq_vhost.get():
+        if state == 'absent':
+            rabbitmq_vhost.delete()
+            changed = True
         else:
-            module.fail_json(msg=out, name=name, state=state)
+            if rabbitmq_vhost.set_tracing():
+                changed = True
+    elif state == 'present':
+        rabbitmq_vhost.add()
+        rabbitmq_vhost.set_tracing()
+        changed = True
 
-    if state == 'absent' and not present:
-        module.exit_json(changed=False, name=name, state=state)
-
-    if state == 'absent' and present:
-        rc, out, err = module.run_command('%s delete_vhost %s' % (RABBITMQCTL, name))
-        if '...done' in out:
-            module.exit_json(changed=True, name=name, state=state)
-        else:
-            module.fail_json(msg=out, name=name, state=state)
-
-    module.exit_json(changed=False, name=name, state=state)
+    module.exit_json(changed=changed, name=name, state=state)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
 main()

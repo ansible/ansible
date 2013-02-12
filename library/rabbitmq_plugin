@@ -54,22 +54,23 @@ examples:
 class RabbitMqPlugins(object):
     def __init__(self, module):
         self.module = module
+        self._rabbitmq_plugins = module.get_bin_path('rabbitmq-plugins', True)
 
-    def _exec(self, args):
-        cmd = ["rabbitmq-plugins"]
-        rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-        return out.splitlines()
+    def _exec(self, args, run_in_check_mode=False):
+        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+            cmd = [self._rabbitmq_plugins]
+            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            return out.splitlines()
+        return list()
 
     def get_all(self):
-        return self._exec(["list", "-E", "-m"])
+        return self._exec(['list', '-E', '-m'], True)
 
     def enable(self, name):
-        if not self.module.check_mode:
-            self._exec(["enable", name])
+        self._exec(['enable', name])
 
     def disable(self, name):
-        if not self.module.check_mode:
-            self._exec(["disable", name])
+        self._exec(['disable', name])
 
 def main():
     arg_spec = dict(
