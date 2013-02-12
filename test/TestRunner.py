@@ -129,7 +129,7 @@ class TestRunner(unittest.TestCase):
 
         result = self._run('command', [ "false" ])
         assert result['rc'] == 1
-        assert 'failed' not in result
+        assert 'failed' in result
 
         result = self._run('command', [ "/usr/bin/this_does_not_exist", "splat" ])
         assert 'msg' in result

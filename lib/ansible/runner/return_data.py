@@ -56,6 +56,6 @@ class ReturnData(object):
     def communicated_ok(self):
         return self.comm_ok
 
-    def is_successful(self):
-        return self.comm_ok and (self.result.get('failed', False) == False) and (self.result.get('rc',0) == 0)
+    def is_successful(self, check_rc=False):
+        return self.comm_ok and (self.result.get('failed', False) == False) and (not check_rc or self.result.get('rc',0) == 0)
 
