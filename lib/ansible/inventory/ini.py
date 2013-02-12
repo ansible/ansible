@@ -63,6 +63,8 @@ class InventoryParser(object):
         self.groups = dict(all=all, ungrouped=ungrouped)
         active_group_name = 'ungrouped'
 
+        hns_to_del = set()
+
         for line in self.lines:
             if line.startswith("["):
                 active_group_name = line.replace("[","").replace("]","").strip()
@@ -102,8 +104,22 @@ class InventoryParser(object):
 
                 for hn in hostnames:
                     host = None
+                    rename_host = None
                     if hn in self.hosts:
-                        host = self.hosts[hn]
+                        try:
+                            rename_port = self.hosts[hn].vars['ansible_ssh_port']
+                            rename_hn = '%s:%s' % (hn, rename_port)
+                            rename_host = Host(name=rename_hn, port=rename_port)
+                            self.hosts[rename_hn] = rename_host
+
+                            if hn not in hns_to_del:
+                                hns_to_del.add((hn, self.hosts[hn]))
+
+                            new_hn = '%s:%s' % (hn, port)
+                            host = Host(name=new_hn, port=port)
+                            self.hosts[new_hn] = host
+                        except KeyError:
+                            host = self.hosts[hn]
                     else:
                         host = Host(name=hn, port=port)
                         self.hosts[hn] = host
@@ -112,6 +128,13 @@ class InventoryParser(object):
                             (k,v) = t.split("=")
                             host.set_variable(k,v)
                     self.groups[active_group_name].add_host(host)
+                    if rename_host:
+                        self.groups[active_group_name].add_host(rename_host)
+
+        for hn, old_host in hns_to_del:
+            del self.hosts[hn]
+            for group in self.groups:
+                self.groups[group].cleanup_host(old_host)
 
     # [southeast:children]
     # atlanta

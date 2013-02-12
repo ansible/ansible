@@ -44,6 +44,11 @@ class Group(object):
         self.hosts.append(host)
         host.add_group(self)
 
+    def cleanup_host(self, host):
+
+        if host in self.hosts:
+            self.hosts.remove(host)
+
     def set_variable(self, key, value):
 
         self.vars[key] = value
