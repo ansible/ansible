@@ -380,6 +380,8 @@ class LinuxHardware(Hardware):
         lspci = module.get_bin_path('lspci')
         if lspci:
             rc, pcidata, err = module.run_command(lspci)
+        else:
+            pcidata = None
 
         try:
             block_devs = os.listdir("/sys/block")
@@ -397,19 +399,18 @@ class LinuxHardware(Hardware):
                     sysfs_no_links = 1
                 else:
                     continue
-            if re.search("virtual", path):
+            if "virtual" in path:
                 continue
             sysdir = os.path.join("/sys/block", path)
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
-                    if re.search("device", folder):
+                    if "device" in folder:
                         virtual = 0
                         break
                 if virtual:
                     continue
             d = {}
-            m = re.match(".*/(.+)$", sysdir)
-            diskname = m.group(1)
+            diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
@@ -448,8 +449,8 @@ class LinuxHardware(Hardware):
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
-            m = re.match(".+/\d+:(\w+:\w+\.\w)/host\d+/\s*", sysdir)
-            if m:
+            m = re.match(".+/[a-f0-9]+:([a-f0-9]+:[a-f0-9]+\.[a-f0-9]+)/host\d+/", sysdir)
+            if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
                 m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
@@ -457,8 +458,9 @@ class LinuxHardware(Hardware):
 
             d['holders'] = []
             for folder in os.listdir(sysdir + "/holders"):
-                if re.search("^dm-.*", folder):
-                    name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                if not folder.startswith("dm-"):
+                    continue
+                name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
                 if name:
                     d['holders'].append(name)
                 else:
