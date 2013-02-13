@@ -319,12 +319,12 @@ def template_from_file(basedir, path, vars):
     to load them with the jinja environment
     '''
     jinja_exts = []
-    if C.DEFAULT_JINA_EXTENSIONS:
+    if C.DEFAULT_JINJA2_EXTENSIONS:
         '''
         Let's make sure the configuration directive doesn't contain spaces
         and split extensions in an array
         '''
-        jinja_exts = C.DEFAULT_JINA_EXTENSIONS.replace(" ", "").split(',')
+        jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=jinja_exts)
     for filter_plugin in utils.plugins.filter_loader.all():
