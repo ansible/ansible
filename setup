@@ -967,30 +967,32 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
-        for line in open('/proc/self/status').readlines():
-            if re.match('^VxID: \d+', line):
-                self.facts['virtualization_type'] = 'linux_vserver'
-                if re.match('^VxID: 0', line):
-                    self.facts['virtualization_role'] = 'host'
-                else:
-                    self.facts['virtualization_role'] = 'guest'
-                return
+        if os.path.exists('/proc/self/status'):
+            for line in open('/proc/self/status').readlines():
+                if re.match('^VxID: \d+', line):
+                    self.facts['virtualization_type'] = 'linux_vserver'
+                    if re.match('^VxID: 0', line):
+                        self.facts['virtualization_role'] = 'host'
+                    else:
+                        self.facts['virtualization_role'] = 'guest'
+                    return
 
-        for line in open('/proc/cpuinfo').readlines():
-            if re.match('^model name.*QEMU Virtual CPU', line):
-                self.facts['virtualization_type'] = 'kvm'
-            elif re.match('^vendor_id.*User Mode Linux', line):
-                self.facts['virtualization_type'] = 'uml'
-            elif re.match('^model name.*UML', line):
-                self.facts['virtualization_type'] = 'uml'
-            elif re.match('^vendor_id.*PowerVM Lx86', line):
-                self.facts['virtualization_type'] = 'powervm_lx86'
-            elif re.match('^vendor_id.*IBM/S390', line):
-                self.facts['virtualization_type'] = 'ibm_systemz'
-            else:
-                continue
-            self.facts['virtualization_role'] = 'guest'
-            return
+        if os.path.exists('/proc/cpuinfo'):
+            for line in open('/proc/cpuinfo').readlines():
+                if re.match('^model name.*QEMU Virtual CPU', line):
+                    self.facts['virtualization_type'] = 'kvm'
+                elif re.match('^vendor_id.*User Mode Linux', line):
+                    self.facts['virtualization_type'] = 'uml'
+                elif re.match('^model name.*UML', line):
+                    self.facts['virtualization_type'] = 'uml'
+                elif re.match('^vendor_id.*PowerVM Lx86', line):
+                    self.facts['virtualization_type'] = 'powervm_lx86'
+                elif re.match('^vendor_id.*IBM/S390', line):
+                    self.facts['virtualization_type'] = 'ibm_systemz'
+                else:
+                    continue
+                self.facts['virtualization_role'] = 'guest'
+                return
 
         # Beware that we can have both kvm and virtualbox running on a single system
         if os.path.exists("/proc/modules"):
