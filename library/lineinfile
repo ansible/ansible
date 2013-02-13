@@ -82,7 +82,7 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
 examples:
    - code: 'lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled'
-   - code: "lineinfile: \\\"dest=/usr/pkg/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
+   - code: "lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
    - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
    - code: 'lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"'
 """
