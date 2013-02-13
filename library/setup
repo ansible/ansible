@@ -76,7 +76,8 @@ class Facts(object):
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
     OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
-                    '/etc/vmware-release': 'VMwareESX' }
+                    '/etc/vmware-release': 'VMwareESX',
+                    '/etc/system-release': 'Amazon' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -132,6 +133,10 @@ class Facts(object):
             if os.path.exists(path):
                 if self.facts['distribution'] == 'Fedora':
                     pass
+                elif name == 'Amazon':
+                    self.facts['distribution'] = 'Amazon'
+                    data = get_file_content(path)
+                    self.facts['distribution_version'] = data.split()[-1]
                 elif name == 'RedHat':
                     data = get_file_content(path)
                     if 'Red Hat' in data:

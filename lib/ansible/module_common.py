@@ -97,6 +97,9 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
+            if distribution == 'NA':
+                if os.path.is_file('/etc/system-release'):
+                    distribution = 'Amazon'
         except:
             # FIXME: MethodMissing, I assume?
             distribution = platform.dist()[0].capitalize()
