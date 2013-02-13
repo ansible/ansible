@@ -59,6 +59,8 @@ options:
 examples:
     - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
       description: Example git checkout from Ansible Playbooks
+    - code: "git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello"
+      description: Example read-write git checkout from github
 '''
 
 import re
