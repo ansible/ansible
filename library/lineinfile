@@ -64,17 +64,14 @@ options:
         after the specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
     choices: [ EOF, *regex* ]
-    default: EOF
   insertbefore:
     required: false
-    default: BOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
          C(BOF) for inserting the line at the beginning of the
         file.
     choices: [ BOF, *regex* ]
-    default: BOF    
   create:
     required: false
     choices: [ yes, no ]
@@ -116,18 +113,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     mre = re.compile(regexp)
     if not mre.search(line):
         module.fail_json(msg="usage error: line= doesn't match regexp (%s)" % regexp)
-
-    if insertbefore and insertafter:
-        module.fail_json(msg="usage error: \"insertbefore\" and \"insertafter\" cannot be combined")
-
     
-    if insertafter in ('BOF', 'EOF', False):
-        if insertbefore in ('BOF', False):
-            insre = None
-        else:
-            insre = re.compile(insertbefore)
-    else:
+    if insertafter is not None and insertafter not in ('BOF', 'EOF'):
         insre = re.compile(insertafter)
+    elif insertbefore is not None and insertbefore not in ('BOF'):
+        insre = re.compile(insertbefore)
+    else:
+        insre = None
 
     # index[0] is the line num where regexp has been found
     # index[1] is the line num where insertafter/inserbefore has been found
@@ -153,12 +145,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
             msg = 'line replaced'
             changed = True
     # Add it to the beginning of the file
-    # we keep insertafter == 'BOF' for backwards compatibility, but it should be removed eventually
     elif insertbefore == 'BOF' or insertafter == 'BOF':
         lines.insert(0, line + os.linesep)
         msg = 'line added'
         changed = True
-    # Add it to the end of the file if requested or if insertafter=/insertbefore didn't match
+    # Add it to the end of the file if requested or
+    # if insertafter=/insertbefore didn't match anything
+    # (so default behaviour is to add at the end)
     elif insertafter == 'EOF' or index[1] == -1:
         lines.append(line + os.linesep)
         msg = 'line added'
@@ -209,11 +202,12 @@ def main():
             state=dict(default='present', choices=['absent', 'present']),
             regexp=dict(required=True),
             line=dict(aliases=['value']),
-            insertafter=dict(default=False),
-            insertbefore=dict(default=False),
+            insertafter=dict(default=None),
+            insertbefore=dict(default=None),
             create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
+    mutually_exclusive = [['insertbefore', 'insertafter']]
     )
 
     params = module.params
