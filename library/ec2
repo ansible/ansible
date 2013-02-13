@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on boto and m2crypt.
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto.
 version_added: "0.9"
 options:
   key_name:
@@ -30,9 +30,16 @@ options:
     aliases: ['keypair']
   group:
     description:
-      - security group to use on the instance
+      - security group to use with the instance
     required: false
     default: 'default'
+    aliases: []
+  group:
+    version_added: "1.1"
+    description:
+      - security group id to use with the instance 
+    required: false
+    default: null
     aliases: []
   instance_type:
     description:
@@ -66,7 +73,7 @@ options:
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to ec2 or your Eucalyptus cloud (by default the module will use ec2 endpoints)
+      - url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
     required: False
     default: null
     aliases: []
@@ -89,6 +96,7 @@ options:
     default: 1
     aliases: []
   monitor:
+    version_added: "1.1"
     description:
       - enable detailed monitoring (CloudWatch) for instance
     required: False
@@ -104,7 +112,7 @@ options:
   instance_tags:
     version_added: "1.0"
     description:
-      - a hash/dictionary of tags, in quoted json format, to add to the new instance
+      - a hash/dictionary of tags to add to the new instance; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: False
     default: null
     aliases: []
@@ -129,6 +137,7 @@ def main():
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
             group = dict(default='default'),
+            group_id = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
@@ -146,6 +155,7 @@ def main():
 
     key_name = module.params.get('key_name')
     group = module.params.get('group')
+    group_id = module.params.get('group_id')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
@@ -175,7 +185,6 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
 
-
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
     try:
@@ -184,6 +193,7 @@ def main():
                                 max_count = count,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group],
+                                security_group_ids = group_id,
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
