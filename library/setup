@@ -602,6 +602,46 @@ class FreeBSDHardware(Hardware):
                 if s:
                     self.facts['devices'][d.group(1)].append(s.group(1))
 
+def itersubclasses(cls, _seen=None):
+    """
+    itersubclasses(cls)
+
+    Generator over all subclasses of a given class, in depth first order.
+
+    >>> list(itersubclasses(int)) == [bool]
+    True
+    >>> class A(object): pass
+    >>> class B(A): pass
+    >>> class C(A): pass
+    >>> class D(B,C): pass
+    >>> class E(D): pass
+    >>> 
+    >>> for cls in itersubclasses(A):
+    ...     print(cls.__name__)
+    B
+    D
+    E
+    C
+    >>> # get ALL (new-style) classes currently defined
+    >>> [cls.__name__ for cls in itersubclasses(object)] #doctest: +ELLIPSIS
+    ['type', ...'tuple', ...]
+    """
+    
+    if not isinstance(cls, type):
+        raise TypeError('itersubclasses must be called with '
+                        'new-style classes, not %.100r' % cls)
+    if _seen is None: _seen = set()
+    try:
+        subs = cls.__subclasses__()
+    except TypeError: # fails only when cls is type
+        subs = cls.__subclasses__(cls)
+    for sub in subs:
+        if sub not in _seen:
+            _seen.add(sub)
+            yield sub
+            for sub in itersubclasses(sub, _seen):
+                yield sub
+
 class Network(Facts):
     """
     This is a generic Network subclass of Facts.  This should be further
@@ -623,7 +663,7 @@ class Network(Facts):
 
     def __new__(cls, *arguments, **keyword):
         subclass = cls
-        for sc in Network.__subclasses__():
+        for sc in itersubclasses(Network):
             if sc.platform == platform.system():
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
@@ -785,6 +825,163 @@ class LinuxNetwork(Network):
                         ips['all_ipv6_addresses'].append(address)
 
         return interfaces, ips
+
+class GenericBsdIfconfigNetwork(Network):
+    """
+    This is a generic BSD subclass of Network using the ifconfig command.
+    It defines
+    - interfaces (a list of interface names)
+    - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
+    It currently does not define 
+    - default_ipv4 and default_ipv6
+    - type, mtu and network on interfaces
+    """
+    platform = 'Generic_BSD_Ifconfig'
+
+    def __init__(self):
+        Network.__init__(self)
+
+    def populate(self):
+        ifconfig_path = module.get_bin_path('ifconfig')
+        if ifconfig_path is None:
+            return self.facts
+        route_path = module.get_bin_path('route')
+        if route_path is None:
+            return self.facts
+        default_ipv4, default_ipv6 = self.get_default_interfaces(route_path)
+        interfaces, ips = self.get_interfaces_info(ifconfig_path)
+        self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
+        self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
+        self.facts['interfaces'] = interfaces.keys()
+        for iface in interfaces:
+            self.facts[iface] = interfaces[iface]
+        self.facts['default_ipv4'] = default_ipv4
+        self.facts['default_ipv6'] = default_ipv6
+        self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
+        self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
+        return self.facts
+
+    def get_default_interfaces(self, route_path):
+        # Use the commands:
+        #     route -n get 8.8.8.8                     -> Google public DNS
+        #     route -n get 2404:6800:400a:800::1012    -> ipv6.google.com
+        # to find out the default outgoing interface, address, and gateway
+        command = dict(
+            v4 = [route_path, '-n', 'get', '8.8.8.8'],
+            v6 = [route_path, '-n', 'get', '2404:6800:400a:800::1012']
+        )
+        interface = dict(v4 = {}, v6 = {})
+        for v in 'v4', 'v6':
+            if v == 'v6' and not socket.has_ipv6:
+                continue
+            rc, out, err = module.run_command(command[v])
+            if not out:
+                # v6 routing may result in 
+                #   RTNETLINK answers: Invalid argument
+                continue
+            lines = out.split('\n')
+            for line in lines:
+                words = line.split()
+                # look for first word starting interface
+                if len(words) > 0 and words[0] == 'interface:':
+                    interface[v]['interface'] = words[1]
+        return interface['v4'], interface['v6']
+
+    def get_interfaces_info(self, ifconfig_path):
+        interfaces = {}
+        current_if = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        rc, out, err = module.run_command([ifconfig_path])
+        for line in out.split('\n'):
+            if line:
+                words = line.split()
+                if re.match('^\S', line) and len(words) > 3:
+                    device = words[0][0:-1]
+                    current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+                    interfaces[device] = current_if
+                    current_if['flags'] = self.get_options(words[1])
+                    current_if['mtu'] = words[3]
+                    current_if['macaddress'] = 'unknown'    # will be overwritten later
+                elif words[0].startswith('options='):
+                    # Mac has options like this...
+                    current_if['options'] = self.get_options(words[0])
+                elif words[0] == 'nd6':
+                    # FreBSD has options like this...
+                    current_if['options'] = self.get_options(words[1])
+                elif words[0] == 'ether':
+                    current_if['macaddress'] = words[1]
+                elif words[0] == 'media:':
+                    # not sure if this is useful - we also drop information
+                    current_if['media'] = words[1]
+                elif words[0] == 'status:':
+                    current_if['status'] = words[1]
+                elif words[0] == 'lladdr':
+                    current_if['lladdr'] = words[1]
+                elif words[0] == 'inet':
+                    address = {'address': words[1]}
+                    if words[3].startswith('0x'):
+                        address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+                    else:
+                        address['netmask'] = words[3]
+                    if len(words) > 5:
+                        address['broadcast'] = words[5]
+                    # calculate the network
+                    address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
+                    netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
+                    address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
+                    # add to our list of addresses
+                    if not words[1].startswith('127.'):
+                        ips['all_ipv4_addresses'].append(address['address'])
+                    current_if['ipv4'].append(address)
+                elif words[0] == 'inet6':
+                    address = {'address': words[1]}
+                    if (len(words) >= 4) and (words[2] == 'prefixlen'):
+                        address['prefix'] = words[3]
+                    if (len(words) >= 6) and (words[4] == 'scopeid'):
+                        address['scope'] = words[5]
+                    if not address['address'] == '::1' and not address['address'] == 'fe80::1%lo0':
+                        ips['all_ipv6_addresses'].append(address['address'])
+                    current_if['ipv6'].append(address)
+        return interfaces, ips
+
+    def get_options(self, option_string):
+        start = option_string.find('<') + 1
+        end = option_string.rfind('>') - 1
+        if (start > 0) and (end > 0) and (end > start + 1):
+            option_csv = option_string[start:end]
+            return option_csv.split(',')
+        else:
+            return []
+
+    def merge_default_interface(self, defaults, interfaces, ip_type):
+        if not 'interface' in defaults.keys():
+            return
+        ifinfo = interfaces[defaults['interface']]
+        # copy all the interface values across except addresses
+        for item in ifinfo.keys():
+            if item != 'ipv4' and item != 'ipv6':
+                defaults[item] = ifinfo[item]
+        if len(ifinfo[ip_type]) > 0:
+            for item in ifinfo[ip_type][0].keys():
+                defaults[item] = ifinfo[ip_type][0][item]
+
+class DarwinNetwork(GenericBsdIfconfigNetwork):
+    """
+    This is the Mac OS X/Darwin Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged
+    """
+    platform = 'Darwin'
+
+class FreeBSDNetwork(GenericBsdIfconfigNetwork):
+    """
+    This is the FreeBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged
+    """
+    platform = 'FreeBSD'
 
 class Virtual(Facts):
     """
