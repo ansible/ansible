@@ -609,6 +609,10 @@ def main():
         result['enabled'] = service.module.params['enabled']
     if service.state:
         result['state'] = service.state
+    elif service.running:
+        result['state'] = 'running'
+    else:
+        result['state'] = 'stopped'
 
     module.exit_json(**result)
 
