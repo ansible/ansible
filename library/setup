@@ -388,7 +388,7 @@ class LinuxHardware(Hardware):
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
-        mtab = get_file_content('/etc/mtab')
+        mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
