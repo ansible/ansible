@@ -1,0 +1,168 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_vol
+short_description: create and attach a volume, return volume id and device map
+description:
+    - creates an EBS volume and optionally attaches it to an instance. This module has a dependency on python-boto
+version_added: "1.1"
+options:
+  instance:
+    description:
+      - instance ID
+    required: false
+    default: null 
+    aliases: []
+  volume_size:
+    description:
+      - size of volume (in GB)
+    required: true
+    default: null
+    aliases: []
+  device_name:
+    description:
+      - device id to override device mapping. Normally /dev/sdf for instance-store, /dev/sdb for EBS.
+    required: false
+    default: null
+    aliases: []
+  zone:
+    description:
+      - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
+    required: false
+    default: null
+    aliases: []
+examples:
+   - code: 'local_action: ec2_vol instance=XXXXXX volume_size=5 device_name=sdd'
+     description: "Simple playbook example"
+   - code: '- name: Launch instances
+              local_action: ec2 keypair=$keypair image=$image wait=true count=3
+              register: ec2
+
+            - name: Create volumes and attach
+              local_action: ec2_vol instance=${item.id} volume_size=5
+              with_items: ${ec2.instances}
+              register: ec2_vol
+     description: "Advanced playbook example"   
+requirements: [ "boto" ]
+author: Lester Wade
+'''
+
+import sys
+import time
+
+try:
+    import boto 
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            instance = dict(),
+            volume_size = dict(required=True),
+            device_name = dict(),
+            zone = dict(),
+            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
+            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+        )
+    )
+
+    instance = module.params.get('instance')
+    volume_size = module.params.get('volume_size')
+    device_name = module.params.get('device_name')
+    zone = module.params.get('zone')
+    ec2_url = module.params.get('ec2_url')
+    ec2_secret_key = module.params.get('ec2_secret_key')
+    ec2_access_key = module.params.get('ec2_access_key')
+
+    # allow eucarc environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    try:
+        if ec2_url: # if we have an URL set, connect to the specified endpoint 
+            ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+        else: # otherwise it's Amazon.
+            ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
+    # Here we need to get the zone info for the instance. This covers situation where 
+    # instance is specified but zone isn't.
+    # Useful for playbooks chaining instance launch with volume create + attach and where the
+    # zone doesn't matter to the user.
+
+    if instance:
+        reservation = ec2.get_all_instances(instance_ids=instance)
+        inst = reservation[0].instances[0]
+        zone = inst.placement
+
+    # If no instance supplied, try volume creation based on module parameters.
+
+    try:
+        volume = ec2.create_volume(volume_size, zone)
+        while volume.status != 'available':
+            time.sleep(3)
+            volume.update()
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    # Attach the created volume.
+
+    if device_name and instance:
+        try:
+            attach = volume.attach(inst.id, device_name)
+            while volume.attachment_state() != 'attached':
+                time.sleep(3)
+                volume.update()
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))           
+   
+    # If device_name isn't set, make a choice based on best practices here:
+    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
+       
+    if device_name is None and instance:
+        try:
+            if inst.root_device_type != 'ebs':
+                device_name = '/dev/sdf'
+                attach = volume.attach(inst.id, device_name)
+            else:
+                device_name = '/dev/sdb'
+                attach = volume.attach(inst.id, device_name)
+                while volume.attachment_state() != 'attached':
+                    time.sleep(3)
+                    volume.update()
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))           
+
+    print json.dumps({
+        "volume_id": volume.id,
+        "device": device_name
+    })
+    sys.exit(0)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
