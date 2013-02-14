@@ -485,9 +485,6 @@ class Runner(object):
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
         ''' execute a command string over SSH, return the output '''
 
-        if executable is None:
-            executable = '/bin/sh'
-
         sudo_user = self.sudo_user
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
@@ -557,7 +554,8 @@ class Runner(object):
 
         cmd = ' && '.join((cmd, 'cd %s' % basetmp, 'pwd'))
         executable = '/bin/sh'
-        result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        result = self._low_level_exec_command(conn, cmd, None, sudoable=False,
+                                              executable=executable)
         if result['rc'] != 0:
             raise errors.AnsibleError('Cannot create remote temporary directory: '
                                       '%s' % basetmp)
