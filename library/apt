@@ -59,7 +59,7 @@ options:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed.
     required: false
-    default: "no"
+    default: "yes"
     choices: [ "yes", "no" ]
   force:
     description:
