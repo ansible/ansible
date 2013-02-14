@@ -119,7 +119,12 @@ class Connection(object):
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
-            chan.get_pty()
+            # sudo usually requires a PTY (cf. requiretty option), therefore
+            # we give it one, and we try to initialise from the calling
+            # environment
+            chan.get_pty(term=os.getenv('TERM', 'vt100'),
+                         width=os.getenv('COLUMNS', 0),
+                         height=os.getenv('LINES', 0))
             shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
