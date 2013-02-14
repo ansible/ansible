@@ -110,7 +110,6 @@ class Connection(object):
             if len(str(e)) > 0:
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
-        chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -120,6 +119,7 @@ class Connection(object):
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
+            chan.get_pty()
             shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
