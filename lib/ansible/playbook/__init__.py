@@ -63,7 +63,8 @@ class PlayBook(object):
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
-        diff             = False):
+        diff             = False,
+        chroot           = None):
 
         """
         playbook:         path to a playbook file
@@ -113,12 +114,16 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.chroot           = chroot
 
         if inventory is None:
             self.inventory    = ansible.inventory.Inventory(host_list)
             self.inventory.subset(subset)
         else:
             self.inventory    = inventory
+
+        if self.chroot and not self.transport == 'local':
+            raise errors.AnsibleError("chroot option requires connection 'local'")
 
         self.basedir     = os.path.dirname(playbook) or '.'
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
@@ -273,7 +278,8 @@ class PlayBook(object):
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment
+            check=self.check, diff=self.diff, environment=task.environment,
+            chroot=task.chroot
         )
 
         if task.async_seconds == 0:
@@ -379,7 +385,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            check=self.check, diff=self.diff
+            check=self.check, diff=self.diff, chroot=play.chroot
         ).run()
         self.stats.compute(setup_results, setup=True)
 

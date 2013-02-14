@@ -27,7 +27,8 @@ class Task(object):
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment'
+        'items_lookup_plugin', 'items_lookup_terms', 'environment',
+        'chroot'
     ]
 
     # to prevent typos and such
@@ -35,7 +36,7 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment'
+         'sudo_pass', 'when', 'connection', 'environment', 'chroot'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -110,6 +111,11 @@ class Task(object):
             # delegate_to: localhost should use local transport
             if self.delegate_to in ['127.0.0.1', 'localhost']:
                 self.transport   = 'local'
+
+        if play.chroot and not self.transport == 'local':
+            raise errors.AnsibleError("chroot option requires connection 'local'")
+
+        self.chroot       = play.chroot
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier

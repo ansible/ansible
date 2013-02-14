@@ -452,6 +452,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         parser.add_option('-c', '--connection', dest='connection',
                           default=C.DEFAULT_TRANSPORT,
                           help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+        parser.add_option('',   '--chroot', dest='chroot', metavar='DIR',
+                          default=None,
+                          help="chroot to this dir when executing scripts (requires connection 'local' and running as root)")
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',

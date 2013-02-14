@@ -106,6 +106,12 @@ def main(args):
         if not os.path.isfile(playbook):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
+    if options.chroot:
+        if not os.geteuid() == 0:
+            raise errors.AnsibleError("chroot option requires running as root")
+        if not os.path.isdir(options.chroot):
+            raise errors.AnsibleError("chroot dir %s is not a directory" % options.chroot)
+
     # run all playbooks specified on the command line
     for playbook in args:
 
@@ -132,7 +138,8 @@ def main(args):
             private_key_file=options.private_key_file,
             only_tags=only_tags,
             check=options.check,
-            diff=options.diff
+            diff=options.diff,
+            chroot=options.chroot
         )
 
         if options.listhosts or options.listtasks:
