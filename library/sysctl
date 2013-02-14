@@ -161,8 +161,9 @@ def sysctl_check(current_step, **sysctl_args):
     # TODO choose if prefered to use os.access() instead try/catch on open
     if current_step == 'before':
         try:
-            with open(sysctl_args['sysctl_file']) as f: pass
-        except IOError as e:
+            f = open(sysctl_args['sysctl_file'])
+            f.close()
+        except IOError, e:
             return 1, 'unable to open supplied sysctl.conf'
    
     # no smart checks at this step ?
@@ -184,11 +185,12 @@ def sysctl_check(current_step, **sysctl_args):
     if current_step == 'after' and sysctl_args['checks'] in ['after', 'both']:
 
         if sysctl_args['value'] is not None:
-            with open(sysctl_args['key_path'],'r') as f:
-                output = f.read()
-                output = output.strip(' \t\n\r')
-                if output != sysctl_args['value']:
-                    return 1, 'key seems not set to value even after update/sysctl, founded : <%s>, wanted : <%s>' % (output, sysctl_args['value'])
+            f = open(sysctl_args['key_path'],'r')
+            output = f.read()
+            f.close()
+            output = output.strip(' \t\n\r')
+            if output != sysctl_args['value']:
+                return 1, 'key seems not set to value even after update/sysctl, founded : <%s>, wanted : <%s>' % (output, sysctl_args['value'])
         
         return 0, ''
     
