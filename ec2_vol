@@ -24,19 +24,19 @@ version_added: "1.1"
 options:
   instance:
     description:
-      - instance ID
+      - instance ID if you wish to attach the volume. 
     required: false
     default: null 
     aliases: []
   volume_size:
     description:
-      - size of volume (in GB)
+      - size of volume (in GB) to create.
     required: true
     default: null
     aliases: []
   device_name:
     description:
-      - device id to override device mapping. Normally /dev/sdf for instance-store, /dev/sdb for EBS.
+      - device id to override device mapping. Assumes /dev/sdf for instance-store, /dev/sdb for EBS.
     required: false
     default: null
     aliases: []
@@ -52,11 +52,10 @@ examples:
    - code: '- name: Launch instances
               local_action: ec2 keypair=$keypair image=$image wait=true count=3
               register: ec2
-
             - name: Create volumes and attach
               local_action: ec2_vol instance=${item.id} volume_size=5
               with_items: ${ec2.instances}
-              register: ec2_vol
+              register: ec2_vol'
      description: "Advanced playbook example"   
 requirements: [ "boto" ]
 author: Lester Wade
@@ -141,6 +140,9 @@ def main():
    
     # If device_name isn't set, make a choice based on best practices here:
     # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
+    
+    # In future this needs to be more dynamic but combining block device mapping best practices
+    # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)
        
     if device_name is None and instance:
         try:
