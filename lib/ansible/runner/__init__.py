@@ -546,15 +546,13 @@ class Runner(object):
         if self.sudo and self.sudo_user != 'root':
             basetmp = os.path.join('/tmp', basefile)
 
-        cmd = 'mkdir -p %s' % basetmp
+        cmd = 'mkdir -p '
         if self.remote_user != 'root':
-            cmd += ' && chmod a+rx %s' % basetmp
-        cmd += ' && echo %s' % basetmp
-
+            cmd += '-m755 '
+        cmd += '%s && echo %s' % (basetmp, basetmp)
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         return rc
-
 
     # *****************************************************
 
