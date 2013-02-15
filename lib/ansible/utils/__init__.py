@@ -612,10 +612,10 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     # the -p option.
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-    sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+    sudocmd = '%s -k %s -S -p "%s" -u %s %s -c %s' % (
+        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
-    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
+    return (sudocmd, prompt)
 
 def get_diff(before_string, after_string):
     # called by --diff usage in playbook and runner via callbacks
