@@ -549,7 +549,14 @@ class Runner(object):
         cmd = 'mkdir -p '
         if self.remote_user != 'root':
             cmd += '-m755 '
-        cmd += '%s && echo %s' % (basetmp, basetmp)
+        cmd += basetmp
+
+        # we need to obtain the full path of the generated directory, which
+        # seems the most efficient way to expand the directory according to
+        # remote rules (e.g. $HOME and ~ expansion), so use a shell command:
+
+        cmd = ' && '.join((cmd, 'cd %s' % basetmp, 'pwd'))
+        executable = '/bin/sh'
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         return rc
