@@ -256,7 +256,7 @@ class Runner(object):
 
         cmd = " ".join([environment_string, shebang.replace("#!",""), cmd]).strip()
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
-            cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
+            cmd += " --cleanup %s" % tmp.rstrip('/')
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data = utils.parse_json(res['stdout'])
         if 'parsed' in data and data['parsed'] == False:
