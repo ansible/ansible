@@ -558,6 +558,9 @@ class Runner(object):
         cmd = ' && '.join((cmd, 'cd %s' % basetmp, 'pwd'))
         executable = '/bin/sh'
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        if result['rc'] != 0:
+            raise errors.AnsibleError('Cannot create remote temporary directory: '
+                                      '%s' % basetmp)
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         return rc
 
