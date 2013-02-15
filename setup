@@ -31,13 +31,13 @@ DOCUMENTATION = '''
 module: setup
 short_description: Gathers facts about remote hosts
 options: {}
-description: 
+description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
        executed directly by C(/usr/bin/ansible) to check what variables are
        available to a host. Ansible provides many I(facts) about the system,
        automatically.
-notes: 
+notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
       into the JSON file for usage in templating. These variables are prefixed
@@ -77,7 +77,7 @@ class Facts(object):
     # This is the fallback to handle unknowns or exceptions
     OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
                     '/etc/vmware-release': 'VMwareESX',
-                    '/etc/system-release': 'Amazon' }
+                    '/etc/system-release': 'OtherLinux' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -86,7 +86,7 @@ class Facts(object):
     PKG_MGRS = [ { 'path' : '/usr/bin/yum',         'name' : 'yum' },
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
-                 { 'path' : '/usr/bin/pacman',      'name' : 'pacman' }, 
+                 { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' } ]
 
     def __init__(self):
@@ -133,10 +133,11 @@ class Facts(object):
             if os.path.exists(path):
                 if self.facts['distribution'] == 'Fedora':
                     pass
-                elif name == 'Amazon':
-                    self.facts['distribution'] = 'Amazon'
+                elif name == 'OtherLinux':
                     data = get_file_content(path)
-                    self.facts['distribution_version'] = data.split()[-1]
+                    if 'Amazon' in data:
+                        self.facts['distribution'] = 'Amazon'
+                        self.facts['distribution_version'] = data.split()[-1]
                 elif name == 'RedHat':
                     data = get_file_content(path)
                     if 'Red Hat' in data:
@@ -682,7 +683,7 @@ class LinuxNetwork(Network):
                 continue
             rc, out, err = module.run_command(command[v])
             if not out:
-                # v6 routing may result in 
+                # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
                 continue
             words = out.split('\n')[0].split()
@@ -843,7 +844,7 @@ class LinuxVirtual(Virtual):
             except IOError:
                 pass
             return
- 
+
         if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
             if os.path.exists('/proc/bc'):
