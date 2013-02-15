@@ -254,7 +254,7 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd]).strip()
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
