@@ -256,10 +256,6 @@ def uri(module, url, dest, user, password, body, method, headers, redirects):
         module.fail_json(msg="Socket error: %s to %s" % (e, url))
 
 def main():
-    if not HAS_HTTPLIB2:
-        module.fail_json(msg="httplib2 is not installed")
-    if not HAS_URLPARSE:
-        module.fail_json(msg="urlparse is not installed")
 
     module = AnsibleModule(
         argument_spec = dict(
@@ -279,6 +275,11 @@ def main():
         check_invalid_arguments=False,
         add_file_common_args=True
     )
+
+    if not HAS_HTTPLIB2:
+        module.fail_json(msg="httplib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
 
     url  = module.params['url']
     user = module.params['user']
