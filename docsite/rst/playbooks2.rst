@@ -88,22 +88,28 @@ that is preferred::
 
     {{ ansible_eth0["ipv4"]["address"] }}
 
-Accessing Information About Other Hosts
-```````````````````````````````````````
+Magic Variables, and How To Access Information About Other Hosts
+````````````````````````````````````````````````````````````````
 
-If your database server wants to check the value of a 'fact' from another node, or an inventory variable
+Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
+The most important of these are 'hostvars', 'group_names', and 'groups'.
+
+Hostvars lets you ask about the variables of another host, including facts that have been gathered
+about that host.  If you haven't yet talked to that host in any play yet at this point in the playbook
+or set of playbooks, you can get at the variables, but you will not be able o see the facts.
+
+If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
 
     ${hostvars.hostname.factname}
 
-.. note::
-   No database or other complex system is required to exchange data
-   between hosts.  The hosts that you want to reference data from must
-   be included in either the current play or any previous play if you
-   are using a version prior to 0.8.  If you are using 0.8, and you have
-   not yet contacted the host, you'll be able to read inventory variables
-   but not fact variables.  Speak to the host by including it in a play
-   to make fact information available.
+Note in playbooks if your hostname contains a dash or periods in it, escape it like so::
+
+    ${hostvars.{test.example.com}.ansible_distribution}
+
+In Jinja2 templates, this can also be expressed as::
+
+    {{ hostvars['test.example.com']['ansible_distribution'] }}
 
 Additionally, *group_names* is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
 
@@ -118,12 +124,20 @@ For example::
       # something that applies to all app servers.
    {% endfor %}
 
-Use cases include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+A frequently used idiom is walking a group to find all IP addresses in that group::
+   
+   {% for host in groups['app_servers'] %}
+      {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }} 
+   {% endfor %}
 
-*inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
+An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+
+Just a few other 'magic' variables are available...  There aren't many.
+
+Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
-reasons.  If you have a long FQDN, *inventory_hostname_short* (in Ansible 0.6) also contains the part up to the first
-period.
+reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
+period, without the rest of the domain.  
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
