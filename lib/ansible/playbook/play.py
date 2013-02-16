@@ -30,7 +30,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir'
+       'basedir', 'chroot'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -38,7 +38,8 @@ class Play(object):
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial'
+       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
+       'chroot'
     ]
 
     # *************************************************
@@ -77,6 +78,10 @@ class Play(object):
         self.gather_facts = ds.get('gather_facts', None)
         self.serial       = int(utils.template(basedir, ds.get('serial', 0), self.vars))
         self.remote_port  = utils.template(basedir, self.remote_port, self.vars)
+        self.chroot       = ds.get('chroot', self.playbook.chroot)
+
+        if self.chroot and not self.transport == 'local':
+            raise errors.AnsibleError("chroot option requires connection 'local'")
 
         self._update_vars_files_for_host(None)
 

@@ -120,7 +120,8 @@ class Runner(object):
         subset=None,                        # subset pattern
         check=False,                        # don't make any changes, just try to probe for potential changes
         diff=False,                         # whether to show diffs for template files that change
-        environment=None                    # environment variables (as dict) to use inside the command
+        environment=None,                   # environment variables (as dict) to use inside the command
+        chroot=None                         # whether to use a local dir as a chroot when running scripts
         ):
 
         # storage & defaults
@@ -151,6 +152,7 @@ class Runner(object):
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
+        self.chroot           = chroot
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -159,6 +161,9 @@ class Runner(object):
 
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
+
+        if self.chroot and not self.transport == 'local':
+            raise errors.AnsibleError("chroot option requires connection 'local'")
 
         if module_path is not None:
             for i in module_path.split(os.pathsep):

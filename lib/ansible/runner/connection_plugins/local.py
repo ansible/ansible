@@ -38,10 +38,17 @@ class Connection(object):
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
 
+        if self.runner.chroot:
+            vvv("USING CHROOT: %s" % self.runner.chroot, host=self.host)
+
         return self
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the local host '''
+
+        # In a chroot we're running as root, so ignore sudo
+        if self.runner.chroot:
+            sudoable = False
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -50,6 +57,16 @@ class Connection(object):
                 local_cmd = cmd
         else:
             local_cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+
+        if self.runner.chroot:
+            # Prepend chroot command
+            chroot_cmd = '/usr/sbin/chroot'
+
+            if executable:
+                local_cmd = [chroot_cmd, self.runner.chroot] + local_cmd
+                executable = None
+            else:
+                local_cmd = '%s "%s" ' % (chroot_cmd, self.runner.chroot) + local_cmd
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
@@ -87,6 +104,11 @@ class Connection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
+        if self.runner.chroot:
+            if out_path.startswith(os.path.sep):
+                out_path = out_path[1:]
+            out_path = os.path.join(self.runner.chroot, out_path)
+
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -100,9 +122,24 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
+        ''' fetch a file from local to local '''
+
+        if self.runner.chroot:
+            if in_path.startswith(os.path.sep):
+                in_path = in_path[1:]
+            in_path = os.path.join(self.runner.chroot, in_path)
+
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        ''' fetch a file from local to local -- for copatibility '''
-        self.put_file(in_path, out_path)
+        if not os.path.exists(in_path):
+            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+        try:
+            shutil.copyfile(in_path, out_path)
+        except shutil.Error:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+        except IOError:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def close(self):
         ''' terminate the connection; nothing to do here '''

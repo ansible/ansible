@@ -112,6 +112,18 @@ class Cli(object):
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
+        if options.chroot:
+            import os
+            if not options.connection == 'local':
+                print >>sys.stderr, "chroot option requires connection 'local'"
+                sys.exit(1)
+            if not os.geteuid() == 0:
+                print >>sys.stderr, "chroot option requires running as root"
+                sys.exit(1)
+            if not os.path.isdir(options.chroot):
+                print >>sys.stderr, "chroot dir %s is not a directory" % options.chroot
+                sys.exit(1)
+
         runner = Runner(
             module_name=options.module_name, module_path=options.module_path,
             module_args=options.module_args,
@@ -124,7 +136,8 @@ class Cli(object):
             sudo_pass=sudopass,sudo_user=options.sudo_user,
             transport=options.connection, subset=options.subset,
             check=options.check,
-            diff=options.check
+            diff=options.check,
+            chroot=options.chroot
         )
 
         if options.seconds:
