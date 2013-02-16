@@ -10,15 +10,21 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-Ansible is written for Python 2.6.  If you are running Python 2.5 on an "Enterprise Linux" variant,
-your distribution can easily install 2.6 (see instructions in the next section).  Newer versions
-of Linux and OS X should already have 2.6.
+Ansible is written for Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
+2.6.  Newer versions of Linux and OS X should already have 2.6 or higher.
 
-In additon to Python 2.6, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
+In additon to Python 2.6+, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
 * ``paramiko``
 * ``PyYAML``
 * ``jinja2``
+
+If you are using RHEL or CentOS 5 , python is version 2.4 by default, but you can get python 2.6 installed easily. `Use EPEL <http://fedoraproject.org/wiki/EPEL>`_ and install these dependencies as follows:
+
+.. code-block:: bash
+
+   $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
+
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
@@ -28,22 +34,10 @@ also need:
 .. note::
 
    Ansible's "raw" module (for executing commands in a quick and dirty
-   way) and the copy module -- some of the most basic features in
-   ansible -- don't even need that.  So technically, you can use
+   way) and the script module don't even need that.  So technically, you can use
    Ansible to install python-simplejson using the raw module, which
    then allows you to use everything else.  (That's jumping ahead
    though.)
-
-Python 2.6 EPEL instructions for RHEL and CentOS 5
-``````````````````````````````````````````````````
-
-These distributions don't have Python 2.6 by default, but it is easily
-installable. If you have not already done so, `configure EPEL
-<http://fedoraproject.org/wiki/EPEL>`_
-
-.. code-block:: bash
-
-   $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
 
 Getting Ansible
 ```````````````
@@ -82,6 +76,8 @@ You can optionally specify an inventory file (see :doc:`patterns`) other than /e
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_HOSTS=~/ansible_hosts
 
+You can read more about the inventory file in later parts of the manual.
+
 Now let's test things:
 
 .. code-block:: bash
@@ -101,6 +97,19 @@ using "make install".  This is done through `python-distutils`:
     $ cd ./ansible
     $ sudo make install
 
+Via Pip
++++++++
+
+Are you a python developer?
+
+Ansible can be installed via Pip, but when you do so, it will ask to install other dependencies used for
+optional modes::
+
+   $ sudo easy_install pip
+   $ sudo pip install ansible
+
+Readers that use virtualenv can also install Ansible under virtualenv.  Do not use easy_install to install
+ansible directly.
 
 Via RPM
 +++++++
@@ -110,6 +119,8 @@ RPMs for the last Ansible release are available for `EPEL
 Fedora distributions.  Ansible itself can manage earlier operating
 systems that contain python 2.4 or higher.
 
+If you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
+   
 .. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
@@ -124,6 +135,17 @@ Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+
+Python 2.6 EPEL instructions for RHEL and CentOS 5
+``````````````````````````````````````````````````
+
+These distributions don't have Python 2.6 by default, but it is easily
+installable. 
+
+
+.. code-block:: bash
+
+
 
 Via MacPorts
 ++++++++++++
@@ -146,6 +168,7 @@ git checkout, run:
 
 Please refer to the documentation at <http://www.macports.org> for
 further information on using Portfiles with MacPorts.
+
 
 Debian, Gentoo, Arch, Others
 ++++++++++++++++++++++++++++
@@ -200,6 +223,7 @@ options to ensure performance of this transport.  With ControlMaster in use, bot
 are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.
 
 If none of this makes sense to you, the default paramiko option is probably fine.
+
 
 Your first commands
 ```````````````````
