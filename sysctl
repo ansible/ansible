@@ -79,6 +79,7 @@ author: David "DaviXX" CHANIAL <david.chanial@gmail.com>
 
 import os
 import tempfile
+import re
 
 # ==============================================================
 
@@ -185,13 +186,22 @@ def sysctl_check(current_step, **sysctl_args):
     if current_step == 'after' and sysctl_args['checks'] in ['after', 'both']:
 
         if sysctl_args['value'] is not None:
+        
+            # reading the virtual file
             f = open(sysctl_args['key_path'],'r')
             output = f.read()
             f.close()
             output = output.strip(' \t\n\r')
+            
+            # multi positive integer values separated by spaces as described in issue #2004 :
+            if re.search('^([\d\s]+)$', sysctl_args['value']):
+                # replace all groups of spaces by one space
+                output = re.sub('(\s+)', ' ', output)
+            
+            # normal case, finded value must be equal to the submitted value :
             if output != sysctl_args['value']:
                 return 1, 'key seems not set to value even after update/sysctl, founded : <%s>, wanted : <%s>' % (output, sysctl_args['value'])
-        
+
         return 0, ''
     
     # weird end
