@@ -97,6 +97,9 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
+            if distribution == 'NA':
+                if os.path.is_file('/etc/system-release'):
+                    distribution = 'OtherLinux'
         except:
             # FIXME: MethodMissing, I assume?
             distribution = platform.dist()[0].capitalize()
@@ -105,7 +108,7 @@ def get_distribution():
     return distribution
 
 def load_platform_subclass(cls, *args, **kwargs):
-    ''' 
+    '''
     used by modules like User to have different implementations based on detected platform.  See User
     module for an example.
     '''
@@ -113,7 +116,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     this_platform = get_platform()
     distribution = get_distribution()
     subclass = None
-  
+
     # get the most specific superclass for this platform
     if distribution is not None:
         for sc in cls.__subclasses__():
@@ -171,7 +174,7 @@ class AnsibleModule(object):
             self._log_invocation()
 
     def load_file_common_arguments(self, params):
-        ''' 
+        '''
         many modules deal with files, this encapsulates common
         options that the file module accepts such that it is directly
         available to all modules and they can share code.
@@ -191,7 +194,7 @@ class AnsibleModule(object):
         setype    = params.get('setype', None)
         selevel   = params.get('serange', 's0')
         secontext = [seuser, serole, setype]
-    
+
         if self.selinux_mls_enabled():
             secontext.append(selevel)
 
@@ -201,9 +204,9 @@ class AnsibleModule(object):
                 secontext[i] = default_secontext[i]
 
         return dict(
-            path=path, mode=mode, owner=owner, group=group, 
+            path=path, mode=mode, owner=owner, group=group,
             seuser=seuser, serole=serole, setype=setype,
-            selevel=selevel, secontext=secontext, 
+            selevel=selevel, secontext=secontext,
         )
 
 
@@ -271,11 +274,11 @@ class AnsibleModule(object):
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
-        try:    
+        try:
             user = pwd.getpwuid(uid)[0]
         except KeyError:
             user = str(uid)
-        try:    
+        try:
             group = grp.getgrgid(gid)[0]
         except KeyError:
             group = str(gid)
@@ -290,7 +293,7 @@ class AnsibleModule(object):
     def set_context_if_different(self, path, context, changed):
 
         if not HAVE_SELINUX or not self.selinux_enabled():
-            return changed 
+            return changed
         cur_context = self.selinux_context(path)
         new_context = list(cur_context)
         # Iterate over the current context instead of the
@@ -413,9 +416,9 @@ class AnsibleModule(object):
         return changed
 
     def add_path_info(self, kwargs):
-        ''' 
+        '''
         for results that are files, supplement the info about the file
-        in the return path with stats about the file path. 
+        in the return path with stats about the file path.
         '''
 
         path = kwargs.get('path', kwargs.get('dest', None))
@@ -727,7 +730,7 @@ class AnsibleModule(object):
                                    shell=shell,
                                    close_fds=close_fds,
                                    stdin=st_in,
-                                   stdout=subprocess.PIPE, 
+                                   stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
             if data:
                 cmd.stdin.write(data)
