@@ -63,15 +63,16 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
-    choices: [ EOF, *regex* ]
+    choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
+    versionadded: 1.1
     description:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
          C(BOF) for inserting the line at the beginning of the
         file.
-    choices: [ BOF, *regex* ]
+    choices: [ 'BOF', '*regex*' ]
   create:
     required: false
     choices: [ yes, no ]
@@ -88,11 +89,12 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
 examples:
    - code: 'lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled'
-   - code: "lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
    - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
    - code: 'lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"'
    - code: 'lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"'
+   - code: "lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
 """
+   
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create, backup):
 
