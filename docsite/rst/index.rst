@@ -72,4 +72,5 @@ A list of some people using Ansible, and some additional resources:
 
    who_uses_ansible
    contrib
+   glossary
 
