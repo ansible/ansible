@@ -73,6 +73,25 @@ access, if any.
 
 Desired sudo user (default=root).
 
+*--tags*::
+
+Run only these tags from the playbook
+
+*--check-syntax*::
+
+Look for syntax errors in the playbook, but don't run anything
+
+*--check*::
+
+Do not make any changes on the remote system, but test resources to see what might
+have changed.  Note this can not scan all possible resource types and is only
+a simulation.
+
+*--diff*::
+
+When changing any templated files, show the unified diffs of how they changed.  When
+used with --check, shows how the files would have changed if --check were not used.
+
 *-T* 'SECONDS', *--timeout=*'SECONDS'::
 
 Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
