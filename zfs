@@ -23,46 +23,9 @@ DOCUMENTATION = '''
 ---
 module: zfs
 short_description: Manage zfs
-description:
-    - Manages ZFS file systems on Solaris and FreeBSD. Can manage file systems, volumes
-      and snapshots. Supports the following options from zfs(1M) (See the man page for 
-      more information):
-      aclinherit
-      aclmode
-      atime
-      canmount
-      casesensitivity
-      checksum
-      compression
-      copies
-      dedup
-      devices
-      exec
-      jailed
-      logbias
-      mountpoint
-      nbmand
-      normalization
-      primarycache
-      quota
-      readonly
-      recordsize
-      refquota
-      refreservation
-      reservation
-      secondarycache
-      setuid
-      shareiscsi
-      sharenfs
-      sharesmb
-      snapdir
-      sync
-      utf8only
-      volsize
-      volblocksize
-      vscan
-      xattr
-      zoned
+description: >
+    Manages ZFS file systems on Solaris and FreeBSD. Can manage file systems, volumes
+    and snapshots. See zfs(1M) for more information about the properties.
 options:
   name:
     description:
@@ -73,6 +36,176 @@ options:
       - Whether to create (C(present)), or remove (C(absent)) a file system, snapshot or volume.
     required: true
     choices: [present, absent]
+  aclinherit:
+    description:
+      - The aclinherit property.
+    required: False
+    choices: [discard,noallow,restricted,passthrough,passthrough-x]
+  aclmode:
+    description:
+      - The aclmode property.
+    required: False
+    choices: [discard,groupmask,passthrough]
+  atime:
+    description:
+      - The atime property.
+    required: False
+    choices: [on,off]
+  canmount:
+    description:
+      - The canmount property.
+    required: False
+    choices: [on,off,noauto]
+  casesensitivity:
+    description:
+      - The casesensitivity property.
+    required: False
+    choices: [sensitive,insensitive,mixed]
+  checksum:
+    description:
+      - The checksum property.
+    required: False
+    choices: [on,off,fletcher2,fletcher4,sha256]
+  compression:
+    description:
+      - The compression property.
+    required: False
+    choices: [on,off,lzjb,gzip,gzip-1,gzip-2,gzip-3,gzip-4,gzip-5,gzip-6,gzip-7,gzip-8,gzip-9]
+  copies:
+    description:
+      - The copies property.
+    required: False
+    choices: [1,2,3]
+  dedup:
+    description:
+      - The dedup property.
+    required: False
+    choices: [on,off]
+  devices:
+    description:
+      - The devices property.
+    required: False
+    choices: [on,off]
+  exec:
+    description:
+      - The exec property.
+    required: False
+    choices: [on,off]
+  jailed:
+    description:
+      - The jailed property.
+    required: False
+    choices: [on,off]
+  logbias:
+    description:
+      - The logbias property.
+    required: False
+    choices: [latency,throughput]
+  mountpoint:
+    description:
+      - The mountpoint property.
+    required: False
+  nbmand:
+    description:
+      - The nbmand property.
+    required: False
+    choices: [on,off]
+  normalization:
+    description:
+      - The normalization property.
+    required: False
+    choices: [none,formC,formD,formKC,formKD]
+  primarycache:
+    description:
+      - The primarycache property.
+    required: False
+    choices: [all,none,metadata]
+  quota:
+    description:
+      - The quota property.
+    required: False
+  readonly:
+    description:
+      - The readonly property.
+    required: False
+    choices: [on,off]
+  recordsize:
+    description:
+      - The recordsize property.
+    required: False
+  refquota:
+    description:
+      - The refquota property.
+    required: False
+  refreservation:
+    description:
+      - The refreservation property.
+    required: False
+  reservation:
+    description:
+      - The reservation property.
+    required: False
+  secondarycache:
+    description:
+      - The secondarycache property.
+    required: False
+    choices: [all,none,metadata]
+  setuid:
+    description:
+      - The setuid property.
+    required: False
+    choices: [on,off]
+  shareiscsi:
+    description:
+      - The shareiscsi property.
+    required: False
+    choices: [on,off]
+  sharenfs:
+    description:
+      - The sharenfs property.
+    required: False
+  sharesmb:
+    description:
+      - The sharesmb property.
+    required: False
+  snapdir:
+    description:
+      - The snapdir property.
+    required: False
+    choices: [hidden,visible]
+  sync:
+    description:
+      - The sync property.
+    required: False
+    choices: [on,off]
+  utf8only:
+    description:
+      - The utf8only property.
+    required: False
+    choices: [on,off]
+  volsize:
+    description:
+      - The volsize property.
+    required: False
+  volblocksize:
+    description:
+      - The volblocksize property.
+    required: False
+  vscan:
+    description:
+      - The vscan property.
+    required: False
+    choices: [on,off]
+  xattr:
+    description:
+      - The xattr property.
+    required: False
+    choices: [on,off]
+  zoned:
+    description:
+      - The zoned property.
+    required: False
+    choices: [on,off]
 examples:
   - code: zfs name=rpool/myfs state=present
     description: Create a new file system called myfs in pool rpool
