@@ -401,8 +401,8 @@ Transport
 
 Ansible uses "Connection Plugins" to define types of available transports.  These are simply how ansible will reach out to managed systems.  Transports included are paramiko (the default SSH transport), SSH (using openssh), fireball (an SSH bootstrapped accelerated connection plugin), and local. 
 
-When_*
-++++++
+When
+++++
 
 When statements (when_string, when_changed, when_boolean, when_integer, etc) are easier to write forms of the only_if conditional. They can be affixed to any task to make that task decide to run only when an expression involving variables or facts is actually true.
 
