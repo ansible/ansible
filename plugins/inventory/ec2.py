@@ -283,7 +283,7 @@ class Ec2Inventory(object):
         else:
             dest =  getattr(instance, self.destination_variable)
 
-        if dest == None:
+        if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
             return
 
@@ -303,7 +303,7 @@ class Ec2Inventory(object):
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
         
         # Inventory: Group by key pair
-        if instance.key_name != None:
+        if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
         
         # Inventory: Group by security group
