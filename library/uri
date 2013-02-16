@@ -105,8 +105,8 @@ options:
     required: false
     default: 200
   HEADER_:
-    description:
-      - Any parameter starting with "HEADER_" is a sent with your request as a header. For example,
+    description: >
+        Any parameter starting with "HEADER_" is a sent with your request as a header. For example,
         HEADER_Content-Type="application/json" would send the header "Content-Type" along with your
         request with a value of "application/json".
     required: false
@@ -128,7 +128,8 @@ examples:
 
      description: Check that a page returns a status 200 and the word AWESOME is in the page contents.
 
-   - code: "uri: url=https://your.jira.server.com/rest/api/2/issue/ method=POST user=your_username password=your_pass body='$FILE(issue.json)' force_basic_auth=yes status_code=201 HEADER_Content-Type="application/json"  
+   - code: |
+           uri: url=https://your.jira.server.com/rest/api/2/issue/ method=POST user=your_username password=your_pass body='$FILE(issue.json)' force_basic_auth=yes status_code=201 HEADER_Content-Type="application/json"  
      description: "Create a JIRA issue." 
 
    - code: |
