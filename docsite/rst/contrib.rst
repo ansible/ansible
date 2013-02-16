@@ -9,7 +9,7 @@ Ansible Modules
 ```````````````
 
 Ansible modules are a way of adding new client-side logic to ansible.
-They can be written in any language.  Generally our goal is to include most modules in core,
+They can be written in any language.  Generally our goal is to include most modules in core ("batteries included!"),
 though a few may remain outside of core depending on use cases and implementations.
 
 -  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
