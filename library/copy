@@ -19,7 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import time
 
 DOCUMENTATION = '''
@@ -86,8 +85,8 @@ def main():
     md5sum_dest = None
 
     if os.path.exists(dest):
-        if not os.access(dest, os.W_OK):
-            module.fail_json(msg="Destination %s not writable" % (dest))
+        if not os.access(os.path.dirname(dest), os.W_OK):
+            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
         if not os.access(dest, os.R_OK):
             module.fail_json(msg="Destination %s not readable" % (dest))
         if (os.path.isdir(dest)):
@@ -113,10 +112,10 @@ def main():
             #TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
             # might be an issue with exceeding path length
             dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
-            shutil.copyfile(src, dest_tmp)
+            os.link(src, dest_tmp)
             module.atomic_replace(dest_tmp, dest)
-        except shutil.Error:
-            module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
+        except OSError:
+            module.fail_json(msg="failed to hard link: %s and %s" % (src, dest))
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
         changed = True
