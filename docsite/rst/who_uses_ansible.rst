@@ -25,9 +25,10 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Schmooze Com <http://www.schmoozecom.com/>`_ - Creators of Industry Leading PBX Platforms
     * `Scientific Computing Center, Aristotle Univ. of Thessaloniki <http://www.grid.auth.gr/en/>`_ - Grid/Cloud-Based Scientific Computing
     * `Shorty Awards <http://shortyawards.com>`_ - Honoring the best in social media
+    * `Speedy Rails <http://speedyrails.com>`_ - Cloud Based Rails Hosting
     * `Skylines.io <http://skylines.io>`_ - Real time photo search engine
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
-    * `Tent.is <http://tent.is>`_ 
+    * `Tent.is <http://tent.is>`_ - "The easiest way to start using Tent"
     * `Tranquil Hosting <http://tranquilhosting.com>`_ - Managed Linux Hosting Services
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
