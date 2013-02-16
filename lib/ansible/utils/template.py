@@ -26,7 +26,6 @@ import ansible.constants as C
 import time
 import subprocess
 import datetime
-import pwd
 
 # TODO: refactor this file
 
@@ -339,6 +338,7 @@ def template_from_file(basedir, path, vars):
     t = environment.from_string(data)
     vars = vars.copy()
     try:
+        import pwd
         template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
     except:
         template_uid = os.stat(realpath).st_uid

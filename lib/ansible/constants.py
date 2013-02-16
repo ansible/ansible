@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
+import getpass
 import sys
 import ConfigParser
 
@@ -36,7 +36,10 @@ def load_config_file():
     p = ConfigParser.ConfigParser()
     path1 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
     path2 = os.getcwd() + "/ansible.cfg"
-    path3 = "/etc/ansible/ansible.cfg"
+    if sys.platform == 'win32':
+        path3 = os.path.join(os.environ['APPDATA'], 'ansible', 'ansible.cfg')
+    else:
+        path3 = "/etc/ansible/ansible.cfg"
 
     if os.path.exists(path1):
         p.read(path1)
@@ -57,20 +60,30 @@ def shell_expand_path(path):
 
 p = load_config_file()
 
-active_user   = pwd.getpwuid(os.geteuid())[0]
+active_user   = getpass.getuser()
 
 # Needed so the RPM can call setup.py and have modules land in the
 # correct location. See #1277 for discussion
 if getattr(sys, "real_prefix", None):
     DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
+elif sys.platform == 'win32':
+    DIST_MODULE_PATH = os.path.join(os.environ['APPDATA'], 'ansible', 'modules')
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
+
+# platform dependent prefix for plugins
+if sys.platform == 'win32':
+    DEFAULT_PLUGINS_PATH = os.path.join(os.environ['APPDATA'], 'ansible', 'plugins')
+    DEFAULT_CONFIG_PATH = os.path.join(os.environ['APPDATA'], 'ansible')
+else:
+    DEFAULT_PLUGINS_PATH = '/usr/share/ansible_plugins/'
+    DEFAULT_CONFIG_PATH = '/etc/ansible/'
 
 # sections in config file
 DEFAULTS='defaults'
 
 # configurable things
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            '/etc/ansible/hosts'))
+DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile',         'ANSIBLE_HOSTS',            os.path.join(DEFAULT_CONFIG_PATH, 'hosts')))
 DEFAULT_MODULE_PATH       = shell_expand_path(get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH))
 DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
@@ -95,12 +108,12 @@ DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EX
 DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
 DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
 
-DEFAULT_ACTION_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '/usr/share/ansible_plugins/action_plugins'))
-DEFAULT_CALLBACK_PLUGIN_PATH   = shell_expand_path(get_config(p, DEFAULTS, 'callback_plugins',   'ANSIBLE_CALLBACK_PLUGINS', '/usr/share/ansible_plugins/callback_plugins'))
-DEFAULT_CONNECTION_PLUGIN_PATH = shell_expand_path(get_config(p, DEFAULTS, 'connection_plugins', 'ANSIBLE_CONNECTION_PLUGINS', '/usr/share/ansible_plugins/connection_plugins'))
-DEFAULT_LOOKUP_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', '/usr/share/ansible_plugins/lookup_plugins'))
-DEFAULT_VARS_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'vars_plugins',     'ANSIBLE_VARS_PLUGINS', '/usr/share/ansible_plugins/vars_plugins'))
-DEFAULT_FILTER_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins'))
+DEFAULT_ACTION_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'action_plugins')))
+DEFAULT_CALLBACK_PLUGIN_PATH   = shell_expand_path(get_config(p, DEFAULTS, 'callback_plugins',   'ANSIBLE_CALLBACK_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'callback_plugins')))
+DEFAULT_CONNECTION_PLUGIN_PATH = shell_expand_path(get_config(p, DEFAULTS, 'connection_plugins', 'ANSIBLE_CONNECTION_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'connection_plugins')))
+DEFAULT_LOOKUP_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'lookup_plugins')))
+DEFAULT_VARS_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'vars_plugins',     'ANSIBLE_VARS_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'vars_plugins')))
+DEFAULT_FILTER_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', os.path.join(DEFAULT_PLUGINS_PATH, 'filter_plugins')))
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
