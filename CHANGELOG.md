@@ -31,6 +31,20 @@ Ansible Changes By Release
 * virtualenv module can now inherit system site packages (or not)
 * able to set the environment by setting "environment:" as a dictionary on any task (go proxy support!)
 * added ansible_ssh_user and ansible_ssh_pass for per-host/group username and password
+* facts for AIX
+* new uri module -- can get/put/post/etc
+* fact detection for OS type on Amazon Linux
+* jinja2 extensions can now be loaded from the config file
+* lineinfile module now has an insertbefore option
+* NetBSD service module support
+* end of line comments now work in the inventory file
+* fixes to sysctl module where item has multiple values
+* AIX support for the user and group modules
+* directory destinations now work better with remote md5 code
+* device fact gathering stability improvements
+* fixed ~ expansion for fileglob
+* can set ansible_ssh_user and ansible_ssh_pass in inventory variables
+* lookup plugin macros like $FILE and $ENV now work without returning arrays in variable definitions/playbooks
 
 1.0 "Eruption" -- Feb 1 2013
 
