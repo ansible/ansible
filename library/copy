@@ -50,9 +50,9 @@ options:
     default: "no"
   thirsty:
     description:
-      - if C(yes), will copy the file every time and replace the
-        file if the contents change. If C(no), the file will only be copied if
-        the destination does not exist.
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
     version_added: "1.1"
     required: false
     choices: [ "yes", "no" ]
