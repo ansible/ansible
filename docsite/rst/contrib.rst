@@ -62,8 +62,8 @@ integrations with other interesting pieces of software.
 -  `uptime (API demo) <https://github.com/ansible/ansible/blob/devel/examples/scripts/uptime.py>`_ - mpdehaan
 -  `vim snippet generator <https://github.com/bleader/ansible_snippet_generator>`_ - bleader
 
-Blogs & Articles
-````````````````
+Blogs, Videos & Articles
+````````````````````````
 
 -  `HighScalability.com <http://highscalability.com/blog/2012/4/18/ansible-a-simple-model-driven-configuration-management-and-c.html>`_ - mpdehaan
 -  `ColoAndCloud.com interview <http://www.coloandcloud.com/editorial/an-interview-with-ansible-author-michael-dehaan/>`_ - mpdehaan
@@ -79,6 +79,7 @@ Blogs & Articles
 -  `Infracoders Presentation <http://www.danielhall.me/2012/10/ansible-talk-infra-coders/>`_ - Daniel Hall
 -  `Ansible - an introduction <https://speakerdeck.com/jpmens/ansible-an-introduction>`_ - jp\_mens
 -  `Using Ansible to setup complex networking - <http://exarv.nl/2013/02/using-ansible-to-setup-complex-networking/>`_ - Robert Verspuy
+-  `Video presentation to Montreal Linux <http://www.youtube.com/embed/up3ofvQNm8c>`_ - Alexandre Bourget
 
 Disclaimer
 ``````````
