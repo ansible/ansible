@@ -174,10 +174,11 @@ please stop by the mailing list and say hi!
 Tagged Releases
 +++++++++++++++
 
-Tagged releases are available as tar.gz files from the Ansible github
-project page:
+Tarballs of releases are available on the ansible.cc page.
 
-* `Ansible/downloads <https://github.com/ansible/ansible/downloads>`_
+* `Ansible/downloads <https://ansible.cc/releases>`_
+
+These releases are also tagged in the git repository with the release version.
 
 Choosing Between Paramiko and Native SSH
 ````````````````````````````````````````
