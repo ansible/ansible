@@ -671,9 +671,6 @@ def main():
     result['changed'] = service.changed
     if service.module.params['enabled']:
         result['enabled'] = service.module.params['enabled']
-    #if service.state:
-    #    result['state'] = service.state
-    print "getting state!"
 
     if not service.module.params['state']: 
         status = service.get_service_status()
