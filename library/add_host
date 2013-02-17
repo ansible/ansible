@@ -24,4 +24,6 @@ examples:
     code: add_host hostname=${ip_from_ec2create} groups=just_created foo=42
   - description: add a host with a non-standard port local to your machines
     code: add_host hostname='${new_ip}:${new_port}' 
+  - description: add a host alias that we reach through a tunnel
+    code: add_host hostname=${new_ip} ansible_ssh_host=${inventory_hostname} ansible_ssh_port=${new_port}' 
 '''
