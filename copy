@@ -99,19 +99,16 @@ def main():
     if os.path.exists(dest):
         if not thirsty:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if not os.access(dest, os.W_OK):
-            module.fail_json(msg="Destination %s not writable" % (dest))
-        if not os.access(dest, os.R_OK):
-            module.fail_json(msg="Destination %s not readable" % (dest))
         if (os.path.isdir(dest)):
             basename = os.path.basename(src)
             dest = os.path.join(dest, basename)
-        md5sum_dest = module.md5(dest)
+        if os.access(dest, os.R_OK):
+            md5sum_dest = module.md5(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
-        if not os.access(os.path.dirname(dest), os.W_OK):
-            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+    if not os.access(os.path.dirname(dest), os.W_OK):
+        module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
     if md5sum_src != md5sum_dest or os.path.islink(dest):
