@@ -333,8 +333,8 @@ class User(object):
                 cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             cmd.append('-d')
@@ -351,6 +351,8 @@ class User(object):
         # skip if no changes to be made
         if len(cmd) == 1:
             return (None, '', '')
+        elif self.check_mode:
+            return (True, '', '')
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -947,6 +949,8 @@ class AIX(User):
         # skip if no changes to be made
         if len(cmd) == 1:
             (rc, out, err) = (None, '', '')
+        elif self.check_mode:
+            return (True, '', '')
         else:
             cmd.append(self.name)
             (rc, out, err) = self.execute_command(cmd)
@@ -1002,7 +1006,8 @@ def main():
             ssh_key_file=dict(default=None),
             ssh_key_comment=dict(default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(default=None)
-        )
+        ),
+        supports_check_mode=True
     )
 
     user = User(module)
@@ -1021,6 +1026,8 @@ def main():
     result['state'] = user.state
     if user.state == 'absent':
         if user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
             (rc, out, err) = user.remove_user()
             if rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
@@ -1028,10 +1035,13 @@ def main():
             result['remove'] = user.remove
     elif user.state == 'present':
         if not user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
             (rc, out, err) = user.create_user()
             result['system'] = user.system
             result['createhome'] = user.createhome
         else:
+            # modify user (note: this function is check mode aware)
             (rc, out, err) = user.modify_user()
             result['append'] = user.append
         if rc is not None and rc != 0:
