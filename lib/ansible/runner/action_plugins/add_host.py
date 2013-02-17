@@ -48,8 +48,21 @@ class ActionModule(object):
 
         result = {'changed': True}
 
-        new_host = Host(args['hostname'])
+        # Parse out any hostname:port patterns
+        new_hostname = args['hostname']
+        if ":" in new_hostname:
+            new_hostname, new_port = new_hostname.split(":")
+            args['ansible_ssh_port'] = new_port
+        
+        # create host and get inventory    
+        new_host = Host(new_hostname)
         inventory = self.runner.inventory
+        
+        # Add any variables to the new_host
+        for k in args.keys():
+            if k != 'hostname' and k != 'groupname':
+                new_host.set_variable(k, args[k]) 
+                
         
         # add the new host to the 'all' group
         allgroup = inventory.get_group('all')
