@@ -60,7 +60,7 @@ class ActionModule(object):
         
         # Add any variables to the new_host
         for k in args.keys():
-            if k != 'hostname' and k != 'groupname':
+            if not k in [ 'hostname', 'groupname', 'groups' ]:
                 new_host.set_variable(k, args[k]) 
                 
         
@@ -68,17 +68,18 @@ class ActionModule(object):
         allgroup = inventory.get_group('all')
         allgroup.add_host(new_host)
         result['changed'] = True
-        
+       
+        groupnames = args.get('groupname', args.get('groups', '')) 
         # add it to the group if that was specified
-        if 'groupname' in args:
-            if not inventory.get_group(args['groupname']):
-                new_group = Group(args['groupname'])
-                inventory.add_group(new_group)
-                
-            ngobj = inventory.get_group(args['groupname'])
-            ngobj.add_host(new_host)
-            vv("created 'add_host' ActionModule: groupname=%s"%(args['groupname']))
-            result['new_group'] = args['groupname']
+        if groupnames != '':
+            for group_name in groupnames.split(","):
+                if not inventory.get_group(group_name):
+                    new_group = Group(group_name)
+                    inventory.add_group(new_group)
+                grp = inventory.get_group(group_name)
+                grp.add_host(new_host)
+            vv("added host to group via add_host module: %s" % group_name)
+            result['new_groups'] = groupnames.split(",")
             
         result['new_host'] = args['hostname']
         

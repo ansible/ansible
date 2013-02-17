@@ -13,14 +13,15 @@ options:
     description:
     - The hostname/ip of the host to add to the inventory
     required: true     
-  groupname:
+  groups:
+    aliases: [ 'groupname' ]
     description:
-    - The groupname to add the hostname to.
+    - The groups to add the hostname to, comma seperated.
     required: false
 author: Seth Vidal
 examples:
-  - description: add host to group 'just_created'
-    code: add_host hostname=${ip_from_ec2create} groupname=just_created
-  - description add a host with a non-standard port local to your machines
-    code: add_host hostname='${new_ip}:${new_port}' ansible_ssh_port='${new_port}' ansible_ssh_host='${new_ip}' groupname=cloud_hosts
+  - description: add host to group 'just_created' with variable foo=42
+    code: add_host hostname=${ip_from_ec2create} groups=just_created foo=42
+  - description: add a host with a non-standard port local to your machines
+    code: add_host hostname='${new_ip}:${new_port}' 
 '''
