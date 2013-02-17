@@ -125,9 +125,9 @@ For example::
    {% endfor %}
 
 A frequently used idiom is walking a group to find all IP addresses in that group::
-   
+
    {% for host in groups['app_servers'] %}
-      {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }} 
+      {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
@@ -137,7 +137,7 @@ Just a few other 'magic' variables are available...  There aren't many.
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
 reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
-period, without the rest of the domain.  
+period, without the rest of the domain.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
@@ -469,7 +469,7 @@ be used like this::
 
         # copy each file over that matches the given pattern
         - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
-          with_fileglob: 
+          with_fileglob:
             - /playbooks/files/fooapp/*
 
 'with_file' loads data in from a file directly::
@@ -494,7 +494,7 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
       tasks:
 
          - action: debug msg="$item is an environment variable"
-           with_env: 
+           with_env:
              - HOME
              - LANG
 
@@ -536,7 +536,7 @@ can specify a start, end, and an optional step value.
 Arguments can be either key-value pairs or as a shortcut in the format
 "[start-]end[/stride][:format]".  The format is a printf style string.
 
-Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600). 
+Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).
 Negative numbers are not supported.  This works as follows::
 
     ---
@@ -567,7 +567,7 @@ Negative numbers are not supported.  This works as follows::
 Getting values from files
 `````````````````````````
 
-.. versionadded: 0.8
+.. versionadded:: 0.8
 
 Sometimes you'll want to include the content of a file directly into a playbook.  You can do so using a macro.
 This syntax will remain in future versions, though we will also will provide ways to do this via lookup plugins (see "More Loops") as well.  What follows
@@ -582,6 +582,20 @@ is an example using the authorized_key module, which requires the actual text of
              - snowball
 
 The "$PIPE" macro works just like file, except you would feed it a command string instead.  It executes locally, not remotely, as does $FILE.
+
+Because Ansible uses lazy evaluation, a "$PIPE" macro will be executed each time it is used. For
+example, it will be executed separately for each host, and if it is used in a variable definition,
+it will be executed each time the variable is evaluated.
+
+.. versionadded:: 1.1
+
+The "$PIPE_ONCE" macro is an alternative that uses a caching strategy: it is executed only once, and
+subsequent accesses use the cached value. One use case is for computing a timestamp that is intended
+to be the same across all tasks and hosts that use it::
+
+    vars:
+      timestamp: $PIPE_ONCE(date +%Y%m%d-%H%M%S)
+
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
