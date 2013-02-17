@@ -27,7 +27,7 @@ class Task(object):
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment'
+        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args'
     ]
 
     # to prevent typos and such
@@ -35,7 +35,7 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment'
+         'sudo_pass', 'when', 'connection', 'environment', 'args'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -81,6 +81,10 @@ class Task(object):
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.environment  = ds.get('environment', {})
+
+        # rather than simple key=value args on the options line, these represent structured data and the values
+        # can be hashes and lists, not just scalars
+        self.args         = ds.get('args', {})
 
         if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)

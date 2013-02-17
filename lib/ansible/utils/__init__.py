@@ -118,6 +118,8 @@ def exit(msg, rc=1):
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
 
+    if result is None:
+        return {}
     result2 = result.copy()
     if format:
         return json.dumps(result2, sort_keys=True, indent=4)

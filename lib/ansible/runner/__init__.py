@@ -29,6 +29,7 @@ import socket
 import base64
 import sys
 import shlex
+import pipes
 
 import ansible.constants as C
 import ansible.inventory
@@ -120,8 +121,12 @@ class Runner(object):
         subset=None,                        # subset pattern
         check=False,                        # don't make any changes, just try to probe for potential changes
         diff=False,                         # whether to show diffs for template files that change
-        environment=None                    # environment variables (as dict) to use inside the command
+        environment=None,                   # environment variables (as dict) to use inside the command
+        complex_args=None                   # structured data in addition to module_args, must be a dict
         ):
+
+        if not complex_args:
+            complex_args = {}
 
         # storage & defaults
         self.check            = check
@@ -151,6 +156,7 @@ class Runner(object):
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
+        self.complex_args     = complex_args
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -168,6 +174,27 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
+        
+    # *****************************************************
+
+    def _complex_args_hack(self, complex_args, module_args):
+        """
+        ansible-playbook both allows specifying key=value string arguments and complex arguments
+        however not all modules use our python common module system and cannot
+        access these.  An example might be a Bash module.  This hack allows users to still pass "args"
+        as a hash of simple scalars to those arguments and is short term.  We could technically
+        just feed JSON to the module, but that makes it hard on Bash consumers.  The way this is implemented
+        it does mean values in 'args' have LOWER priority than those on the key=value line, allowing
+        args to provide yet another way to have pluggable defaults.
+        """
+        if complex_args is None:
+            return module_args
+        if type(complex_args) != dict:
+            raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
+        for (k,v) in complex_args.iteritems():
+            if isinstance(v, basestring):
+                module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+        return module_args
 
     # *****************************************************
 
@@ -212,7 +239,7 @@ class Runner(object):
     # *****************************************************
 
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False):
+        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
 
         ''' runs a module that has already been transferred '''
 
@@ -222,7 +249,7 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject)
+        (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
 
         environment_string = self._compute_environment_string(inject)
 
@@ -364,6 +391,7 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
         ''' decides how to invoke a module '''
 
+
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
@@ -374,6 +402,7 @@ class Runner(object):
 
         module_name = utils.template(self.basedir, module_name, inject)
         module_args = utils.template(self.basedir, module_args, inject)
+        
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -448,8 +477,8 @@ class Runner(object):
         # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
-
-        result = handler.run(conn, tmp, module_name, module_args, inject)
+        
+        result = handler.run(conn, tmp, module_name, module_args, inject, self.complex_args)
 
         conn.close()
 
@@ -558,8 +587,10 @@ class Runner(object):
 
     # *****************************************************
 
-    def _copy_module(self, conn, tmp, module_name, module_args, inject):
+    def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
+
+        # FIXME if complex args is none, set to {}
 
         if module_name.startswith("/"):
             raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
@@ -578,11 +609,17 @@ class Runner(object):
             module_data = f.read()
             if module_common.REPLACER in module_data:
                 is_new_style=True
-            module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+ 
+            complex_args_json = utils.jsonify(complex_args) 
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
-            module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
             encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
+            encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json
+
+            module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
+            module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
+            module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
+            
             if is_new_style:
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
@@ -684,7 +721,9 @@ class Runner(object):
         # run once per hostgroup, rather than pausing once per each
         # host.
         p = utils.plugins.action_loader.get(self.module_name, self)
+        
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
+
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
             # We aren't iterating over all the hosts in this
@@ -697,6 +736,7 @@ class Runner(object):
             results = [ ReturnData(host=h, result=result_data, comm_ok=True) \
                            for h in hosts ]
             del self.host_set
+
         elif self.forks > 1:
             try:
                 results = self._parallel_exec(hosts)

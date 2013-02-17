@@ -18,6 +18,7 @@
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 REPLACER_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
+REPLACER_COMPLEX = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 MODULE_COMMON = """
 
@@ -25,6 +26,7 @@ MODULE_COMMON = """
 
 MODULE_ARGS = <<INCLUDE_ANSIBLE_MODULE_ARGS>>
 MODULE_LANG = <<INCLUDE_ANSIBLE_MODULE_LANG>>
+MODULE_COMPLEX_ARGS = <<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
@@ -559,7 +561,9 @@ class AnsibleModule(object):
             except:
                 self.fail_json(msg="this module requires key=value arguments")
             params[k] = v
-        return (params, args)
+        params2 = json.loads(MODULE_COMPLEX_ARGS)
+        params2.update(params)
+        return (params2, args)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''

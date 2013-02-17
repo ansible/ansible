@@ -46,7 +46,7 @@ class ActionModule(object):
                        'delta': None,
                        }
 
-    def run(self, conn, tmp, module_name, module_args, inject):
+    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' run the pause action module '''
 
         # note: this module does not need to pay attention to the 'check'
