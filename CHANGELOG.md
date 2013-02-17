@@ -45,6 +45,8 @@ Ansible Changes By Release
 * fixed ~ expansion for fileglob
 * can set ansible_ssh_user and ansible_ssh_pass in inventory variables
 * lookup plugin macros like $FILE and $ENV now work without returning arrays in variable definitions/playbooks
+* add_host module can set ports and other inventory variables
+* add_host module can add modules to multiple groups (groups=a,b,c), groups now alias for groupname
 
 1.0 "Eruption" -- Feb 1 2013
 
