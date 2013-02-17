@@ -237,7 +237,7 @@ class Service(object):
 
     def check_service_changed(self):
         if self.state and self.running is None:
-            self.module.fail_json(msg="failed determining the current service state => state stays unchanged")
+            self.module.fail_json(msg="failed determining service state, possible typo of service name?")
         # Find out if state has changed
         if not self.running and self.state in ["started", "running"]:
             self.changed = True
@@ -419,6 +419,9 @@ class LinuxService(Service):
                 # iptables status command output is lame
                 # TODO: lookup if we can use a return code for this instead?
                 self.running = True
+
+        return self.running
+
 
     def service_enable(self):
         # we change argument depending on real binary used
@@ -666,8 +669,25 @@ def main():
     result['changed'] = service.changed
     if service.module.params['enabled']:
         result['enabled'] = service.module.params['enabled']
-    if service.state:
-        result['state'] = service.state
+    #if service.state:
+    #    result['state'] = service.state
+    print "getting state!"
+
+    if not service.module.params['state']: 
+        status = service.get_service_status()
+        if status is None:
+            result['state'] = 'absent' 
+        elif status is False:
+            result['state'] = 'started'
+        else:
+            result['state'] = 'stopped'
+    else:
+        # as we may have just bounced the service the service command may not
+        # report accurate state at this moment so just show what we ran
+        if service.module.params['state'] in ['started','restarted']:
+            result['state'] = 'started'
+        else:
+            result['state'] = 'stopped'
 
     module.exit_json(**result)
 
