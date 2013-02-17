@@ -117,8 +117,8 @@ class Service(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-# ===========================================
-# Platform specific methods (must be replaced by subclass).
+    # ===========================================
+    # Platform specific methods (must be replaced by subclass).
 
     def get_service_tools(self):
         self.module.fail_json(msg="get_service_tools not implemented on target platform")
@@ -132,8 +132,8 @@ class Service(object):
     def service_control(self):
         self.module.fail_json(msg="service_control not implemented on target platform")
 
-# ===========================================
-# Generic methods that should be used on all platforms.
+    # ===========================================
+    # Generic methods that should be used on all platforms.
 
     def execute_command(self, cmd, daemonize=False):
         if self.syslogging:
@@ -245,8 +245,11 @@ class Service(object):
             self.changed = True
         elif self.state == "restarted":
             self.changed = True
+        if self.module.check_mode and self.changed:
+            self.module.exit_json(changed=True, msg='service state changed')
 
     def modify_service_state(self):
+
         # Only do something if state will change
         if self.changed:
             # Control service
@@ -258,6 +261,9 @@ class Service(object):
                 self.action = "reload"
             elif self.state == 'restarted':
                 self.action = "restart"
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=True, msg='changing service state')
 
             return self.service_control()
 
@@ -305,6 +311,10 @@ class Service(object):
             changed = True
 
         if changed is True:
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=True, msg="changing service enablement")
+
             # Create a temporary file next to the current rc.conf (so we stay on the same filesystem).
             # This way the replacement operation is atomic.
             rcconf_dir = os.path.dirname(self.rcconf_file)
@@ -442,7 +452,15 @@ class LinuxService(Service):
         else:
             args = (self.enable_cmd, self.name, on_off)
 
-        if self.enable is not None:
+        # FIXME: we need this function to detect whether to run the command
+        # so we need something to get the service enablement state here.
+
+        changed = True
+
+        if self.module.check_mode and changed:
+            self.module.exit_json(changed=True, msg="editing service enablement")
+
+        if self.enable is not None and changed:
             return self.execute_command("%s %s %s" % args)
 
     def service_control(self):
@@ -508,9 +526,14 @@ class FreeBsdService(Service):
         
         self.rcconf_key = "%s_enable" % self.name
 
+        # FIXME: detect the enablement state rather than just running the command
+        if self.module.check_mode:
+            self.module.exit_json(changed=True, msg="editing service enablement")
+
         return self.service_enable_rcconf()
 
     def service_control(self):
+
         if self.action is "start":
             self.action = "onestart"
         if self.action is "stop":
@@ -586,6 +609,10 @@ class NetBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
+        # FIXME: need to decide whether to run enablement command or not
+        if self.module.check_mode:
+            self.module.exit_json(changed=True, msg="editing service enablement")
+
         rcfiles = [ '/etc/rc.conf' ]		# Overkill?
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
@@ -624,7 +651,8 @@ def main():
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS),
             arguments = dict(aliases=['args'], default=''),
-        )
+        ),
+        supports_check_mode=True
     )
 
     service = Service(module)
