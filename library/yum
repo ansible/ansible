@@ -416,6 +416,10 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             pkg = spec
 
         cmd = yum_basecmd + ['install', pkg]
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         rc, out, err = module.run_command(cmd)
 
         res['rc'] += rc
@@ -451,6 +455,10 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         # run an actual yum transaction
         cmd = yum_basecmd + ["remove", pkg]
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         rc, out, err = module.run_command(cmd)
 
         res['rc'] += rc
@@ -520,6 +528,10 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             pkg = spec
 
         cmd = yum_basecmd + [basecmd, pkg]
+
+        if module.check_mode:
+            return module.exit_json(changed=True)
+
         rc, out, err = module.run_command(cmd)
 
         res['rc'] += rc
@@ -619,7 +631,8 @@ def main():
             conf_file=dict(default=None),
         ),
         required_one_of = [['name','list']],
-        mutually_exclusive = [['name','list']]
+        mutually_exclusive = [['name','list']],
+        supports_check_mode = True
     )
 
     params = module.params
