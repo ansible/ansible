@@ -159,6 +159,7 @@ class AnsibleModule(object):
 
         if check_invalid_arguments:
             self._check_invalid_arguments()
+        self._check_for_check_mode()
 
         self._set_defaults(pre=True)
 
@@ -462,13 +463,18 @@ class AnsibleModule(object):
                 if alias in self.params:
                     self.params[k] = self.params[alias]
 
-    def _check_invalid_arguments(self):
+    def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
             if k == 'CHECKMODE':
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
                 if self.supports_check_mode:
                     self.check_mode = True
+
+    def _check_invalid_arguments(self):
+        for (k,v) in self.params.iteritems():
+            if k == 'CHECKMODE':
+                continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
