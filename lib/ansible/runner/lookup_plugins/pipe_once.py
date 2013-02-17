@@ -33,7 +33,8 @@ class LookupModule(object):
         ret = []
         for term in terms:
             if term in CACHE:
-                ret.append(CACHE.get(term)
+                ret.append(CACHE.get(term))
+                continue
             p = subprocess.Popen(term, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
