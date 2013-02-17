@@ -21,7 +21,7 @@
       state: stopped
     complex:
       ghostbusters: [ 'egon', 'ray', 'peter', 'winston' ]
-      mice: [ 'pinky', 'brain', 'snowball', 'larry' ]
+      mice: [ 'pinky', 'brain', 'larry' ]
  
   tasks:
 
