@@ -118,6 +118,8 @@ class Group(object):
                     cmd.append(kwargs[key])
         if len(cmd) == 1:
             return (None, '', '')
+        if self.module.check_mode:
+            return (True, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
  
@@ -201,6 +203,8 @@ class AIX(Group):
                     cmd.append('id='+kwargs[key])
         if len(cmd) == 1:
             return (None, '', '')
+        if self.module.check_mode:
+            return (True, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -213,7 +217,8 @@ def main():
             name=dict(required=True),
             gid=dict(default=None),
             system=dict(default='no', choices=['yes', 'no']),
-        )
+        ),
+        supports_check_mode=True
     )
 
     group = Group(module)
@@ -230,13 +235,21 @@ def main():
     result = {}
     result['name'] = group.name
     result['state'] = group.state
+
     if group.state == 'absent':
+
         if group.group_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
             (rc, out, err) = group.group_del()
             if rc != 0:
                 module.fail_json(name=group.name, msg=err)
+
     elif group.state == 'present':
+
         if not group.group_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
             (rc, out, err) = group.group_add(gid=group.gid, system=group.system)
         else:
             (rc, out, err) = group.group_mod(gid=group.gid)
