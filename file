@@ -117,6 +117,7 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+    version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
 examples:
