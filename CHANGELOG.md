@@ -47,6 +47,7 @@ Ansible Changes By Release
 * lookup plugin macros like $FILE and $ENV now work without returning arrays in variable definitions/playbooks
 * add_host module can set ports and other inventory variables
 * add_host module can add modules to multiple groups (groups=a,b,c), groups now alias for groupname
+* support for complex arguments to modules (within reason)
 
 1.0 "Eruption" -- Feb 1 2013
 
