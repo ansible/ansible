@@ -164,7 +164,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         msg = 'line added'
         changed = True
 
-    if changed:
+    if changed and not module.check_mode:
         if backup and os.path.exists(dest):
             module.backup_local(dest)
         f = open(dest, 'wb')
@@ -189,7 +189,7 @@ def absent(module, dest, regexp, backup):
 
     lines = filter(matcher, lines)
     changed = len(found) > 0
-    if changed:
+    if changed and not module.check_mode:
         if backup:
             module.backup_local(dest)
         f = open(dest, 'wb')
@@ -209,7 +209,8 @@ def main():
             create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
-    mutually_exclusive = [['insertbefore', 'insertafter']]
+    mutually_exclusive = [['insertbefore', 'insertafter']],
+    supports_check_mode = True
     )
 
     params = module.params
