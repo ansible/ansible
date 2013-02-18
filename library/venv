@@ -1,0 +1,94 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: venv
+short_description: Manages Python virtual environments.
+description:
+     - Manage Python virtual environments.
+version_added: "1.1"
+options:
+  dest:
+    description:
+      - The C(virtualenv) directory to create
+    required: true
+    default: null
+  site_packages:
+    description:
+      - Whether the virtual environment will inherit packages from the
+        global site-packages directory.  Note that if this setting is
+        changed on an already existing virtual environment it will not
+        have any effect, the environment must be deleted and newly
+        created.
+    required: false
+    default: no
+  command:
+    description:
+      - The command to create the virtual environment with. For example
+        C(pyvenv), C(virtualenv), C(virtualenv2).
+    required: false
+    default: virtualenv
+examples:
+   - code: "venv: dest=/my_app/venv"
+     description: Create a virtual environment in /my_app/venv
+   - code: "venv: dest=/my_app/venv command=pyvenv-3.3"
+     description: Create a Python 3.3 virtual environment in /my_app/venv.
+   - code: "venv: dest=/my_app/venv site_packages=yes"
+     description: Create a virtual environment in /my_app/venv and inherit the globally installed modules
+author: Jeroen Hoekx
+'''
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            dest=dict(required=True),
+            site_packages=dict(default='no', choices=BOOLEANS),
+            command=dict(default='virtualenv', required=False)
+        ),
+        supports_check_mode=True,
+    )
+
+    dest = module.params['dest']
+    site_packages = module.boolean(module.params['site_packages'])
+    command = module.params['command']
+
+    venv_bin = module.get_bin_path(command, True)
+
+    if os.path.exists("%s/bin/activate"%(dest)):
+        module.exit_json(changed=False)
+    elif module.check_mode:
+        module.exit_json(changed=True)
+
+    cmd = "%s %s"%(command, dest)
+    if site_packages:
+        cmd += " --system-site-packages"
+
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(cmd=cmd, msg="stdout: %s\nstderr: %s"%(out, err))
+
+    module.exit_json(changed=True, dest=dest)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
