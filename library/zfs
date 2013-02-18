@@ -214,7 +214,7 @@ examples:
   - code: zfs name=rpool/myfs@mysnapshot state=present
     description: Create a snapshot of rpool/myfs file system.
   - code: zfs name=rpool/myfs2 state=present snapdir=enabled
-    description: Create a new file system called myfs2 whith snapdir enabled
+    description: Create a new file system called myfs2 with snapdir enabled
 author: Johan Wiren
 '''
 import os
