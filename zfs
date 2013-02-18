@@ -23,9 +23,8 @@ DOCUMENTATION = '''
 ---
 module: zfs
 short_description: Manage zfs
-description: >
-    Manages ZFS file systems on Solaris and FreeBSD. Can manage file systems, volumes
-    and snapshots. See zfs(1M) for more information about the properties.
+description:
+  - Manages ZFS file systems on Solaris and FreeBSD. Can manage file systems, volumes and snapshots. See zfs(1M) for more information about the properties.
 options:
   name:
     description:
