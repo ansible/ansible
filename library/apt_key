@@ -115,9 +115,9 @@ def add_key(module, key):
     (rc, out, err) = module.run_command(cmd, data=key, check_rc=True)
     return True
 
-def remove_key(key_id):
+def remove_key(module, key_id):
     # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
-    cmd = 'apt-key del %s' 
+    cmd = 'apt-key del %s' % key_id
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
@@ -142,6 +142,7 @@ def main():
     check_missing_binaries(module)
 
     keys = all_keys(module)
+    return_values = {}
 
     if state == 'present':
         if key_id and key_id in keys:
@@ -164,13 +165,13 @@ def main():
         if not key_id:
             module.fail_json(msg="key is required")
         if key_id in keys:
-            if remove_key(key_id):
+            if remove_key(module, key_id):
                 changed=True
             else:
                 # FIXME: module.fail_json  or exit-json immediately at point of failure
-                module.fail_json(msg="error removing key_id", **return_values(True))
+                module.fail_json(msg="error removing key_id", **return_values)
 
-    module.exit_json(changed=changed, **return_values())
+    module.exit_json(changed=changed, **return_values)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
