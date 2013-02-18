@@ -508,20 +508,24 @@ class FreeBsdUser(User):
     SHADOWFILE = '/etc/master.passwd'
 
     def remove_user(self):
-        cmd = [self.module.get_bin_path('pw', True),
-               'userdel',
-               '-n',
-               self.name ]
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'userdel',
+            '-n',
+            self.name
+        ]
         if self.remove:
             cmd.append('-r')
 
         return self.execute_command(cmd)
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('pw', True),
-               'useradd',
-               '-n',
-               self.name ]
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'useradd',
+            '-n',
+            self.name 
+        ]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -563,19 +567,23 @@ class FreeBsdUser(User):
 
         # we have to set the password in a second command
         if self.password is not None:
-            cmd = [self.module.get_bin_path('chpass', True),
-                   '-p',
-                   self.password,
-                   self.name ]
+            cmd = [
+                self.module.get_bin_path('chpass', True),
+                '-p',
+                self.password,
+                self.name 
+            ]
             return self.execute_command(cmd)
 
         return (rc, out, err)
 
     def modify_user(self):
-        cmd = [self.module.get_bin_path('pw', True),
-               'usermod',
-               '-n',
-               self.name ]
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'usermod',
+            '-n',
+            self.name 
+        ]
         cmd_len = len(cmd)
         info = self.user_info()
 
@@ -639,10 +647,12 @@ class FreeBsdUser(User):
 
         # we have to set the password in a second command
         if self.password is not None and info[1] != self.password:
-            cmd = [self.module.get_bin_path('chpass', True),
-                   '-p',
-                   self.password,
-                   self.name ]
+            cmd = [
+                self.module.get_bin_path('chpass', True),
+                '-p',
+                self.password,
+                self.name 
+            ]
             return self.execute_command(cmd)
 
         return (rc, out, err)

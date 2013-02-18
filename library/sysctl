@@ -120,11 +120,8 @@ def write_sysctl(module, lines, **sysctl_args):
 # ==============================================================
 
 def sysctl_args_expand(**sysctl_args):
-    # key_path
     sysctl_args['key_path'] = sysctl_args['name'].replace('.' ,'/')
-    sysctl_args['key_path'] = '/proc/sys/' + sysctl_args['key_path'];
-    
-    # end
+    sysctl_args['key_path'] = '/proc/sys/' + sysctl_args['key_path']
     return sysctl_args
 
 # ==============================================================

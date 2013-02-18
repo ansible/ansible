@@ -295,7 +295,7 @@ def main():
     # Some 'basic auth' servies fail to send a 401 and require the authentication
     # up front. This creates the Basic authentication header and sends it immediately. 
     if force_basic_auth:
-       dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
+        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
 
     # Redirects         
     if follow_redirects:

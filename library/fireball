@@ -170,7 +170,7 @@ def fetch(data):
     # so don't use it to move ISOs, use rsync.
 
     fh = open(data['in_path'])
-    data =  base64.b64encode(fh.read())
+    data = base64.b64encode(fh.read())
     return dict(data=data)
 
 def put(data):

@@ -596,9 +596,9 @@ class NetBsdService(Service):
         initpaths = [ '/etc/rc.d' ]		# better: $rc_directories - how to get in here? Run: sh -c '. /etc/rc.conf ; echo $rc_directories'
 
         for initdir in initpaths:
-	    initscript = "%s/%s" % (initdir,self.name)
-	    if os.path.isfile(initscript):
-	        self.svc_initscript = initscript
+            initscript = "%s/%s" % (initdir,self.name)
+            if os.path.isfile(initscript):
+                self.svc_initscript = initscript
 
         if not self.svc_initscript:
             self.module.fail_json(msg='unable to find rc.d script')
