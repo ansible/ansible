@@ -355,8 +355,10 @@ def main():
             port=dict(default='5432'),
             fail_on_user=dict(default='yes'),
             role_attr_flags=dict(default='')
-        )
+        ),
+	supports_check_mode = True
     )
+
     user = module.params["user"]
     password = module.params["password"]
     state = module.params["state"]
@@ -392,7 +394,12 @@ def main():
     kw = dict(user=user)
     changed = False
     user_removed = False
+        
     if state == "present":
+        if  module.check_mode:  
+    	    kw['changed'] = True 
+            module.exit_json(**kw)
+
         if user_exists(cursor, user):
             changed = user_alter(cursor, user, password, role_attr_flags)
         else:
@@ -402,6 +409,11 @@ def main():
             changed = user_add(cursor, user, password, role_attr_flags)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
+        if  module.check_mode:  
+    	    kw['changed'] = True 
+            kw['user_removed'] = True 
+            module.exit_json(**kw)
+
         if user_exists(cursor, user):
             changed = revoke_privileges(cursor, user, privs)
             user_removed = user_delete(cursor, user)
