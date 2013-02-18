@@ -84,11 +84,11 @@ def all_keys(module):
     results = []
     lines = out.split('\n')
     for line in lines:
-       if line.startswith("pub"):
-          tokens = line.split()
-          code = tokens[1]
-          (len_type, real_code) = code.split("/")
-          results.append(real_code)
+        if line.startswith("pub"):
+            tokens = line.split()
+            code = tokens[1]
+            (len_type, real_code) = code.split("/")
+            results.append(real_code)
     return results
 
 def key_present(module, key_id):

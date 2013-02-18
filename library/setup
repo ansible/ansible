@@ -656,7 +656,7 @@ class AIX(Hardware):
         for line in out.split('\n'):
             data = line.split(':')
             if 'Available' in line:
-               i += 1
+                i += 1
         self.facts['processor_count'] = int(i)
 
     def get_memory_facts(self):
