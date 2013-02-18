@@ -20,16 +20,11 @@
 
 import os
 import sys
-import yaml
-import json
-import ast
 import textwrap
 import re
 import optparse
-import time
 import datetime
 from ansible import utils
-from ansible import errors
 from ansible.utils import module_docs
 import ansible.constants as C
 from ansible.utils import version
