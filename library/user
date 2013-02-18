@@ -351,7 +351,7 @@ class User(object):
         # skip if no changes to be made
         if len(cmd) == 1:
             return (None, '', '')
-        elif self.check_mode:
+        elif self.module.check_mode:
             return (True, '', '')
 
         cmd.append(self.name)
@@ -959,7 +959,7 @@ class AIX(User):
         # skip if no changes to be made
         if len(cmd) == 1:
             (rc, out, err) = (None, '', '')
-        elif self.check_mode:
+        elif self.module.check_mode:
             return (True, '', '')
         else:
             cmd.append(self.name)
