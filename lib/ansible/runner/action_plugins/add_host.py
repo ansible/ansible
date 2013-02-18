@@ -40,16 +40,15 @@ class ActionModule(object):
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
         args = parse_kv(module_args)
-        if not 'hostname' in args:
-            raise ae("'hostname' is a required argument.")
-
-        vv("created 'add_host' ActionModule: hostname=%s"%(args['hostname']))
-
+        if not 'hostname' in args and not 'name' in args:
+            raise ae("'name' is a required argument.")
 
         result = {'changed': True}
 
         # Parse out any hostname:port patterns
-        new_hostname = args['hostname']
+        new_hostname = args.get('hostname', args.get('name', None))
+        vv("creating host via 'add_host': hostname=%s" % new_hostname)
+
         if ":" in new_hostname:
             new_hostname, new_port = new_hostname.split(":")
             args['ansible_ssh_port'] = new_port
@@ -60,7 +59,7 @@ class ActionModule(object):
         
         # Add any variables to the new_host
         for k in args.keys():
-            if not k in [ 'hostname', 'groupname', 'groups' ]:
+            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
                 new_host.set_variable(k, args[k]) 
                 
         
@@ -81,7 +80,7 @@ class ActionModule(object):
             vv("added host to group via add_host module: %s" % group_name)
             result['new_groups'] = groupnames.split(",")
             
-        result['new_host'] = args['hostname']
+        result['new_host'] = new_hostname
         
         return ReturnData(conn=conn, comm_ok=True, result=result)
 

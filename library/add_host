@@ -9,9 +9,9 @@ description:
     Takes variables so you can define the new hosts more fully.
 version_added: 0.9
 options:
-  hostname:
+  name:
     description:
-    - The hostname/ip of the host to add to the inventory
+    - The hostname/ip of the host to add to the inventory, can include a colon and a port number.
     required: true     
   groups:
     aliases: [ 'groupname' ]
