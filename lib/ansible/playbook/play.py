@@ -200,7 +200,7 @@ class Play(object):
                 salt = var.get("salt", None)
 
                 if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt (
+                    vars[vname] = self.playbook.callbacks.on_vars_prompt(
                                      vname, private, prompt, encrypt, confirm, salt_size, salt, default
                                   )
 

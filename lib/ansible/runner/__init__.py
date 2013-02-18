@@ -51,7 +51,6 @@ multiprocessing_runner = None
 
 ################################################
 
-
 def _executor_hook(job_queue, result_queue):
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
@@ -531,9 +530,9 @@ class Runner(object):
             err = stderr
 
         if rc is not None:
-            return dict(rc=rc, stdout=out, stderr=err )
+            return dict(rc=rc, stdout=out, stderr=err)
         else:
-            return dict(stdout=out, stderr=err )
+            return dict(stdout=out, stderr=err)
 
     # *****************************************************
 
