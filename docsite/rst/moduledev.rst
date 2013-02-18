@@ -354,6 +354,19 @@ for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specifies as ``M(module)``.
 
+Examples (which typically contain colons, quotes, etc.) are difficult
+to format with YAML, so these can (alternatively, or additionally) be
+written in plain text in an ``EXAMPLES`` string within the module
+like this::
+
+    EXAMPLES = '''
+    - action: modulename opt1=arg1 opt2=arg2
+    '''
+
+The ``module_formatter.py`` script and ``ansible-doc(1)`` append the
+``EXAMPLES`` blob after any existing ``examples`` you may have in the
+YAML ``DOCUMENTATION`` string.
+
 Building & Testing
 ++++++++++++++++++
 
