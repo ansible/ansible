@@ -116,7 +116,7 @@ def load_mongocnf():
     config = ConfigParser.RawConfigParser()
     mongocnf = os.path.expanduser('~/.mongodb.cnf')
     if not os.path.exists(mongocnf):
-      return False
+        return False
 
     try:
         config.readfp(open(mongocnf))

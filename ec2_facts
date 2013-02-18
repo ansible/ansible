@@ -73,7 +73,8 @@ class Ec2Metadata(object):
         for pattern in filter_patterns:
             for key in new_fields.keys():
                 match = re.search(pattern, key)
-                if match: new_fields.pop(key)
+                if match: 
+                    new_fields.pop(key)
         return new_fields
 
     def fetch(self, uri, recurse=True):
@@ -103,23 +104,19 @@ class Ec2Metadata(object):
                 newkey = key.replace(':','_').replace('-','_')
                 data[newkey] = value
 
-
     def run(self):
         self.fetch(self.uri_meta) # populate _data
-        data =  self._mangle_fields(self._data,
-                                self.uri_meta)
+        data = self._mangle_fields(self._data, self.uri_meta)
         data[self._prefix % 'user-data'] = self._fetch(self.uri_user)
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
         self.fix_invalid_varnames(data)
         return data
 
-
 def main():
+
     ec2_facts = Ec2Metadata().run()
-    ec2_facts_result = {
-                    "changed" : False,
-                    "ansible_facts" : ec2_facts
-                }
+    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
+
     module = AnsibleModule(
         argument_spec = dict()
     )
