@@ -35,6 +35,7 @@ import tty
 import pipes
 import random
 import difflib
+import warnings
 
 VERBOSITY=0
 
@@ -619,9 +620,16 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
 
-def get_diff(before_string, after_string):
+def get_diff(before, after):
     # called by --diff usage in playbook and runner via callbacks
     # include names in diffs 'before' and 'after' and do diff -U 10
-    differ = difflib.unified_diff(before_string.split("\n"), after_string.split("\n"), 'before', 'after', '', '', 10)
-    return "\n".join(list(differ))
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            differ = difflib.unified_diff(before.split("\n"), after.split("\n"), 'before', 'after', '', '', 10)
+            return "\n".join(list(differ))
+    except UnicodeDecodeError:
+        return ">> the files are different, but the diff library cannot compare unicode strings"
+
  
