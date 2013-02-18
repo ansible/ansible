@@ -162,7 +162,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         if basedir is None:
             return {'replacement': None, 'start': start, 'end': end}
         var_end -= 1
-    	from ansible import utils
+        from ansible import utils
         args = text[part_start:var_end]
         if lookup_plugin_name == 'LOOKUP':
             lookup_plugin_name, args = args.split(",", 1)
@@ -259,11 +259,13 @@ class _jinja2_vars(object):
     here.
     extras is a list of locals to also search for variables. 
     '''
+
     def __init__(self, basedir, vars, globals, *extras):
         self.basedir = basedir
         self.vars = vars
         self.globals = globals
         self.extras = extras
+
     def __contains__(self, k):
         if k in self.vars:
             return True
@@ -273,6 +275,7 @@ class _jinja2_vars(object):
         if k in self.globals:
             return True
         return False
+
     def __getitem__(self, varname):
         if varname not in self.vars:
             for i in self.extras:
@@ -288,6 +291,7 @@ class _jinja2_vars(object):
             return var
         else:
             return template(self.basedir, var, self.vars)
+
     def add_locals(self, locals):
         '''
         If locals are provided, create a copy of self containing those
