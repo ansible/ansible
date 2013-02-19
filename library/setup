@@ -130,6 +130,46 @@ class Facts(object):
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
 
+        # A list with OS Family members
+        OSFAMILY = {
+                      'RedHat'       : 'RedHat',
+                      'Fedora'       : 'RedHat',
+                      'CentOS'       : 'RedHat',
+                      'Scientific'   : 'RedHat',
+                      'SLC'          : 'RedHat',
+                      'Ascendos'     : 'RedHat',
+                      'CloudLinux'   : 'RedHat',
+                      'PSBM'         : 'RedHat',
+                      'OracleLinux'  : 'RedHat',
+                      'OVS'          : 'RedHat',
+                      'OEL'          : 'RedHat',
+                      'Amazon'       : 'RedHat',
+                      'XenServer'    : 'RedHat',
+                      #
+                      'Ubuntu'       : 'Debian',
+                      'Debian'       : 'Debian',
+                      #
+                      'SLES'         : 'Suse',
+                      'SLED'         : 'Suse',
+                      'OpenSuSE'     : 'Suse',
+                      'SuSE'         : 'Suse',
+                      #
+                      'Gentoo'       : 'Gentoo',
+                      #
+                      'Archlinux'    : 'Archlinux',
+                      #
+                      'Mandriva'     : 'Mandrake',
+                      'Mandrake'     : 'Mandrake',
+		      #
+                      'Solaris'      : 'Solaris',
+                      'Nexenta'      : 'Solaris',
+                      'OmniOS'       : 'Solaris',
+                      'OpenIndiana'  : 'Solaris',
+                      'SmartOS'      : 'Solaris',
+                      #
+                      'AIX'          : 'AIX'
+	           }
+
         if self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
@@ -159,6 +199,11 @@ class Facts(object):
                             self.facts['distribution_version'] = data.split()[-1]
                     else:
                         self.facts['distribution'] = name
+
+        # Find the family
+	self.facts['osfamily'] = self.facts['distribution']
+	if self.facts['distribution'] in OSFAMILY:
+	   self.facts['osfamily'] = OSFAMILY[self.facts['distribution']]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
