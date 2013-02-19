@@ -100,11 +100,14 @@ def package_split(pkgspec):
     else:
         return parts[0], None
 
-def package_status(m, pkgname, version, cache):
+def package_status(m, pkgname, version, cache, state):
     try:
         pkg = cache[pkgname]
     except KeyError:
-        m.fail_json(msg="No package matching '%s' is available" % pkgname)
+        if state == 'install':
+            m.fail_json(msg="No package matching '%s' is available" % pkgname)
+        else:
+            return False, False
     if version:
         try :
             return pkg.is_installed and pkg.installed.version == version, False
@@ -122,7 +125,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
     packages = ""
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache)
+        installed, upgradable = package_status(m, name, version, cache, state='install')
         if not installed or (upgrade and upgradable):
             packages += "'%s' " % package
 
@@ -150,14 +153,16 @@ def remove(m, pkgspec, cache, purge=False):
     packages = ""
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache)
+        installed, upgradable = package_status(m, name, version, cache, state='remove')
         if installed:
             packages += "'%s' " % package
 
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
-        purge = '--purge' if purge else ''
+        purge = ''
+        if purge:
+            purge = '--purge'
         cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
         rc, out, err = m.run_command(cmd)
         if rc:
