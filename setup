@@ -538,13 +538,10 @@ class FreeBSDHardware(Hardware):
         rc, out, err = module.run_command("/sbin/sysctl -n hw.ncpu")
         self.facts['processor_count'] = out.strip()
 
-        try:
-            dmesg_boot = open(FreeBSDHardware.DMESG_BOOT)
-        except IOError:
-            rc, out, err = module.run_command("/sbin/dmesg")
-            dmesg_boot = out
-
-        for line in dmesg_boot.readlines():
+        dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
+        if not dmesg_boot:
+            rc, dmesg_boot, err = module.run_command("/sbin/dmesg")
+        for line in dmesg_boot.split('\n'):
             if 'CPU:' in line:
                 cpu = re.sub(r'CPU:\s+', r"", line)
                 self.facts['processor'].append(cpu.strip())
@@ -579,11 +576,12 @@ class FreeBSDHardware(Hardware):
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
-        for line in fstab.split('\n'):
-            if line.startswith('#') or line.strip() == '':
-                continue
-            fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-            self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+        if fstab:
+            for line in fstab.split('\n'):
+                if line.startswith('#') or line.strip() == '':
+                    continue
+                fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
     def get_device_facts(self):
         sysdir = '/dev'
