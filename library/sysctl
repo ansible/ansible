@@ -189,6 +189,7 @@ def sysctl_check(current_step, **sysctl_args):
             output = f.read()
             f.close()
             output = output.strip(' \t\n\r')
+            output = re.sub(r'\s+', ' ', output)
             
             # multi positive integer values separated by spaces as described in issue #2004 :
             if re.search('^([\d\s]+)$', sysctl_args['value']):
