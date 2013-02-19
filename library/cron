@@ -167,8 +167,9 @@ def find_job(name,tmpfile):
     return []
 
 def add_job(module,name,job,tmpfile):
-    cmd = "echo \"#Ansible: %s\n%s\" >> %s" % (name,job,tmpfile)
-    return module.run_command(cmd)
+    f = open(tmpfile, 'a')
+    f.write("#Ansible: %s\n%s\n" % (name, job))
+    f.close()
 
 def update_job(name,job,tmpfile):
     return _update_job(name,job,tmpfile,do_add_job)
@@ -178,7 +179,7 @@ def do_add_job(lines, comment, job):
     lines.append(job)
 
 def remove_job(name,tmpfile):
-    return _update_job(name,"",tmpfile,do_remove_job)
+    return _update_job(name, "", tmpfile, do_remove_job)
 
 def do_remove_job(lines,comment,job):
     return None
@@ -188,9 +189,10 @@ def remove_job_file(cron_file):
     os.unlink(fname)
 
 def _update_job(name,job,tmpfile,addlinesfunction):
-    ansiblename="#Ansible: %s" % (name)
+    ansiblename = "#Ansible: %s" % (name)
     f = open(tmpfile)
     lines = f.read().splitlines()
+    f.close()
     newlines = []
     comment = None
     for l in lines:
@@ -201,17 +203,16 @@ def _update_job(name,job,tmpfile,addlinesfunction):
             comment = l
         else:
             newlines.append(l)
-    f.close()
-    f = open(tmpfile,'w')
+    f = open(tmpfile, 'w')
     for l in newlines:
         f.write(l)
         f.write('\n')
     f.close()
 
     if len(newlines) == 0:
-        return (0,"","",True)
+        return True
     else:
-        return (0,"","",False) # TODO add some more error testing 
+        return False # TODO add some more error testing 
 
 def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
     if reboot:
@@ -223,7 +224,7 @@ def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
         if cron_file:
             return "%s %s %s %s %s %s %s" % (minute,hour,day,month,weekday,user,job)
         else:
-            return  "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+            return "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
 
     return None
 
@@ -314,15 +315,15 @@ def main():
     old_job = find_job(name,backupfile)
     if do_install:
         if len(old_job) == 0:
-            (rc, out, err) = add_job(module,name,job,tmpfile.name)
+            add_job(module,name,job,tmpfile.name)
             changed = True
         if len(old_job) > 0 and old_job[1] != job:
-            (rc, out, err) = update_job(name,job,tmpfile.name)
+            update_job(name,job,tmpfile.name)
             changed = True
     else:
         if len(old_job) > 0:
             # if rm is true after the next line, file will be deleted afterwards
-            (rc, out, err, rm) = remove_job(name,tmpfile.name)
+            rm = remove_job(name,tmpfile.name)
             changed = True
         else:
             # there is no old_jobs for deletion - we should leave everything
