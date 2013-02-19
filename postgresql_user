@@ -110,6 +110,9 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
+   - If you specify PUBLIC as the user, then the privilege changes will apply
+     to all users. You may not specify password or role_attr_flags when the
+     PUBLIC user is specified.
 requirements: [ psycopg2 ]
 author: Lorin Hochstein
 '''
