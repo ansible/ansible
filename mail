@@ -94,6 +94,11 @@ options:
     default: null
     required: false
     version_added: "1.0"
+  charset:
+    description:
+      - The character set of email being sent
+    default: 'us-ascii'
+    requred: false
 examples:
     - description: "Example playbook sending mail to root"
       code: "local_action: mail msg='System ${ansible_hostname} has been sucessfully provisioned.'"
@@ -109,6 +114,7 @@ examples:
                  cc="Charlie Root <root@localhost>"
                  attach="/etc/group /tmp/pavatar2.png"
                  headers=Reply-To=john@example.com|X-Special="Something or other"
+                 charset=utf8
 """
 
 import os
@@ -144,6 +150,7 @@ def main():
             body = dict(default=None),
             attach = dict(default=None),
             headers = dict(default=None),
+            charset = dict(default='us-ascii')
         )
     )
 
@@ -157,6 +164,7 @@ def main():
     body = module.params.get('body')
     attach_files = module.params.get('attach')
     headers = module.params.get('headers')
+    charset = module.params.get('charset')
 
     sender_phrase, sender_addr = parseaddr(sender)
 
@@ -206,7 +214,7 @@ def main():
     if len(cc_list) > 0:
         msg['Cc'] = ", ".join(cc_list)
 
-    part = MIMEText(body + "\n\n")
+    part = MIMEText(body + "\n\n", _charset=charset)
     msg.attach(part)
 
     if attach_files is not None:
