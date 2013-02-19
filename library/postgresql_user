@@ -110,6 +110,9 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
+   - If you specify PUBLIC as the user, then the privilege changes will apply
+     to all users. You may not specify password or role_attr_flags when the
+     PUBLIC user is specified.
 requirements: [ psycopg2 ]
 author: Lorin Hochstein
 '''
@@ -129,6 +132,9 @@ else:
 
 
 def user_exists(cursor, user):
+    # The PUBLIC user is a special case that is always there
+    if user == 'PUBLIC':
+        return True
     query = "SELECT rolname FROM pg_roles WHERE rolname=%(user)s"
     cursor.execute(query, {'user': user})
     return cursor.rowcount > 0
@@ -143,6 +149,14 @@ def user_add(cursor, user, password, role_attr_flags):
 def user_alter(cursor, user, password, role_attr_flags):
     """Change user password"""
     changed = False
+
+    if user == 'PUBLIC':
+        if password is not None:
+            module.fail_json(msg="cannot change the password for PUBLIC user")
+        elif role_attr_flags != '':
+            module.fail_json(msg="cannot change the role_attr_flags for PUBLIC user")
+        else:
+            return False
 
     # Handle passwords.
     if password is not None or role_attr_flags is not None:
@@ -241,14 +255,20 @@ def has_database_privilege(cursor, user, db, priv):
 
 def grant_database_privilege(cursor, user, db, priv):
     prev_priv = get_database_privileges(cursor, user, db)
-    query = 'GRANT %s ON DATABASE \"%s\" TO \"%s\"' % (priv, db, user)
+    if user == "PUBLIC":
+        query = 'GRANT %s ON DATABASE \"%s\" TO PUBLIC' % (priv, db)
+    else:
+        query = 'GRANT %s ON DATABASE \"%s\" TO \"%s\"' % (priv, db, user)
     cursor.execute(query)
     curr_priv = get_database_privileges(cursor, user, db)
     return len(curr_priv) > len(prev_priv)
 
 def revoke_database_privilege(cursor, user, db, priv):
     prev_priv = get_database_privileges(cursor, user, db)
-    query = 'REVOKE %s ON DATABASE \"%s\" FROM \"%s\"' % (priv, db, user)
+    if user == "PUBLIC":
+        query = 'REVOKE %s ON DATABASE \"%s\" FROM PUBLIC' % (priv, db)
+    else:
+        query = 'REVOKE %s ON DATABASE \"%s\" FROM \"%s\"' % (priv, db, user)
     cursor.execute(query)
     curr_priv = get_database_privileges(cursor, user, db)
     return len(curr_priv) < len(prev_priv)
