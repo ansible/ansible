@@ -39,6 +39,15 @@ options:
         I(virtualenv) does not exist, it is created automatically
     required: false
     default: null
+  virtualenv_site_packages:
+    description:
+      - Whether the virtual environment will inherit packages from the
+        global site-packages directory.  Note that if this setting is
+        changed on an already existing virtual environment it will not
+        have any effect, the environment must be deleted and newly
+        created.
+    required: false
+    default: no
 examples:
    - code: "easy_install: name=pip"
      description: "Examples from Ansible Playbooks"
@@ -55,13 +64,6 @@ requirements: [ "virtualenv" ]
 author: Matt Wright
 '''
 
-def _ensure_virtualenv(module, env, virtualenv):
-    if os.path.exists(os.path.join(env, 'bin', 'activate')):
-        return 0, '', ''
-    else:
-        return module.run_command('%s %s' % (virtualenv, env))
-
-
 def _is_package_installed(module, name, easy_install):
     cmd = '%s --dry-run %s' % (easy_install, name)
     rc, status_stdout, status_stderr = module.run_command(cmd)
@@ -71,7 +73,8 @@ def _is_package_installed(module, name, easy_install):
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        virtualenv=dict(default=None, required=False)
+        virtualenv=dict(default=None, required=False),
+        virtualenv_site_packages=dict(default='no', choices=BOOLEANS),
     )
 
     module = AnsibleModule(argument_spec=arg_spec)
@@ -79,6 +82,7 @@ def main():
     name = module.params['name']
     env = module.params['virtualenv']
     easy_install = module.get_bin_path('easy_install', True, ['%s/bin' % env])
+    site_packages = module.boolean(module.params['virtualenv_site_packages'])
 
     rc = 0
     err = ''
@@ -86,14 +90,16 @@ def main():
 
     if env:
         virtualenv = module.get_bin_path('virtualenv', True)
-        if virtualenv is None:
-            module.fail_json(msg='virtualenv is not installed')
 
-        rc_venv, out_venv, err_venv = _ensure_virtualenv(module, env, virtualenv)
+        if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+            command = '%s %s' % (virtualenv, env)
+            if site_packages:
+                command += ' --system-site-packages'
+            rc_venv, out_venv, err_venv = module.run_command('%s %s' % (virtualenv, env))
 
-        rc += rc_venv
-        out += out_venv
-        err += err_venv
+            rc += rc_venv
+            out += out_venv
+            err += err_venv
 
     cmd = None
     changed = False
