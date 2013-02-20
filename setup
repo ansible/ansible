@@ -52,11 +52,20 @@ notes:
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems. (See also M(facter) and M(ohai).)
+    - The filter option filters only the first level subkey below ansible_facts.
 examples:
     - code: ansible all -m setup --tree /tmp/facts
       description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
     - code: ansible all -m setup -a 'filter=ansible_*_mb'
-      description: Obtain I(only) facts regarding memory from all hosts and output them.
+      description: Obtain I(only) facts regarding memory found by ansible on all hosts and output them.
+    - code: ansible all -m setup -a 'filter=facter_*'
+      description: Display I(only) facts returned by facter.
+    - code: ansible all -m setup -a 'filter=ansible_eth[0-2]'
+      description: Displays ansible facts abouts ethernet interfaces eth0, eth1, and eth2.
+    - code: ansible all -m setup -a 'filter=ansible_eth?'
+      description: Displays ansible facts abouts ethernet interfaces eth0 through eth9 (but not eth10).
+    - code: ansible all -m setup -a 'filter=ansible_eth[!0]'
+      description: Displays ansible facts abouts all ethernet interfaces but eth0.
 author: Michael DeHaan
 '''
 
