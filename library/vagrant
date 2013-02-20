@@ -183,7 +183,7 @@ class VagrantWrapper(object):
             vgn = d['vagrant_name']
             status = self.vg.status(vgn)
             if status != 'running':
-                self.vg.up(False, d['vagrant_name'])
+                self.vg.up(True, d['vagrant_name'])
                 changed =True
                 
         ad = self._build_instance_array_for_ansible(vm_name)
@@ -317,7 +317,8 @@ class VagrantWrapper(object):
         d['n'] = n
         d['N'] = N
         d['name'] = vm_name
-        d['vagrant_name'] = "%s%d" % (vm_name,n)
+        d['vagrant_name'] = "%s%d" % (vm_name.replace("-","_"),n)
+        d['vagrant_hostname'] = d['vagrant_name'].replace("_","-")
         d['internal_ip'] = VAGRANT_INT_IP % (255-N)
         self.vg_data['num_inst'] = N
         
@@ -377,10 +378,11 @@ class VagrantWrapper(object):
             for c in range(len(inst_array)):
                 d = inst_array[c] 
                 name = d['vagrant_name']
+                hostname = d['vagrant_hostname']
                 ip = d['internal_ip']
                 box_name = d['box_name']
                 vfile.write(VAGRANT_FILE_VM_STANZA % 
-                            (name, name, name, ip, name, name, name, box_name) )
+                            (name, name, name, ip, name, hostname, name, box_name) )
   
         vfile.write(VAGRANT_FILE_TAIL)
         vfile.close()
@@ -442,7 +444,7 @@ def main():
     box_path = module.params.get('box_path')
     vm_name = module.params.get('vm_name')
     if vm_name != None: 
-        vm_name = vm_name.lower().replace("-","_")
+        vm_name = vm_name.lower()
     count = module.params.get('count') 
 
     # Initialize vagrant
@@ -539,7 +541,7 @@ def main():
                 module.fail_json(msg = "Unknown vagrant subcommand: \"%s\"." % (cmd))
             
     except subprocess.CalledProcessError as e:     
-        module.fail_json(msg = "Vagrant command failed: %s." % (e))
+        module.fail_json(msg = "Vagrant command failed: %s.\nOutput of vagrant command:\n%s" % (e,e.output))
 #    except Exception as e:
 #        module.fail_json(msg = e.__str__())
     module.exit_json(status = "success")
