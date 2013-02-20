@@ -627,8 +627,8 @@ def get_diff(before, after):
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            differ = difflib.unified_diff(before.split("\n"), after.split("\n"), 'before', 'after', '', '', 10)
-            return "\n".join(list(differ))
+            differ = difflib.unified_diff(before.splitlines(True), after.splitlines(True), 'before', 'after', '', '', 10)
+            return "".join(list(differ))
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
