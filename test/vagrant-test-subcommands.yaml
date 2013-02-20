@@ -1,0 +1,74 @@
+---
+- hosts:
+  - localhost
+  connection: local
+  gather_facts: False
+
+#  vars:
+#    keypair: robparrott-ec2
+#    instance_type: t1.micro
+#    security_group: my-little-instance
+#    image: ami-1624987f
+#    mail_from: parrott@g.harvard.edu
+#    mail_to: parrott@g.harvard.edu
+#    me: "Rob Parrott"
+#  vars_prompt:
+#    shortname: "What is the shortname of this host to be?"
+
+  tasks:
+  - name: Fire up a vagrant instance
+    local_action: vagrant
+        command=up
+        box_name=centos6
+    register: vagrant
+    
+  - name: Fire up another couple vagrant instances
+    local_action: vagrant
+        command=up
+        box_name=lucid32
+        vm_name=fred
+        count=2
+    register: vagrant
+        
+  - name: Report the status of fred (with 2 instances)
+    local_action: vagrant
+        command=status
+        vm_name=fred
+    register: vagrant    
+        
+  - name: Report the status of everyone (three total ...)
+    local_action: vagrant
+        command=status
+    register: vagrant 
+    
+    
+  - name: Report the configuration info of fred
+    local_action: vagrant
+        command=config
+        vm_name=fred
+    register: vagrant    
+    
+  - name: Stop one
+    local_action: vagrant
+        command=halt
+        vm_name=fred
+    register: vagrant 
+            
+  - name: Stop all
+    local_action: vagrant
+        command=halt
+    register: vagrant 
+            
+  - name: Destroy 'em
+    local_action: vagrant
+        command=destroy
+    register: vagrant 
+    
+  - name: Clear it out
+    local_action: vagrant
+        command=clear
+    register: vagrant 
+
+
+         
+      
