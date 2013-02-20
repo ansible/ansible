@@ -238,7 +238,6 @@ def main():
     if not os.access(sysctl_args['sysctl_file'], os.W_OK):
         try:
             f = open(sysctl_args['sysctl_file'],'w')
-            f.write('')
             f.close()
         except IOError, e:
             module.fail_json(msg='unable to create supplied sysctl file (destination directory probably missing)')
