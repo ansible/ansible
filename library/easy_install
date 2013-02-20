@@ -48,6 +48,12 @@ options:
         created.
     required: false
     default: no
+  virtualenv_command:
+    description:
+      - The command to create the virtual environment with. For example
+        C(pyvenv), C(virtualenv), C(virtualenv2).
+    required: false
+    default: virtualenv
 examples:
    - code: "easy_install: name=pip"
      description: "Examples from Ansible Playbooks"
@@ -75,6 +81,7 @@ def main():
         name=dict(required=True),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', choices=BOOLEANS),
+        virtualenv_command=dict(default='virtualenv', required=False),
     )
 
     module = AnsibleModule(argument_spec=arg_spec)
@@ -83,13 +90,14 @@ def main():
     env = module.params['virtualenv']
     easy_install = module.get_bin_path('easy_install', True, ['%s/bin' % env])
     site_packages = module.boolean(module.params['virtualenv_site_packages'])
+    virtualenv_command = module.params['virtualenv_command']
 
     rc = 0
     err = ''
     out = ''
 
     if env:
-        virtualenv = module.get_bin_path('virtualenv', True)
+        virtualenv = module.get_bin_path(virtualenv_command, True)
 
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             command = '%s %s' % (virtualenv, env)
