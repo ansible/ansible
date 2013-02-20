@@ -46,6 +46,13 @@ options:
     required: false
     default: null
     aliases: []
+  volume_tags:
+    version_added: "1.1"
+    description:
+      - a hash/dictionary of tags to add to the new volume; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+    aliases: []    
 examples:
    - code: 'local_action: ec2_vol instance=XXXXXX volume_size=5 device_name=sdd'
      description: "Simple playbook example"
@@ -86,6 +93,7 @@ def main():
             ec2_url = dict(aliases=['EC2_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            volume_tags = dict(),
         )
     )
 
@@ -96,6 +104,7 @@ def main():
     ec2_url = module.params.get('ec2_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
+    volume_tags = module.params.get('volume_tags')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -163,6 +172,18 @@ def main():
                     volume.update()
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))           
+
+    # Add some tags so it can be found in the ec2 console    
+    try:
+        name_set = False
+        if volume_tags:
+            tags = module.from_json(volume_tags)
+            name_set = "Name" in tags
+            ec2.create_tags([volume.id], tags)
+        if (not name_set) and device_name and instance:
+            volume.add_tag("Name", "%s - %s" % (instance, device_name))
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     print json.dumps({
         "volume_id": volume.id,
