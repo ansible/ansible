@@ -20,6 +20,7 @@
 
 import array
 import fcntl
+import fnmatch
 import glob
 import platform
 import re
@@ -30,7 +31,13 @@ DOCUMENTATION = '''
 ---
 module: setup
 short_description: Gathers facts about remote hosts
-options: {}
+options:
+    filter:
+        description:
+            - a filter that will be applied to the keys; only key matching filter will
+            be returned. The filter should be a shell-style wildcard.
+        required: false
+        default: *
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -1084,9 +1091,12 @@ def run_setup(module):
 
     setup_options = {}
     facts = ansible_facts()
+    filtr = module.params['filter']
 
     for (k, v) in facts.items():
-        setup_options["ansible_%s" % k.replace('-', '_')] = v
+        k = "ansible_%s" % k.replace('-', '_')
+        if fnmatch.fnmatch(k, module.params['filter']):
+            setup_options[k] = v
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
@@ -1100,7 +1110,9 @@ def run_setup(module):
             facter = False
         if facter:
             for (k,v) in facter_ds.items():
-                setup_options["facter_%s" % k] = v
+                k = "facter_%s" % k
+                if fnmatch.fnmatch(k, module.params['filter']):
+                    setup_options[k] = v
 
     # ditto for ohai, but just top level string keys
     # because it contains a lot of nested stuff we can't use for
@@ -1117,7 +1129,8 @@ def run_setup(module):
             for (k,v) in ohai_ds.items():
                 if type(v) == str or type(v) == unicode:
                     k2 = "ohai_%s" % k.replace('-', '_')
-                    setup_options[k2] = v
+                    if fnmatch.fnmatch(k2, module.params['filter']):
+                        setup_options[k2] = v
 
     setup_result = {}
     setup_result['ansible_facts'] = setup_options
@@ -1130,7 +1143,9 @@ def run_setup(module):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(),
+        argument_spec = dict(
+            filter=dict(default="*", required=False),
+        ),
         supports_check_mode = True,
     )
     data = run_setup(module)
