@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pwd
+import grp
 
 from ansible import utils
 from ansible import errors
@@ -40,6 +42,9 @@ class ActionModule(object):
         options  = utils.parse_kv(module_args)
         source   = options.get('src', None)
         dest     = options.get('dest', None)
+        group    = options.get('group',None)
+        owner    = options.get('owner',None)
+        mode     = options.get('mode',None)
 
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
@@ -113,5 +118,29 @@ class ActionModule(object):
                 res.after_diff_value = resultant
                 return res
         else:
-            return ReturnData(conn=conn, comm_ok=True, result=dict(changed=False))
+            is_owner = True
+            is_group = True
+            result = dict(changed=False)
+
+            # check if the file mode is the same. this should execute on remote. #stat -c "%U %G"
+            data = self.runner._low_level_exec_command( conn, "stat -c '%a %U %G' " + " %s" % dest, tmp)
+            data2 = utils.last_non_blank_line(data['stdout']).split()
+            file_mode = "0" + data2[0]
+            file_owner = data2[1]
+            file_group= data2[2]
+
+            if file_mode != mode:
+                result = self.runner._low_level_exec_command(conn, "chmod %s %s" % (mode,dest) , tmp)
+                result.update(dict(changed=True, mode="%s" % (mode)))
+
+            if owner is not None and owner != file_owner:
+                is_owner = False
+            if  group is not None and group != file_group:
+                is_group = False
+
+            if not is_owner or not is_group:
+                result = self.runner._low_level_exec_command(conn, "chown %s:%s %s" % (owner,group,dest) , tmp,sudoable=True)
+                result.update(dict(changed=True, owner="%s" % (owner), group="%s" % (group)))
+
+            return ReturnData(conn=conn, comm_ok=True, result=result)
 
