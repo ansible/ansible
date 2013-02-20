@@ -113,5 +113,5 @@ class ActionModule(object):
                 res.after_diff_value = resultant
                 return res
         else:
-            return ReturnData(conn=conn, comm_ok=True, result=dict(changed=False))
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
 
