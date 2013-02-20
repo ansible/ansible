@@ -158,12 +158,14 @@ def sysctl_check(current_step, **sysctl_args):
     # sysctl file exists and openable ?
     # TODO choose if prefered to use os.access() instead try/catch on open
     if current_step == 'before':
-        try:
-            f = open(sysctl_args['sysctl_file'])
-            f.close()
-        except IOError, e:
-            return 1, 'unable to open supplied sysctl.conf'
-   
+        if not os.access(sysctl_args['sysctl_file'], os.W_OK):
+            try:
+                f = open(sysctl_args['sysctl_file'],'w')
+                f.write('')
+                f.close()
+            except IOError, e:
+                return 1, 'unable to create supplied sysctl file (directory missing)'
+
     # no smart checks at this step ?
     if sysctl_args['checks'] == 'none':
         return 0, ''
