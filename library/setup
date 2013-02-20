@@ -55,6 +55,8 @@ notes:
 examples:
     - code: ansible all -m setup --tree /tmp/facts
       description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+    - code: ansible all -m setup -a 'filter=ansible_*_mb'
+      description: Obtain I(only) facts regarding memory from all hosts and output them.
 author: Michael DeHaan
 '''
 
