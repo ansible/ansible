@@ -141,6 +141,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
         if not install_recommends:
             cmd += " --no-install-recommends"
 
+        if m.check_mode:
+            m.exit_json(changed=True)
+
         rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
@@ -164,6 +167,10 @@ def remove(m, pkgspec, cache, purge=False):
         if purge:
             purge = '--purge'
         cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
+
+        if m.check_mode:
+            m.exit_json(changed=True)
+
         rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
@@ -180,7 +187,8 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], choices=['yes', 'no']),
             force = dict(default='no', choices=['yes', 'no'])
-        )
+        ),
+        supports_check_mode = True
     )
 
     try:
@@ -235,4 +243,3 @@ def main():
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
-
