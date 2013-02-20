@@ -48,7 +48,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  thirsty:
+  force:
     description:
       - the default is C(yes), which will replace the remote file when contents
         are different than the source.  If C(no), the file will only be transferred
@@ -57,6 +57,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
+    aliases: [ "thirsty" ]
   others:
   others:
     description:
@@ -78,7 +79,7 @@ def main():
             src=dict(required=True),
             dest=dict(required=True),
             backup=dict(default=False, choices=BOOLEANS),
-            thirsty = dict(default='yes', choices=BOOLEANS),
+            force = dict(default='yes', choices=BOOLEANS, aliases=['thirsty']),
         ),
         add_file_common_args=True,
     )
@@ -86,7 +87,7 @@ def main():
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
     backup = module.boolean(module.params.get('backup', False))
-    thirsty = module.boolean(module.params['thirsty'])
+    force = module.boolean(module.params['force'])
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -97,7 +98,7 @@ def main():
     md5sum_dest = None
 
     if os.path.exists(dest):
-        if not thirsty:
+        if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if (os.path.isdir(dest)):
             basename = os.path.basename(src)
