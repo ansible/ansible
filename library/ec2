@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on boto and m2crypt.
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto.
 version_added: "0.9"
 options:
   key_name:
@@ -30,9 +30,16 @@ options:
     aliases: ['keypair']
   group:
     description:
-      - security group to use on the instance
+      - security group to use with the instance
     required: false
-    default: 'default'
+    default: null 
+    aliases: []
+  group_id:
+    version_added: "1.1"
+    description:
+      - security group id to use with the instance 
+    required: false
+    default: null
     aliases: []
   instance_type:
     description:
@@ -61,25 +68,25 @@ options:
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    required: False
-    default: False
+    required: false
+    default: false
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to ec2 or your Eucalyptus cloud (by default the module will use ec2 endpoints)
-    required: False
+      - url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
+    required: false
     default: null
     aliases: []
   ec2_secret_key:
     description:
       - ec2 secret key
-    required: False
+    required: false
     default: null
     aliases: []
   ec2_access_key:
     description:
       - ec2 access key
-    required: False
+    required: false
     default: null
     aliases: []
   count:
@@ -89,27 +96,28 @@ options:
     default: 1
     aliases: []
   monitor:
+    version_added: "1.1"
     description:
       - enable detailed monitoring (CloudWatch) for instance
-    required: False
+    required: false
     default: null
     aliases: []
   user_data:
     version_added: "0.9"
     description:
       - opaque blob of data which is made available to the ec2 instance
-    required: False
+    required: false
     default: null
     aliases: []
   instance_tags:
     version_added: "1.0"
     description:
-      - a hash/dictionary of tags, in quoted json format, to add to the new instance
-    required: False
+      - a hash/dictionary of tags to add to the new instance; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
     default: null
     aliases: []
 examples:
-   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3'
+   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 group=webservers'
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -128,7 +136,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
-            group = dict(default='default'),
+            group = dict(),
+            group_id = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
@@ -145,7 +154,8 @@ def main():
     )
 
     key_name = module.params.get('key_name')
-    group = module.params.get('group')
+    group_name = module.params.get('group')
+    group_id = module.params.get('group_id')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
@@ -174,7 +184,16 @@ def main():
             ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
+    
+    # Here we try to lookup the group name from the security group id - if group_id is set.
 
+    try:
+        if group_id:
+            grp_details = ec2.get_all_security_groups(group_ids=group_id)
+            grp_item = grp_details[0]
+            group_name = grp_item.name
+    except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
@@ -183,7 +202,7 @@ def main():
                                 min_count = count, 
                                 max_count = count,
                                 monitoring_enabled = monitoring,
-                                security_groups = [group],
+                                security_groups = [group_name],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
@@ -219,7 +238,9 @@ def main():
             }
         instances.append(d)
 
-    module.exit_json(changed=True, instances=instances)
+    result = {"changed": True,
+              "instances": instances }
+    module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
