@@ -160,7 +160,7 @@ class Facts(object):
                       #
                       'Mandriva'     : 'Mandrake',
                       'Mandrake'     : 'Mandrake',
-		      #
+              #
                       'Solaris'      : 'Solaris',
                       'Nexenta'      : 'Solaris',
                       'OmniOS'       : 'Solaris',
@@ -168,7 +168,7 @@ class Facts(object):
                       'SmartOS'      : 'Solaris',
                       #
                       'AIX'          : 'AIX'
-	           }
+               }
 
         if self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
@@ -201,9 +201,9 @@ class Facts(object):
                         self.facts['distribution'] = name
 
         # Find the family
-	self.facts['osfamily'] = self.facts['distribution']
-	if self.facts['distribution'] in OSFAMILY:
-	   self.facts['osfamily'] = OSFAMILY[self.facts['distribution']]
+    self.facts['osfamily'] = self.facts['distribution']
+    if self.facts['distribution'] in OSFAMILY:
+       self.facts['osfamily'] = OSFAMILY[self.facts['distribution']]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
