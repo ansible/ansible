@@ -13,6 +13,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Cygate AB <http://cygate.se>`_ - IT solutions from Malmo, Sweeden
     * `D square NV <http://dsquare.be>`_ - Process industry data mining, Belgium
     * `Dag IT Solutions  <http://dagit.net>`_ - Enterprise Linux & Beyond
+    * `Digital Repository of Ireland <http://www.dri.ie/>` - Digital Preservation and Archiving
     * `Duke University Economics <http://duke.edu>`_ - Research & Education
     * `Eucalyptus Systems Inc. <http://www.eucalyptus.com>`_ - Makers of the AWS-compatible private cloud platform 
     * `Ginsys <http://ginsys.eu/>`_ - Linux infrastructure consulting from Belgium
@@ -30,6 +31,7 @@ The following is an opt-in list of just some of the folks using Ansible -- to ge
     * `Steelhouse <http://steelhouse.com>`_ - Behavioral commerce
     * `Tent.is <http://tent.is>`_ - "The easiest way to start using Tent"
     * `Tranquil Hosting <http://tranquilhosting.com>`_ - Managed Linux Hosting Services
+    * `Trinity Centre for High Performance Computing - <http://www.tchpc.tcd.ie>`_ - Research and Education
     * `Tomorrow Focus Technologies GmbH <http://www.t-f-t.net/>`_ - Running some of the biggest web sites in Europe
     * `123i.com.br <http://123i.com.br>`_ - Find real estate in Brazil
 
