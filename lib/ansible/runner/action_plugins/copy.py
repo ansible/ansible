@@ -20,6 +20,7 @@ import os
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
+import base64
 
 class ActionModule(object):
 
@@ -74,10 +75,21 @@ class ActionModule(object):
         exec_rc = None
         if local_md5 != remote_md5:
 
+            if self.runner.diff:
+                dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
+                if 'content' in dest_result.result:
+                    dest_contents = dest_result.result['content']
+                    if dest_result.result['encoding'] == 'base64':
+                        dest_contents = base64.b64decode(dest_contents)
+                    else:
+                        raise Exception("unknown encoding, failed: %s" % dest_result.result)
+                else:
+                    dest_result = ''
+
+                src_contents = file(source).read()
+
             if self.runner.check:
-                # TODO: if the filesize is small, include a nice pretty-printed diff by 
-                # calling a (new) diff callback
-                return ReturnData(conn=conn, result=dict(changed=True))
+                return ReturnData(conn=conn, result=dict(changed=True), before_diff_value=dest_contents, after_diff_value=src_contents)
 
             # transfer the file to a remote tmp location
             tmp_src = tmp + os.path.basename(source)
