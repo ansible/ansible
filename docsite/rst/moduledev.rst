@@ -309,6 +309,26 @@ will know what to do::
 If you're writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.
 
+Unit testing
+````````````
+Unit tests should be provided for new modules. This will ensure that
+changes to the module do not break its funtionalities, and make it
+easier for others to contribute.
+
+All unit tests are in the test/ directory. TestRunner.py contains the
+tests for the core modules.
+
+Extra packages are required:
+
+- make
+- python-nose
+- facter
+- ruby-json
+
+To execute the tests::
+
+    cd ansible
+    make tests
 
 Documenting Your Module
 ```````````````````````
@@ -353,6 +373,7 @@ These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specifies as ``M(module)``.
+
 
 Building & Testing
 ++++++++++++++++++
