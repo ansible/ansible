@@ -71,7 +71,6 @@ import grp
 import pwd
 import platform
 import errno
-
 import urllib2
 
 HAVE_SELINUX=False
@@ -790,11 +789,11 @@ class AnsibleModule(object):
         if url is None:
             self.fail_json(msg="needed a URL but was not specified")
         try:
-	    if proxy:
-	        proxies = {'http' : 'http://' + proxy, 'https': 'https://' + proxy } 
-	        proxy_handler = urllib2.ProxyHandler(proxies)
-	        opener =  urllib2.build_opener(proxy_handler)
-  	        urllib2.install_opener(opener)
+            if proxy:
+                proxies = {'http' : 'http://' + proxy, 'https': 'https://' + proxy}
+                proxy_handler = urllib2.ProxyHandler(proxies)
+                opener =  urllib2.build_opener(proxy_handler)
+                urllib2.install_opener(opener)
 
             connection = urllib2.urlopen(url)
             if connection is None:
