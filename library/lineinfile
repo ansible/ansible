@@ -164,6 +164,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         msg = 'line added'
         changed = True
 
+    file_args = module.load_file_common_arguments(module.params)
+    changed = module.set_file_attributes_if_different(file_args, changed)
+
     if changed and not module.check_mode:
         if backup and os.path.exists(dest):
             module.backup_local(dest)
