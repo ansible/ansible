@@ -1102,12 +1102,9 @@ def run_setup(module):
 
     setup_options = {}
     facts = ansible_facts()
-    filtr = module.params['filter']
 
     for (k, v) in facts.items():
-        k2 = "ansible_%s" % k.replace('-', '_')
-        if fnmatch.fnmatch(k2, filtr):
-            setup_options[k2] = v
+        setup_options["ansible_%s" % k.replace('-', '_')] = v
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
@@ -1121,9 +1118,7 @@ def run_setup(module):
             facter = False
         if facter:
             for (k,v) in facter_ds.items():
-                k2 = "facter_%s" % k
-                if fnmatch.fnmatch(k2, filtr):
-                    setup_options[k2] = v
+                setup_options["facter_%s" % k] = v
 
     # ditto for ohai, but just top level string keys
     # because it contains a lot of nested stuff we can't use for
@@ -1140,11 +1135,13 @@ def run_setup(module):
             for (k,v) in ohai_ds.items():
                 if type(v) == str or type(v) == unicode:
                     k2 = "ohai_%s" % k.replace('-', '_')
-                    if fnmatch.fnmatch(k2, filtr):
-                        setup_options[k2] = v
+                    setup_options[k2] = v
 
-    setup_result = {}
-    setup_result['ansible_facts'] = setup_options
+    setup_result = { 'ansible_facts': {} }
+
+    for (k,v) in setup_options.items():
+        if fnmatch.fnmatch(k, module.params['filter']):
+            setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
     setup_result['verbose_override'] = True
