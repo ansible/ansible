@@ -103,6 +103,17 @@ examples:
 """
    
 
+def check_file(module, changed, message=""):
+
+    file_args = module.load_file_common_arguments(module.params)
+    if module.set_file_attributes_if_different(file_args, False):
+        if changed:
+            message += " and "
+        changed = True
+        message += "ownership, perms or SE linux context changed"
+
+    return [ message, changed ]
+
 def present(module, dest, regexp, line, insertafter, insertbefore, create, backup):
 
     if os.path.isdir(dest):
@@ -178,13 +189,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f.writelines(lines)
         f.close()
 
-    file_args = module.load_file_common_arguments(module.params)
-    if module.set_file_attributes_if_different(file_args, False):
-        if changed:
-            msg += " and "
-        changed = True
-        msg += "ownership, perms or SE linux context changed"
-
+    [ msg, changed ] = check_file(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
 
 def absent(module, dest, regexp, backup):
@@ -194,6 +199,7 @@ def absent(module, dest, regexp, backup):
     elif not os.path.exists(dest):
         module.exit_json(changed=False, msg="file not present")
 
+    msg = ""
     f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
@@ -216,10 +222,12 @@ def absent(module, dest, regexp, backup):
         f.writelines(lines)
         f.close()
 
-    file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    if changed:
+        msg = "%s line(s) removed" % len(found)
 
-    module.exit_json(changed=changed, found=len(found))
+    [ msg, changed ] = check_file(module, changed, msg)
+
+    module.exit_json(changed=changed, found=len(found), msg=msg)
 
 def main():
     module = AnsibleModule(
