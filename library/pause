@@ -17,7 +17,7 @@ options:
     default: null
   seconds:
     description:
-      - Number of minutes to pause for.
+      - Number of seconds to pause for.
     required: false
     default: null
   prompt:
