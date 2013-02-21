@@ -209,21 +209,23 @@ def main():
             create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
-    mutually_exclusive = [['insertbefore', 'insertafter']],
-    supports_check_mode = True
+        mutually_exclusive = [['insertbefore', 'insertafter']],
+        add_file_common_args=True,
+        supports_check_mode = True
     )
 
     params = module.params
     create = module.boolean(module.params.get('create', False))
     backup = module.boolean(module.params.get('backup', False))
+    dest   = os.path.expanduser(params['dest'])
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
-        present(module, params['dest'], params['regexp'], params['line'],
+        present(module, dest, params['regexp'], params['line'],
                 params['insertafter'], params['insertbefore'], create, backup)
     else:
-        absent(module, params['dest'], params['regexp'], backup)
+        absent(module, dest, params['regexp'], backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
