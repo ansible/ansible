@@ -240,6 +240,9 @@ class Zfs(object):
             return False
 
     def create(self):
+        if self.module.check_mode:
+            self.changed = True
+            return
         properties=self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
@@ -266,6 +269,9 @@ class Zfs(object):
             self.module.fail_json(msg=out)
 
     def destroy(self):
+        if self.module.check_mode:
+            self.changed = True
+            return
         cmd = [self.module.get_bin_path('zfs', True)]
         cmd.append('destroy')
         cmd.append(self.name)
@@ -276,6 +282,9 @@ class Zfs(object):
             self.module.fail_json(msg=out)
 
     def set_property(self, prop, value):
+        if self.module.check_mode:
+            self.changed = True
+            return
         cmd = [self.module.get_bin_path('zfs', True)]
         cmd.append('set')
         cmd.append(prop + '=' + value)
@@ -356,18 +365,21 @@ def main():
             'vscan':           {'required': False, 'choices':['on', 'off']},
             'xattr':           {'required': False, 'choices':['on', 'off']},
             'zoned':           {'required': False, 'choices':['on', 'off']},
-            }
+            },
+        supports_check_mode=True
         )
+
     state = module.params.pop('state')
     name = module.params.pop('name')
-    # Remaining items in module.params are zfs properties
 
-    # Remove 'null' value properties
+    # Get all valid zfs-properties
     properties = dict()
     for prop, value in module.params.iteritems():
+        if prop in ['CHECKMODE']:
+            continue
         if value:
             properties[prop] = value
-    
+
     result = {}
     result['name'] = name
     result['state'] = state
