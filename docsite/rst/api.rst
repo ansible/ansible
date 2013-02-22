@@ -202,7 +202,7 @@ You can use this script in one of two ways. The easiest is to use Ansible's ``-i
 
     ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
-The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the ``ec2.ini`` file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
+The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
 To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is just to export two environment variables:
 
