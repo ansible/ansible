@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import socket
 import ansible.constants as C
 
 class Host(object):
@@ -61,6 +62,8 @@ class Host(object):
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
+        try:
+            results['inventory_ip'] = socket.getaddrinfo(x,None)[0][4][0]
+        except:
+            results['inventory_ip'] = None
         return results
-
-
