@@ -103,10 +103,11 @@ examples:
 """
    
 
-def check_file(module, changed, message=""):
+def check_file_attrs(module, changed, message):
 
     file_args = module.load_file_common_arguments(module.params)
     if module.set_file_attributes_if_different(file_args, False):
+
         if changed:
             message += " and "
         changed = True
@@ -129,6 +130,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f = open(dest, 'rb')
         lines = f.readlines()
         f.close()
+
+    msg = ""
 
     mre = re.compile(regexp)
     if not mre.search(line):
@@ -182,9 +185,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         msg = 'line added'
         changed = True
 
-    file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_file_attributes_if_different(file_args, changed)
-
     if changed and not module.check_mode:
         if backup and os.path.exists(dest):
             module.backup_local(dest)
@@ -192,7 +192,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f.writelines(lines)
         f.close()
 
-    [ msg, changed ] = check_file(module, changed, msg)
+    [ msg, changed ] = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
 
 def absent(module, dest, regexp, backup):
@@ -203,6 +203,7 @@ def absent(module, dest, regexp, backup):
         module.exit_json(changed=False, msg="file not present")
 
     msg = ""
+
     f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
@@ -228,8 +229,7 @@ def absent(module, dest, regexp, backup):
     if changed:
         msg = "%s line(s) removed" % len(found)
 
-    [ msg, changed ] = check_file(module, changed, msg)
-
+    [ msg, changed ] = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, found=len(found), msg=msg)
 
 def main():
