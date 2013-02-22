@@ -311,9 +311,9 @@ JSON is probably the simplest way to go.
 
 Unit testing
 ````````````
-Unit tests should be provided for new modules. This will ensure that
-changes to the module do not break its funtionalities, and make it
-easier for others to contribute.
+Unit tests should be provided for new modules that do not rely on too many
+external depedencies. This will ensure that changes to the module do not break
+its funtionalities, and make it easier for others to contribute.
 
 All unit tests are in the test/ directory. TestRunner.py contains the
 tests for the core modules.
