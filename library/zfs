@@ -373,12 +373,13 @@ def main():
     name = module.params.pop('name')
 
     # Get all valid zfs-properties
-    properties = {}
-    for key in set(module.params.keys()).intersection(set(module.argument_spec.keys())):
-        # Skip keys with null value
-        if module.params[key]:
-            properties[key] = module.params[key]
-    
+    properties = dict()
+    for prop, value in module.params.iteritems():
+        if prop in ['CHECKMODE']:
+            continue
+        if value:
+            properties[prop] = value
+
     result = {}
     result['name'] = name
     result['state'] = state
