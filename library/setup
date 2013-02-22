@@ -1140,7 +1140,7 @@ def run_setup(module):
     setup_result = { 'ansible_facts': {} }
 
     for (k,v) in setup_options.items():
-        if fnmatch.fnmatch(k, module.params['filter']):
+        if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
             setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
