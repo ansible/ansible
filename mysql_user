@@ -213,7 +213,13 @@ def privileges_revoke(cursor, user,host,db_table):
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
     query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
-    cursor.execute(query)
+    try:
+        cursor.execute(query)
+    except MySQLdb.OperationalError, e:
+        # 1141 -> There is no such grant defined for user ... on host ...
+        # If this exception is raised, there is no need to revoke the GRANT privilege
+        if e.args[0] != 1141 or not e.args[1].startswith("There is no such grant defined for user"):
+            raise e
 
 def privileges_grant(cursor, user,host,db_table,priv):
 
