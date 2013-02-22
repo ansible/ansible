@@ -366,7 +366,7 @@ def main():
             'xattr':           {'required': False, 'choices':['on', 'off']},
             'zoned':           {'required': False, 'choices':['on', 'off']},
             },
-          supports_check_mode=True
+        supports_check_mode=True
         )
 
     state = module.params.pop('state')
