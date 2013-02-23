@@ -87,14 +87,33 @@ options:
      description:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
+  others:
+     description:
+       - All arguments accepted by the M(file) module also work here. If you 
+       use file arguments with C(state=absent) and the file exists, it's perms, 
+       ownership or SE linux context will be updated if needed.
+     required: false
 examples:
    - code: 'lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled'
    - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
+   - code: "lineinfile: dest=/etc/host regexp='^127\.0\.0\.1' line='127.0.0.1 localhost' owner=root group=root mode=0644"
    - code: 'lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"'
    - code: 'lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"'
    - code: "lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
 """
    
+
+def check_file_attrs(module, changed, message):
+
+    file_args = module.load_file_common_arguments(module.params)
+    if module.set_file_attributes_if_different(file_args, False):
+
+        if changed:
+            message += " and "
+        changed = True
+        message += "ownership, perms or SE linux context changed"
+
+    return [ message, changed ]
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create, backup):
 
@@ -111,6 +130,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f = open(dest, 'rb')
         lines = f.readlines()
         f.close()
+
+    msg = ""
 
     mre = re.compile(regexp)
     if not mre.search(line):
@@ -171,9 +192,18 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f.writelines(lines)
         f.close()
 
+    [ msg, changed ] = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
 
 def absent(module, dest, regexp, backup):
+
+    if os.path.isdir(dest):
+        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    elif not os.path.exists(dest):
+        module.exit_json(changed=False, msg="file not present")
+
+    msg = ""
+
     f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
@@ -195,7 +225,12 @@ def absent(module, dest, regexp, backup):
         f = open(dest, 'wb')
         f.writelines(lines)
         f.close()
-    module.exit_json(changed=changed, found=len(found))
+
+    if changed:
+        msg = "%s line(s) removed" % len(found)
+
+    [ msg, changed ] = check_file_attrs(module, changed, msg)
+    module.exit_json(changed=changed, found=len(found), msg=msg)
 
 def main():
     module = AnsibleModule(
@@ -210,20 +245,22 @@ def main():
             backup=dict(default=False, choices=BOOLEANS),
         ),
         mutually_exclusive = [['insertbefore', 'insertafter']],
+        add_file_common_args=True,
         supports_check_mode = True
     )
 
     params = module.params
     create = module.boolean(module.params.get('create', False))
     backup = module.boolean(module.params.get('backup', False))
+    dest   = os.path.expanduser(params['dest'])
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
-        present(module, params['dest'], params['regexp'], params['line'],
+        present(module, dest, params['regexp'], params['line'],
                 params['insertafter'], params['insertbefore'], create, backup)
     else:
-        absent(module, params['dest'], params['regexp'], backup)
+        absent(module, dest, params['regexp'], backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
