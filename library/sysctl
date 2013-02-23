@@ -155,15 +155,6 @@ def sysctl_check(current_step, **sysctl_args):
     if not os.access(sysctl_args['key_path'], os.R_OK):
         return 1, 'key_path is not a readable file, key seems to be uncheckable'
     
-    # sysctl file exists and openable ?
-    # TODO choose if prefered to use os.access() instead try/catch on open
-    if current_step == 'before':
-        try:
-            f = open(sysctl_args['sysctl_file'])
-            f.close()
-        except IOError, e:
-            return 1, 'unable to open supplied sysctl.conf'
-   
     # no smart checks at this step ?
     if sysctl_args['checks'] == 'none':
         return 0, ''
@@ -243,6 +234,13 @@ def main():
     res,msg = sysctl_check('before', **sysctl_args)
     if res != 0:
         module.fail_json(msg='checks_before failed with: ' + msg)
+
+    if not os.access(sysctl_args['sysctl_file'], os.W_OK):
+        try:
+            f = open(sysctl_args['sysctl_file'],'w')
+            f.close()
+        except IOError, e:
+            module.fail_json(msg='unable to create supplied sysctl file (destination directory probably missing)')
 
     # reading the file
     for line in open(sysctl_args['sysctl_file'], 'r').readlines():
