@@ -178,7 +178,7 @@ def main():
         configure_priv=dict(default='^$'),
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
-        force=dict(default='no', choices=BOOLEANS),
+        force=dict(default='no', choices=BOOLEANS, type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
     module = AnsibleModule(
@@ -193,7 +193,7 @@ def main():
     configure_priv = module.params['configure_priv']
     write_priv = module.params['write_priv']
     read_priv = module.params['read_priv']
-    force = module.boolean(module.params['force'])
+    force = module.params['force']
     state = module.params['state']
 
     rabbitmq_user = RabbitMqUser(module, username, password, tags, vhost, configure_priv, write_priv, read_priv)

@@ -158,9 +158,9 @@ def main():
             version=dict(default=None, required=False),
             requirements=dict(default=None, required=False),
             virtualenv=dict(default=None, required=False),
-            virtualenv_site_packages=dict(default='no', choices=BOOLEANS),
+            virtualenv_site_packages=dict(default='no', choices=BOOLEANS, type='bool'),
             virtualenv_command=dict(default='virtualenv', required=False),
-            use_mirrors=dict(default='yes', choices=BOOLEANS),
+            use_mirrors=dict(default='yes', choices=BOOLEANS, type='bool'),
             extra_args=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
@@ -171,7 +171,7 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
-    use_mirrors = module.boolean(module.params['use_mirrors'])
+    use_mirrors = module.params['use_mirrors']
     extra_args = module.params['extra_args']
 
     if state == 'latest' and version is not None:
@@ -188,7 +188,7 @@ def main():
     if env:
         virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
-            if module.boolean(module.params['virtualenv_site_packages']):
+            if module.params['virtualenv_site_packages']:
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
                 cmd = '%s %s' % (virtualenv, env)

@@ -101,7 +101,7 @@ class Service(object):
         self.name           = module.params['name']
         self.state          = module.params['state']
         self.pattern        = module.params['pattern']
-        self.enable         = module.boolean(module.params.get('enabled', None))
+        self.enable         = module.params['enabled']
         self.changed        = False
         self.running        = None
         self.action         = None
@@ -649,7 +649,7 @@ def main():
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
-            enabled = dict(choices=BOOLEANS),
+            enabled = dict(choices=BOOLEANS, type='bool'),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True

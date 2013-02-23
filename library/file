@@ -140,7 +140,7 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
-            recurse  = dict(default='no', choices=BOOLEANS)
+            recurse  = dict(default='no', choices=BOOLEANS, type='bool')
         ),
         add_file_common_args=True,
         supports_check_mode=True
@@ -215,7 +215,7 @@ def main():
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
-        recurse = module.boolean(params['recurse'])
+        recurse = params['recurse']
         if recurse:
             for root,dirs,files in os.walk( file_args['path'] ):
                 for dir in dirs:

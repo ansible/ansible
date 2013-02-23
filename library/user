@@ -202,12 +202,12 @@ class User(object):
         self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
-        self.force      = module.boolean(module.params['force'])
-        self.remove     = module.boolean(module.params['remove'])
-        self.createhome = module.boolean(module.params['createhome'])
-        self.system     = module.boolean(module.params['system'])
-        self.append     = module.boolean(module.params['append'])
-        self.sshkeygen  = module.boolean(module.params['generate_ssh_key'])
+        self.force      = module.params['force']
+        self.remove     = module.params['remove']
+        self.createhome = module.params['createhome']
+        self.system     = module.params['system']
+        self.append     = module.params['append']
+        self.sshkeygen  = module.params['generate_ssh_key']
         self.ssh_bits   = module.params['ssh_key_bits']
         self.ssh_type   = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
@@ -1002,15 +1002,15 @@ def main():
             shell=dict(default=None),
             password=dict(default=None),
             # following options are specific to userdel
-            force=dict(default='no', choices=BOOLEANS),
-            remove=dict(default='no', choices=BOOLEANS),
+            force=dict(default='no', choices=BOOLEANS, type='bool'),
+            remove=dict(default='no', choices=BOOLEANS, type='bool'),
             # following options are specific to useradd
-            createhome=dict(default='yes', choices=BOOLEANS),
-            system=dict(default='no', choices=BOOLEANS),
+            createhome=dict(default='yes', choices=BOOLEANS, type='bool'),
+            system=dict(default='no', choices=BOOLEANS, type='bool'),
             # following options are specific to usermod
-            append=dict(default='no', choices=BOOLEANS),
+            append=dict(default='no', choices=BOOLEANS, type='bool'),
             # following are specific to ssh key generation
-            generate_ssh_key=dict(choices=BOOLEANS),
+            generate_ssh_key=dict(choices=BOOLEANS, type='bool'),
             ssh_key_bits=dict(default=ssh_defaults['bits']),
             ssh_key_type=dict(default=ssh_defaults['type']),
             ssh_key_file=dict(default=None),

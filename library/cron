@@ -259,17 +259,17 @@ def main():
             job=dict(required=False),
             cron_file=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
-            backup=dict(default=False, choices=BOOLEANS),
+            backup=dict(default=False, choices=BOOLEANS, type='bool'),
             minute=dict(default='*'),
             hour=dict(default='*'),
             day=dict(default='*'),
             month=dict(default='*'),
             weekday=dict(default='*'),
-            reboot=dict(required=False, default=False, choices=BOOLEANS)
+            reboot=dict(required=False, default=False, choices=BOOLEANS, type='bool')
         )
     )
 
-    backup     = module.boolean(module.params.get('backup', False))
+    backup     = module.params['backup']
     name       = module.params['name']
     user       = module.params['user']
     job        = module.params['job']
@@ -279,7 +279,7 @@ def main():
     day        = module.params['day']
     month      = module.params['month']
     weekday    = module.params['weekday']
-    reboot     = module.boolean(module.params.get('reboot', False))
+    reboot     = module.params['reboot']
     state      = module.params['state']
     do_install = module.params['state'] == 'present'
     changed    = False
