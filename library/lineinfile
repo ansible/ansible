@@ -66,7 +66,7 @@ options:
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
-    versionadded: 1.1
+    version_added: 1.1
     description:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
@@ -209,8 +209,8 @@ def main():
             create=dict(default=False, choices=BOOLEANS),
             backup=dict(default=False, choices=BOOLEANS),
         ),
-    mutually_exclusive = [['insertbefore', 'insertafter']],
-    supports_check_mode = True
+        mutually_exclusive = [['insertbefore', 'insertafter']],
+        supports_check_mode = True
     )
 
     params = module.params
