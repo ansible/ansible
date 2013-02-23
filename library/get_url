@@ -42,10 +42,10 @@ options:
   dest:
     description:
       - absolute path of where to download the file to.
-      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, C(thirsty=yes) must also be set.
+      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, C(force=yes) must also be set.
     required: true
     default: null
-  thirsty:
+  force:
     description:
       - if C(yes), will download the file every time and replace the
         file if the contents change. If C(no), the file will only be downloaded if
@@ -55,6 +55,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+    aliases: [ "thirsty" ]
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -194,19 +195,19 @@ def main():
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
-            thirsty = dict(default='no', choices=BOOLEANS)
+            force = dict(default='no', choices=BOOLEANS, aliases=['thirsty'])
         ),
         add_file_common_args=True
     )
 
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
-    thirsty = module.boolean(module.params['thirsty'])
+    force = module.boolean(module.params['force'])
 
     if os.path.isdir(dest):
         dest = os.path.join(dest, url_filename(url))
 
-    if not thirsty:
+    if not force:
         if os.path.exists(dest):
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
