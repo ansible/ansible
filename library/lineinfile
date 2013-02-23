@@ -89,17 +89,22 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
   others:
      description:
-       - All arguments accepted by the M(file) module also work here. If you 
-       use file arguments with C(state=absent) and the file exists, it's perms, 
-       ownership or SE linux context will be updated if needed.
+       - All arguments accepted by the M(file) module also work here. 
      required: false
-examples:
-   - code: 'lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled'
-   - code: 'lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"'
-   - code: "lineinfile: dest=/etc/host regexp='^127\.0\.0\.1' line='127.0.0.1 localhost' owner=root group=root mode=0644"
-   - code: 'lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"'
-   - code: 'lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"'
-   - code: "lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\""
+"""
+
+EXAMPLES = """
+   lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+
+   lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
+
+   lineinfile: dest=/etc/host regexp='^127\.0\.0\.1' line='127.0.0.1 localhost' owner=root group=root mode=0644
+
+   lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"
+
+   lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
+
+   lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\"
 """
    
 

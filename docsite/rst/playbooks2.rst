@@ -946,6 +946,46 @@ feature produces a large amount of output, it is best used when checking a singl
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
+Passing Complex Arguments From Dictionaries
+```````````````````````````````````````````
+
+As a review, most tasks in ansbile are of this form::
+
+    tasks:
+
+      - name: ensure the cobbler package is installed
+        yum: name=cobbler state=installed
+        
+However, in some cases, it may be useful to feed arguments directly in from a hash (dictionary).  In fact, a very small
+number of modules (the CloudFormations module is one) actually require complex arguments that can't be fit
+into a key=value system.  To pass arguments in from a hash (dictionary), do this::
+
+    tasks:
+
+      - name: call a module that requires some complex arguments
+        module_name_goes_here: asdf=1234
+        args:
+           fibonacci_list
+             - 1
+             - 1
+             - 2
+             - 3
+           my_pets:
+             dogs:
+               - fido
+               - woof    
+             fish: 
+               - limpet
+               - nemo
+
+While complex arguments can be fed to most modules in Ansible, they should only be used where needed.  Note
+that variable interpolation works exactly as you would suspect, so you can use "${foo}" and so on in values
+inside of the dictionary you pass to "args".
+
+If both key=value arguments are given along with 'args', the key=value arguments take priority.  This technically
+means you can set defaults by using 'args' if you so choose, though that is not the intended purpose of this
+feature.
+
 Advanced Task Includes
 ``````````````````````
 
