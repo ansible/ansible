@@ -580,32 +580,41 @@ It is quite possible that you may need to get package updates through a proxy, o
 updates through a proxy and access other packages not through a proxy.  Ansible makes it easy for you
 to configure your environment by using the 'environment' keyword.  Here is an example::
 
-- hosts: all
-  user: root
+    - hosts: all
+      user: root
 
-  tasks:
+      tasks:
 
-    - apt: name=cobbler state=installed
-      environment:
-         http_proxy: http://proxy.example.com:8080
+        - apt: name=cobbler state=installed
+          environment:
+            http_proxy: http://proxy.example.com:8080
 
 The environment can also be stored in a variable, and accessed like so::
 
-- hosts: all
-  user: root
+    - hosts: all
+      user: root
 
-  # here we make a variable named "env" that is a dictionary
-  vars:
-    env:
-       http_proxy=http://proxy.example.com:8080
+      # here we make a variable named "env" that is a dictionary
+      vars:
+        proxy_env:
+          http_proxy=http://proxy.example.com:8080
 
-  tasks:
+      tasks:
     
-    - apt: name=cobbler state=installed
-      environment: $env
+        - apt: name=cobbler state=installed
+          environment: $proxy_env
 
-While just proxy settings were shown above, any number of settings can be supplied.
+While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
+to define an environment hash might be a group_vars file, like so::
 
+    ----
+    # file: group_vars/boston
+
+    ntp_server: ntp.bos.example.com
+    backup: bak.bos.example.com
+    proxy_env:
+      http_proxy=http://proxy.bos.example.com:8080
+      https_proxy=http://proxy.bos.example.com:8080
 
 Getting values from files
 `````````````````````````
@@ -629,16 +638,6 @@ The "$PIPE" macro works just like file, except you would feed it a command strin
 Because Ansible uses lazy evaluation, a "$PIPE" macro will be executed each time it is used. For
 example, it will be executed separately for each host, and if it is used in a variable definition,
 it will be executed each time the variable is evaluated.
-
-.. versionadded:: 1.1
-
-The "$PIPE_ONCE" macro is an alternative that uses a caching strategy: it is executed only once, and
-subsequent accesses use the cached value. One use case is for computing a timestamp that is intended
-to be the same across all tasks and hosts that use it::
-
-    vars:
-      timestamp: $PIPE_ONCE(date +%Y%m%d-%H%M%S)
-
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
