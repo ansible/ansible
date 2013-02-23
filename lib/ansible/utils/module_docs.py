@@ -45,7 +45,7 @@ def get_docstring(filename, verbose=False):
         for child in M.body:
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
-                    doc = yaml.load(child.value.s)
+                    doc = yaml.safe_load(child.value.s)
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
     except:
