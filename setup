@@ -131,44 +131,16 @@ class Facts(object):
     def get_distribution_facts(self):
 
         # A list with OS Family members
-        OSFAMILY = {
-                      'RedHat'       : 'RedHat',
-                      'Fedora'       : 'RedHat',
-                      'CentOS'       : 'RedHat',
-                      'Scientific'   : 'RedHat',
-                      'SLC'          : 'RedHat',
-                      'Ascendos'     : 'RedHat',
-                      'CloudLinux'   : 'RedHat',
-                      'PSBM'         : 'RedHat',
-                      'OracleLinux'  : 'RedHat',
-                      'OVS'          : 'RedHat',
-                      'OEL'          : 'RedHat',
-                      'Amazon'       : 'RedHat',
-                      'XenServer'    : 'RedHat',
-                      #
-                      'Ubuntu'       : 'Debian',
-                      'Debian'       : 'Debian',
-                      #
-                      'SLES'         : 'Suse',
-                      'SLED'         : 'Suse',
-                      'OpenSuSE'     : 'Suse',
-                      'SuSE'         : 'Suse',
-                      #
-                      'Gentoo'       : 'Gentoo',
-                      #
-                      'Archlinux'    : 'Archlinux',
-                      #
-                      'Mandriva'     : 'Mandrake',
-                      'Mandrake'     : 'Mandrake',
-              #
-                      'Solaris'      : 'Solaris',
-                      'Nexenta'      : 'Solaris',
-                      'OmniOS'       : 'Solaris',
-                      'OpenIndiana'  : 'Solaris',
-                      'SmartOS'      : 'Solaris',
-                      #
-                      'AIX'          : 'AIX'
-               }
+        OS_FAMILY = dict(
+            RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
+            SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
+            OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
+            XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', SLES = 'Suse',
+            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
+            Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
+            Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
+            SmartOS = 'Solaris', AIX = 'AIX'
+        )
 
         if self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
@@ -200,10 +172,9 @@ class Facts(object):
                     else:
                         self.facts['distribution'] = name
 
-        # Find the family
-    self.facts['osfamily'] = self.facts['distribution']
-    if self.facts['distribution'] in OSFAMILY:
-       self.facts['osfamily'] = OSFAMILY[self.facts['distribution']]
+        self.facts['os_family'] = self.facts['distribution']
+        if self.facts['distribution'] in OS_FAMILY:
+           self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
