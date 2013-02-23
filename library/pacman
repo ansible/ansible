@@ -134,7 +134,7 @@ def main():
     module = AnsibleModule(
             argument_spec    = dict(
                 state        = dict(default="installed", choices=["installed","absent"]),
-                update_cache = dict(default="no", choices=BOOLEANS, aliases=["update-cache"], type='bool'),
+                update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
                 name         = dict(aliases=["pkg"], required=True)))
                 
 

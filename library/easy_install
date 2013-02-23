@@ -82,7 +82,7 @@ def main():
     arg_spec = dict(
         name=dict(required=True),
         virtualenv=dict(default=None, required=False),
-        virtualenv_site_packages=dict(default='no', choices=BOOLEANS, type='bool'),
+        virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
     )
 

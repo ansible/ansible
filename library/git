@@ -223,7 +223,7 @@ def main():
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
-            force=dict(default='yes', choices=BOOLEANS, type='bool')
+            force=dict(default='yes', type='bool')
         )
     )
 

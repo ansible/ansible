@@ -158,8 +158,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True),
-            persistent=dict(default='no', choices=BOOLEANS, type='bool'),
-            state=dict(required=True, choices=BOOLEANS, type='bool')
+            persistent=dict(default='no', type='bool'),
+            state=dict(required=True, type='bool')
         )
     )
 

@@ -1002,13 +1002,13 @@ def main():
             shell=dict(default=None),
             password=dict(default=None),
             # following options are specific to userdel
-            force=dict(default='no', choices=BOOLEANS, type='bool'),
-            remove=dict(default='no', choices=BOOLEANS, type='bool'),
+            force=dict(default='no', type='bool'),
+            remove=dict(default='no', type='bool'),
             # following options are specific to useradd
-            createhome=dict(default='yes', choices=BOOLEANS, type='bool'),
-            system=dict(default='no', choices=BOOLEANS, type='bool'),
+            createhome=dict(default='yes', type='bool'),
+            system=dict(default='no', type='bool'),
             # following options are specific to usermod
-            append=dict(default='no', choices=BOOLEANS, type='bool'),
+            append=dict(default='no', type='bool'),
             # following are specific to ssh key generation
             generate_ssh_key=dict(choices=BOOLEANS, type='bool'),
             ssh_key_bits=dict(default=ssh_defaults['bits']),

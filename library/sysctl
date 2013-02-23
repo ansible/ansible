@@ -208,7 +208,7 @@ def main():
             value = dict(aliases=['val'], required=False),
             state = dict(default='present', choices=['present', 'absent']),
             checks = dict(default='both', choices=['none', 'before', 'after', 'both']),
-            reload = dict(default=True, choices=BOOLEANS, type='bool'),
+            reload = dict(default=True, type='bool'),
             sysctl_file = dict(default='/etc/sysctl.conf')
         )
     )

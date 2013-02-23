@@ -94,7 +94,7 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
-            backup=dict(default=False, choices=BOOLEANS, type='bool'),
+            backup=dict(default=False, type='bool'),
         ),
         add_file_common_args=True
     )

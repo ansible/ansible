@@ -178,7 +178,7 @@ def main():
         configure_priv=dict(default='^$'),
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
-        force=dict(default='no', choices=BOOLEANS, type='bool'),
+        force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
     module = AnsibleModule(
