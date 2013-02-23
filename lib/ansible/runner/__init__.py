@@ -317,7 +317,8 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
-        if self.transport in [ 'paramiko', 'ssh' ]:
+        host_connection = host_variables.get('ansible_connection', self.transport)
+        if host_connection in [ 'paramiko', 'ssh' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -423,7 +424,8 @@ class Runner(object):
         actual_port = port
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
-        if self.transport in [ 'paramiko', 'ssh' ]:
+        actual_transport = inject.get('ansible_connection', self.transport)
+        if actual_transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -445,6 +447,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
+                actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
@@ -463,7 +466,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
