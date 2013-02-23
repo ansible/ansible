@@ -56,6 +56,13 @@
 .fi
 {% endfor %}
 {% endif %}
+." ------ PLAINEXAMPLES
+{% if plainexamples is defined %}
+.nf
+@{ plainexamples }@
+.fi
+{% endif %}
+
 ." ------- AUTHOR
 {% if author is defined %}
 .SH AUTHOR

@@ -296,7 +296,7 @@ def main():
                 js_data.append(j)
             continue
 
-        doc = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+        doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
         if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
             sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
@@ -314,6 +314,7 @@ def main():
             doc['docuri']           = doc['module'].replace('_', '-')
             doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
             doc['ansible_version']  = options.ansible_version
+            doc['plainexamples']    = examples  #plain text
 
             if options.includes_file is not None and includefmt != "":
                 incfile.write(includefmt % module)

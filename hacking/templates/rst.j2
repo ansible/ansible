@@ -54,6 +54,14 @@
 {% endfor %}
     <br/>
 
+{% if plainexamples %}
+.. raw:: html
+
+    <pre>
+@{ plainexamples | escape | indent(4, True) }@
+    </pre>
+{% endif %}
+
 {% if notes %}
 .. raw:: html
 
