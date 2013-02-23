@@ -160,7 +160,7 @@ def get_head_branch(module, dest, remote):
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
         try:
-            gitdir = yaml.load(open(repo_path)).get('gitdir')
+            gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
             # There is a posibility the .git file to have an absolute path.
             if os.path.isabs(gitdir):
                 repo_path = gitdir
