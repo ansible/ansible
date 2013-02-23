@@ -295,7 +295,7 @@ won't need them for much else.
    Notify handlers are always run in the order written.
 
 
-Include Files And Encouraging Reuse
+Task Include Files And Encouraging Reuse
 ```````````````````````````````````
 
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
@@ -346,6 +346,8 @@ which also supports structured variables::
               - alpha
               - beta
               - gamma
+
+Playbooks can include other playbooks too, but that's mentioned in a later section.
 
 .. note::
    As of 1.0, task include statements can be used at arbitrary depth.
