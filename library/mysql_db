@@ -131,7 +131,7 @@ def load_mycnf():
         return False
     try:
         config.readfp(open(mycnf))
-        creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'pass'))
+        creds = dict(user=config.get('client', 'user'),passwd=config.get('client', 'password'))
     except (ConfigParser.NoOptionError, IOError):
         return False
     return creds
