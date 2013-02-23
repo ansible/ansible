@@ -296,7 +296,7 @@ won't need them for much else.
 
 
 Task Include Files And Encouraging Reuse
-```````````````````````````````````
+````````````````````````````````````````
 
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.  Use of included task lists is a great way to define a role
