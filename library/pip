@@ -56,6 +56,12 @@ options:
         created.
     required: false
     default: no
+  virtualenv_command:
+    description:
+      - The command to create the virtual environment with. For example
+        C(pyvenv), C(virtualenv), C(virtualenv2).
+    required: false
+    default: virtualenv
   use_mirrors:
     description:
       - Whether to use mirrors when installing python libraries.  If using
@@ -86,6 +92,8 @@ examples:
      description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), inheriting none of the globally installed modules"
    - code: "pip: name=flask virtualenv=/my_app/venv virtualenv_site_packages=yes"
      description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), inheriting globally installed modules"
+   - code: "pip: name=flask virtualenv=/my_app/venv virtualenv_command=virtualenv-2.7"
+     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), using Python 2.7"
    - code: "pip: requirements=/my_app/requirements.txt"
      description: Install specified python requirements.
    - code: "pip: requirements=/my_app/requirements.txt virtualenv=/my_app/venv"
@@ -149,6 +157,7 @@ def main():
             requirements=dict(default=None, required=False),
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', choices=BOOLEANS),
+            virtualenv_command=dict(default='virtualenv', required=False),
             use_mirrors=dict(default='yes', choices=BOOLEANS),
             extra_args=dict(default=None, required=False),
         ),
@@ -172,9 +181,10 @@ def main():
     out = ''
 
     env = module.params['virtualenv']
+    virtualenv_command = module.params['virtualenv_command']
 
     if env:
-        virtualenv = module.get_bin_path('virtualenv', True)
+        virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.boolean(module.params['virtualenv_site_packages']):
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
