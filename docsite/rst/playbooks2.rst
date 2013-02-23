@@ -600,7 +600,7 @@ The environment can also be stored in a variable, and accessed like so::
           http_proxy=http://proxy.example.com:8080
 
       tasks:
-    
+
         - apt: name=cobbler state=installed
           environment: $proxy_env
 
@@ -954,7 +954,7 @@ As a review, most tasks in ansbile are of this form::
 
       - name: ensure the cobbler package is installed
         yum: name=cobbler state=installed
-        
+
 However, in some cases, it may be useful to feed arguments directly in from a hash (dictionary).  In fact, a very small
 number of modules (the CloudFormations module is one) actually require complex arguments that can't be fit
 into a key=value system.  To pass arguments in from a hash (dictionary), do this::
@@ -972,8 +972,8 @@ into a key=value system.  To pass arguments in from a hash (dictionary), do this
            my_pets:
              dogs:
                - fido
-               - woof    
-             fish: 
+               - woof
+             fish:
                - limpet
                - nemo
 
@@ -992,13 +992,13 @@ In above sections we talked about task includes, and how to do loops using with_
 to externalize data from the playbook rules itself, this is possible by combining some concepts.
 
 This is not something everyone may need to do at first, but it's a clever trick and deserves explanation.
-Here is a top level example playbook that loads variables from an external file and also tasks from an 
+Here is a top level example playbook that loads variables from an external file and also tasks from an
 external file.  You will note that we use a list (using with_items) as a parameter on the include
-statement.
+statement::
 
     ----
     # file: playbook-demo.yml
- 
+
     hosts: all
     vars_files:
        - config/users.yml
@@ -1018,7 +1018,7 @@ them in the file instead.  It's up to you::
       - name: alice
         password: cryptedPasswordHere
         sshkey: $FILE(/home/alice/id_rsa.pub)
-  
+
       - name: bob
         password: cryptedPasswordHere
         sshkey: $FILE(/home/bob/id_rsa.pub)
