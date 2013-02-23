@@ -33,9 +33,9 @@ module: setup
 short_description: Gathers facts about remote hosts
 options:
     filter:
+        version_added: 1.1
         description:
-            - a filter that will be applied to the keys; only key matching filter will
-            be returned. The filter should be a shell-style wildcard.
+            - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
         required: false
         default: *
 description:
