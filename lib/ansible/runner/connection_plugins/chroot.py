@@ -27,7 +27,7 @@ from ansible import utils
 from ansible.callbacks import vvv
 
 class Connection(object):
-    ''' Local based connections '''
+    ''' Local chroot based connections '''
 
     def __init__(self, runner, host, port, **kwargs):
         self.chroot = host
