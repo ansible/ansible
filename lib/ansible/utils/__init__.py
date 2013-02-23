@@ -237,7 +237,7 @@ def parse_json(raw_data):
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
-    return yaml.load(data)
+    return yaml.safe_load(data)
 
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
@@ -345,7 +345,7 @@ def _gitinfo():
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.load(open(repo_path)).get('gitdir')
+                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
                 # There is a posibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
