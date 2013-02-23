@@ -181,12 +181,12 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(default='no', choices=BOOLEANS, aliases=['update-cache'], type='bool'),
-            purge = dict(default='no', choices=BOOLEANS, type='bool'),
+            update_cache = dict(default='no', aliases=['update-cache'], type='bool'),
+            purge = dict(default='no', type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], choices=BOOLEANS, type='bool'),
-            force = dict(default='no', choices=BOOLEANS, type='bool')
+            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
+            force = dict(default='no', type='bool')
         ),
         supports_check_mode = True
     )

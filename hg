@@ -204,8 +204,8 @@ def main():
             repo = dict(required=True),	    
             dest = dict(required=True),
             revision = dict(default="default"),
-            force = dict(default='yes', choices=BOOLEANS, type='bool'),
-            purge = dict(default='no', choices=BOOLEANS, type='bool')
+            force = dict(default='yes', type='bool'),
+            purge = dict(default='no', type='bool')
         ),
     )
     repo = module.params['repo']

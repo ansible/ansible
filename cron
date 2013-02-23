@@ -259,13 +259,13 @@ def main():
             job=dict(required=False),
             cron_file=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
-            backup=dict(default=False, choices=BOOLEANS, type='bool'),
+            backup=dict(default=False, type='bool'),
             minute=dict(default='*'),
             hour=dict(default='*'),
             day=dict(default='*'),
             month=dict(default='*'),
             weekday=dict(default='*'),
-            reboot=dict(required=False, default=False, choices=BOOLEANS, type='bool')
+            reboot=dict(required=False, default=False, type='bool')
         )
     )
 
