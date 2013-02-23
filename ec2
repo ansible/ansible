@@ -116,7 +116,7 @@ options:
     required: false
     default: null
     aliases: []
-  subnet_id:
+  vpc_subnet_id:
     version_added: "1.1"
     description:
       - the subnet ID in which to launch the instance (VPC)
