@@ -60,6 +60,9 @@ Automation tests are run by "make tests" and contain a mixture of integration an
    * Your user environment should allow "ssh 127.0.0.1"
      without a password - so a key held in ssh-agent and an authorized_keys entry.
 
+If your module does not require any additional dependencies beyond ansible-core, it is a good idea to write some
+tests for the module.
+
 Contributors License Agreement
 ==============================
 
