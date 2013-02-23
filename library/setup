@@ -20,6 +20,7 @@
 
 import array
 import fcntl
+import fnmatch
 import glob
 import platform
 import re
@@ -30,7 +31,13 @@ DOCUMENTATION = '''
 ---
 module: setup
 short_description: Gathers facts about remote hosts
-options: {}
+options:
+    filter:
+        description:
+            - a filter that will be applied to the keys; only key matching filter will
+            be returned. The filter should be a shell-style wildcard.
+        required: false
+        default: *
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -45,9 +52,20 @@ notes:
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems. (See also M(facter) and M(ohai).)
+    - The filter option filters only the first level subkey below ansible_facts.
 examples:
     - code: ansible all -m setup --tree /tmp/facts
       description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+    - code: ansible all -m setup -a 'filter=ansible_*_mb'
+      description: Obtain I(only) facts regarding memory found by ansible on all hosts and output them.
+    - code: ansible all -m setup -a 'filter=facter_*'
+      description: Display I(only) facts returned by facter.
+    - code: ansible all -m setup -a 'filter=ansible_eth[0-2]'
+      description: Displays ansible facts abouts ethernet interfaces eth0, eth1, and eth2.
+    - code: ansible all -m setup -a 'filter=ansible_eth?'
+      description: Displays ansible facts abouts ethernet interfaces eth0 through eth9 (but not eth10).
+    - code: ansible all -m setup -a 'filter=ansible_eth[!0]'
+      description: Displays ansible facts abouts all ethernet interfaces but eth0.
 author: Michael DeHaan
 '''
 
@@ -1135,8 +1153,11 @@ def run_setup(module):
                     k2 = "ohai_%s" % k.replace('-', '_')
                     setup_options[k2] = v
 
-    setup_result = {}
-    setup_result['ansible_facts'] = setup_options
+    setup_result = { 'ansible_facts': {} }
+
+    for (k,v) in setup_options.items():
+        if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
+            setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
     setup_result['verbose_override'] = True
@@ -1146,7 +1167,9 @@ def run_setup(module):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(),
+        argument_spec = dict(
+            filter=dict(default="*", required=False),
+        ),
         supports_check_mode = True,
     )
     data = run_setup(module)
