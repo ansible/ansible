@@ -75,7 +75,7 @@ class RabbitMqPlugins(object):
 def main():
     arg_spec = dict(
         names=dict(required=True, aliases=['name']),
-        new_only=dict(default='no', choices=BOOLEANS),
+        new_only=dict(default='no', choices=BOOLEANS, type='bool'),
         state=dict(default='enabled', choices=['enabled', 'disabled'])
     )
     module = AnsibleModule(
@@ -84,7 +84,7 @@ def main():
     )
 
     names = module.params['names'].split(',')
-    new_only = module.boolean(module.params['new_only'])
+    new_only = module.params['new_only']
     state = module.params['state']
 
     rabbitmq_plugins = RabbitMqPlugins(module)
