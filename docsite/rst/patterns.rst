@@ -57,6 +57,17 @@ In 1.0 and later, you can also do this for alphabetic ranges::
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.
 
+In 1.1 and later, you can also select the connection type and user on a per host basis::
+
+   [targets]
+
+   localhost              ansible_connection=local
+   other1.example.com     ansible_connection=ssh        ansible_ssh_user=mpdehaan
+   other2.example.com     ansible_connection=ssh        ansible_ssh_user=mdehaan
+
+All of these variables can of course also be set outside of the inventory file, in 'host_vars' if you wish
+to keep your inventory file simple.
+
 Selecting Targets
 +++++++++++++++++
 
