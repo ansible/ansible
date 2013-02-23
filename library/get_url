@@ -195,7 +195,7 @@ def main():
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
-            force = dict(default='no', choices=BOOLEANS, aliases=['thirsty'], type='bool')
+            force = dict(default='no', aliases=['thirsty'], type='bool')
         ),
         add_file_common_args=True
     )

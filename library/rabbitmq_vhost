@@ -100,7 +100,7 @@ class RabbitMqVhost(object):
 def main():
     arg_spec = dict(
         name=dict(required=True, aliases=['vhost']),
-        tracing=dict(default='off', choices=BOOLEANS, aliases=['trace'], type='bool'),
+        tracing=dict(default='off', aliases=['trace'], type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

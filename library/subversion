@@ -129,7 +129,7 @@ def main():
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name', 'repository']),
             revision=dict(default='HEAD', aliases=['rev']),
-            force=dict(default='yes', choices=BOOLEANS, type='bool'),
+            force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
         )
