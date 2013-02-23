@@ -280,9 +280,9 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd]).strip()
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
-            cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
+            cmd += " --cleanup %s" % tmp.rstrip('/')
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data = utils.parse_json(res['stdout'])
         if 'parsed' in data and data['parsed'] == False:
@@ -513,9 +513,6 @@ class Runner(object):
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
         ''' execute a command string over SSH, return the output '''
 
-        if executable is None:
-            executable = '/bin/sh'
-
         sudo_user = self.sudo_user
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
@@ -574,15 +571,24 @@ class Runner(object):
         if self.sudo and self.sudo_user != 'root':
             basetmp = os.path.join('/tmp', basefile)
 
-        cmd = 'mkdir -p %s' % basetmp
+        cmd = 'mkdir -p '
         if self.remote_user != 'root':
-            cmd += ' && chmod a+rx %s' % basetmp
-        cmd += ' && echo %s' % basetmp
+            cmd += '-m755 '
+        cmd += basetmp
 
-        result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        # we need to obtain the full path of the generated directory, which
+        # seems the most efficient way to expand the directory according to
+        # remote rules (e.g. $HOME and ~ expansion), so use a shell command:
+
+        cmd = ' && '.join((cmd, 'cd %s' % basetmp, 'pwd'))
+        executable = '/bin/sh'
+        result = self._low_level_exec_command(conn, cmd, None, sudoable=False,
+                                              executable=executable)
+        if result['rc'] != 0:
+            raise errors.AnsibleError('Cannot create remote temporary directory: '
+                                      '%s' % basetmp)
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         return rc
-
 
     # *****************************************************
 

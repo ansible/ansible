@@ -71,6 +71,17 @@ import grp
 import pwd
 import platform
 import errno
+import optparse
+
+def get_cl_options():
+    parser = optparse.OptionParser()
+    parser.add_option("--cleanup",
+                      action="store", type="string",
+                      dest="directory_to_cleanup")
+    return parser.parse_args()[0]
+
+def get_directory_to_cleanup():
+    return get_cl_options().directory_to_cleanup
 
 HAVE_SELINUX=False
 try:
@@ -651,13 +662,25 @@ class AnsibleModule(object):
     def from_json(self, data):
         return json.loads(data)
 
+    def sys_exit(self, rc):
+        ''' do the actual exiting, possibly cleaning up '''
+        d = get_directory_to_cleanup()
+        if d is not None:
+            if not d.startswith('/'):
+                # sanitise this directory a bit, just to be safe:
+                d = os.path.expanduser(os.path.join('~', d))
+            if os.getcwd().startswith(d):
+                os.chdir('/')
+            shutil.rmtree(d)
+        sys.exit(rc)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not kwargs.has_key('changed'):
             kwargs['changed'] = False
         print self.jsonify(kwargs)
-        sys.exit(0)
+        self.sys_exit(0)
 
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
@@ -665,7 +688,7 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
         print self.jsonify(kwargs)
-        sys.exit(1)
+        self.sys_exit(1)
 
     def is_executable(self, path):
         '''is the given path executable?'''
