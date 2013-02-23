@@ -996,7 +996,7 @@ Here is a top level example playbook that loads variables from an external file 
 external file.  You will note that we use a list (using with_items) as a parameter on the include
 statement::
 
-    ----
+    ---
     # file: playbook-demo.yml
 
     hosts: all
