@@ -1,0 +1,399 @@
+{
+  "Outputs" : {
+    "ClusterSecGroup" : {
+      "Description" : "Name of RegionalManagerSecGroup",
+      "Value" : {
+        "Ref" : "InstanceSecurityGroup"
+      }
+    }
+  },
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Launches an example cluster",
+  "Mappings" : {
+    "ebs" : {
+      "ap-northeast-1" : {
+        "AMI" : "ami-4e6cd34f"
+      },
+      "ap-southeast-1" : {
+        "AMI" : "ami-a6a7e7f4"
+      },
+      "eu-west-1" : {
+        "AMI" : "ami-c37474b7"
+      },
+      "sa-east-1" : {
+        "AMI" : "ami-1e08d103"
+      },
+      "us-east-1" : {
+        "AMI" : "ami-1624987f"
+      },
+      "us-west-1" : {
+        "AMI" : "ami-1bf9de5e"
+      },
+      "us-west-2" : {
+        "AMI" : "ami-2a31bf1a"
+      }
+    },
+    "ephemeral" : {
+      "ap-northeast-1" : {
+        "AMI" : "ami-5a6cd35b"
+      },
+      "ap-southeast-1" : {
+        "AMI" : "ami-a8a7e7fa"
+      },
+      "eu-west-1" : {
+        "AMI" : "ami-b57474c1"
+      },
+      "sa-east-1" : {
+        "AMI" : "ami-1608d10b"
+      },
+      "us-east-1" : {
+        "AMI" : "ami-e8249881"
+      },
+      "us-west-1" : {
+        "AMI" : "ami-21f9de64"
+      },
+      "us-west-2" : {
+        "AMI" : "ami-2e31bf1e"
+      }
+    }
+  },
+  "Parameters" : {
+    "ClusterSize" : {
+      "Description" : "Number of nodes in the cluster",
+      "Type" : "String"
+    },
+    "DiskType" : {
+      "AllowedValues" : [
+        "ephemeral",
+        "ebs"
+      ],
+      "Default" : "ephemeral",
+      "Description" : "Type of Disk to use ( ephemeral/ebs )",
+      "Type" : "String"
+    },
+    "InstanceType" : {
+      "AllowedValues" : [
+        "t1.micro",
+        "m1.small",
+        "m1.medium",
+        "m1.large",
+        "m1.xlarge",
+        "m2.xlarge",
+        "m2.2xlarge",
+        "m2.4xlarge",
+        "c1.medium",
+        "c1.xlarge",
+        "cc1.4xlarge"
+      ],
+      "ConstraintDescription" : "must be valid instance type. ",
+      "Default" : "m1.large",
+      "Description" : "Type of EC2 instance for cluster",
+      "Type" : "String"
+    },
+    "KeyName" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the cluster",
+      "Type" : "String"
+    }
+  },
+  "Resources" : {
+    "ApplicationWaitCondition" : {
+      "DependsOn" : "ClusterServerGroup",
+      "Properties" : {
+        "Handle" : {
+          "Ref" : "ApplicationWaitHandle"
+        },
+        "Timeout" : "4500"
+      },
+      "Type" : "AWS::CloudFormation::WaitCondition"
+    },
+    "ApplicationWaitHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+    "CFNInitUser" : {
+      "Properties" : {
+        "Path" : "/",
+        "Policies" : [
+          {
+            "PolicyDocument" : {
+              "Statement" : [
+                {
+                  "Action" : [
+                    "cloudformation:DescribeStackResource",
+                    "s3:GetObject"
+                  ],
+                  "Effect" : "Allow",
+                  "Resource" : "*"
+                }
+              ]
+            },
+            "PolicyName" : "AccessForCFNInit"
+          }
+        ]
+      },
+      "Type" : "AWS::IAM::User"
+    },
+    "CFNKeys" : {
+      "Properties" : {
+        "UserName" : {
+          "Ref" : "CFNInitUser"
+        }
+      },
+      "Type" : "AWS::IAM::AccessKey"
+    },
+    "ClusterCommunication1" : {
+      "Properties" : {
+        "FromPort" : "-1",
+        "GroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "IpProtocol" : "icmp",
+        "SourceSecurityGroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "ToPort" : "-1"
+      },
+      "Type" : "AWS::EC2::SecurityGroupIngress"
+    },
+    "ClusterCommunication2" : {
+      "Properties" : {
+        "FromPort" : "1",
+        "GroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "IpProtocol" : "tcp",
+        "SourceSecurityGroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "ToPort" : "65356"
+      },
+      "Type" : "AWS::EC2::SecurityGroupIngress"
+    },
+    "ClusterCommunication3" : {
+      "Properties" : {
+        "FromPort" : "1",
+        "GroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "IpProtocol" : "udp",
+        "SourceSecurityGroupName" : {
+          "Ref" : "InstanceSecurityGroup"
+        },
+        "ToPort" : "65356"
+      },
+      "Type" : "AWS::EC2::SecurityGroupIngress"
+    },
+    "InstanceSecurityGroup" : {
+      "Properties" : {
+        "GroupDescription" : "Enable SSH access via port 22",
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp" : "0.0.0.0/0",
+            "FromPort" : "22",
+            "IpProtocol" : "tcp",
+            "ToPort" : "22"
+          }
+        ]
+      },
+      "Type" : "AWS::EC2::SecurityGroup"
+    },
+    "LaunchConfig" : {
+      "Properties" : {
+        "IamInstanceProfile" : {
+          "Ref" : "RootInstanceProfile"
+        },
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            {
+              "Ref" : "DiskType"
+            },
+            {
+              "Ref" : "AWS::Region"
+            },
+            "AMI"
+          ]
+        },
+        "InstanceType" : {
+          "Ref" : "InstanceType"
+        },
+        "KeyName" : {
+          "Ref" : "KeyName"
+        },
+        "SecurityGroups" : [
+          {
+            "Ref" : "InstanceSecurityGroup"
+          }
+        ],
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "\n",
+              [
+                "#!/bin/bash -v",
+                "exec > >(tee /var/log/cfn-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
+                "",
+                "sleep 10",
+                "",
+                "function retry {",
+                "   nTrys=0",
+                "   maxTrys=5",
+                "   status=256",
+                "   until [ $status == 0 ] ; do",
+                "      $1",
+                "      status=$?",
+                "      nTrys=$(($nTrys + 1))",
+                "      if [ $nTrys -gt $maxTrys ] ; then",
+                "            echo \"Number of re-trys exceeded. Exit code: $status\"",
+                "            exit $status",
+                "      fi",
+                "      if [ $status != 0 ] ; then",
+                "            echo \"Failed (exit code $status)... retry $nTrys\"",
+                "            sleep 10",
+                "      fi",
+                "   done",
+                "}",
+                "",
+                "yum update -y aws-cfn-bootstrap",
+                "",
+                "#for all the stuff that complains about sudo and tty",
+                "sed -i 's,Defaults    requiretty,#Defaults    requiretty,g' /etc/sudoers",
+                "",
+                "function error_exit",
+                "{",
+                {
+                  "Fn::Join" : [
+                    "",
+                    [
+                      "  /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '",
+                      {
+                        "Ref" : "ApplicationWaitHandle"
+                      },
+                      "'"
+                    ]
+                  ]
+                },
+                "}",
+                "yum update -y aws-cfn-bootstrap",
+                "#this runs the first stage of cfinit",
+                {
+                  "Fn::Join" : [
+                    "",
+                    [
+                      "#/opt/aws/bin/cfn-init -c ascending -v --region ",
+                      {
+                        "Ref" : "AWS::Region"
+                      },
+                      " -s ",
+                      {
+                        "Ref" : "AWS::StackName"
+                      },
+                      " -r ",
+                      "LaunchConfig",
+                      " --access-key ",
+                      {
+                        "Ref" : "CFNKeys"
+                      },
+                      " --secret-key ",
+                      {
+                        "Fn::GetAtt" : [
+                          "CFNKeys",
+                          "SecretAccessKey"
+                        ]
+                      },
+                      " || error_exit 'Failed to initialize client using cfn-init'"
+                    ]
+                  ]
+                },
+                "",
+                "",
+                "",
+                "result_code=$?",
+                {
+                  "Fn::Join" : [
+                    "",
+                    [
+                      "/opt/aws/bin/cfn-signal -e $result_code '",
+                      {
+                        "Ref" : "ApplicationWaitHandle"
+                      },
+                      "'"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "Type" : "AWS::AutoScaling::LaunchConfiguration"
+    },
+    "ClusterServerGroup" : {
+      "Properties" : {
+        "AvailabilityZones" : {
+          "Fn::GetAZs" : ""
+        },
+        "LaunchConfigurationName" : {
+          "Ref" : "LaunchConfig"
+        },
+        "MaxSize" : {
+          "Ref" : "ClusterSize"
+        },
+        "MinSize" : {
+          "Ref" : "ClusterSize"
+        }
+      },
+      "Type" : "AWS::AutoScaling::AutoScalingGroup"
+    },
+    "RolePolicies" : {
+      "Properties" : {
+        "PolicyDocument" : {
+          "Statement" : [
+            {
+              "Action" : "*",
+              "Effect" : "Allow",
+              "Resource" : "*"
+            }
+          ]
+        },
+        "PolicyName" : "root",
+        "Roles" : [
+          {
+            "Ref" : "RootRole"
+          }
+        ]
+      },
+      "Type" : "AWS::IAM::Policy"
+    },
+    "RootInstanceProfile" : {
+      "Properties" : {
+        "Path" : "/",
+        "Roles" : [
+          {
+            "Ref" : "RootRole"
+          }
+        ]
+      },
+      "Type" : "AWS::IAM::InstanceProfile"
+    },
+    "RootRole" : {
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Statement" : [
+            {
+              "Action" : [
+                "sts:AssumeRole"
+              ],
+              "Effect" : "Allow",
+              "Principal" : {
+                "Service" : [
+                  "ec2.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        },
+        "Path" : "/"
+      },
+      "Type" : "AWS::IAM::Role"
+    }
+  }
+}
