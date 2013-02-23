@@ -291,9 +291,10 @@ class TestRunner(unittest.TestCase):
         assert result['changed'] == False
 
     def test_lineinfile(self):
-        samplefn = 'rocannon.txt'
-        sample = os.path.join('test', 'artifact' + samplefn)
-        shutil.copy( os.path.join('test', samplefn), sample)
+        sampleroot = 'rocannon'
+        sample_origin = self._get_test_file(sampleroot + '.txt')
+        sample = self._get_stage_file(sampleroot + '.out' + '.txt')
+        shutil.copy( sample_origin, sample)
         # The order of the test cases is important
 
         # defaults to insertafter at the end of the file
