@@ -48,6 +48,26 @@ Ansible Changes By Release
 * add_host module can set ports and other inventory variables
 * add_host module can add modules to multiple groups (groups=a,b,c), groups now alias for groupname
 * support for complex arguments to modules (within reason)
+* uses yaml.safe_load everywhere
+* can specify ansible_connection=X to define the connection type in inventory variables
+* CloudFormation module
+* subnet ID can be set on EC2 module
+* MySQL module password handling improvements
+* added new virtualenv flags to pip and easy_install modules
+* various improvements to lineinfile module, now accepts common arguments from file
+* ansible_os_family fact added
+* force= now replaces thirsty where used before, thirsty remains an alias
+* able to add EXAMPLES to documentation via EXAMPLES docstring, rather than just in main documentation YAML
+* a new chroot connection type
+* setup module can take a 'filter=<wildcard>' parameter to just return a few facts
+* cron module works even if no crontab is present (for cron.d)
+* security group ID settable on EC2 module
+* misc fixes to sysctl module
+* fix to apt module so packages not in cache are still removable
+* charset fix to mail module
+* postresql db module now does not try to create the 'PUBLIC' user
+* added zfs module
+* ansible module common code (and ONLY that) which is mixed in with modules, is now BSD licensed.  App remains GPLv3.
 
 1.0 "Eruption" -- Feb 1 2013
 
