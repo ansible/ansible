@@ -334,6 +334,19 @@ Variables passed in can then be used in the included files.  You can reference t
 (In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.)
 
+Starting in 1.0, variables can also be passed to include files using an alternative syntax,
+which also supports structured variables::
+
+    tasks:
+
+      - include: wordpress.yml
+        vars:
+            user: timmy
+            some_list_variable: 
+              - alpha
+              - beta
+              - gamma
+
 .. note::
    As of 1.0, task include statements can be used at arbitrary depth.
    They were previously limited to a single level, so task includes
