@@ -204,15 +204,15 @@ def main():
             repo = dict(required=True),	    
             dest = dict(required=True),
             revision = dict(default="default"),
-            force = dict(default='yes', choices=['yes', 'no']),
-            purge = dict(default='no', choices=['yes', 'no'])
+            force = dict(default='yes', choices=BOOLEANS, type='bool'),
+            purge = dict(default='no', choices=BOOLEANS, type='bool')
         ),
     )
     repo = module.params['repo']
     dest = module.params['dest']
     revision = module.params['revision']
-    force = module.boolean(module.params['force'])
-    purge = module.boolean(module.params['purge'])
+    force = module.params['force']
+    purge = module.params['purge']
     hgrc = os.path.join(dest, '.hg/hgrc')
    
     # initial states

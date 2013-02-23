@@ -267,9 +267,9 @@ def main():
             password = dict(required=False, default=None),
             body = dict(required=False, default=None),
             method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS']),
-            return_content = dict(required=False, default='no', choices=BOOLEANS),
-            force_basic_auth = dict(required=False, default='no', choices=BOOLEANS),
-            follow_redirects = dict(required=False, default='no', choices=BOOLEANS),
+            return_content = dict(required=False, default='no', choices=BOOLEANS, type='bool'),
+            force_basic_auth = dict(required=False, default='no', choices=BOOLEANS, type='bool'),
+            follow_redirects = dict(required=False, default='no', choices=BOOLEANS, type='bool'),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
             status_code = dict(required=False, default="200"),
@@ -289,9 +289,9 @@ def main():
     body = module.params['body']
     method = module.params['method']
     dest = module.params['dest']
-    return_content = module.boolean(module.params['return_content'])
-    force_basic_auth = module.boolean(module.params['force_basic_auth'])
-    follow_redirects = module.boolean(module.params['follow_redirects'])
+    return_content = module.params['return_content']
+    force_basic_auth = module.params['force_basic_auth']
+    follow_redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
     status_code = module.params['status_code']

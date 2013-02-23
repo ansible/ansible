@@ -158,8 +158,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True),
-            persistent=dict(default='no', choices=BOOLEANS),
-            state=dict(required=True, choices=BOOLEANS)
+            persistent=dict(default='no', choices=BOOLEANS, type='bool'),
+            state=dict(required=True, choices=BOOLEANS, type='bool')
         )
     )
 
@@ -173,8 +173,8 @@ def main():
         module.fail_json(msg="SELinux is disabled on this host.")
 
     name = module.params['name']
-    persistent = module.boolean(module.params['persistent'])
-    state = module.boolean(module.params['state'])
+    persistent = module.params['persistent']
+    state = module.params['state']
     result = {}
     result['name'] = name
 
