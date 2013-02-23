@@ -116,6 +116,13 @@ options:
     required: false
     default: null
     aliases: []
+  subnet_id:
+    version_added: "1.1"
+    description:
+      - the subnet ID in which to launch the instance (VPC)
+    required: false
+    default: null
+    aliases: []
 examples:
    - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 group=webservers'
      description: "Examples from Ansible Playbooks"
@@ -150,6 +157,7 @@ def main():
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
             user_data = dict(),
             instance_tags = dict(),
+            vpc_subnet_id = dict(),
         )
     )
 
@@ -168,6 +176,7 @@ def main():
     ec2_access_key = module.params.get('ec2_access_key')
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
+    vpc_subnet_id = module.params.get('vpc_subnet_id')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -206,6 +215,7 @@ def main():
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
+                                subnet_id = vpc_subnet_id,
                                 user_data = user_data)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
