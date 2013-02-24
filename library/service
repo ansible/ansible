@@ -364,8 +364,12 @@ class LinuxService(Service):
             # service is managed by upstart
             self.enable_cmd = location['update-rc.d']
         elif location.get('systemctl', None):
-            # service is managed by systemd
-            self.enable_cmd = location['systemctl']
+            
+            # verify service is managed by systemd
+            rc, out, err = self.execute_command("%s --all" % (location['systemctl']))
+            look_for = "%s.service" % self.name
+            if look_for in out:
+                self.enable_cmd = location['systemctl']
        
         # Locate a tool for runtime service management (start, stop etc.)
         self.svc_cmd = ''
@@ -447,7 +451,7 @@ class LinuxService(Service):
     def service_enable(self):
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg='unable to find enable binary')
+            self.module.fail_json(msg='service name not recognized')
 
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something
