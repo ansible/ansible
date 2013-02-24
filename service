@@ -345,39 +345,45 @@ class LinuxService(Service):
     distribution = None
 
     def get_service_tools(self):
+
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
         for binary in binaries:
             location[binary] = None
-
         for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
         # Locate a tool for enable options
-        if location.get('systemctl', None):
-            self.enable_cmd = location['systemctl']
-        elif location.get('chkconfig', None):
+        if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
+            # we are using a standard SysV service
             self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None):
+        elif location.get('update-rc.d', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+            # service is managed by upstart
             self.enable_cmd = location['update-rc.d']
-
-        if self.enable_cmd is None:
-            self.module.fail_json(msg='unable to find enable binary')
-
+        elif location.get('systemctl', None):
+            # service is managed by systemd
+            self.enable_cmd = location['systemctl']
+        
         # Locate a tool for runtime service management (start, stop etc.)
-        if location.get('service', None):
+        self.svc_cmd = ''
+        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
+            # SysV init script
             self.svc_cmd = location['service']
+        elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+            # upstart -- rather than being managed by one command, start/stop/restart are actual commands
+            self.svc_cmd = ''
         else:
+            # still a SysV init script, but /sbin/service isn't installed
             for initdir in initpaths:
                 initscript = "%s/%s" % (initdir,self.name)
                 if os.path.isfile(initscript):
                     self.svc_initscript = initscript
 
-        if not self.svc_cmd and not self.svc_initscript:
-            self.module.fail_json(msg='unable to find service binary nor initscript')
+        if self.svc_cmd is None and not self.svc_initscript:
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, aborting')
 
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
@@ -386,7 +392,7 @@ class LinuxService(Service):
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
-        # Check if we have upstart on the system and then the job state
+        # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
@@ -434,10 +440,14 @@ class LinuxService(Service):
 
 
     def service_enable(self):
+
+        if self.enable_cmd is None:
+            self.module.fail_json(msg='unable to find enable binary')
+
         # we change argument depending on real binary used
         # update-rc.d wants enable/disable while
         # chkconfig wants on/off
-        # also, systemctl needs the arguments reversed
+        # also, systemctl needs the argument order reversed
         if self.enable:
             on_off = "on"
             enable_disable = "enable"
@@ -463,19 +473,42 @@ class LinuxService(Service):
         if self.enable is not None and changed:
             return self.execute_command("%s %s %s" % args)
 
+
     def service_control(self):
 
         # Decide what command to run
+        svc_cmd = ''
         if self.svc_cmd:
+            # SysV or systemd
             svc_cmd = "%s %s" % (self.svc_cmd, self.name)
-        elif self.svc_initscript:
+        elif self.svc_initscript: 
+            # upstart
             svc_cmd = "%s" % self.svc_initscript
 
         if self.action is not "restart":
-            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
+            if svc_cmd != '':
+                # upstart
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, self.arguments), daemonize=True)
         else:
-            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
-            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
+            # not all services support restart. Do it the hard way.
+            if svc_cmd != '':
+                # upstart
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, self.arguments), daemonize=True)
+            
+            if svc_cmd != '':
+                # upstart
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % ('start', self.name, self.arguments), daemonize=True)
+
+            # merge return information
             if rc1 != 0 and rc2 == 0:
                 rc_state = rc2
                 stdout = stdout2
