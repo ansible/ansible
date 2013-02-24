@@ -1,0 +1,228 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Scott Anderson <scottanderson42@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: django-manage
+short_description: Manages a Django application.
+description:
+     - Manages a Django application.
+version_added: "1.1"
+options:
+  command:
+    description:
+      - The name of the Django management command to run. Allowed commands are cleanup, flush, loaddata, runfcgi (untested), syncdb, test, validate
+    required: true
+  app_path:
+    description:
+      - The path to the root of the Django application
+    required: true
+  settings:
+    description:
+      - The Python path to a settings module.
+    required: false
+  pythonpath:
+    description:
+      - A directory to add to the Python path
+    required: false
+  virtualenv:
+    description:
+      - An optional path to a I(virtualenv) directory to use while running the manage application
+    required: false
+  apps:
+    description:
+      - A list of space-delimited apps to target, used for some commands
+    required: false
+  database:
+    description:
+      - The database to target, used for some commands
+    required: false
+  extra_args:
+    description:
+      - Extra arguments to append to the command string; used only for runfcgi
+    required: false
+  failfast:
+    description:
+      - Fail the command immediately if a test fails.
+    required: false
+  fixtures:
+    description:
+      - A space-delimited list of fixture file names to load in the database.
+    required: false
+examples:
+   - code: "django-manage command=cleanup app_path=django_dir"
+     description: Run I(cleanup) on the application installed in B(django_dir).
+   - code: "django-manage command=loaddata app_path=django_dir fixtures=initial_data"
+     description: Load the B(initial_data) fixture into the application installed in B(django_dir).
+   - code: "django-manage command=syncdb app_path=django_dir settings=settings_app_name pythonpath=settings_dir virtualenv=virtualenv_dir database=mydb"
+     description: Run I(syncdb) on the application installed in B(django_dir), using settings_B(app_name) for the settings file located in B(settings_dir) and the virtual environment located in B(virtualenv_dir), on the database B(mydb).
+notes:
+   - Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
+   - Please note that I(flup) must be installed on the remote host if using the I(runfcgi) command.
+requirements: [ "virtualenv", "django" ]
+author: Scott Anderson
+'''
+
+import os
+
+def _fail(module, cmd, out, err, **kwargs):
+    msg = ''
+    if out:
+        msg += "stdout: %s" % (out, )
+    if err:
+        msg += "\n:stderr: %s" % (err, )
+    module.fail_json(cmd=cmd, msg=msg, **kwargs)
+
+
+def _ensure_virtualenv(module):
+    venv_param = module.params['virtualenv']
+
+    virtualenv = module.get_bin_path('virtualenv', True)
+
+    vbin = os.path.join(venv_param, 'bin')
+    activate = os.path.join(vbin, 'activate')
+
+    if not os.path.exists(activate):
+        vcmd = '%s %s' % (virtualenv, venv_param)
+        vcmd = [virtualenv, venv_param]
+        rc, out_venv, err_venv = module.run_command(vcmd)
+        if rc != 0:
+            _fail(module, vcmd, out_venv, err_venv)
+
+    os.environ["PATH"] = "%s:%s" % (vbin, os.environ["PATH"])
+
+def flush_filter_output(line):
+    return "Installed" in line and "Installed 0 object" not in line
+
+def loaddata_filter_output(line):
+    return "Installed" in line and "Installed 0 object" not in line
+
+def syncdb_filter_output(line):
+    return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
+
+def main():
+    command_allowed_param_map = dict(
+        cleanup=(),
+        flush=('database', ),
+        loaddata=('database', 'fixtures', ),
+        runfcgi=('extra_args', ),
+        syncdb=('database', ),
+        test=('failfast', 'testrunner', 'liveserver', 'apps', ),
+        validate=(),
+        )
+
+    command_required_param_map = dict(
+        loaddata=('fixtures', ),
+        )
+
+    # forces --noinput on every command that needs it
+    noinput_commands = (
+        'flush',
+        'syncdb',
+        'test',
+        )
+
+    # These params are allowed for certain commands only
+    specific_params = ('apps', 'database', 'extra_args', 'failfast', 'fixtures', 'liveserver', 'testrunner', )
+
+    # These params are automatically added to the command if present
+    general_params = ('settings', 'pythonpath', )
+    specific_boolean_params = ('failfast', )
+    end_of_command_params = ('apps', 'fixtures', 'extra_args', )
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            command=dict(default=None, required=True, choices=command_allowed_param_map.keys()),
+            app_path=dict(default=None, required=True),
+            settings=dict(default=None, required=False),
+            pythonpath=dict(default=None, required=False),
+            virtualenv=dict(default=None, required=False),
+
+            apps=dict(default=None, required=False),
+            database=dict(default=None, required=False),
+            extra_args=dict(default=None, required=False),
+            failfast=dict(default='no', required=False, choices=BOOLEANS),
+            fixtures=dict(default=None, required=False),
+            liveserver=dict(default=None, required=False),
+            testrunner=dict(default=None, required=False),
+        ),
+    )
+
+    command = module.params['command']
+    app_path = module.params['app_path']
+    virtualenv = module.params['virtualenv']
+
+    for param in specific_params:
+        value = module.params[param]
+        if param in specific_boolean_params:
+            value = module.boolean(value)
+        if value and param not in command_allowed_param_map[command]:
+            module.fail_json(msg='%s param is incompatible with command=%s' % (param, command))
+
+    required = command_required_param_map.get(command, None)
+    if required:
+        for param in required:
+            if not module.params[param]:
+                module.fail_json(msg='%s param is required for command=%s' % (param, command))
+
+    venv = module.params['virtualenv']
+
+    _ensure_virtualenv(module)
+
+    os.chdir(app_path)
+    cmd = "python manage.py %s" % (command, )
+
+    if command in noinput_commands:
+        cmd = '%s --noinput' % cmd
+
+    for param in general_params:
+        if module.params[param]:
+            cmd = '%s --%s=%s' % (cmd, param, module.params[param])
+
+    for param in specific_boolean_params:
+        if module.boolean(module.params[param]):
+            cmd = '%s --%s' % (cmd, param)
+
+    # these params always get tacked on the end of the command
+    for param in end_of_command_params:
+        if module.params[param]:
+            cmd = '%s %s' % (cmd, module.params[param])
+
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        _fail(module, cmd, out, err, path=os.environ["PATH"], syspath=sys.path)
+
+    changed = False
+
+    lines = out.split('\n')
+    filt = globals().get(command + "_filter_output", None)
+    if filt:
+        filtered_output = filter(filt, out.split('\n'))
+        if len(filtered_output):
+            changed = filtered_output
+
+    module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,
+                     settings=module.params['settings'], pythonpath=module.params['pythonpath'])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
