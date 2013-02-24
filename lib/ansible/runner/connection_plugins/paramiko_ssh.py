@@ -123,8 +123,8 @@ class Connection(object):
             # we give it one, and we try to initialise from the calling
             # environment
             chan.get_pty(term=os.getenv('TERM', 'vt100'),
-                         width=os.getenv('COLUMNS', 0),
-                         height=os.getenv('LINES', 0))
+                         width=int(os.getenv('COLUMNS', 0)),
+                         height=int(os.getenv('LINES', 0)))
             shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
