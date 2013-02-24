@@ -366,7 +366,7 @@ class LinuxService(Service):
         elif location.get('systemctl', None):
             # service is managed by systemd
             self.enable_cmd = location['systemctl']
-        
+       
         # Locate a tool for runtime service management (start, stop etc.)
         self.svc_cmd = ''
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
@@ -381,6 +381,11 @@ class LinuxService(Service):
                 initscript = "%s/%s" % (initdir,self.name)
                 if os.path.isfile(initscript):
                     self.svc_initscript = initscript
+
+        # couldn't find anything yet, assume systemd
+        if self.svc_initscript is None:
+            if location.get('systemctl'):
+                self.svc_cmd = location['systemctl']
 
         if self.svc_cmd is None and not self.svc_initscript:
             self.module.fail_json(msg='cannot find \'service\' binary or init script for service, aborting')
@@ -444,8 +449,9 @@ class LinuxService(Service):
         if self.enable_cmd is None:
             self.module.fail_json(msg='unable to find enable binary')
 
-        # FIXME: we use chkconfig to decide whether to run the command here, but if we don't
-        # have chkconfig we need similar code for updates-rc.d and systemd.
+        # FIXME: we use chkconfig or systemctl
+        # to decide whether to run the command here but need something
+        # similar for upstart
 
         if self.enable_cmd.endswith("chkconfig"):
             (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
@@ -455,6 +461,13 @@ class LinuxService(Service):
             if self.enable and ( "3:on" in out and "5:on" in out ):
                 return
             elif not self.enable and ( "3:off" in out and "5:off" in out ):
+                return
+
+        if self.enable_cmd.endswith("systemctl"):
+            (rc, out, err) = self.execute_command("%s is-enabled %s.service" % (self.enable_cmd, self.name))
+            if self.enable and rc == 0:
+                return
+            elif not self.enable and rc == 1:
                 return
 
         # we change argument depending on real binary used
@@ -488,8 +501,13 @@ class LinuxService(Service):
         # Decide what command to run
         svc_cmd = ''
         if self.svc_cmd:
-            # SysV or systemd
-            svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+            if not self.svc_cmd.endswith("systemctl"):
+                # SysV or systemd take the form <cmd> <name> <action>
+                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+            else:
+                # systemd commands take the form <cmd> <action> <name>
+                svc_cmd = self.svc_cmd
+                self.arguments = "%s %s" % (self.name, self.arguments)
         elif self.svc_initscript: 
             # upstart
             svc_cmd = "%s" % self.svc_initscript
