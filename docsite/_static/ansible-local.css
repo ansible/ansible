@@ -1,0 +1,4 @@
+/* Local CSS tweaks for ansible */
+.dropdown-menu {
+    overflow-y: auto;
+}
