@@ -444,6 +444,19 @@ class LinuxService(Service):
         if self.enable_cmd is None:
             self.module.fail_json(msg='unable to find enable binary')
 
+        # FIXME: we use chkconfig to decide whether to run the command here, but if we don't
+        # have chkconfig we need similar code for updates-rc.d and systemd.
+
+        if self.enable_cmd.endswith("chkconfig"):
+            (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
+            if not self.name in out:
+                self.module.exit_json(msg="unknown service name")
+            state = out.split()[-1]
+            if self.enable and ( "3:on" in out and "5:on" in out ):
+                return
+            elif not self.enable and ( "3:off" in out and "5:off" in out ):
+                return
+
         # we change argument depending on real binary used
         # update-rc.d wants enable/disable while
         # chkconfig wants on/off
@@ -462,16 +475,12 @@ class LinuxService(Service):
         else:
             args = (self.enable_cmd, self.name, on_off)
 
-        # FIXME: we need this function to detect whether to run the command
-        # so we need something to get the service enablement state here.
-
-        changed = True
+        self.changed = True
 
         if self.module.check_mode and changed:
-            self.module.exit_json(changed=True, msg="editing service enablement")
+            self.module.exit_json(changed=True)
 
-        if self.enable is not None and changed:
-            return self.execute_command("%s %s %s" % args)
+        return self.execute_command("%s %s %s" % args)
 
 
     def service_control(self):
