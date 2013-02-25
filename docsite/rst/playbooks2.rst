@@ -964,7 +964,7 @@ into a key=value system.  To pass arguments in from a hash (dictionary), do this
       - name: call a module that requires some complex arguments
         module_name_goes_here: asdf=1234
         args:
-           fibonacci_list
+           fibonacci_list:
              - 1
              - 1
              - 2
