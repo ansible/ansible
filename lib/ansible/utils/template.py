@@ -173,6 +173,8 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         if instance is not None:
             try:
                 replacement = instance.run(args, inject=vars)
+                if expand_lists:
+                    replacement = u",".join([unicode(x) for x in replacement])
             except errors.AnsibleError:
                 if not lookup_fatal:
                     replacement = None
