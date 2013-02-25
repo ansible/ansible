@@ -592,11 +592,9 @@ class AnsibleModule(object):
         passwd_keys = ['password', 'login_password']
         
         for param in self.params:
-            no_log = False
-            if self.aliases:
-                canon  = self.aliases.get(param, param)
-                arg_opts = self.argument_spec[canon]
-                no_log = arg_opts.get('no_log', False)
+            canon  = self.aliases.get(param, param)
+            arg_opts = self.argument_spec.get(canon, {})
+            no_log = arg_opts.get('no_log', False)
                 
             if no_log:
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
