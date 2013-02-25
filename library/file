@@ -140,7 +140,8 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
-            recurse  = dict(default='no', choices=BOOLEANS)
+            recurse  = dict(default='no', choices=BOOLEANS),
+            diff_peek = dict(default=None)
         ),
         add_file_common_args=True,
         supports_check_mode=True
@@ -149,6 +150,19 @@ def main():
     params = module.params
     state  = params['state']
     params['path'] = path = os.path.expanduser(params['path'])
+
+    # short-circuit for diff_peek
+    if params.get('diff_peek', None) is not None:
+        appears_binary = False
+        try:
+            f = open(path)
+            b = f.read(8192)
+            f.close()
+            if b.find("\x00") != -1:
+                appears_binary = True
+        except:
+            pass
+        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
