@@ -139,7 +139,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             brace_level += 1
         elif is_complex and text[end] == '}':
             brace_level -= 1
-        elif is_complex and text[end] in ('$', '[', ']'):
+        elif is_complex and text[end] in ('$', '[', ']', '-'):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == 1:
