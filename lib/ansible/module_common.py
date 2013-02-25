@@ -454,6 +454,7 @@ class AnsibleModule(object):
                 kwargs['state'] = 'file'
             if HAVE_SELINUX and self.selinux_enabled():
                 kwargs['secontext'] = ':'.join(self.selinux_context(path))
+            kwargs['size'] = st[stat.ST_SIZE]
         else:
             kwargs['state'] = 'absent'
         return kwargs

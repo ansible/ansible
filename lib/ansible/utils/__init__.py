@@ -39,6 +39,8 @@ import warnings
 
 VERBOSITY=0
 
+MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+
 try:
     import json
 except ImportError:
@@ -620,15 +622,27 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
 
-def get_diff(before, after):
+def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
     # include names in diffs 'before' and 'after' and do diff -U 10
 
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            differ = difflib.unified_diff(before.splitlines(True), after.splitlines(True), 'before', 'after', '', '', 10)
-            return "".join(list(differ))
+            ret = []
+            if 'dst_binary' in diff:
+                ret.append("diff skipped: destination file appears to be binary\n")
+            if 'src_binary' in diff:
+                ret.append("diff skipped: source file appears to be binary\n")
+            if 'dst_larger' in diff:
+                ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+            if 'src_larger' in diff:
+                ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+            if 'before' in diff and 'after' in diff:
+                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), 'before', 'after', '', '', 10)
+                for line in list(differ):
+                    ret.append(line)
+            return "".join(ret)
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 

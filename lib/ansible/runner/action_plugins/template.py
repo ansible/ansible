@@ -106,11 +106,10 @@ class ActionModule(object):
             module_args = "%s src=%s dest=%s" % (module_args, xfered, dest)
 
             if self.runner.check:
-                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), before_diff_value=dest_contents, after_diff_value=resultant)
+                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before=dest_contents, after=resultant))
             else:
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
-                res.before_diff_value = dest_contents
-                res.after_diff_value = resultant
+                res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
