@@ -161,7 +161,9 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
-
+        
+        self.aliases = {}
+        
         if add_file_common_args:
             self.argument_spec.update(FILE_COMMON_ARGUMENTS)
 
@@ -169,7 +171,8 @@ class AnsibleModule(object):
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = [ 'CHECKMODE' ]
-        self._handle_aliases()
+        
+        self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
             self._check_invalid_arguments()
@@ -460,6 +463,7 @@ class AnsibleModule(object):
 
 
     def _handle_aliases(self):
+        aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.iteritems():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
@@ -474,8 +478,11 @@ class AnsibleModule(object):
                 self.fail_json(msg='internal error: aliases must be a list')
             for alias in aliases:
                 self._legal_inputs.append(alias)
+                aliases_results[alias] = k
                 if alias in self.params:
                     self.params[k] = self.params[alias]
+        
+        return aliases_results
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
@@ -583,8 +590,17 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
         passwd_keys = ['password', 'login_password']
+        
         for param in self.params:
-            if param in passwd_keys:
+            no_log = False
+            if self.aliases:
+                canon  = self.aliases.get(param, param)
+                arg_opts = self.argument_spec[canon]
+                no_log = arg_opts.get('no_log', False)
+                
+            if no_log:
+                log_args[param] = 'NOT_LOGGING_PARAMETER'
+            elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
                 log_args[param] = self.params[param]
