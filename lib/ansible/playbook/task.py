@@ -110,7 +110,6 @@ class Task(object):
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
-            self.delegate_to = utils.template(None, self.delegate_to, self.module_vars)
             # delegate_to: localhost should use local transport
             if self.delegate_to in ['127.0.0.1', 'localhost']:
                 self.transport   = 'local'
