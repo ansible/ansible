@@ -129,7 +129,7 @@ def main():
 class CommandModule(AnsibleModule):
 
     def _handle_aliases(self):
-        pass
+        return {}
 
     def _check_invalid_arguments(self):
         pass
