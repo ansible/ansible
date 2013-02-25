@@ -325,7 +325,7 @@ Example
 Here's a correctly formatted YAML document we could use for a
 ``DOCUMENTATION`` string:
 
-.. literalinclude:: ../DOCUMENTATION.yaml
+.. literalinclude:: ../../examples/DOCUMENTATION.yaml
 
 This is available in the 'examples/' directory of the of the Ansible
 github repository, and you can have that generated with
