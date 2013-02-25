@@ -227,7 +227,6 @@ class Runner(object):
         if not self.environment:
             return ""
         enviro = utils.template(self.basedir, self.environment, inject)
-        print "DEBUG: vars=%s" % enviro
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, recieved %s" % enviro)
         result = ""
