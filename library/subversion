@@ -129,7 +129,7 @@ def main():
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name', 'repository']),
             revision=dict(default='HEAD', aliases=['rev']),
-            force=dict(default='yes', choices=['yes', 'no']),
+            force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
         )
@@ -138,7 +138,7 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     repo = module.params['repo']
     revision = module.params['revision']
-    force = module.boolean(module.params['force'])
+    force = module.params['force']
     username = module.params['username']
     password = module.params['password']
 

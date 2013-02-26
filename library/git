@@ -223,7 +223,7 @@ def main():
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
-            force=dict(default='yes', choices=['yes', 'no'], aliases=['force'])
+            force=dict(default='yes', type='bool')
         )
     )
 
@@ -231,7 +231,7 @@ def main():
     repo    = module.params['repo']
     version = module.params['version']
     remote  = module.params['remote']
-    force   = module.boolean(module.params['force'])
+    force   = module.params['force']
 
     gitconfig = os.path.join(dest, '.git', 'config')
 
