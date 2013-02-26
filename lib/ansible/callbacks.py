@@ -38,9 +38,9 @@ madcow = None
 if cowsay:
     cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
-    madcow = random.choice(out.split())
-
-
+    cows = out.split()
+    cows.append(False)
+    madcow = random.choice(cows)
 
 # ****************************************************************************
 # 1.1 DEV NOTES
