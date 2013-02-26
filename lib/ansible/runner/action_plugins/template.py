@@ -82,7 +82,7 @@ class ActionModule(object):
             # template is different from the remote value
 
             # if showing diffs, we need to get the remote value
-            dest_contents = None
+            dest_contents = ''
 
             if self.runner.diff:
                 # using persist_files to keep the temp directory around to avoid needing to grab another
@@ -93,8 +93,6 @@ class ActionModule(object):
                         dest_contents = base64.b64decode(dest_contents)
                     else:
                         raise Exception("unknown encoding, failed: %s" % dest_result.result)
-                else:
-                    dest_result = ''
  
             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
