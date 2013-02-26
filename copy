@@ -78,16 +78,16 @@ def main():
         argument_spec = dict(
             src=dict(required=True),
             dest=dict(required=True),
-            backup=dict(default=False, choices=BOOLEANS),
-            force = dict(default='yes', choices=BOOLEANS, aliases=['thirsty']),
+            backup=dict(default=False, type='bool'),
+            force = dict(default='yes', aliases=['thirsty'], type='bool'),
         ),
         add_file_common_args=True,
     )
 
     src  = os.path.expanduser(module.params['src'])
     dest = os.path.expanduser(module.params['dest'])
-    backup = module.boolean(module.params.get('backup', False))
-    force = module.boolean(module.params['force'])
+    backup = module.params['backup']
+    force = module.params['force']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
