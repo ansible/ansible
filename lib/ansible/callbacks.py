@@ -217,9 +217,8 @@ class DefaultRunnerCallbacks(object):
     def on_async_failed(self, host, res, jid):
         call_callback_module('runner_on_async_failed', host, res, jid)
 
-    def on_file_diff(self, host, before_string, after_string):
-        if before_string and after_string:
-            call_callback_module('runner_on_file_diff', before_string, after_string)
+    def on_file_diff(self, host, diff):
+        call_callback_module('runner_on_file_diff', diff)
 
 ########################################################################
 
@@ -285,11 +284,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
     
-    def on_file_diff(self, host, before_string, after_string):
-        if before_string and after_string:
-            if self.options.diff:
-                print utils.get_diff(before_string, after_string)
-            super(CliRunnerCallbacks, self).on_file_diff(host, before_string, after_string)
+    def on_file_diff(self, host, diff):
+        if self.options.diff:
+            print utils.get_diff(diff)
+        super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
 
@@ -422,10 +420,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         print stringc(msg, 'red')
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
-    def on_file_diff(self, host, before_string, after_string):
-        if before_string and after_string:
-            print utils.get_diff(before_string, after_string)
-            super(PlaybookRunnerCallbacks, self).on_file_diff(host, before_string, after_string)
+    def on_file_diff(self, host, diff):
+        print utils.get_diff(diff)
+        super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
 
