@@ -100,7 +100,7 @@ class RabbitMqVhost(object):
 def main():
     arg_spec = dict(
         name=dict(required=True, aliases=['vhost']),
-        tracing=dict(default='off', choices=BOOLEANS, aliases=['trace']),
+        tracing=dict(default='off', aliases=['trace'], type='bool'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -110,7 +110,7 @@ def main():
     )
 
     name = module.params['name']
-    tracing = module.boolean(module.params['tracing'])
+    tracing = module.params['tracing']
     state = module.params['state']
 
     rabbitmq_vhost = RabbitMqVhost(module, name, tracing)

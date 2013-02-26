@@ -134,7 +134,7 @@ def main():
     module = AnsibleModule(
             argument_spec    = dict(
                 state        = dict(default="installed", choices=["installed","absent"]),
-                update_cache = dict(default="no", choices=["yes","no"], aliases=["update-cache"]),
+                update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
                 name         = dict(aliases=["pkg"], required=True)))
                 
 
@@ -144,7 +144,7 @@ def main():
     p = module.params
 
 
-    if module.boolean(p["update_cache"]):
+    if p["update_cache"]:
         update_package_db(module)
 
     pkgs = p["name"].split(",")

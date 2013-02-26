@@ -181,12 +181,12 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(default='no', choices=['yes', 'no'], aliases=['update-cache']),
-            purge = dict(default='no', choices=['yes', 'no']),
+            update_cache = dict(default='no', aliases=['update-cache'], type='bool'),
+            purge = dict(default='no', type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], choices=['yes', 'no']),
-            force = dict(default='no', choices=['yes', 'no'])
+            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
+            force = dict(default='no', type='bool')
         ),
         supports_check_mode = True
     )
@@ -204,7 +204,7 @@ def main():
     if p['package'] is None and p['update_cache'] != 'yes':
         module.fail_json(msg='pkg=name and/or update_cache=yes is required')
 
-    install_recommends = module.boolean(p['install_recommends'])
+    install_recommends = p['install_recommends']
 
     cache = apt.Cache()
     if p['default_release']:
@@ -212,13 +212,13 @@ def main():
         # reopen cache w/ modified config
         cache.open(progress=None)
 
-    if module.boolean(p['update_cache']):
+    if p['update_cache']:
         cache.update()
         cache.open(progress=None)
         if not p['package']:
             module.exit_json(changed=False)
 
-    force_yes = module.boolean(p['force'])
+    force_yes = p['force']
 
     packages = p['package'].split(',')
     latest = p['state'] == 'latest'
@@ -237,7 +237,7 @@ def main():
         install(module, packages, cache, default_release=p['default_release'],
                   install_recommends=install_recommends,force=force_yes)
     elif p['state'] in [ 'removed', 'absent' ]:
-        remove(module, packages, cache, purge = module.boolean(p['purge']))
+        remove(module, packages, cache, p['purge'])
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

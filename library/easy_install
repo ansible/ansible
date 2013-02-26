@@ -82,7 +82,7 @@ def main():
     arg_spec = dict(
         name=dict(required=True),
         virtualenv=dict(default=None, required=False),
-        virtualenv_site_packages=dict(default='no', choices=BOOLEANS),
+        virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
     )
 
@@ -91,7 +91,7 @@ def main():
     name = module.params['name']
     env = module.params['virtualenv']
     easy_install = module.get_bin_path('easy_install', True, ['%s/bin' % env])
-    site_packages = module.boolean(module.params['virtualenv_site_packages'])
+    site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
 
     rc = 0

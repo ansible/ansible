@@ -195,14 +195,14 @@ def main():
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
-            force = dict(default='no', choices=BOOLEANS, aliases=['thirsty'])
+            force = dict(default='no', aliases=['thirsty'], type='bool')
         ),
         add_file_common_args=True
     )
 
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
-    force = module.boolean(module.params['force'])
+    force = module.params['force']
 
     if os.path.isdir(dest):
         dest = os.path.join(dest, url_filename(url))
