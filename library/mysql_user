@@ -236,8 +236,20 @@ def load_mycnf():
         return False
     try:
         config.readfp(open(mycnf))
-        creds = dict(user=config.get('client', 'user'),password=config.get('client', 'password'))
-    except (ConfigParser.NoOptionError, IOError):
+    except (IOError):
+        return False
+    # We support two forms of passwords in .my.cnf, both pass= and password=,
+    # as these are both supported by MySQL.
+    try:
+        passwd = config.get('client', 'password')
+    except (ConfigParser.NoOptionError):
+        try:
+            passwd = config.get('client', 'pass')
+        except (ConfigParser.NoOptionError):
+            return False
+    try:
+        creds = dict(user=config.get('client', 'user'),passwd=passwd)
+    except (ConfigParser.NoOptionError):
         return False
     return creds
 
