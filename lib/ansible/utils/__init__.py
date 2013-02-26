@@ -639,7 +639,15 @@ def get_diff(diff):
             if 'src_larger' in diff:
                 ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
             if 'before' in diff and 'after' in diff:
-                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), 'before', 'after', '', '', 10)
+                if 'before_header' in diff:
+                    before_header = "before: %s" % diff['before_header']
+                else:
+                    before_header = 'before'
+                if 'after_header' in diff:
+                    after_header = "after: %s" % diff['after_header']
+                else:
+                    after_header = 'after'
+                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), before_header, after_header, '', '', 10)
                 for line in list(differ):
                     ret.append(line)
             return "".join(ret)

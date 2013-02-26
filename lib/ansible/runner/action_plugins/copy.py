@@ -126,6 +126,7 @@ class ActionModule(object):
                     dest_contents = base64.b64decode(dest_contents)
                 else:
                     raise Exception("unknown encoding, failed: %s" % dest_result.result)
+                diff['before_header'] = destination
                 diff['before'] = dest_contents
 
         src = open(source)
@@ -137,6 +138,7 @@ class ActionModule(object):
             diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
         else:
             src.seek(0)
+            diff['after_header'] = source
             diff['after'] = src.read()
 
         return diff
