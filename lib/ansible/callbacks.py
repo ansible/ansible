@@ -20,7 +20,7 @@ import sys
 import getpass
 import os
 import subprocess
-import os.path
+import random
 from ansible.color import stringc
 
 cowsay = None
@@ -34,6 +34,13 @@ elif os.path.exists("/usr/local/bin/cowsay"):
     # BSD path for cowsay
     cowsay = "/usr/local/bin/cowsay"
 
+noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+if cowsay and noncow == 'random':
+    cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    cows = out.split()
+    cows.append(False)
+    noncow = random.choice(cows)
 
 # ****************************************************************************
 # 1.1 DEV NOTES
@@ -132,8 +139,12 @@ def regular_generic_msg(hostname, result, oneline, caption):
 def banner(msg):
 
     if cowsay:
-        cmd = subprocess.Popen([cowsay, "-W", "60", msg],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        runcmd = [cowsay,"-W", "60"]
+        if noncow:
+            runcmd.append('-f')
+            runcmd.append(noncow)
+        runcmd.append(msg)
+        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         return "%s\n" % out
     else:
