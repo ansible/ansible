@@ -1,0 +1,183 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: gem
+short_description: Manage Ruby gems
+description: 
+  - Manage installation and uninstallation of Ruby gems.
+version_added: "1.1"
+options:
+  name:
+    description: The name of the gem to be managed.
+    required: true
+  state:
+    description: The desired state of the gem. C(latest) ensures that the latest version is installed.
+    required: true
+    choices: [present, absent, latest]
+  gemsource:
+    description: The path to a local gem used as installation source.
+    required: false
+  http-proxy:
+    description: HTTP Proxy for remote operations.
+    required: false
+  includedependencies:
+    description: Wheter to include dependencies or not.
+    required: false
+    choices: [true, false]
+    default: true
+  repository:
+    description: The repository from which the gem will be installed
+    required: false
+    aliases: [source]
+  version:
+    description: Version of the gem to be installed/removed.
+    required: false
+examples:
+  - code: gem name=vagrant version=1.0 state=present
+    description: Installs version 1.0 of vagrant.
+  - code: gem name=rake state=latest
+    description: Installs latest available version of rake.
+  - code: gem name=rake gemsource=/path/to/gems/rake-1.0.gem state=present
+    description: Installs rake version 1.0 from a local gem on disk.
+author: Johan Wiren
+'''
+import re
+from urlparse import urlparse
+
+def getinstalledversions(module, remote=False):
+    cmd = [ module.get_bin_path('gem', True) ]
+    cmd.append('query')
+    if remote:
+        cmd.append('--remote')
+        if module.params['http-proxy']:
+            cmd.extend([ '--http-proxy', module.params['http-proxy'] ])
+        if module.params['repository']:
+            cmd.extend([ '--source', module.params['repository'] ])
+    cmd.append('-n')
+    cmd.append('^%s$' % module.params['name'])
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    installedversions = []
+    for line in out.splitlines():
+        match = re.match(r"\S+\s+\((.+)\)", line)
+        if match:
+            versions = match.group(1)
+            for version in versions.split(', '):
+                installedversions.append(version)
+    return installedversions
+
+def exists(module):
+    if module.params['state'] == 'latest':
+        remoteversions = getinstalledversions(module, remote=True)
+        if remoteversions:
+            module.params['version'] = remoteversions[0]
+    installedversions = getinstalledversions(module)
+    if module.params['version']:
+        if module.params['version'] in installedversions:
+            return True
+    else:
+        if installedversions:
+            return True
+    return False
+
+def uninstall(module):
+    if module.check_mode:
+        return
+    cmd = [ module.get_bin_path('gem', True) ]
+    cmd.append('uninstall')
+    if module.params['version']:
+        cmd.extend([ '--version', module.params['version'] ])
+    else:
+        cmd.append('--all')
+    cmd.append(module.params['name'])
+    module.run_command(cmd, check_rc=True)
+
+def install(module):
+    if module.check_mode:
+        return
+    cmd = [ module.get_bin_path('gem', True) ]
+    cmd.append('install')
+    if module.params['version']:
+        cmd.extend([ '--version', module.params['version'] ])
+    if module.params['repository']:
+        cmd.extend([ '--source', module.params['repository'] ])
+    if module.params['http-proxy']:
+        cmd.extend([ '--http-proxy', module.params['http-proxy'] ])
+    if module.params['includedependencies']:
+        cmd.append('--include-dependencies')
+    cmd.append('--no-rdoc')
+    cmd.append('--no-ri')
+    cmd.append(module.params['gemsource'])
+    module.run_command(cmd, check_rc=True)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = {
+            'gemsource':           {'required': False},
+            'http-proxy':          {'required': False},
+            'includedependencies': {'required': False, 'default':True,  'choices':BOOLEANS},
+            'name':                {'required': True},
+            'repository':          {'required': False, 'aliases':['source']},
+            'state':               {'required': True, 'choices':['present', 'absent', 'latest']},
+            'version':             {'required': False},
+            },
+        supports_check_mode = True,
+        mutually_exclusive = [ [ 'gemsource', 'repository' ], [ 'gemsource', 'version' ] ],
+        )
+
+    if module.params['version'] and module.params['state'] == 'latest':
+        module.fail_json(msg="Cannot specify version when state=latest")
+    if module.params['gemsource'] and module.params['state'] == 'latest':
+        module.fail_json(msg="Cannot maintain state=latest when installing from local source")
+
+    if module.params['gemsource']:
+        url=urlparse(module.params['gemsource'])
+        if url.scheme in [ '', 'file' ] :
+            module.params['gemsource'] = url.path
+        else:
+            module.fail_json(msg="Installation using url scheme %s is not supported." % url.scheme)
+    else:
+        module.params['gemsource'] = module.params['name']
+
+    changed = False
+
+    if module.params['state'] in [ 'present', 'latest' ]:
+        if not exists(module):
+            install(module)
+            changed = True
+    elif module.params['state'] == 'absent':
+        if exists(module):
+            uninstall(module)
+            changed = True
+
+    result = {}
+    result['name'] = module.params['name']
+    result['state'] = module.params['state']
+    if module.params['version']:
+        result['version'] = module.params['version']
+    result['changed'] = changed
+
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
