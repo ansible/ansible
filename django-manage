@@ -28,8 +28,9 @@ description:
 version_added: "1.1"
 options:
   command:
+    choices: [ 'cleanup', 'flush', 'loaddata', 'runfcgi', 'syncdb', 'test', 'validate' ]
     description:
-      - The name of the Django management command to run. Allowed commands are cleanup, flush, loaddata, runfcgi (untested), syncdb, test, validate
+      - The name of the Django management command to run. 
     required: true
   app_path:
     description:
@@ -67,19 +68,30 @@ options:
     description:
       - A space-delimited list of fixture file names to load in the database.
     required: false
-examples:
-   - code: "django-manage command=cleanup app_path=django_dir"
-     description: Run I(cleanup) on the application installed in B(django_dir).
-   - code: "django-manage command=loaddata app_path=django_dir fixtures=initial_data"
-     description: Load the B(initial_data) fixture into the application installed in B(django_dir).
-   - code: "django-manage command=syncdb app_path=django_dir settings=settings_app_name pythonpath=settings_dir virtualenv=virtualenv_dir database=mydb"
-     description: Run I(syncdb) on the application installed in B(django_dir), using settings_B(app_name) for the settings file located in B(settings_dir) and the virtual environment located in B(virtualenv_dir), on the database B(mydb).
+requirements: [ "virtualenv", "django" ]
 notes:
    - Please note that U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
    - Please note that I(flup) must be installed on the remote host if using the I(runfcgi) command.
-requirements: [ "virtualenv", "django" ]
 author: Scott Anderson
 '''
+
+EXAMPLES = """
+# Run cleanup on the application installed in '$django_dir'.
+django-manage: command=cleanup app_path=$django_dir
+
+# Load the $initial_data fixture into the application
+django-manage: command=loaddata app_path=$django_dir fixtures=$initial_data
+
+#Run syncdb on the application
+django-manage: >
+    command=syncdb 
+    app_path=$django_dir 
+    settings=$settings_app_name 
+    pythonpath=$settings_dir 
+    virtualenv=$virtualenv_dir 
+    database=$mydb
+"""
+
 
 import os
 
@@ -149,20 +161,19 @@ def main():
     end_of_command_params = ('apps', 'fixtures', 'extra_args', )
 
     module = AnsibleModule(
-        argument_spec=dict(
-            command=dict(default=None, required=True, choices=command_allowed_param_map.keys()),
-            app_path=dict(default=None, required=True),
-            settings=dict(default=None, required=False),
-            pythonpath=dict(default=None, required=False),
-            virtualenv=dict(default=None, required=False),
-
-            apps=dict(default=None, required=False),
-            database=dict(default=None, required=False),
-            extra_args=dict(default=None, required=False),
-            failfast=dict(default='no', required=False, choices=BOOLEANS),
-            fixtures=dict(default=None, required=False),
-            liveserver=dict(default=None, required=False),
-            testrunner=dict(default=None, required=False),
+        argument_spec = dict(
+            command    = dict(default=None, required=True, choices=command_allowed_param_map.keys()),
+            app_path   = dict(default=None, required=True),
+            settings   = dict(default=None, required=False),
+            pythonpath = dict(default=None, required=False, aliases=['python_path']),
+            virtualenv = dict(default=None, required=False, aliases=['virtual_env']),
+            apps       = dict(default=None, required=False),
+            database   = dict(default=None, required=False),
+            extra_args = dict(default=None, required=False),
+            failfast   = dict(default='no', required=False, choices=BOOLEANS, aliases=['fail_fast']),
+            fixtures   = dict(default=None, required=False),
+            liveserver = dict(default=None, required=False, aliases=['live_server']),
+            testrunner = dict(default=None, required=False, aliases=['test_runner']),
         ),
     )
 
