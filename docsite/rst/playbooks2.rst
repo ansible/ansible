@@ -597,7 +597,7 @@ The environment can also be stored in a variable, and accessed like so::
       # here we make a variable named "env" that is a dictionary
       vars:
         proxy_env:
-          http_proxy=http://proxy.example.com:8080
+          http_proxy: http://proxy.example.com:8080
 
       tasks:
 
@@ -613,8 +613,8 @@ to define an environment hash might be a group_vars file, like so::
     ntp_server: ntp.bos.example.com
     backup: bak.bos.example.com
     proxy_env:
-      http_proxy=http://proxy.bos.example.com:8080
-      https_proxy=http://proxy.bos.example.com:8080
+      http_proxy: http://proxy.bos.example.com:8080
+      https_proxy: http://proxy.bos.example.com:8080
 
 Getting values from files
 `````````````````````````
