@@ -18,7 +18,7 @@
 DOCUMENTATION = '''
 ---
 module: nagios
-short_description: Perform common tasks in Nagios related to downtime and notifications. 
+short_description: Perform common tasks in Nagios related to downtime and notifications.
 description:
   - "The M(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
   - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C($inventory_hostname) variable to refer to the host the playbook is currently running on.
@@ -185,7 +185,10 @@ def main():
 
     ##################################################################
     ansible_nagios = Nagios(module, **module.params)
-    ansible_nagios.act()
+    if self.check_mode:
+        module.exit_json(changed=True)
+    else:
+        ansible_nagios.act()
     ##################################################################
 
 
@@ -346,7 +349,7 @@ class Nagios(object):
 
     def schedule_host_svc_downtime(self, host, minutes=30):
         """
-        This command is used to schedule downtime for 
+        This command is used to schedule downtime for
         all services associated with a particular host.
 
         During the specified downtime, Nagios will not send
