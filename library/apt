@@ -201,7 +201,7 @@ def main():
         module.fail_json(msg="Cannot find apt-get")
 
     p = module.params
-    if p['package'] is None and p['update_cache'] != 'yes':
+    if p['package'] is None and not p['update_cache']:
         module.fail_json(msg='pkg=name and/or update_cache=yes is required')
 
     install_recommends = p['install_recommends']
