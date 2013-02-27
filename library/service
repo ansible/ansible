@@ -701,7 +701,7 @@ class NetBsdService(Service):
             self.action = "onestop"
 
         self.svc_cmd = "%s" % self.svc_initscript
-        return self.execute_command("%s %s" % (self.svc_cmd, self.action))
+        return self.execute_command("%s %s" % (self.svc_cmd, self.action), daemonize=True)
 
 
 # ===========================================
