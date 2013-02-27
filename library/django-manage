@@ -70,7 +70,7 @@ options:
     required: false
 notes:
    - U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
-   - This module will create a virtualenv if one does not already exist.
+   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
 requirements: [ "virtualenv", "django" ]
 author: Scott Anderson
