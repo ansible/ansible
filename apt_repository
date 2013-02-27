@@ -90,7 +90,7 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     if not HAVE_PYAPT:
         module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
@@ -119,9 +119,13 @@ def main():
     out = ''
     err = ''
     if state == 'absent' and exists:
+        if module.check_mode:
+            module.exit_json(changed=True)
         cmd = '%s "%s" --remove' % (add_apt_repository, repo)
         rc, out, err = module.run_command(cmd)
     elif state == 'present' and not exists:
+        if module.check_mode:
+            module.exit_json(changed=True)
         cmd = '%s "%s"' % (add_apt_repository, repo)
         rc, out, err = module.run_command(cmd)
     else:

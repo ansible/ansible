@@ -86,7 +86,7 @@ def main():
         virtualenv_command=dict(default='virtualenv', required=False),
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     name = module.params['name']
     env = module.params['virtualenv']
@@ -102,6 +102,8 @@ def main():
         virtualenv = module.get_bin_path(virtualenv_command, True)
 
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+            if module.check_mode:
+                module.exit_json(changed=True)
             command = '%s %s' % (virtualenv, env)
             if site_packages:
                 command += ' --system-site-packages'
@@ -116,6 +118,8 @@ def main():
     installed = _is_package_installed(module, name, easy_install)
 
     if not installed:
+        if module.check_mode:
+            module.exit_json(changed=True)
         cmd = '%s %s' % (easy_install, name)
         rc_pip, out_pip, err_pip = module.run_command(cmd)
 
