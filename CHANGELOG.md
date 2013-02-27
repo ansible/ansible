@@ -16,6 +16,7 @@ Core Features
 * a new chroot connection type
 * module common code now has basic type checking (and casting) capability 
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
+* inventory can now point to a directory containing multiple scripts/hosts files
 
 Modules Added:
 
