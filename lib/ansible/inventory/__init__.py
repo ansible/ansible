@@ -35,7 +35,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
@@ -60,9 +60,6 @@ class Inventory(object):
         self._also_restriction = None
         self._subset = None
 
-        # whether the inventory file is a script
-        self._is_script = False
-
         if type(host_list) in [ str, unicode ]:
             if host_list.find(",") != -1:
                 host_list = host_list.split(",")
@@ -82,7 +79,6 @@ class Inventory(object):
                     all.add_host(Host(x))
         elif os.path.exists(host_list):
             if utils.is_executable(host_list):
-                self._is_script = True
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
@@ -280,16 +276,7 @@ class Inventory(object):
                 vars.update(updated)
 
         vars.update(host.get_variables())
-        if self._is_script:
-            cmd = [self.host_list,"--host",hostname]
-            try:
-                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except OSError, e:
-                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-            (out, err) = sp.communicate()
-            results = utils.parse_json(out)
-
-            vars.update(results)
+        vars.update(self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):
