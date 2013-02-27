@@ -285,8 +285,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
     
     def on_file_diff(self, host, diff):
-        if self.options.diff:
-            print utils.get_diff(diff)
+        print utils.get_diff(diff)
         super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
