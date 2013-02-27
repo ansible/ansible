@@ -25,6 +25,7 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
+from ansible.inventory.dir import InventoryDirectory
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible import errors
@@ -78,7 +79,10 @@ class Inventory(object):
                 else:
                     all.add_host(Host(x))
         elif os.path.exists(host_list):
-            if utils.is_executable(host_list):
+            if os.path.isdir(host_list):
+                self.parser = InventoryDirectory(filename=host_list)
+                self.groups = self.parser.groups.values()
+            elif utils.is_executable(host_list):
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
