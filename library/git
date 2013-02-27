@@ -224,7 +224,8 @@ def main():
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
             force=dict(default='yes', type='bool')
-        )
+        ),
+        supports_check_mode = True
     )
 
     dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
@@ -242,11 +243,15 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
+        if module.check_mode: 
+            module.exit_json(changed=True)
         (rc, out, err) = clone(module, repo, dest, remote)
     else:
         # else do a pull
         local_mods = has_local_mods(dest)
         before = get_version(dest)
+        if module.check_mode: 
+            module.exit_json(changed=True)
         (rc, out, err) = reset(module,dest,force)
         if rc != 0:
             module.fail_json(msg=err)
