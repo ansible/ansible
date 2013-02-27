@@ -6,7 +6,7 @@ Ansible Changes By Release
 Core Features
 
 * added --check option for "dry run" mode
-* added --diff option to show how templates change, or might change
+* added --diff option to show how templates or copied files change, or might change
 * --list-tasks for the playbook will list the tasks without running them
 * able to set the environment by setting "environment:" as a dictionary on any task (go proxy support!)
 * added ansible_ssh_user and ansible_ssh_pass for per-host/group username and password
@@ -14,6 +14,8 @@ Core Features
 * support for complex arguments to modules (within reason)
 * can specify ansible_connection=X to define the connection type in inventory variables
 * a new chroot connection type
+* module common code now has basic type checking (and casting) capability 
+* module common now supports a 'no_log' attribute to mark a field as not to be syslogged
 
 Modules Added:
 
@@ -24,10 +26,10 @@ Modules Added:
 * new uri module -- can get/put/post/etc
 * CloudFormation module
 * zfs
+* django-manage
 
 Bugfixes and Misc Changes:
 
-* ansible module common code (and ONLY that) which is mixed in with modules, is now BSD licensed.  App remains GPLv3.
 * stderr shown when commands fail to parse
 * uses yaml.safe_dump in filter plugins
 * authentication Q&A no longer happens before --syntax-check, but after
@@ -53,6 +55,9 @@ Facts:
 
 Module Changes/Fixes:
 
+* ansible module common code (and ONLY that) which is mixed in with modules, is now BSD licensed.  App remains GPLv3.
+* service code works better on platforms that mix upstart, systemd, and system-v
+* service enablement idempotence fixes for systemd and upstart
 * service status 4 is also 'not running'
 * supervisorctl restart fix
 * increased error handling for ec2 module
@@ -79,6 +84,7 @@ Module Changes/Fixes:
 * fix to apt module so packages not in cache are still removable
 * charset fix to mail module
 * postresql db module now does not try to create the 'PUBLIC' user
+* SVN module now works correctly with self signed certs
 
 Plugins:
 
