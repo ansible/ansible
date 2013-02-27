@@ -34,13 +34,13 @@ elif os.path.exists("/usr/local/bin/cowsay"):
     # BSD path for cowsay
     cowsay = "/usr/local/bin/cowsay"
 
-madcow = None
-if cowsay:
+noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+if cowsay and noncow == 'random':
     cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     cows = out.split()
     cows.append(False)
-    madcow = random.choice(cows)
+    noncow = random.choice(cows)
 
 # ****************************************************************************
 # 1.1 DEV NOTES
@@ -140,9 +140,9 @@ def banner(msg):
 
     if cowsay:
         runcmd = [cowsay,"-W", "60"]
-        if madcow:
+        if noncow:
             runcmd.append('-f')
-            runcmd.append(madcow)
+            runcmd.append(noncow)
         runcmd.append(msg)
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
