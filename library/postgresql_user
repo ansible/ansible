@@ -375,8 +375,10 @@ def main():
             port=dict(default='5432'),
             fail_on_user=dict(default='yes'),
             role_attr_flags=dict(default='')
-        )
+        ),
+	supports_check_mode = True
     )
+
     user = module.params["user"]
     password = module.params["password"]
     state = module.params["state"]
@@ -412,17 +414,34 @@ def main():
     kw = dict(user=user)
     changed = False
     user_removed = False
+        
     if state == "present":
+
         if user_exists(cursor, user):
+            if  module.check_mode:  
+		kw['changed'] = True 
+                module.exit_json(**kw)
+
             changed = user_alter(cursor, user, password, role_attr_flags)
         else:
             if password is None:
                 msg = "password parameter required when adding a user"
                 module.fail_json(msg=msg)
+
+            if  module.check_mode:  
+		kw['changed'] = True 
+                module.exit_json(**kw)
+
             changed = user_add(cursor, user, password, role_attr_flags)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
+
         if user_exists(cursor, user):
+            if  module.check_mode:  
+		kw['changed'] = True 
+                kw['user_removed'] = True 
+                module.exit_json(**kw)
+
             changed = revoke_privileges(cursor, user, privs)
             user_removed = user_delete(cursor, user)
             changed = changed or user_removed

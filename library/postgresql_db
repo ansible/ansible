@@ -59,6 +59,11 @@ options:
       - Encoding of the database
     required: false
     default: null
+  encoding:
+    description:
+      - Encoding of the database
+    required: false
+    default: null
   state:
     description:
       - The database state
@@ -143,7 +148,8 @@ def main():
             template=dict(default=""),
             encoding=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
-        )
+        ),
+	supports_check_mode = True
     )
 
     if not postgresqldb_found:
@@ -182,10 +188,15 @@ def main():
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     try:
+        if module.check_mode:
+            module.exit_json(changed=True,db=db)
+
         if state == "absent":
             changed = db_delete(cursor, db)
+
         elif state == "present":
             changed = db_create(cursor, db, owner, template, encoding)
+
     except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
