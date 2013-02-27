@@ -165,6 +165,7 @@ def main():
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
+        supports_check_mode=True
     )
 
     state = module.params['state']
@@ -188,6 +189,8 @@ def main():
     if env:
         virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+            if module.check_mode:
+                module.exit_json(changed=True)
             if module.params['virtualenv_site_packages']:
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
@@ -210,6 +213,8 @@ def main():
     elif requirements:
         cmd += ' -r %s' % requirements
 
+    if module.check_mode:
+        module.exit_json(changed=True)
     rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip
