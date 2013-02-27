@@ -20,10 +20,10 @@ from ansible import utils
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
-    __slots__ = [ 'result', 'comm_ok', 'host', 'before_diff_value', 'after_diff_value' ]
+    __slots__ = [ 'result', 'comm_ok', 'host', 'diff' ]
 
     def __init__(self, conn=None, host=None, result=None, 
-        comm_ok=True, before_diff_value=None, after_diff_value=None):
+        comm_ok=True, diff=dict()):
 
         # which host is this ReturnData about?
         if conn is not None:
@@ -41,8 +41,7 @@ class ReturnData(object):
 
         # if these values are set and used with --diff we can show
         # changes made to particular files
-        self.before_diff_value = before_diff_value
-        self.after_diff_value = after_diff_value
+        self.diff = diff
 
         if type(self.result) in [ str, unicode ]:
             self.result = utils.parse_json(self.result)
