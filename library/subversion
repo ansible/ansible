@@ -79,7 +79,7 @@ class Subversion(object):
         self.password = password
 
     def _exec(self, args):
-        bits = ["svn --non-interactive --no-auth-cache", ]
+        bits = ["svn --non-interactive --trust-server-cert --no-auth-cache", ]
         if self.username:
             bits.append("--username '%s'" % self.username)
         if self.password:
