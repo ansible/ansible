@@ -29,7 +29,8 @@ class InventoryScript(object):
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
-        cmd = [ filename, "--list" ]
+        self.filename = filename
+        cmd = [ self.filename, "--list" ]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
@@ -77,3 +78,13 @@ class InventoryScript(object):
                     if child_name in groups:
                         groups[group_name].add_child_group(groups[child_name])
         return groups
+
+    def get_host_variables(self, host):
+        """ Runs <script> --host <hostname> to determine additional host variables """
+        cmd = [self.filename, "--host", host.name]
+        try:
+            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+        (out, err) = sp.communicate()
+        return utils.parse_json(out)
