@@ -614,7 +614,7 @@ class Runner(object):
             complex_args_json = utils.jsonify(complex_args) 
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
-            encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json
+            encoded_complex = "%r" % complex_args_json
 
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
