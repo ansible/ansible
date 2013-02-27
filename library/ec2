@@ -248,9 +248,7 @@ def main():
             }
         instances.append(d)
 
-    result = {"changed": True,
-              "instances": instances }
-    module.exit_json(**result)
+    module.exit_json(changed=True, instances=instances)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

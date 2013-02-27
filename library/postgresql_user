@@ -376,7 +376,7 @@ def main():
             fail_on_user=dict(default='yes'),
             role_attr_flags=dict(default='')
         ),
-	supports_check_mode = True
+        supports_check_mode = True
     )
 
     user = module.params["user"]
@@ -419,7 +419,7 @@ def main():
 
         if user_exists(cursor, user):
             if  module.check_mode:  
-		kw['changed'] = True 
+                kw['changed'] = True 
                 module.exit_json(**kw)
 
             changed = user_alter(cursor, user, password, role_attr_flags)
@@ -429,7 +429,7 @@ def main():
                 module.fail_json(msg=msg)
 
             if  module.check_mode:  
-		kw['changed'] = True 
+                kw['changed'] = True 
                 module.exit_json(**kw)
 
             changed = user_add(cursor, user, password, role_attr_flags)
@@ -438,7 +438,7 @@ def main():
 
         if user_exists(cursor, user):
             if  module.check_mode:  
-		kw['changed'] = True 
+                kw['changed'] = True 
                 kw['user_removed'] = True 
                 module.exit_json(**kw)
 

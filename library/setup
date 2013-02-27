@@ -193,7 +193,7 @@ class Facts(object):
 
         self.facts['os_family'] = self.facts['distribution']
         if self.facts['distribution'] in OS_FAMILY:
-           self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
+            self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')

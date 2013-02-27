@@ -149,7 +149,7 @@ def main():
             encoding=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
         ),
-	supports_check_mode = True
+        supports_check_mode = True
     )
 
     if not postgresqldb_found:
