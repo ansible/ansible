@@ -26,6 +26,7 @@ import platform
 import re
 import socket
 import struct
+import datetime
 
 DOCUMENTATION = '''
 ---
@@ -117,6 +118,7 @@ class Facts(object):
         self.get_selinux_facts()
         self.get_pkg_mgr_facts()
         self.get_lsb_facts()
+        self.get_date_time_facts()
 
     def populate(self):
         return self.facts
@@ -288,6 +290,22 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['type'] = 'unknown'
+
+
+    def get_date_time_facts(self):
+        self.facts['date_time'] = {}
+
+        now = datetime.datetime.now()
+        self.facts['date_time']['year'] = now.strftime('%Y')
+        self.facts['date_time']['month'] = now.strftime('%m')
+        self.facts['date_time']['day'] = now.strftime('%d')
+        self.facts['date_time']['hour'] = now.strftime('%H')
+        self.facts['date_time']['minute'] = now.strftime('%M')
+        self.facts['date_time']['second'] = now.strftime('%S')
+        self.facts['date_time']['epoch'] = now.strftime('%s')
+        self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
+        self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
+
 
 class Hardware(Facts):
     """
