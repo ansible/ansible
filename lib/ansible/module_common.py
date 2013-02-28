@@ -379,7 +379,8 @@ class AnsibleModule(object):
             return changed
         try:
             # FIXME: support English modes
-            mode = int(mode, 8)
+            if not isinstance(mode, int):
+                mode = int(mode, 8)
         except Exception, e:
             self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 

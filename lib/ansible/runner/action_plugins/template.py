@@ -37,7 +37,10 @@ class ActionModule(object):
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
 
         # load up options
-        options  = utils.parse_kv(module_args)
+        options  = {}
+        if complex_args:
+            options.update(complex_args)
+        options.update(utils.parse_kv(module_args))
         source   = options.get('src', None)
         dest     = options.get('dest', None)
 
@@ -106,9 +109,9 @@ class ActionModule(object):
             if self.runner.check:
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
                 res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
