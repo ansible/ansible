@@ -66,9 +66,6 @@ class Inventory(object):
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
-        else:
-            utils.plugins.vars_loader.add_directory(self.basedir())
-
         if type(host_list) == list:
             all = Group('all')
             self.groups = [ all ]
@@ -80,6 +77,8 @@ class Inventory(object):
                     all.add_host(Host(x))
         elif os.path.exists(host_list):
             if os.path.isdir(host_list):
+                # Ensure basedir is inside the directory
+                self.host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(filename=host_list)
                 self.groups = self.parser.groups.values()
             elif utils.is_executable(host_list):
@@ -92,6 +91,8 @@ class Inventory(object):
                     self.groups = self.parser.groups.values()
                 else:
                     raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+
+            utils.plugins.vars_loader.add_directory(self.basedir())
         else:
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
