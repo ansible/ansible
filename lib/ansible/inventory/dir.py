@@ -39,6 +39,9 @@ class InventoryDirectory(object):
         for i in self.names:
             if i.endswith("~") or i.endswith(".orig") or i.endswith(".bak"):
                 continue
+            # These are things inside of an inventory basedir
+            if i in ("host_vars", "group_vars", "vars_plugins"):
+                continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
                 parser = InventoryDirectory(filename=fullpath)
