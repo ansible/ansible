@@ -109,7 +109,10 @@ def _fail(module, cmd, out, err, **kwargs):
 
 
 def _ensure_virtualenv(module):
+
     venv_param = module.params['virtualenv']
+    if venv_param is None:
+        return
 
     virtualenv = module.get_bin_path('virtualenv', True)
 
