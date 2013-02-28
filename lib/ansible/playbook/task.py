@@ -115,6 +115,14 @@ class Task(object):
             self.delegate_to = ds.get('delegate_to', None)
             self.transport   = ds.get('connection', ds.get('transport', play.transport))
 
+        if isinstance(self.action, dict):
+            if 'module' not in self.action:
+                raise errors.AnsibleError("'module' attribute missing from action in task \"%s\"" % ds.get('name', '%s' % self.action))
+            if self.args:
+                raise errors.AnsibleError("'args' cannot be combined with dict 'action' in task \"%s\"" % ds.get('name', '%s' % self.action))
+            self.args = self.action
+            self.action = self.args.pop('module')
+
         # delegate_to can use variables
         if not (self.delegate_to is None):
             # delegate_to: localhost should use local transport
