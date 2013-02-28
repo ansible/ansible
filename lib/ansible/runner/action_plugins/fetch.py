@@ -40,7 +40,10 @@ class ActionModule(object):
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
 
         # load up options
-        options = utils.parse_kv(module_args)
+        options = {}
+        if complex_args:
+            options.update(complex_args)
+        options.update(utils.parse_kv(module_args))
         source = options.get('src', None)
         dest = options.get('dest', None)
         if source is None or dest is None:
