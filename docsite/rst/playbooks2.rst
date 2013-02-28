@@ -1030,11 +1030,11 @@ the user names with the SSH keys, and so on::
     ---
     # file: tasks/user.yml
 
-    - name: ensure user ${user.username} exists
-      action: user state=present name=${user.username} password=${user.password}
+    - name: ensure user ${user.name} exists
+      action: user state=present name=${user.name} password=${user.password}
 
-    - name: install authorized keys for ${user.username}
-      action: authorized_key state=present user=${user.username} key="${user.sshkey}"
+    - name: install authorized keys for ${user.name}
+      action: authorized_key state=present user=${user.name} key="${user.sshkey}"
 
 If you can follow this example, you've done pretty well!  It combines most of the language features
 of example all together.  As you can see, there are lots of different ways to load data from
