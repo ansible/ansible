@@ -7,7 +7,8 @@ short_description: Fetches a file from remote nodes
 description:
      - This module works like M(copy), but in reverse. It is used for fetching
        files from remote machines and storing them locally in a file tree,
-       organized by hostname.
+       organized by hostname. Note that if the source file is missing, it
+       returns status=ok.
 version_added: "0.2"
 options:
   src:
