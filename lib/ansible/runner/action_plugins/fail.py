@@ -33,7 +33,10 @@ class ActionModule(object):
         # note: the fail module does not need to pay attention to check mode
         # it always runs.
 
-        args = utils.parse_kv(module_args)
+        args = {}
+        if complex_args:
+            args.update(complex_args)
+        args.update(utils.parse_kv(module_args))
         if not 'msg' in args:
             args['msg'] = 'Failed as requested from task'
 
