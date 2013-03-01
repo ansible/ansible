@@ -27,6 +27,7 @@ import re
 import socket
 import struct
 import datetime
+import getpass
 
 DOCUMENTATION = '''
 ---
@@ -119,6 +120,7 @@ class Facts(object):
         self.get_pkg_mgr_facts()
         self.get_lsb_facts()
         self.get_date_time_facts()
+        self.get_user_facts()
 
     def populate(self):
         return self.facts
@@ -305,6 +307,11 @@ class Facts(object):
         self.facts['date_time']['epoch'] = now.strftime('%s')
         self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
         self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
+
+
+    # User
+    def get_user_facts(self):
+        self.facts['user_id'] = getpass.getuser()
 
 
 class Hardware(Facts):
