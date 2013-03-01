@@ -98,6 +98,7 @@ class Facts(object):
     # This is the fallback to handle unknowns or exceptions
     OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
                     '/etc/vmware-release': 'VMwareESX',
+                    '/etc/openwrt_release': 'OpenWrt',
                     '/etc/system-release': 'OtherLinux' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
@@ -108,6 +109,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
+                 { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' } ]
 
     def __init__(self):
@@ -192,6 +194,16 @@ class Facts(object):
                         if 'Amazon' in data:
                             self.facts['distribution'] = 'Amazon'
                             self.facts['distribution_version'] = data.split()[-1]
+                    elif name == 'OpenWrt':
+                        data = get_file_content(path)
+                        if 'OpenWrt' in data:
+                            self.facts['distribution'] = name
+                        version = re.search('DISTRIB_RELEASE="(.*)"', data)
+                        if version:
+                            self.facts['distribution_version'] = version.groups()[0]
+                        release = re.search('DISTRIB_CODENAME="(.*)"', data)
+                        if release:
+                            self.facts['distribution_release'] = release.groups()[0]
                     else:
                         self.facts['distribution'] = name
 
