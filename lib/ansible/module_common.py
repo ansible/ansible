@@ -71,6 +71,7 @@ import grp
 import pwd
 import platform
 import errno
+import tempfile
 
 HAVE_SELINUX=False
 try:
@@ -432,6 +433,59 @@ class AnsibleModule(object):
         changed = self.set_mode_if_different(
             file_args['path'], file_args['mode'], changed
         )
+        return changed
+
+    def set_file_content_if_different(self, path, content, changed):
+        '''
+        set content of a file it it is different or does not exists
+        creates a tmp file with the new content and checks md5 with original
+        '''
+
+        path = os.path.expanduser(path)
+
+        # create a temp file with content
+        fd, tmp = tempfile.mkstemp()
+        f = os.fdopen(fd, 'w')
+        try:
+            f.write(content)
+        except Exception, err:
+            os.remove(tmp)
+            module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        f.close()
+
+        md5_src = self.md5(tmp)
+        md5_dest = None
+
+        # get md5 hash of original file if it exists
+        if os.path.exists(path) and not os.access(path, os.R_OK):
+            os.remove(tmp)
+            module.fail_json( msg="Can't read original file %s" % (path))
+        else:
+            md5_dest = self.md5(path)
+
+        if md5_src != md5_dest:
+            # check for write access
+            if os.path.exists(path) and not os.access(path, os.W_OK):
+                os.remove(tmp)
+                module.fail_json( msg="No write access on file %s" % (path))
+            elif not os.access(os.path.dirname(path), os.W_OK):
+                os.remove(tmp)
+                module.fail_json( msg="Destination dir %s not writable" % (os.path.dirname(path)))
+            else:
+                # make the change
+                try:
+                    dest_tmp = "%s.%s.%s.tmp" % (path,os.getpid(),time.time())
+                    shutil.copyfile(tmp, dest_tmp)
+                    self.atomic_replace(dest_tmp, path)
+                except Exception, err:
+                    os.remove(tmp)
+                    os.remove(dest_tmp)
+                    module.fail_json(msg="failed to copy %s to %s: %s" % (tmp, path, str(err)))
+                changed = True
+        else:
+            os.remove(tmp)
+            changed = changed or False
+
         return changed
 
     def add_path_info(self, kwargs):

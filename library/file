@@ -120,10 +120,17 @@ options:
     version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
+  content:
+    required: false
+    default: None
+    version_added: "1.1"
+    description:
+      - set content of the file if it's different
 examples:
    - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
      description: Example from Ansible Playbooks
    - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
+   - code: "file: path=/tmp/foo.txt content='foobar'"
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
@@ -140,6 +147,7 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
+            content = dict(required=False, default=None),
             recurse  = dict(default='no', type='bool'),
             diff_peek = dict(default=None)
         ),
@@ -149,6 +157,7 @@ def main():
 
     params = module.params
     state  = params['state']
+    content = params['content']
     params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
@@ -180,6 +189,9 @@ def main():
         module.fail_json(msg='src and dest are required for "link" state')
     elif path is None:
         module.fail_json(msg='path is required')
+
+    if content is not None and state != 'file':
+        module.fail_json(msg='content requires state=="file"')
 
     changed = False
 
@@ -217,8 +229,11 @@ def main():
 
     if state == 'file':
 
-        if prev_state != 'file':
-            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
+        if prev_state != 'file' and content is None:
+            module.fail_json(path=path, msg='file (%s) does not exist, set content or use copy or template module to create' % path)
+
+        if content is not None:
+            changed = module.set_file_content_if_different(path, content, changed)
 
         changed = module.set_file_attributes_if_different(file_args, changed)
         module.exit_json(path=path, changed=changed)
