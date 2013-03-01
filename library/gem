@@ -62,7 +62,6 @@ examples:
 author: Johan Wiren
 '''
 import re
-from urlparse import urlparse
 
 def getinstalledversions(module, remote=False):
     cmd = [ module.get_bin_path('gem', True) ]
@@ -149,13 +148,7 @@ def main():
     if module.params['gemsource'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot maintain state=latest when installing from local source")
 
-    if module.params['gemsource']:
-        url=urlparse(module.params['gemsource'])
-        if url.scheme in [ '', 'file' ] :
-            module.params['gemsource'] = url.path
-        else:
-            module.fail_json(msg="Installation using url scheme %s is not supported." % url.scheme)
-    else:
+    if module.params['gemsource'] is not 'null':
         module.params['gemsource'] = module.params['name']
 
     changed = False
