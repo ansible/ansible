@@ -775,7 +775,7 @@ class AnsibleModule(object):
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, run_in_check_mode=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -796,6 +796,10 @@ class AnsibleModule(object):
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        if self.check_mode and not run_in_check_mode:
+            return (0, list(), list())
+
         rc = 0
         msg = None
         st_in = None
