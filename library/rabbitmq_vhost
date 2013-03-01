@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Matt Cordial <matt.cordial@gmail.com>
+# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
 #
 # This file is part of Ansible
 #
@@ -25,6 +25,8 @@ module: rabbitmq_vhost
 short_description: Manage the state of a virtual host in RabbitMQ
 description:
   - Manage the state of a virtual host in RabbitMQ
+version_added: 1.1
+author: Chris Hoffman  
 options:
   name:
     description:
@@ -46,7 +48,6 @@ options:
 examples:
    - code: 'rabbitmq_vhost: name=/test state=present'
      description: Ensure that the vhost /test exists.
-author: Matt Cordial
 '''
 
 class RabbitMqVhost(object):
