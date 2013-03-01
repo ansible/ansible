@@ -92,7 +92,7 @@ class Inventory(object):
                 else:
                     raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
 
-            utils.plugins.vars_loader.add_directory(self.basedir())
+            utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
