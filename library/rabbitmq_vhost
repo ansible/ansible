@@ -58,12 +58,10 @@ class RabbitMqVhost(object):
         self._tracing = False
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args, run_in_check_mode=False):
-        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = [self._rabbitmqctl, '-q']
-            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-            return out.splitlines()
-        return list()
+    def _exec(self, args, check_mode=False):
+        cmd = [self._rabbitmqctl, '-q']
+        rc, out, err = self.module.run_command(cmd + args, check_rc=True, check_mode=check_mode)
+        return out.splitlines()
 
     def get(self):
         vhosts = self._exec(['list_vhosts', 'name', 'tracing'], True)
