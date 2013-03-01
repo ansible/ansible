@@ -71,6 +71,7 @@ import syslog
 import signal
 import time
 import signal
+import traceback
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 PIDFILE = os.path.expanduser("~/.fireball.pid")
@@ -244,7 +245,8 @@ def daemonize(module, password, port, minutes):
 
         serve(module, password, port, minutes)
     except Exception, e:
-        log("exception caught, exiting fireball mode: %s" % e)
+        tb = traceback.format_exc()
+        log("exception caught, exiting fireball mode: %s\n%s" % (e, tb))
         sys.exit(0)
 
 def main():
