@@ -985,62 +985,6 @@ If both key=value arguments are given along with 'args', the key=value arguments
 means you can set defaults by using 'args' if you so choose, though that is not the intended purpose of this
 feature.
 
-Advanced Task Includes
-``````````````````````
-
-In above sections we talked about task includes, and how to do loops using with_items.  If we wish
-to externalize data from the playbook rules itself, this is possible by combining some concepts.
-
-This is not something everyone may need to do at first, but it's a clever trick and deserves explanation.
-Here is a top level example playbook that loads variables from an external file and also tasks from an
-external file.  You will note that we use a list (using with_items) as a parameter on the include
-statement::
-
-    ---
-    # file: playbook-demo.yml
-
-    hosts: all
-    vars_files:
-       - config/users.yml
-    tasks:
-      - include: tasks/user.yml user=$item
-        with_items: $users
-
-We've defined our user definitions in an external file.  This allows us to reference that list of users in
-multiple playbooks.  The users list also defines users as a list of hashes, rather than just the usernames.
-We are also loading the SSH public keys for those users from the filesystem, though we could choose to embed
-them in the file instead.  It's up to you::
-
-    ----
-    # file: config/users.yml
-
-    users:
-      - name: alice
-        password: cryptedPasswordHere
-        sshkey: $FILE(/home/alice/id_rsa.pub)
-
-      - name: bob
-        password: cryptedPasswordHere
-        sshkey: $FILE(/home/bob/id_rsa.pub)
-
-Now that we have these two things together, we can write a task include file the playbook can use that sets
-up *all* of the users, rather than mentioning each user by name, or going to lots of trouble to correlate
-the user names with the SSH keys, and so on::
-
-    ---
-    # file: tasks/user.yml
-
-    - name: ensure user ${user.name} exists
-      action: user state=present name=${user.name} password=${user.password}
-
-    - name: install authorized keys for ${user.name}
-      action: authorized_key state=present user=${user.name} key="${user.sshkey}"
-
-If you can follow this example, you've done pretty well!  It combines most of the language features
-of example all together.  As you can see, there are lots of different ways to load data from
-sources, and to organize things.  Ansible does not really make you pick one or the other, so choose
-an approach that works best for you.
-
 Style Points
 ````````````
 
