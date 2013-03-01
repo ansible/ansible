@@ -51,7 +51,7 @@ def main():
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped'])
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     name = module.params['name']
     state = module.params['state']
@@ -63,6 +63,8 @@ def main():
 
     if state == 'present':
         if not present:
+            if module.check_mode:
+                module.exit_json(changed=True)
             module.run_command('%s reread' % SUPERVISORCTL, check_rc=True)
             rc, out, err = module.run_command('%s add %s' % (SUPERVISORCTL, name))
 
@@ -80,6 +82,8 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     if running and state == 'stopped':
+        if module.check_mode:
+            module.exit_json(changed=True)
         rc, out, err = module.run_command('%s stop %s' % (SUPERVISORCTL, name))
 
         if '%s: stopped' % name in out:
@@ -88,6 +92,8 @@ def main():
         module.fail_json(msg=out)
 
     elif state == 'restarted':
+        if module.check_mode:
+            module.exit_json(changed=True)
         rc, out, err = module.run_command('%s update %s' % (SUPERVISORCTL, name))
         rc, out, err = module.run_command('%s restart %s' % (SUPERVISORCTL, name))
 
@@ -97,6 +103,8 @@ def main():
         module.fail_json(msg=out)
 
     elif not running and state == 'started':
+        if module.check_mode:
+            module.exit_json(changed=True)
         rc, out, err = module.run_command('%s start %s' % (SUPERVISORCTL, name))
 
         if '%s: started' % name in out:
