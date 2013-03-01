@@ -81,34 +81,36 @@ class LookupModule(object):
     def run(self, terms, **kwargs):
         result = None
         for term in terms:
-            files = term.get('files', [])
-            paths = term.get('paths', [])
-        
-            filelist = files
-            if isinstance(files, basestring):
-                files = files.replace(',', ' ')
-                files = files.replace(';', ' ')
-                filelist = files.split(' ')
+            if isinstance(term, dict):
+                files = term.get('files', [])
+                paths = term.get('paths', [])
+            
+                filelist = files
+                if isinstance(files, basestring):
+                    files = files.replace(',', ' ')
+                    files = files.replace(';', ' ')
+                    filelist = files.split(' ')
 
-            pathlist = paths
-            if paths:
-                if isinstance(paths, basestring):
-                    paths = paths.replace(',', ' ')
-                    paths = paths.replace(':', ' ')
-                    paths = paths.replace(';', ' ')
-                    pathlist = paths.split(' ')
-                
-            total_search = []
-        
+                pathlist = paths
+                if paths:
+                    if isinstance(paths, basestring):
+                        paths = paths.replace(',', ' ')
+                        paths = paths.replace(':', ' ')
+                        paths = paths.replace(';', ' ')
+                        pathlist = paths.split(' ')
+                    
+                total_search = []
+            
 
-            if not pathlist:
-                total_search = filelist
+                if not pathlist:
+                    total_search = filelist
+                else:
+                    for path in pathlist:
+                        for fn in filelist:
+                            f = path + '/' + fn
+                            total_search.append(f)
             else:
-                for path in pathlist:
-                    for fn in filelist:
-                        f = path + '/' + fn
-                        total_search.append(f)
-
+                total_search = [term]
 
             result = None
             for fn in total_search:
