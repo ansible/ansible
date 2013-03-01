@@ -775,19 +775,21 @@ class AnsibleModule(object):
                 self.set_context_if_different(src, context, False)
         os.rename(src, dest)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, run_in_check_mode=True):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, check_mode=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
         If args is a list, the command will be run with shell=False.
         Otherwise, the command will be run with shell=True when args is a string.
         Other arguments:
-        - check_rc (boolean)  Whether to call fail_json in case of
-                              non zero RC.  Default is False.
-        - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is False.
-        - executable (string) See documentation for subprocess.Popen().
-                              Default is None.
+        - check_rc (boolean)   Whether to call fail_json in case of
+                               non zero RC.  Default is False.
+        - close_fds (boolean)  See documentation for subprocess.Popen().
+                               Default is False.
+        - executable (string)  See documentation for subprocess.Popen().
+                               Default is None.
+        - check_mode (boolean) Whether to run command when in check_mode
+                               Default is True
         '''
         if isinstance(args, list):
             shell = False
@@ -797,7 +799,7 @@ class AnsibleModule(object):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
-        if self.check_mode and not run_in_check_mode:
+        if self.check_mode and not check_mode:
             return (0, list(), list())
 
         rc = 0
