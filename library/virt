@@ -35,21 +35,22 @@ options:
         since these refer only to VM states. After starting a guest, it may not
         be immediately accessible.
     required: false
-    choices: [ "running", "shutdown", "destroyed", "undefined" ]
+    choices: [ "running", "shutdown" ]
     default: "no"
   command:
     description:
       - in addition to state management, various non-idempotent commands are available. See examples
     required: false
+    choices: ["create","status", "start", "stop", "pause", "unpause",
+              "shutdown", "undefine", "destroy", "get_xml", "autostart",
+              "freemem", "list_vms", "info", "nodeinfo", "virttype"]
 examples:
    - code: "virt: guest=alpha state=running"
      description: "Example from Ansible Playbooks"
    - code: ansible host -m virt -a "guest=alpha command=status"
      description: "Example guest management with C(/usr/bin/ansible)"
-notes:
-   - "Other non-idempotent commands are: C(status), C(pause), C(unpause),
-     C(get_xml), C(autostart), C(freemem), C(list_vms), C(info), C(nodeinfo),
-     C(virttype)"
+   - code: ansible host -m virt -a "guest=alpha command=get_xml"
+     description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
 '''
