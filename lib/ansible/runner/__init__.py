@@ -343,7 +343,7 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and self.module_name in [ 'apt', 'yum' ]:
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum' ]:
                 # hack for apt and soon yum, with_items maps back into a single module call
                 inject['item'] = ",".join(items)
                 items = None

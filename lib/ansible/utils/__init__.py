@@ -654,4 +654,9 @@ def get_diff(diff):
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
- 
+def is_list_of_strings(items):
+   for x in items: 
+       if not isinstance(x, basestring):
+           return False
+   return True
+
