@@ -33,6 +33,9 @@ elif os.path.exists("/usr/games/cowsay"):
 elif os.path.exists("/usr/local/bin/cowsay"):
     # BSD path for cowsay
     cowsay = "/usr/local/bin/cowsay"
+elif os.path.exists("/opt/local/bin/cowsay"):
+    # MacPorts path for cowsay
+    cowsay = "/opt/local/bin/cowsay"
 
 
 # ****************************************************************************
