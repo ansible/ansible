@@ -800,7 +800,7 @@ class AnsibleModule(object):
             self.fail_json(rc=257, cmd=args, msg=msg)
 
         if self.check_mode and not check_mode:
-            return (0, list(), list())
+            return (0, '', '')
 
         rc = 0
         msg = None
