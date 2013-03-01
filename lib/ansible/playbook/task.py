@@ -47,6 +47,13 @@ class Task(object):
             if x in utils.plugins.module_finder:
                 if 'action' in ds:
                     raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
+                if isinstance(ds[x], dict):
+                    if 'args' in ds:
+                        raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
+                    ds['args'] = ds[x]
+                    ds[x] = ''
+                elif ds[x] is None:
+                    ds[x] = ''
                 if not isinstance(ds[x], basestring):
                     raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
                 ds['action'] = x + " " + ds[x]
@@ -107,6 +114,14 @@ class Task(object):
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
             self.transport   = ds.get('connection', ds.get('transport', play.transport))
+
+        if isinstance(self.action, dict):
+            if 'module' not in self.action:
+                raise errors.AnsibleError("'module' attribute missing from action in task \"%s\"" % ds.get('name', '%s' % self.action))
+            if self.args:
+                raise errors.AnsibleError("'args' cannot be combined with dict 'action' in task \"%s\"" % ds.get('name', '%s' % self.action))
+            self.args = self.action
+            self.action = self.args.pop('module')
 
         # delegate_to can use variables
         if not (self.delegate_to is None):
