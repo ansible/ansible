@@ -34,13 +34,10 @@ options:
     description: The desired state of the gem. C(latest) ensures that the latest version is installed.
     required: true
     choices: [present, absent, latest]
-  gemsource:
+  gem_source:
     description: The path to a local gem used as installation source.
     required: false
-  http-proxy:
-    description: HTTP Proxy for remote operations.
-    required: false
-  includedependencies:
+  include_dependencies:
     description: Wheter to include dependencies or not.
     required: false
     choices: [true, false]
@@ -52,53 +49,59 @@ options:
   version:
     description: Version of the gem to be installed/removed.
     required: false
-examples:
-  - code: gem name=vagrant version=1.0 state=present
-    description: Installs version 1.0 of vagrant.
-  - code: gem name=rake state=latest
-    description: Installs latest available version of rake.
-  - code: gem name=rake gemsource=/path/to/gems/rake-1.0.gem state=present
-    description: Installs rake version 1.0 from a local gem on disk.
 author: Johan Wiren
 '''
+
+EXAMPLES = '''
+# Installs version 1.0 of vagrant.
+gem: name=vagrant version=1.0 state=present
+
+# Installs latest available version of rake.
+gem: name=rake state=latest
+
+# Installs rake version 1.0 from a local gem on disk.
+gem: name=rake gem_source=/path/to/gems/rake-1.0.gem state=present
+'''
+
 import re
 
-def getinstalledversions(module, remote=False):
+def get_installed_versions(module, remote=False):
+
     cmd = [ module.get_bin_path('gem', True) ]
     cmd.append('query')
     if remote:
         cmd.append('--remote')
-        if module.params['http-proxy']:
-            cmd.extend([ '--http-proxy', module.params['http-proxy'] ])
         if module.params['repository']:
             cmd.extend([ '--source', module.params['repository'] ])
     cmd.append('-n')
     cmd.append('^%s$' % module.params['name'])
     (rc, out, err) = module.run_command(cmd, check_rc=True)
-    installedversions = []
+    installed_versions = []
     for line in out.splitlines():
         match = re.match(r"\S+\s+\((.+)\)", line)
         if match:
             versions = match.group(1)
             for version in versions.split(', '):
-                installedversions.append(version)
-    return installedversions
+                installed_versions.append(version)
+    return installed_versions
 
 def exists(module):
+
     if module.params['state'] == 'latest':
-        remoteversions = getinstalledversions(module, remote=True)
+        remoteversions = get_installed_versions(module, remote=True)
         if remoteversions:
             module.params['version'] = remoteversions[0]
-    installedversions = getinstalledversions(module)
+    installed_versions = get_installed_versions(module)
     if module.params['version']:
-        if module.params['version'] in installedversions:
+        if module.params['version'] in installed_versions:
             return True
     else:
-        if installedversions:
+        if installed_versions:
             return True
     return False
 
 def uninstall(module):
+
     if module.check_mode:
         return
     cmd = [ module.get_bin_path('gem', True) ]
@@ -111,6 +114,7 @@ def uninstall(module):
     module.run_command(cmd, check_rc=True)
 
 def install(module):
+
     if module.check_mode:
         return
     cmd = [ module.get_bin_path('gem', True) ]
@@ -119,41 +123,39 @@ def install(module):
         cmd.extend([ '--version', module.params['version'] ])
     if module.params['repository']:
         cmd.extend([ '--source', module.params['repository'] ])
-    if module.params['http-proxy']:
-        cmd.extend([ '--http-proxy', module.params['http-proxy'] ])
-    if module.params['includedependencies']:
+    if module.params['include_dependencies']:
         cmd.append('--include-dependencies')
     cmd.append('--no-rdoc')
     cmd.append('--no-ri')
-    cmd.append(module.params['gemsource'])
+    cmd.append(module.params['gem_source'])
     module.run_command(cmd, check_rc=True)
 
 def main():
+
     module = AnsibleModule(
-        argument_spec = {
-            'gemsource':           {'required': False},
-            'http-proxy':          {'required': False},
-            'includedependencies': {'required': False, 'default':True,  'choices':BOOLEANS},
-            'name':                {'required': True},
-            'repository':          {'required': False, 'aliases':['source']},
-            'state':               {'required': True, 'choices':['present', 'absent', 'latest']},
-            'version':             {'required': False},
-            },
+        argument_spec = dict(
+            gem_source           = dict(required=False, type='str'),
+            include_dependencies = dict(required=False, default=True, type='bool'),
+            name                 = dict(required=True, type='str'),
+            repository           = dict(required=False, aliases=['source'], type='str'),
+            state                = dict(required=False, choices=['present','absent','latest'], type='str'),
+            version              = dict(required=False, type='str'),
+        ),
         supports_check_mode = True,
-        mutually_exclusive = [ [ 'gemsource', 'repository' ], [ 'gemsource', 'version' ] ],
-        )
+        mutually_exclusive = [ ['gem_source','repository'], ['gem_source','version'] ],
+    )
 
     if module.params['version'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot specify version when state=latest")
-    if module.params['gemsource'] and module.params['state'] == 'latest':
+    if module.params['gem_source'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot maintain state=latest when installing from local source")
 
-    if module.params['gemsource'] is not 'null':
-        module.params['gemsource'] = module.params['name']
+    if module.params['gem_source'] is not 'null':
+        module.params['gem_source'] = module.params['name']
 
     changed = False
 
-    if module.params['state'] in [ 'present', 'latest' ]:
+    if module.params['state'] in [ 'present', 'latest']:
         if not exists(module):
             install(module)
             changed = True
