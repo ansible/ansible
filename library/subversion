@@ -132,7 +132,8 @@ def main():
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
-        )
+        ),
+        supports_check_mode=True
     )
 
     dest = os.path.expanduser(module.params['dest'])
@@ -147,11 +148,15 @@ def main():
     if not os.path.exists(dest):
         before = None
         local_mods = False
+        if module.check_mode:
+            module.exit_json(changed=True)
         svn.checkout()
     elif os.path.exists("%s/.svn" % (dest, )):
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
+        if module.check_mode:
+            module.exit_json(changed=True)
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
         svn.switch()

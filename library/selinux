@@ -124,7 +124,8 @@ def main():
             policy=dict(required=False),
             state=dict(choices=['enforcing', 'permissive', 'disabled'], required=True),
             configfile=dict(aliases=['conf','file'], default='/etc/selinux/config')
-        )
+        ),
+        supports_check_mode=True
     )
 
     # global vars
@@ -155,16 +156,22 @@ def main():
 
     # check changed values and run changes
     if (policy != runtime_policy):
+        if module.check_mode:
+            module.exit_json(changed=True)
         # cannot change runtime policy
         msgs.append('reboot to change the loaded policy')
         changed=True
 
     if (policy != config_policy):
+        if module.check_mode:
+            module.exit_json(changed=True)
         msgs.append('config policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
         set_config_policy(policy, configfile)
         changed=True
 
     if (state != runtime_state):
+        if module.check_mode:
+            module.exit_json(changed=True)
         if (state == 'disabled'):
             msgs.append('state change will take effect next reboot')
         else:
@@ -176,6 +183,8 @@ def main():
         changed=True
 
     if (state != config_state):
+        if module.check_mode:
+            module.exit_json(changed=True)
         msgs.append('config state changed from \'%s\' to \'%s\'' % (config_state, state))
         set_config_state(state, configfile)
         changed=True

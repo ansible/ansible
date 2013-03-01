@@ -130,6 +130,7 @@ def main():
             key=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
+        supports_check_mode=True
     )
 
     key_id          = module.params['id']
@@ -153,6 +154,8 @@ def main():
             if key_id and key_id in keys:
                 module.exit_json(changed=False)
             else:
+                if module.check_mode:
+                    module.exit_json(changed=True)
                 add_key(module, data)
                 changed=False
                 keys2 = all_keys(module)
@@ -165,6 +168,8 @@ def main():
         if not key_id:
             module.fail_json(msg="key is required")
         if key_id in keys:
+            if module.check_mode:
+                module.exit_json(changed=True)
             if remove_key(module, key_id):
                 changed=True
             else:
