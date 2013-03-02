@@ -71,6 +71,7 @@ class ActionModule(object):
                 inv_group = ansible.inventory.Group(name=group)
                 inventory.add_group(inv_group)
             for host in hosts:
+                del self.runner.inventory._vars_per_host[host]
                 inv_host = inventory.get_host(host)
                 if not inv_host:
                     inv_host = ansible.inventory.Host(name=host)
