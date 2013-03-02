@@ -372,7 +372,7 @@ to a task include statement as below.  Note this does not work with playbook inc
 get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
-      when_string: 'reticulating splines' in $output
+      when_string: "'reticulating splines' in $output"
 
 Conditional Imports
 ```````````````````
