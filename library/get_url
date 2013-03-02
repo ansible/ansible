@@ -64,7 +64,7 @@ options:
     aliases: [ "thirsty" ]
   use_proxy:
     description:
-      - if C(yes), it will no use a proxy, even if one is defined by
+      - if C(no), it will not use a proxy, even if one is defined by
         in an environment variable on the target hosts.
     required: false
     default: yes
