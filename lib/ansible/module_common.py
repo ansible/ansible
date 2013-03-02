@@ -51,11 +51,6 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # of an ansible module. The source of this common code lives
 # in lib/ansible/module_common.py
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-import base64
 import os
 import re
 import shlex
@@ -71,6 +66,15 @@ import grp
 import pwd
 import platform
 import errno
+
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        sys.stderr.write('Error: ansible requires a json module, none found!')
+        sys.exit(1)
 
 HAVE_SELINUX=False
 try:
