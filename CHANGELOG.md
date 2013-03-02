@@ -16,17 +16,22 @@ Core Features
 * a new chroot connection type
 * module common code now has basic type checking (and casting) capability 
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
-* inventory can now point to a directory containing multiple scripts/hosts files
+* inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
 
 Modules Added:
 
 * rabbit_mq plugin module
 * rabbit_mq user module
 * rabbit_mq vhost module
+* rabbit_mq parameter module
 * mongodb_user module
 * new uri module -- can get/put/post/etc
 * CloudFormation module
 * zfs
+* okg
+* macports
+* gem
+* lvol (LVM logical volumes)
 * django-manage
 
 Bugfixes and Misc Changes:
@@ -39,12 +44,17 @@ Bugfixes and Misc Changes:
 * raise an error when multiple when_ statements are provided
 * --list-hosts applies host limit selections better
 * (internals) template engine specifications to use template_ds everywhere
-* better error message when your host file can't be found
+* better error message when your host file can not be found
 * end of line comments now work in the inventory file
 * directory destinations now work better with remote md5 code
 * lookup plugin macros like $FILE and $ENV now work without returning arrays in variable definitions/playbooks
 * uses yaml.safe_load everywhere
 * able to add EXAMPLES to documentation via EXAMPLES docstring, rather than just in main documentation YAML
+* can set ANSIBLE_COW_SELECTION to pick other cowsay types (including random)
+* to_nice_yaml and to_nice_json available as Jinja2 filters that indent and sort
+* cowsay able to run out of macports (very important!)
+* improved logging for fireball mode
+* nicer error message when talking to an older system that needs a JSON module installed
 
 Facts:
 
@@ -53,6 +63,9 @@ Facts:
 * fact detection for OS type on Amazon Linux
 * device fact gathering stability improvements
 * ansible_os_family fact added
+* user_id (remote user name)
+* a whole series of current time information under the 'datetime' hash
+
 
 Module Changes/Fixes:
 
@@ -86,6 +99,8 @@ Module Changes/Fixes:
 * charset fix to mail module
 * postresql db module now does not try to create the 'PUBLIC' user
 * SVN module now works correctly with self signed certs
+* apt module now has an upgrade parameter (values=yes, no, or 'dist')
+
 
 Plugins:
 
