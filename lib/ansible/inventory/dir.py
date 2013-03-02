@@ -59,7 +59,7 @@ class InventoryDirectory(object):
                 for host in group.get_hosts():
                     if host.name not in self.hosts:
                         self.hosts[host.name] = Host(host.name)
-                    for k, v in host.get_variables().iteritems():
+                    for k, v in host.vars.iteritems():
                         self.hosts[host.name].set_variable(k, v)
                     self.groups[name].add_host(self.hosts[host.name])
             # This needs to be a second loop to ensure all the parent groups exist
