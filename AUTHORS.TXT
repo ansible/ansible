@@ -27,6 +27,7 @@ Chris Hoffman <christopher.hoffman@gmail.com>
 fdavis <reddot357@hotmail.com>
 Jeroen Hoekx <jeroen@hoekx.be>
 Timothy Appnel <tim@appnel.com>
+Brian Coca <briancoca+dev@gmail.com>
 Daniel Néri <dne@mayonnaise.net>
 Dietmar Schinnerl <SleeplessAnnoyedNerd+github@gmail.com>
 Nikhil Singh <nix85@ymail.com>
@@ -42,7 +43,6 @@ Yeukhon Wong <yeukhon@acm.org>
 Yves Dorfsman <yves@zioup.com>
 lwade <lestertron@gmail.com>
 Anastasis Andronidis <anastasis90@yahoo.gr>
-Brian Coca <briancoca+dev@gmail.com>
 Dag Wieërs <dag@wieers.com>
 Ludovic Claude <ludovic.claude@lbpoker.com>
 Shaun Zinck <shaun.zinck@gmail.com>
