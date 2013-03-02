@@ -62,7 +62,7 @@ tests:
 	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES) modulepages webdocs authors
+docs: $(MANPAGES) modulepages webdocs
 
 authors:
 	sh hacking/authors.sh
