@@ -396,6 +396,10 @@ output formats available:
    If you're having a problem with the syntax of your YAML you can
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
+.. tip::
+
+    You can use ANSIBLE_KEEP_REMOTE_FILES=1 to prevent ansible from
+    deleting the remote files so you can debug your module.
 
 Getting Your Module Into Core
 `````````````````````````````
