@@ -604,9 +604,9 @@ class SunOSHardware(Hardware):
         self.facts['swap_allocated_mb'] = allocated / 1024
         self.facts['swap_reserved_mb'] = reserved / 1024
 
-class FreeBSDHardware(Hardware):
+class GenericBSDHardware(Hardware):
     """
-    FreeBSD-specific subclass of Hardware.  Defines memory and CPU facts:
+    This is a generic BSD subclass of Hardware.  Defines memory and CPU facts:
     - memfree_mb
     - memtotal_mb
     - swapfree_mb
@@ -616,7 +616,7 @@ class FreeBSDHardware(Hardware):
     - processor_count
     - devices
     """
-    platform = 'FreeBSD'
+    platform = 'Generic_BSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
 
     def __init__(self):
@@ -693,6 +693,13 @@ class FreeBSDHardware(Hardware):
                 s = slices.match(device)
                 if s:
                     self.facts['devices'][d.group(1)].append(s.group(1))
+
+class FreeBSDHardware(GenericBSDHardware, Hardware):
+    """
+    This is the FreeBSD Hardware class.
+    It uses the GenericBSDHardware class unchanged.
+    """
+    platform = 'FreeBSD'
 
 class AIX(Hardware):
     """
