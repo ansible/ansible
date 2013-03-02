@@ -245,6 +245,8 @@ class Facts(object):
         for pkg in Facts.PKG_MGRS:
             if os.path.exists(pkg['path']):
                 self.facts['pkg_mgr'] = pkg['name']
+        if self.facts['system'] == 'OpenBSD':
+                self.facts['pkg_mgr'] = 'openbsd_pkg'
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
