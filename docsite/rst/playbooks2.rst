@@ -430,7 +430,7 @@ Loops
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
-    - name: add user $item
+    - name: add several users
       action: user name=$item state=present groups=wheel
       with_items:
          - testuser1
