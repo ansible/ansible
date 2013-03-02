@@ -24,7 +24,7 @@ module: rabbitmq_parameter
 short_description: Adds or removes parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide parameters for RabbitMQ
-version_added: 1.1
+version_added: '1.1'
 author: Chris Hoffman
 options:
   component:
@@ -52,11 +52,13 @@ options:
       - Specify if user is to be added or removed
     required: false
     default: present
-    choices: [present, absent]
-examples:
-  - code: rabbitmq_parameter: component=federation name=local-username value='"guest"' state=present
-    description: Add the federation parameter local_username to value of guest
+    choices: [ 'present', 'absent']
 '''
+
+EXAMPLES = """
+# Set the federation parameter 'local_username' to a value of 'guest' (in quotes)
+rabbitmq_parameter: component=federation name=local-username value='"guest"' state=present
+"""
 
 class RabbitMqParameter(object):
     def __init__(self, module, component, name, value, vhost):
