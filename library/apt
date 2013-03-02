@@ -241,9 +241,9 @@ def main():
 
     force_yes = p['force']
 
-    if p['upgrade'] != 'no' and p['package'] is None:
+    if p['upgrade'] and p['package'] is None:
         upgrade(module, p['upgrade'])
-    elif p['upgrade'] != 'no' and p['package'] != None:
+    elif p['upgrade'] and p['package'] != None:
         module.fail_json(msg="Upgrade should not be used in conjunction with other options.")
 
     packages = p['package'].split(',')
