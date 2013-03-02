@@ -56,6 +56,14 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     aliases: [ "thirsty" ]
+  use_proxy:
+    description:
+      - By default, if an environment variable C(<protocol>_proxy) is set on
+        the target host, request will be sent through the proxy. To override
+        this behaviour, set C(use_proxy=no).
+    required: false
+    default: yes
+    choices: [yes, no]
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -94,7 +102,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest):
+def url_do_get(module, url, dest, use_proxy):
     """
     Get url and return request and info
     Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
@@ -103,7 +111,10 @@ def url_do_get(module, url, dest):
     USERAGENT = 'ansible-httpget'
     info = dict(url=url, dest=dest)
     r = None
+    handlers = []
+
     parsed = urlparse.urlparse(url)
+
     if '@' in parsed[1]:
         credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
@@ -123,12 +134,17 @@ def url_do_get(module, url, dest):
 
         authhandler = urllib2.HTTPBasicAuthHandler(passman)
         # create the AuthHandler
+        handlers.append(authhandler)
 
-        opener = urllib2.build_opener(authhandler)
-        urllib2.install_opener(opener)
         #reconstruct url without credentials
         url = urlparse.urlunparse(parsed)
 
+    if not use_proxy:
+        proxyhandler = urllib2.ProxyHandler({})
+        handlers.append(proxyhandler)
+
+    opener = urllib2.build_opener(*handlers)
+    urllib2.install_opener(opener)
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
@@ -151,14 +167,14 @@ def url_do_get(module, url, dest):
 
     return r, info
 
-def url_get(module, url, dest):
+def url_get(module, url, dest, use_proxy):
     """
     Download url and store at dest.
     If dest is a directory, determine filename from url.
     Return (tempfile, info about the request)
     """
 
-    req, info = url_do_get(module, url, dest)
+    req, info = url_do_get(module, url, dest, use_proxy)
 
     # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
@@ -195,7 +211,8 @@ def main():
         argument_spec = dict(
             url = dict(required=True),
             dest = dict(required=True),
-            force = dict(default='no', aliases=['thirsty'], type='bool')
+            force = dict(default='no', aliases=['thirsty'], type='bool'),
+            use_proxy = dict(default='yes', type='bool')
         ),
         add_file_common_args=True
     )
@@ -203,6 +220,7 @@ def main():
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
+    use_proxy = module.params['use_proxy']
 
     if os.path.isdir(dest):
         dest = os.path.join(dest, url_filename(url))
@@ -212,7 +230,7 @@ def main():
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest)
+    tmpsrc, info = url_get(module, url, dest, use_proxy)
     md5sum_src   = None
     md5sum_dest  = None
 
