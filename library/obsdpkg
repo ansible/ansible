@@ -44,9 +44,9 @@ examples:
     - description: Make sure nmap is installed
       code: "obsdpkg: name=nmap state=present"
     - description: Make sure nmap is the latest version
-      code: "bsdpkg: name=nmap state=latest"
+      code: "obsdpkg: name=nmap state=latest"
     - description: Make sure nmap is not installed
-      code: "bsdpkg: name=nmap state=absent"
+      code: "obsdpkg: name=nmap state=absent"
 '''
 
 # select whether we dump additional debug info through syslog
