@@ -47,6 +47,8 @@ requirements: []
 author: Michael DeHaan
 '''
 
+import base64
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(

@@ -372,7 +372,7 @@ to a task include statement as below.  Note this does not work with playbook inc
 get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
-      when_string: 'reticulating splines' in $output
+      when_string: "'reticulating splines' in $output"
 
 Conditional Imports
 ```````````````````
@@ -430,7 +430,7 @@ Loops
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
-    - name: add user $item
+    - name: add several users
       action: user name=$item state=present groups=wheel
       with_items:
          - testuser1
@@ -945,8 +945,8 @@ feature produces a large amount of output, it is best used when checking a singl
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
-Passing Complex Arguments From Dictionaries
-```````````````````````````````````````````
+Dictionary & Nested (Complex) Arguments
+```````````````````````````````````````
 
 As a review, most tasks in ansbile are of this form::
 
@@ -956,14 +956,12 @@ As a review, most tasks in ansbile are of this form::
         yum: name=cobbler state=installed
 
 However, in some cases, it may be useful to feed arguments directly in from a hash (dictionary).  In fact, a very small
-number of modules (the CloudFormations module is one) actually require complex arguments that can't be fit
-into a key=value system.  To pass arguments in from a hash (dictionary), do this::
+number of modules (the CloudFormations module is one) actually require complex arguments.  They work like this::
 
     tasks:
 
       - name: call a module that requires some complex arguments
-        module_name_goes_here: asdf=1234
-        args:
+        foo_module:
            fibonacci_list:
              - 1
              - 1
@@ -976,14 +974,22 @@ into a key=value system.  To pass arguments in from a hash (dictionary), do this
              fish:
                - limpet
                - nemo
+               - ${other_fish_name}
 
-While complex arguments can be fed to most modules in Ansible, they should only be used where needed.  Note
-that variable interpolation works exactly as you would suspect, so you can use "${foo}" and so on in values
-inside of the dictionary you pass to "args".
+You can of course use variables inside these, as noted above.
 
-If both key=value arguments are given along with 'args', the key=value arguments take priority.  This technically
-means you can set defaults by using 'args' if you so choose, though that is not the intended purpose of this
-feature.
+If using local_action, you can do this::
+      
+    - name: call a module that requires some complex arguments
+      local_action:
+        module: foo_module
+        arg1: 1234
+        arg2: 'asdf'
+
+Which of course means, though more verbose, this is also technically legal syntax::
+
+    - name: foo
+      template: { src: '/templates/motd.j2', dest: '/etc/motd' }
 
 Style Points
 ````````````

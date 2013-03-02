@@ -32,7 +32,10 @@ class ActionModule(object):
         ''' handler for file transfer operations '''
 
         # load up options
-        options = utils.parse_kv(module_args)
+        options = {}
+        if complex_args:
+            options.update(complex_args)
+        options.update(utils.parse_kv(module_args))
         source  = options.get('src', None)
         dest    = options.get('dest', None)
 
@@ -93,7 +96,7 @@ class ActionModule(object):
 
             # run the copy module
             module_args = "%s src=%s" % (module_args, tmp_src)
-            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
 
         else:
             # no need to transfer the file, already correct md5, but still need to call
@@ -103,7 +106,7 @@ class ActionModule(object):
             module_args = "%s src=%s" % (module_args, tmp_src)
             if self.runner.check:
                 module_args = "%s CHECKMODE=True" % module_args
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
     def _get_diff_data(self, conn, tmp, inject, destination, source):
         peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject, persist_files=True)

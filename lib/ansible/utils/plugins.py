@@ -68,9 +68,11 @@ class PluginLoader(object):
         ret += self._get_package_path()
         return ret
 
-    def add_directory(self, directory):
+    def add_directory(self, directory, with_subdir=False):
         """Adds an additional directory to the search path"""
         if directory is not None:
+            if with_subdir:
+                directory = os.path.join(directory, self.subdir)
             self._extra_dirs.append(directory)
 
     def print_paths(self):
