@@ -21,7 +21,7 @@ setup(name='ansible',
       author_email='michael.dehaan@gmail.com',
       url='http://ansible.github.com/',
       license='GPLv3',
-      install_requires=['paramiko', 'jinja2', "PyYAML"],
+      install_requires=['paramiko', 'jinja2', "PyYAML"], # optional: keyring
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
