@@ -290,7 +290,9 @@ def main():
         d = {
            'id': inst.id,
            'public_ip': inst.ip_address,
-           'public_dns_name': inst.public_dns_name
+           'public_dns_name': inst.public_dns_name,
+           'private_ip': inst.private_ip_address,
+           'private_dns_name': inst.private_dns_name
             }
         instances.append(d)
 
