@@ -1013,7 +1013,7 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
-        rc, out, err = module.run_command([ifconfig_path])
+        rc, out, err = module.run_command([ifconfig_path, '-a'])
         for line in out.split('\n'):
             if line:
                 words = line.split()
@@ -1025,6 +1025,8 @@ class GenericBsdIfconfigNetwork(Network):
                 elif words[0] == 'nd6':
                     self.parse_nd6_line(words, current_if, ips)
                 elif words[0] == 'ether':
+                    self.parse_ether_line(words, current_if, ips)
+                elif words[0] == 'address:':
                     self.parse_ether_line(words, current_if, ips)
                 elif words[0] == 'media:':
                     self.parse_media_line(words, current_if, ips)
@@ -1077,6 +1079,10 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['lladdr'] = words[1]
 
     def parse_inet_line(self, words, current_if, ips):
+	# NetBSD indicates secondary ipv4 addresses with the keyword
+	# "alias".  The line is otherwise the same, so simply delete it.
+	if words[1] == 'alias':
+	    del words[1]
         address = {'address': words[1]}
         # deal with hex netmask
         if words[3].startswith('0x'):
@@ -1158,6 +1164,14 @@ class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     It uses the GenericBsdIfconfigNetwork unchanged
     """
     platform = 'FreeBSD'
+
+class NetBSDNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the NetBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork with
+    a few parsing changes (parse_inet_line):
+    """
+    platform = 'NetBSD'
 
 class Virtual(Facts):
     """
