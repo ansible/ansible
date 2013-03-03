@@ -634,7 +634,7 @@ class GenericBSDHardware(Hardware):
         rc, out, err = module.run_command("/sbin/sysctl -n hw.ncpu")
         self.facts['processor_count'] = out.strip()
 
-        dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
+        dmesg_boot = get_file_content(GenericBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
             rc, dmesg_boot, err = module.run_command("/sbin/dmesg")
         for line in dmesg_boot.split('\n'):
@@ -700,6 +700,49 @@ class FreeBSDHardware(GenericBSDHardware, Hardware):
     It uses the GenericBSDHardware class unchanged.
     """
     platform = 'FreeBSD'
+
+class NetBSDHardware(GenericBSDHardware, Hardware):
+    """
+    This is the NetBSD Hardware class.
+    It uses the GenericBSDHardware class, with
+    the following methods overridden:
+
+    get_memory_facts()
+    get_device_facts()
+    """
+    platform = 'NetBSD'
+
+    def get_memory_facts(self):
+        rc, out, err = module.run_command("/usr/bin/vmstat -s")
+        for line in out.split('\n'):
+            data = line.split(None,1)
+	    if len(data) < 2:
+		continue
+            if data[1] == 'bytes per page':
+                pagesize = long(data[0])
+            if data[1] == 'pages managed':
+                pagecount = long(data[0])
+            if data[1] == 'pages free':
+                freecount = long(data[0])
+        self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
+        self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
+        # Get swapinfo.  swapinfo output looks like:
+        # Device          1M-blocks     Used    Avail Capacity
+        # /dev/ada0p3        314368        0   314368     0%
+        #
+        rc, out, err = module.run_command("/usr/sbin/pstat -sm")
+        lines = out.split('\n')
+        if len(lines[-1]) == 0:
+            lines.pop()
+        data = lines[-1].split()
+        self.facts['swaptotal_mb'] = data[1]
+        self.facts['swapfree_mb'] = data[3]
+
+    def get_device_facts(self):
+	rc, out, err = module.run_command("/sbin/sysctl -n hw.disknames")
+	self.facts['devices'] = {}
+	for device in out.split():
+	    self.facts['devices'][device] = []
 
 class AIX(Hardware):
     """
