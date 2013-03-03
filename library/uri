@@ -103,6 +103,11 @@ options:
       - A valid, numeric, HTTP status code that signifies success of the request.
     required: false
     default: 200
+  timeout:
+    description:
+      - The socket level timeout in seconds 
+    required: false
+    default: no timeout
   HEADER_:
     description: Any parameter starting with "HEADER_" is a sent with your request as a header. For example, HEADER_Content-Type="application/json" would send the header "Content-Type" along with your request with a value of "application/json".
     required: false
@@ -217,12 +222,12 @@ def url_filename(url):
     return fn
 
 
-def uri(module, url, dest, user, password, body, method, headers, redirects):
+def uri(module, url, dest, user, password, body, method, headers, redirects, socket_timeout):
     # To debug
     #httplib2.debug = 4
 
     # Create a Http object and set some default options.
-    h = httplib2.Http(disable_ssl_certificate_validation=True)
+    h = httplib2.Http(disable_ssl_certificate_validation=True, timeout=socket_timeout)
     h.follow_all_redirects = redirects
     h.forward_authorization_headers = True
 
@@ -273,6 +278,7 @@ def main():
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
             status_code = dict(required=False, default="200"),
+            timeout = dict(required=False, default=None, type='int'),
         ),
         check_invalid_arguments=False,
         add_file_common_args=True
@@ -295,6 +301,7 @@ def main():
     creates = module.params['creates']
     removes = module.params['removes']
     status_code = module.params['status_code']
+    socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
     dict_headers = {}
@@ -340,7 +347,7 @@ def main():
             dest = os.path.join(dest, url_filename(url))
 
     # Make the request
-    resp, content = uri(module, url, dest, user, password, body, method, dict_headers, redirects)
+    resp, content = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
 
     # Write the file out if requested
     if dest is not None:
