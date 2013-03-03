@@ -1365,6 +1365,28 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'host'
                 return
 
+class NetBSDVirtual(Virtual):
+    """
+    This is a NetBSD-specific subclass of Virtual.
+    """
+    platform = 'NetBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        if os.path.exists("/kern/xen"):
+            self.facts['virtualization_type'] = 'xen'
+	    if os.path.exists("/kern/xen/privcmd"):
+		self.facts['virtualization_role'] = 'host'
+	    else:
+		self.facts['virtualization_role'] = 'guest'
+	    return
+
 class SunOSVirtual(Virtual):
     """
     This is a SunOS-specific subclass of Virtual.  It defines
