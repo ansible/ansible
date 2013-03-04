@@ -31,10 +31,15 @@ description:
 options:
   src:
     description:
-      - Local path to a file to copy to the remote server; can be absolute or relative.
-    required: true
+      - Local path to a file to copy to the remote server; can be absolute or relative. Mutually exclusive with content.
+    required: false
     default: null
     aliases: []
+  content:
+    description:
+      - Creates and/or set content of a file on the remote server. Mutually exclusive with content.
+    required: false
+    default: null
   dest:
     description:
       - Remote absolute path where the file should be copied to.
@@ -76,7 +81,8 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src=dict(required=True),
+            src=dict(required=False),
+            content=dict(required=False),
             dest=dict(required=True),
             backup=dict(default=False, type='bool'),
             force = dict(default='yes', aliases=['thirsty'], type='bool'),
