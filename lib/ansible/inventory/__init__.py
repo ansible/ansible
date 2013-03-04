@@ -67,6 +67,7 @@ class Inventory(object):
                 host_list = [ h for h in host_list if h and h.strip() ]
 
         if type(host_list) == list:
+            self.parser = None
             all = Group('all')
             self.groups = [ all ]
             for x in host_list:
@@ -281,7 +282,8 @@ class Inventory(object):
                 vars.update(updated)
 
         vars.update(host.get_variables())
-        vars.update(self.parser.get_host_variables(host))
+        if self.parser is not None:
+            vars.update(self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):
