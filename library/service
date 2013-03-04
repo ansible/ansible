@@ -101,7 +101,7 @@ class Service(object):
         self.name           = module.params['name']
         self.state          = module.params['state']
         self.pattern        = module.params['pattern']
-        self.enable         = module.boolean(module.params.get('enabled', None))
+        self.enable         = module.params['enabled']
         self.changed        = False
         self.running        = None
         self.action         = None
@@ -283,7 +283,7 @@ class Service(object):
         RCFILE = open(self.rcconf_file, "r")
         new_rc_conf = []
 
-        # Build a list containing the possibly modified file. 
+        # Build a list containing the possibly modified file.
         for rcline in RCFILE:
             # Parse line removing whitespaces, quotes, etc.
             rcarray = shlex.split(rcline, comments=True)
@@ -294,7 +294,7 @@ class Service(object):
                         # Since the proper entry already exists we can stop iterating.
                         changed = False
                         break
-                    else: 
+                    else:
                         # We found the key but the value is wrong, replace with new entry.
                         rcline = entry
                         changed = True
@@ -345,39 +345,57 @@ class LinuxService(Service):
     distribution = None
 
     def get_service_tools(self):
+
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
         for binary in binaries:
             location[binary] = None
-
         for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
         # Locate a tool for enable options
-        if location.get('systemctl', None):
-            self.enable_cmd = location['systemctl']
-        elif location.get('chkconfig', None):
+        if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
+            # we are using a standard SysV service
             self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None):
+        elif location.get('update-rc.d', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+            # service is managed by upstart
             self.enable_cmd = location['update-rc.d']
+        elif location.get('update-rc.d', None) and os.path.exists("/etc/init.d/%s" % self.name):
+            # service is managed by with SysV init scripts, but with update-rc.d
+            self.enable_cmd = location['update-rc.d']
+        elif location.get('systemctl', None):
 
-        if self.enable_cmd is None:
-            self.module.fail_json(msg='unable to find enable binary')
+            # verify service is managed by systemd
+            rc, out, err = self.execute_command("%s --all" % (location['systemctl']))
+            look_for = "%s.service" % self.name
+            if look_for in out:
+                self.enable_cmd = location['systemctl']
 
         # Locate a tool for runtime service management (start, stop etc.)
-        if location.get('service', None):
+        self.svc_cmd = ''
+        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
+            # SysV init script
             self.svc_cmd = location['service']
+        elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+            # upstart -- rather than being managed by one command, start/stop/restart are actual commands
+            self.svc_cmd = ''
         else:
+            # still a SysV init script, but /sbin/service isn't installed
             for initdir in initpaths:
                 initscript = "%s/%s" % (initdir,self.name)
                 if os.path.isfile(initscript):
                     self.svc_initscript = initscript
 
-        if not self.svc_cmd and not self.svc_initscript:
-            self.module.fail_json(msg='unable to find service binary nor initscript')
+        # couldn't find anything yet, assume systemd
+        if self.svc_initscript is None:
+            if location.get('systemctl'):
+                self.svc_cmd = location['systemctl']
+
+        if self.svc_cmd is None and not self.svc_initscript:
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, aborting')
 
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
@@ -386,7 +404,7 @@ class LinuxService(Service):
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
-        # Check if we have upstart on the system and then the job state
+        # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
@@ -434,10 +452,35 @@ class LinuxService(Service):
 
 
     def service_enable(self):
+
+        if self.enable_cmd is None:
+            self.module.fail_json(msg='service name not recognized')
+
+        # FIXME: we use chkconfig or systemctl
+        # to decide whether to run the command here but need something
+        # similar for upstart
+
+        if self.enable_cmd.endswith("chkconfig"):
+            (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
+            if not self.name in out:
+                self.module.exit_json(msg="unknown service name")
+            state = out.split()[-1]
+            if self.enable and ( "3:on" in out and "5:on" in out ):
+                return
+            elif not self.enable and ( "3:off" in out and "5:off" in out ):
+                return
+
+        if self.enable_cmd.endswith("systemctl"):
+            (rc, out, err) = self.execute_command("%s is-enabled %s.service" % (self.enable_cmd, self.name))
+            if self.enable and rc == 0:
+                return
+            elif not self.enable and rc == 1:
+                return
+
         # we change argument depending on real binary used
         # update-rc.d wants enable/disable while
         # chkconfig wants on/off
-        # also, systemctl needs the arguments reversed
+        # also, systemctl needs the argument order reversed
         if self.enable:
             on_off = "on"
             enable_disable = "enable"
@@ -452,30 +495,54 @@ class LinuxService(Service):
         else:
             args = (self.enable_cmd, self.name, on_off)
 
-        # FIXME: we need this function to detect whether to run the command
-        # so we need something to get the service enablement state here.
-
-        changed = True
+        self.changed = True
 
         if self.module.check_mode and changed:
-            self.module.exit_json(changed=True, msg="editing service enablement")
+            self.module.exit_json(changed=True)
 
-        if self.enable is not None and changed:
-            return self.execute_command("%s %s %s" % args)
+        return self.execute_command("%s %s %s" % args)
+
 
     def service_control(self):
 
         # Decide what command to run
+        svc_cmd = ''
         if self.svc_cmd:
-            svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+            if not self.svc_cmd.endswith("systemctl"):
+                # SysV or systemd take the form <cmd> <name> <action>
+                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+            else:
+                # systemd commands take the form <cmd> <action> <name>
+                svc_cmd = self.svc_cmd
+                self.arguments = "%s %s" % (self.name, self.arguments)
         elif self.svc_initscript:
+            # upstart
             svc_cmd = "%s" % self.svc_initscript
 
         if self.action is not "restart":
-            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
+            if svc_cmd != '':
+                # upstart
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, self.arguments), daemonize=True)
         else:
-            rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
-            rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
+            # not all services support restart. Do it the hard way.
+            if svc_cmd != '':
+                # upstart
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, self.arguments), daemonize=True)
+
+            if svc_cmd != '':
+                # upstart
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
+            else:
+                # SysV or systemd
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % ('start', self.name, self.arguments), daemonize=True)
+
+            # merge return information
             if rc1 != 0 and rc2 == 0:
                 rc_state = rc2
                 stdout = stdout2
@@ -523,7 +590,7 @@ class FreeBsdService(Service):
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
-        
+
         self.rcconf_key = "%s_enable" % self.name
 
         # FIXME: detect the enablement state rather than just running the command
@@ -617,7 +684,7 @@ class NetBsdService(Service):
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
-        
+
         self.rcconf_key = "%s" % self.name
 
         return self.service_enable_rcconf()
@@ -637,7 +704,7 @@ class NetBsdService(Service):
             self.action = "onestop"
 
         self.svc_cmd = "%s" % self.svc_initscript
-        return self.execute_command("%s %s" % (self.svc_cmd, self.action))
+        return self.execute_command("%s %s" % (self.svc_cmd, self.action), daemonize=True)
 
 
 # ===========================================
@@ -649,7 +716,7 @@ def main():
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
-            enabled = dict(choices=BOOLEANS),
+            enabled = dict(choices=BOOLEANS, type='bool'),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True
@@ -700,10 +767,10 @@ def main():
     if service.module.params['enabled']:
         result['enabled'] = service.module.params['enabled']
 
-    if not service.module.params['state']: 
+    if not service.module.params['state']:
         status = service.get_service_status()
         if status is None:
-            result['state'] = 'absent' 
+            result['state'] = 'absent'
         elif status is False:
             result['state'] = 'started'
         else:
@@ -711,7 +778,7 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started','restarted']:
+        if service.module.params['state'] in ['started','restarted','running']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'

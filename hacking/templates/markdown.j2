@@ -44,7 +44,11 @@ New in version @{ version_added }@.
 @{ example['code'] }@
 ```
 {% endfor %}
- 
+{% if plainexamples -%}
+```
+@{ plainexamples }@
+```
+{% endif %}
 
 {% if notes %}
 #### Notes

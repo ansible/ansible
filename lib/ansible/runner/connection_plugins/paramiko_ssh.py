@@ -110,7 +110,6 @@ class Connection(object):
             if len(str(e)) > 0:
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
-        chan.get_pty()
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -120,6 +119,12 @@ class Connection(object):
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
+            # sudo usually requires a PTY (cf. requiretty option), therefore
+            # we give it one, and we try to initialise from the calling
+            # environment
+            chan.get_pty(term=os.getenv('TERM', 'vt100'),
+                         width=int(os.getenv('COLUMNS', 0)),
+                         height=int(os.getenv('LINES', 0)))
             shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
@@ -151,8 +156,8 @@ class Connection(object):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
             self.sftp = self.ssh.open_sftp()
-        except:
-            raise errors.AnsibleError("failed to open a SFTP connection")
+        except Exception, e:
+            raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
         try:
             self.sftp.put(in_path, out_path)
         except IOError:
@@ -171,8 +176,8 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
             self.sftp = self._connect_sftp()
-        except:
-            raise errors.AnsibleError("failed to open a SFTP connection")
+        except Exception, e:
+            raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
         try:
             self.sftp.get(in_path, out_path)
         except IOError:

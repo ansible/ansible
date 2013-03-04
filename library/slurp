@@ -47,11 +47,14 @@ requirements: []
 author: Michael DeHaan
 '''
 
+import base64
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             src = dict(required=True, aliases=['path']),
-        )
+        ),
+        supports_check_mode=True
     )
     source = module.params['src']
 

@@ -139,7 +139,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             brace_level += 1
         elif is_complex and text[end] == '}':
             brace_level -= 1
-        elif is_complex and text[end] in ('$', '[', ']'):
+        elif is_complex and text[end] in ('$', '[', ']', '-'):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == 1:
@@ -173,7 +173,9 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         if instance is not None:
             try:
                 replacement = instance.run(args, inject=vars)
-            except errors.AnsibleError:
+                if expand_lists:
+                    replacement = ",".join([str(x) for x in replacement])
+            except:
                 if not lookup_fatal:
                     replacement = None
                 else:

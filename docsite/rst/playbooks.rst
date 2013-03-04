@@ -295,8 +295,8 @@ won't need them for much else.
    Notify handlers are always run in the order written.
 
 
-Include Files And Encouraging Reuse
-```````````````````````````````````
+Task Include Files And Encouraging Reuse
+````````````````````````````````````````
 
 Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
 include files to do this.  Use of included task lists is a great way to define a role
@@ -333,6 +333,21 @@ Variables passed in can then be used in the included files.  You can reference t
 
 (In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.)
+
+Starting in 1.0, variables can also be passed to include files using an alternative syntax,
+which also supports structured variables::
+
+    tasks:
+
+      - include: wordpress.yml
+        vars:
+            user: timmy
+            some_list_variable: 
+              - alpha
+              - beta
+              - gamma
+
+Playbooks can include other playbooks too, but that's mentioned in a later section.
 
 .. note::
    As of 1.0, task include statements can be used at arbitrary depth.

@@ -88,12 +88,44 @@ def main():
     chdir = module.params['chdir']
     executable = module.params['executable']
     args  = module.params['args']
+    creates  = module.params['creates']
+    removes  = module.params['removes']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
         os.chdir(os.path.expanduser(chdir))
+
+    if creates:
+        # do not run the command if the line contains creates=filename
+        # and the filename already exists.  This allows idempotence
+        # of command executions.
+        v = os.path.expanduser(creates)
+        if os.path.exists(v):
+            module.exit_json(
+                cmd=args,
+                stdout="skipped, since %s exists" % v,
+                skipped=True,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
+
+    if removes:
+    # do not run the command if the line contains removes=filename
+    # and the filename does not exist.  This allows idempotence
+    # of command executions.
+        v = os.path.expanduser(removes)
+        if not os.path.exists(v):
+            module.exit_json(
+                cmd=args,
+                stdout="skipped, since %s does not exist" % v,
+                skipped=True,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
 
     if not shell:
         args = shlex.split(args)
@@ -129,7 +161,7 @@ def main():
 class CommandModule(AnsibleModule):
 
     def _handle_aliases(self):
-        pass
+        return {}
 
     def _check_invalid_arguments(self):
         pass
@@ -139,6 +171,8 @@ class CommandModule(AnsibleModule):
         args = MODULE_ARGS
         params = {}
         params['chdir'] = None
+        params['creates'] = None
+        params['removes'] = None
         params['shell'] = False
         params['executable'] = None
         if args.find("#USE_SHELL") != -1:
@@ -149,38 +183,14 @@ class CommandModule(AnsibleModule):
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
-                # do not run the command if the line contains creates=filename
-                # and the filename already exists.  This allows idempotence
-                # of command executions.
-                v = os.path.expanduser(v)
-                if os.path.exists(v):
-                    self.exit_json(
-                        cmd=args,
-                        stdout="skipped, since %s exists" % v,
-                        skipped=True,
-                        changed=False,
-                        stderr=False,
-                        rc=0
-                    )
+                params['creates'] = v
             elif m.group(2) == "removes":
-                # do not run the command if the line contains removes=filename
-                # and the filename do not exists.  This allows idempotence
-                # of command executions.
-                v = os.path.expanduser(v)
-                if not os.path.exists(v):
-                    self.exit_json(
-                        cmd=args,
-                        stdout="skipped, since %s does not exist" % v,
-                        skipped=True,
-                        changed=False,
-                        stderr=False,
-                        rc=0
-                    )
+                params['removes'] = v
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
                     self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                elif v[0] != '/':
+                elif v[0] != os.sep:
                     self.fail_json(rc=259, msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
             elif m.group(2) == "executable":

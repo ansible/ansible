@@ -13,8 +13,8 @@ They can be written in any language.  Generally our goal is to include most modu
 though a few may remain outside of core depending on use cases and implementations.
 
 -  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
+-  `Linode <https://github.com/lextoumbourou/ansible-linode>`_ - Lex Toumbourou
 -  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
--  `homebrew <https://gist.github.com/3170079>`_ - swehack
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
 

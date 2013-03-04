@@ -20,6 +20,8 @@ import os
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
+import base64
+import stat
 
 class ActionModule(object):
 
@@ -30,7 +32,10 @@ class ActionModule(object):
         ''' handler for file transfer operations '''
 
         # load up options
-        options = utils.parse_kv(module_args)
+        options = {}
+        if complex_args:
+            options.update(complex_args)
+        options.update(utils.parse_kv(module_args))
         source  = options.get('src', None)
         dest    = options.get('dest', None)
 
@@ -74,10 +79,13 @@ class ActionModule(object):
         exec_rc = None
         if local_md5 != remote_md5:
 
+            if self.runner.diff:
+                diff = self._get_diff_data(conn, tmp, inject, dest, source)
+            else:
+                diff = {}
+
             if self.runner.check:
-                # TODO: if the filesize is small, include a nice pretty-printed diff by 
-                # calling a (new) diff callback
-                return ReturnData(conn=conn, result=dict(changed=True))
+                return ReturnData(conn=conn, result=dict(changed=True), diff=diff)
 
             # transfer the file to a remote tmp location
             tmp_src = tmp + os.path.basename(source)
@@ -88,7 +96,7 @@ class ActionModule(object):
 
             # run the copy module
             module_args = "%s src=%s" % (module_args, tmp_src)
-            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+            return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
 
         else:
             # no need to transfer the file, already correct md5, but still need to call
@@ -98,5 +106,42 @@ class ActionModule(object):
             module_args = "%s src=%s" % (module_args, tmp_src)
             if self.runner.check:
                 module_args = "%s CHECKMODE=True" % module_args
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
+    def _get_diff_data(self, conn, tmp, inject, destination, source):
+        peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject, persist_files=True)
+
+        if not peek_result.is_successful():
+            return {}
+
+        diff = {}
+        if peek_result.result['state'] == 'absent':
+            diff['before'] = ''
+        elif peek_result.result['appears_binary']:
+            diff['dst_binary'] = 1
+        elif peek_result.result['size'] > utils.MAX_FILE_SIZE_FOR_DIFF:
+            diff['dst_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
+        else:
+            dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % destination, inject=inject, persist_files=True)
+            if 'content' in dest_result.result:
+                dest_contents = dest_result.result['content']
+                if dest_result.result['encoding'] == 'base64':
+                    dest_contents = base64.b64decode(dest_contents)
+                else:
+                    raise Exception("unknown encoding, failed: %s" % dest_result.result)
+                diff['before_header'] = destination
+                diff['before'] = dest_contents
+
+        src = open(source)
+        src_contents = src.read(8192)
+        st = os.stat(source)
+        if src_contents.find("\x00") != -1:
+            diff['src_binary'] = 1
+        elif st[stat.ST_SIZE] > utils.MAX_FILE_SIZE_FOR_DIFF:
+            diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
+        else:
+            src.seek(0)
+            diff['after_header'] = source
+            diff['after'] = src.read()
+
+        return diff

@@ -158,7 +158,7 @@ def main():
             section = dict(required=True),
             option = dict(required=False),
             value = dict(required=False),
-            backup = dict(default='no', choices=BOOLEANS),
+            backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent'])
         ),
         add_file_common_args = True
@@ -171,7 +171,7 @@ def main():
     option = module.params['option']
     value = module.params['value']
     state = module.params['state']
-    backup = module.boolean(module.params['backup'])
+    backup = module.params['backup']
 
     changed = do_ini(module, dest, section, option, value, state, backup)
 

@@ -290,3 +290,161 @@ class TestRunner(unittest.TestCase):
         print result
         assert result['changed'] == False
 
+    def test_lineinfile(self):
+        sampleroot = 'rocannon'
+        sample_origin = self._get_test_file(sampleroot + '.txt')
+        sample = self._get_stage_file(sampleroot + '.out' + '.txt')
+        shutil.copy( sample_origin, sample)
+        # The order of the test cases is important
+
+        # defaults to insertafter at the end of the file
+        testline = 'First: Line added by default at the end of the file.'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='^First: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # run a second time, verify only one line has been added
+        result = self._run(*testcase)
+        assert result['changed'] == False
+        assert result['msg'] == ''
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+
+        # insertafter with EOF
+        testline = 'Second: Line added with insertafter=EOF'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter=EOF",
+                    "regexp='^Second: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # with invalid insertafter regex
+        testline = 'Third: Line added with an invalid insertafter regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='^abcdefgh'",
+                    "regexp='^Third: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # with an insertafter regex
+        testline = 'Fourth: Line added with a valid insertafter regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='^receive messages to '",
+                    "regexp='^Fourth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        idx = artifact.index('receive messages to and from a corresponding device over any distance')
+        assert artifact[idx + 1] == testline
+
+        # replacement of a line from a regex
+        # we replace the line, so we need to get its idx before the run
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        target_line = 'combination of microphone, speaker, keyboard and display. It can send and'
+        idx = artifact.index(target_line)
+
+        testline = 'Fith: replacement of a line: combination of microphone'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='combination of microphone'",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line replaced'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        assert artifact.index(testline) == idx
+        assert target_line not in artifact
+
+        # removal of a line
+        # we replace the line, so we need to get its idx before the run
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        target_line = 'receive messages to and from a corresponding device over any distance'
+        idx = artifact.index(target_line)
+
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='^receive messages to and from '",
+                    "state=absent"
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert target_line not in artifact
+
+
+        # with both insertafter and insertbefore (should fail)
+        testline = 'Seventh: this line should not be there'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='BOF'",
+                    "insertbefore='BOF'",
+                    "regexp='^communication. '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['failed'] == True
+
+        # insertbefore with BOF
+        testline = 'Eighth: insertbefore BOF'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertbefore=BOF",
+                    "regexp='^Eighth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        assert artifact[0] == testline
+
+        # insertbefore with regex
+        testline = 'Ninth: insertbefore with a regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertbefore='^communication. Typically '",
+                    "regexp='^Ninth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        idx = artifact.index('communication. Typically it is depicted as a lunch-box sized object with some')
+        assert artifact[idx - 1] == testline
+
+        # cleanup
+        os.unlink(sample)
+
+

@@ -163,8 +163,8 @@ This file is just mapping hosts to the roles they fulfill.  Now, below is an exa
         - restart ntpd
       tags: ntp
 
-    - name: be sure ntp is enabled
-      service: name=ntp state=running enabled=yes
+    - name: be sure ntpd is running and enabled
+      service: name=ntpd state=running enabled=yes
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end
@@ -172,8 +172,8 @@ of each play::
 
     ---
     # file: common/handlers/main.yml
-    - name: restart ntp
-      service: name=ntp state=restarted
+    - name: restart ntpd
+      service: name=ntpd state=restarted
 
 What This Organization Enables (Examples)
 `````````````````````````````````````````
@@ -268,7 +268,7 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
 
    - hosts: all
      tasks:
-        - group_by key=${ansible_distribution}
+        - group_by: key=${ansible_distribution}
 
    # now just on the CentOS hosts...
 

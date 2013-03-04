@@ -81,6 +81,12 @@ notes:
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
+   - "MySQL server installs with default login_user of 'root' and no password. To secure this user
+     as part of an idempotent playbook, you must create at least two tasks: the first must change the root user's password,
+     without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
+     the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
+     the file."
+
 requirements: [ "ConfigParser", "MySQLdb" ]
 author: Mark Theunissen
 '''
@@ -213,7 +219,13 @@ def privileges_revoke(cursor, user,host,db_table):
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
     query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
-    cursor.execute(query)
+    try:
+        cursor.execute(query)
+    except MySQLdb.OperationalError, e:
+        # 1141 -> There is no such grant defined for user ... on host ...
+        # If this exception is raised, there is no need to revoke the GRANT privilege
+        if e.args[0] != 1141 or not e.args[1].startswith("There is no such grant defined for user"):
+            raise e
 
 def privileges_grant(cursor, user,host,db_table,priv):
 
@@ -230,8 +242,20 @@ def load_mycnf():
         return False
     try:
         config.readfp(open(mycnf))
-        creds = dict(user=config.get('client', 'user'),password=config.get('client', 'pass'))
-    except (ConfigParser.NoOptionError, IOError):
+    except (IOError):
+        return False
+    # We support two forms of passwords in .my.cnf, both pass= and password=,
+    # as these are both supported by MySQL.
+    try:
+        passwd = config.get('client', 'password')
+    except (ConfigParser.NoOptionError):
+        try:
+            passwd = config.get('client', 'pass')
+        except (ConfigParser.NoOptionError):
+            return False
+    try:
+        creds = dict(user=config.get('client', 'user'),passwd=passwd)
+    except (ConfigParser.NoOptionError):
         return False
     return creds
 
@@ -280,7 +304,7 @@ def main():
             login_password = ""
         else:
             login_user = mycnf_creds["user"]
-            login_password = mycnf_creds["password"]
+            login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 

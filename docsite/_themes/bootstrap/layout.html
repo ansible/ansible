@@ -1,6 +1,6 @@
 {% extends "basic/layout.html" %}
 {% set script_files = script_files + ['_static/bootstrap-dropdown.js', '_static/bootstrap-scrollspy.js'] %}
-{% set css_files = ['_static/bootstrap.css', '_static/bootstrap-sphinx.css'] + css_files %}
+{% set css_files = ['_static/bootstrap.css', '_static/bootstrap-sphinx.css', '_static/ansible-local.css'] + css_files %}
 
 {# Sidebar: Rework into our Boostrap nav section. #}
 {% macro navBar() %}
@@ -96,6 +96,20 @@
    var s = document.getElementsByTagName('script')[0];
 s.parentNode.insertBefore(ga, s);
  })();
+
+</script>
+<script type="text/javascript">
+// Set the maximum height of drop down menus to just less than the height
+// of the viewport.
+var set_max_menu_height = function () {
+
+  // set menu max height to 75 less than viewport height
+  $('.dropdown-menu').css('max-height', $(window).height() - 75); 
+}
+
+// Set this when we set the page up and on each resize.
+$(window).resize(set_max_menu_height);
+$(window).ready(set_max_menu_height);
 
 </script>
 

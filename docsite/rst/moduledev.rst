@@ -325,7 +325,7 @@ Example
 Here's a correctly formatted YAML document we could use for a
 ``DOCUMENTATION`` string:
 
-.. literalinclude:: ../DOCUMENTATION.yaml
+.. literalinclude:: ../../examples/DOCUMENTATION.yaml
 
 This is available in the 'examples/' directory of the of the Ansible
 github repository, and you can have that generated with
@@ -353,6 +353,19 @@ These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specifies as ``M(module)``.
+
+Examples (which typically contain colons, quotes, etc.) are difficult
+to format with YAML, so these can (alternatively, or additionally) be
+written in plain text in an ``EXAMPLES`` string within the module
+like this::
+
+    EXAMPLES = '''
+    - action: modulename opt1=arg1 opt2=arg2
+    '''
+
+The ``module_formatter.py`` script and ``ansible-doc(1)`` append the
+``EXAMPLES`` blob after any existing ``examples`` you may have in the
+YAML ``DOCUMENTATION`` string.
 
 Building & Testing
 ++++++++++++++++++
@@ -383,6 +396,10 @@ output formats available:
    If you're having a problem with the syntax of your YAML you can
    validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
+.. tip::
+
+    You can use ANSIBLE_KEEP_REMOTE_FILES=1 to prevent ansible from
+    deleting the remote files so you can debug your module.
 
 Getting Your Module Into Core
 `````````````````````````````

@@ -20,17 +20,26 @@
 
 import array
 import fcntl
+import fnmatch
 import glob
 import platform
 import re
 import socket
 import struct
+import datetime
+import getpass
 
 DOCUMENTATION = '''
 ---
 module: setup
 short_description: Gathers facts about remote hosts
-options: {}
+options:
+    filter:
+        version_added: 1.1
+        description:
+            - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
+        required: false
+        default: '*'
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -45,11 +54,23 @@ notes:
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems. (See also M(facter) and M(ohai).)
-examples:
-    - code: ansible all -m setup --tree /tmp/facts
-      description: Obtain facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+    - The filter option filters only the first level subkey below ansible_facts.
 author: Michael DeHaan
 '''
+
+EXAMPLES = """
+# Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+ansible all -m setup --tree /tmp/facts
+
+# Display only facts regarding memory found by ansible on all hosts and output them.
+ansible all -m setup -a 'filter=ansible_*_mb'
+
+# Display only facts returned by facter.
+ansible all -m setup -a 'filter=facter_*'
+
+# Display only facts returned by facter.
+ansible all -m setup -a 'filter=ansible_eth[0-2]'
+"""
 
 try:
     import selinux
@@ -77,6 +98,7 @@ class Facts(object):
     # This is the fallback to handle unknowns or exceptions
     OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
                     '/etc/vmware-release': 'VMwareESX',
+                    '/etc/openwrt_release': 'OpenWrt',
                     '/etc/system-release': 'OtherLinux' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
@@ -87,6 +109,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
+                 { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' } ]
 
     def __init__(self):
@@ -98,6 +121,8 @@ class Facts(object):
         self.get_selinux_facts()
         self.get_pkg_mgr_facts()
         self.get_lsb_facts()
+        self.get_date_time_facts()
+        self.get_user_facts()
 
     def populate(self):
         return self.facts
@@ -130,6 +155,18 @@ class Facts(object):
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
 
+        # A list with OS Family members
+        OS_FAMILY = dict(
+            RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
+            SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
+            OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
+            XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', SLES = 'Suse',
+            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
+            Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
+            Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
+            SmartOS = 'Solaris', AIX = 'AIX'
+        )
+
         if self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
@@ -157,8 +194,22 @@ class Facts(object):
                         if 'Amazon' in data:
                             self.facts['distribution'] = 'Amazon'
                             self.facts['distribution_version'] = data.split()[-1]
+                    elif name == 'OpenWrt':
+                        data = get_file_content(path)
+                        if 'OpenWrt' in data:
+                            self.facts['distribution'] = name
+                        version = re.search('DISTRIB_RELEASE="(.*)"', data)
+                        if version:
+                            self.facts['distribution_version'] = version.groups()[0]
+                        release = re.search('DISTRIB_CODENAME="(.*)"', data)
+                        if release:
+                            self.facts['distribution_release'] = release.groups()[0]
                     else:
                         self.facts['distribution'] = name
+
+        self.facts['os_family'] = self.facts['distribution']
+        if self.facts['distribution'] in OS_FAMILY:
+            self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
@@ -253,6 +304,30 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['type'] = 'unknown'
+
+
+    def get_date_time_facts(self):
+        self.facts['date_time'] = {}
+
+        now = datetime.datetime.now()
+        self.facts['date_time']['year'] = now.strftime('%Y')
+        self.facts['date_time']['month'] = now.strftime('%m')
+        self.facts['date_time']['day'] = now.strftime('%d')
+        self.facts['date_time']['hour'] = now.strftime('%H')
+        self.facts['date_time']['minute'] = now.strftime('%M')
+        self.facts['date_time']['second'] = now.strftime('%S')
+        self.facts['date_time']['epoch'] = now.strftime('%s')
+        self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
+        self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
+        self.facts['date_time']['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        self.facts['date_time']['iso8601'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.facts['date_time']['tz'] = time.strftime("%Z")
+
+
+    # User
+    def get_user_facts(self):
+        self.facts['user_id'] = getpass.getuser()
+
 
 class Hardware(Facts):
     """
@@ -388,7 +463,7 @@ class LinuxHardware(Hardware):
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
-        mtab = get_file_content('/etc/mtab')
+        mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
@@ -869,6 +944,221 @@ class LinuxNetwork(Network):
 
         return interfaces, ips
 
+class GenericBsdIfconfigNetwork(Network):
+    """
+    This is a generic BSD subclass of Network using the ifconfig command.
+    It defines
+    - interfaces (a list of interface names)
+    - interface_<name> dictionary of ipv4, ipv6, and mac address information.
+    - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
+    It currently does not define 
+    - default_ipv4 and default_ipv6
+    - type, mtu and network on interfaces
+    """
+    platform = 'Generic_BSD_Ifconfig'
+
+    def __init__(self):
+        Network.__init__(self)
+
+    def populate(self):
+        ifconfig_path = module.get_bin_path('ifconfig')
+        if ifconfig_path is None:
+            return self.facts
+        route_path = module.get_bin_path('route')
+        if route_path is None:
+            return self.facts
+        default_ipv4, default_ipv6 = self.get_default_interfaces(route_path)
+        interfaces, ips = self.get_interfaces_info(ifconfig_path)
+        self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
+        self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
+        self.facts['interfaces'] = interfaces.keys()
+        for iface in interfaces:
+            self.facts[iface] = interfaces[iface]
+        self.facts['default_ipv4'] = default_ipv4
+        self.facts['default_ipv6'] = default_ipv6
+        self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
+        self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
+        return self.facts
+
+    def get_default_interfaces(self, route_path):
+        # Use the commands:
+        #     route -n get 8.8.8.8                     -> Google public DNS
+        #     route -n get 2404:6800:400a:800::1012    -> ipv6.google.com
+        # to find out the default outgoing interface, address, and gateway
+        command = dict(
+            v4 = [route_path, '-n', 'get', '8.8.8.8'],
+            v6 = [route_path, '-n', 'get', '2404:6800:400a:800::1012']
+        )
+        interface = dict(v4 = {}, v6 = {})
+        for v in 'v4', 'v6':
+            if v == 'v6' and not socket.has_ipv6:
+                continue
+            rc, out, err = module.run_command(command[v])
+            if not out:
+                # v6 routing may result in 
+                #   RTNETLINK answers: Invalid argument
+                continue
+            lines = out.split('\n')
+            for line in lines:
+                words = line.split()
+                # look for first word starting interface
+                if len(words) > 0 and words[0] == 'interface:':
+                    interface[v]['interface'] = words[1]
+        return interface['v4'], interface['v6']
+
+    def get_interfaces_info(self, ifconfig_path):
+        interfaces = {}
+        current_if = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        rc, out, err = module.run_command([ifconfig_path])
+        for line in out.split('\n'):
+            if line:
+                words = line.split()
+                if re.match('^\S', line) and len(words) > 3:
+                    current_if = self.parse_interface_line(words)
+                    interfaces[ current_if['device'] ] = current_if
+                elif words[0].startswith('options='):
+                    self.parse_options_line(words, current_if, ips)
+                elif words[0] == 'nd6':
+                    self.parse_nd6_line(words, current_if, ips)
+                elif words[0] == 'ether':
+                    self.parse_ether_line(words, current_if, ips)
+                elif words[0] == 'media:':
+                    self.parse_media_line(words, current_if, ips)
+                elif words[0] == 'status:':
+                    self.parse_status_line(words, current_if, ips)
+                elif words[0] == 'lladdr':
+                    self.parse_lladdr_line(words, current_if, ips)
+                elif words[0] == 'inet':
+                    self.parse_inet_line(words, current_if, ips)
+                elif words[0] == 'inet6':
+                    self.parse_inet6_line(words, current_if, ips)
+                else:
+                    self.parse_unknown_line(words, current_if, ips)
+
+        return interfaces, ips
+
+    def parse_interface_line(self, words):
+        device = words[0][0:-1]
+        current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        current_if['flags'] = self.get_options(words[1])
+        current_if['mtu'] = words[3]
+        current_if['macaddress'] = 'unknown'    # will be overwritten later
+        return current_if
+
+    def parse_options_line(self, words, current_if, ips):
+        # Mac has options like this...
+        current_if['options'] = self.get_options(words[0])
+
+    def parse_nd6_line(self, words, current_if, ips):
+        # FreBSD has options like this...
+        current_if['options'] = self.get_options(words[1])
+
+    def parse_ether_line(self, words, current_if, ips):
+        current_if['macaddress'] = words[1]
+
+    def parse_media_line(self, words, current_if, ips):
+        # not sure if this is useful - we also drop information
+        current_if['media'] = words[1]
+        if len(words) > 2:
+            current_if['media_select'] = words[2]
+        if len(words) > 3:
+            current_if['media_type'] = words[3][1:]
+        if len(words) > 4:
+            current_if['media_options'] = self.get_options(words[4])
+
+    def parse_status_line(self, words, current_if, ips):
+        current_if['status'] = words[1]
+
+    def parse_lladdr_line(self, words, current_if, ips):
+        current_if['lladdr'] = words[1]
+
+    def parse_inet_line(self, words, current_if, ips):
+        address = {'address': words[1]}
+        # deal with hex netmask
+        if words[3].startswith('0x'):
+            address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+        else:
+            # otherwise assume this is a dotted quad
+            address['netmask'] = words[3]
+        # calculate the network
+        address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
+        netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
+        address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
+        # broadcast may be given or we need to calculate
+        if len(words) > 5:
+            address['broadcast'] = words[5]
+        else:
+            address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
+        # add to our list of addresses
+        if not words[1].startswith('127.'):
+            ips['all_ipv4_addresses'].append(address['address'])
+        current_if['ipv4'].append(address)
+
+    def parse_inet6_line(self, words, current_if, ips):
+        address = {'address': words[1]}
+        if (len(words) >= 4) and (words[2] == 'prefixlen'):
+            address['prefix'] = words[3]
+        if (len(words) >= 6) and (words[4] == 'scopeid'):
+            address['scope'] = words[5]
+        if not address['address'] == '::1' and not address['address'] == 'fe80::1%lo0':
+            ips['all_ipv6_addresses'].append(address['address'])
+        current_if['ipv6'].append(address)
+
+    def parse_unknown_line(self, words, current_if, ips):
+        # we are going to ignore unknown lines here - this may be
+        # a bad idea - but you can override it in your subclass
+        pass
+
+    def get_options(self, option_string):
+        start = option_string.find('<') + 1
+        end = option_string.rfind('>')
+        if (start > 0) and (end > 0) and (end > start + 1):
+            option_csv = option_string[start:end]
+            return option_csv.split(',')
+        else:
+            return []
+
+    def merge_default_interface(self, defaults, interfaces, ip_type):
+        if not 'interface' in defaults.keys():
+            return
+        ifinfo = interfaces[defaults['interface']]
+        # copy all the interface values across except addresses
+        for item in ifinfo.keys():
+            if item != 'ipv4' and item != 'ipv6':
+                defaults[item] = ifinfo[item]
+        if len(ifinfo[ip_type]) > 0:
+            for item in ifinfo[ip_type][0].keys():
+                defaults[item] = ifinfo[ip_type][0][item]
+
+class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the Mac OS X/Darwin Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged
+    """
+    platform = 'Darwin'
+
+    # media line is different to the default FreeBSD one
+    def parse_media_line(self, words, current_if, ips):
+        # not sure if this is useful - we also drop information
+        current_if['media'] = 'Unknown' # Mac does not give us this
+        current_if['media_select'] = words[1]
+        if len(words) > 2:
+            current_if['media_type'] = words[2][1:]
+        if len(words) > 3:
+            current_if['media_options'] = self.get_options(words[3])
+
+
+class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the FreeBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged
+    """
+    platform = 'FreeBSD'
+
 class Virtual(Facts):
     """
     This is a generic Virtual subclass of Facts.  This should be further
@@ -967,30 +1257,32 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
-        for line in open('/proc/self/status').readlines():
-            if re.match('^VxID: \d+', line):
-                self.facts['virtualization_type'] = 'linux_vserver'
-                if re.match('^VxID: 0', line):
-                    self.facts['virtualization_role'] = 'host'
-                else:
-                    self.facts['virtualization_role'] = 'guest'
-                return
+        if os.path.exists('/proc/self/status'):
+            for line in open('/proc/self/status').readlines():
+                if re.match('^VxID: \d+', line):
+                    self.facts['virtualization_type'] = 'linux_vserver'
+                    if re.match('^VxID: 0', line):
+                        self.facts['virtualization_role'] = 'host'
+                    else:
+                        self.facts['virtualization_role'] = 'guest'
+                    return
 
-        for line in open('/proc/cpuinfo').readlines():
-            if re.match('^model name.*QEMU Virtual CPU', line):
-                self.facts['virtualization_type'] = 'kvm'
-            elif re.match('^vendor_id.*User Mode Linux', line):
-                self.facts['virtualization_type'] = 'uml'
-            elif re.match('^model name.*UML', line):
-                self.facts['virtualization_type'] = 'uml'
-            elif re.match('^vendor_id.*PowerVM Lx86', line):
-                self.facts['virtualization_type'] = 'powervm_lx86'
-            elif re.match('^vendor_id.*IBM/S390', line):
-                self.facts['virtualization_type'] = 'ibm_systemz'
-            else:
-                continue
-            self.facts['virtualization_role'] = 'guest'
-            return
+        if os.path.exists('/proc/cpuinfo'):
+            for line in open('/proc/cpuinfo').readlines():
+                if re.match('^model name.*QEMU Virtual CPU', line):
+                    self.facts['virtualization_type'] = 'kvm'
+                elif re.match('^vendor_id.*User Mode Linux', line):
+                    self.facts['virtualization_type'] = 'uml'
+                elif re.match('^model name.*UML', line):
+                    self.facts['virtualization_type'] = 'uml'
+                elif re.match('^vendor_id.*PowerVM Lx86', line):
+                    self.facts['virtualization_type'] = 'powervm_lx86'
+                elif re.match('^vendor_id.*IBM/S390', line):
+                    self.facts['virtualization_type'] = 'ibm_systemz'
+                else:
+                    continue
+                self.facts['virtualization_role'] = 'guest'
+                return
 
         # Beware that we can have both kvm and virtualbox running on a single system
         if os.path.exists("/proc/modules"):
@@ -1117,8 +1409,11 @@ def run_setup(module):
                     k2 = "ohai_%s" % k.replace('-', '_')
                     setup_options[k2] = v
 
-    setup_result = {}
-    setup_result['ansible_facts'] = setup_options
+    setup_result = { 'ansible_facts': {} }
+
+    for (k,v) in setup_options.items():
+        if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
+            setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
     setup_result['verbose_override'] = True
@@ -1128,7 +1423,9 @@ def run_setup(module):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(),
+        argument_spec = dict(
+            filter=dict(default="*", required=False),
+        ),
         supports_check_mode = True,
     )
     data = run_setup(module)

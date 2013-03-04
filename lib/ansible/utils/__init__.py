@@ -39,6 +39,8 @@ import warnings
 
 VERBOSITY=0
 
+MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+
 try:
     import json
 except ImportError:
@@ -120,7 +122,7 @@ def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
 
     if result is None:
-        return {}
+        return "{}"
     result2 = result.copy()
     if format:
         return json.dumps(result2, sort_keys=True, indent=4)
@@ -237,7 +239,7 @@ def parse_json(raw_data):
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
-    return yaml.load(data)
+    return yaml.safe_load(data)
 
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
@@ -345,7 +347,7 @@ def _gitinfo():
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.load(open(repo_path)).get('gitdir')
+                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
                 # There is a posibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
@@ -620,16 +622,41 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
 
-def get_diff(before, after):
+def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
     # include names in diffs 'before' and 'after' and do diff -U 10
 
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            differ = difflib.unified_diff(before.split("\n"), after.split("\n"), 'before', 'after', '', '', 10)
-            return "\n".join(list(differ))
+            ret = []
+            if 'dst_binary' in diff:
+                ret.append("diff skipped: destination file appears to be binary\n")
+            if 'src_binary' in diff:
+                ret.append("diff skipped: source file appears to be binary\n")
+            if 'dst_larger' in diff:
+                ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+            if 'src_larger' in diff:
+                ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+            if 'before' in diff and 'after' in diff:
+                if 'before_header' in diff:
+                    before_header = "before: %s" % diff['before_header']
+                else:
+                    before_header = 'before'
+                if 'after_header' in diff:
+                    after_header = "after: %s" % diff['after_header']
+                else:
+                    after_header = 'after'
+                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), before_header, after_header, '', '', 10)
+                for line in list(differ):
+                    ret.append(line)
+            return "".join(ret)
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
- 
+def is_list_of_strings(items):
+   for x in items: 
+       if not isinstance(x, basestring):
+           return False
+   return True
+

@@ -18,14 +18,27 @@
 import json
 import yaml
 
+def to_nice_yaml(*a, **kw):
+    '''Make verbose, human readable yaml'''
+    return yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
+
+def to_nice_json(*a, **kw):
+    '''Make verbose, human readable JSON'''
+    return json.dumps(*a, indent=4, sort_keys=True, **kw)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
     def filters(self):
         return {
+            # json
             'to_json': json.dumps,
+            'to_nice_json': to_nice_json,
             'from_json': json.loads,
+
+            # yaml
             'to_yaml': yaml.safe_dump,
-            'from_yaml': yaml.load,
+            'to_nice_yaml': to_nice_yaml,
+            'from_yaml': yaml.safe_load,
         }
     

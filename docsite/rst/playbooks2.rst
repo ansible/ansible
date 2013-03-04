@@ -367,6 +367,13 @@ registered tasks.  As an example::
       action: shell /bin/true
       when_changed: $result
 
+Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
+to a task include statement as below.  Note this does not work with playbook includes, just task includes.  All the tasks
+get evaluated, but the conditional is applied to each and every task::
+
+    - include: tasks/sometasks.yml
+      when_string: "'reticulating splines' in $output"
+
 Conditional Imports
 ```````````````````
 
@@ -423,7 +430,7 @@ Loops
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
-    - name: add user $item
+    - name: add several users
       action: user name=$item state=present groups=wheel
       with_items:
          - testuser1
@@ -564,6 +571,51 @@ Negative numbers are not supported.  This works as follows::
         - group: name=group${item} state=present
           with_sequence: count=4
 
+Setting the Environment (and Working With Proxies)
+``````````````````````````````````````````````````
+
+.. versionadded: 1.1
+
+It is quite possible that you may need to get package updates through a proxy, or even get some package
+updates through a proxy and access other packages not through a proxy.  Ansible makes it easy for you
+to configure your environment by using the 'environment' keyword.  Here is an example::
+
+    - hosts: all
+      user: root
+
+      tasks:
+
+        - apt: name=cobbler state=installed
+          environment:
+            http_proxy: http://proxy.example.com:8080
+
+The environment can also be stored in a variable, and accessed like so::
+
+    - hosts: all
+      user: root
+
+      # here we make a variable named "env" that is a dictionary
+      vars:
+        proxy_env:
+          http_proxy: http://proxy.example.com:8080
+
+      tasks:
+
+        - apt: name=cobbler state=installed
+          environment: $proxy_env
+
+While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
+to define an environment hash might be a group_vars file, like so::
+
+    ----
+    # file: group_vars/boston
+
+    ntp_server: ntp.bos.example.com
+    backup: bak.bos.example.com
+    proxy_env:
+      http_proxy: http://proxy.bos.example.com:8080
+      https_proxy: http://proxy.bos.example.com:8080
+
 Getting values from files
 `````````````````````````
 
@@ -586,16 +638,6 @@ The "$PIPE" macro works just like file, except you would feed it a command strin
 Because Ansible uses lazy evaluation, a "$PIPE" macro will be executed each time it is used. For
 example, it will be executed separately for each host, and if it is used in a variable definition,
 it will be executed each time the variable is evaluated.
-
-.. versionadded:: 1.1
-
-The "$PIPE_ONCE" macro is an alternative that uses a caching strategy: it is executed only once, and
-subsequent accesses use the cached value. One use case is for computing a timestamp that is intended
-to be the same across all tasks and hosts that use it::
-
-    vars:
-      timestamp: $PIPE_ONCE(date +%Y%m%d-%H%M%S)
-
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
@@ -873,6 +915,81 @@ in the subgroup have higher precedence.
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
 place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
 variables that are true across your entire site, since everything has higher priority than these values.
+
+
+Check Mode ("Dry Run") --check
+```````````````````````````````
+
+.. versionadded:: 1.1
+
+When ansible-playbook is executed with --check it will not make any changes on remote systems.  Instead, any module
+instrumented to support 'check mode' (which contains the primary core modules, but it is not required that all modules do
+this) will report what changes they would have made.  Other modules that do not support check mode will also take no
+action, but just will not report what changes they might have made.
+
+Check mode is just a simulation, and if you have steps that use conditionals that depend on the results of prior commands,
+it may be less useful for you.  However it is great for one-node-at-time basic configuration management use cases.
+
+Example::
+
+    ansible-playbook foo.yml --check
+
+Showing Differences with --diff
+```````````````````````````````
+
+.. versionadded:: 1.1
+
+The --diff option to ansible-playbook works great with --check (detailed above) but can also be used by itself.  When this flag is supplied, if any templated files on the remote system are changed, and the ansible-playbook CLI will report back
+the textual changes made to the file (or, if used with --check, the changes that would have been made).  Since the diff
+feature produces a large amount of output, it is best used when checking a single host at a time, like so::
+
+    ansible-playbook foo.yml --check --diff --limit foo.example.com
+
+Dictionary & Nested (Complex) Arguments
+```````````````````````````````````````
+
+As a review, most tasks in ansbile are of this form::
+
+    tasks:
+
+      - name: ensure the cobbler package is installed
+        yum: name=cobbler state=installed
+
+However, in some cases, it may be useful to feed arguments directly in from a hash (dictionary).  In fact, a very small
+number of modules (the CloudFormations module is one) actually require complex arguments.  They work like this::
+
+    tasks:
+
+      - name: call a module that requires some complex arguments
+        foo_module:
+           fibonacci_list:
+             - 1
+             - 1
+             - 2
+             - 3
+           my_pets:
+             dogs:
+               - fido
+               - woof
+             fish:
+               - limpet
+               - nemo
+               - ${other_fish_name}
+
+You can of course use variables inside these, as noted above.
+
+If using local_action, you can do this::
+      
+    - name: call a module that requires some complex arguments
+      local_action:
+        module: foo_module
+        arg1: 1234
+        arg2: 'asdf'
+
+Which of course means, though more verbose, this is also technically legal syntax::
+
+    - name: foo
+      template: { src: '/templates/motd.j2', dest: '/etc/motd' }
 
 Style Points
 ````````````

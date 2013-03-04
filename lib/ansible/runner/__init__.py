@@ -227,12 +227,11 @@ class Runner(object):
         if not self.environment:
             return ""
         enviro = utils.template(self.basedir, self.environment, inject)
-        print "DEBUG: vars=%s" % enviro
         if type(enviro) != dict:
-            raise errors.AnsibleError("environment must be a dictionary, recieved %s" % enviro)
+            raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
         for (k,v) in enviro.iteritems():
-            result = "%s=%s %s" % (k, str(v), result)       
+            result = "%s=%s %s" % (k, pipes.quote(str(v)), result)
         return result
 
     # *****************************************************
@@ -317,7 +316,8 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
-        if self.transport in [ 'paramiko', 'ssh' ]:
+        host_connection = host_variables.get('ansible_connection', self.transport)
+        if host_connection in [ 'paramiko', 'ssh' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -343,7 +343,7 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and self.module_name in [ 'apt', 'yum' ]:
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum' ]:
                 # hack for apt and soon yum, with_items maps back into a single module call
                 inject['item'] = ",".join(items)
                 items = None
@@ -423,7 +423,8 @@ class Runner(object):
         actual_port = port
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
-        if self.transport in [ 'paramiko', 'ssh' ]:
+        actual_transport = inject.get('ansible_connection', self.transport)
+        if actual_transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -445,6 +446,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
+                actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
@@ -463,7 +465,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
@@ -504,7 +506,7 @@ class Runner(object):
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
                 if self.diff:
-                    self.callbacks.on_file_diff(conn.host, result.before_diff_value, result.after_diff_value)
+                    self.callbacks.on_file_diff(conn.host, result.diff)
                 self.callbacks.on_ok(host, data)
         return result
 
@@ -612,7 +614,7 @@ class Runner(object):
             complex_args_json = utils.jsonify(complex_args) 
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
-            encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json
+            encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json.replace("\\", "\\\\")
 
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)

@@ -30,11 +30,14 @@ BLACKLIST_MODULES = [
 
 def get_docstring(filename, verbose=False):
     """
-    Search for assignment of the DOCUMENTATION variable in the given file.
-    Parse that from YAML and return the YAML doc or None.
+    Search for assignment of the DOCUMENTATION and EXAMPLES variables
+    in the given file.
+    Parse DOCUMENTATION from YAML and return the YAML doc or None
+    together with EXAMPLES, as plain text.
     """
 
     doc = None
+    plainexamples = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -42,9 +45,12 @@ def get_docstring(filename, verbose=False):
         for child in M.body:
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
-                    doc = yaml.load(child.value.s)
+                    doc = yaml.safe_load(child.value.s)
+                if 'EXAMPLES' in (t.id for t in child.targets):
+                    plainexamples = child.value.s[1:]  # Skip first empty line
     except:
         if verbose == True:
             traceback.print_exc()
             print "unable to parse %s" % filename
-    return doc
+    return doc, plainexamples
+
