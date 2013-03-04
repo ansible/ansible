@@ -438,6 +438,8 @@ class PlayBook(object):
                             should_run = True
                             break
                 if should_run:
+                    if ansible.callbacks.cowsay:
+                        print "\n"
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
                         # if we got exactly no hosts on the first step (setup!) then the host group
