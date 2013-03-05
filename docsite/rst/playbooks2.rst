@@ -209,7 +209,8 @@ some other options, but otherwise works equivalently::
        prompt: "Product release version"
        private: no
 
-vars_prompt can also crypt the entered value so you can use it, for instance, with the user module to define a password::
+If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the 
+entered value so you can use it, for instance, with the user module to define a password::
 
    vars_prompt:
      - name: "my_password2"
@@ -219,29 +220,29 @@ vars_prompt can also crypt the entered value so you can use it, for instance, wi
        confirm: yes
        salt_size: 7
 
-You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/passlib/lib/passlib.hash.html>` :
+You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/passlib/lib/passlib.hash.html>`_ :
 
-- des_crypt - DES Crypt
-- bsdi_crypt - BSDi Crypt
-- bigcrypt - BigCrypt
-- crypt16 - Crypt16
-- md5_crypt - MD5 Crypt
-- bcrypt - BCrypt
-- sha1_crypt - SHA-1 Crypt
-- sun_md5_crypt - Sun MD5 Crypt
-- sha256_crypt - SHA-256 Crypt
-- sha512_crypt - SHA-512 Crypt
-- apr_md5_crypt - Apache’s MD5-Crypt variant
-- phpass - PHPass’ Portable Hash
-- pbkdf2_digest - Generic PBKDF2 Hashes
-- cta_pbkdf2_sha1 - Cryptacular’s PBKDF2 hash
-- dlitz_pbkdf2_sha1 - Dwayne Litzenberger’s PBKDF2 hash
-- scram - SCRAM Hash
-- bsd_nthash - FreeBSD’s MCF-compatible nthash encoding
+- *des_crypt* - DES Crypt
+- *bsdi_crypt* - BSDi Crypt
+- *bigcrypt* - BigCrypt
+- *crypt16* - Crypt16
+- *md5_crypt* - MD5 Crypt
+- *bcrypt* - BCrypt
+- *sha1_crypt* - SHA-1 Crypt
+- *sun_md5_crypt* - Sun MD5 Crypt
+- *sha256_crypt* - SHA-256 Crypt
+- *sha512_crypt* - SHA-512 Crypt
+- *apr_md5_crypt* - Apache’s MD5-Crypt variant
+- *phpass* - PHPass’ Portable Hash
+- *pbkdf2_digest* - Generic PBKDF2 Hashes
+- *cta_pbkdf2_sha1* - Cryptacular’s PBKDF2 hash
+- *dlitz_pbkdf2_sha1* - Dwayne Litzenberger’s PBKDF2 hash
+- *scram* - SCRAM Hash
+- *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
 
- However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
- 'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt 
- of size 8 will be generated.
+However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
+'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt 
+of size 8 will be generated.
 
 Passing Variables On The Command Line
 `````````````````````````````````````
@@ -943,7 +944,7 @@ priority.
 6.  Host variables from inventory.
 
 7.  Group variables from inventory in inheritance order.  This means if a group includes a sub-group, the variables
-in the subgroup have higher precedence.
+    in the subgroup have higher precedence.
 
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
 place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
