@@ -132,7 +132,7 @@ def url_do_get(module, url, dest):
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
-    if os.path.exists(dest):
+    if os.path.exists(dest) and not module.params['force']:
         t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
         tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
