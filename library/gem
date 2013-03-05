@@ -31,7 +31,8 @@ options:
     description: The name of the gem to be managed.
     required: true
   state:
-    description: The desired state of the gem. C(latest) ensures that the latest version is installed.
+    description: 
+      - The desired state of the gem. C(latest) ensures that the latest version is installed.
     required: true
     choices: [present, absent, latest]
   gem_source:
