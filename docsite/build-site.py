@@ -21,7 +21,13 @@ __docformat__ = 'restructuredtext'
 import os
 import sys
 import traceback
-from sphinx.application import Sphinx
+try:
+    from sphinx.application import Sphinx
+except ImportError:
+    print "#################################"
+    print "Dependency missing: Python Sphinx"
+    print "#################################"
+    sys.exit(1)
 import os
 
 
