@@ -26,6 +26,6 @@ clean:
 .PHONEY: docs clean
 
 modules: $(FORMATTER) ../hacking/templates/rst.j2
-	$(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/modules/ --includes-file=rst/modules/_list.rst
+	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/modules/ --includes-file=rst/modules/_list.rst
 
 
