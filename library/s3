@@ -128,7 +128,7 @@ def main():
                 bucket.delete_key(contents.key)
                 s3.delete_bucket(bucket_name)
 
-    # If the bucket exists and we have an action specified with object, do stuff ...
+    # If the bucket exists and we have an action specified along with filename, do stuff ...
     if exists == True
        if action in ['put','get'] and obj: 
            if action == 'put':
@@ -149,8 +149,9 @@ def main():
 #                            download = key.get_contents_to_filename(item.name)
 
     print json.dumps({
-        "volume_id": volume.id,
-        "device": device_name
+        "bucket something": what else?
+        "something else": acl ?
+        # check "changed" etc. 
     })
     sys.exit(0)
 
