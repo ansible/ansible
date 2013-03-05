@@ -16,48 +16,39 @@
 
 DOCUMENTATION = '''
 ---
-module: ec2_vol
-short_description: create and attach a volume, return volume id and device map
+module: s3
+short_description: idempotent s3 module for bucket create/delete, get and put operations
 description:
-    - creates an EBS volume and optionally attaches it to an instance. This module has a dependency on python-boto
+    - Creates and deletes and S3 bucket. Can be used to perform PUT/GET with a filename argument into a bucket based on supplied key (basically a directory). This module has a dependency on python-boto.
 version_added: "1.1"
 options:
-  instance:
+  bucket:
     description:
-      - instance ID if you wish to attach the volume. 
-    required: false
+      - bucket you wish to create/delete or upload/fetch from. 
+    required: true
     default: null 
     aliases: []
-  volume_size:
+  key:
     description:
-      - size of volume (in GB) to create.
+      - key name (directory name) to use within the bucket.
     required: true
     default: null
     aliases: []
-  device_name:
+  action:
     description:
-      - device id to override device mapping. Assumes /dev/sdf for instance-store, /dev/sdb for EBS.
+      - Action to perform, GET or PUT.
     required: false
     default: null
     aliases: []
-  zone:
+  filename:
     description:
-      - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
+      - filename for PUT or GET operation.
     required: false
     default: null
     aliases: []
 examples:
-   - code: 'local_action: ec2_vol instance=XXXXXX volume_size=5 device_name=sdd'
+   - code: 's3 bucket=mybucket key=mystuff action=put filename=/path/to/file state=present'
      description: "Simple playbook example"
-   - code: |
-            - name: Launch instances
-              local_action: ec2 keypair=$keypair image=$image wait=true count=3
-              register: ec2
-            - name: Create volumes and attach
-              local_action: ec2_vol instance=${item.id} volume_size=5
-              with_items: ${ec2.instances}
-              register: ec2_vol
-     description: "Advanced - attaching multiple volumes to multiple instances"
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -78,7 +69,7 @@ def main():
             bucket = dict(),
             key = dict(),
             action = dict(choices=['put', 'get']),
-            filename = dict(required=True),
+            filename = dict(),
             state  = dict(required=True, choices=['present', 'absent']),
             s3_url = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
@@ -116,7 +107,7 @@ def main():
     if bucket:
         exists = True
     else
-        exists = False 
+        exists = False
     
     # Lets list the contents
     bucket_contents = bucket.list()
@@ -126,6 +117,7 @@ def main():
         try:
             bucket = s3.create_bucket(bucket_name)
             exists = True
+            changed = True
         except s3.provider.storage_create_error, e:
             module.fail_json(msg = str(e))
 
@@ -155,67 +147,6 @@ def main():
 #                    for item in bucket_list:
 #                        try:
 #                            download = key.get_contents_to_filename(item.name)
-                   
-    if exists = True and state == 'present' and action == 'put'
-        try:
-            
-
-    if state == 'absent' 
-
-
-
-
-
-    # Here we need to get the zone info for the instance. This covers situation where 
-    # instance is specified but zone isn't.
-    # Useful for playbooks chaining instance launch with volume create + attach and where the
-    # zone doesn't matter to the user.
-
-    if instance:
-        reservation = ec2.get_all_instances(instance_ids=instance)
-        inst = reservation[0].instances[0]
-        zone = inst.placement
-
-    # If no instance supplied, try volume creation based on module parameters.
-
-    try:
-        volume = ec2.create_volume(volume_size, zone)
-        while volume.status != 'available':
-            time.sleep(3)
-            volume.update()
-    except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-    # Attach the created volume.
-
-    if device_name and instance:
-        try:
-            attach = volume.attach(inst.id, device_name)
-            while volume.attachment_state() != 'attached':
-                time.sleep(3)
-                volume.update()
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))           
-   
-    # If device_name isn't set, make a choice based on best practices here:
-    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
-    
-    # In future this needs to be more dynamic but combining block device mapping best practices
-    # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)
-       
-    if device_name is None and instance:
-        try:
-            if inst.root_device_type != 'ebs':
-                device_name = '/dev/sdf'
-                attach = volume.attach(inst.id, device_name)
-            else:
-                device_name = '/dev/sdb'
-                attach = volume.attach(inst.id, device_name)
-                while volume.attachment_state() != 'attached':
-                    time.sleep(3)
-                    volume.update()
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))           
 
     print json.dumps({
         "volume_id": volume.id,
