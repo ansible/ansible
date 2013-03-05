@@ -209,6 +209,16 @@ some other options, but otherwise works equivalently::
        prompt: "Product release version"
        private: no
 
+vars_prompt can also crypt the entered value so you can use it, for instance, with the user module to define a password::
+
+   vars_prompt:
+     - name: "my_password2"
+       prompt: "Enter password2"
+       private: yes
+       encrypt: "md5_crypt" 
+       confirm: yes
+       salt_size: 7
+       salt: "foo" 
 
 Passing Variables On The Command Line
 `````````````````````````````````````
