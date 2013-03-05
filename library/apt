@@ -73,7 +73,7 @@ options:
     version_added: "1.1"
     required: false
     default: no
-    choices: [ "yes", "no", "dist"]
+    choices: [ "yes", "dist"]
 author: Matthew Williams
 notes: []
 examples:
@@ -186,13 +186,13 @@ def remove(m, pkgspec, cache, purge=False):
         m.exit_json(changed=True)
 
 def upgrade(m, mode="yes"):
-    upgrade_command = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" upgrade'
+    upgrade_command = 'upgrade'
     if mode == "dist":
-        upgrade_command = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade'
-    cmd = "%s -q -y %s" % (APT, upgrade_command)
+        upgrade_command = 'dist-upgrade'
+    cmd = '%s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" %s' % (APT, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
-        m.fail_json(msg="'apt-get %s ' failed: %s" % (upgrade_command, err))
+        m.fail_json(msg="'apt-get %s' failed: %s" % (upgrade_command, err))
     if "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded." in out :
         m.exit_json(changed=False)
     m.exit_json(changed=True)
@@ -201,14 +201,16 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(default='no', aliases=['update-cache'], type='bool'),
+            update_cache = dict(aliases=['update-cache'], type='bool'),
             purge = dict(default='no', type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(default="no", type='bool')
+            upgrade = dict(choices=['yes', 'dist'])
         ),
+        mutually_exclusive = [['package', 'upgrade']],
+        required_one_of = [['package', 'upgrade', 'update_cache']],
         supports_check_mode = True
     )
 
@@ -222,9 +224,6 @@ def main():
         module.fail_json(msg="Cannot find apt-get")
 
     p = module.params
-    if p['package'] is None and not p['update_cache'] and not p['upgrade']:
-        module.fail_json(msg='pkg=name and/or update_cache=yes or upgrade=yes is required')
-
     install_recommends = p['install_recommends']
 
     cache = apt.Cache()
@@ -241,10 +240,8 @@ def main():
 
     force_yes = p['force']
 
-    if p['upgrade'] and p['package'] is None:
+    if p['upgrade']:
         upgrade(module, p['upgrade'])
-    elif p['upgrade'] and p['package'] != None:
-        module.fail_json(msg="Upgrade should not be used in conjunction with other options.")
 
     packages = p['package'].split(',')
     latest = p['state'] == 'latest'

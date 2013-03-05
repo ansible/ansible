@@ -527,7 +527,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count == 0:
-                self.fail_json(msg="one of the following is required: %s" % check)
+                self.fail_json(msg="one of the following is required: %s" % ','.join(check))
 
     def _check_required_together(self, spec):
         if spec is None:
