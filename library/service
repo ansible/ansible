@@ -414,8 +414,10 @@ class LinuxService(Service):
                 self.running = True
 
         # if the job status is still not known check it by response code
+        # For reference, see:
+        # http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
         if self.running is None:
-            if rc in [2, 3, 4, 69]:
+            if rc in [1, 2, 3, 4, 69]:
                 self.running = False
             elif rc == 0:
                 self.running = True
