@@ -120,6 +120,17 @@ class Subversion(object):
         # Has local mods if more than 0 modifed revisioned files.
         return len(filter(regex.match, lines)) > 0
 
+    def needs_update(self):
+        curr, url = self.get_revision()
+        out2 = '\n'.join(self._exec("info -r HEAD '%s'" % self.dest))
+        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
+        rev1 = int(curr.split(':')[1].strip())
+        rev2 = int(head.split(':')[1].strip())
+        change = False
+        if rev1 < rev2:
+            change = True
+        return change, curr, head
+
 
 # ===========================================
 
@@ -156,7 +167,8 @@ def main():
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
         if module.check_mode:
-            module.exit_json(changed=True)
+            check, before, after = svn.needs_update()
+            module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
         svn.switch()
