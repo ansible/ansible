@@ -681,7 +681,7 @@ class Runner(object):
     # *****************************************************
 
     def _partition_results(self, results):
-        ''' seperate results by ones we contacted & ones we didn't '''
+        ''' separate results by ones we contacted & ones we didn't '''
 
         if results is None:
             return None

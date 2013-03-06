@@ -205,7 +205,7 @@ Other core changes:
 
 * fix for template calls when last character is '$'
 * if ansible_python_interpreter is set on a delegated host, it now works as intended
-* --limit can now take "," as seperator as well as ";" or ":"
+* --limit can now take "," as separator as well as ";" or ":"
 * msg is now displaced with newlines when a task fails
 * if any with_ plugin has no results in a list (empty list for with_items, etc), the task is now skipped
 * various output formatting fixes/improvements
@@ -502,7 +502,7 @@ internals:
 * support for older versions of python-apt in the apt module
 * a new "assemble" module, for constructing files from pieces of files (inspired by Puppet "fragments" idiom)
 * ability to override most default values with ANSIBLE_FOO environment variables
-* --module-path parameter can support multiple directories seperated with the OS path seperator
+* --module-path parameter can support multiple directories separated with the OS path separator
 * with_items can take a variable of type list
 * ansible_python_interpreter variable available for systems with more than one Python
 * BIOS and VMware "fact" upgrades
