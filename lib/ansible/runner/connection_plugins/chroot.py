@@ -1,4 +1,5 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 #
 # This file is part of Ansible
 #
