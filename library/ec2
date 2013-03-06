@@ -231,6 +231,9 @@ def main():
     res_list = res.connection.get_all_instances(instids)
     this_res = res_list[0]
     if wait:
+        # there's a race between start and get an instance state
+        import time
+        time.sleep(5)
         # wait here until the instances are up
         num_running = 0
         while num_running != len(instids):
