@@ -58,7 +58,8 @@ import time
 import os
 
 try:
-    import boto 
+    import boto
+    import boto.s3 
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -71,6 +72,7 @@ def main():
             action = dict(choices=['put', 'get']),
             filename = dict(),
             state  = dict(required=True, choices=['present', 'absent']),
+            expiry = dict(required=False, default=60),
             s3_url = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
@@ -80,8 +82,9 @@ def main():
     bucket_name = module.params.get('bucket')
     key_name = module.params.get('key')
     action = module.params.get('action')
-    filename = module.params.get('filename')
-    state = module.params('state')
+    filename = os.path.expanduser(module.params['filename'])
+    state = module.params.get('state')
+    expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
@@ -106,14 +109,28 @@ def main():
     bucket = s3.lookup(bucket_name)
     if bucket:
         exists = True
-    else
+    else:
         exists = False
     
     # Lets list the contents
-    bucket_contents = bucket.list()
+    if exists == True:
+        bucket_contents = bucket.list()
+
+    # Check filename is valid if doing a PUT
+    if action != 'get':
+        if not os.path.exists(filename):
+            module.fail_json(msg="Source %s cannot be found" % (filename))
+
+    # Default to setting the key to the same as the filename
+    # only if doing a PUT, with a GET the destination might not exist
+    if key_name is None:
+        if action == 'get':
+            key_name = os.path.basename(filename)
+        if action == 'put':
+            key_name = os.path.basename(filename)
 
     # If state is present but the bucket doesn't exist, create it ...
-    if state == 'present' and exists == False
+    if state == 'present' and exists == False:
         try:
             bucket = s3.create_bucket(bucket_name)
             exists = True
@@ -122,36 +139,36 @@ def main():
             module.fail_json(msg = str(e))
 
     # If state is absent and the bucket exists already, delete it (recursively) ...
-    if state == 'absent' and exists = True
+    if state == 'absent' and exists == True:
         try:
             for contents in bucket.list():
                 bucket.delete_key(contents.key)
-                s3.delete_bucket(bucket_name)
+                s3.delete_bucket(bucket)
+        except s3.provider.storage_response_error, e:
+            module.fail_json(msg= str(e))
 
     # If the bucket exists and we have an action specified along with filename, do stuff ...
-    if exists == True
-       if action in ['put','get'] and obj: 
+    if exists == True:
+       if action in ['put','get']: 
            if action == 'put':
                 try:
-                    from boto.s3.key import Key
                     key = bucket.new_key(key_name)  
                     key.set_contents_from_filename(filename)
+                    url = key.generate_url(expiry)
+                except s3.provider.storage_copy_error, e:
+                    module.fail_json(msg= str(e))
+           # for the GET, if filename is set it will download to that path
            if action == 'get':
-                try:
-                    key.get_contents_to_filename(filename))
-
-#    # If the bucket exists and we are fetching but with no object, get all contents
-#    if exists == True
-#        if not obj:
-#            if action in ['get']:
-#                    for item in bucket_list:
-#                        try:
-#                            download = key.get_contents_to_filename(item.name)
+               if filename:
+                    try:
+                        getkey = bucket.lookup(key_name)
+                        getkey.get_contents_to_filename(filename)
+                        url = getkey.generate_url(expiry)
+                    except s3.provider.storage_copy_error, e:
+                        module.fail_json(msg= str(e))
 
     print json.dumps({
-        "bucket something": what else?
-        "something else": acl ?
-        # check "changed" etc. 
+        "url": url
     })
     sys.exit(0)
 
