@@ -142,6 +142,8 @@ class Facts(object):
         elif Facts._I386RE.search(self.facts['machine']):
             self.facts['architecture'] = 'i386'
         else:
+            self.facts['architecture'] = platform.processor()
+        if self.facts['architecture'] == '':
             self.facts['architecture'] = self.facts['machine']
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
