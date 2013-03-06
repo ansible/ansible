@@ -77,7 +77,7 @@ Desired sudo user (default=root).
 
 Run only these tags from the playbook
 
-*--check-syntax*::
+*--syntax-check*::
 
 Look for syntax errors in the playbook, but don't run anything
 
