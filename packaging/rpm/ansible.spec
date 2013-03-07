@@ -18,7 +18,8 @@ BuildRequires: python2-devel
 
 Requires: PyYAML
 Requires: python-paramiko
-Requires: python-jinja2
+%{?fedora:Requires: python-jinja2}
+%{?el6:Requires: python-jinja2-26}
 
 %description
 
