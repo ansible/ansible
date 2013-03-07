@@ -151,7 +151,7 @@ def main():
     if module.params['gem_source'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot maintain state=latest when installing from local source")
 
-    if module.params['gem_source'] is not 'null':
+    if not module.params['gem_source']:
         module.params['gem_source'] = module.params['name']
 
     changed = False
