@@ -36,9 +36,9 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
+        options = utils.template(self.runner.basedir, options, inject)
         source  = options.get('src', None)
         dest    = options.get('dest', None)
-        options = utils.template(self.runner.basedir, options, inject)
         module_args = self.runner._complex_args_hack(options, '')
 
         if (source is None and not 'first_available_file' in inject) or dest is None:
