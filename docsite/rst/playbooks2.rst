@@ -324,7 +324,7 @@ In Ansible 0.8, a few shortcuts are available for testing whether a variable is 
 
 There is a matching 'is_unset' that works the same way.  Quoting the variable inside the function is mandatory.
 
-When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed seperately for each item.
+When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed separately for each item.
 This is by design::
 
     tasks:
@@ -343,7 +343,7 @@ Conditional Execution (Simplified)
 
 In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
 to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
-to be quoted or casted to specify types, but you should seperate any variables used with whitespace.  In
+to be quoted or casted to specify types, but you should separate any variables used with whitespace.  In
 most cases users will be able to use 'when', but for more complex cases, only_if may still be required.
 
 Here are various examples of 'when' in use.  'when' is incompatible with 'only_if' in the same task::
