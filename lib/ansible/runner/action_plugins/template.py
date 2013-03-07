@@ -41,6 +41,9 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
+        options = utils.template(self.runner.basedir, options, inject)
+        module_args = self.runner._complex_args_hack(options, '')
+
         source   = options.get('src', None)
         dest     = options.get('dest', None)
 
