@@ -38,6 +38,8 @@ class ActionModule(object):
         options.update(utils.parse_kv(module_args))
         source  = options.get('src', None)
         dest    = options.get('dest', None)
+        options = utils.template(self.runner.basedir, options, inject)
+        module_args = self.runner._complex_args_hack(options, '')
 
         if (source is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src and dest are required")
