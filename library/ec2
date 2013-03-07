@@ -72,10 +72,10 @@ options:
     default: false
     aliases: []
   wait_timeout:
-    descritption:
+    description:
       - How long before wait gives up. In seconds.
-      - default: 300
-      aliases: []
+    default: 300
+    aliases: []
   ec2_url:
     description:
       - url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
