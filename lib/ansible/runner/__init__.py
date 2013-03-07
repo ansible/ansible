@@ -351,7 +351,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
 
         if items is None:
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
         elif len(items) > 0:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -362,7 +362,7 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -387,7 +387,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
 
@@ -401,7 +401,7 @@ class Runner(object):
 
         module_name = utils.template(self.basedir, module_name, inject)
         module_args = utils.template(self.basedir, module_args, inject)
-        
+        complex_args = utils.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -479,7 +479,7 @@ class Runner(object):
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
         
-        result = handler.run(conn, tmp, module_name, module_args, inject, self.complex_args)
+        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
         conn.close()
 

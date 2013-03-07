@@ -36,7 +36,6 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
-        complex_args = utils.template(self.runner.basedir, complex_args, inject)
         module_args = self.runner._complex_args_hack(complex_args, module_args)
 
         if self.runner.check:
