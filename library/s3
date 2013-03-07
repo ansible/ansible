@@ -53,7 +53,7 @@ options:
     default: 600
     aliases: []
 examples:
-   - code: 's3 bucket=mybucket key=mystuff action=put filename=/path/to/file state=present'
+   - code: 's3 bucket=mybucket action=put filename=/path/to/file state=present'
      description: "Simple playbook example"
 requirements: [ "boto" ]
 author: Lester Wade
