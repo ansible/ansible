@@ -414,7 +414,7 @@ Tips and Tricks
 
 Look at the bottom of the playbook execution for a summary of the nodes that were executed
 and how they performed.   General failures and fatal "unreachable" communication attempts are
-kept seperate in the counts.
+kept separate in the counts.
 
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the '--verbose' flag.  This is available in Ansible 0.5 and later.
