@@ -73,7 +73,7 @@ options:
     aliases: []
   wait_timeout:
     description:
-      - How long before wait gives up. In seconds.
+      - how long before wait gives up, in seconds
     default: 300
     aliases: []
   ec2_url:
