@@ -172,20 +172,20 @@ class TestPlaybook(unittest.TestCase):
        print utils.jsonify(actual, format=True)
        expected =  {
            "localhost": {
-               "changed": 9,
+               "changed": 16,
                "failures": 0,
-               "ok": 14,
+               "ok": 21,
                "skipped": 1,
                "unreachable": 0
-           }   
-       }   
+           }
+       }
        print "**EXPECTED**"
        print utils.jsonify(expected, format=True)
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
        print "len(EVENTS) = %d" % len(EVENTS)
-       assert len(EVENTS) == 60
+       assert len(EVENTS) == 74
 
    def test_includes(self):
        pb = os.path.join(self.test_dir, 'playbook-includer.yml')
@@ -201,14 +201,14 @@ class TestPlaybook(unittest.TestCase):
                "ok": 10,
                "skipped": 0,
                "unreachable": 0
-           }   
-       }   
+           }
+       }
        print "**EXPECTED**"
        print utils.jsonify(expected, format=True)
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
-   def test_playbook_vars(self): 
+   def test_playbook_vars(self):
        test_callbacks = TestCallbacks()
        playbook = ansible.playbook.PlayBook(
            playbook=os.path.join(self.test_dir, 'test_playbook_vars', 'playbook.yml'),
