@@ -743,7 +743,7 @@ def main():
     service.get_service_tools()
 
     # Enable/disable service startup at boot if requested
-    if service.module.params['enabled']:
+    if service.module.params['enabled'] is not None:
         # FIXME: ideally this should detect if we need to toggle the enablement state, though
         # it's unlikely the changed handler would need to fire in this case so it's a minor thing.
         service.service_enable()
@@ -766,7 +766,7 @@ def main():
             module.fail_json(msg=out)
 
     result['changed'] = service.changed
-    if service.module.params['enabled']:
+    if service.module.params['enabled'] is not None:
         result['enabled'] = service.module.params['enabled']
 
     if not service.module.params['state']:
