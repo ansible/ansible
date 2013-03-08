@@ -56,10 +56,14 @@ options:
     aliases: []
   forward_ports:
     description:
-      - comma separated list of ports to forward to the host
+      - comma separated list of ports to forward to the host. If the port is under 1024, the host port will be the guest port +10000
     required: False
-    aliases: []    
-  
+    aliases: []
+  memory:
+    description:
+      - memory in MB    
+    required: False
+    
 examples:
    - code: 'local_action: vagrant cmd=up box_name=lucid32 vm_name=webserver'
      description: 
@@ -80,6 +84,7 @@ VAGRANT_FILE_VM_STANZA_HEAD = """
 """
 VAGRANT_FILE_HOSTNAME_LINE     = "    %s_config.vm.host_name = \"%s\"\n"
 VAGRANT_FILE_PORT_FORWARD_LINE = "    %s_config.vm.forward_port %s, %s\n"  
+VAGRANT_FILE_MEMORY_LINE       = "    %s_config.vm.customize [\"modifyvm\", :id, \"--memory\", %s]\n" 
 VAGRANT_FILE_VM_STANZA_TAIL="  end\n"
 
 VAGRANT_FILE_TAIL = "\nend\n"
@@ -88,6 +93,7 @@ VAGRANT_FILE_TAIL = "\nend\n"
 VAGRANT_INT_IP = "192.168.179.%s"
 
 DEFAULT_VM_NAME = "ansible"
+DEFAULT_VM_RAM = 1024
 
 import sys
 import subprocess
@@ -327,6 +333,7 @@ class VagrantWrapper(object):
         d['vagrant_name'] = "%s%d" % (vm_name.replace("-","_"),n)
         d['internal_ip'] = VAGRANT_INT_IP % (255-N)
         d['forward_ports'] = []
+        d['ram'] = DEFAULT_VM_RAM
         self.vg_data['num_inst'] = N
         
         inst_array.append(d)
@@ -389,10 +396,15 @@ class VagrantWrapper(object):
                 box_name = d['box_name']
                 vfile.write(VAGRANT_FILE_VM_STANZA_HEAD % 
                             (name, name, name, ip, name, box_name) )
-                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )   
+                if d.has_key('ram'):
+                    vfile.write(VAGRANT_FILE_MEMORY_LINE  % (name, d['ram'])  )   
+                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )       
                 if d.has_key('forward_ports'):
                     for p in d['forward_ports']:
-                        vfile.write(VAGRANT_FILE_PORT_FORWARD_LINE % (name,p,p) )
+                        p = int(p)
+                        ph = p
+                        if p < 1024: ph = p + 10000
+                        vfile.write(VAGRANT_FILE_PORT_FORWARD_LINE % (name,p,ph) )
                 vfile.write(VAGRANT_FILE_VM_STANZA_TAIL)
   
         vfile.write(VAGRANT_FILE_TAIL)
@@ -456,10 +468,11 @@ def main():
     box_path = module.params.get('box_path')
     vm_name = module.params.get('vm_name')
     forward_ports = module.params.get('forward_ports')     
-#    if vm_name != None: 
-#        vm_name = vm_name.lower().replace("-","_")
+
     if forward_ports != None:
-        forward_ports=forward_ports.split(',')  
+        forward_ports=forward_ports.split(',')
+    if forward_ports == None: forward_ports=[]
+
     count = module.params.get('count') 
  
     # Initialize vagrant
@@ -475,6 +488,7 @@ def main():
                 module.fail_json(msg = "State must be \"present\" or \"absent\" in vagrant module.")
                  
             if state == 'present':
+               
                 changd, insts = vgw.up(box_name, vm_name, count, box_path, forward_ports)
                 module.exit_json(changed = changd, instances = insts)
                  
