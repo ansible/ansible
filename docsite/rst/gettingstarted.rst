@@ -39,6 +39,8 @@ also need:
    then allows you to use everything else.  (That's jumping ahead
    though.)
 
+   Ansible does not run with Python 3.
+
 Getting Ansible
 ```````````````
 
@@ -189,6 +191,9 @@ If you have python3 installed on Arch, you probably want to symlink python to py
 .. code-block:: bash
 
     $ sudo ln -sf /usr/bin/python2 /usr/bin/python
+
+You can also use the ansible_python_interpreter variable for hosts that have python 
+pointing to python3 
 
 If you would like to package Ansible for Homebrew, BSD, or others,
 please stop by the mailing list and say hi!
