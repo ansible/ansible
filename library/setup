@@ -110,7 +110,8 @@ class Facts(object):
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
-                 { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' } ]
+                 { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
+                 { 'path' : '/opt/local/bin/port',  'name' : 'macports' } ]
 
     def __init__(self):
         self.facts = {}
@@ -164,7 +165,7 @@ class Facts(object):
             SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
-            SmartOS = 'Solaris', AIX = 'AIX'
+            SmartOS = 'Solaris', AIX = 'AIX', MacOSX = 'Darwin'
         )
 
         if self.facts['system'] == 'AIX':
@@ -173,6 +174,11 @@ class Facts(object):
             data = out.split('.')
             self.facts['distribution_version'] = data[0]
             self.facts['distribution_release'] = data[1]
+        elif self.facts['system'] == 'Darwin':
+            self.facts['distribution'] = 'MacOSX'
+            rc, out, err = module.run_command("/usr/bin/sw_vers -productVersion")
+            data = out.split()[-1]
+            self.facts['distribution_version'] = data
         else:
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
@@ -761,6 +767,40 @@ class AIX(Hardware):
         rc, out, err = module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         self.facts['firmware_version'] = data[1].strip('IBM,')
+
+class Darwin(Hardware):
+   """
+   Darwin-specific subclass of Hardware.  Defines memory and CPU facts:
+   - processor_cores
+   - memtotal_mb
+   - memfree_mb
+   """
+   platform = 'Darwin'
+
+   def __init__(self):
+       Hardware.__init__(self)
+
+   def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        return self.facts
+
+   def get_cpu_facts(self):
+        self.facts['processor'] = []
+        rc, out, err = module.run_command("/usr/sbin/sysctl machdep.cpu.brand_string")
+        data = out[:-1].split(': ')
+        self.facts['processor'] = data[1]
+        rc, out, err = module.run_command("/usr/sbin/sysctl machdep.cpu.core_count")
+        data = out[:-1].split(': ')
+        self.facts['processor_cores'] = data[1]
+
+   def get_memory_facts(self):
+        rc, out, err = module.run_command("/usr/sbin/sysctl hw.memsize")
+        data = out[:-1].split(': ')
+        self.facts['memtotal_mb'] = int(data[1]) / 1024 / 1024
+        rc, out, err = module.run_command("/usr/sbin/sysctl hw.usermem")
+        data = out[:-1].split(': ')
+        self.facts['memfree_mb'] = int(data[1]) / 1024 / 1024
 
 class Network(Facts):
     """
