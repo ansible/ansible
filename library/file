@@ -136,7 +136,6 @@ def main():
     global module
 
     module = AnsibleModule(
-        check_invalid_arguments = False,
         argument_spec = dict(
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
