@@ -597,6 +597,12 @@ class AnsibleModule(object):
                         self.params[k] = self.boolean(value)
                     else:
                         is_invalid = True
+            elif wanted == 'int':
+                if not isinstance(value, int):
+                    if isinstance(value, basestring):
+                        self.params[k] = int(value)
+                    else:
+                        is_invalid = True
             else:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
