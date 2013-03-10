@@ -149,7 +149,7 @@ def banner(msg):
         runcmd.append(msg)
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        return "%s\n" % out
+        return "%s" % out
     else:
         return "\n%s ********************* " % msg
 

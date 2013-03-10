@@ -176,6 +176,8 @@ def main(args):
             pb.run()
 
             hosts = sorted(pb.stats.processed.keys())
+            if callbacks.cowsay:
+                print "\n"
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
             for h in hosts:
