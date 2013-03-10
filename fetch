@@ -7,8 +7,9 @@ short_description: Fetches a file from remote nodes
 description:
      - This module works like M(copy), but in reverse. It is used for fetching
        files from remote machines and storing them locally in a file tree,
-       organized by hostname. Note that if the source file is missing, it
-       returns status=ok.
+       organized by hostname. Note that this module was originally written to
+       transfer log files that were not necessarily present, therefore, by
+       default, if the source file is missing, it does not fail ; 
 version_added: "0.2"
 options:
   src:
@@ -26,6 +27,12 @@ options:
         C(/backup/host.example.com/etc/profile)
     required: true
     default: null
+  fail_on_missing:
+    description:
+      - Makes it fails when the source file is missing.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
 examples:
    - code: "fetch: src=/var/log/messages dest=/home/logtree"
      description: "Example from Ansible Playbooks"
