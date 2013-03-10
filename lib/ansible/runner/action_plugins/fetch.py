@@ -46,6 +46,8 @@ class ActionModule(object):
         options.update(utils.parse_kv(module_args))
         source = options.get('src', None)
         dest = options.get('dest', None)
+        fail_on_missing = options.get('fail_on_missing', False)
+        fail_on_missing = utils.boolean(fail_on_missing)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
@@ -73,7 +75,10 @@ class ActionModule(object):
             result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_md5 == '1':
-            result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+            if fail_on_missing:
+                result = dict(failed=True, msg="the remote file does not exist", file=source)
+            else:
+                result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_md5 == '2':
             result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
