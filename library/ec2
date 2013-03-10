@@ -71,6 +71,11 @@ options:
     required: false
     default: false
     aliases: []
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 300
+    aliases: []
   ec2_url:
     description:
       - url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
@@ -134,7 +139,7 @@ import sys
 import time
 
 try:
-    import boto 
+    import boto
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -152,6 +157,7 @@ def main():
             monitoring = dict(choices=BOOLEANS, default=False),
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
+            wait_timeout = dict(default=300),
             ec2_url = dict(aliases=['EC2_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY'], no_log=True),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
@@ -171,6 +177,7 @@ def main():
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
     ec2_url = module.params.get('ec2_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
@@ -221,6 +228,16 @@ def main():
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     instids = [ i.id for i in res.instances ]
+    while True:
+        try:
+            res.connection.get_all_instances(instids)
+            break
+        except boto.exception.EC2ResponseError as e:
+            if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
+                # there's a race between start and get an instance
+                continue
+            else:
+                module.fail_json(msg = str(e))
 
     if instance_tags:
         try:
@@ -228,17 +245,19 @@ def main():
         except boto.exception.EC2ResponseError as e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
+    # wait here until the instances are up
     res_list = res.connection.get_all_instances(instids)
     this_res = res_list[0]
-    if wait:
-        # wait here until the instances are up
-        num_running = 0
-        while num_running != len(instids):
-            res_list = res.connection.get_all_instances(instids)
-            this_res = res_list[0]
-            num_running = len([ i for i in this_res.instances if i.state=='running' ])
-            time.sleep(5)
-    
+    num_running = 0
+    wait_timeout = time.time() + wait_timeout
+    while wait and wait_timeout > time.time() and num_running < len(instids):
+        res_list = res.connection.get_all_instances(instids)
+        this_res = res_list[0]
+        num_running = len([ i for i in this_res.instances if i.state=='running' ])
+        time.sleep(5)
+    if wait and wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
     instances = []
     for inst in this_res.instances:
         d = {
