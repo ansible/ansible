@@ -19,7 +19,6 @@
 #######################################################
 
 import sys
-import getpass
 import os
 
 import ansible.playbook
@@ -83,20 +82,19 @@ def main(args):
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:
         raise errors.AnsibleError("provided hosts list is empty")
+    
+    if options.ask_sudo_pass or options.sudo_user:
+        options.sudo = True
 
-    sshpass = None
-    sudopass = None
+    # only ask for passwords once and if we need them
+    remote_pass = None
+    sudo_pass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
-        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         if options.ask_pass:
-            sshpass = getpass.getpass(prompt="SSH password: ")
-        options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
+           remote_pass = utils.ask_for_password('ssh')
         if options.ask_sudo_pass:
-            sudopass = getpass.getpass(prompt="sudo password: ")
-            options.sudo = True
-        if options.sudo_user:
-            options.sudo = True
-        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+           sudo_pass = utils.ask_for_password('sudo')
+
     extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
 
@@ -119,21 +117,23 @@ def main(args):
             inventory=inventory,
             forks=options.forks,
             remote_user=options.remote_user,
-            remote_pass=sshpass,
+            remote_pass=remote_pass,
             callbacks=playbook_cb,
             runner_callbacks=runner_cb,
             stats=stats,
             timeout=options.timeout,
             transport=options.connection,
             sudo=options.sudo,
-            sudo_user=options.sudo_user,
-            sudo_pass=sudopass,
+            sudo_pass=sudo_pass,
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
             check=options.check,
             diff=options.diff
         )
+        
+        if options.sudo_user:
+            pb.sudo_user = options.sudo_user
 
         if options.listhosts or options.listtasks:
             print ''

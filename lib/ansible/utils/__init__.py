@@ -36,6 +36,7 @@ import pipes
 import random
 import difflib
 import warnings
+import getpass
 
 VERBOSITY=0
 
@@ -403,6 +404,25 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
+def ask_for_password(name):
+    '''Securely get a password and return it'''
+    keys = None
+    password = None
+    if C.DEFAULT_KEYRING:
+        import keyring
+        keys = keyring.get_keyring()
+        password = keys.get_password('ansible', name)
+
+    if password:
+        print 'using %s password from %s' % (name, keys.__module__)
+    else:
+        password = getpass.getpass(prompt="%s password: " % name)
+
+    if keys:
+        keys.set_password('ansible', name, password)
+
+    return password
+
 def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
@@ -420,12 +440,10 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
-    parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
-        help='ask for SSH password')
+    parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS,
+        dest='ask_pass', action='store_true', help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
-    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-        help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
@@ -445,6 +463,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
             help='log output to this directory')
 
     if runas_opts:
+        parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS,
+            dest='ask_sudo_pass', action='store_true',
+            help='run operations with sudo (with password)')
         parser.add_option("-s", "--sudo", default=False, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',

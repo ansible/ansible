@@ -20,7 +20,6 @@
 ########################################################
 
 import sys
-import getpass
 
 from ansible.runner import Runner
 import ansible.constants as C
@@ -97,35 +96,32 @@ class Cli(object):
             print >>sys.stderr, "No argument passed to command module"
             sys.exit(1)
 
-        sshpass = None
-        sudopass = None
-        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-        if options.ask_pass:
-            sshpass = getpass.getpass(prompt="SSH password: ")
-        options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        if options.ask_sudo_pass:
-            sudopass = getpass.getpass(prompt="sudo password: ")
+        if options.ask_sudo_pass or options.sudo_user:
             options.sudo = True
-        if options.sudo_user:
-            options.sudo = True
-        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
         runner = Runner(
             module_name=options.module_name, module_path=options.module_path,
             module_args=options.module_args,
-            remote_user=options.remote_user, remote_pass=sshpass,
+            remote_user=options.remote_user,
             inventory=inventory_manager, timeout=options.timeout,
             private_key_file=options.private_key_file,
             forks=options.forks,
             pattern=pattern,
             callbacks=self.callbacks, sudo=options.sudo,
-            sudo_pass=sudopass,sudo_user=options.sudo_user,
             transport=options.connection, subset=options.subset,
             check=options.check,
             diff=options.check
         )
+        
+        if options.ask_sudo_pass:
+            runner.sudo_pass = utils.ask_for_password('sudo')
+        if options.ask_pass:
+            runner.remote_pass = utils.ask_for_password('ssh')
+        if options.sudo_user:
+            runner.sudo_user = options.sudo_user
 
         if options.seconds:
             print "background launch...\n\n"

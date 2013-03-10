@@ -19,6 +19,7 @@ BuildRequires: python2-devel
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
+Requires: python-keyring
 
 %description
 
