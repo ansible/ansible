@@ -55,7 +55,7 @@ options:
     required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
-        file. Must match the value given to I(regexp).
+        file. May contain backreferences.
   insertafter:
     required: false
     default: EOF
@@ -105,6 +105,8 @@ EXAMPLES = """
    lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
 
    lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\"
+
+   lineinfile dest=/tmp/grub.conf state=present regexp='^(splashimage=.*)$' line="#\\1"
 """
    
 
@@ -139,8 +141,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     msg = ""
 
     mre = re.compile(regexp)
-    if not mre.search(line):
-        module.fail_json(msg="usage error: line= doesn't match regexp (%s)" % regexp)
     
     if insertafter is not None and insertafter not in ('BOF', 'EOF'):
         insre = re.compile(insertafter)
@@ -152,9 +152,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     # index[0] is the line num where regexp has been found
     # index[1] is the line num where insertafter/inserbefore has been found
     index = [-1, -1]
+    m = None
     for lineno in range(0, len(lines)):
-        if mre.search(lines[lineno]):
+        match_found = mre.search(lines[lineno])
+        if match_found:
             index[0] = lineno
+            m = match_found
         elif insre is not None and insre.search(lines[lineno]):
             if insertafter:
                 # + 1 for the next line
@@ -165,11 +168,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
 
     # Regexp matched a line in the file
     if index[0] != -1:
-        if lines[index[0]] == line + os.linesep:
+        if lines[index[0]] == m.expand(line) + os.linesep:
             msg = ''
             changed = False
         else:
-            lines[index[0]] = line + os.linesep
+            lines[index[0]] = m.expand(line) + os.linesep
             msg = 'line replaced'
             changed = True
     # Add it to the beginning of the file
