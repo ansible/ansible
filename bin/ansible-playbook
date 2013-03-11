@@ -72,6 +72,8 @@ def main(args):
         help="do a playbook syntax check on the playbook, do not execute the playbook")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
         help="do list all tasks that would be executed")
+    parser.add_option('--step', dest='step', action='store_true',
+        help="one-step-at-a-time: confirm each task before running")
 
     options, args = parser.parse_args(args)
 
@@ -111,6 +113,8 @@ def main(args):
 
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
+        if options.step:
+            playbook_cb.step = options.step
         runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
 
         pb = ansible.playbook.PlayBook(
