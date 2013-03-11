@@ -43,6 +43,7 @@ class LookupModule(object):
         if not isinstance(terms, list):
             raise errors.AnsibleError("a list is required for with_nested")
         my_list = terms[:]
+        my_list.reverse()
         result = []
         if len(my_list) == 0:
             raise errors.AnsibleError("with_nested requires at least one list")
