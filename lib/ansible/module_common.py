@@ -629,8 +629,8 @@ class AnsibleModule(object):
         for x in items:
             try:
                 (k, v) = x.split("=",1)
-            except:
-                self.fail_json(msg="this module requires key=value arguments")
+            except Exception, e:
+                self.fail_json(msg="this module requires key=value arguments (%s)" % items)
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
