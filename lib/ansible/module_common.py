@@ -75,6 +75,9 @@ except ImportError:
     except ImportError:
         sys.stderr.write('Error: ansible requires a json module, none found!')
         sys.exit(1)
+    except SyntaxError:
+        sys.stderr.write('SyntaxError: probably due to json and python being for different versions')
+        sys.exit(1)
 
 HAVE_SELINUX=False
 try:
