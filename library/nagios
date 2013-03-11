@@ -32,11 +32,12 @@ options:
       - Action to take.
     required: true
     default: null
-    choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence" ]
+    choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
+               "silence_nagios", "unsilence_nagios", "command" ]
   host:
     description:
       - Host to operate on in Nagios.
-    required: true
+    required: false
     default: null
   cmdfile:
     description:
@@ -64,6 +65,14 @@ options:
     aliases: [ "service" ]
     required: true
     default: null
+  command:
+    description:
+      - raw command to send to nagios
+      - should not include the submitted time header or the line-feed
+      - B(Required) option when using the C(command) action
+    required: true
+    default: null
+
 author: Tim Bielawa
 requirements: [ "Nagios" ]
 examples:
@@ -85,6 +94,12 @@ examples:
       code: "nagios: action=silence host=$inventory_hostname"
     - description: unsilence all alerts
       code: "nagios: action=unsilence host=$inventory_hostname"
+    - description: SHUT UP NAGIOS
+      code: "nagios: action=silence_nagios"
+    - description: ANNOY ME NAGIOS
+      code: "nagios: action=unsilence_nagios"
+    - description: command something
+      code: "nagios: action=command command='DISABLE_FAILURE_PREDICTION'"
 '''
 
 import ConfigParser
@@ -133,17 +148,21 @@ def main():
         'silence',
         'unsilence',
         'enable_alerts',
-        'disable_alerts'
+        'disable_alerts',
+        'silence_nagios',
+        'unsilence_nagios',
+        'command',
         ]
 
     module = AnsibleModule(
         argument_spec=dict(
             action=dict(required=True, default=None, choices=ACTION_CHOICES),
             author=dict(default='Ansible'),
-            host=dict(required=True, default=None),
+            host=dict(required=False, default=None),
             minutes=dict(default=30),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
+            command=dict(required=False, default=None),
             )
         )
 
@@ -151,17 +170,23 @@ def main():
     minutes = module.params['minutes']
     services = module.params['services']
     cmdfile = module.params['cmdfile']
-
+    command = module.params['command']
+    
     ##################################################################
     # Required args per action:
     # downtime = (minutes, service, host)
     # (un)silence = (host)
     # (enable/disable)_alerts = (service, host)
+    # command = command
     #
     # AnsibleModule will verify most stuff, we need to verify
     # 'minutes' and 'service' manually.
 
     ##################################################################
+    if action not in ['command', 'silence_nagios', 'unsilence_nagios']:
+        if not host:
+            module.fail_json(msg='no host specified for action requiring one')
+    ######################################################################
     if action == 'downtime':
         # Make sure there's an actual service selected
         if not services:
@@ -179,13 +204,16 @@ def main():
         if not services:
             module.fail_json(msg='a service is required when setting alerts')
 
+    if action in ['command']:
+        if not command:
+            module.fail_json(msg='no command passed for command action')
     ##################################################################
     if not cmdfile:
         module.fail_json('unable to locate nagios.cfg')
 
     ##################################################################
     ansible_nagios = Nagios(module, **module.params)
-    if self.check_mode:
+    if module.check_mode:
         module.exit_json(changed=True)
     else:
         ansible_nagios.act()
@@ -215,6 +243,7 @@ class Nagios(object):
         self.host = kwargs['host']
         self.minutes = int(kwargs['minutes'])
         self.cmdfile = kwargs['cmdfile']
+        self.command = kwargs['command']
 
         if (kwargs['services'] is None) or (kwargs['services'] == 'host') or (kwargs['services'] == 'all'):
             self.services = kwargs['services']
@@ -292,12 +321,13 @@ class Nagios(object):
 
         return dt_str
 
-    def _fmt_notif_str(self, cmd, host, svc=None):
+    def _fmt_notif_str(self, cmd, host=None, svc=None):
         """
         Format an external-command notification string.
 
         cmd - Nagios command ID.
-        host - Host to en/disable notifications on..
+        host - Host to en/disable notifications on.. A value is not required
+          for global downtime
         svc - Service to schedule downtime for. A value is not required
           for host downtime.
 
@@ -305,11 +335,14 @@ class Nagios(object):
         """
 
         entry_time = self._now()
-        if svc is not None:
-            notif_str = "[%s] %s;%s;%s\n" % (entry_time, cmd, host, svc)
-        else:
-            # Downtime for a host if no svc specified
-            notif_str = "[%s] %s;%s\n" % (entry_time, cmd, host)
+        notif_str = "[%s] %s" % (entry_time, cmd)
+        if host is not None:
+            notif_str += ";%s" % host
+            
+            if svc is not None:
+                notif_str += ";%s" %  svc
+
+        notif_str += "\n"
 
         return notif_str
 
@@ -733,7 +766,42 @@ class Nagios(object):
             return return_str_list
         else:
             return "Fail: could not write to the command file"
-
+    
+    def silence_nagios(self):
+        """
+        This command is used to disable notifications for all hosts and services
+        in nagios.
+        
+        This is a 'SHUT UP, NAGIOS' command
+        """
+        cmd = 'DISABLE_NOTIFICATIONS'
+        self._write_command(self._fmt_notif_str(cmd))
+    
+    def unsilence_nagios(self):
+        """
+        This command is used to enable notifications for all hosts and services
+        in nagios.
+        
+        This is a 'OK, NAGIOS, GO'' command
+        """
+        cmd = 'ENABLE_NOTIFICATIONS'
+        self._write_command(self._fmt_notif_str(cmd))
+        
+    def nagios_cmd(self, cmd):
+        """
+        This sends an arbitrary command to nagios
+        
+        It prepends the submitted time and appends a \n
+        
+        You just have to provide the properly formatted command
+        """
+        
+        pre = '[%s]' % int(time.time())
+        
+        post = '\n'
+        cmdstr = '%s %s %s' % (pre, cmd, post)
+        self._write_command(cmdstr)
+        
     def act(self):
         """
         Figure out what you want to do from ansible, and then do the
@@ -771,6 +839,15 @@ class Nagios(object):
             else:
                 self.disable_svc_notifications(self.host,
                                                services=self.services)
+        elif self.action == 'silence_nagios':
+            self.silence_nagios()
+            
+        elif self.action == 'unsilence_nagios':
+            self.unsilence_nagios()
+            
+        elif self.action == 'command':
+            self.nagios_cmd(self.command)
+            
         # wtf?
         else:
             self.module.fail_json(msg="unknown action specified: '%s'" % \
