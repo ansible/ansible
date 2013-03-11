@@ -1,6 +1,6 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130131
+pkgver=20130311
 pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
@@ -10,7 +10,7 @@ depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
 conflicts=('ansible')
 source=("python-binary.diff")
-md5sums=("8f1eb942a01bbf206dbe32bded8725c6")
+md5sums=("ab81876d8d4c86c27d137e3d86c25a3a")
 
 _gitroot="https://github.com/ansible/ansible"
 _gitname="ansible"
