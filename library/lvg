@@ -1,0 +1,145 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Alexander Bulimov <lazywolf0@gmail.com>
+# based on lvol module by Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Alexander Bulimov
+module: lvg
+short_description: Configure LVM volume groups
+description:
+  - This module creates or removes volume groups.
+version_added: "1.1"
+options:
+  vg:
+    description:
+    - The name of the volume group.
+    required: true
+  dev:
+    description:
+    - List of comma-separated devices to use in this volume group.
+    required: true
+  state:
+    choices: [ "present", "absent" ]
+    default: present
+    description:
+    - Control if the volume group exists.
+    required: false
+  force:
+    choices: [ "yes", "no" ]
+    default: no
+    description:
+    - If yes, allows to remove volume group with logical volumes.
+    required: false
+examples:
+  - description: Create a volume group on top of /dev/sda1.
+    code: lvg vg=vg.services dev=/dev/sda1
+  - description: Create a volume group on top of /dev/sdb1 and /dev/sdc5.
+    code: lvg vg=vg.services dev=/dev/sdb1,/dev/sdc5
+  - description: Remove a volume group with name vg.services.
+    code: lvg vg=vg.services state=absent
+notes:
+  - module does not check device list for already present volume group
+'''
+
+def parse_vgs(data):
+    vgs = []
+    for line in data.splitlines():
+        parts = line.strip().split(';')
+        vgs.append({
+            'name': parts[0],
+            'pv_count': int(parts[1]),
+            'lv_count': int(parts[2]),
+        })
+    return vgs
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            vg=dict(required=True),
+            dev=dict(),
+            state=dict(choices=["absent", "present"], default='present'),
+            force=dict(choices=["yes", "no"], default='no'),
+        ),
+        supports_check_mode=True,
+    )
+
+    vg = module.params['vg']
+    if module.params['dev']:
+        dev = module.params['dev'].replace(',',' ')
+        dev_list = module.params['dev'].split(',')
+    state = module.params['state']
+    force = module.params['force']
+
+    if state=='present' and not dev:
+        module.fail_json(msg="No dev given.")
+
+    if state=='present':
+        for test_dev in dev_list:
+            if not os.path.exists(test_dev):
+                module.fail_json(msg="No dev %s found."%test_dev)
+
+    rc,current_vgs,err = module.run_command("vgs --noheadings -o vg_name,pv_count,lv_count --separator ';'")
+
+    if rc != 0:
+        module.fail_json(msg="Failed creating volume group %s."%vg, rc=rc, err=err)
+
+    changed = False
+
+    vgs = parse_vgs(current_vgs)
+
+    for test_vg in vgs:
+        if test_vg['name'] == vg:
+            this_vg = test_vg
+            break
+    else:
+        this_vg = None
+
+    if this_vg is None:
+        if state == 'present':
+            ### create VG
+            if module.check_mode:
+                changed = True
+            else:
+                rc,_,err = module.run_command("vgcreate %s %s"%(vg, dev))
+                if rc == 0:
+                    changed = True
+                else:
+                    module.fail_json(msg="Creating volume group '%s' failed"%(vg), rc=rc, err=err)
+    else:
+        if state == 'absent':
+            if module.check_mode:
+                module.exit_json(changed=True)
+            else:
+                if this_vg['lv_count'] == 0 or force == "yes":
+                    ### remove VG
+                    rc,_,err = module.run_command("vgremove --force %s"%(vg))
+                    if rc == 0:
+                        module.exit_json(changed=True)
+                    else:
+                        module.fail_json(msg="Failed to remove volume group %s"%(vg),rc=rc, err=err)
+                else:
+                    module.fail_json(msg="Refuse to remove non-empty volume group %s without force=yes"%(vg))
+
+    module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
