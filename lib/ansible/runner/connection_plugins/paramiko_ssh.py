@@ -115,7 +115,9 @@ class Connection(object):
                     (self.user, self.host, self.port, err)
                 )
             except paramiko.PasswordRequiredException as err:
-                msg = "Password required for " + str(self.user) +"@"+ str(self.host) + ":" + str(self.port) + ". " + "Private key may be password-protected; try running with an ssh-agent. " + "To connect as a different user, use -u <username>."
+                msg = "Password required for " + str(self.user) +"@"+ str(self.host) + ":" + str(self.port) + ". " + \
+                    "Private key may be password-protected; try running with an ssh-agent. " + \
+                    "To connect as a different user, use -u <username>."
                 raise errors.AnsibleError(msg)
             except Exception as err:
                 msg = str(err)
