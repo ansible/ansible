@@ -23,6 +23,7 @@ from ansible.runner.return_data import ReturnData
 import base64
 import stat
 import tempfile
+import pipes
 
 class ActionModule(object):
 
@@ -119,7 +120,7 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
-            module_args = "%s src=%s" % (module_args, tmp_src)
+            module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
             return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
 
         else:
@@ -129,7 +130,7 @@ class ActionModule(object):
             if content is not None:
                 os.remove(tmp_content)
             tmp_src = tmp + os.path.basename(source)
-            module_args = "%s src=%s" % (module_args, tmp_src)
+            module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
             if self.runner.check:
                 module_args = "%s CHECKMODE=True" % module_args
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
