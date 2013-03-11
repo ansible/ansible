@@ -3,6 +3,4 @@ ansible from a git checkout.
 
 To use it from the root of a checkout:
 
-    $ . ./hacking/env-setup
-
-Note the space between the '.' and the './'
+    $ source ./hacking/env-setup
