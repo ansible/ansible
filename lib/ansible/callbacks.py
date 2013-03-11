@@ -476,7 +476,8 @@ class PlaybookCallbacks(object):
                 print banner(msg)
             else:
                 self.skip_task = True
-        
+        else:
+            print banner(msg)                
         
         call_callback_module('playbook_on_task_start', name, is_conditional)
 
