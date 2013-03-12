@@ -103,14 +103,14 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_dump(user, password, db_name, target):
-    res = os.system("/usr/bin/mysqldump -q -u "+user+ " -p"+password+" "
+def db_dump(host, user, password, db_name, target):
+    res = os.system("/usr/bin/mysqldump -q -h "+host+"-u "+user+ " -p"+password+" "
             +db_name+" > "
             +target)
     return (res == 0)
 
-def db_import(user, password, db_name, target):
-    res = os.system("/usr/bin/mysql -u "+user+ " -p"+password+" "
+def db_import(host, user, password, db_name, target):
+    res = os.system("/usr/bin/mysql -h "+host+" -u "+user+ " -p"+password+" "
             +db_name+" < "
             +target)
     return (res == 0)
@@ -191,6 +191,7 @@ def main():
             login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+    login_host = module.params["login_host"]
 
     if state in ['dump','import']:
         if target is None:
@@ -212,11 +213,11 @@ def main():
         if state == "absent":
             changed = db_delete(cursor, db)
         elif state == "dump":
-            changed = db_dump(login_user, login_password, db, target)
+            changed = db_dump(login_host, login_user, login_password, db, target)
             if not changed:
                 module.fail_json(msg="dump failed!")
         elif state == "import":
-            changed = db_import(login_user, login_password, db, target)
+            changed = db_import(login_host, login_user, login_password, db, target)
             if not changed:
                 module.fail_json(msg="import failed!")
     else:
