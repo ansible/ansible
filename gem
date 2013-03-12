@@ -41,8 +41,8 @@ options:
   include_dependencies:
     description: Wheter to include dependencies or not.
     required: false
-    choices: [true, false]
-    default: true
+    choices: [ "yes", "no" ]
+    default: "yes"
   repository:
     description: The repository from which the gem will be installed
     required: false
