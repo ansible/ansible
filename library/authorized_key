@@ -49,7 +49,8 @@ options:
     description:
       - Wheter this module should manage the directory of the authorized_keys file
     required: false
-    default: true
+    choices: [ "yes", "no" ]
+    default: "yes"
   state:
     description:
       - whether the given key should or should not be in the file
@@ -61,7 +62,7 @@ examples:
      description: "Example from Ansible Playbooks"
    - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)'"
      description: "Shorthand available in Ansible 0.8 and later"
- - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)' sshdir='/etc/ssh/authorized_keys/charlie' manage_dir=false"
+ - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)' sshdir='/etc/ssh/authorized_keys/charlie' manage_dir=no"
      description: "Advanced usage with an alternate AuthorizedKeysFile configuration"
 author: Brad Olson
 '''
@@ -199,10 +200,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-           user       = dict(required=True),
-           key        = dict(required=True),
-           path       = dict(required=False),
-           manage_dir = dict(required=False),
+           user       = dict(required=True, type='str'),
+           key        = dict(required=True, type='str'),
+           path       = dict(required=False, type='str'),
+           manage_dir = dict(required=False, type='bool', choices=BOOLEANS),
            state      = dict(default='present', choices=['absent','present'])
         )
     )
