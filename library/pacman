@@ -42,6 +42,8 @@ options:
         description:
             - update the package db first (pacman -Syy)
         required: false
+        default: "no"
+        choices: [ "yes", "no" ]
 
 author: Afterburn
 notes:  []

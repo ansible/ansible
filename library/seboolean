@@ -41,7 +41,7 @@ options:
       - Desired boolean value
     required: true
     default: null
-    choices: [ "true", "false" ]
+    choices: [ true, false ]
 examples:
    - code: "seboolean: name=httpd_can_network_connect state=true persistent=yes"
      description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)

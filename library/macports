@@ -41,6 +41,8 @@ options:
         description:
             - update the package db first
         required: false
+        default: "no"
+        choices: [ "yes", "no" ]
 notes:  []
 '''
 EXAMPLES = '''

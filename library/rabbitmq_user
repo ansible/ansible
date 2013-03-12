@@ -73,8 +73,8 @@ options:
     description:
       - Deletes and recreates the user.
     required: false
-    default: no
-    choices: [yes, no]
+    default: "no"
+    choices: [ "yes", "no" ]
   state:
     description:
       - Specify if user is to be added or removed

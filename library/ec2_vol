@@ -51,7 +51,7 @@ examples:
      description: "Simple playbook example"
    - code: |
             - name: Launch instances
-              local_action: ec2 keypair=$keypair image=$image wait=true count=3
+              local_action: ec2 keypair=$keypair image=$image wait=yes count=3
               register: ec2
             - name: Create volumes and attach
               local_action: ec2_vol instance=${item.id} volume_size=5

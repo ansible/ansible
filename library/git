@@ -50,7 +50,7 @@ options:
     force:
         required: false
         default: "yes"
-        choices: [ yes, no ]
+        choices: [ "yes", "no" ]
         version_added: "0.7"
         description:
             - If C(yes), any modified files in the working

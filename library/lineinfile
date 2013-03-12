@@ -75,15 +75,16 @@ options:
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
-    choices: [ yes, no ]
-    default: no
+    choices: [ "yes", "no" ]
+    default: "no"
     description:
       - Used with C(state=present). If specified, the file will be created
         if it does not already exist. By default it will fail if the file
         is missing.
   backup:
      required: false
-     default: no
+     default: "no"
+     choices: [ "yes", "no" ]
      description:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
