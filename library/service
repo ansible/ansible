@@ -595,10 +595,6 @@ class FreeBsdService(Service):
 
         self.rcconf_key = "%s_enable" % self.name
 
-        # FIXME: detect the enablement state rather than just running the command
-        if self.module.check_mode:
-            self.module.exit_json(changed=True, msg="editing service enablement")
-
         return self.service_enable_rcconf()
 
     def service_control(self):
@@ -677,10 +673,6 @@ class NetBsdService(Service):
             self.rcconf_value = "YES"
         else:
             self.rcconf_value = "NO"
-
-        # FIXME: need to decide whether to run enablement command or not
-        if self.module.check_mode:
-            self.module.exit_json(changed=True, msg="editing service enablement")
 
         rcfiles = [ '/etc/rc.conf' ]		# Overkill?
         for rcfile in rcfiles:
