@@ -107,6 +107,7 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    content = dict(),
 )
 
 def get_platform():
