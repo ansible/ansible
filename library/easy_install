@@ -48,7 +48,8 @@ options:
         have any effect, the environment must be deleted and newly
         created.
     required: false
-    default: no
+    default: "no"
+    choices: [ "yes", "no" ]
   virtualenv_command:
     version_added: 1.1
     description:

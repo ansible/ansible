@@ -42,6 +42,7 @@ options:
       - A boolean that indicates whether the debug module should fail or not.
     required: false
     default: "no"
+    choices: [ "yes", "no" ]
 examples:
     - code: |
         - action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"

@@ -45,7 +45,7 @@ options:
     system:
         required: false
         default: "no"
-        choices: [ yes, no ]
+        choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
 examples:

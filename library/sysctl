@@ -56,8 +56,8 @@ options:
         description:
             - if C(reload=yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is updated
             - if C(reload=no), does not reload I(sysctl) even if the C(sysctl_file) is updated
-        choices: [ yes, no ]
-        default: yes
+        choices: [ "yes", "no" ]
+        default: "yes"
     sysctl_file:
         description:
             - specifies the absolute path to C(sysctl.conf), if not /etc/sysctl.conf

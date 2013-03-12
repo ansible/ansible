@@ -69,7 +69,8 @@ options:
     description:
       - wait for the instance to be in state 'running' before returning
     required: false
-    default: false
+    default: "no"
+    choices: [ "yes", "no" ]
     aliases: []
   wait_timeout:
     description:
@@ -129,7 +130,7 @@ options:
     default: null
     aliases: []
 examples:
-   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=true group=webserver count=3 group=webservers'
+   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=yes group=webserver count=3 group=webservers'
      description: "Examples from Ansible Playbooks"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
