@@ -41,6 +41,14 @@ options:
         required: false
         description:
             - Optionally sets the I(UID) of the user.
+    nonunique:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+            - Optionally when used with the -u option, this option allows to
+              change the user ID to a non-unique value.
+              (New in 1.1)
     group:
         required: false
         description:
@@ -196,6 +204,7 @@ class User(object):
         self.state      = module.params['state']
         self.name       = module.params['name']
         self.uid        = module.params['uid']
+        self.nonunique  = module.params['nonunique']
         self.group      = module.params['group']
         self.groups     = module.params['groups']
         self.comment    = module.params['comment']
@@ -243,6 +252,9 @@ class User(object):
         if self.uid is not None:
             cmd.append('-u')
             cmd.append(self.uid)
+
+        if self.nonunique:
+            cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -293,6 +305,9 @@ class User(object):
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
+
+        if self.nonunique:
+            cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -531,6 +546,9 @@ class FreeBsdUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
+        if self.nonunique:
+            cmd.append('-o')
+
         if self.comment is not None:
             cmd.append('-c')
             cmd.append(self.comment)
@@ -590,6 +608,9 @@ class FreeBsdUser(User):
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
+
+        if self.nonunique:
+            cmd.append('-o')
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
@@ -691,6 +712,9 @@ class SunOS(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
+        if self.nonunique:
+            cmd.append('-o')
+
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
@@ -751,6 +775,9 @@ class SunOS(User):
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
+
+        if self.nonunique:
+            cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -857,6 +884,9 @@ class AIX(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
+        if self.nonunique:
+            cmd.append('-o')
+
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
@@ -909,6 +939,9 @@ class AIX(User):
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
+
+        if self.nonunique:
+            cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -995,6 +1028,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, aliases=['user'], type='str'),
             uid=dict(default=None, type='str'),
+            nonunique=dict(default='no', type='bool'),
             group=dict(default=None, type='str'),
             groups=dict(default=None, type='str'),
             comment=dict(default=None, type='str'),
