@@ -214,7 +214,7 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
 
         replacement = m['replacement']
         if expand_lists and isinstance(replacement, (list, tuple)):
-            replacement = ",".join(replacement)
+            replacement = ",".join([str(x) for x in replacement])
         if isinstance(replacement, (str, unicode)):
             replacement = varReplace(basedir, replacement, vars, lookup_fatal, depth=depth+1, expand_lists=expand_lists)
         if replacement is None:
