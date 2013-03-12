@@ -38,8 +38,8 @@ options:
       - Only enable missing plugins
       - Does not disable plugins that are not in the names list
     required: false
-    default: no
-    choices: [yes, no]
+    default: "no"
+    choices: [ "yes", "no" ]
   state:
     description:
       - Specify if pluginss are to be enabled or disabled

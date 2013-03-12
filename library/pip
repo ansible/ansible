@@ -56,7 +56,8 @@ options:
         have any effect, the environment must be deleted and newly
         created.
     required: false
-    default: no
+    default: "no"
+    choices: [ "yes", "no" ]
   virtualenv_command:
     version_aded: 1.1
     description:
@@ -70,7 +71,7 @@ options:
         an older version of pip (< 1.0), you should set this to no because
         older versions of pip do not support I(--use-mirrors).
     required: false
-    default: yes
+    default: "yes"
     choices: [ "yes", "no" ]
     version_added: "1.0"
   state:
