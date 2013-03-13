@@ -2,17 +2,10 @@
 
 import os
 import sys
-from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
 from distutils.core import setup
-
-# find library modules
-from ansible.constants import DIST_MODULE_PATH
-data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
-
-print "DATA FILES=%s" % data_files
 
 setup(name='ansible',
       version=__version__,
@@ -43,5 +36,5 @@ setup(name='ansible',
          'bin/ansible-pull',
          'bin/ansible-doc'
       ],
-      data_files=data_files
+      package_data={ 'ansible': ['library/*'] }
 )

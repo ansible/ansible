@@ -59,12 +59,7 @@ p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
-# Needed so the RPM can call setup.py and have modules land in the
-# correct location. See #1277 for discussion
-if getattr(sys, "real_prefix", None):
-    DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
-else:
-    DIST_MODULE_PATH = '/usr/share/ansible/'
+DIST_MODULE_PATH = os.path.join(os.path.dirname(__file__), 'library')
 
 # sections in config file
 DEFAULTS='defaults'
