@@ -263,7 +263,7 @@ def main():
         elif p['state'] in [ 'removed', 'absent' ]:
             remove(module, packages, cache, p['purge'])
 
-    except LockFailedException:
+    except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
 
 # this is magic, see lib/ansible/module_common.py
