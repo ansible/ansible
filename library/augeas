@@ -99,8 +99,7 @@ def main():
     a = augeas.Augeas(root=p['root'], loadpath=p['loadpath'])
 
     value = module.params['value']
-    if ((p['command'] == 'set' and value is _missing) or
-        (p['command'] != 'set' and value is not _missing)):
+    if (p['command'] == 'set') != (value is not _missing):
         module.fail_json(msg='You should use "value" argument for "set" command.')
 
     path = module.params['path']
