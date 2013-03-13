@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Tomasz Rybarczyk <paluho@gmail.com>
@@ -17,12 +17,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 DOCUMENTATION = '''
 ---
 module: augeas
 author: Tomasz Rybarczyk
 short_description: Augeas support
+description:
+  - test
+version_added: "1.1"
 requirements:
   - augeas + lenses (augeas-lenses on Debian)
   - augeas python bindings (python-augeas on Debian)
@@ -30,29 +34,28 @@ options:
   path:
     required: true
     description:
-      - Variable path.
-    alias: name
+      - 'Variable path.'
   value:
     required: false
     description:
-      - Variable value (required for "set" command).
+      - 'Variable value (required for "set" command).'
   root:
     required: false
     description:
-      - The filesystem root - config files are searched realtively to this path (fallbacks to AUGEAS_ROOT or /).
+      - 'The filesystem root - config files are searched realtively to this path (fallbacks to AUGEAS_ROOT or /).'
   loadpath:
     required: false
     description:
-      - Colon-spearated list of directories that modules should be searched in.
+      - 'Colon-spearated list of directories that modules should be searched in.'
   command:
     required: false
     default: "set"
     choices: [ set, rm, match ]
     description:
-      - Whether given path should be modified, removed or matched. Command "match" passes results through 'matches' attribute. Every item on this list is an object with: 'label' and 'value' (check third example below).
+      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "matches" attribute. Every item on this list is an object with "label" and "value" (check third example below).'
 examples:
-  - code: "augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD"
-    description: Example one setting change: force members of "admin" group to use password when using "sudo".
+  - code: '"augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD"'
+    description: 'Simple value change'
 
   - code: |
       -action: augeas command="set" path="/files/etc/ssh/sshd_config/${item.path}" value="${item.value}"
@@ -61,7 +64,7 @@ examples:
            value: 'no'
          - path: 'PasswordAuthentication'
            value: 'no'
-    description: Example of multiple value changes: tighten sshd security.
+    description: 'Multiple values change with loop'
 
   - code: |
       - name: Fetch users list from sshd_config
@@ -70,7 +73,7 @@ examples:
       - name: Allow user to login through ssh
         action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="${user}"
         only_if: "'${user}' not in [m['value'] for m in ${allow_users.matches}]"
-    description: Example of more complex modification: fetch values lists and append new value only if it doesn't exists already in config.
+    description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
 '''
 
 
@@ -111,8 +114,6 @@ def main():
     else:
         a.set(path, value)
     a.save()
-    if a.get(path) != value:
-        module.fail_json(msg='Value hasn\'t changed... is file path correct?')
     module.exit_json(changed=True)
 
 # this is magic, see lib/ansible/module_common.py
