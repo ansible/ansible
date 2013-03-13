@@ -385,7 +385,7 @@ class Ec2Inventory(object):
         self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
 
         # Inventory: Group by parameter group
-        self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group), dest)
+        self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
 
 
     def get_host_info(self):
