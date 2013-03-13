@@ -25,7 +25,7 @@ module: augeas
 author: Tomasz Rybarczyk
 short_description: Augeas support
 description:
-  - test
+  - Augeas module which exposes simple API for "match", "set" and "rm"
 version_added: "1.1"
 requirements:
   - augeas + lenses (augeas-lenses on Debian)
@@ -54,7 +54,7 @@ options:
     description:
       - 'Whether given path should be modified, removed or matched. Command "match" passes results through "matches" attribute. Every item on this list is an object with "label" and "value" (check third example below).'
 examples:
-  - code: '"augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD"'
+  - code: 'augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD'
     description: 'Simple value change'
 
   - code: |
