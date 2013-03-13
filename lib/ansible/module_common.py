@@ -107,7 +107,10 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    # not taken by the file module, but other modules call file so it must ignore them.
     content = dict(),
+    backup = dict(),
+    force = dict(),
 )
 
 def get_platform():
