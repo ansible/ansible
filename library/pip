@@ -30,7 +30,7 @@ options:
   name:
     description:
       - The name of a Python library to install
-    required: true
+    required: false
     default: null
   version:
     description:
@@ -230,7 +230,7 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=env)
+                     state=state, requirements=requirements, virtualenv=env, stdout=out, stderr=err)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
