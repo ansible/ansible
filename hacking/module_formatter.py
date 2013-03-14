@@ -34,7 +34,7 @@ import ansible.utils.module_docs as module_docs
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'lib', 'ansible', 'library'
     ))
 EXAMPLE_YAML=os.path.abspath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yaml'
