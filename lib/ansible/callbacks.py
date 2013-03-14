@@ -464,7 +464,21 @@ class PlaybookCallbacks(object):
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
-        print banner(msg)
+
+        if hasattr(self, 'step') and self.step:
+            resp = raw_input('Perform task: %s (y/n/c): ' % name)
+            if resp.lower() in ['y','yes']:
+                self.skip_task = False
+                print banner(msg)                
+            elif resp.lower() in ['c', 'continue']:
+                self.skip_task = False
+                self.step = False
+                print banner(msg)
+            else:
+                self.skip_task = True
+        else:
+            print banner(msg)                
+        
         call_callback_module('playbook_on_task_start', name, is_conditional)
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
