@@ -619,6 +619,83 @@ class SunOSHardware(Hardware):
         self.facts['swap_allocated_mb'] = allocated / 1024
         self.facts['swap_reserved_mb'] = reserved / 1024
 
+class OpenBSDHardware(Hardware):
+    """
+    OpenBSD-specific subclass of Hardware. Defines memory, CPU and device facts:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
+    - processor_speed
+    - devices
+    """
+    platform = 'OpenBSD'
+    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.sysctl = self.get_sysctl()
+        self.get_memory_facts()
+        self.get_processor_facts()
+        self.get_device_facts()
+        return self.facts
+
+    def get_sysctl(self):
+        rc, out, err = module.run_command(["/sbin/sysctl", "hw"])
+        if rc != 0:
+            return dict()
+        sysctl = dict()
+        for line in out.splitlines():
+            (key, value) = line.split('=')
+            sysctl[key] = value.strip()
+        return sysctl
+
+    def get_memory_facts(self):
+        # Get free memory. vmstat output looks like:
+        #  procs    memory       page                    disks    traps          cpu
+        #  r b w    avm     fre  flt  re  pi  po  fr  sr wd0 fd0  int   sys   cs us sy id
+        #  0 0 0  47512   28160   51   0   0   0   0   0   1   0  116    89   17  0  1 99
+        rc, out, err = module.run_command("/usr/bin/vmstat")
+        if rc == 0:
+            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[4]) / 1024
+            self.facts['memtotal_mb'] = long(self.sysctl['hw.usermem']) / 1024 / 1024
+
+        # Get swapctl info. swapctl output looks like:
+        # total: 69268 1K-blocks allocated, 0 used, 69268 available
+        # And for older OpenBSD:
+        # total: 69268k bytes allocated = 0k used, 69268k available
+        rc, out, err = module.run_command("/sbin/swapctl -sk")
+        if rc == 0:
+            data = out.split()
+            self.facts['swapfree_mb'] = long(data[-2].translate(None, "kmg")) / 1024
+            self.facts['swaptotal_mb'] = long(data[1].translate(None, "kmg")) / 1024
+
+    def get_processor_facts(self):
+        processor = []
+        dmesg_boot = get_file_content(OpenBSDHardware.DMESG_BOOT)
+        if not dmesg_boot:
+            rc, dmesg_boot, err = module.run_command("/sbin/dmesg")
+        i = 0
+        for line in dmesg_boot.splitlines():
+            if line.split(' ', 1)[0] == 'cpu%i:' % i:
+                processor.append(line.split(' ', 1)[1])
+                i = i + 1
+        processor_count = i
+        self.facts['processor'] = processor
+        self.facts['processor_count'] = processor_count
+        # I found no way to figure out the number of Cores per CPU in OpenBSD
+        self.facts['processor_cores'] = 'NA'
+
+    def get_device_facts(self):
+        devices = []
+        devices.extend(self.sysctl['hw.disknames'].split(','))
+        self.facts['devices'] = devices
+
 class FreeBSDHardware(Hardware):
     """
     FreeBSD-specific subclass of Hardware.  Defines memory and CPU facts:
@@ -1207,6 +1284,17 @@ class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     It uses the GenericBsdIfconfigNetwork unchanged
     """
     platform = 'FreeBSD'
+
+class OpenBSDNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the OpenBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork.
+    """
+    platform = 'OpenBSD'
+
+    # Return macaddress instead of lladdr
+    def parse_lladdr_line(self, words, current_if, ips):
+        current_if['macaddress'] = words[1]
 
 class Virtual(Facts):
     """
