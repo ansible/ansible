@@ -85,8 +85,6 @@ cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
 cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
 cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ansible
-cp -v library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -94,21 +92,17 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %{python_sitelib}/ansible*
+%exclude %{python_sitelib}/ansible/library/fireball
 %{_bindir}/ansible*
-%dir %{_datadir}/ansible
-%{_datadir}/ansible/[a-eg-z]*
-%{_datadir}/ansible/f[a-hj-z]*
-%{_datadir}/ansible/file
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.[a-eg-z]*
-%doc %{_mandir}/man3/ansible.f[a-hj-z]*
-%doc %{_mandir}/man3/ansible.file*
+%doc %{_mandir}/man3/ansible.*
+%exclude %{_mandir}/man3/ansible.fireball.*
 %doc examples/playbooks
 
 %files fireball
-%{_datadir}/ansible/fireball
+%{python_sitelib}/ansible/library/fireball
 %doc %{_mandir}/man3/ansible.fireball.*
 
 %files node-fireball
