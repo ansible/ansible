@@ -188,6 +188,7 @@ def main():
     virtualenv_command = module.params['virtualenv_command']
 
     if env:
+        env = os.path.expanduser(env)
         virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.check_mode:
