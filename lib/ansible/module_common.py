@@ -176,7 +176,9 @@ class AnsibleModule(object):
         self.aliases = {}
         
         if add_file_common_args:
-            self.argument_spec.update(FILE_COMMON_ARGUMENTS)
+            for k, v in FILE_COMMON_ARGUMENTS.iteritems():
+                if k not in self.argument_spec:
+                    self.argument_spec[k] = v
 
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
