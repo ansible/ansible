@@ -104,6 +104,8 @@ class Play(object):
             tasks = []
 
         for x in tasks:
+            if not isinstance(x, dict):
+                raise errors.AnsibleError("expecting dict; got: %s" % x)
             task_vars = self.vars.copy()
             task_vars.update(vars)
             if 'include' in x:
