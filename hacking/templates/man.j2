@@ -41,6 +41,24 @@
 {% endfor %}
 {% endif %}
 ."
+." ------ NODESREQUIRE
+{% if requirements %}
+.SH "NODE REQUIREMENTS"
+{% for req in requirements %}
+.PP
+@{ req | jpfunc }@ 
+{% endfor %}
+{% endif %}
+."
+." ------ CONTROLLERREQUIRES
+{% if control_requirements %}
+.SH "CONTROLLER REQUIRES"
+{% for req in control_requirements %}
+.PP
+@{ req | jpfunc }@ 
+{% endfor %}
+{% endif %}
+."
 ."
 ." ------ EXAMPLES
 {% if examples is defined %}
@@ -58,6 +76,8 @@
 {% endif %}
 ." ------ PLAINEXAMPLES
 {% if plainexamples is defined %}
+.SH EXAMPLES
+.PP
 .nf
 @{ plainexamples }@
 .fi

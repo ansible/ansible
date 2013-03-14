@@ -71,3 +71,21 @@
     {% endfor %}
 {% endif %}
 
+{% if requirements %}
+.. raw:: html
+
+    <h4>Nodes require</h4>
+    {% for req in requirements %}
+    <p>@{ req | html_ify }@</p>
+    {% endfor %}
+{% endif %}
+
+{% if control_requirements %}
+.. raw:: html
+
+    <h4>Controller requires</h4>
+    {% for req in control_requirements %}
+    <p>@{ req | html_ify }@</p>
+    {% endfor %}
+{% endif %}
+
