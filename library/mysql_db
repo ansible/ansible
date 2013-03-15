@@ -47,6 +47,11 @@ options:
       - Host running the database
     required: false
     default: localhost
+  login_unix_socket:
+    description:
+      - The path to a Unix domain socket for local connections
+    required: false
+    default: null
   state:
     description:
       - The database state
