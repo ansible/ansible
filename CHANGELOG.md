@@ -16,17 +16,27 @@ Core Features
 * a new chroot connection type
 * module common code now has basic type checking (and casting) capability 
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
+* inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
+* added configurable crypt scheme for 'vars_prompt'
+* password generating lookup plugin -- $PASSWORD(path/to/save/data/in)
 
 Modules Added:
 
 * rabbit_mq plugin module
 * rabbit_mq user module
 * rabbit_mq vhost module
+* rabbit_mq parameter module
 * mongodb_user module
 * new uri module -- can get/put/post/etc
 * CloudFormation module
 * zfs
+* okg
+* macports
+* gem
+* lvol (LVM logical volumes)
 * django-manage
+* openbsd_pkg
+* netscaler
 
 Bugfixes and Misc Changes:
 
@@ -38,12 +48,17 @@ Bugfixes and Misc Changes:
 * raise an error when multiple when_ statements are provided
 * --list-hosts applies host limit selections better
 * (internals) template engine specifications to use template_ds everywhere
-* better error message when your host file can't be found
+* better error message when your host file can not be found
 * end of line comments now work in the inventory file
 * directory destinations now work better with remote md5 code
 * lookup plugin macros like $FILE and $ENV now work without returning arrays in variable definitions/playbooks
 * uses yaml.safe_load everywhere
 * able to add EXAMPLES to documentation via EXAMPLES docstring, rather than just in main documentation YAML
+* can set ANSIBLE_COW_SELECTION to pick other cowsay types (including random)
+* to_nice_yaml and to_nice_json available as Jinja2 filters that indent and sort
+* cowsay able to run out of macports (very important!)
+* improved logging for fireball mode
+* nicer error message when talking to an older system that needs a JSON module installed
 
 Facts:
 
@@ -52,6 +67,10 @@ Facts:
 * fact detection for OS type on Amazon Linux
 * device fact gathering stability improvements
 * ansible_os_family fact added
+* user_id (remote user name)
+* a whole series of current time information under the 'datetime' hash
+* more OS X facts
+* support for detecting Alpine Linux
 
 Module Changes/Fixes:
 
@@ -85,6 +104,14 @@ Module Changes/Fixes:
 * charset fix to mail module
 * postresql db module now does not try to create the 'PUBLIC' user
 * SVN module now works correctly with self signed certs
+* apt module now has an upgrade parameter (values=yes, no, or 'dist')
+* nagios module gets new silence/unsilence commands
+* ability to disable proxy usage in get_url (use_proxy=no)
+* more OS X facts
+* added a 'fail_on_missing' (default no) option to fetch
+* added timeout to the uri module (default 30 seconds, adjustable)
+* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for seperate wait_for call.
+* allow regex backreferences in lineinfile
 
 Plugins:
 
@@ -189,7 +216,7 @@ Other core changes:
 
 * fix for template calls when last character is '$'
 * if ansible_python_interpreter is set on a delegated host, it now works as intended
-* --limit can now take "," as seperator as well as ";" or ":"
+* --limit can now take "," as separator as well as ";" or ":"
 * msg is now displaced with newlines when a task fails
 * if any with_ plugin has no results in a list (empty list for with_items, etc), the task is now skipped
 * various output formatting fixes/improvements
@@ -486,7 +513,7 @@ internals:
 * support for older versions of python-apt in the apt module
 * a new "assemble" module, for constructing files from pieces of files (inspired by Puppet "fragments" idiom)
 * ability to override most default values with ANSIBLE_FOO environment variables
-* --module-path parameter can support multiple directories seperated with the OS path seperator
+* --module-path parameter can support multiple directories separated with the OS path separator
 * with_items can take a variable of type list
 * ansible_python_interpreter variable available for systems with more than one Python
 * BIOS and VMware "fact" upgrades

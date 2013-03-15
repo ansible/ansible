@@ -20,11 +20,16 @@ OS = $(shell uname -s)
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
+MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1
+ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
-MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1
+else
+ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
+endif
 
-SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+PYTHON=python
+SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)
@@ -62,7 +67,7 @@ tests:
 	PYTHONPATH=./lib nosetests -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES) modulepages webdocs authors
+docs: $(MANPAGES) modulepages
 
 authors:
 	sh hacking/authors.sh
@@ -114,13 +119,13 @@ clean:
 	rm -rf docs/js
 
 python:
-	python setup.py build
+	$(PYTHON) setup.py build
 
 install:
-	python setup.py install
+	$(PYTHON) setup.py install
 
 sdist: clean docs
-	python setup.py sdist -t MANIFEST.in
+	$(PYTHON) setup.py sdist -t MANIFEST.in
 
 rpmcommon: sdist
 	@mkdir -p rpm-build
@@ -149,6 +154,7 @@ rpm: rpmcommon
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
 	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
+	--define "__python `which $(PYTHON)`" \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -167,16 +173,16 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
 
 modulejson:
 	mkdir -p docs/json
-	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
 
 modulejs:
 	mkdir -p docs/js
 	make modulejson
-	PYTHONPATH=./lib hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
 
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 
@@ -186,4 +192,3 @@ webdocs:
 # just for quick testing of all the module docs
 webdocs2:
 	(cd docsite; make modules)
-

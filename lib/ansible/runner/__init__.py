@@ -206,7 +206,12 @@ class Runner(object):
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
         try:
-            afo.write(data.encode('utf8'))
+            if not isinstance(data, unicode):
+                #ensure the data is valid UTF-8
+                data.decode('utf-8')
+            else:
+                data = data.encode('utf-8')
+            afo.write(data)
         except:
             raise errors.AnsibleError("failure encoding into utf-8")
         afo.flush()
@@ -343,7 +348,7 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and self.module_name in [ 'apt', 'yum' ]:
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum' ]:
                 # hack for apt and soon yum, with_items maps back into a single module call
                 inject['item'] = ",".join(items)
                 items = None
@@ -351,7 +356,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
 
         if items is None:
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
         elif len(items) > 0:
             # executing using with_items, so make multiple calls
             # TODO: refactor
@@ -362,7 +367,7 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port)
+                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -387,7 +392,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
 
@@ -401,7 +406,7 @@ class Runner(object):
 
         module_name = utils.template(self.basedir, module_name, inject)
         module_args = utils.template(self.basedir, module_args, inject)
-        
+        complex_args = utils.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -479,7 +484,7 @@ class Runner(object):
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
         
-        result = handler.run(conn, tmp, module_name, module_args, inject, self.complex_args)
+        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
         conn.close()
 
@@ -541,6 +546,7 @@ class Runner(object):
     def _remote_md5(self, conn, tmp, path):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
+        path = pipes.quote(path)
         test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % (path, path, path)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
@@ -573,7 +579,7 @@ class Runner(object):
 
         basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if self.sudo and self.sudo_user != 'root':
+        if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
@@ -681,7 +687,7 @@ class Runner(object):
     # *****************************************************
 
     def _partition_results(self, results):
-        ''' seperate results by ones we contacted & ones we didn't '''
+        ''' separate results by ones we contacted & ones we didn't '''
 
         if results is None:
             return None

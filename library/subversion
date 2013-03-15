@@ -49,7 +49,7 @@ options:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
     required: false
-    default: yes
+    default: "yes"
     choices: [ "yes", "no" ]
   username:
     description:
@@ -120,6 +120,17 @@ class Subversion(object):
         # Has local mods if more than 0 modifed revisioned files.
         return len(filter(regex.match, lines)) > 0
 
+    def needs_update(self):
+        curr, url = self.get_revision()
+        out2 = '\n'.join(self._exec("info -r HEAD '%s'" % self.dest))
+        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
+        rev1 = int(curr.split(':')[1].strip())
+        rev2 = int(head.split(':')[1].strip())
+        change = False
+        if rev1 < rev2:
+            change = True
+        return change, curr, head
+
 
 # ===========================================
 
@@ -132,7 +143,8 @@ def main():
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
-        )
+        ),
+        supports_check_mode=True
     )
 
     dest = os.path.expanduser(module.params['dest'])
@@ -147,11 +159,16 @@ def main():
     if not os.path.exists(dest):
         before = None
         local_mods = False
+        if module.check_mode:
+            module.exit_json(changed=True)
         svn.checkout()
     elif os.path.exists("%s/.svn" % (dest, )):
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
+        if module.check_mode:
+            check, before, after = svn.needs_update()
+            module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
         svn.switch()

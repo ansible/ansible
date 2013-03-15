@@ -41,7 +41,7 @@ options:
       - Desired boolean value
     required: true
     default: null
-    choices: [ "true", "false" ]
+    choices: [ true, false ]
 examples:
    - code: "seboolean: name=httpd_can_network_connect state=true persistent=yes"
      description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
@@ -160,7 +160,8 @@ def main():
             name=dict(required=True),
             persistent=dict(default='no', type='bool'),
             state=dict(required=True, type='bool')
-        )
+        ),
+        supports_check_mode=True
     )
 
     if not HAVE_SELINUX:
@@ -188,6 +189,8 @@ def main():
         result['changed'] = False
         module.exit_json(**result)
 
+    if module.check_mode:
+        module.exit_json(changed=True)
     if persistent:
         r = semanage_boolean_value(module, name, state)
     else:

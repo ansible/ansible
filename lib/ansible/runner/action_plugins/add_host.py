@@ -39,7 +39,10 @@ class ActionModule(object):
         if self.runner.check:
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
-        args = parse_kv(module_args)
+        args = {}
+        if complex_args:
+            args.update(complex_args)
+        args.update(parse_kv(module_args))
         if not 'hostname' in args and not 'name' in args:
             raise ae("'name' is a required argument.")
 

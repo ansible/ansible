@@ -25,6 +25,7 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
+from ansible.inventory.dir import InventoryDirectory
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible import errors
@@ -35,7 +36,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', '_is_script',
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
@@ -60,18 +61,13 @@ class Inventory(object):
         self._also_restriction = None
         self._subset = None
 
-        # whether the inventory file is a script
-        self._is_script = False
-
         if type(host_list) in [ str, unicode ]:
             if host_list.find(",") != -1:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
-        else:
-            utils.plugins.vars_loader.add_directory(self.basedir())
-
         if type(host_list) == list:
+            self.parser = None
             all = Group('all')
             self.groups = [ all ]
             for x in host_list:
@@ -81,8 +77,12 @@ class Inventory(object):
                 else:
                     all.add_host(Host(x))
         elif os.path.exists(host_list):
-            if utils.is_executable(host_list):
-                self._is_script = True
+            if os.path.isdir(host_list):
+                # Ensure basedir is inside the directory
+                self.host_list = os.path.join(self.host_list, "")
+                self.parser = InventoryDirectory(filename=host_list)
+                self.groups = self.parser.groups.values()
+            elif utils.is_executable(host_list):
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
@@ -92,6 +92,8 @@ class Inventory(object):
                     self.groups = self.parser.groups.values()
                 else:
                     raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+
+            utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
@@ -280,16 +282,8 @@ class Inventory(object):
                 vars.update(updated)
 
         vars.update(host.get_variables())
-        if self._is_script:
-            cmd = [self.host_list,"--host",hostname]
-            try:
-                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except OSError, e:
-                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-            (out, err) = sp.communicate()
-            results = utils.parse_json(out)
-
-            vars.update(results)
+        if self.parser is not None:
+            vars.update(self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):

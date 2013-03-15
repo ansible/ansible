@@ -173,3 +173,6 @@ class InventoryParser(object):
                         group.set_variable(k, re.sub(r"^['\"]|['\"]$", '', v))
                     else:
                         group.set_variable(k, v)
+
+    def get_host_variables(self, host):
+        return {}

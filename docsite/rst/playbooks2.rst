@@ -95,8 +95,8 @@ Even if you didn't define them yourself, ansible provides a few variables for yo
 The most important of these are 'hostvars', 'group_names', and 'groups'.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
-about that host.  If you haven't yet talked to that host in any play yet at this point in the playbook
-or set of playbooks, you can get at the variables, but you will not be able o see the facts.
+about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
+or set of playbooks, you can get at the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -209,6 +209,40 @@ some other options, but otherwise works equivalently::
        prompt: "Product release version"
        private: no
 
+If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the
+entered value so you can use it, for instance, with the user module to define a password::
+
+   vars_prompt:
+     - name: "my_password2"
+       prompt: "Enter password2"
+       private: yes
+       encrypt: "md5_crypt"
+       confirm: yes
+       salt_size: 7
+
+You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/passlib/lib/passlib.hash.html>`_ :
+
+- *des_crypt* - DES Crypt
+- *bsdi_crypt* - BSDi Crypt
+- *bigcrypt* - BigCrypt
+- *crypt16* - Crypt16
+- *md5_crypt* - MD5 Crypt
+- *bcrypt* - BCrypt
+- *sha1_crypt* - SHA-1 Crypt
+- *sun_md5_crypt* - Sun MD5 Crypt
+- *sha256_crypt* - SHA-256 Crypt
+- *sha512_crypt* - SHA-512 Crypt
+- *apr_md5_crypt* - Apache’s MD5-Crypt variant
+- *phpass* - PHPass’ Portable Hash
+- *pbkdf2_digest* - Generic PBKDF2 Hashes
+- *cta_pbkdf2_sha1* - Cryptacular’s PBKDF2 hash
+- *dlitz_pbkdf2_sha1* - Dwayne Litzenberger’s PBKDF2 hash
+- *scram* - SCRAM Hash
+- *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
+
+However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
+'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
+of size 8 will be generated.
 
 Passing Variables On The Command Line
 `````````````````````````````````````
@@ -290,7 +324,7 @@ In Ansible 0.8, a few shortcuts are available for testing whether a variable is 
 
 There is a matching 'is_unset' that works the same way.  Quoting the variable inside the function is mandatory.
 
-When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed seperately for each item.
+When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed separately for each item.
 This is by design::
 
     tasks:
@@ -309,7 +343,7 @@ Conditional Execution (Simplified)
 
 In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
 to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
-to be quoted or casted to specify types, but you should seperate any variables used with whitespace.  In
+to be quoted or casted to specify types, but you should separate any variables used with whitespace.  In
 most cases users will be able to use 'when', but for more complex cases, only_if may still be required.
 
 Here are various examples of 'when' in use.  'when' is incompatible with 'only_if' in the same task::
@@ -372,7 +406,7 @@ to a task include statement as below.  Note this does not work with playbook inc
 get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
-      when_string: 'reticulating splines' in $output
+      when_string: "'reticulating splines' in $output"
 
 Conditional Imports
 ```````````````````
@@ -430,7 +464,7 @@ Loops
 
 To save some typing, repeated tasks can be written in short-hand like so::
 
-    - name: add user $item
+    - name: add several users
       action: user name=$item state=present groups=wheel
       with_items:
          - testuser1
@@ -571,6 +605,44 @@ Negative numbers are not supported.  This works as follows::
         - group: name=group${item} state=present
           with_sequence: count=4
 
+.. versionadded: 1.1
+
+'with_password' and associated macro "$PASSWORD" generate a random plaintext password and store it in
+a file at a given filepath. If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents,
+behaving just like $FILE/'with_file'.
+
+Generated passwords contain a random mix of upper and lower case letters in the ASCII alphabets, the
+numbers 0-9 and the punctuation signs ".,:-_". The default length of a generated password is 30 characters.
+This gives us ~ 180 bits of entropy. However, this length can be changed by passing an extra parameter.
+
+This is how it all works, with an exemplary use case, which is generating a different random password for every
+mysql database in a given server pool:
+
+    ---
+    - hosts: all
+
+      tasks:
+
+        # create a mysql user with a random password:
+        - mysql_user: name=$client
+                      password=$PASSWORD(credentials/$client/$tier/$role/mysqlpassword)
+                      priv=$client_$tier_$role.*:ALL
+
+        (...)
+
+        # dump a mysql database with a given password
+        - mysql_db: name=$client_$tier_$role
+                    login_user=$client
+                    login_password=$item
+                    state=dump
+                    target=/tmp/$client_$tier_$role_backup.sql
+          with_password: credentials/$client/$tier/$role/mysqlpassword
+
+        # make a longer or shorter password by appending a length parameter:
+        - mysql_user: name=who_cares
+                      password=$item
+          with_password: files/same/password/everywhere length=4
+
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
 
@@ -597,7 +669,7 @@ The environment can also be stored in a variable, and accessed like so::
       # here we make a variable named "env" that is a dictionary
       vars:
         proxy_env:
-          http_proxy=http://proxy.example.com:8080
+          http_proxy: http://proxy.example.com:8080
 
       tasks:
 
@@ -613,8 +685,8 @@ to define an environment hash might be a group_vars file, like so::
     ntp_server: ntp.bos.example.com
     backup: bak.bos.example.com
     proxy_env:
-      http_proxy=http://proxy.bos.example.com:8080
-      https_proxy=http://proxy.bos.example.com:8080
+      http_proxy: http://proxy.bos.example.com:8080
+      https_proxy: http://proxy.bos.example.com:8080
 
 Getting values from files
 `````````````````````````
@@ -910,7 +982,7 @@ priority.
 6.  Host variables from inventory.
 
 7.  Group variables from inventory in inheritance order.  This means if a group includes a sub-group, the variables
-in the subgroup have higher precedence.
+    in the subgroup have higher precedence.
 
 Therefore, if you want to set a default value for something you wish to override somewhere else, the best
 place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
@@ -945,8 +1017,8 @@ feature produces a large amount of output, it is best used when checking a singl
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
-Passing Complex Arguments From Dictionaries
-```````````````````````````````````````````
+Dictionary & Nested (Complex) Arguments
+```````````````````````````````````````
 
 As a review, most tasks in ansbile are of this form::
 
@@ -956,14 +1028,12 @@ As a review, most tasks in ansbile are of this form::
         yum: name=cobbler state=installed
 
 However, in some cases, it may be useful to feed arguments directly in from a hash (dictionary).  In fact, a very small
-number of modules (the CloudFormations module is one) actually require complex arguments that can't be fit
-into a key=value system.  To pass arguments in from a hash (dictionary), do this::
+number of modules (the CloudFormations module is one) actually require complex arguments.  They work like this::
 
     tasks:
 
       - name: call a module that requires some complex arguments
-        module_name_goes_here: asdf=1234
-        args:
+        foo_module:
            fibonacci_list:
              - 1
              - 1
@@ -976,70 +1046,22 @@ into a key=value system.  To pass arguments in from a hash (dictionary), do this
              fish:
                - limpet
                - nemo
+               - ${other_fish_name}
 
-While complex arguments can be fed to most modules in Ansible, they should only be used where needed.  Note
-that variable interpolation works exactly as you would suspect, so you can use "${foo}" and so on in values
-inside of the dictionary you pass to "args".
+You can of course use variables inside these, as noted above.
 
-If both key=value arguments are given along with 'args', the key=value arguments take priority.  This technically
-means you can set defaults by using 'args' if you so choose, though that is not the intended purpose of this
-feature.
+If using local_action, you can do this::
 
-Advanced Task Includes
-``````````````````````
+    - name: call a module that requires some complex arguments
+      local_action:
+        module: foo_module
+        arg1: 1234
+        arg2: 'asdf'
 
-In above sections we talked about task includes, and how to do loops using with_items.  If we wish
-to externalize data from the playbook rules itself, this is possible by combining some concepts.
+Which of course means, though more verbose, this is also technically legal syntax::
 
-This is not something everyone may need to do at first, but it's a clever trick and deserves explanation.
-Here is a top level example playbook that loads variables from an external file and also tasks from an
-external file.  You will note that we use a list (using with_items) as a parameter on the include
-statement::
-
-    ---
-    # file: playbook-demo.yml
-
-    hosts: all
-    vars_files:
-       - config/users.yml
-    tasks:
-      - include: tasks/user.yml user=$item
-        with_items: $users
-
-We've defined our user definitions in an external file.  This allows us to reference that list of users in
-multiple playbooks.  The users list also defines users as a list of hashes, rather than just the usernames.
-We are also loading the SSH public keys for those users from the filesystem, though we could choose to embed
-them in the file instead.  It's up to you::
-
-    ----
-    # file: config/users.yml
-
-    users:
-      - name: alice
-        password: cryptedPasswordHere
-        sshkey: $FILE(/home/alice/id_rsa.pub)
-
-      - name: bob
-        password: cryptedPasswordHere
-        sshkey: $FILE(/home/bob/id_rsa.pub)
-
-Now that we have these two things together, we can write a task include file the playbook can use that sets
-up *all* of the users, rather than mentioning each user by name, or going to lots of trouble to correlate
-the user names with the SSH keys, and so on::
-
-    ---
-    # file: tasks/user.yml
-
-    - name: ensure user ${user.username} exists
-      action: user state=present name=${user.username} password=${user.password}
-
-    - name: install authorized keys for ${user.username}
-      action: authorized_key state=present user=${user.username} key="${user.sshkey}"
-
-If you can follow this example, you've done pretty well!  It combines most of the language features
-of example all together.  As you can see, there are lots of different ways to load data from
-sources, and to organize things.  Ansible does not really make you pick one or the other, so choose
-an approach that works best for you.
+    - name: foo
+      template: { src: '/templates/motd.j2', dest: '/etc/motd' }
 
 Style Points
 ````````````

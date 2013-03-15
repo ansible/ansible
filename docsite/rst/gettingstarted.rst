@@ -39,6 +39,18 @@ also need:
    then allows you to use everything else.  (That's jumping ahead
    though.)
 
+.. note::
+
+   Python 3 is a slightly different language than Python 2 and most python programs (including
+   Ansible) are not
+   switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Python 2.X interpreter installed by default.  On those systems, you should install one, and set
+   the 'ansible_python_interpreter' variable in inventory to point at your 2.X python.  Distributions
+   like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
+   by default and this does not apply to those distributions.  This is also true of nearly all
+   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
+   using the 'raw' module will be able to do it remotely.
+
 Getting Ansible
 ```````````````
 
@@ -170,8 +182,8 @@ Please refer to the documentation at <http://www.macports.org> for
 further information on using Portfiles with MacPorts.
 
 
-Debian, Gentoo, Arch, Others
-++++++++++++++++++++++++++++
+Ubuntu and Debian
++++++++++++++++++
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_
 
@@ -180,6 +192,9 @@ Debian/Ubuntu package recipes can also be built from the source checkout, run:
 .. code-block:: bash
 
     $ make debian
+
+Gentoo, Arch, Others
+++++++++++++++++++++
 
 Gentoo eBuilds are available `on github here <https://github.com/uu/ubuilds>`_
 
@@ -190,9 +205,8 @@ If you have python3 installed on Arch, you probably want to symlink python to py
 
     $ sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-If you would like to package Ansible for Homebrew, BSD, or others,
-please stop by the mailing list and say hi!
-
+You should also set a 'ansible_python_interpreter' inventory variable for hosts that have python 
+pointing to python3, so the right python can be found on the managed nodes.
 
 Tagged Releases
 +++++++++++++++

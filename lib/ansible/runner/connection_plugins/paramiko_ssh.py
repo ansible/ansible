@@ -156,8 +156,8 @@ class Connection(object):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
             self.sftp = self.ssh.open_sftp()
-        except:
-            raise errors.AnsibleError("failed to open a SFTP connection")
+        except Exception, e:
+            raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
         try:
             self.sftp.put(in_path, out_path)
         except IOError:
@@ -176,8 +176,8 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
             self.sftp = self._connect_sftp()
-        except:
-            raise errors.AnsibleError("failed to open a SFTP connection")
+        except Exception, e:
+            raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
         try:
             self.sftp.get(in_path, out_path)
         except IOError:

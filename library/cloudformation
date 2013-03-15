@@ -32,7 +32,8 @@ options:
     description:
       - If a stacks fails to form, rollback will remove the stack
     required: false
-    default: false
+    default: "no"
+    choices: [ "yes", "no" ]
     aliases: []
   template_parameters:
     description:
@@ -63,7 +64,8 @@ options:
     description:
       - Wait while the stack is being created/updated/deleted.
     required: false
-    default: true
+    default: "yes"
+    choices: [ "yes", "no" ]
     aliases: []
 
 examples:
@@ -72,7 +74,7 @@ examples:
   - name: launch ansible cloudformation example
     cloudformation: >
       stack_name="ansible-cloudformation" state=present
-      region=us-east-1 disable_rollback=true
+      region=us-east-1 disable_rollback=yes
       template=files/cloudformation-example.json
     args:
       template_parameters:
