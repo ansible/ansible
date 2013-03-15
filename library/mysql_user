@@ -91,7 +91,17 @@ requirements: [ "ConfigParser", "MySQLdb" ]
 author: Mark Theunissen
 '''
 
+EXAMPLES = """
+# Example .my.cnf file for setting the root password
+# Note: don't use quotes around the password, because the mysql_user module
+# will include them in the password but the mysql client will not
+[client]
+user=root
+password=n<_665{vS43y
+"""
+
 import ConfigParser
+import getpass
 try:
     import MySQLdb
 except ImportError:
@@ -253,10 +263,13 @@ def load_mycnf():
             passwd = config.get('client', 'pass')
         except (ConfigParser.NoOptionError):
             return False
+
+    # If .my.cnf doesn't specify a user, default to user login name
     try:
-        creds = dict(user=config.get('client', 'user'),passwd=passwd)
+        user = config.get('client', 'user')
     except (ConfigParser.NoOptionError):
-        return False
+        user = getpass.getuser()
+    creds = dict(user=user,passwd=passwd)
     return creds
 
 # ===========================================
