@@ -19,6 +19,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import tempfile
+
 DOCUMENTATION = '''
 ---
 module: pip
@@ -217,6 +219,7 @@ def main():
 
     if module.check_mode:
         module.exit_json(changed=True)
+    os.chdir(tempfile.gettempdir())
     rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip
