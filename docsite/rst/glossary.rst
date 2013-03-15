@@ -335,7 +335,7 @@ Resource Model
 
 Ansible modules work in terms of resources.   For instance the file module will select a particular file, say, /etc/motd
 and ensure that attributes of that resource match a particular model, for instance, we might wish to set the ownership
-to 'root' if not already set to root, or set the mode to '0644' if not already set to 06444.  The resource models
+to 'root' if not already set to root, or set the mode to '0644' if not already set to '0644'.  The resource models
 are 'idempotent' meaning change commands are not run unless needed, and ansible will bring the system back to a desired
 state regardless of the actual state -- rather than you having to tell it how to get to the state.
 
