@@ -337,6 +337,8 @@ class Runner(object):
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups'] = self.inventory.groups_list()
+        if self.inventory.basedir() is not None:
+            inject['inventory_dir'] = self.inventory.basedir()
 
         # allow with_foo to work in playbooks...
         items = None
