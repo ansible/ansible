@@ -5,7 +5,7 @@ Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
 Modules can be written in any language and are found in the path specified
-by `ANSIBLE_LIBRARY_PATH` or the ``--module-path`` command line option.
+by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
 .. contents::
    :depth: 2
