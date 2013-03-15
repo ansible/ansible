@@ -73,14 +73,14 @@ options:
          C(BOF) for inserting the line at the beginning of the
         file.
     choices: [ 'BOF', '*regex*' ]
-  appendat:
+  append_at:
     required: false
     version_added: 1.1
     description:
       - Used with C(state=present). If specified, the line will be inserted
         at the start of the line with the specified regular expression. 
     choices: [ '*regex*' ]
-  prependat:
+  prepend_at:
     required: false
     version_added: 1.1
     description:
@@ -120,9 +120,9 @@ EXAMPLES = """
 
    lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\"
 
-   lineinfile: \\\"dest='/etc/passwd' line='#' prependat='^root:' regexp='^#root:' state='present'\\\"
+   lineinfile: \\\"dest='/etc/passwd' line='#' prepend_at='^root:' regexp='^#root:' state='present'\\\"
 
-   lineinfile: \\\"dest='/usr/pkg/etc/httpd/httpd.conf' line=' index.php' appendat='DirectoryIndex' regexp='DirectoryIndex.*index.php' state='present'\\\"
+   lineinfile: \\\"dest='/usr/pkg/etc/httpd/httpd.conf' line=' index.php' append_at='DirectoryIndex' regexp='DirectoryIndex.*index.php' state='present'\\\"
 """
    
 
@@ -138,7 +138,7 @@ def check_file_attrs(module, changed, message):
 
     return [ message, changed ]
 
-def present(module, dest, regexp, line, insertafter, insertbefore, prependat, appendat, create, backup):
+def present(module, dest, regexp, line, insertafter, insertbefore, prepend_at, append_at, create, backup):
 
     if os.path.isdir(dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
@@ -158,7 +158,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, prependat, ap
 
     mre = re.compile(regexp)
     if not mre.search(line):
-        if prependat is None and appendat is None:
+        if prepend_at is None and append_at is None:
             module.fail_json(msg="usage error: line= doesn't match regexp (%s)" % regexp)
         else:
             # Hard to say - leave and see
@@ -168,16 +168,16 @@ def present(module, dest, regexp, line, insertafter, insertbefore, prependat, ap
         insre = re.compile(insertafter)
     elif insertbefore is not None and insertbefore not in ('BOF'):
         insre = re.compile(insertbefore)
-    elif prependat is not None:
-        insre = re.compile(prependat)
-    elif appendat is not None:
-        insre = re.compile(appendat)
+    elif prepend_at is not None:
+        insre = re.compile(prepend_at)
+    elif append_at is not None:
+        insre = re.compile(append_at)
     else:
         insre = None
 
     # index[0] is the line num where regexp has been found
     # index[1] is the line num where insertafter/inserbefore has been found
-    # index[2] is the line num where appendat/prependat has been found
+    # index[2] is the line num where append_at/prepend_at has been found
     index = [-1, -1, -1]
     for lineno in range(0, len(lines)):
         if mre.search(lines[lineno]):
@@ -189,18 +189,18 @@ def present(module, dest, regexp, line, insertafter, insertbefore, prependat, ap
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
-            if prependat:
+            if prepend_at:
                 index[2] = lineno
-            if appendat:
+            if append_at:
                 index[2] = lineno
 
     # Regexp matched a line in the file
     if index[0] != -1:
-        if prependat is not None:
+        if prepend_at is not None:
 	    # Text already present, do nothing
             msg = ''
             changed = False
-        elif appendat is not None:
+        elif append_at is not None:
 	    # Text already present, do nothing
             msg = ''
             changed = False
@@ -217,9 +217,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, prependat, ap
         lines.insert(0, line + os.linesep)
         msg = 'line added'
         changed = True
-    # Append/prepend at the line the appendat/prependat regex was found
+    # Append/prepend at the line the append_at/prepend_at regex was found
     elif index[2] != -1:
-        if prependat is not None:
+        if prepend_at is not None:
              # Prepend to start of line
              lines[index[2]] = line + lines[index[2]]
              msg = 'text prepended'
@@ -298,12 +298,12 @@ def main():
             line=dict(aliases=['value']),
             insertafter=dict(default=None),
             insertbefore=dict(default=None),
-            appendat=dict(default=None),
-            prependat=dict(default=None),
+            append_at=dict(default=None),
+            prepend_at=dict(default=None),
             create=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
         ),
-        mutually_exclusive = [['insertbefore', 'insertafter', 'prependat', 'appendat']],
+        mutually_exclusive = [['insertbefore', 'insertafter', 'prepend_at', 'append_at']],
         add_file_common_args = True,
         supports_check_mode = True
     )
@@ -318,7 +318,7 @@ def main():
             module.fail_json(msg='line= is required with state=present')
         present(module, dest, params['regexp'], params['line'],
                 params['insertafter'], params['insertbefore'], 
-                params['prependat'], params['appendat'], 
+                params['prepend_at'], params['append_at'], 
 		create, backup)
     else:
         absent(module, dest, params['regexp'], backup)
