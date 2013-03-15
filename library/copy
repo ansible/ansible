@@ -82,19 +82,19 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src=dict(required=False),
-            content=dict(required=False),
-            dest=dict(required=True),
-            backup=dict(default=False, type='bool'),
-            force = dict(default='yes', aliases=['thirsty'], type='bool'),
+            src     = dict(required=False),
+            content = dict(required=False),
+            dest    = dict(required=True),
+            backup  = dict(default=False, type='bool'),
+            force   = dict(default=True, aliases=['thirsty'], type='bool'),
         ),
         add_file_common_args=True,
     )
 
-    src  = os.path.expanduser(module.params['src'])
-    dest = os.path.expanduser(module.params['dest'])
+    src    = os.path.expanduser(module.params['src'])
+    dest   = os.path.expanduser(module.params['dest'])
     backup = module.params['backup']
-    force = module.params['force']
+    force  = module.params['force']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))

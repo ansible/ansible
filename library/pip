@@ -30,7 +30,7 @@ options:
   name:
     description:
       - The name of a Python library to install
-    required: true
+    required: false
     default: null
   version:
     description:
@@ -56,7 +56,8 @@ options:
         have any effect, the environment must be deleted and newly
         created.
     required: false
-    default: no
+    default: "no"
+    choices: [ "yes", "no" ]
   virtualenv_command:
     version_aded: 1.1
     description:
@@ -70,7 +71,7 @@ options:
         an older version of pip (< 1.0), you should set this to no because
         older versions of pip do not support I(--use-mirrors).
     required: false
-    default: yes
+    default: "yes"
     choices: [ "yes", "no" ]
     version_added: "1.0"
   state:
@@ -187,6 +188,7 @@ def main():
     virtualenv_command = module.params['virtualenv_command']
 
     if env:
+        env = os.path.expanduser(env)
         virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.check_mode:
@@ -229,7 +231,7 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=env)
+                     state=state, requirements=requirements, virtualenv=env, stdout=out, stderr=err)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

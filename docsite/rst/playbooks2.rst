@@ -95,8 +95,8 @@ Even if you didn't define them yourself, ansible provides a few variables for yo
 The most important of these are 'hostvars', 'group_names', and 'groups'.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
-about that host.  If you haven't yet talked to that host in any play yet at this point in the playbook
-or set of playbooks, you can get at the variables, but you will not be able o see the facts.
+about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
+or set of playbooks, you can get at the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::

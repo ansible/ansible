@@ -115,7 +115,7 @@ options:
         in the policy. Does nothing if no default value is available.
   recurse:
     required: false
-    default: no
+    default: "no"
     choices: [ "yes", "no" ]
     version_added: "1.1"
     description:
