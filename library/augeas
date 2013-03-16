@@ -191,7 +191,7 @@ def main():
                              ' You have to switch of filepath validation if you want to proceed.')
 
     augeas_instance = Augeas(root=module.params['root'], loadpath=module.params['loadpath'],
-                             flags=Augeas.ENABLE_SPAN)
+                             flags=getattr(Augeas, 'ENABLE_SPAN', 0))
     command = module.params['command']
     value = module.params['value']
     if (command == 'set') != (value is not _missing):
