@@ -203,8 +203,9 @@ def main():
             validate_path(augeas_instance, path)
         except FileNotFound, e:
             module.fail_json(msg='It seems that augeas was not able to match any file for given path. '
-                                 'Prefix which is matched: \'%s\'. '
-                                 'Please check your path for typos.' % e.correct_subpath)
+                                 'Prefix which is matched: \'%s\'. You can explore which files where '
+                                 'parsed through \'mach\' calls - start with: "augeas command=match path=/files/*" '
+                                 'and use recursive calls for subdirectories.' % e.correct_subpath)
         except PathNotFound:
             pass
 
