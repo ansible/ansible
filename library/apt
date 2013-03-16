@@ -226,41 +226,45 @@ def main():
     p = module.params
     install_recommends = p['install_recommends']
 
-    cache = apt.Cache()
-    if p['default_release']:
-        apt_pkg.config['APT::Default-Release'] = p['default_release']
-        # reopen cache w/ modified config
-        cache.open(progress=None)
+    try:
+        cache = apt.Cache()
+        if p['default_release']:
+            apt_pkg.config['APT::Default-Release'] = p['default_release']
+            # reopen cache w/ modified config
+            cache.open(progress=None)
 
-    if p['update_cache']:
-        cache.update()
-        cache.open(progress=None)
-        if not p['package']:
-            module.exit_json(changed=False)
+        if p['update_cache']:
+            cache.update()
+            cache.open(progress=None)
+            if not p['package']:
+                module.exit_json(changed=False)
 
-    force_yes = p['force']
+        force_yes = p['force']
 
-    if p['upgrade']:
-        upgrade(module, p['upgrade'])
+        if p['upgrade']:
+            upgrade(module, p['upgrade'])
 
-    packages = p['package'].split(',')
-    latest = p['state'] == 'latest'
-    for package in packages:
-        if package.count('=') > 1:
-            module.fail_json(msg="invalid package spec: %s" % package)
-        if latest and '=' in package:
-            module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+        packages = p['package'].split(',')
+        latest = p['state'] == 'latest'
+        for package in packages:
+            if package.count('=') > 1:
+                module.fail_json(msg="invalid package spec: %s" % package)
+            if latest and '=' in package:
+                module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
-    if p['state'] == 'latest':
-        install(module, packages, cache, upgrade=True,
-                default_release=p['default_release'],
-                install_recommends=install_recommends,
-                force=force_yes)
-    elif p['state'] in [ 'installed', 'present' ]:
-        install(module, packages, cache, default_release=p['default_release'],
-                  install_recommends=install_recommends,force=force_yes)
-    elif p['state'] in [ 'removed', 'absent' ]:
-        remove(module, packages, cache, p['purge'])
+        if p['state'] == 'latest':
+            install(module, packages, cache, upgrade=True,
+                    default_release=p['default_release'],
+                    install_recommends=install_recommends,
+                    force=force_yes)
+        elif p['state'] in [ 'installed', 'present' ]:
+            install(module, packages, cache, default_release=p['default_release'],
+                      install_recommends=install_recommends,force=force_yes)
+        elif p['state'] in [ 'removed', 'absent' ]:
+            remove(module, packages, cache, p['purge'])
+
+    except apt.cache.LockFailedException:
+        module.fail_json(msg="Failed to lock apt for exclusive operation")
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
