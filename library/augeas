@@ -198,14 +198,15 @@ def main():
         module.fail_json(msg='You should use \'value\' argument with \'set\' command.')
 
     path = module.params['path']
-    try:
-        validate_path(augeas_instance, path)
-    except FileNotFound, e:
-        module.fail_json(msg='It seems that augeas was not able to match any file for given path. '
-                             'Prefix which is matched: \'%s\'. '
-                             'Please check your path for typos.' % e.correct_subpath)
-    except PathNotFound:
-        pass
+    if module.params['validate_filepath']:
+        try:
+            validate_path(augeas_instance, path)
+        except FileNotFound, e:
+            module.fail_json(msg='It seems that augeas was not able to match any file for given path. '
+                                 'Prefix which is matched: \'%s\'. '
+                                 'Please check your path for typos.' % e.correct_subpath)
+        except PathNotFound:
+            pass
 
     if augeas_instance.get(path) == value:
         module.exit_json(changed=False)
