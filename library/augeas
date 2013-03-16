@@ -78,12 +78,12 @@ examples:
     description: 'Multiple values change with loop'
 
   - code: |
-      - name: Fetch users list from sshd_config
-        action: augeas command='match' path='/files/etc/ssh/sshd_config/AllowUsers/*'
-        register: allow_users
+      - name: Check wether given user is listed in sshd_config
+        action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[. = \"${user}\"]"
+        register: user_entry
       - name: Allow user to login through ssh
         action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="${user}"
-        only_if: "'${user}' not in [m['value'] for m in ${allow_users.matches}]"
+        only_if: "not ${user_entry.matches}"
     description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
 '''
 
