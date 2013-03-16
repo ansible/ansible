@@ -196,7 +196,12 @@ Debian/Ubuntu package recipes can also be built from the source checkout, run:
 Gentoo, Arch, Others
 ++++++++++++++++++++
 
-Gentoo eBuilds are available `on github here <https://github.com/uu/ubuilds>`_
+Gentoo eBuilds are in portage, version 1.0 `coming soon <https://bugs.gentoo.org/show_bug.cgi?id=461830>`_.
+
+.. code-block:: bash
+
+    $ emerge ansible
+
 
 An Arch PKGBUILD is available on `AUR <https://aur.archlinux.org/packages.php?ID=58621>`_
 If you have python3 installed on Arch, you probably want to symlink python to python2:
