@@ -58,10 +58,10 @@ options:
     default: True
     description:
       - 'Check if given path matches any file in filesystem.'
-  verify:
+  validate_set_result:
     required: false
-    default: None
-    choices: [ exact, counter ]
+    default: "guess"
+    choices: [ guess, exact, counter ]
     description:
       - 'This option can be used with "set" command. It tries to verify if given value was set correctly. You can use "counter" choice if you are appending new value to enumerated list.'
 examples:
@@ -182,11 +182,11 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            validate_filepath=dict(default=True, type='bool'),
+            validate_filepath=dict(default=_missing, type='bool'),
             command=dict(default='set', choices=['set', 'rm', 'match']),
             path=dict(required=True, aliases=['name']),
             value=dict(default=_missing),
-            verify=dict(default=None, choices=['counter', 'exact']),
+            validate_set_result=dict(default='guess', choices=['guess', 'counter', 'exact']),
         )
     )
     if augeas is None:
@@ -201,14 +201,17 @@ def main():
                              flags=getattr(Augeas, 'ENABLE_SPAN', 0))
     command = module.params['command']
     value = module.params['value']
-    verify = module.params['verify']
+    validate_set_result = module.params['validate_set_result']
     if (command == 'set') != (value is not _missing):
         module.fail_json(msg='You should use \'value\' argument with \'set\' command.')
-    if verify is not None and command != 'set':
-        module.fail_json(msg='You can use \'verify\' argument with \'set\' command only.')
+    if validate_set_result is not None and command != 'set':
+        module.fail_json(msg='You can use \'validate_set_result\' argument with \'set\' command only.')
 
     path = module.params['path']
-    if module.params['validate_filepath']:
+    validate_filepath = module.params['validate_filepath']
+    # by default skip filepath validation for match
+    validate_filepath = validate_filepath if validate_filepath is not _missing else command != 'match'
+    if validate_filepath:
         try:
             validate_path(augeas_instance, path)
         except FileNotFound, e:
@@ -230,14 +233,17 @@ def main():
         augeas_instance.set(path, value)
     augeas_instance.save()
 
-    if command == 'set' and verify is not None:
+    if command == 'set':
         augeas_instance = Augeas(root=module.params['root'],
                                  loadpath=module.params['loadpath'],
                                  flags=augeas_instance.ENABLE_SPAN)
-        if verify == 'exact':
+        path_regexp = re.compile('(.*/)([0-9]+)$')
+        if validate_set_result == 'guess':
+            validate_set_result = 'counter' if path_regexp.match(path) else 'exact'
+        if validate_set_result == 'exact':
             p = path
         else:
-            m = re.match('(.*/)([0-9]+)$', path)
+            m = path_regexp.match(path)
             if m:
                 prefix = m.groups()[0]
                 index = m.groups()[1]
