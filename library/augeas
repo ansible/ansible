@@ -58,6 +58,12 @@ options:
     default: True
     description:
       - 'Check if given path matches any file in filesystem.'
+  verify:
+    required: false
+    default: None
+    choices: [ exact, counter ]
+    description:
+      - 'This option can be used with "set" command. It tries to verify if given value was set correctly. You can use "counter" choice if you are appending new value to enumerated list.'
 examples:
   - code: 'augeas: path=/files/etc/sudoers/spec[user=admin]/host_group/command/tag value=PASSWD'
     description: 'Simple value change'
@@ -180,6 +186,7 @@ def main():
             command=dict(default='set', choices=['set', 'rm', 'match']),
             path=dict(required=True, aliases=['name']),
             value=dict(default=_missing),
+            verify=dict(default=None, choices=['counter', 'exact']),
         )
     )
     if augeas is None:
@@ -194,8 +201,11 @@ def main():
                              flags=getattr(Augeas, 'ENABLE_SPAN', 0))
     command = module.params['command']
     value = module.params['value']
+    verify = module.params['verify']
     if (command == 'set') != (value is not _missing):
         module.fail_json(msg='You should use \'value\' argument with \'set\' command.')
+    if verify is not None and command != 'set':
+        module.fail_json(msg='You can use \'verify\' argument with \'set\' command only.')
 
     path = module.params['path']
     if module.params['validate_filepath']:
@@ -219,6 +229,39 @@ def main():
     else:
         augeas_instance.set(path, value)
     augeas_instance.save()
+
+    if command == 'set' and verify is not None:
+        augeas_instance = Augeas(root=module.params['root'],
+                                 loadpath=module.params['loadpath'],
+                                 flags=augeas_instance.ENABLE_SPAN)
+        if verify == 'exact':
+            p = path
+        else:
+            m = re.match('(.*/)([0-9]+)$', path)
+            if m:
+                prefix = m.groups()[0]
+                index = m.groups()[1]
+                if index.startswith('0') or len(augeas_instance.match(prefix + '*')) < int(index):
+                    p = '%s%i' % (prefix, len(augeas_instance.match(prefix + '*')))
+                else:
+                    p = path
+            else:
+                p = path
+        if augeas_instance.get(p) != value:
+            try:
+                path_info = validate_path(augeas_instance, p)
+            except PathNotFound, e:
+                module.fail_json(msg='Augeas was not able to set given value. '
+                                     'Longest existing prefix of your path is : \'%s\'. '
+                                     'Please check your path for typos.' % e.correct_subpath)
+            else:
+                if path_info['filepath'] == p:
+                    module.fail_json(msg='Augeas wasn\'t able to set given value beacause '
+                                         'it points to a file: %s' % path_info['filename'])
+                else:
+                    module.fail_json(msg='Augeas wasn\'t able to set given path but '
+                                         'it seems that it exists and equals: %s' % augeas_instance.get(p))
+
 
     module.exit_json(changed=True)
 
