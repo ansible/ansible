@@ -56,6 +56,11 @@ options:
       - Host running the database
     required: false
     default: localhost
+  login_unix_socket:
+    description:
+      - The path to a Unix domain socket for local connections
+    required: false
+    default: null
   priv:
     description:
       - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
@@ -74,6 +79,8 @@ examples:
      description: Ensure no user named 'sally' exists, also passing in the auth credentials.
    - code: mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
      description: Example privileges string format
+   - code: "mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock"
+     description: Example using login_unix_socket to connect to server
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
