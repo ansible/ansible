@@ -129,11 +129,40 @@ options:
     required: false
     default: null
     aliases: []
+    
+  vpc_private_ip_address:
+    version_added: "1.1"
+    description:
+      - the specific VPC IP Address to launch the instance (VPC)
+    required: false
+    default: null
+    aliases: []
+  
 examples:
    - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=yes group=webserver count=3 group=webservers'
      description: "Examples from Ansible Playbooks"
+     
+   VPC example:
+   - action: Create a VPC/EC2 instance (AWS-VPC-EC2)
+   local_action:
+                ec2
+                count=1
+                ec2_access_key=AJIYDSNKDYGISHIH
+                ec2_secret_key=jYF766HBbuyg8B8Y79967V7bh9776v877gg8
+                image=ami-7ecf5c17
+                key_name=my-ec2-ssh-key.pub
+                instance_tags='{"Name":"My VPC Instance Test 01"}'
+                instance_type=t1.micro
+                group=MY-VPC-SPECIFIC-SECURITY-GROUP-24
+                ###group_id=sg-ad878w9
+                wait=true
+                vpc_private_ip_address="10.0.2.100"
+                vpc_subnet_id=subnet-89j8qhf                        #Id for my subnet vpc eg: 10.0.2.*
+     register: ec2
+     description: "Examples from SamukaSmk Playbooks"
+     
 requirements: [ "boto" ]
-author: Seth Vidal, Tim Gerla, Lester Wade
+author: Seth Vidal, Tim Gerla, Lester Wade, Samuel Sampaio
 '''
 
 import sys
@@ -164,6 +193,7 @@ def main():
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
             user_data = dict(),
             instance_tags = dict(),
+            vpc_private_ip_address = dict(aliases=['private_ip_address']),
             vpc_subnet_id = dict(),
         )
     )
@@ -184,6 +214,7 @@ def main():
     ec2_access_key = module.params.get('ec2_access_key')
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
+    vpc_private_ip_address = module.params.get('vpc_private_ip_address')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
@@ -194,6 +225,7 @@ def main():
     if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
+
     try:
         if ec2_url: # if we have an URL set, connect to the specified endpoint 
             ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
@@ -201,16 +233,27 @@ def main():
             ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
-    
-    # Here we try to lookup the group name from the security group id - if group_id is set.
 
+    if group_id and group_name:
+        module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
+        sys.exit(1)    
+        
     try:
-        if group_id:
+        # Here we try to lookup the group id from the security group name - if group is set.
+        if group_name:
+            grp_details = ec2.get_all_security_groups()
+            for id in range(0, len(grp_details)):
+                if str(group_name) in str(grp_details[id]):
+                    group_id = str(grp_details[id].id)
+        # Now we try to lookup the group id testing if group exists.                    
+        elif group_id:
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
-            grp_item = grp_details[0]
-            group_name = grp_item.name
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
+            
+            
+            
+            
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
@@ -219,11 +262,12 @@ def main():
                                 min_count = count, 
                                 max_count = count,
                                 monitoring_enabled = monitoring,
-                                security_groups = [group_name],
+                                security_group_ids = [group_id],
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
                                 subnet_id = vpc_subnet_id,
+                                private_ip_address = vpc_private_ip_address,
                                 user_data = user_data)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
