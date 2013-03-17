@@ -329,7 +329,15 @@ class Ec2Inventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
+        if not self.args.host in self.index:
+            # try updating the cache
+            self.do_api_calls_update_cache()
+            if not self.args.host in self.index:
+                # host migh not exist anymore
+                return self.json_format_dict({}, True)
+
         (region, instance_id) = self.index[self.args.host]
+
         instance = self.get_instance(region, instance_id)
         instance_vars = {}
         for key in vars(instance):
