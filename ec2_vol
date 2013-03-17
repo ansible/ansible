@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2_vol
 short_description: create and attach a volume, return volume id and device map
 description:
-    - creates an EBS volume and optionally attaches it to an instance. This module has a dependency on python-boto
+    - creates an EBS volume and optionally attaches it to an instance.  If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and no attachment is made.  This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   instance:
@@ -122,6 +122,12 @@ def main():
         reservation = ec2.get_all_instances(instance_ids=instance)
         inst = reservation[0].instances[0]
         zone = inst.placement
+
+        # Check if there is a volume already mounted there.
+        if device_name:
+            if device_name in inst.block_device_mapping:
+                module.exit_json(msg="Volume mapping for %s already exists on instance %s" % (device_name, instance),
+                                 changed=False)
 
     # If no instance supplied, try volume creation based on module parameters.
 
