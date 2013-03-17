@@ -608,15 +608,10 @@ Negative numbers are not supported.  This works as follows::
 .. versionadded: 1.1
 
 'with_password' and associated macro "$PASSWORD" generate a random plaintext password and store it in
-a file at a given filepath. If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents,
-behaving just like $FILE/'with_file'.
+a file at a given filepath. If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents, behaving just like $FILE/'with_file'. Usage of variables like "${inventory_hostname}" in the filepath can be used to set up random passwords per host.
 
-Generated passwords contain a random mix of upper and lower case letters in the ASCII alphabets, the
-numbers 0-9 and the punctuation signs ".,:-_". The default length of a generated password is 30 characters.
-This gives us ~ 180 bits of entropy. However, this length can be changed by passing an extra parameter.
-
-This is how it all works, with an exemplary use case, which is generating a different random password for every
-mysql database in a given server pool:
+Generated passwords contain a random mix of upper and lowercase ASCII letters, the
+numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters. This length can be changed by passing an extra parameter::
 
     ---
     - hosts: all
@@ -630,7 +625,7 @@ mysql database in a given server pool:
 
         (...)
 
-        # dump a mysql database with a given password
+        # dump a mysql database with a given password (this example showing the other form).
         - mysql_db: name=$client_$tier_$role
                     login_user=$client
                     login_password=$item
@@ -639,9 +634,9 @@ mysql database in a given server pool:
           with_password: credentials/$client/$tier/$role/mysqlpassword
 
         # make a longer or shorter password by appending a length parameter:
-        - mysql_user: name=who_cares
+        - mysql_user: name=some_name
                       password=$item
-          with_password: files/same/password/everywhere length=4
+          with_password: files/same/password/everywhere length=15
 
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
