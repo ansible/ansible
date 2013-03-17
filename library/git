@@ -103,6 +103,17 @@ def reset(module,dest,force):
         module.fail_json(msg="Local modifications exist in repository (force=no).")
     return module.run_command("git reset --hard HEAD", check_rc=True)
 
+def get_remote_head(module, dest, version, remote):
+    if version == 'HEAD':
+        version = get_head_branch(module, dest, remote)
+    os.chdir(dest)
+    cmd = "git ls-remote %s -h refs/heads/%s" % (remote, version)
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    if len(out) < 1:
+        module.fail_json(msg="Could not determine remote revision for %s" % version)
+    rev = out.split()[0]
+    return rev
+
 def get_branches(module, dest):
     os.chdir(dest)
     branches = []
@@ -224,7 +235,8 @@ def main():
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
             force=dict(default='yes', type='bool')
-        )
+        ),
+        supports_check_mode=True
     )
 
     dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
@@ -242,14 +254,27 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
+        if module.check_mode:
+            module.exit_json(changed=True)
         (rc, out, err) = clone(module, repo, dest, remote)
     else:
         # else do a pull
         local_mods = has_local_mods(dest)
         before = get_version(dest)
+        # if force, do a reset
+        if local_mods and module.check_mode:
+            module.exit_json(changed=True, msg='Local modifications exist')
         (rc, out, err) = reset(module,dest,force)
         if rc != 0:
             module.fail_json(msg=err)
+        # check or get changes from remote
+        remote_head = get_remote_head(module, dest, version, remote)
+        if module.check_mode:
+            remote_head = remote_head[0:7]
+            if before != remote_head:
+                module.exit_json(changed=True, before=before, after=remote_head)
+            else:
+                module.exit_json(changed=False, before=before, after=remote_head)
         (rc, out, err) = fetch(module, repo, dest, version, remote)
         if rc != 0:
             module.fail_json(msg=err)
