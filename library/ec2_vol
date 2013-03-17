@@ -36,7 +36,7 @@ options:
     aliases: []
   device_name:
     description:
-      - device id to override device mapping. Assumes /dev/sdf for instance-store, /dev/sdb for EBS.
+      - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
     required: false
     default: null
     aliases: []
