@@ -17,6 +17,7 @@
 
 #############################################
 
+import os
 import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
@@ -29,7 +30,16 @@ class InventoryScript(object):
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
-        self.filename = filename
+        # To support inventory scripts that are not in PATH, first
+        # check if the script exists and if it does, use its absolute
+        # path so that subprocess.Popen() will be able to execute it
+        # even if it is not in PATH.  If the script does not exist,
+        # then assume that it is in PATH.
+        abs_filename = os.path.abspath(filename)
+        if os.path.isfile(abs_filename):
+            self.filename = abs_filename
+        else:
+            self.filename = filename
         cmd = [ self.filename, "--list" ]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
