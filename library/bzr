@@ -23,7 +23,7 @@ DOCUMENTATION = u'''
 ---
 module: bzr
 author: André Paramés
-version_added: 0.0.1
+version_added: "1.1"
 short_description: Deploy software (or files) from bzr branches
 description:
     - Manage I(bzr) branches to deploy files or software.
