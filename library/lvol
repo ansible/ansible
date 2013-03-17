@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>, Alexander Bulimov <lazywolf0@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -64,7 +64,6 @@ def parse_lvs(data):
         lvs.append({
             'name': parts[0],
             'size': int(parts[1].split('.')[0]),
-            'path': parts[2],
         })
     return lvs
 
@@ -90,7 +89,7 @@ def main():
     if size:
         size = int(size)
 
-    rc,current_lvs,err = module.run_command("lvs --noheadings -o lv_name,size,lv_path --units m --separator ';' %s"%(vg))
+    rc,current_lvs,err = module.run_command("lvs --noheadings -o lv_name,size --units m --separator ';' %s"%(vg))
 
     if rc != 0:
         module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
@@ -122,7 +121,7 @@ def main():
             ### remove LV
             if module.check_mode:
                 module.exit_json(changed=True)
-            rc,_,err = module.run_command("lvremove --force %s"%(this_lv['path']))
+            rc,_,err = module.run_command("lvremove --force %s/%s"%(vg,this_lv['name']))
             if rc == 0:
                 module.exit_json(changed=True)
             else:
@@ -138,7 +137,7 @@ def main():
             if module.check_mode:
                 changed = True
             else:
-                rc,_,err = module.run_command("%s -L %sm %s"%(tool, size, this_lv['path']))
+                rc,_,err = module.run_command("%s -L %sm %s/%s"%(tool, size, vg, this_lv['name']))
                 if rc == 0:
                     changed = True
                 else:
