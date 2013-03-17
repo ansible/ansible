@@ -220,7 +220,7 @@ entered value so you can use it, for instance, with the user module to define a 
        confirm: yes
        salt_size: 7
 
-You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/passlib/lib/passlib.hash.html>`_ :
+You can use any crypt scheme supported by 'Passlib':
 
 - *des_crypt* - DES Crypt
 - *bsdi_crypt* - BSDi Crypt
