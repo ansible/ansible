@@ -28,9 +28,9 @@ short_description: Deploy software (or files) from bzr branches
 description:
     - Manage I(bzr) branches to deploy files or software.
 options:
-    parent:
+    name:
         required: true
-        aliases: [ name ]
+        aliases: [ 'parent' ]
         description:
             - SSH or HTTP protocol address of the parent branch.
     dest:
