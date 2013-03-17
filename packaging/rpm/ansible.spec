@@ -1,4 +1,4 @@
-%if 0%{?rhel} <= 5
+%if 0%{?rhel} && 0%{?rhel} <= 5
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %endif
@@ -14,7 +14,7 @@ Source0: https://github.com/downloads/ansible/ansible/%{name}-%{version}.tar.gz
 Url: http://ansible.github.com
 
 BuildArch: noarch
-%if 0%{?rhel} <= 5
+%if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
 
 Requires: python26-PyYAML
@@ -40,7 +40,7 @@ are transferred to managed machines automatically.
 Summary: Ansible fireball transport support
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-%if 0%{?rhel} <= 5
+%if 0%{?rhel} && 0%{?rhel} <= 5
 Requires: python26-keyczar
 Requires: python26-zmq
 %else
@@ -57,7 +57,7 @@ multiple actions, but requires additional supporting packages.
 %package node-fireball
 Summary: Ansible fireball transport - node end support
 Group: Development/Libraries
-%if 0%{?rhel} <= 5
+%if 0%{?rhel} && 0%{?rhel} <= 5
 Requires: python26-keyczar
 Requires: python26-zmq
 %else
