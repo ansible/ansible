@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/local/bin/python -tt
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -28,6 +28,12 @@ options:
     required: true
     default: null
     aliases: ['keypair']
+  id:
+    description:
+      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
+    required: false
+    default: null
+    aliases: []
   group:
     description:
       - security group to use with the instance
@@ -149,6 +155,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
+            id = dict(),
             group = dict(),
             group_id = dict(),
             instance_type = dict(aliases=['type']),
@@ -169,6 +176,7 @@ def main():
     )
 
     key_name = module.params.get('key_name')
+    id = module.params.get('id')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     instance_type = module.params.get('instance_type')
@@ -212,12 +220,30 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
+    # Lookup any instances that much our run id.
+    
+    running_instances = []
+    count_remaining = int(count)
+        
+    if id != None:
+        filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
+        previous_reservations = ec2.get_all_instances(None, filter_dict )
+        for res in previous_reservations:
+            for prev_instance in res.instances:
+                running_instances.append(prev_instance)
+        count_remaining = count_remaining - len(running_instances) 
+#        module.fail_json(msg = "known running instances: %s" % (running_instances)) 
+
+    
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
-    try:
-        res = ec2.run_instances(image, key_name = key_name,
-                                min_count = count, 
-                                max_count = count,
+    
+    if count_remaining > 0:
+        try:
+            res = ec2.run_instances(image, key_name = key_name,
+                                client_token=id,
+                                min_count = count_remaining, 
+                                max_count = count_remaining,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group_name],
                                 instance_type = instance_type,
@@ -225,50 +251,54 @@ def main():
                                 ramdisk_id = ramdisk,
                                 subnet_id = vpc_subnet_id,
                                 user_data = user_data)
-    except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-    instids = [ i.id for i in res.instances ]
-    while True:
-        try:
-            res.connection.get_all_instances(instids)
-            break
-        except boto.exception.EC2ResponseError as e:
-            if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
-                # there's a race between start and get an instance
-                continue
-            else:
-                module.fail_json(msg = str(e))
-
-    if instance_tags:
-        try:
-            ec2.create_tags(instids, module.from_json(instance_tags))
-        except boto.exception.EC2ResponseError as e:
+        except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
-    # wait here until the instances are up
-    res_list = res.connection.get_all_instances(instids)
-    this_res = res_list[0]
-    num_running = 0
-    wait_timeout = time.time() + wait_timeout
-    while wait and wait_timeout > time.time() and num_running < len(instids):
+        instids = [ i.id for i in res.instances ]
+        while True:
+            try:
+                res.connection.get_all_instances(instids)
+                break
+            except boto.exception.EC2ResponseError as e:
+                if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
+                    # there's a race between start and get an instance
+                    continue
+                else:
+                    module.fail_json(msg = str(e))
+
+        if instance_tags:
+            try:
+                ec2.create_tags(instids, module.from_json(instance_tags))
+            except boto.exception.EC2ResponseError as e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+        # wait here until the instances are up
         res_list = res.connection.get_all_instances(instids)
         this_res = res_list[0]
-        num_running = len([ i for i in this_res.instances if i.state=='running' ])
-        time.sleep(5)
-    if wait and wait_timeout <= time.time():
-        # waiting took too long
-        module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
-    instances = []
-    for inst in this_res.instances:
+        num_running = 0
+        wait_timeout = time.time() + wait_timeout
+        while wait and wait_timeout > time.time() and num_running < len(instids):
+            res_list = res.connection.get_all_instances(instids)
+            this_res = res_list[0]
+            num_running = len([ i for i in this_res.instances if i.state=='running' ])
+            time.sleep(5)
+        if wait and wait_timeout <= time.time():
+            # waiting took too long
+            module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
+    
+        for inst in this_res.instances:
+            running_instances.append(inst)
+        
+    instance_dict_array = []
+    for inst in running_instances:
         d = {
            'id': inst.id,
            'public_ip': inst.ip_address,
            'public_dns_name': inst.public_dns_name
             }
-        instances.append(d)
+        instance_dict_array.append(d)
 
-    module.exit_json(changed=True, instances=instances)
+    module.exit_json(changed=True, instances=instance_dict_array)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
