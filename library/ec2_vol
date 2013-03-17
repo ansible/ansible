@@ -36,7 +36,7 @@ options:
     aliases: []
   device_name:
     description:
-      - device id to override device mapping. Assumes /dev/sdf for instance-store, /dev/sdb for EBS.
+      - device id to override device mapping. Assumes /dev/sdb for instance-store, /dev/sdf for EBS.
     required: false
     default: null
     aliases: []
@@ -153,10 +153,10 @@ def main():
     if device_name is None and instance:
         try:
             if inst.root_device_type != 'ebs':
-                device_name = '/dev/sdf'
+                device_name = '/dev/sdb'
                 attach = volume.attach(inst.id, device_name)
             else:
-                device_name = '/dev/sdb'
+                device_name = '/dev/sdf'
                 attach = volume.attach(inst.id, device_name)
                 while volume.attachment_state() != 'attached':
                     time.sleep(3)
