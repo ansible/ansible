@@ -167,6 +167,7 @@ def main():
         )
 
     action = module.params['action']
+    host = module.params['host']
     minutes = module.params['minutes']
     services = module.params['services']
     cmdfile = module.params['cmdfile']
