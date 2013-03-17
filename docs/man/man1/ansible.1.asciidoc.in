@@ -60,7 +60,8 @@ Execute the module called 'NAME'.
 
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
-The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
+The 'DIRECTORY' to load modules from. The default is the directory where the modules bundled
+with Ansible are installed.
 
 
 *-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
@@ -136,8 +137,6 @@ FILES
 -----
 
 /etc/ansible/hosts -- Default inventory file
-
-/usr/share/ansible/ -- Default module library
 
 /etc/ansible/ansible.cfg -- Config file, used if present
 
