@@ -249,6 +249,32 @@ can function outside of Ansible.
 If submitting a module to ansible's core code, which we encourage, use of the AnsibleModule
 class is required.
 
+Check Mode
+``````````
+.. versionadded:: 1.1
+
+Modules may optionally support check mode. If the user runs Ansible in check
+mode, the module should try to predict whether changes will occur.
+
+For your module to support check mode, you must pass ``supports_check_mode=True``
+when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute
+will evaluate to True when check mode is enabled. For example::
+
+    module = AnsibleModule(
+        argument_spec = dict(...),
+        supports_check_mode=True
+    )
+
+    if module.check_mode:
+        # Check if any changes would be made by don't actually make those changes
+        module.exit_json(changed=check_if_system_state_would_be_changed())
+
+Remember that, as module developer, you are responsible for ensuring that no
+system state is altered when the user enables check mode.
+
+If your module does not support check mode, when the user runs Ansible in check
+mode, your module will simply be skipped.
+
 Common Pitfalls
 ```````````````
 
