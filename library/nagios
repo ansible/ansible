@@ -128,7 +128,11 @@ def which_cmdfile():
         '/usr/local/nagios/etc/nagios.cfg',
         '/usr/local/nagios/nagios.cfg',
         '/opt/nagios/etc/nagios.cfg',
-        '/opt/nagios/nagios.cfg'
+        '/opt/nagios/nagios.cfg',
+        # icinga on debian/ubuntu
+        '/etc/icinga/icinga.cfg',
+        # icinga installed from source (default location)
+        '/usr/local/icinga/etc/icinga.cfg',
         ]
 
     for path in locations:
