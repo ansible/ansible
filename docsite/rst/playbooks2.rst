@@ -608,7 +608,7 @@ Negative numbers are not supported.  This works as follows::
 .. versionadded: 1.1
 
 'with_password' and associated macro "$PASSWORD" generate a random plaintext password and store it in
-a file at a given filepath. If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents, behaving just like $FILE/'with_file'. Usage of variables like "${inventory_hostname}" in the filepath can be used to set up random passwords per host.
+a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents, behaving just like $FILE/'with_file'. Usage of variables like "${inventory_hostname}" in the filepath can be used to set up random passwords per host.
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters. This length can be changed by passing an extra parameter::
