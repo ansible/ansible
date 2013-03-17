@@ -20,6 +20,7 @@ import os
 import pipes
 import socket
 import random
+import time
 from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
@@ -39,11 +40,10 @@ with warnings.catch_warnings():
 SSH_CONNECTION_CACHE = {}
 SFTP_CONNECTION_CACHE = {}
 
-
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port, user, password):
+    def __init__(self, runner, host, port, user, password, paramiko_tcp_timeout=60):
 
         self.ssh = None
         self.sftp = None
@@ -78,23 +78,49 @@ class Connection(object):
         allow_agent = True
         if self.password is not None:
             allow_agent = False
-        try:
-            if self.runner.private_key_file:
-                key_filename = os.path.expanduser(self.runner.private_key_file)
-            else:
-                key_filename = None
-            ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
-                key_filename=key_filename, password=self.password,
-                timeout=self.runner.timeout, port=self.port)
-        except Exception, e:
-            msg = str(e)
-            if "PID check failed" in msg:
-                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif "Private key file is encrypted" in msg:
-                msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    self.user, self.host, self.port, msg)
-                raise errors.AnsibleConnectionFailed(msg)
-            else:
+        if self.runner.private_key_file:
+            key_filename = os.path.expanduser(self.runner.private_key_file)
+        else:
+            key_filename = None
+        # retry logic for cases where a host has been recently booted and
+        # the ssh service isn't yet prepared. Happens with cloud-init
+        # putting private keys in place
+        retry_timeout = time.time() + self.runner.timeout
+        while time.time() < retry_timeout:
+            try:
+                ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
+                    key_filename=key_filename, password=self.password,
+                    timeout=self.runner.timeout, port=self.port)
+                break
+            except (paramiko.AuthenticationException, paramiko.ChannelException, socket.error) as err:
+                vvv("got %s establishing connection for: %s@%s:%s; retrying" %
+                    (err, self.host, self.user, self.port))
+                continue
+            except paramiko.SSHException as err:
+                msg = str(e)
+                if "PID check failed" in msg:
+                    raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+                else:
+                    raise errors.AnsibleConnectionFailed(msg)
+        else:
+            # timeout happened---last try
+            # give the user some hints, too
+            try:
+                ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
+                    key_filename=key_filename, password=self.password,
+                    timeout=self.runner.timeout, port=self.port)
+            except paramiko.BadAuthenticationType as err:
+                raise errors.AnsibleError(
+                    "Bad authentication type provided for %s@%s:%s. Password given when public-key required? (%s)" %
+                    (self.user, self.host, self.port, err)
+                )
+            except paramiko.PasswordRequiredException as err:
+                msg = "Password required for " + str(self.user) +"@"+ str(self.host) + ":" + str(self.port) + ". " + \
+                    "Private key may be password-protected; try running with an ssh-agent. " + \
+                    "To connect as a different user, use -u <username>."
+                raise errors.AnsibleError(msg)
+            except Exception as err:
+                msg = str(err)
                 raise errors.AnsibleConnectionFailed(msg)
 
         return ssh
