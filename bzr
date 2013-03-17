@@ -51,7 +51,7 @@ options:
             - If C(yes), any modified files in the working
               tree will be discarded.
 examples:
-    - code: "bzr parent=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22"
+    - code: "bzr name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22"
       description: Example bzr checkout from Ansible Playbooks
 '''
 
@@ -124,14 +124,14 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             dest=dict(required=True),
-            parent=dict(required=True, aliases=['name']),
+            name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
             force=dict(default='yes', type='bool')
         )
     )
 
     dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
-    parent  = module.params['parent']
+    parent  = module.params['name']
     version = module.params['version']
     force   = module.params['force']
 
