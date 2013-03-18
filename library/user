@@ -992,15 +992,15 @@ def main():
     }
     module = AnsibleModule(
         argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            name=dict(required=True, aliases=['user']),
-            uid=dict(default=None),
-            group=dict(default=None),
-            groups=dict(default=None),
-            comment=dict(default=None),
-            home=dict(default=None),
-            shell=dict(default=None),
-            password=dict(default=None),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, aliases=['user'], type='str'),
+            uid=dict(default=None, type='str'),
+            group=dict(default=None, type='str'),
+            groups=dict(default=None, type='str'),
+            comment=dict(default=None, type='str'),
+            home=dict(default=None, type='str'),
+            shell=dict(default=None, type='str'),
+            password=dict(default=None, type='str'),
             # following options are specific to userdel
             force=dict(default='no', type='bool'),
             remove=dict(default='no', type='bool'),
@@ -1011,11 +1011,11 @@ def main():
             append=dict(default='no', type='bool'),
             # following are specific to ssh key generation
             generate_ssh_key=dict(choices=BOOLEANS, type='bool'),
-            ssh_key_bits=dict(default=ssh_defaults['bits']),
-            ssh_key_type=dict(default=ssh_defaults['type']),
-            ssh_key_file=dict(default=None),
-            ssh_key_comment=dict(default=ssh_defaults['comment']),
-            ssh_key_passphrase=dict(default=None)
+            ssh_key_bits=dict(default=ssh_defaults['bits'], type='str'),
+            ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
+            ssh_key_file=dict(default=None, type='str'),
+            ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
+            ssh_key_passphrase=dict(default=None, type='str')
         ),
         supports_check_mode=True
     )
