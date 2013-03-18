@@ -151,6 +151,7 @@ def main():
     # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)
 
     # Use password data attribute to tell whether the instance is Windows or Linux
+
     if device_name is None and instance:
         try:
             if inst.get_password_data == '':
@@ -160,7 +161,7 @@ def main():
                     time.sleep(3)
                     volume.update()
             else:
-                device_name = '/dev/sdb'
+                device_name = '/dev/xvdf'
                 attach = volume.attach(inst.id, device_name)
                 while volume.attachment_state() != 'attached':
                     time.sleep(3)
