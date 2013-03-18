@@ -107,7 +107,7 @@ options:
     description:
       - The socket level timeout in seconds 
     required: false
-    default: no timeout
+    default: 30
   HEADER_:
     description: Any parameter starting with "HEADER_" is a sent with your request as a header. For example, HEADER_Content-Type="application/json" would send the header "Content-Type" along with your request with a value of "application/json".
     required: false
@@ -278,7 +278,7 @@ def main():
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
             status_code = dict(required=False, default="200"),
-            timeout = dict(required=False, default=None, type='int'),
+            timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
         add_file_common_args=True
