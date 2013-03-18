@@ -17,6 +17,8 @@ Core Features
 * module common code now has basic type checking (and casting) capability 
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
 * inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
+* added configurable crypt scheme for 'vars_prompt'
+* password generating lookup plugin -- $PASSWORD(path/to/save/data/in)
 
 Modules Added:
 
@@ -33,6 +35,8 @@ Modules Added:
 * gem
 * lvol (LVM logical volumes)
 * django-manage
+* openbsd_pkg
+* netscaler
 
 Bugfixes and Misc Changes:
 
@@ -65,7 +69,8 @@ Facts:
 * ansible_os_family fact added
 * user_id (remote user name)
 * a whole series of current time information under the 'datetime' hash
-
+* more OS X facts
+* support for detecting Alpine Linux
 
 Module Changes/Fixes:
 
@@ -100,7 +105,13 @@ Module Changes/Fixes:
 * postresql db module now does not try to create the 'PUBLIC' user
 * SVN module now works correctly with self signed certs
 * apt module now has an upgrade parameter (values=yes, no, or 'dist')
-
+* nagios module gets new silence/unsilence commands
+* ability to disable proxy usage in get_url (use_proxy=no)
+* more OS X facts
+* added a 'fail_on_missing' (default no) option to fetch
+* added timeout to the uri module (default 30 seconds, adjustable)
+* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for seperate wait_for call.
+* allow regex backreferences in lineinfile
 
 Plugins:
 
