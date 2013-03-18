@@ -42,7 +42,7 @@ class ActionModule(object):
         dest    = options.get('dest', None)
 
         if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
-            result=dict(failed=True, msg="src or content and dest are required")
+            result=dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
         elif (source is not None or 'first_available_file' in inject) and content is not None:
             result=dict(failed=True, msg="src and content are mutually exclusive")
