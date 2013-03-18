@@ -551,6 +551,11 @@ class LinuxService(Service):
             if self.restart_delay is not None:
                 time.sleep(float(self.restart_delay));
 
+            # add generic time.sleep of N seconds to play nicer with
+            # applications that take some time to stop
+            if self.restart_delay is not None:
+                time.sleep(float(self.restart_delay));
+
             if svc_cmd != '':
                 # SysV or systemd
                 rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
