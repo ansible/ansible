@@ -127,7 +127,7 @@ def load_examples_section(text):
 def return_data(text, options, outputname, module):
     if options.output_dir is not None:
         f = open(os.path.join(options.output_dir, outputname % module), 'w')
-        f.write(text)
+        f.write(text.encode('utf-8'))
         f.close()
     else:
         print text
