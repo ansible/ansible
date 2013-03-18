@@ -31,13 +31,14 @@ description:
 options:
   src:
     description:
-      - Local path to a file to copy to the remote server; can be absolute or relative. Mutually exclusive with content.
+      - Local path to a file to copy to the remote server; can be absolute or relative.  
     required: false
     default: null
     aliases: []
   content:
+    version_added: 1.1
     description:
-      - Creates and/or set content of a file on the remote server. Mutually exclusive with content.
+      - When used instead of 'src', sets the contents of a file directly to the specified value.  (New in 1.1).
     required: false
     default: null
   dest:
