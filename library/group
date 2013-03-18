@@ -213,10 +213,10 @@ class AIX(Group):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            name=dict(required=True),
-            gid=dict(default=None),
-            system=dict(default='no', choices=['yes', 'no']),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, type='str'),
+            gid=dict(default=None, type='str'),
+            system=dict(default='no', choices=['yes', 'no'], type='bool'),
         ),
         supports_check_mode=True
     )
