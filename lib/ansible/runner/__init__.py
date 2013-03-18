@@ -206,7 +206,12 @@ class Runner(object):
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
         try:
-            afo.write(data.encode('utf8'))
+            if not isinstance(data, unicode):
+                #ensure the data is valid UTF-8
+                data.decode('utf-8')
+            else:
+                data = data.encode('utf-8')
+            afo.write(data)
         except:
             raise errors.AnsibleError("failure encoding into utf-8")
         afo.flush()
