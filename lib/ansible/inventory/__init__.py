@@ -288,6 +288,7 @@ class Inventory(object):
 
     def add_group(self, group):
         self.groups.append(group)
+        self._groups_list = None  # invalidate internal cache 
 
     def list_hosts(self, pattern="all"):
         return [ h.name for h in self.get_hosts(pattern) ]
