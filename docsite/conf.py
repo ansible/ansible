@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
 VERSION='0.01'
-AUTHOR='Michael DeHaan'
+AUTHOR='AnsibleWorks'
 
 
 # General configuration
@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2012 Michael DeHaan"
+copyright = "2013 AnsibleWorks"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.

@@ -1,6 +1,11 @@
 Getting Started
 ===============
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://www.eventbrite.com/event/5593981750
+
+
 .. contents::
    :depth: 2
    :backlinks: top

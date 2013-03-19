@@ -1,6 +1,11 @@
 Glossary
 ========
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://www.eventbrite.com/event/5593981750
+
+
 The following is a list (and re-explanation) of term definitions used elsewhere in the Ansible documentation.
 
 Consult the documentation home page for the full documentation and to see this in context, but this should be a good resource
