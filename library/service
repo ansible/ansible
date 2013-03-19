@@ -115,7 +115,7 @@ class Service(object):
         self.rcconf_value   = None
 
         # select whether we dump additional debug info through syslog
-        self.syslogging = False
+        self.syslogging = True
 
     # ===========================================
     # Platform specific methods (must be replaced by subclass).
@@ -516,7 +516,7 @@ class LinuxService(Service):
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
-                self.arguments = "%s %s" % (self.name, self.arguments)
+                self.arguments = self.name
         elif self.svc_initscript:
             # upstart
             svc_cmd = "%s" % self.svc_initscript
