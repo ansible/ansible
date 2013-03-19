@@ -44,6 +44,13 @@ Modules are `idempotent`, meaning they will seek to avoid changes to the system 
 playbooks, these modules can trigger 'change events' in the form of notifying 'handlers'
 to run additional tasks.
 
+Documention for each module can be accessed from the command line with the
+ansible-doc as well as the man command::
+
+    ansible-doc command
+
+    man ansible.template
+
 Let's see what's available in the Ansible module library, out of the box:
 
 
