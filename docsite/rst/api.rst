@@ -1,6 +1,11 @@
 API & Integrations
 ==================
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://www.eventbrite.com/event/5593981750
+
+
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events,
 and you can plug in inventory data from external data sources.  Ansible is written in its own
