@@ -493,6 +493,12 @@ class LinuxService(Service):
             enable_disable = "disable"
 
         if self.enable_cmd.endswith("update-rc.d"):
+            # test if service has already been added using update-rc.d first
+            # this is similar to how the chkconfig services are checked prior to
+            (rc, out, err) = self.execute_command("%s -n %s defaults" % (self.enable_cmd, self.name))
+            if "enable service" in err:
+                self.module.fail_json(msg="unknown service name")
+
             args = (self.enable_cmd, self.name, enable_disable)
         elif self.enable_cmd.endswith("systemctl"):
             args = (self.enable_cmd, enable_disable, self.name + ".service")
