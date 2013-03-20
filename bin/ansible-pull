@@ -43,6 +43,7 @@ import sys
 import datetime
 import socket
 from optparse import OptionParser
+import ansible.constants as C
 
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = { 1: 'File does not exist',
@@ -102,6 +103,9 @@ def main(args):
     parser.add_option('-C', '--checkout', dest='checkout',
                       default="HEAD",
                       help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+                      help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
+                      default=C.DEFAULT_HOST_LIST)
     options, args = parser.parse_args(args)
 
     if not options.dest:
@@ -128,7 +132,7 @@ def main(args):
         print >>sys.stderr, "Could not find a playbook to run."
         return 1
 
-    cmd = 'ansible-playbook -c local --limit "%s" %s' % (limit_opts, playbook)
+    cmd = 'ansible-playbook -c local -i "%s" --limit "%s" %s' % (options.inventory, limit_opts, playbook)
     os.chdir(options.dest)
     rc = _run(cmd)
 
