@@ -46,6 +46,18 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
+    options:
+     description:
+      - ssh-key-file options
+      required: false
+      default: null
+    sshfrom:
+      description:
+        - additional setting for from-setting in ssh-keyfile
+          example: from=[192.168.1.1,127.0.0.1]
+      required: false
+      default: null
+
 examples:
    - code: 'authorized_key: user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"'
      description: "Example from Ansible Playbooks"
@@ -151,23 +163,72 @@ def enforce_state(module, params):
 
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
-        present = new_key in keys
+        
+        key_line=make_keyline(new_key, params['options'], params['sshfrom'])
+    
+        present = False
+        for k in keys:
+            if new_key in k:
+                present = True
+                break
+                
         # handle idempotent state=present
         if state=="present":
             if present:
-                continue
-            keys.append(new_key)
+                if check_if_key_is_real_present(keys,key_line):
+                    continue
+                else:
+                    keys=remove_key(keys,new_key)
+                    
+            keys.append(key_line)
             writekeys(module, keyfile(module, user,write=True), keys)
             params['changed'] = True
 
         elif state=="absent":
             if not present:
                 continue
-            keys.remove(new_key)
+            keys=remove_key(keys, new_key)
             writekeys(module, keyfile(module, user,write=True), keys)
             params['changed'] = True
 
     return params
+
+def make_keyline(key, opts=False, sshfrom=False):
+    ret="" 
+    if opts is not False:
+	    ret+=str(opts)
+    if sshfrom is not False:
+        tmp=sshfrom.strip()
+        tmp=tmp.strip('[')
+        tmp=tmp.strip(']')
+        fromhosts=tmp.split(',')
+        if opts is False:
+            ret='from="'
+        else:
+            ret+=',from="'
+        for host in fromhosts:
+            ret+=str(host)+","
+        ret=ret[:-1]+'"'
+    ret+=" "+key
+    return ret	
+
+def remove_key(keys,key):
+    newkeys=[]
+    for k in keys:
+        if key in k:
+            continue
+        else:
+            newkeys.append(k)
+    return newkeys
+    
+def check_if_key_is_real_present(keys,key):
+    for k in keys:
+        if k == key:
+            return True
+            break
+    return False
+    
+    
 
 def main():
 
@@ -175,12 +236,15 @@ def main():
         argument_spec = dict(
            user  = dict(required=True),
            key   = dict(required=True),
-           state = dict(default='present', choices=['absent','present'])
+           state = dict(default='present', choices=['absent','present']),
+           options   = dict(required=False),
+           sshfrom   = dict(required=False)
         )
     )
 
     results = enforce_state(module, module.params)
     module.exit_json(**results)
+
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
