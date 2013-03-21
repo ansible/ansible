@@ -3,6 +3,8 @@ Best Practices
 
 Here are some tips for making the most of Ansible.
 
+You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
+
 .. contents::
    :depth: 2
    :backlinks: top
