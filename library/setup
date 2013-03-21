@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import array
 import fcntl
 import fnmatch
@@ -28,6 +29,12 @@ import socket
 import struct
 import datetime
 import getpass
+
+if not os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
+    try:
+        import dmidecode
+    except ImportError:
+        import subprocess
 
 DOCUMENTATION = '''
 ---
@@ -390,26 +397,6 @@ class LinuxHardware(Hardware):
 
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
-    # DMI bits
-    DMI_DICT = dict(
-        form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
-        product_name    = '/sys/devices/virtual/dmi/id/product_name',
-        product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
-        product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
-        product_version = '/sys/devices/virtual/dmi/id/product_version',
-        system_vendor   = '/sys/devices/virtual/dmi/id/sys_vendor',
-        bios_date       = '/sys/devices/virtual/dmi/id/bios_date',
-        bios_version    = '/sys/devices/virtual/dmi/id/bios_version'
-    )
-    # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
-    FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
-                    "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
-                    "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
-                    "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
-                    "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
-                    "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
-                    "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                    "CompactPCI", "AdvancedTCA", "Blade" ]
 
     def __init__(self):
         Hardware.__init__(self)
@@ -463,18 +450,91 @@ class LinuxHardware(Hardware):
             self.facts['processor_cores'] = 'NA'
 
     def get_dmi_facts(self):
-        for (key,path) in LinuxHardware.DMI_DICT.items():
-            data = get_file_content(path)
-            if data is not None:
-                if key == 'form_factor':
-                    try:
-                        self.facts['form_factor'] = LinuxHardware.FORM_FACTOR[int(data)]
-                    except IndexError, e:
-                        self.facts['form_factor'] = 'unknown (%s)' % data
+
+        def execute(cmd):
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = p.communicate()
+            if p.returncode or err:
+                return None
+            return out.rstrip()
+
+        if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
+            # Use kernel DMI info, if available
+
+            # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
+            FORM_FACTOR = [ "Unknown", "Other", "Unknown", "Desktop",
+                            "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
+                            "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
+                            "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
+                            "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
+                            "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
+                            "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
+                            "CompactPCI", "AdvancedTCA", "Blade" ]
+
+            DMI_DICT = dict(
+                bios_date       = '/sys/devices/virtual/dmi/id/bios_date',
+                bios_version    = '/sys/devices/virtual/dmi/id/bios_version',
+                form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
+                product_name    = '/sys/devices/virtual/dmi/id/product_name',
+                product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
+                product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
+                product_version = '/sys/devices/virtual/dmi/id/product_version',
+                system_vendor   = '/sys/devices/virtual/dmi/id/sys_vendor',
+            )
+
+            for (key,path) in DMI_DICT.items():
+                data = get_file_content(path)
+                if data is not None:
+                    if key == 'form_factor':
+                        try:
+                            self.facts['form_factor'] = FORM_FACTOR[int(data)]
+                        except IndexError, e:
+                            self.facts['form_factor'] = 'unknown (%s)' % data
+                    else:
+                        self.facts[key] = data
                 else:
-                    self.facts[key] = data
-            else:
-                self.facts[key] = 'NA'
+                    self.facts[key] = 'NA'
+
+        elif 'dmidecode' in sys.modules.keys():
+            # Use python dmidecode, if available
+
+            DMI_DICT = dict(
+                bios_date       = '/dmidecode/BIOSinfo/ReleaseDate',
+                bios_version    = '/dmidecode/BIOSinfo/BIOSrevision',
+                form_factor     = '/dmidecode/ChassisInfo/ChassisType',
+                product_name    = '/dmidecode/SystemInfo/ProductName',
+                product_serial  = '/dmidecode/SystemInfo/SerialNumber',
+                product_uuid    = '/dmidecode/SystemInfo/SystemUUID',
+                product_version = '/dmidecode/SystemInfo/Version',
+                system_vendor   = '/dmidecode/SystemInfo/Manufacturer',
+            )
+
+            dmixml = dmidecode.dmidecodeXML()
+            dmixml.SetResultType(dmidecode.DMIXML_DOC)
+            xmldoc = dmixml.QuerySection('all')
+            dmixp = xmldoc.xpathNewContext()
+
+            for (key,path) in DMI_DICT.items():
+                try:
+                    data = dmixp.xpathEval(path)
+                    if len(data) > 0:
+                        self.facts[key] = data[0].get_content()
+                    else:
+                        self.facts[key] = 'Error'
+                except:
+                    self.facts[key] = 'NA'
+
+        else:
+            # Fall back to using dmidecode, if available
+
+            self.facts['bios_date'] = execute('dmidecode -s bios-release-date') or 'NA'
+            self.facts['bios_version'] = execute('dmidecode -s bios-version') or 'NA'
+            self.facts['form_factor'] = execute('dmidecode -s chassis-type') or 'NA'
+            self.facts['product_name'] = execute('dmidecode -s system-product-name') or 'NA'
+            self.facts['product_serial'] = execute('dmidecode -s system-serial-number') or 'NA'
+            self.facts['product_uuid'] = execute('dmidecode -s system-uuid') or 'NA'
+            self.facts['product_version'] = execute('dmidecode -s system-version') or 'NA'
+            self.facts['system_vendor'] = execute('dmidecode -s system-manufacturer') or 'NA'
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
