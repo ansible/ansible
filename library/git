@@ -104,15 +104,32 @@ def reset(module,dest,force):
     return module.run_command("git reset --hard HEAD", check_rc=True)
 
 def get_remote_head(module, dest, version, remote):
+    cmd = ''
+    os.chdir(dest)
     if version == 'HEAD':
         version = get_head_branch(module, dest, remote)
-    os.chdir(dest)
-    cmd = "git ls-remote %s -h refs/heads/%s" % (remote, version)
+    if is_remote_branch(module, dest, remote, version):
+        cmd = 'git ls-remote %s -h refs/heads/%s' % (remote, version)
+    elif is_remote_tag(module, dest, remote, version):
+        cmd = 'git ls-remote %s -t refs/tags/%s' % (remote, version)
+    else:
+        # appears to be a sha1.  return as-is since it appears
+        # cannot check for a specific sha1 on remote
+        return version
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
     return rev
+
+def is_remote_tag(module, dest, remote, version):
+    os.chdir(dest)
+    cmd = 'git ls-remote %s -t refs/tags/%s' % (remote, version)
+    (rc, out, err) = module.run_command(cmd)
+    if version in out:
+        return True
+    else:
+        return False
 
 def get_branches(module, dest):
     os.chdir(dest)
@@ -270,11 +287,22 @@ def main():
         # check or get changes from remote
         remote_head = get_remote_head(module, dest, version, remote)
         if module.check_mode:
-            remote_head = remote_head[0:7]
-            if before != remote_head:
-                module.exit_json(changed=True, before=before, after=remote_head)
+            changed = False
+            if remote_head == version:
+                # get_remote_head returned version as-is
+                # were given a sha1 object, see if it is present
+                (rc, out, err) = module.run_command("git show %s" % version)
+                if version in out:
+                    changed = False
+                else:
+                    changed = True
             else:
-                module.exit_json(changed=False, before=before, after=remote_head)
+                remote_head = remote_head[0:7]
+                if before != remote_head:
+                    changed = True
+                else:
+                    changed = False
+            module.exit_json(changed=changed, before=before, after=remote_head)
         (rc, out, err) = fetch(module, repo, dest, version, remote)
         if rc != 0:
             module.fail_json(msg=err)
