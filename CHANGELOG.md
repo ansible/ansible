@@ -17,6 +17,9 @@ Core Features
 * module common code now has basic type checking (and casting) capability 
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
 * inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
+* added configurable crypt scheme for 'vars_prompt'
+* password generating lookup plugin -- $PASSWORD(path/to/save/data/in)
+* added --step option to ansible-playbook, works just like Linux interactive startup!
 
 Modules Added:
 
@@ -30,9 +33,17 @@ Modules Added:
 * zfs
 * okg
 * macports
+* homebrew
 * gem
 * lvol (LVM logical volumes)
 * django-manage
+* openbsd_pkg
+* netscaler
+* bzr (bazaar version control)
+* lvg (logical volume groups)
+* s3 (allows putting file contents in buckets for sharing over s3)
+* vagrant (launching VMs with vagrant, this is different from existing vagrant plugin)
+
 
 Bugfixes and Misc Changes:
 
@@ -65,7 +76,9 @@ Facts:
 * ansible_os_family fact added
 * user_id (remote user name)
 * a whole series of current time information under the 'datetime' hash
-
+* more OS X facts
+* support for detecting Alpine Linux
+* added facts for OpenBSD
 
 Module Changes/Fixes:
 
@@ -100,12 +113,24 @@ Module Changes/Fixes:
 * postresql db module now does not try to create the 'PUBLIC' user
 * SVN module now works correctly with self signed certs
 * apt module now has an upgrade parameter (values=yes, no, or 'dist')
-
+* nagios module gets new silence/unsilence commands
+* ability to disable proxy usage in get_url (use_proxy=no)
+* more OS X facts
+* added a 'fail_on_missing' (default no) option to fetch
+* added timeout to the uri module (default 30 seconds, adjustable)
+* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for seperate wait_for call.
+* allow regex backreferences in lineinfile
+* id attribute on ec2 module can be used to set idempotent-do-not-recreate launches
+* icinga support for nagios module
+* fix default logins when no my.conf for MySQL module
+* option to create users with non-unique UIDs (user module)
+* macports module can enable/disable packages
 
 Plugins:
 
 * added 'with_random_choice' filter plugin
 * fixed ~ expansion for fileglob
+* with_nested allows for nested loops (see examples in examples/playbooks)
 
 1.0 "Eruption" -- Feb 1 2013
 

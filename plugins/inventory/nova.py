@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 #

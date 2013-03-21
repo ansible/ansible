@@ -50,7 +50,7 @@ options:
     force:
         required: false
         default: "yes"
-        choices: [ yes, no ]
+        choices: [ "yes", "no" ]
         version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
@@ -102,6 +102,34 @@ def reset(module,dest,force):
     if not force and has_local_mods(dest):
         module.fail_json(msg="Local modifications exist in repository (force=no).")
     return module.run_command("git reset --hard HEAD", check_rc=True)
+
+def get_remote_head(module, dest, version, remote):
+    cmd = ''
+    os.chdir(dest)
+    if version == 'HEAD':
+        version = get_head_branch(module, dest, remote)
+    if is_remote_branch(module, dest, remote, version):
+        cmd = 'git ls-remote %s -h refs/heads/%s' % (remote, version)
+    elif is_remote_tag(module, dest, remote, version):
+        cmd = 'git ls-remote %s -t refs/tags/%s' % (remote, version)
+    else:
+        # appears to be a sha1.  return as-is since it appears
+        # cannot check for a specific sha1 on remote
+        return version
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    if len(out) < 1:
+        module.fail_json(msg="Could not determine remote revision for %s" % version)
+    rev = out.split()[0]
+    return rev
+
+def is_remote_tag(module, dest, remote, version):
+    os.chdir(dest)
+    cmd = 'git ls-remote %s -t refs/tags/%s' % (remote, version)
+    (rc, out, err) = module.run_command(cmd)
+    if version in out:
+        return True
+    else:
+        return False
 
 def get_branches(module, dest):
     os.chdir(dest)
@@ -224,7 +252,8 @@ def main():
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
             force=dict(default='yes', type='bool')
-        )
+        ),
+        supports_check_mode=True
     )
 
     dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
@@ -242,14 +271,38 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
+        if module.check_mode:
+            module.exit_json(changed=True)
         (rc, out, err) = clone(module, repo, dest, remote)
     else:
         # else do a pull
         local_mods = has_local_mods(dest)
         before = get_version(dest)
+        # if force, do a reset
+        if local_mods and module.check_mode:
+            module.exit_json(changed=True, msg='Local modifications exist')
         (rc, out, err) = reset(module,dest,force)
         if rc != 0:
             module.fail_json(msg=err)
+        # check or get changes from remote
+        remote_head = get_remote_head(module, dest, version, remote)
+        if module.check_mode:
+            changed = False
+            if remote_head == version:
+                # get_remote_head returned version as-is
+                # were given a sha1 object, see if it is present
+                (rc, out, err) = module.run_command("git show %s" % version)
+                if version in out:
+                    changed = False
+                else:
+                    changed = True
+            else:
+                remote_head = remote_head[0:7]
+                if before != remote_head:
+                    changed = True
+                else:
+                    changed = False
+            module.exit_json(changed=changed, before=before, after=remote_head)
         (rc, out, err) = fetch(module, repo, dest, version, remote)
         if rc != 0:
             module.fail_json(msg=err)

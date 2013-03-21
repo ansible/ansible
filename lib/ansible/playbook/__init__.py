@@ -301,7 +301,9 @@ class PlayBook(object):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
         self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
-
+        if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
+            return True
+        
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 

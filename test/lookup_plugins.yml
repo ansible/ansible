@@ -55,3 +55,25 @@
     action: copy src=sample.j2 dest=/tmp/ansible-test-with_lines-data
   - name: cleanup test file
     action: file path=/tmp/ansible-test-with_lines-data state=absent
+
+# password lookup plugin
+  - name: ensure test file doesn't exist
+    # command because file will return differently
+    action: command rm -f /tmp/ansible-test-with_password
+  - name: test LOOKUP and PASSWORD with non existing password file
+    action: command test "$LOOKUP(password, /tmp/ansible-test-with_password)" = "$PASSWORD(/tmp/ansible-test-with_password)"
+  - name: test LOOKUP and PASSWORD with existing password file
+    action: command test "$LOOKUP(password, /tmp/ansible-test-with_password)" = "$PASSWORD(/tmp/ansible-test-with_password)"
+  - name: now test existing password via $item and with_password
+    action: command test "$PASSWORD(/tmp/ansible-test-with_password)" = "$item"
+    with_password:
+      - /tmp/ansible-test-with_password
+  - name: cleanup test file
+    action: file path=/tmp/ansible-test-with_password state=absent
+  - name: now test a password of non-default length (default=20, but here length=8)
+    action: command test "$PASSWORD(/tmp/ansible-test-with_password length=8)" = "$LOOKUP(password, /tmp/ansible-test-with_password)"
+  # - name: did we really create a password of length=8?
+  #   action: command test "`expr length $PASSWORD(/tmp/ansible-test-with_password)`" = "8"
+  - name: cleanup test file, again
+    action: file path=/tmp/ansible-test-with_password state=absent
+

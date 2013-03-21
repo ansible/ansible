@@ -75,6 +75,9 @@ except ImportError:
     except ImportError:
         sys.stderr.write('Error: ansible requires a json module, none found!')
         sys.exit(1)
+    except SyntaxError:
+        sys.stderr.write('SyntaxError: probably due to json and python being for different versions')
+        sys.exit(1)
 
 HAVE_SELINUX=False
 try:
@@ -104,6 +107,10 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    # not taken by the file module, but other modules call file so it must ignore them.
+    content = dict(),
+    backup = dict(),
+    force = dict(),
 )
 
 def get_platform():
@@ -169,7 +176,9 @@ class AnsibleModule(object):
         self.aliases = {}
         
         if add_file_common_args:
-            self.argument_spec.update(FILE_COMMON_ARGUMENTS)
+            for k, v in FILE_COMMON_ARGUMENTS.iteritems():
+                if k not in self.argument_spec:
+                    self.argument_spec[k] = v
 
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
@@ -597,6 +606,12 @@ class AnsibleModule(object):
                         self.params[k] = self.boolean(value)
                     else:
                         is_invalid = True
+            elif wanted == 'int':
+                if not isinstance(value, int):
+                    if isinstance(value, basestring):
+                        self.params[k] = int(value)
+                    else:
+                        is_invalid = True
             else:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
@@ -623,8 +638,8 @@ class AnsibleModule(object):
         for x in items:
             try:
                 (k, v) = x.split("=",1)
-            except:
-                self.fail_json(msg="this module requires key=value arguments")
+            except Exception, e:
+                self.fail_json(msg="this module requires key=value arguments (%s)" % items)
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)

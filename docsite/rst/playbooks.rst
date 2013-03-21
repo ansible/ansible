@@ -27,6 +27,9 @@ Let's dive in and see how they work.  As you go, you may wish to open
 the `github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_ in
 another tab, so you can apply the theory to what things look like in practice.
 
+There are also some full sets of playbooks illustrating a lot of these techniques in the
+`ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
+
 Playbook Language Example
 `````````````````````````
 

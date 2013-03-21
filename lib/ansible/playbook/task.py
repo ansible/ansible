@@ -94,7 +94,7 @@ class Task(object):
         self.args         = ds.get('args', {})
 
         if self.sudo:
-            self.sudo_user    = ds.get('sudo_user', play.sudo_user)
+            self.sudo_user    = utils.template(play.basedir, ds.get('sudo_user', play.sudo_user), play.vars)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
         else:
             self.sudo_user    = None

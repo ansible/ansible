@@ -95,8 +95,8 @@ Even if you didn't define them yourself, ansible provides a few variables for yo
 The most important of these are 'hostvars', 'group_names', and 'groups'.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
-about that host.  If you haven't yet talked to that host in any play yet at this point in the playbook
-or set of playbooks, you can get at the variables, but you will not be able o see the facts.
+about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
+or set of playbooks, you can get at the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -209,18 +209,18 @@ some other options, but otherwise works equivalently::
        prompt: "Product release version"
        private: no
 
-If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the 
+If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the
 entered value so you can use it, for instance, with the user module to define a password::
 
    vars_prompt:
      - name: "my_password2"
        prompt: "Enter password2"
        private: yes
-       encrypt: "md5_crypt" 
+       encrypt: "md5_crypt"
        confirm: yes
        salt_size: 7
 
-You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/passlib/lib/passlib.hash.html>`_ :
+You can use any crypt scheme supported by 'Passlib':
 
 - *des_crypt* - DES Crypt
 - *bsdi_crypt* - BSDi Crypt
@@ -241,7 +241,7 @@ You can use any crypt scheme supported by `Passlib <http://pythonhosted.org/pass
 - *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
 
 However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
-'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt 
+'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
 of size 8 will be generated.
 
 Passing Variables On The Command Line
@@ -604,6 +604,39 @@ Negative numbers are not supported.  This works as follows::
         # create 4 groups
         - group: name=group${item} state=present
           with_sequence: count=4
+
+.. versionadded: 1.1
+
+'with_password' and associated macro "$PASSWORD" generate a random plaintext password and store it in
+a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents, behaving just like $FILE/'with_file'. Usage of variables like "${inventory_hostname}" in the filepath can be used to set up random passwords per host.
+
+Generated passwords contain a random mix of upper and lowercase ASCII letters, the
+numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters. This length can be changed by passing an extra parameter::
+
+    ---
+    - hosts: all
+
+      tasks:
+
+        # create a mysql user with a random password:
+        - mysql_user: name=$client
+                      password=$PASSWORD(credentials/$client/$tier/$role/mysqlpassword)
+                      priv=$client_$tier_$role.*:ALL
+
+        (...)
+
+        # dump a mysql database with a given password (this example showing the other form).
+        - mysql_db: name=$client_$tier_$role
+                    login_user=$client
+                    login_password=$item
+                    state=dump
+                    target=/tmp/$client_$tier_$role_backup.sql
+          with_password: credentials/$client/$tier/$role/mysqlpassword
+
+        # make a longer or shorter password by appending a length parameter:
+        - mysql_user: name=some_name
+                      password=$item
+          with_password: files/same/password/everywhere length=15
 
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
@@ -1013,7 +1046,7 @@ number of modules (the CloudFormations module is one) actually require complex a
 You can of course use variables inside these, as noted above.
 
 If using local_action, you can do this::
-      
+
     - name: call a module that requires some complex arguments
       local_action:
         module: foo_module
