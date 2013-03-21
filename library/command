@@ -65,9 +65,19 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  ignore_changed:
+    description:
+      - reports as not changed (changed=0). This is useful when using command does not make any change and is used only to register a variable, making the final statistics more meaningful.
+    required: false
+    default: 'no'
+    choices: ['yes', 'no' ]
 examples:
    - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
+   - code: |
+       local_action: command whoami ignore_changed=yes
+       register: runas
+     description: Looks up the name of the local user and register it to be used later in the playbook. Adding C(ignore_changed=yes) reflects the fact that no state is changed by this command.
    - code: "command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
      description: "C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
@@ -90,6 +100,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    ignore_changed = module.params['ignore_changed']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -149,7 +160,7 @@ def main():
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
-        changed = True
+        changed = not ignore_changed,
     )
 
 # include magic from lib/ansible/module_common.py
@@ -175,15 +186,18 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
+        params['ignore_changed'] = False
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|ignore_changed)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
                 params['creates'] = v
+            elif m.group(2) == "ignore_changed":
+                params['ignore_changed'] = self.boolean(v)
             elif m.group(2) == "removes":
                 params['removes'] = v
             elif m.group(2) == "chdir":

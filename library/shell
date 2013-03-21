@@ -34,6 +34,12 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  ignore_changed:
+    description:
+      - reports as not changed (changed=0). This is useful when using command does not make any change and is used only to register a variable, making the final statistics more meaningful.
+    required: false
+    default: 'no'
+    choices: ['yes', 'no' ]
 examples:
    - code: "shell: somescript.sh >> somelog.txt"
      description: Execute the command in remote shell
