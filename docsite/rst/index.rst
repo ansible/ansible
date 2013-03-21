@@ -42,7 +42,7 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    playbooks2
    bestpractices
    YAMLSyntax
-
+   Example Playbooks <https://github.com/ansible/ansible-examples>
 
 Developer Information
 `````````````````````
