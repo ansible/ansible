@@ -184,10 +184,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     # Add it to the end of the file if requested or
     # if insertafter=/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
-    elif insertafter == 'EOF' or index[1] == -1:
+    elif insertafter == 'EOF':
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
+    # Do nothing if regexp didn't match
+    elif index[1] == -1:
+        msg = ''
+        changed = False 
     # insertafter/insertbefore= matched
     else:
         lines.insert(index[1], line + os.linesep)
