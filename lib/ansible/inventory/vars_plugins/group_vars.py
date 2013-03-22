@@ -42,7 +42,7 @@ class VarsModule(object):
 
         results = {}
 
-        # load vars in playbook_dir/group_vars/name_of_group
+        # load vars in inventory_dir/group_vars/name_of_group
         for x in groups:
             path = os.path.join(basedir, "group_vars/%s" % x)
             if os.path.exists(path):
@@ -55,7 +55,7 @@ class VarsModule(object):
                 else:
                     results.update(data)
 
-        # load vars in playbook_dir/group_vars/name_of_host
+        # load vars in inventory_dir/hosts_vars/name_of_host
         path = os.path.join(basedir, "host_vars/%s" % host.name)
         if os.path.exists(path):
             data = utils.parse_yaml_from_file(path)
