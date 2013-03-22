@@ -66,16 +66,14 @@ with other solutions in your environment.
    api
    moduledev
 
-Tips and Tricks
-```````````````
-
-`Learn and share neat Ansible tricks on Coderwall <https://coderwall.com/p/t/ansible>`_ - sign-in using GitHub or Twitter to vote on top tips and add your own!
-
 Miscellaneous
 `````````````
 
-A list of some people using Ansible, and some additional resources:
+`Learn and share neat Ansible tricks on Coderwall <https://coderwall.com/p/t/ansible>`_ - sign-in using GitHub or Twitter to vote on top tips and add your own!
 
+`A list of some Ansible users and quotes about Ansible <http://www.ansibleworks.com/users>`_.
+
+More links:
 
 .. toctree::
    :maxdepth: 1
