@@ -499,7 +499,7 @@ class LinuxService(Service):
 
         self.changed = True
 
-        if self.module.check_mode and changed:
+        if self.module.check_mode and self.changed:
             self.module.exit_json(changed=True)
 
         return self.execute_command("%s %s %s" % args)
