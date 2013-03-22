@@ -124,7 +124,7 @@ def db_create(cursor, db, owner, template, encoding):
             template = " TEMPLATE \"%s\"" % template
         if encoding:
             encoding = " ENCODING '%s'" % encoding
-        query = "CREATE DATABASE %s%s%s%s" % (db, owner, template, encoding)
+        query = "CREATE DATABASE \"%s\"%s%s%s" % (db, owner, template, encoding)
         cursor.execute(query)
         return True
     elif owner and not db_owned_by(cursor, db, owner):
