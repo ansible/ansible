@@ -118,7 +118,7 @@ You can also use variables::
 
     webservers:!$excluded:&$required
 
-Individual host names (or IPs), but not groups, can also be referenced using
+Individual host names, IPs and groups, can also be referenced using
 wildcards::
 
     *.example.com
@@ -127,6 +127,7 @@ wildcards::
 It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
+
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 
