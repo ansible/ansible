@@ -103,8 +103,8 @@ def main():
     saturl = module.params['url']
     
     #initialize connection
-    user = "kussenv"
-    pwd = "fubar2000"
+    user = ""
+    pwd = ""
     client = xmlrpclib.Server(saturl, verbose=0)
     session = client.auth.login(user, pwd)
      
