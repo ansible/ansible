@@ -701,6 +701,128 @@ class NetBsdService(Service):
         self.svc_cmd = "%s" % self.svc_initscript
         return self.execute_command("%s %s" % (self.svc_cmd, self.action), daemonize=True)
 
+# ===========================================
+# Subclass: SunOS
+class SunOSService(Service):
+    """
+    This is the SunOS Service manipulation class - it uses the svcadm
+    command for controlling services, and svcs command for checking status.
+    It also tries to be smart about taking the service out of maintenance
+    state if necessary.
+    """
+    platform = 'SunOS'
+    distribution = None
+
+    def get_service_tools(self):
+        self.svcs_cmd = self.module.get_bin_path('svcs', True)
+
+        if not self.svcs_cmd:
+            self.module.fail_json(msg='unable to find svcs binary')
+
+        self.svcadm_cmd = self.module.get_bin_path('svcadm', True)
+    
+        if not self.svcadm_cmd:
+            self.module.fail_json(msg='unable to find svcadm binary')
+
+    def get_service_status(self):
+        status = self.get_sunos_svcs_status()
+        # Only 'online' is considered properly running. Everything else is off
+        # or has some sort of problem.
+        if status == 'online':
+            self.running = True
+        else:
+            self.running = False
+
+    def get_sunos_svcs_status(self):
+        rc, stdout, stderr = self.execute_command("%s %s" % (self.svcs_cmd, self.name))
+        if rc == 1:
+            if stderr:
+                self.module.fail_json(msg=stderr)
+            else:
+                self.module.fail_json(msg=stdout)
+
+        lines = stdout.rstrip("\n").split("\n")
+        status = lines[-1].split(" ")[0]
+        # status is one of: online, offline, degraded, disabled, maintenance, uninitialized
+        # see man svcs(1)
+        return status
+
+    def service_enable(self):
+        # Get current service enablement status
+        rc, stdout, stderr = self.execute_command("%s -l %s" % (self.svcs_cmd, self.name))
+
+        if rc != 0:
+            if err:
+                self.module.fail_json(msg=stderr)
+            else:
+                self.module.fail_json(msg=stdout)
+
+        enabled = False
+        temporary = False
+
+        # look for enabled line, which could be one of:
+        #    enabled   true (temporary)
+        #    enabled   false (temporary)
+        #    enabled   true
+        #    enabled   false
+        for line in stdout.split("\n"):
+            if line.find("enabled") == 0:
+                if line.find("true") != -1:
+                    enabled = True
+                if line.find("temporary") != -1:
+                    temporary = True
+                
+        startup_enabled = (enabled and not temporary) or (not enabled and temporary)
+        
+        if self.enable and startup_enabled:
+            return
+        elif (not self.enable) and (not startup_enabled):
+            return
+
+        # Mark service as started or stopped (this will have the side effect of
+        # actually stopping or starting the service)
+        if self.enable:
+            subcmd = "enable -rs"
+        else:
+            subcmd = "disable -s"
+
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
+
+        if rc != 0:
+            if stderr:
+                self.module.fail_json(msg=stderr)
+            else:
+                self.module.fail_json(msg=stdout)
+
+        self.changed = True
+        
+            
+    def service_control(self):
+        status = self.get_sunos_svcs_status()
+
+        # if starting or reloading, clear maintenace states
+        if self.action in ['start', 'reload', 'restart'] and status in ['maintenance', 'degraded']:
+            rc, stdout, stderr = self.execute_command("%s clear %s" % (self.svcadm_cmd, self.name))
+            if rc != 0:
+                return rc, stdout, stderr
+            status = self.get_sunos_svcs_status()
+
+        if status in ['maintenance', 'degraded']:
+            self.module.fail_json(msg="Failed to bring service out of %s status." % status)
+
+        if self.action == 'start':
+            subcmd = "enable -rst"
+        elif self.action == 'stop':
+            subcmd = "disable -st"
+        elif self.action == 'reload':
+            subcmd = "refresh"
+        elif self.action == 'restart' and status == 'online':
+            subcmd = "restart"
+        elif self.action == 'restart' and status != 'online':
+            subcmd = "enable -rst"
+            
+        return self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
+
 
 # ===========================================
 # Main control flow
