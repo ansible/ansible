@@ -141,6 +141,8 @@ period, without the rest of the domain.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
+Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file.
+
 Variable File Separation
 ````````````````````````
 
