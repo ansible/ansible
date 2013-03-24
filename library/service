@@ -517,14 +517,15 @@ class LinuxService(Service):
 
         # Decide what command to run
         svc_cmd = ''
+        arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV or systemd take the form <cmd> <name> <action>
+                # SysV take the form <cmd> <name> <action>
                 svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
-                self.arguments = "%s %s" % (self.name, self.arguments)
+                arguments = "%s %s" % (self.name, arguments)
         elif self.svc_initscript:
             # upstart
             svc_cmd = "%s" % self.svc_initscript
