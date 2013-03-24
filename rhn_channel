@@ -12,8 +12,6 @@ notes:
     - this module fetches the systemid from rhn. A function 
       to use the local systemid is provided (get_localsystem)
       but not integrated
-    - Username and password are currently hardcoded in the main
-      section
 requirements:
     - none
 options:
