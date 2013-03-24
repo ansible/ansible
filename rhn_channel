@@ -33,13 +33,13 @@ options:
         description:
             - the user to login to rhn/sattelite
         required: true
-    pwd:
+    password:
         description:
             - the user's password
         required: true
 examples:
     - code: rhn_channel name=rhel-x86_64-server-v2vwin-6  sysname=server01
-      url=https://rhn.redhat.com/rpc/api user=rhnuser pwd=guessme
+      url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
       description: add software channel rhel-x86_64-server-v2vwin-6 
                    to server01 in Red Hat Network
 '''
@@ -100,7 +100,7 @@ def main():
             sysname = dict(required=True),
             url = dict(required=True),
             user = dict(required=True),
-            pwd = dict(required=True),
+            password = dict(required=True, aliases=['pwd']),
         )
 #        supports_check_mode=True
     )
@@ -110,11 +110,11 @@ def main():
     systname = module.params['sysname']
     saturl = module.params['url']
     user = module.params['user']
-    pwd = module.params['pwd']
+    password = module.params['password']
     
     #initialize connection
     client = xmlrpclib.Server(saturl, verbose=0)
-    session = client.auth.login(user, pwd)
+    session = client.auth.login(user, password)
      
     # get systemid
     sys_id = get_systemid(client, session, systname)
@@ -126,7 +126,6 @@ def main():
     if state == 'present':
         if channelname in chans:
             module.exit_json(changed=False, msg="Channel %s already exists" % channelname)
-
         else:
             subscribe_channels(channelname, client, session, systname, sys_id)
             module.exit_json(changed=True, msg="Channel %s added" % channelname)
