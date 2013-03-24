@@ -29,7 +29,6 @@ options:
         description: 
             - The full url to the rhn/sattelite api
         required: true
-        default: https://rhn.redhat.com/rpc/api
     user:
         description:
             - the user to login to rhn/sattelite
