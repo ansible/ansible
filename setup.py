@@ -10,7 +10,18 @@ from distutils.core import setup
 
 # find library modules
 from ansible.constants import DIST_MODULE_PATH
-data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
+from shlex import shlex
+
+def getopt_basedir():
+   lexer = shlex(' '.join(sys.argv[1:]))
+   lexer.whitespace += '='
+   lexer.whitespace_split = True
+   for tok in lexer:
+      if tok in ('--home','--root'):
+         return os.path.join(lexer.next(), 'share/ansible/')
+   return DIST_MODULE_PATH
+
+data_files = [ (getopt_basedir(), glob('./library/*')) ]
 
 print "DATA FILES=%s" % data_files
 
