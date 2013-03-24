@@ -75,6 +75,7 @@ import os
 import tempfile
 import shlex
 import select
+import time
 
 class Service(object):
     """
@@ -102,6 +103,7 @@ class Service(object):
         self.state          = module.params['state']
         self.pattern        = module.params['pattern']
         self.enable         = module.params['enabled']
+        self.restart_delay  = module.params['restart_delay']
         self.changed        = False
         self.running        = None
         self.action         = None
@@ -509,6 +511,12 @@ class LinuxService(Service):
             enable_disable = "disable"
 
         if self.enable_cmd.endswith("update-rc.d"):
+            # test if service has already been added using update-rc.d first
+            # this is similar to how the chkconfig services are checked prior to
+            (rc, out, err) = self.execute_command("%s -n %s defaults" % (self.enable_cmd, self.name))
+            if "enable service" in err:
+                self.module.fail_json(msg="unknown service name")
+
             args = (self.enable_cmd, self.name, enable_disable)
         elif self.enable_cmd.endswith("systemctl"):
             args = (self.enable_cmd, enable_disable, self.name + ".service")
@@ -542,26 +550,31 @@ class LinuxService(Service):
 
         if self.action is not "restart":
             if svc_cmd != '':
-                # upstart or systemd
-                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
+                # SysV or systemd
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, self.arguments), daemonize=True)
             else:
-                # SysV
-                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, arguments), daemonize=True)
+                # upstart
+                rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, self.arguments), daemonize=True)
         else:
             # not all services support restart. Do it the hard way.
             if svc_cmd != '':
-                # upstart or systemd
-                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', arguments), daemonize=True)
+                # SysV or systemd
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', self.arguments), daemonize=True)
             else:
-                # SysV
-                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, arguments), daemonize=True)
+                # upstart
+                rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, self.arguments), daemonize=True)
+
+            # add generic time.sleep of N seconds to play nicer with
+            # applications that take some time to stop
+            if self.restart_delay is not None:
+                time.sleep(float(self.restart_delay));
 
             if svc_cmd != '':
-                # upstart or systemd
-                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', arguments), daemonize=True)
+                # SysV or systemd
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', self.arguments), daemonize=True)
             else:
-                # SysV
-                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % ('start', self.name, arguments), daemonize=True)
+                # upstart
+                rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % ('start', self.name, self.arguments), daemonize=True)
 
             # merge return information
             if rc1 != 0 and rc2 == 0:
@@ -852,6 +865,7 @@ def main():
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS, type='bool'),
+            restart_delay = dict(required=False, default=None),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True
