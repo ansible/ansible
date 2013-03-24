@@ -664,20 +664,24 @@ class AnsibleModule(object):
             else:
                 log_args[param] = self.params[param]
 
+        module = 'ansible-%s' % os.path.basename(__file__)
+        msg = ''
+        for arg in log_args:
+            msg = msg + arg + '=' + str(log_args[arg]) + ' '
+        if msg:
+            msg = 'Invoked with %s' % msg
+        else:
+            msg = 'Invoked'
+
         if (has_journal):
-            journal_args = ["MESSAGE=Ansible module invoked", "MODULE=%s" % os.path.basename(__file__)]
+            journal_args = ["MESSAGE=%s %s" % (module, msg)]
+            journal_args.append("MODULE=%s" % os.path.basename(__file__))
             for arg in log_args:
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
             journal.sendv(*journal_args)
         else:
-            msg = ''
-            syslog.openlog('ansible-%s' % str(os.path.basename(__file__)), 0, syslog.LOG_USER)
-            for arg in log_args:
-                msg = msg + arg + '=' + str(log_args[arg]) + ' '
-            if msg:
-                syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % msg)
-            else:
-                syslog.syslog(syslog.LOG_NOTICE, 'Invoked')
+            syslog.openlog(module, 0, syslog.LOG_USER)
+            syslog.syslog(syslog.LOG_NOTICE, msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
