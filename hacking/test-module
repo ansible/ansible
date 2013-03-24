@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
@@ -35,6 +35,7 @@ import traceback
 import optparse
 import ansible.utils as utils
 import ansible.module_common as module_common
+import ansible.constants as C
 
 try:
     import json
@@ -83,6 +84,11 @@ def boilerplate_module(modfile, args):
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
         encoded_args = "\"\"\"%s\"\"\"" % args.replace("\"","\\\"")
         module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+        encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
+        empty_complex = "\"\"\"%s\"\"\"" % "{}"
+        module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
+        module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % C.DEFAULT_SYSLOG_FACILITY)
+        module_data = module_data.replace(module_common.REPLACER_COMPLEX, empty_complex)
 
         modfile2_path = os.path.expanduser("~/.ansible_module_generated")
         print "* including generated source, if any, saving to: %s" % modfile2_path

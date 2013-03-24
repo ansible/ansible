@@ -24,6 +24,7 @@ from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
+import re
 
 class InventoryParser(object):
     """
@@ -66,8 +67,11 @@ class InventoryParser(object):
             if line.startswith("["):
                 active_group_name = line.replace("[","").replace("]","").strip()
                 if line.find(":vars") != -1 or line.find(":children") != -1:
+                    active_group_name = active_group_name.rsplit(":", 1)[0]
+                    if active_group_name not in self.groups:
+                        self.groups[active_group_name] = Group(name=active_group_name)
                     active_group_name = None
-                else:
+                elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
                     all.add_child_group(new_group)
             elif line.startswith("#") or line == '':
@@ -90,28 +94,26 @@ class InventoryParser(object):
                         hostname = tokens2[0]
                         port     = tokens2[1]
 
-                host = None
-                _all_hosts = []
-                if hostname in self.hosts:
-                    host = self.hosts[hostname]
-                    _all_hosts.append(host)
+                hostnames = []
+                if detect_range(hostname):
+                    hostnames = expand_hostname_range(hostname)
                 else:
-                    if detect_range(hostname):
-                        _hosts = expand_hostname_range(hostname)
-                        for _ in _hosts:
-                            host = Host(name=_, port=port)
-                            self.hosts[_] = host
-                            _all_hosts.append(host)
+                    hostnames = [hostname]
+
+                for hn in hostnames:
+                    host = None
+                    if hn in self.hosts:
+                        host = self.hosts[hn]
                     else:
-                        host = Host(name=hostname, port=port)
-                        self.hosts[hostname] = host
-                        _all_hosts.append(host)
-                if len(tokens) > 1:
-                    for t in tokens[1:]:
-                        (k,v) = t.split("=")
-                        host.set_variable(k,v)
-                for _ in _all_hosts:
-                    self.groups[active_group_name].add_host(_)
+                        host = Host(name=hn, port=port)
+                        self.hosts[hn] = host
+                    if len(tokens) > 1:
+                        for t in tokens[1:]:
+                            if t.startswith('#'):
+                                break
+                            (k,v) = t.split("=")
+                            host.set_variable(k,v)
+                    self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
     # atlanta
@@ -164,5 +166,13 @@ class InventoryParser(object):
                 if line.find("=") == -1:
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
-                    (k,v) = line.split("=",1)
-                    group.set_variable(k,v)
+                    (k, v) = [e.strip() for e in line.split("=", 1)]
+                    # When the value is a single-quoted or double-quoted string
+                    if re.match(r"^(['\"]).*\1$", v):
+                        # Unquote the string
+                        group.set_variable(k, re.sub(r"^['\"]|['\"]$", '', v))
+                    else:
+                        group.set_variable(k, v)
+
+    def get_host_variables(self, host):
+        return {}

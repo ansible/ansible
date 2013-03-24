@@ -1,47 +1,54 @@
 ---
-# this is a demo of conditional executions using 'only_if', which can skip
-# certain tasks on machines/platforms/etc where they do not apply.
+# this is a demo of conditional executions using 'when' statements, which can skip
+# certain tasks on machines/platforms/etc where they do not apply.  
 
 - hosts: all
   user: root
 
   vars:
      favcolor: "red"
+     dog: "fido"
+     cat: "whiskers"
      ssn: 8675309
 
-# Below we're going to define some expressions.
+# These are the types of when statemnets available
+#     when_set: $variable_name
+#     when_unset: $variable_name
+#     when_str: $x == "test"
+#     when_int: $y > 2
+#     when_float: $z => 2.3
 #
-# Not only can we assign variables for reuse, but we can also assign conditional
-# expressions.  By keeping these in 'vars', the task section remains
-# extraordinarily clean, and not littered with programming language
-# constructs -- so it's easily skimmed by humans.
+# when using 'when', take care to make sure any variables given are surrounded by spaces
+# as an example, $z>3 will not do what you want, use "$z > 3"
 #
-# Remember to quote any variables if they are not numbers!
-#
-# Interesting fact: aside from the $variables, these expressions are actually
-# tiny bits of Python.  They are evaluated in the context of each host, so different
-# steps can be skipped on different hosts!  They should evaluate to either True
-# or False
-
-     is_favcolor_blue: "'$favcolor' == 'blue'"
-     is_centos: "'$facter_operatingsystem' == 'CentOS'"
-
-# NOTE:
-#
-# facter and ohai variables can be used in only_if statements too
-# ex:  "'$facter_operatingsystem' == 'CentOS'", which bubble up automatically
-# from the managed machines
-#
-# this example won't do that though, as you might not have facter or ohai,
-# but you get the idea...
+# note, if you are doing comparisons to variables that are stored as hashes or lists,
+# you will need to use the older 'only_if', which is more free form.  
+# see conditionals_part_3.yml
 
   tasks:
 
-     - name: "do this if my favcolor is blue"
+     - name: "do this if my favcolor is blue, and my dog is named fido"
        action: shell /bin/false
-       only_if: '$is_favcolor_blue'
+       when_string: $favcolor == 'blue' and $dog == 'fido'
 
-     - name: "do this if my favcolor is not blue"
+     - name: "do this if my favcolor is not blue, and my dog is named fido"
        action: shell /bin/true
-       only_if: 'not ($is_favcolor_blue)'
+       when_string: $favcolor != 'blue' and $dog == 'fido'
+
+     - name: "do this if my SSN is over 9000"
+       action: shell /bin/true
+       when_integer: $ssn > 9000
+
+     - name: "do this if I have one of these SSNs"
+       action: shell /bin/true
+       when_integer:  $ssn in [ 8675309, 8675310, 8675311 ]
+     
+     - name: "do this if a variable named hippo is NOT defined"
+       action: shell /bin/true
+       when_unset: $hippo
+
+     - name: "do this if a variable named hippo is defined"
+       action: shell /bin/true
+       when_set: $hippo
+
 

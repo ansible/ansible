@@ -4,7 +4,11 @@ Ansible
 Ansible is a radically simple configuration-management, deployment, task-execution, and
 multinode orchestration framework.
 
-Read the documentation at http://ansible.github.com
+Read the documentation and more at http://ansible.cc
+
+Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.  You can find 
+instructions on http://ansible.cc/docs/gettingstarted.html for a variety of platforms.  If you want a tarball of the last release, go to 
+http://ansible.cc/releases/ and you can also install with pip (though that will bring in some optional binary dependencies you normally do not need).
 
 Design Principles
 =================
@@ -28,32 +32,9 @@ Branch Info
 ===========
 
    * Releases are named after Van Halen songs.
-   * The devel branch corresponds to release 0.7, "Panama".
+   * The devel branch corresponds to the release actively under development.
    * Various release-X.Y branches exist for previous releases
-   * All feature work happens on the development branch.
-   * Major bug fixes will be made to the last release branch only
-   * See CHANGELOG.md for release notes to track each release.
-
-Patch Instructions
-==================
-
-Contributions to the core and modules are greatly welcome.
-
-   * Required Process:
-       * Submit github pull requests to the "ansible/devel" branch for features
-       * Fixes for bugs may also be submitted to "ansible/release-X.Y" for the last release
-       * Make sure "make tests" passes before submitting any requests.
-   * Bonus points:
-       * Joining the mailing list
-       * Fixing bugs instead of sending bug reports.
-       * Using squash merges
-       * Updating the "rst/*" files in the docs project and "docs/" manpage content
-       * Adding more unit tests
-   * Avoid:
-       * Sending patches to the mailing list directly.
-       * Sending feature pull requests to the 'release' branch instead of the devel branch
-       * Sending pull requests to mpdehaan's personal ansible fork.
-
+   * We'd love to have your contributions, read "CONTRIBUTING.md" for process notes.
 
 Author
 ======

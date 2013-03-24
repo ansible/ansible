@@ -17,6 +17,40 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: seboolean
+short_description: Toggles SELinux booleans.
+description:
+     - Toggles SELinux booleans.
+version_added: "0.7"
+options:
+  name:
+    description:
+      - Name of the boolean to configure
+    required: true
+    default: null
+  persistent:
+    description:
+      - Set to C(yes) if the boolean setting should survive a reboot
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  state:
+    description:
+      - Desired boolean value
+    required: true
+    default: null
+    choices: [ true, false ]
+examples:
+   - code: "seboolean: name=httpd_can_network_connect state=true persistent=yes"
+     description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
+notes:
+   - Not tested on any debian based system
+requirements: [ ]
+author: Stephen Fromm
+'''
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -124,13 +158,14 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True),
-            persistent=dict(default='no', choices=BOOLEANS),
-            state=dict(required=True, choices=BOOLEANS)
-        )
+            persistent=dict(default='no', type='bool'),
+            state=dict(required=True, type='bool')
+        ),
+        supports_check_mode=True
     )
-    
+
     if not HAVE_SELINUX:
-        module.fail_json(msg="SELinux not supported on this host.")
+        module.fail_json(msg="This module requires libselinux-python support")
 
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
@@ -139,8 +174,8 @@ def main():
         module.fail_json(msg="SELinux is disabled on this host.")
 
     name = module.params['name']
-    persistent = module.boolean(module.params['persistent'])
-    state = module.boolean(module.params['state'])
+    persistent = module.params['persistent']
+    state = module.params['state']
     result = {}
     result['name'] = name
 
@@ -154,6 +189,8 @@ def main():
         result['changed'] = False
         module.exit_json(**result)
 
+    if module.check_mode:
+        module.exit_json(changed=True)
     if persistent:
         r = semanage_boolean_value(module, name, state)
     else:

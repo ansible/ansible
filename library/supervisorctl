@@ -19,23 +19,31 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def _is_present(name, supervisorctl):
-    rc, out, err = _run('%s status' % supervisorctl)
-    return name in out
-
-
-def _is_running(name, supervisorctl):
-    rc, out, err = _run('%s status %s' % (supervisorctl, name))
-    return 'RUNNING' in out
-
-
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
+DOCUMENTATION = '''
+---
+module: supervisorctl
+short_description: Manage the state of a program or group of programs running via Supervisord
+description:
+     - Manage the state of a program or group of programs running via I(Supervisord)
+version_added: "0.7"
+options:
+  name:
+    description:
+      - The name of the I(supervisord) program/process to manage
+    required: true
+    default: null
+  state:
+    description:
+      - The state of service
+    required: true
+    default: null
+    choices: [ "present", "started", "stopped", "restarted" ]
+examples:
+   - code: "supervisorctl: name=my_app state=started"
+     description: Manage the state of program I(my_app) to be in I(started) state.
+requirements: [ ]
+author: Matt Wright
+'''
 
 def main():
     arg_spec = dict(
@@ -43,19 +51,22 @@ def main():
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped'])
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     name = module.params['name']
     state = module.params['state']
 
     SUPERVISORCTL = module.get_bin_path('supervisorctl', True)
 
-    present = _is_present(name, SUPERVISORCTL)
+    rc, out, err = module.run_command('%s status' % SUPERVISORCTL)
+    present = name in out
 
     if state == 'present':
         if not present:
-            _run('%s reread' % SUPERVISORCTL)
-            rc, out, err = _run('%s add %s' % (SUPERVISORCTL, name))
+            if module.check_mode:
+                module.exit_json(changed=True)
+            module.run_command('%s reread' % SUPERVISORCTL, check_rc=True)
+            rc, out, err = module.run_command('%s add %s' % (SUPERVISORCTL, name))
 
             if '%s: added process group' % name in out:
                 module.exit_json(changed=True, name=name, state=state)
@@ -64,38 +75,42 @@ def main():
 
         module.exit_json(changed=False, name=name, state=state)
 
-    running = _is_running(name, SUPERVISORCTL)
+    rc, out, err = module.run_command('%s status %s' % (SUPERVISORCTL, name))
+    running = 'RUNNING' in out
 
     if running and state == 'started':
         module.exit_json(changed=False, name=name, state=state)
 
     if running and state == 'stopped':
-        rc, out, err = _run('%s stop %s' % (SUPERVISORCTL, name))
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command('%s stop %s' % (SUPERVISORCTL, name))
 
         if '%s: stopped' % name in out:
             module.exit_json(changed=True, name=name, state=state)
 
         module.fail_json(msg=out)
 
-    elif running and state == 'restarted':
-        rc, out, err = _run('%s update %s' % (SUPERVISORCTL, name))
-        rc, out, err = _run('%s restart %s' % (SUPERVISORCTL, name))
-
-        if '%s: stopped' % name in out and '%s: started' % name in out:
-            module.exit_json(changed=True, name=name, state=state)
-
-        module.fail_json(msg=out)
-
-    elif not running and state == 'started':
-        rc, out, err = _run('%s start %s' % (SUPERVISORCTL, name))
+    elif state == 'restarted':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command('%s update %s' % (SUPERVISORCTL, name))
+        rc, out, err = module.run_command('%s restart %s' % (SUPERVISORCTL, name))
 
         if '%s: started' % name in out:
             module.exit_json(changed=True, name=name, state=state)
 
         module.fail_json(msg=out)
 
-    elif not running and state == 'restarted':
-        module.fail_json(msg='Could not restart `%s` because it is not running' % name)
+    elif not running and state == 'started':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command('%s start %s' % (SUPERVISORCTL, name))
+
+        if '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
 
     module.exit_json(changed=False, name=name, state=state)
 

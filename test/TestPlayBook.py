@@ -22,6 +22,9 @@ class TestCallbacks(object):
     def set_playbook(self, playbook):
         self.playbook = playbook
 
+    def on_no_hosts_remaining(self):
+        pass
+
     def on_start(self):
         EVENTS.append('start')
 
@@ -111,12 +114,17 @@ class TestPlaybook(unittest.TestCase):
        filename = os.path.join(self.stage_dir, filename)
        return filename
 
-   def _run(self, test_playbook):
+   def _run(self, test_playbook, host_list='test/ansible_hosts'):
        ''' run a module and get the localhost results '''
+       # This ensures tests are independent of eachother
+       global EVENTS
+       ansible.playbook.SETUP_CACHE.clear()
+       EVENTS = []
+
        self.test_callbacks = TestCallbacks()
        self.playbook = ansible.playbook.PlayBook(
            playbook     = test_playbook,
-           host_list    = 'test/ansible_hosts',
+           host_list    = host_list,
            module_path  = 'library/',
            forks        = 1,
            timeout      = 5,
@@ -130,7 +138,7 @@ class TestPlaybook(unittest.TestCase):
        return result
 
    def test_one(self):
-       pb = os.path.join(self.test_dir, 'playbook1.yml')
+       pb = 'test/playbook1.yml'
        actual = self._run(pb)
 
        # if different, this will output to screen
@@ -155,7 +163,52 @@ class TestPlaybook(unittest.TestCase):
        print data
        assert data.find("ears") != -1, "template success"
 
-   def test_playbook_vars(self): 
+   def test_lookups(self):
+       pb = os.path.join(self.test_dir, 'lookup_plugins.yml')
+       actual = self._run(pb)
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 16,
+               "failures": 0,
+               "ok": 21,
+               "skipped": 1,
+               "unreachable": 0
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
+       print "len(EVENTS) = %d" % len(EVENTS)
+       assert len(EVENTS) == 74
+
+   def test_includes(self):
+       pb = os.path.join(self.test_dir, 'playbook-includer.yml')
+       actual = self._run(pb)
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 0,
+               "failures": 0,
+               "ok": 10,
+               "skipped": 0,
+               "unreachable": 0
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
+   def test_playbook_vars(self):
        test_callbacks = TestCallbacks()
        playbook = ansible.playbook.PlayBook(
            playbook=os.path.join(self.test_dir, 'test_playbook_vars', 'playbook.yml'),
@@ -165,8 +218,6 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks=test_callbacks
        )
        playbook.run()
-       assert playbook.SETUP_CACHE['host1'] == {'attr2': 2, 'attr1': 1}
-       assert playbook.SETUP_CACHE['host2'] == {'attr2': 2}
 
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
@@ -179,5 +230,6 @@ class TestPlaybook(unittest.TestCase):
            callbacks=test_callbacks,
            runner_callbacks=test_callbacks
        )
-       play = ansible.playbook.Play(playbook, playbook.playbook[0])
+       play = ansible.playbook.Play(playbook, playbook.playbook[0], os.getcwd())
        assert play.hosts == ';'.join(('host1', 'host2', 'host3'))
+

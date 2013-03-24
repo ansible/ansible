@@ -19,6 +19,34 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+DOCUMENTATION = '''
+---
+module: async_status
+short_description: Obtain status of asynchronous task
+description:
+     - "This module gets the status of an asynchronous task. See:
+       U(http://ansible.cc/docs/playbooks2.html#asynchronous-actions-and-polling)"
+version_added: "0.5"
+options:
+  jid:
+    description:
+      - Job or task identifier
+    required: true
+    default: null
+    aliases: []
+  mode:
+    description:
+      - if C(status), obtain the status; if C(cleanup), clean up the async job cache
+        located in C(~/.ansible_async/) for the specified job I(jid).
+    required: false
+    choices: [ "status", "cleanup" ]
+    default: "status"
+notes:
+    - See U(http://ansible.cc/docs/playbooks2.html#asynchronous-actions-and-polling)
+requirements: []
+author: Michael DeHaan
+'''
+
 import datetime
 import traceback
 
@@ -55,12 +83,16 @@ def main():
             # file not written yet?  That means it is running
             module.exit_json(results_file=log_path, ansible_job_id=jid, started=1)
         else:
-            module_fail_json(ansible_job_id=jid, results_file=log_path,
+            module.fail_json(ansible_job_id=jid, results_file=log_path,
                 msg="Could not parse job output: %s" % data)
 
     if not 'started' in data:
         data['finished'] = 1
         data['ansible_job_id'] = jid
+
+    # Fix error: TypeError: exit_json() keywords must be strings
+    data = dict([(str(k), v) for k, v in data.iteritems()])
+
     module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py

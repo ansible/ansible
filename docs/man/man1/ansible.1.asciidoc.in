@@ -102,14 +102,11 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 *-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
-Use this remote 'USERNAME' instead of root.
+Use this remote 'USERNAME' instead of the current user.
 
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
 Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
-
-*--private-key=*'PRIVATE_KEY_FILE'::
-Use this file to authenticate the connection.
 
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
@@ -119,6 +116,10 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
 Further limits the selected host/group patterns.
+
+*-l* '\~REGEX', *--limit=*'~REGEX'::
+
+Further limits hosts with a regex pattern.
 
 INVENTORY
 ---------
@@ -138,6 +139,9 @@ FILES
 
 /usr/share/ansible/ -- Default module library
 
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
 
 ENVIRONMENT
 -----------
@@ -147,6 +151,8 @@ The following environment variables may specified.
 ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+ANSIBLE_CONFIG -- Override the default ansible config file
 
 
 AUTHOR
@@ -167,7 +173,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible-playbook*(1), *ansible-pull*(1)
+*ansible-playbook*(1), *ansible-pull*(1), *ansible-doc*(1)
 
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>

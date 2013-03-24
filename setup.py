@@ -9,8 +9,8 @@ from ansible import __version__, __author__
 from distutils.core import setup
 
 # find library modules
-from ansible.constants import DEFAULT_MODULE_PATH
-data_files = [ (DEFAULT_MODULE_PATH, glob('./library/*')) ]
+from ansible.constants import DIST_MODULE_PATH
+data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
 
 print "DATA FILES=%s" % data_files
 
@@ -25,17 +25,23 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.utils',
          'ansible.inventory',
+         'ansible.inventory.vars_plugins',
          'ansible.playbook',
          'ansible.runner',
+         'ansible.runner.action_plugins',
+         'ansible.runner.lookup_plugins',
          'ansible.runner.connection_plugins',
          'ansible.runner.action_plugins',
+         'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
       ],
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
-         'bin/ansible-pull'
+         'bin/ansible-pull',
+         'bin/ansible-doc'
       ],
       data_files=data_files
 )

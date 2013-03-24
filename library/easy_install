@@ -19,61 +19,110 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def _ensure_virtualenv(env, virtualenv):
-    if os.path.exists(os.path.join(env, 'bin', 'activate')):
-        return 0, '', ''
-    else:
-        return _run('%s %s' % (virtualenv, env))
+DOCUMENTATION = '''
+---
+module: easy_install
+short_description: Installs Python libraries
+description:
+     - Installs Python libraries, optionally in a I(virtualenv)
+version_added: "0.7"
+options:
+  name:
+    description:
+      - A Python library name
+    required: true
+    default: null
+    aliases: []
+  virtualenv:
+    description:
+      - an optional I(virtualenv) directory path to install into. If the
+        I(virtualenv) does not exist, it is created automatically
+    required: false
+    default: null
+  virtualenv_site_packages:
+    version_added: 1.1
+    description:
+      - Whether the virtual environment will inherit packages from the
+        global site-packages directory.  Note that if this setting is
+        changed on an already existing virtual environment it will not
+        have any effect, the environment must be deleted and newly
+        created.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  virtualenv_command:
+    version_added: 1.1
+    description:
+      - The command to create the virtual environment with. For example
+        C(pyvenv), C(virtualenv), C(virtualenv2).
+    required: false
+    default: virtualenv
+examples:
+   - code: "easy_install: name=pip"
+     description: "Examples from Ansible Playbooks"
+   - code: "easy_install: name=flask virtualenv=/webapps/myapp/venv"
+     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
+notes:
+    - Please note that the M(easy_install) module can only install Python
+      libraries. Thus this module is not able to remove libraries. It is
+      generally recommended to use the M(pip) module which you can first install
+      using M(easy_install).
+    - Also note that I(virtualenv) must be installed on the remote host if the
+      C(virtualenv) parameter is specified.
+requirements: [ "virtualenv" ]
+author: Matt Wright
+'''
 
-
-def _is_package_installed(name, easy_install):
+def _is_package_installed(module, name, easy_install):
     cmd = '%s --dry-run %s' % (easy_install, name)
-    rc, status_stdout, status_stderr = _run(cmd)
+    rc, status_stdout, status_stderr = module.run_command(cmd)
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
-
-
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
 
 
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        virtualenv=dict(default=None, required=False)
+        virtualenv=dict(default=None, required=False),
+        virtualenv_site_packages=dict(default='no', type='bool'),
+        virtualenv_command=dict(default='virtualenv', required=False),
     )
 
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     name = module.params['name']
     env = module.params['virtualenv']
     easy_install = module.get_bin_path('easy_install', True, ['%s/bin' % env])
+    site_packages = module.params['virtualenv_site_packages']
+    virtualenv_command = module.params['virtualenv_command']
 
     rc = 0
     err = ''
     out = ''
 
     if env:
-        virtualenv = module.get_bin_path('virtualenv', True)
-        if virtualenv is None:
-            module.fail_json(msg='virtualenv is not installed')
+        virtualenv = module.get_bin_path(virtualenv_command, True)
 
-        rc_venv, out_venv, err_venv = _ensure_virtualenv(env, virtualenv)
+        if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+            if module.check_mode:
+                module.exit_json(changed=True)
+            command = '%s %s' % (virtualenv, env)
+            if site_packages:
+                command += ' --system-site-packages'
+            rc_venv, out_venv, err_venv = module.run_command('%s %s' % (virtualenv, env))
 
-        rc += rc_venv
-        out += out_venv
-        err += err_venv
+            rc += rc_venv
+            out += out_venv
+            err += err_venv
 
     cmd = None
     changed = False
-    installed = _is_package_installed(name, easy_install)
+    installed = _is_package_installed(module, name, easy_install)
 
     if not installed:
+        if module.check_mode:
+            module.exit_json(changed=True)
         cmd = '%s %s' % (easy_install, name)
-        rc_pip, out_pip, err_pip = _run(cmd)
+        rc_pip, out_pip, err_pip = module.run_command(cmd)
 
         rc += rc_pip
         out += out_pip

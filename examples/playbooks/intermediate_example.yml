@@ -1,5 +1,5 @@
 ---
-# see examples.yml first!
+# see intro_example.yml first!
 # This file explains some more advanced features of playbooks.
 # because of the comments it's less concise than it normally is.  But feel
 # free to comment your playbooks if you like.
@@ -42,7 +42,9 @@
 
     # handlers can also be included from files, to promote reuse
     # and simpler recipes, you may wish to only have one
-    # handler file for all your plays and playbooks
+    # handler file for all your plays and playbooks.  This example really
+    # doesn't notify any handlers, it is just showing you how they would
+    # be included (see intro_example for usage).
 
     - include: handlers/handlers.yml
 

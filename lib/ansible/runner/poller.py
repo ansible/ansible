@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -32,19 +32,23 @@ class AsyncPoller(object):
 
         # Get job id and which hosts to poll again in the future
         jid = None
+        # True to work with & below
+        skipped = True
         for (host, res) in results['contacted'].iteritems():
             if res.get('started', False):
                 self.hosts_to_poll.append(host)
                 jid = res.get('ansible_job_id', None)
             else:
+                skipped = skipped & res.get('skipped', False)
                 self.results['contacted'][host] = res
         for (host, res) in results['dark'].iteritems():
             self.results['dark'][host] = res
 
-        if jid is None:
-            raise errors.AnsibleError("unexpected error: unable to determine jid")
-        if len(self.hosts_to_poll)==0:
-            raise errors.AnsibleErrot("unexpected error: no hosts to poll")
+        if not skipped:
+            if jid is None:
+                raise errors.AnsibleError("unexpected error: unable to determine jid")
+            if len(self.hosts_to_poll)==0:
+                raise errors.AnsibleErrot("unexpected error: no hosts to poll")
         self.jid = jid
 
     def poll(self):
@@ -86,6 +90,10 @@ class AsyncPoller(object):
 
     def wait(self, seconds, poll_interval):
         """ Wait a certain time for job completion, check status every poll_interval. """
+        # jid is None when all hosts were skipped
+        if self.jid is None:
+            return self.results
+
         clock = seconds - poll_interval
         while (clock >= 0 and not self.completed):
             time.sleep(poll_interval)

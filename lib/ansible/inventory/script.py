@@ -22,32 +22,69 @@ import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible import utils
+from ansible import errors
 
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
-        cmd = [ filename, "--list" ]
-        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.filename = filename
+        cmd = [ self.filename, "--list" ]
+        try:
+            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
         self.data = stdout
         self.groups = self._parse()
 
     def _parse(self):
 
-        groups = {}
-        self.raw = utils.parse_json(self.data)
-        all=Group('all')
-        self.groups = dict(all=all)
-        group = None
-        for (group_name, hosts) in self.raw.items():
+        all_hosts = {}
+        self.raw  = utils.parse_json(self.data)
+        all       = Group('all')
+        groups    = dict(all=all)
+        group     = None
+
+        if 'failed' in self.raw:
+            raise errors.AnsibleError("failed to parse executable inventory script results")
+
+        for (group_name, data) in self.raw.items():
+
             group = groups[group_name] = Group(group_name)
             host = None
-            for hostname in hosts:
-                host = Host(hostname)
-                group.add_host(host)
-                # FIXME: hack shouldn't be needed
-                all.add_host(host)
+
+            if not isinstance(data, dict):
+                data = {'hosts': data}
+
+            if 'hosts' in data:
+
+                for hostname in data['hosts']:
+                    if not hostname in all_hosts:
+                        all_hosts[hostname] = Host(hostname)
+                    host = all_hosts[hostname]
+                    group.add_host(host)
+
+            if 'vars' in data:
+                for k, v in data['vars'].iteritems():
+                    group.set_variable(k, v)
             all.add_child_group(group)
+
+        # Separate loop to ensure all groups are defined
+        for (group_name, data) in self.raw.items():
+            if isinstance(data, dict) and 'children' in data:
+                for child_name in data['children']:
+                    if child_name in groups:
+                        groups[group_name].add_child_group(groups[child_name])
         return groups
+
+    def get_host_variables(self, host):
+        """ Runs <script> --host <hostname> to determine additional host variables """
+        cmd = [self.filename, "--host", host.name]
+        try:
+            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError, e:
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+        (out, err) = sp.communicate()
+        return utils.parse_json(out)

@@ -18,21 +18,28 @@
 import sys
 import os
 import shlex
-import re
-import codecs
-import jinja2
 import yaml
+import copy
 import optparse
 import operator
 from ansible import errors
 from ansible import __version__
+from ansible.utils.template import *
+from ansible.utils.plugins import *
 import ansible.constants as C
 import time
 import StringIO
-import imp
-import glob
+import stat
+import termios
+import tty
+import pipes
+import random
+import difflib
+import warnings
 
 VERBOSITY=0
+
+MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 
 try:
     import json
@@ -44,14 +51,57 @@ try:
 except ImportError:
     from md5 import md5 as _md5
 
-# vars_prompt_encrypt
 PASSLIB_AVAILABLE = False
-
 try:
     import passlib.hash
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+KEYCZAR_AVAILABLE=False
+try:
+    import keyczar.errors as key_errors
+    from keyczar.keys import AesKey
+    KEYCZAR_AVAILABLE=True
+except ImportError:
+    pass
+
+###############################################################
+# abtractions around keyczar
+
+def key_for_hostname(hostname):
+    # fireball mode is an implementation of ansible firing up zeromq via SSH
+    # to use no persistent daemons or key management
+
+    if not KEYCZAR_AVAILABLE:
+        raise errors.AnsibleError("python-keyczar must be installed to use fireball mode")
+
+    key_path = os.path.expanduser("~/.fireball.keys")
+    if not os.path.exists(key_path):
+        os.makedirs(key_path)
+    key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
+
+    # use new AES keys every 2 hours, which means fireball must not allow running for longer either
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+        key = AesKey.Generate()
+        fh = open(key_path, "w")
+        fh.write(str(key))
+        fh.close()
+        return key
+    else:
+        fh = open(key_path)
+        key = AesKey.Read(fh.read())
+        fh.close()
+        return key
+
+def encrypt(key, msg):
+    return key.Encrypt(msg)
+
+def decrypt(key, msg):
+    try:
+        return key.Decrypt(msg)
+    except key_errors.InvalidSignatureError:
+        raise errors.AnsibleError("decryption failed")
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -71,6 +121,8 @@ def exit(msg, rc=1):
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
 
+    if result is None:
+        return "{}"
     result2 = result.copy()
     if format:
         return json.dumps(result2, sort_keys=True, indent=4)
@@ -92,6 +144,33 @@ def is_failed(result):
 
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
+def is_changed(result):
+    ''' is a given JSON result a changed result? '''
+
+    return (result.get('changed', False) in [ True, 'True', 'true'])
+
+def check_conditional(conditional):
+
+    if not isinstance(conditional, basestring):
+        return conditional
+
+    def is_set(var):
+        return not var.startswith("$")
+
+    def is_unset(var):
+        return var.startswith("$")
+
+    try:
+        return eval(conditional.replace("\n", "\\n"))
+    except (NameError, SyntaxError):
+        raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
+
+def is_executable(path):
+    '''is the given path executable?'''
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+
 def prepare_writeable_dir(tree):
     ''' make sure a directory exists and is writeable '''
 
@@ -106,11 +185,13 @@ def prepare_writeable_dir(tree):
         exit("Cannot write to path %s" % tree)
 
 def path_dwim(basedir, given):
-    ''' make relative paths work like folks expect '''
+    '''
+    make relative paths work like folks expect.
+    '''
 
     if given.startswith("/"):
         return given
-    elif given.startswith("~/"):
+    elif given.startswith("~"):
         return os.path.expanduser(given)
     else:
         return os.path.join(basedir, given)
@@ -122,6 +203,8 @@ def json_loads(data):
 
 def parse_json(raw_data):
     ''' this version for module return data only '''
+
+    orig_data = raw_data
 
     # ignore stuff like tcgetattr spewage or other warnings
     data = filter_leading_non_json_lines(raw_data)
@@ -140,7 +223,7 @@ def parse_json(raw_data):
 
         for t in tokens:
             if t.find("=") == -1:
-                raise errors.AnsibleError("failed to parse: %s" % raw_data)
+                raise errors.AnsibleError("failed to parse: %s" % orig_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
                 if value.lower() in [ 'true', '1' ]:
@@ -151,112 +234,37 @@ def parse_json(raw_data):
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : raw_data }
+            return { "failed" : True, "parsed" : False, "msg" : orig_data }
         return results
-
-_LISTRE = re.compile(r"(\w+)\[(\d+)\]")
-
-class VarNotFoundException(Exception):
-    pass
-
-def _varLookup(name, vars):
-    ''' find the contents of a possibly complex variable in vars. '''
-
-    path = name.split('.')
-    space = vars
-    for part in path:
-        if part in space:
-            space = space[part]
-        elif "[" in part:
-            m = _LISTRE.search(part)
-            if not m:
-                raise VarNotFoundException()
-            try:
-                space = space[m.group(1)][int(m.group(2))]
-            except (KeyError, IndexError):
-                raise VarNotFoundException()
-        else:
-            raise VarNotFoundException()
-    return space
-
-_KEYCRE = re.compile(r"\$(?P<complex>\{){0,1}((?(complex)[\w\.\[\]]+|\w+))(?(complex)\})")
-
-def varLookup(varname, vars):
-    ''' helper function used by varReplace '''
-
-    m = _KEYCRE.search(varname)
-    if not m:
-        return None
-    try:
-        return _varLookup(m.group(2), vars)
-    except VarNotFoundException:
-        return None
-
-def varReplace(raw, vars):
-    ''' Perform variable replacement of $variables in string raw using vars dictionary '''
-    # this code originally from yum
-
-    done = [] # Completed chunks to return
-
-    while raw:
-        m = _KEYCRE.search(raw)
-        if not m:
-            done.append(raw)
-            break
-
-        # Determine replacement value (if unknown variable then preserve
-        # original)
-        varname = m.group(2)
-
-        try:
-            replacement = unicode(_varLookup(varname, vars))
-        except VarNotFoundException:
-            replacement = m.group()
-
-        start, end = m.span()
-        done.append(raw[:start])    # Keep stuff leading up to token
-        done.append(replacement)    # Append replacement value
-        raw = raw[end:]             # Continue with remainder of string
-
-    return ''.join(done)
-
-def template(text, vars):
-    ''' run a text buffer through the templating engine until it no longer changes '''
-
-    prev_text = ''
-    try:
-        text = text.decode('utf-8')
-    except UnicodeEncodeError:
-        pass # already unicode
-    depth = 0
-    while prev_text != text:
-        depth = depth + 1
-        if (depth > 20):
-            raise errors.AnsibleError("template recursion depth exceeded")
-        prev_text = text
-        text = varReplace(unicode(text), vars)
-    return text
-
-def template_from_file(basedir, path, vars):
-    ''' run a file through the templating engine '''
-
-    environment = jinja2.Environment(loader=jinja2.FileSystemLoader(basedir), trim_blocks=False)
-    environment.filters['to_json'] = json.dumps
-    environment.filters['from_json'] = json.loads
-    environment.filters['to_yaml'] = yaml.dump
-    environment.filters['from_yaml'] = yaml.load
-    data = codecs.open(path_dwim(basedir, path), encoding="utf8").read()
-    t = environment.from_string(data)
-    vars = vars.copy()
-    res = t.render(vars)
-    if data.endswith('\n') and not res.endswith('\n'):
-        res = res + '\n'
-    return template(res, vars)
 
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
+    return yaml.safe_load(data)
 
-    return yaml.load(data)
+def process_yaml_error(exc, data, path=None):
+    if hasattr(exc, 'problem_mark'):
+        mark = exc.problem_mark
+        if mark.line -1 >= 0:
+            before_probline = data.split("\n")[mark.line-1]
+        else:
+            before_probline = ''
+        probline = data.split("\n")[mark.line]
+        arrow = " " * mark.column + "^"
+        msg = """Syntax Error while loading YAML script, %s
+Note: The error may actually appear before this position: line %s, column %s
+
+%s
+%s
+%s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
+    else:
+        # No problem markers means we have to throw a generic
+        # "stuff messed up" type message. Sry bud.
+        if path:
+            msg = "Could not parse YAML. Check over %s again." % path
+        else:
+            msg = "Could not parse YAML."
+    raise errors.AnsibleYAMLValidationFailed(msg)
+
 
 def parse_yaml_from_file(path):
     ''' convert a yaml file to a data structure '''
@@ -267,25 +275,7 @@ def parse_yaml_from_file(path):
     except IOError:
         raise errors.AnsibleError("file not found: %s" % path)
     except yaml.YAMLError, exc:
-        if hasattr(exc, 'problem_mark'):
-            mark = exc.problem_mark
-            if mark.line -1 >= 0:
-                before_probline = data.split("\n")[mark.line-1]
-            else:
-                before_probline = ''
-            probline = data.split("\n")[mark.line]
-            arrow = " " * mark.column + "^"
-            msg = """Syntax Error while loading YAML script, %s
-Note: The error may actually appear before this position: line %s, column %s
-
-%s
-%s
-%s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
-        else:
-            # No problem markers means we have to throw a generic
-            # "stuff messed up" type message. Sry bud.
-            msg = "Could not parse YAML. Check over %s again." % path
-        raise errors.AnsibleYAMLValidationFailed(msg)
+        process_yaml_error(exc, data, path)
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
@@ -299,6 +289,33 @@ def parse_kv(args):
                 k, v = x.split("=",1)
                 options[k]=v
     return options
+
+def merge_hash(a, b):
+    ''' merges hash b into a
+    this means that if b has key k, the resulting has will have a key k
+    which value comes from b
+    said differently, all key/value combination from b will override a's '''
+
+    # and iterate over b keys
+    for k, v in b.iteritems():
+        if k in a and isinstance(a[k], dict):
+            # if this key is a hash and exists in a
+            # we recursively call ourselves with 
+            # the key value of b
+            a[k] = merge_hash(a[k], v)
+        else:
+            # k is not in a, no need to merge b, we just deecopy
+            # or k is not a dictionnary, no need to merge b either, we just deecopy it
+            a[k] = v
+    # finally, return the resulting hash when we're done iterating keys
+    return a
+
+def md5s(data):
+    ''' Return MD5 hex digest of data. '''
+
+    digest = _md5()
+    digest.update(data.encode('utf-8'))
+    return digest.hexdigest()
 
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
@@ -324,13 +341,13 @@ def default(value, function):
 def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '.git')
-    
+    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
+
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.load(open(repo_path)).get('gitdir')
+                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
                 # There is a posibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
@@ -347,7 +364,7 @@ def _gitinfo():
             commit = f.readline()[:10]
             f.close()
             date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:  
+            if time.daylight == 0:
                 offset = time.timezone
             else:
                 offset = time.altzone
@@ -364,6 +381,17 @@ def version(prog):
         result = result + " {0}".format(gitinfo)
     return result
 
+def getch():
+    ''' read in a single character '''
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -379,8 +407,8 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False, 
-    async_opts=False, connect_opts=False, subset_opts=False):
+def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
+    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
@@ -394,13 +422,13 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
-    parser.add_option('--private-key', default=None, dest='private_key_file',
+    parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
-        default=constants.DEFAULT_MODULE_PATH)
+        default=None)
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
@@ -437,6 +465,17 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
             help='run asynchronously, failing after X seconds (default=N/A)')
 
+    if check_opts:
+        parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
+            help="don't make any changes, instead try to predict some of the changes that may occur"
+        )
+
+    if diff_opts:
+        parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
+            help="when changing (small) files and templates, show the differences in those files, works great with --check"
+        )
+
+
     return parser
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
@@ -465,15 +504,15 @@ def last_non_blank_line(buf):
         if (len(line) > 0):
             return line
     # shouldn't occur unless there's no output
-    return ""  
+    return ""
 
 def filter_leading_non_json_lines(buf):
-    ''' 
+    '''
     used to avoid random output from SSH at the top of JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-    
+
     need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
-    filter only leading lines since multiline JSON is valid. 
+    filter only leading lines since multiline JSON is valid.
     '''
 
     filtered_lines = StringIO.StringIO()
@@ -484,14 +523,140 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
-def import_plugins(directory):
-    modules = {}
-    for path in glob.glob(os.path.join(directory, '*.py')): 
-        if path.startswith("_"):
-            continue
-        name, ext = os.path.splitext(os.path.basename(path))
-        if not name.startswith("_"):
-            modules[name] = imp.load_source(name, path)
-    return modules
+def boolean(value):
+    val = str(value)
+    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+        return True
+    else:
+        return False
 
+def compile_when_to_only_if(expression):
+    '''
+    when is a shorthand for writing only_if conditionals.  It requires less quoting
+    magic.  only_if is retained for backwards compatibility.
+    '''
+
+    # when: set $variable
+    # when: unset $variable
+    # when: failed $json_result
+    # when: changed $json_result
+    # when: int $x >= $z and $y < 3
+    # when: int $x in $alist
+    # when: float $x > 2 and $y <= $z
+    # when: str $x != $y
+
+    if type(expression) not in [ str, unicode ]:
+        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+    tokens = expression.split()
+    if len(tokens) < 2:
+        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+
+    # when_set / when_unset
+    if tokens[0] in [ 'set', 'unset' ]:
+        tcopy = tokens[1:]
+        for (i,t) in enumerate(tokens[1:]):
+            if t.find("$") != -1:
+                tcopy[i] = "is_%s('''%s''')" % (tokens[0], t)
+            else:
+                tcopy[i] = t
+        return " ".join(tcopy)
+
+
+
+    # when_failed / when_changed
+    elif tokens[0] in [ 'failed', 'changed' ]:
+        tcopy = tokens[1:]
+        for (i,t) in enumerate(tokens[1:]):
+            if t.find("$") != -1:
+                tcopy[i] = "is_%s(%s)" % (tokens[0], t)
+            else:
+                tcopy[i] = t
+        return " ".join(tcopy)
+
+
+
+    # when_integer / when_float / when_string
+    elif tokens[0] in [ 'integer', 'float', 'string' ]:
+        cast = None
+        if tokens[0] == 'integer':
+            cast = 'int'
+        elif tokens[0] == 'string':
+            cast = 'str'
+        elif tokens[0] == 'float':
+            cast = 'float'
+        tcopy = tokens[1:]
+        for (i,t) in enumerate(tokens[1:]):
+            if t.find("$") != -1:
+                # final variable substitution will happen in Runner code
+                tcopy[i] = "%s('''%s''')" % (cast, t)
+            else:
+                tcopy[i] = t
+        return " ".join(tcopy)
+
+    # when_boolean
+    elif tokens[0] in [ 'bool', 'boolean' ]:
+        tcopy = tokens[1:]
+        for (i, t) in enumerate(tcopy):
+            if t.find("$") != -1:
+                tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
+        return " ".join(tcopy)
+
+    else:
+        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+
+def make_sudo_cmd(sudo_user, executable, cmd):
+    """
+    helper function for connection plugins to create sudo commands
+    """
+    # Rather than detect if sudo wants a password this time, -k makes
+    # sudo always ask for a password if one is required.
+    # Passing a quoted compound command to sudo (or sudo -s)
+    # directly doesn't work, so we shellquote it with pipes.quote()
+    # and pass the quoted string to the user's shell.  We loop reading
+    # output until we see the randomly-generated sudo prompt set with
+    # the -p option.
+    randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+    prompt = '[sudo via ansible, key=%s] password: ' % randbits
+    sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
+        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+        prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
+
+def get_diff(diff):
+    # called by --diff usage in playbook and runner via callbacks
+    # include names in diffs 'before' and 'after' and do diff -U 10
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            ret = []
+            if 'dst_binary' in diff:
+                ret.append("diff skipped: destination file appears to be binary\n")
+            if 'src_binary' in diff:
+                ret.append("diff skipped: source file appears to be binary\n")
+            if 'dst_larger' in diff:
+                ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+            if 'src_larger' in diff:
+                ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+            if 'before' in diff and 'after' in diff:
+                if 'before_header' in diff:
+                    before_header = "before: %s" % diff['before_header']
+                else:
+                    before_header = 'before'
+                if 'after_header' in diff:
+                    after_header = "after: %s" % diff['after_header']
+                else:
+                    after_header = 'after'
+                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), before_header, after_header, '', '', 10)
+                for line in list(differ):
+                    ret.append(line)
+            return "".join(ret)
+    except UnicodeDecodeError:
+        return ">> the files are different, but the diff library cannot compare unicode strings"
+
+def is_list_of_strings(items):
+   for x in items: 
+       if not isinstance(x, basestring):
+           return False
+   return True
 

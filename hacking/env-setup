@@ -10,26 +10,32 @@ else
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=`python -c "import os, sys; print os.path.realpath('$HACKING_DIR')"`
-ANSIBLE_HOME=`dirname $FULL_PATH`
+FULL_PATH=`python -c "import os; print(os.path.realpath('$HACKING_DIR'))"`
+ANSIBLE_HOME=`dirname "$FULL_PATH"`
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
-export PATH=$PREFIX_PATH:$PATH
+[[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
+[[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
 export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
-export MANPATH=$PREFIX_MANPATH:$MANPATH
+[[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
 # Print out values unless -q is set
 
 if [ $# -eq 0 -o "$1" != "-q" ] ; then
+    echo ""
+    echo "Setting up Ansible to run out of checkout..."
+    echo ""
     echo "PATH=$PATH"
     echo "PYTHONPATH=$PYTHONPATH"
     echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
     echo "MANPATH=$MANPATH"
+    echo ""
     
-    echo "Reminder: specify your host file with -i"
-    echo "Done."
+    echo "Remember, you may wish to specify your host file with -i"
+    echo ""
+    echo "Done!"
+    echo ""
 fi

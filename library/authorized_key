@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """
@@ -21,6 +21,39 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+DOCUMENTATION = '''
+---
+module: authorized_key
+short_description: Adds or removes an SSH authorized key
+description:
+     - Adds or removes an SSH authorized key for a user from a remote host.
+version_added: "0.5"
+options:
+  user:
+    description:
+      - Name of the user who should have access to the remote host
+    required: true
+    default: null
+    aliases: []
+  key:
+    description:
+      - the SSH public key, as a string
+    required: true
+    default: null
+  state:
+    description:
+      - whether the given key should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+examples:
+   - code: 'authorized_key: user=charlie key="ssh-dss ASDF1234L+8BTwaRYr/rycsBF1D8e5pTxEsXHQs4iq+mZdyWqlW++L6pMiam1A8yweP+rKtgjK2httVS6GigVsuWWfOd7/sdWippefq74nppVUELHPKkaIOjJNN1zUHFoL/YMwAAAEBALnAsQN10TNGsRDe5arBsW8cTOjqLyYBcIqgPYTZW8zENErFxt7ij3fW3Jh/sCpnmy8rkS7FyK8ULX0PEy/2yDx8/5rXgMIICbRH/XaBy9Ud5bRBFVkEDu/r+rXP33wFPHjWjwvHAtfci1NRBAudQI/98DbcGQw5HmE89CjgZRo5ktkC5yu/8agEPocVjdHyZr7PaHfxZGUDGKtGRL2QzRYukCmWo1cZbMBHcI5FzImvTHS9/8B3SATjXMPgbfBuEeBwuBK5EjL+CtHY5bWs9kmYjmeo0KfUMH8hY4MAXDoKhQ7DhBPIrcjS5jPtoGxIREZjba67r6/P2XKXaCZH6Fc= charlie@example.org 2011-01-17"'
+     description: "Example from Ansible Playbooks"
+   - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)'"
+     description: "Shorthand available in Ansible 0.8 and later"
+author: Brad Olson
+'''
+
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
 #
 # Arguments
@@ -35,8 +68,10 @@ import sys
 import os
 import pwd
 import os.path
+import tempfile
+import shutil
 
-def keyfile(user, write=False):
+def keyfile(module, user, write=False):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
@@ -46,7 +81,10 @@ def keyfile(user, write=False):
     :return: full path string to authorized_keys for user
     """
 
-    user_entry = pwd.getpwnam(user)
+    try:
+        user_entry = pwd.getpwnam(user)
+    except KeyError, e:
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
     homedir    = user_entry.pw_dir
     sshdir     = os.path.join(homedir, ".ssh")
     keysfile   = os.path.join(sshdir, "authorized_keys")
@@ -59,6 +97,8 @@ def keyfile(user, write=False):
 
     if not os.path.exists(sshdir):
         os.mkdir(sshdir, 0700)
+        if module.selinux_enabled():
+            module.set_default_selinux_context(sshdir, False)
     os.chown(sshdir, uid, gid)
     os.chmod(sshdir, 0700)
 
@@ -67,6 +107,8 @@ def keyfile(user, write=False):
             f = open(keysfile, "w") #touches file so we can set ownership and perms
         finally:
             f.close()
+        if module.selinux_enabled():
+            module.set_default_selinux_context(keysfile, False)
 
     os.chown(keysfile, uid, gid)
     os.chmod(keysfile, 0600)
@@ -81,11 +123,16 @@ def readkeys(filename):
     f.close()
     return keys
 
-def writekeys( filename, keys):
+def writekeys(module, filename, keys):
 
-    f = open(filename,"w")
-    f.writelines( (key + "\n" for key in keys) )
+    fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
+    f = open(tmp_path,"w")
+    try:
+        f.writelines( (key + "\n" for key in keys) )
+    except IOError, e:
+        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
+    module.atomic_replace(tmp_path, filename)
 
 def enforce_state(module, params):
     """
@@ -96,25 +143,30 @@ def enforce_state(module, params):
     key   = params["key"]
     state = params.get("state", "present")
 
+    key = key.split('\n')
+
     # check current state -- just get the filename, don't create file
-    params["keyfile"] = keyfile(user, write=False)
+    params["keyfile"] = keyfile(module, user, write=False)
     keys = readkeys(params["keyfile"])
-    present = key in keys
 
-    # handle idempotent state=present
-    if state=="present":
-        if present:
-            module.exit_json(changed=False)
-        keys.append(key)
-        writekeys(keyfile(user,write=True), keys)
+    # Check our new keys, if any of them exist we'll continue.
+    for new_key in key:
+        present = new_key in keys
+        # handle idempotent state=present
+        if state=="present":
+            if present:
+                continue
+            keys.append(new_key)
+            writekeys(module, keyfile(module, user,write=True), keys)
+            params['changed'] = True
 
-    elif state=="absent":
-        if not present:
-            module.exit_json(changed=False)
-        keys.remove(key)
-        writekeys(keyfile(user,write=True), keys)
+        elif state=="absent":
+            if not present:
+                continue
+            keys.remove(new_key)
+            writekeys(module, keyfile(module, user,write=True), keys)
+            params['changed'] = True
 
-    params['changed'] = True
     return params
 
 def main():
@@ -127,7 +179,6 @@ def main():
         )
     )
 
-    params = module.params
     results = enforce_state(module, module.params)
     module.exit_json(**results)
 

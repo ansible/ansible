@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import tempfile
+import urllib2
 
 from nose.plugins.skip import SkipTest
 
@@ -35,6 +36,7 @@ class TestRunner(unittest.TestCase):
             forks=1,
             background=0,
             pattern='all',
+            transport='local',
         )
         self.cwd = os.getcwd()
         self.test_dir = os.path.join(self.cwd, 'test')
@@ -132,11 +134,25 @@ class TestRunner(unittest.TestCase):
         result = self._run('command', [ "/usr/bin/this_does_not_exist", "splat" ])
         assert 'msg' in result
         assert 'failed' in result
-        assert 'rc' not in result
 
         result = self._run('shell', [ "/bin/echo", "$HOME" ])
         assert 'failed' not in result
         assert result['rc'] == 0
+
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "chdir=/tmp", "touch", "'ansible command test'" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+
+        result = self._run('command', [ "creates='/tmp/ansible command test'", "false" ])
+        assert 'skipped' in result
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?" ])
+        assert 'changed' in result
+        assert result['rc'] == 0
+        assert result['stdout'] == '0'
+
+        result = self._run('shell', [ "removes=/tmp/ansible\\ command\\ test", "false" ])
+        assert 'skipped' in result
 
     def test_git(self):
         self._run('file',['path=/tmp/gitdemo','state=absent'])
@@ -157,6 +173,59 @@ class TestRunner(unittest.TestCase):
         # test the force option when set
         result = self._run('git', [ "repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes" ])
         assert result['changed']
+    
+    def test_file(self):
+        filedemo = tempfile.mkstemp()[1]
+        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
+        assert os.path.isfile(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
+        assert os.path.isfile(filedemo)
+
+        res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
+        print res
+        assert res['changed']
+        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+
+
+        filedemo = tempfile.mkdtemp()
+        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
+        assert os.path.isdir(filedemo)
+
+        # this used to fail but will now make a 'null' symlink in the directory pointing to dev/null.
+        # I feel this is ok but don't want to enforce it with a test.
+        #result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])
+        #assert result['failed']
+        #assert os.path.isdir(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory'])['changed']
+        assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+
+
+        tmp_dir = tempfile.mkdtemp()
+        filedemo = os.path.join(tmp_dir, 'link')
+        os.symlink('/dev/zero', filedemo)
+        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
+        assert os.path.islink(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
+        assert os.path.islink(filedemo)
+
+        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['changed']
+        assert os.path.islink(filedemo) and os.path.realpath(filedemo) == '/dev/null'
+
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
+        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        os.rmdir(tmp_dir)
 
     def test_large_output(self):
         large_path = "/usr/share/dict/words"
@@ -205,6 +274,7 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert os.path.exists(output)
         out = file(output).read()
         assert out.find("first") != -1
@@ -217,4 +287,164 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
+        print result
         assert result['changed'] == False
+
+    def test_lineinfile(self):
+        sampleroot = 'rocannon'
+        sample_origin = self._get_test_file(sampleroot + '.txt')
+        sample = self._get_stage_file(sampleroot + '.out' + '.txt')
+        shutil.copy( sample_origin, sample)
+        # The order of the test cases is important
+
+        # defaults to insertafter at the end of the file
+        testline = 'First: Line added by default at the end of the file.'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='^First: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # run a second time, verify only one line has been added
+        result = self._run(*testcase)
+        assert result['changed'] == False
+        assert result['msg'] == ''
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+
+        # insertafter with EOF
+        testline = 'Second: Line added with insertafter=EOF'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter=EOF",
+                    "regexp='^Second: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # with invalid insertafter regex
+        testline = 'Third: Line added with an invalid insertafter regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='^abcdefgh'",
+                    "regexp='^Third: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact[-1] == testline
+        assert artifact.count(testline) == 1
+
+        # with an insertafter regex
+        testline = 'Fourth: Line added with a valid insertafter regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='^receive messages to '",
+                    "regexp='^Fourth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        idx = artifact.index('receive messages to and from a corresponding device over any distance')
+        assert artifact[idx + 1] == testline
+
+        # replacement of a line from a regex
+        # we replace the line, so we need to get its idx before the run
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        target_line = 'combination of microphone, speaker, keyboard and display. It can send and'
+        idx = artifact.index(target_line)
+
+        testline = 'Fith: replacement of a line: combination of microphone'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='combination of microphone'",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line replaced'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        assert artifact.index(testline) == idx
+        assert target_line not in artifact
+
+        # removal of a line
+        # we replace the line, so we need to get its idx before the run
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        target_line = 'receive messages to and from a corresponding device over any distance'
+        idx = artifact.index(target_line)
+
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='^receive messages to and from '",
+                    "state=absent"
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert target_line not in artifact
+
+
+        # with both insertafter and insertbefore (should fail)
+        testline = 'Seventh: this line should not be there'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertafter='BOF'",
+                    "insertbefore='BOF'",
+                    "regexp='^communication. '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['failed'] == True
+
+        # insertbefore with BOF
+        testline = 'Eighth: insertbefore BOF'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertbefore=BOF",
+                    "regexp='^Eighth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        assert artifact[0] == testline
+
+        # insertbefore with regex
+        testline = 'Ninth: insertbefore with a regex'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "insertbefore='^communication. Typically '",
+                    "regexp='^Ninth: '",
+                    "line='%s'" % testline
+                   ])
+        result = self._run(*testcase)
+        assert result['changed'] == True
+        assert result['msg'] == 'line added'
+        artifact = [ x.strip() for x in open(sample).readlines() ]
+        assert artifact.count(testline) == 1
+        idx = artifact.index('communication. Typically it is depicted as a lunch-box sized object with some')
+        assert artifact[idx - 1] == testline
+
+        # cleanup
+        os.unlink(sample)
+
+

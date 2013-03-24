@@ -20,16 +20,66 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# mount module - mount fs and define in fstab
-# usage:
-#
-# mount name=mountpoint, src=device_to_be_mounted fstype=fstype
-#        opts=mount_opts, dump=0 passno=0 state=[present|absent|mounted|unmounted]
-#
-#    absent == remove from fstab and unmounted
-#    present == add to fstab, do not change mount state
-#    mounted == add to fstab if not there and make sure it is mounted
-#    unmounted == do not change fstab state, but unmount
+DOCUMENTATION = '''
+---
+module: mount
+short_description: Control active and configured mount points
+description:
+     - This module controls active and configured mount points in C(/etc/fstab).
+version_added: "0.6"
+options:
+  name:
+    description:
+      - "path to the mount point, eg: C(/mnt/files)"
+    required: true
+    default: null
+    aliases: []
+  src:
+    description:
+      - device to be mounted on I(name).
+    required: true
+    default: null
+  fstype:
+    description:
+      - file-system type
+    required: true
+    default: null
+  opts:
+    description:
+      - mount options (see fstab(8))
+    required: false
+    default: null
+  dump:
+    description:
+      - dump (see fstab(8))
+    required: false
+    default: null
+  passno:
+    description:
+      - passno (see fstab(8))
+    required: false
+    default: null
+  state:
+    description:
+      - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
+        as well as just configured in I(fstab). C(absent) and C(present) only deal with
+        I(fstab).
+    required: true
+    choices: [ "present", "absent", "mounted", "unmounted" ]
+    default: null
+examples:
+   - code: "mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present"
+     description: "Mount DVD read-only"
+   - code: "mount: name=/srv/disk src='LABEL=SOME_LABEL' state=present"
+     description: "Mount up device by label"
+   - code: "mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' opts=noatime state=present"
+     description: "Mount up device by UUID"
+     
+notes: []
+requirements: []
+author: Seth Vidal
+'''
+
 
 def write_fstab(lines, dest):
 
@@ -142,7 +192,7 @@ def unset_mount(**kwargs):
     return (args['name'], changed)
 
 
-def mount(**kwargs):
+def mount(module, **kwargs):
     """ mount up a path or remount if needed """
 
     name = kwargs['name']
@@ -151,25 +201,23 @@ def mount(**kwargs):
     else:
         cmd = [ '/bin/mount', name ]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(cmd)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
-def umount(**kwargs):
+def umount(module, **kwargs):
     """ unmount a path """
 
     name = kwargs['name']
     cmd = ['/bin/umount', name]
 
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
+    rc, out, err = module.run_command(cmd)
+    if rc == 0:
         return 0, ''
     else:
-        return call.returncode, out+err
+        return rc, out+err
 
 def main():
 
@@ -213,7 +261,7 @@ def main():
         name, changed = unset_mount(**args)
         if changed:
             if os.path.ismount(name):
-                res,msg  = umount(**args)
+                res,msg  = umount(module, **args)
                 if res:
                     module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
 
@@ -227,7 +275,7 @@ def main():
 
     if state == 'unmounted':
         if os.path.ismount(name):
-            res,msg  = umount(**args)
+            res,msg  = umount(module, **args)
             if res:
                 module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
@@ -246,10 +294,10 @@ def main():
             res = 0
             if os.path.ismount(name):
                 if changed:
-                    res,msg = mount(**args)
+                    res,msg = mount(module, **args)
             else:
                 changed = True
-                res,msg = mount(**args)
+                res,msg = mount(module, **args)
 
             if res:
                 module.fail_json(msg="Error mounting %s: %s" % (name, msg))

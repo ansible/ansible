@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -22,25 +22,61 @@ from ansible import utils
 class Task(object):
 
     __slots__ = [
-        'name', 'action', 'only_if', 'async_seconds', 'async_poll_interval',
+        'name', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
-        'play', 'notified_by', 'tags', 'register', 'with_items', 
+        'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action'
+        'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
+        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args'
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'action', 'only_if', 'async', 'poll', 'notify', 'with_items', 
+         'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action'
+         'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
+         'sudo_pass', 'when', 'connection', 'environment', 'args'
     ]
 
-    def __init__(self, play, ds, module_vars=None):
+    def __init__(self, play, ds, module_vars=None, additional_conditions=None):
         ''' constructor loads from a task or handler datastructure '''
 
         for x in ds.keys():
-            if not x in Task.VALID_KEYS:
+
+            # code to allow for saying "modulename: args" versus "action: modulename args"
+            if x in utils.plugins.module_finder:
+                if 'action' in ds:
+                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
+                if isinstance(ds[x], dict):
+                    if 'args' in ds:
+                        raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
+                    ds['args'] = ds[x]
+                    ds[x] = ''
+                elif ds[x] is None:
+                    ds[x] = ''
+                if not isinstance(ds[x], basestring):
+                    raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
+                ds['action'] = x + " " + ds[x]
+                ds.pop(x)
+
+            # code to allow "with_glob" and to reference a lookup plugin named glob
+            elif x.startswith("with_"):
+                plugin_name = x.replace("with_","")
+                if plugin_name in utils.plugins.lookup_loader:
+                    ds['items_lookup_plugin'] = plugin_name
+                    ds['items_lookup_terms'] = ds[x]
+                    ds.pop(x)
+                else:
+                    raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+
+            elif x.startswith("when_"):
+                if 'when' in ds:
+                    raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
+                when_name = x.replace("when_","")
+                ds['when'] = "%s %s" % (when_name, ds[x])
+                ds.pop(x)
+
+            elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
         self.module_vars = module_vars
@@ -50,13 +86,26 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
+        self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
+        self.environment  = ds.get('environment', {})
 
+        # rather than simple key=value args on the options line, these represent structured data and the values
+        # can be hashes and lists, not just scalars
+        self.args         = ds.get('args', {})
+
+        if self.sudo:
+            self.sudo_user    = utils.template(play.basedir, ds.get('sudo_user', play.sudo_user), play.vars)
+            self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
+        else:
+            self.sudo_user    = None
+            self.sudo_pass    = None
+        
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):
             raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
         # Both are NOT defined
         elif (not 'action' in ds) and (not 'local_action' in ds):
-            raise errors.AnsibleError("task missing an 'action' attribute")
+            raise errors.AnsibleError("'action' or 'local_action' attribute missing in task \"%s\"" % ds.get('name', '<Unnamed>'))
         # Only one of them is defined
         elif 'local_action' in ds:
             self.action      = ds.get('local_action', '')
@@ -64,6 +113,21 @@ class Task(object):
         else:
             self.action      = ds.get('action', '')
             self.delegate_to = ds.get('delegate_to', None)
+            self.transport   = ds.get('connection', ds.get('transport', play.transport))
+
+        if isinstance(self.action, dict):
+            if 'module' not in self.action:
+                raise errors.AnsibleError("'module' attribute missing from action in task \"%s\"" % ds.get('name', '%s' % self.action))
+            if self.args:
+                raise errors.AnsibleError("'args' cannot be combined with dict 'action' in task \"%s\"" % ds.get('name', '%s' % self.action))
+            self.args = self.action
+            self.action = self.args.pop('module')
+
+        # delegate_to can use variables
+        if not (self.delegate_to is None):
+            # delegate_to: localhost should use local transport
+            if self.delegate_to in ['127.0.0.1', 'localhost']:
+                self.transport   = 'local'
 
         # notified by is used by Playbook code to flag which hosts
         # need to run a notifier
@@ -75,13 +139,22 @@ class Task(object):
 
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
+        self.when    = ds.get('when', None)
+
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
-        self.with_items = ds.get('with_items', None)
+
+        self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
+        self.items_lookup_terms  = ds.get('items_lookup_terms', None)
+     
 
         self.ignore_errors = ds.get('ignore_errors', False)
+
+        # action should be a string
+        if not isinstance(self.action, basestring):
+            raise errors.AnsibleError("action is of type '%s' and not a string in task. name: %s" % (type(self.action).__name__, self.name))
 
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
@@ -101,21 +174,18 @@ class Task(object):
             # allow the user to list comma delimited tags
             import_tags = import_tags.split(",")
 
-        self.name = utils.template(self.name, self.module_vars)
-        self.action = utils.template(self.action, self.module_vars)
-
         # handle mutually incompatible options
-        if self.with_items is not None and self.first_available_file is not None:
-            raise errors.AnsibleError("with_items and first_available_file are mutually incompatible in a single task")
+        incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
+        if len(incompatibles) > 1:
+            raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
         # make first_available_file accessable to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
 
-        # process with_items so it can be used by Runner code
-        if self.with_items is None:
-            self.with_items = [ ]
-        self.module_vars['items'] = self.with_items
+        if self.items_lookup_plugin is not None:
+            self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
+            self.module_vars['items_lookup_terms'] = self.items_lookup_terms
 
         # allow runner to see delegate_to option
         self.module_vars['delegate_to'] = self.delegate_to
@@ -131,4 +201,12 @@ class Task(object):
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
+
+        if self.when is not None:
+            if self.only_if != 'True':
+                raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
+            self.only_if = utils.compile_when_to_only_if(self.when)
+
+        if additional_conditions:
+            self.only_if = '(' + self.only_if + ') and (' + ' ) and ('.join(additional_conditions) + ')'
 

@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 09/06/2012
+.\"      Date: 02/16/2013
 .\"    Manual: System administration commands
-.\"    Source: Ansible 0.8
+.\"    Source: Ansible 1.1
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "09/06/2012" "Ansible 0\&.8" "System administration commands"
+.TH "ANSIBLE" "1" "02/16/2013" "Ansible 1\&.1" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -131,7 +131,7 @@ seconds\&. Requires
 .RS 4
 Use this remote
 \fIUSERNAME\fR
-instead of root\&.
+instead of the current user\&.
 .RE
 .PP
 \fB\-U\fR \fISUDO_USERNAME\fR, \fB\-\-sudo\-user=\fR\fISUDO_USERNAME\fR
@@ -139,11 +139,6 @@ instead of root\&.
 Sudo to
 \fISUDO_USERNAME\fR
 instead of root\&. Implies \-\-sudo\&.
-.RE
-.PP
-\fB\-\-private\-key=\fR\fIPRIVATE_KEY_FILE\fR
-.RS 4
-Use this file to authenticate the connection\&.
 .RE
 .PP
 \fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
@@ -161,6 +156,11 @@ is mostly useful for crontab or kickstarts\&.
 .RS 4
 Further limits the selected host/group patterns\&.
 .RE
+.PP
+\fB\-l\fR \fI~REGEX\fR, \fB\-\-limit=\fR\fI~REGEX\fR
+.RS 4
+Further limits hosts with a regex pattern\&.
+.RE
 .SH "INVENTORY"
 .sp
 Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets that start the line\&.
@@ -171,6 +171,10 @@ Ranges of hosts are also supported\&. For more information and additional option
 /etc/ansible/hosts \(em Default inventory file
 .sp
 /usr/share/ansible/ \(em Default module library
+.sp
+/etc/ansible/ansible\&.cfg \(em Config file, used if present
+.sp
+~/\&.ansible\&.cfg \(em User config file, overrides the default config if present
 .SH "ENVIRONMENT"
 .sp
 The following environment variables may specified\&.
@@ -178,6 +182,8 @@ The following environment variables may specified\&.
 ANSIBLE_HOSTS  \(em Override the default ansible hosts file
 .sp
 ANSIBLE_LIBRARY \(em Override the default ansible module library path
+.sp
+ANSIBLE_CONFIG \(em Override the default ansible config file
 .SH "AUTHOR"
 .sp
 Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
