@@ -3,7 +3,7 @@ Module Development
 
 .. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
    :alt: ansiblefest 2013
-   :target: http://www.eventbrite.com/event/5593981750
+   :target: http://ansibleworks.com/fest
 
 
 Ansible modules are reusable units of magic that can be used by the Ansible API,
