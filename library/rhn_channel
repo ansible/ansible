@@ -3,10 +3,17 @@
 DOCUMENTATION = '''
 ---
 module: rhn_channel
+<<<<<<< HEAD
 short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels
 version_added: '1.1'
+=======
+short_description: Define Red Hat software channel subscriptions
+description:
+    - Adds or removes subscription to Red Hat software channels on a system
+version_added: 1.1
+>>>>>>> Add state in the docs and made it a required option.
 author: Vincent Van der Kussen
 notes:
     - this module fetches the system id from RHN. 
@@ -35,10 +42,22 @@ options:
         description:
             - "the user's password"
         required: true
+<<<<<<< HEAD
 '''
 
 EXAMPLES = '''
 rhn_channel: name=rhel-x86_64-server-v2vwin-6 sysname=server01 url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
+=======
+    state:
+        description:
+            - the desired state of existence for the channel subscription
+        choices: [ present, absent ]
+        required: true
+examples:
+    - code: rhn_channel name=rhel-x86_64-server-v2vwin-6 sysname=server01 url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme state=present
+      description: add software channel rhel-x86_64-server-v2vwin-6 
+                   to server01 in Red Hat Network
+>>>>>>> Add state in the docs and made it a required option.
 '''
 
 import xmlrpclib
@@ -94,7 +113,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent']),
+            state = dict(default='present', choices=['present', 'absent'],required=True),
             name = dict(required=True),
             sysname = dict(required=True),
             url = dict(required=True),
