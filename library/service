@@ -75,6 +75,7 @@ import os
 import tempfile
 import shlex
 import select
+import time
 
 class Service(object):
     """
@@ -102,6 +103,7 @@ class Service(object):
         self.state          = module.params['state']
         self.pattern        = module.params['pattern']
         self.enable         = module.params['enabled']
+        self.restart_delay  = module.params['restart_delay']
         self.changed        = False
         self.running        = None
         self.action         = None
@@ -556,6 +558,11 @@ class LinuxService(Service):
                 # SysV
                 rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, arguments), daemonize=True)
 
+            # add generic time.sleep of N seconds to play nicer with
+            # applications that take some time to stop
+            if self.restart_delay is not None:
+                time.sleep(float(self.restart_delay))
+
             if svc_cmd != '':
                 # upstart or systemd
                 rc2, stdout2, stderr2 = self.execute_command("%s %s %s" % (svc_cmd, 'start', arguments), daemonize=True)
@@ -852,6 +859,7 @@ def main():
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS, type='bool'),
+            restart_delay = dict(required=False, default=None),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True
