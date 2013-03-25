@@ -90,7 +90,7 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
   others:
      description:
-       - All arguments accepted by the M(file) module also work here. 
+       - All arguments accepted by the M(file) module also work here.
      required: false
 """
 
@@ -109,7 +109,7 @@ EXAMPLES = """
 
    lineinfile dest=/tmp/grub.conf state=present regexp='^(splashimage=.*)$' line="#\\1"
 """
-   
+
 
 def check_file_attrs(module, changed, message):
 
@@ -121,9 +121,11 @@ def check_file_attrs(module, changed, message):
         changed = True
         message += "ownership, perms or SE linux context changed"
 
-    return [ message, changed ]
+    return message, changed
 
-def present(module, dest, regexp, line, insertafter, insertbefore, create, backup):
+
+def present(module, dest, regexp, line, insertafter, insertbefore, create,
+            backup, backrefs):
 
     if os.path.isdir(dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
@@ -142,10 +144,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     msg = ""
 
     mre = re.compile(regexp)
-    
-    if insertafter is not None and insertafter not in ('BOF', 'EOF'):
+
+    if insertafter not in (None, 'BOF', 'EOF'):
         insre = re.compile(insertafter)
-    elif insertbefore is not None and insertbefore not in ('BOF'):
+    elif insertbefore not in (None, 'BOF'):
         insre = re.compile(insertbefore)
     else:
         insre = None
@@ -154,12 +156,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
     # index[1] is the line num where insertafter/inserbefore has been found
     index = [-1, -1]
     m = None
-    for lineno in range(0, len(lines)):
-        match_found = mre.search(lines[lineno])
+    for lineno, cur_line in enumerate(lines):
+        match_found = mre.search(cur_line)
         if match_found:
             index[0] = lineno
             m = match_found
-        elif insre is not None and insre.search(lines[lineno]):
+        elif insre is not None and insre.search(cur_line):
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
@@ -167,15 +169,24 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
                 # + 1 for the previous line
                 index[1] = lineno
 
+    msg = ''
+    changed = False
     # Regexp matched a line in the file
     if index[0] != -1:
-        if lines[index[0]] == m.expand(line) + os.linesep:
-            msg = ''
-            changed = False
+        if backrefs:
+            new_line = m.expand(line)
         else:
-            lines[index[0]] = m.expand(line) + os.linesep
+            # Don't do backref expansion if not asked.
+            new_line = line
+
+        if lines[index[0]] != new_line + os.linesep:
+            lines[index[0]] = new_line + os.linesep
             msg = 'line replaced'
             changed = True
+    elif backrefs:
+        # Do absolutely nothing, since it's not safe generating the line
+        # without the regexp matching to populate the backrefs.
+        pass
     # Add it to the beginning of the file
     elif insertbefore == 'BOF' or insertafter == 'BOF':
         lines.insert(0, line + os.linesep)
@@ -188,11 +199,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
-    # Do nothing if regexp didn't match
+    # Do nothing if insert* didn't match
     elif index[1] == -1:
-        msg = ''
-        changed = False 
-    # insertafter/insertbefore= matched
+        pass
+    # insert* matched, but not the regexp
     else:
         lines.insert(index[1], line + os.linesep)
         msg = 'line added'
@@ -205,8 +215,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create, backu
         f.writelines(lines)
         f.close()
 
-    [ msg, changed ] = check_file_attrs(module, changed, msg)
+    msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
+
 
 def absent(module, dest, regexp, backup):
 
@@ -242,36 +253,46 @@ def absent(module, dest, regexp, backup):
     if changed:
         msg = "%s line(s) removed" % len(found)
 
-    [ msg, changed ] = check_file_attrs(module, changed, msg)
+    msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, found=len(found), msg=msg)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             dest=dict(required=True, aliases=['name', 'destfile']),
             state=dict(default='present', choices=['absent', 'present']),
             regexp=dict(required=True),
             line=dict(aliases=['value']),
             insertafter=dict(default=None),
             insertbefore=dict(default=None),
+            backrefs=dict(default=False, type='bool'),
             create=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
         ),
-        mutually_exclusive = [['insertbefore', 'insertafter']],
-        add_file_common_args = True,
-        supports_check_mode = True
+        mutually_exclusive=[['insertbefore', 'insertafter']],
+        add_file_common_args=True,
+        supports_check_mode=True
     )
 
     params = module.params
     create = module.params['create']
     backup = module.params['backup']
-    dest   = os.path.expanduser(params['dest'])
+    backrefs = module.params['backrefs']
+    dest = os.path.expanduser(params['dest'])
 
     if params['state'] == 'present':
         if 'line' not in params:
             module.fail_json(msg='line= is required with state=present')
+
+        # Deal with the insertafter default value manually, to avoid errors
+        # because of the mutually_exclusive mechanism.
+        ins_bef, ins_aft = params['insertbefore'], params['insertafter']
+        if ins_bef is None and ins_aft is None:
+            ins_aft = 'EOF'
+
         present(module, dest, params['regexp'], params['line'],
-                params['insertafter'], params['insertbefore'], create, backup)
+                ins_aft, ins_bef, create, backup, backrefs)
     else:
         absent(module, dest, params['regexp'], backup)
 
@@ -279,4 +300,3 @@ def main():
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
-
