@@ -3,10 +3,10 @@
 DOCUMENTATION = '''
 ---
 module: rhn_channel
-short_description: Define Red Hat software channels
+short_description: Define Red Hat software channel subscriptions
 description:
-    - Adds or removes Red Hat software channels on a system
-version_added: 1.0
+    - Adds or removes subscription to Red Hat software channels on a system
+version_added: 1.1
 author: Vincent Van der Kussen
 notes:
     - this module fetches the systemid from rhn. A function 
@@ -37,9 +37,13 @@ options:
         description:
             - the user's password
         required: true
+    state:
+        description:
+            - the desired state of existence for the channel subscription
+        choices: [ present, absent ]
+        required: true
 examples:
-    - code: rhn_channel name=rhel-x86_64-server-v2vwin-6  sysname=server01
-      url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
+    - code: rhn_channel name=rhel-x86_64-server-v2vwin-6 sysname=server01 url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme state=present
       description: add software channel rhel-x86_64-server-v2vwin-6 
                    to server01 in Red Hat Network
 '''
@@ -95,7 +99,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent']),
+            state = dict(default='present', choices=['present', 'absent'],required=True),
             name = dict(required=True),
             sysname = dict(required=True),
             url = dict(required=True),
