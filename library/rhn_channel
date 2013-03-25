@@ -4,6 +4,7 @@ DOCUMENTATION = '''
 ---
 module: rhn_channel
 <<<<<<< HEAD
+<<<<<<< HEAD
 short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels
@@ -14,6 +15,12 @@ description:
     - Adds or removes subscription to Red Hat software channels on a system
 version_added: 1.1
 >>>>>>> Add state in the docs and made it a required option.
+=======
+short_description: Define Red Hat software channel subscriptions
+description:
+    - Adds or removes subscription to Red Hat software channels on a system
+version_added: 1.1
+>>>>>>> 02d7241d148ec04710c7ee55b4fa61b5f5ffe364
 author: Vincent Van der Kussen
 notes:
     - this module fetches the system id from RHN. 
@@ -48,6 +55,11 @@ options:
 EXAMPLES = '''
 rhn_channel: name=rhel-x86_64-server-v2vwin-6 sysname=server01 url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
 =======
+    state:
+        description:
+            - the desired state of existence for the channel subscription
+        choices: [ present, absent ]
+        required: true
     state:
         description:
             - the desired state of existence for the channel subscription
