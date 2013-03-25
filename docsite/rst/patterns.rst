@@ -5,7 +5,7 @@ Inventory & Patterns
 
 .. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
    :alt: ansiblefest 2013
-   :target: http://www.eventbrite.com/event/5593981750
+   :target: http://ansibleworks.com/fest
 
 
 Ansible works against multiple systems in your infrastructure at the
