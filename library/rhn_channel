@@ -3,45 +3,42 @@
 DOCUMENTATION = '''
 ---
 module: rhn_channel
-short_description: Define Red Hat software channels
+short_description: Adds or removes Red Hat software channels
 description:
-    - Adds or removes Red Hat software channels on a system
+    - Adds or removes Red Hat software channels
 version_added: '1.1'
 author: Vincent Van der Kussen
 notes:
-    - this module fetches the systemid from rhn. A function 
-      to use the local systemid is provided (get_localsystem)
-      but not integrated
+    - this module fetches the system id from RHN. 
 requirements:
     - none
 options:
     name:
-        description
+        description:
             - name of the software channel
         required: true
         default: null
     sysname:
         description:
-            - name of the system as it is known in rhn/sattelite
+            - name of the system as it is known in RHN/Satellite
         required: true
         default: null
     url:
         description: 
-            - The full url to the rhn/sattelite api
+            - The full url to the RHN/Satellite api
         required: true
     user:
         description:
-            - the user to login to rhn/sattelite
+            - RHN/Satellite user
         required: true
     password:
         description:
-            - the user's password
+            - "the user's password"
         required: true
-examples:
-    - code: rhn_channel name=rhel-x86_64-server-v2vwin-6  sysname=server01
-      url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
-      description: add software channel rhel-x86_64-server-v2vwin-6 
-                   to server01 in Red Hat Network
+'''
+
+EXAMPLES = '''
+rhn_channel: name=rhel-x86_64-server-v2vwin-6 sysname=server01 url=https://rhn.redhat.com/rpc/api user=rhnuser password=guessme
 '''
 
 import xmlrpclib
@@ -61,11 +58,13 @@ def get_systemid(client, session, sysname):
 
 # ------------------------------------------------------- #
 
-def get_localsystemid():
-    f = open("/etc/sysconfig/rhn/systemid", "r")
-    content = f.read()
-    loc_id = re.search(r'\b(ID-)(\d{10})' ,content)
-    return loc_id.group(2)
+# unused:
+#
+#def get_localsystemid():
+#    f = open("/etc/sysconfig/rhn/systemid", "r")
+#    content = f.read()
+#    loc_id = re.search(r'\b(ID-)(\d{10})' ,content)
+#    return loc_id.group(2)
 
 # ------------------------------------------------------- #
 
