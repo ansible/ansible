@@ -252,6 +252,38 @@ def privileges_grant(cursor, user,host,db_table,priv):
         query = query + " WITH GRANT OPTION"
     cursor.execute(query)
 
+
+def strip_quotes(s):
+    """ Remove surrounding single or double quotes
+
+    >>> print strip_quotes('hello')
+    hello
+    >>> print strip_quotes('"hello"')
+    hello
+    >>> print strip_quotes("'hello'")
+    hello
+    >>> print strip_quotes("'hello")
+    'hello
+
+    """
+    single_quote = "'"
+    double_quote = '"'
+
+    if s.startswith(single_quote) and s.endswith(single_quote):
+        s = s.strip(single_quote)
+    elif s.startswith(double_quote) and s.endswith(double_quote):
+        s = s.strip(double_quote)
+    return s
+
+
+def config_get(config, section, option):
+    """ Calls ConfigParser.get and strips quotes
+
+    See: http://dev.mysql.com/doc/refman/5.0/en/option-files.html
+    """
+    return strip_quotes(config.get(section, option))
+
+
 def load_mycnf():
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser('~/.my.cnf')
@@ -264,16 +296,16 @@ def load_mycnf():
     # We support two forms of passwords in .my.cnf, both pass= and password=,
     # as these are both supported by MySQL.
     try:
-        passwd = config.get('client', 'password')
+        passwd = config_get(config, 'client', 'password')
     except (ConfigParser.NoOptionError):
         try:
-            passwd = config.get('client', 'pass')
+            passwd = config_get(config, 'client', 'pass')
         except (ConfigParser.NoOptionError):
             return False
 
     # If .my.cnf doesn't specify a user, default to user login name
     try:
-        user = config.get('client', 'user')
+        user = config_get(config, 'client', 'user')
     except (ConfigParser.NoOptionError):
         user = getpass.getuser()
     creds = dict(user=user,passwd=passwd)
