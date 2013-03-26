@@ -82,11 +82,12 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src     = dict(required=False),
-            content = dict(required=False),
-            dest    = dict(required=True),
-            backup  = dict(default=False, type='bool'),
-            force   = dict(default=True, aliases=['thirsty'], type='bool'),
+            src               = dict(required=False),
+            original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack 
+            content           = dict(required=False),
+            dest              = dict(required=True),
+            backup            = dict(default=False, type='bool'),
+            force             = dict(default=True, aliases=['thirsty'], type='bool'),
         ),
         add_file_common_args=True,
     )
@@ -95,6 +96,7 @@ def main():
     dest   = os.path.expanduser(module.params['dest'])
     backup = module.params['backup']
     force  = module.params['force']
+    original_basename = module.params.get('original_basename',None)
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -109,6 +111,8 @@ def main():
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if (os.path.isdir(dest)):
             basename = os.path.basename(src)
+            if original_basename:
+                basename = original_basename
             dest = os.path.join(dest, basename)
         if os.access(dest, os.R_OK):
             md5sum_dest = module.md5(dest)
@@ -128,7 +132,7 @@ def main():
             if os.path.islink(dest):
                 os.unlink(dest)
                 open(dest, 'w').close()
-            #TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
+            # TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
             # might be an issue with exceeding path length
             dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
             shutil.copyfile(src, dest_tmp)
