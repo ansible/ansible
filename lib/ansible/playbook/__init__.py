@@ -114,6 +114,9 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
+        self.callbacks.playbook = self
+        self.runner_callbacks.playbook = self
+
         if inventory is None:
             self.inventory    = ansible.inventory.Inventory(host_list)
             self.inventory.subset(subset)

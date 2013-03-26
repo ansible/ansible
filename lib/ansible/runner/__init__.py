@@ -157,6 +157,8 @@ class Runner(object):
         self.environment      = environment
         self.complex_args     = complex_args
 
+        self.callbacks.runner = self
+
         # misc housekeeping
         if subset and self.inventory._subset is None:
             # don't override subset when passed from playbook
