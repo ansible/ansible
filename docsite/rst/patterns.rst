@@ -3,6 +3,11 @@
 Inventory & Patterns
 ====================
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest
+
+
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to /etc/ansible/hosts.
@@ -118,7 +123,7 @@ You can also use variables::
 
     webservers:!$excluded:&$required
 
-Individual host names (or IPs), but not groups, can also be referenced using
+Individual host names, IPs and groups, can also be referenced using
 wildcards::
 
     *.example.com
@@ -127,6 +132,7 @@ wildcards::
 It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
+
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 

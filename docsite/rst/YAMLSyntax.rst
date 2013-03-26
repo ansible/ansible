@@ -1,6 +1,10 @@
 YAML Syntax
 ===========
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest
+
 This page provides a basic overview of correct YAML syntax, which is how Ansible
 playbooks (our configuration management language) are expressed.  
 

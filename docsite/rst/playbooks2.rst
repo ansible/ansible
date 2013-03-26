@@ -1,6 +1,11 @@
 Advanced Playbooks
 ==================
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest
+
+
 Here are some advanced features of the playbooks language.  Using all of these features
 are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
@@ -140,6 +145,8 @@ reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the 
 period, without the rest of the domain.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
+
+Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file.
 
 Variable File Separation
 ````````````````````````

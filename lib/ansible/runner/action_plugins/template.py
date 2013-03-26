@@ -105,7 +105,7 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(source)))
 
             if self.runner.check:
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))

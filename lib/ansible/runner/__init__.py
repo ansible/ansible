@@ -157,6 +157,8 @@ class Runner(object):
         self.environment      = environment
         self.complex_args     = complex_args
 
+        self.callbacks.runner = self
+
         # misc housekeeping
         if subset and self.inventory._subset is None:
             # don't override subset when passed from playbook
@@ -337,6 +339,10 @@ class Runner(object):
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups'] = self.inventory.groups_list()
+        inject['vars'] = self.module_vars
+        inject['environment'] = self.environment
+        if self.inventory.basedir() is not None:
+            inject['inventory_dir'] = self.inventory.basedir()
 
         # allow with_foo to work in playbooks...
         items = None
@@ -418,7 +424,7 @@ class Runner(object):
             handler = utils.plugins.action_loader.get('async', self)
 
         conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
-        if not getattr(handler, 'BYPASS_HOST_LOOP', False) and not utils.check_conditional(conditional):
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)

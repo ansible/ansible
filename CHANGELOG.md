@@ -23,27 +23,27 @@ Core Features
 
 Modules Added:
 
-* rabbit_mq plugin module
-* rabbit_mq user module
-* rabbit_mq vhost module
-* rabbit_mq parameter module
-* mongodb_user module
-* new uri module -- can get/put/post/etc
-* CloudFormation module
-* zfs
-* okg
-* macports
-* homebrew
-* gem
-* lvol (LVM logical volumes)
-* django-manage
-* openbsd_pkg
-* netscaler
 * bzr (bazaar version control)
+* cloudformation
+* django-manage
+* gem (ruby gems)
+* homebrew
 * lvg (logical volume groups)
-* s3 (allows putting file contents in buckets for sharing over s3)
-* vagrant (launching VMs with vagrant, this is different from existing vagrant plugin)
-
+* lvol (LVM logical volumes)
+* macports
+* mongodb_user
+* netscaler
+* okg
+* openbsd_pkg
+* rabbit_mq_plugin
+* rabbit_mq_user
+* rabbit_mq_vhost
+* rabbit_mq_parameter
+* rhn_channel
+* s3 -- allows putting file contents in buckets for sharing over s3
+* uri module -- can get/put/post/etc
+* vagrant -- launching VMs with vagrant, this is different from existing vagrant plugin
+* zfs
 
 Bugfixes and Misc Changes:
 
@@ -66,6 +66,10 @@ Bugfixes and Misc Changes:
 * cowsay able to run out of macports (very important!)
 * improved logging for fireball mode
 * nicer error message when talking to an older system that needs a JSON module installed
+* 'magic' variable 'inventory_basedir' now gives path to inventory file
+* 'magic' variable 'vars' works like 'hostvars' but gives global scope variables, useful for debugging in templates mostly
+* conditionals can be used on plugins like add_host
+* developers: all callbacks now have access to a ".runner" and ".playbook", ".play", and ".task" object (use getattr, they may not always be set!)
 
 Facts:
 
@@ -125,6 +129,10 @@ Module Changes/Fixes:
 * fix default logins when no my.conf for MySQL module
 * option to create users with non-unique UIDs (user module)
 * macports module can enable/disable packages
+* quotes in my.cnf are stripped by the MySQL modules
+* Solaris Service management added
+* service module will attempt to auto-add unmanaged chkconfig services when needed
+* service module supports systemd service unit files
 
 Plugins:
 
