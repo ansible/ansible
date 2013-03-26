@@ -420,7 +420,7 @@ class Runner(object):
             handler = utils.plugins.action_loader.get('async', self)
 
         conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
-        if not getattr(handler, 'BYPASS_HOST_LOOP', False) and not utils.check_conditional(conditional):
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
