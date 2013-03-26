@@ -38,8 +38,8 @@ depends_lib-append      port:py${python.version}-jinja2 \
 patch {
     fs-traverse f ${worksrcpath} {
         if {[file isfile ${f}]} {
-            reinplace "s#/etc/ansible#${prefix}/etc/ansible#g" ${f}
-            reinplace "s#/usr/share/ansible#${prefix}/share/ansible#g" ${f}
+            reinplace -locale C "s#/etc/ansible#${prefix}/etc/ansible#g" ${f}
+            reinplace -locale C "s#/usr/share/ansible#${prefix}/share/ansible#g" ${f}
         }
     }
 }
