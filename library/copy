@@ -75,6 +75,9 @@ examples:
    - code: "copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes"
      description: "Copy a new C(ntp.conf) file into place, backing up the original if it differs from the copied version"
 author: Michael DeHaan
+notes:
+   - The "copy" module can't be used to recursively copy directory structures to the target machine. Please see the 
+     "Delegation" section of the Advanced Playbooks documentation for a better approach to recursive copies.
 '''
 
 def main():
