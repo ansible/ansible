@@ -69,7 +69,7 @@ Bugfixes and Misc Changes:
 * 'magic' variable 'inventory_basedir' now gives path to inventory file
 * 'magic' variable 'vars' works like 'hostvars' but gives global scope variables, useful for debugging in templates mostly
 * conditionals can be used on plugins like add_host
-* all callbacks now have access to a ".runner" and ".playbook" object (.playbook is only set by ansible-playbook)
+* developers: all callbacks now have access to a ".runner" and ".playbook", ".play", and ".task" object (use getattr, they may not always be set!)
 
 Facts:
 
