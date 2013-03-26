@@ -206,6 +206,10 @@ class PlayBook(object):
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
+
+            self.callbacks.play = play
+            self.runner_callbacks.play = play
+            
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
@@ -306,6 +310,9 @@ class PlayBook(object):
     def _run_task(self, play, task, is_handler):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
+        self.callbacks.task = task
+        self.runner_callbacks.task = task
+
         self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             return True
@@ -379,6 +386,9 @@ class PlayBook(object):
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
+        
+        self.callbacks.task = None
+        self.runner_callbacks.task = None
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
