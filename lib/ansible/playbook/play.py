@@ -80,8 +80,11 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        self._tasks      = self._load_tasks(self._ds.get('tasks', []))
-        self._handlers   = self._load_tasks(self._ds.get('handlers', []))
+        load_vars = {}
+        if self.playbook.inventory.basedir() is not None:
+            load_vars['inventory_dir'] = self.playbook.inventory.basedir();
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
         if self.tags is None:
             self.tags = []
