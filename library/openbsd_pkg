@@ -37,9 +37,9 @@ options:
         required: true
         choices: [ present, latest, absent ]
         description:
-          C(present) will make sure the package is installed.
-          C(latest) will make sure the latest version of the package is installed.
-          C(absent) will make sure the specified package is not installed.
+          - C(present) will make sure the package is installed.
+            C(latest) will make sure the latest version of the package is installed.
+            C(absent) will make sure the specified package is not installed.
 examples:
     - description: Make sure nmap is installed
       code: "openbsd_pkg: name=nmap state=present"
