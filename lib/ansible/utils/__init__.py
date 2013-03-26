@@ -661,7 +661,7 @@ def is_list_of_strings(items):
    return True
 
 def combine_vars(a, b):
-   if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-       return merge_hash(a, b)
-   else:
-       return a.update(b)
+    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+        return merge_hash(a, b)
+    else:
+        return dict(a.items() + b.items())
