@@ -111,7 +111,7 @@ class ActionModule(object):
                 return ReturnData(conn=conn, result=dict(changed=True), diff=diff)
 
             # transfer the file to a remote tmp location
-            tmp_src = tmp + os.path.basename(source)
+            tmp_src = tmp + 'source'
             conn.put_file(source, tmp_src)
             if content is not None:
                 os.remove(tmp_content)
@@ -120,7 +120,7 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
             # run the copy module
-            module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
+            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
             return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
 
         else:
