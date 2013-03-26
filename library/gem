@@ -130,7 +130,10 @@ def install(module):
         return
 
     ver = get_rubygems_version(module)
-    major = ver[0] if ver else None
+    if ver:
+        major = ver[0]
+    else:
+        major = None
 
     cmd = [ module.get_bin_path('gem', True) ]
     cmd.append('install')
