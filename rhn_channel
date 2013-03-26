@@ -23,6 +23,11 @@ options:
             - name of the system as it is known in RHN/Satellite
         required: true
         default: null
+    state:
+        description:
+            - whether the channel should be present or not
+        required: false
+        default: present
     url:
         description: 
             - The full url to the RHN/Satellite api
