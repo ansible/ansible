@@ -609,7 +609,10 @@ class AnsibleModule(object):
             elif wanted == 'int':
                 if not isinstance(value, int):
                     if isinstance(value, basestring):
-                        self.params[k] = int(value)
+                        try:
+                            self.params[k] = int(value)
+                        except ValueError:
+                            is_invalid = True
                     else:
                         is_invalid = True
             else:
