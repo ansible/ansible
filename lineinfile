@@ -25,7 +25,8 @@ DOCUMENTATION = """
 ---
 module: lineinfile
 author: Daniel Hokka Zakrisson
-short_description: Ensure a particular line is in a file
+short_description: Ensure a particular line is in a file, or replace an
+                   existing line using a back-referenced regular expression.
 description:
   - This module will search a file for a line, and ensure that it is present or absent.
   - This is primarily useful when you want to change a single line in a
@@ -36,12 +37,13 @@ options:
     required: true
     aliases: [ name, destfile ]
     description:
-      - The file to modify
+      - The file to modify.
   regexp:
     required: true
     description:
-      - The regular expression to look for in the file. For C(state=present),
-        the pattern to replace. For C(state=absent), the pattern of the line
+      - The regular expression to look for in every line of the file. For
+        C(state=present), the pattern to replace if found; only the last line
+        found will be replaced. For C(state=absent), the pattern of the line
         to remove.  Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
   state:
@@ -55,7 +57,22 @@ options:
     required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
-        file. May contain backreferences.
+        file. If backrefs is set, may contain backreferences that will get
+        expanded with the regexp capture groups if the regexp matches. The
+        backreferences should be double escaped (see examples).
+  backrefs:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: 1.1
+    description:
+      - Used with C(state=present). If set, line can contain backreferences
+        (both positional and named) that will get populated if the regexp
+        matches. This flag changes the operation of the module slightly;
+        insertbefore) and insertafter will be ignored, and if the regexp
+        doesn't match anywhere in the file, the file will be left unchanged.
+        If the regexp does match, the last matching line will be replaced by
+        the expanded line parameter.
   insertafter:
     required: false
     default: EOF
@@ -63,6 +80,7 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
+        May not be used with backrefs.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -70,8 +88,8 @@ options:
     description:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
-         C(BOF) for inserting the line at the beginning of the
-        file.
+        C(BOF) for inserting the line at the beginning of the file.
+        May not be used with backrefs.
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -94,7 +112,7 @@ options:
      required: false
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
    lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
 
    lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
@@ -105,9 +123,9 @@ EXAMPLES = """
 
    lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
 
-   lineinfile: \\\"dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'\\\"
+   lineinfile: dest=/etc/sudoers state=present regexp='^%wheel' line ='%wheel ALL=(ALL) NOPASSWD: ALL'
 
-   lineinfile dest=/tmp/grub.conf state=present regexp='^(splashimage=.*)$' line="#\\1"
+   lineinfile: dest=/opt/jboss-as/bin/standalone.conf state=present regexp='^(.*)Xms(\d+)m(.*)$' line='\\1Xms${xms}m\\3'
 """
 
 
