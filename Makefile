@@ -117,6 +117,8 @@ clean:
 	rm -rf deb-build
 	rm -rf docs/json
 	rm -rf docs/js
+	@echo "Cleaning up authors file"
+	rm -f AUTHORS.TXT
 
 python:
 	$(PYTHON) setup.py build
