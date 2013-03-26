@@ -121,7 +121,10 @@ class PlayBook(object):
             self.inventory    = inventory
 
         self.basedir     = os.path.dirname(playbook) or '.'
-        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
+        vars = {}
+        if self.inventory.basedir() is not None:
+            vars['inventory_dir'] = self.inventory.basedir()
+        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
 
     # *****************************************************
 
@@ -171,7 +174,7 @@ class PlayBook(object):
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
                         incvars[k] = utils.template(basedir, v, incvars)
-                    included_path = utils.path_dwim(basedir, tokens[0])
+                    included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
                     (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
                     for p in plays:
                         if 'vars' not in p:
