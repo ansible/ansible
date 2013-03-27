@@ -76,13 +76,18 @@ options:
     required: false
   merge:
     description:
-     - Will run out-of-order missing migrations as they are no rollbacks, you can only use this parameter with I(migrate)
+     - Will run out-of-order missing migrations as they are no rollbacks, you can only use this parameter with 'migrate' command
+    required: false
+  link:
+    description:
+     - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
     required: false
 notes:
    - U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
    - To be able to use the migrate command, you must have south installed and added as an app in your settings
+   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
 requirements: [ "virtualenv", "django" ]
 author: Scott Anderson
 '''
@@ -161,6 +166,7 @@ def main():
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
         validate=(),
         migrate=('apps', 'skip', 'database', 'merge'),
+        collectstatic=('link', ),
         )
 
     command_required_param_map = dict(
@@ -173,6 +179,7 @@ def main():
         'flush',
         'syncdb',
         'test',
+        'collectstatic',
         )
 
     # These params are allowed for certain commands only
@@ -180,7 +187,7 @@ def main():
 
     # These params are automatically added to the command if present
     general_params = ('settings', 'pythonpath', )
-    specific_boolean_params = ('failfast', 'skip', 'merge', )
+    specific_boolean_params = ('failfast', 'skip', 'merge', 'link' )
     end_of_command_params = ('apps', 'cache_table', 'fixtures', )
 
     module = AnsibleModule(
@@ -200,6 +207,7 @@ def main():
             testrunner  = dict(default=None, required=False, aliases=['test_runner']),
             skip        = dict(default=None, required=False, choices=BOOLEANS),
             merge       = dict(default=None, required=False, choices=BOOLEANS),
+            link        = dict(default=None, required=False, choices=BOOLEANS),
         ),
     )
 
