@@ -64,7 +64,12 @@ options:
     choices: [ "yes", "no" ]
     default: "yes"
     aliases: [ "thirsty" ]
-  others:
+  validate:
+    description:
+      - validation to run before copying into place
+    required: false
+    default: ""
+    version_added: "1.2"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -74,6 +79,8 @@ examples:
      description: "Example from Ansible Playbooks"
    - code: "copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes"
      description: "Copy a new C(ntp.conf) file into place, backing up the original if it differs from the copied version"
+   - code: "copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -c %s'
+     description: "Copy a new C(sudoers) file into place, after passing validation with visudo"
 author: Michael DeHaan
 notes:
    - The "copy" module can't be used to recursively copy directory structures to the target machine. Please see the 
@@ -91,6 +98,7 @@ def main():
             dest              = dict(required=True),
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
+            validate          = dict(required=False, type='str'),
         ),
         add_file_common_args=True,
     )
@@ -100,6 +108,7 @@ def main():
     backup = module.params['backup']
     force  = module.params['force']
     original_basename = module.params.get('original_basename',None)
+    validate = module.params.get('validate',None)
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -139,6 +148,10 @@ def main():
             # might be an issue with exceeding path length
             dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
             shutil.copyfile(src, dest_tmp)
+            if validate:
+               (rc,out,err) = module.run_command(validate % dest_tmp)
+               if rc != 0:
+                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
             module.atomic_replace(dest_tmp, dest)
         except shutil.Error:
             module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
