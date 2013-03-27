@@ -371,7 +371,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     # this might be an url spec
                     fp = urllib.URLopener().open(spec)
                     fp.close()
-                except (urllib.error.URLerror, IOError) as e:
+                except IOError as e:
                     res['msg'] += "error opening url '%s': %s" % (spec, e)
                     module.fail_json(**res)
                 if fp.code != 200:
