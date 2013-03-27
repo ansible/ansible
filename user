@@ -367,7 +367,7 @@ class User(object):
         if len(cmd) == 1:
             return (None, '', '')
         elif self.module.check_mode:
-            return (True, '', '')
+            return (0, '', '')
 
         cmd.append(self.name)
         return self.execute_command(cmd)
