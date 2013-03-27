@@ -24,6 +24,7 @@
 import traceback
 import os
 import yum
+import urllib
 
 DOCUMENTATION = '''
 ---
@@ -366,8 +367,16 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         if spec.endswith('.rpm'):
             # get the pkg name-v-r.arch
             if not os.path.exists(spec):
-                res['msg'] += "No Package file matching '%s' found on system" % spec
-                module.fail_json(**res)
+                try:
+                    # this might be an url spec
+                    fp = urllib.URLopener().open(spec)
+                    fp.close()
+                except Exception as e:
+                    res['msg'] += "error opening url '%s': %s" % (spec, e)
+                    module.fail_json(**res)
+                if fp.code != 200:
+                    res['msg'] += "error opening url '%s'; code: %s" % (spec, fp.code)
+                    module.fail_json(**res)
 
             nvra = local_nvra(module, spec)
             # look for them in the rpmdb
