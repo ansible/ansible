@@ -24,7 +24,7 @@
 import traceback
 import os
 import yum
-import urllib
+import urllib2
 
 DOCUMENTATION = '''
 ---
@@ -365,21 +365,25 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # check if pkgspec is installed (if possible for idempotence)
         # localpkg
         if spec.endswith('.rpm'):
-            # get the pkg name-v-r.arch
-            if not os.path.exists(spec):
+            if os.path.exists(spec):
+                # get the pkg name-v-r.arch
+                nvra = local_nvra(module, spec)
+            elif "://" in spec:
+                # this might be an url spec
+                # parse the spec and check whether it is installed
+                # its not bulletproof but might prove uesful
                 try:
-                    # this might be an url spec
-                    fp = urllib.URLopener().open(spec)
-                    fp.close()
-                except IOError as e:
-                    res['msg'] += "error opening url '%s': %s" % (spec, e)
+                    path = urllib2.urlparse.urlparse(spec)[2]
+                except ValueError as e:
+                    res['msg'] += "Error parsing url '%s': %s" % (spec, e)
                     module.fail_json(**res)
-                if fp.code != 200:
-                    res['msg'] += "error opening url '%s'; code: %s" % (spec, fp.code)
-                    module.fail_json(**res)
+                # a hack to extract nvra from the URL path field
+                nvra = os.path.basename(path).rstrip('.rpm')
+            else:
+                res['msg'] += "No Package file matching '%s' found on system" % spec
+                module.fail_json(**res)
 
-            nvra = local_nvra(module, spec)
-            # look for them in the rpmdb
+            # look for the pkg name-v-r.arch in the rpmdb
             if is_installed(module, repoq, nvra, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                 # if they are there, skip it
                 continue
