@@ -71,7 +71,6 @@ options:
     default: ""
     version_added: "1.2"
   others:
-  others:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
