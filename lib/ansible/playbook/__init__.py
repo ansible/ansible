@@ -63,7 +63,8 @@ class PlayBook(object):
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
-        diff             = False):
+        diff             = False,
+        any_errors_fatal = False):
 
         """
         playbook:         path to a playbook file
@@ -113,6 +114,7 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.any_errors_fatal = any_errors_fatal
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -463,6 +465,9 @@ class PlayBook(object):
                         return False
 
                 host_list = self._list_available_hosts(play.hosts)
+
+                if task.any_errors_fatal and len(self.stats.failures) > 0:
+                  host_list = None
 
                 # if no hosts remain, drop out
                 if not host_list:
