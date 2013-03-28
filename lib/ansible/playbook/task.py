@@ -27,7 +27,8 @@ class Task(object):
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args'
+        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
+        'any_errors_fatal'
     ]
 
     # to prevent typos and such
@@ -35,7 +36,8 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment', 'args'
+         'sudo_pass', 'when', 'connection', 'environment', 'args',
+         'any_errors_fatal'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -151,6 +153,7 @@ class Task(object):
      
 
         self.ignore_errors = ds.get('ignore_errors', False)
+        self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
 
         # action should be a string
         if not isinstance(self.action, basestring):
