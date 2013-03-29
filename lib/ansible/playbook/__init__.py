@@ -449,6 +449,7 @@ class PlayBook(object):
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
+                hosts_count = len(self._list_available_hosts(play.hosts))
 
                 # only run the task if the requested tags match
                 should_run = False
@@ -466,7 +467,7 @@ class PlayBook(object):
 
                 host_list = self._list_available_hosts(play.hosts)
 
-                if task.any_errors_fatal and len(self.stats.failures) > 0:
+                if task.any_errors_fatal and len(host_list) < hosts_count:
                   host_list = None
 
                 # if no hosts remain, drop out
