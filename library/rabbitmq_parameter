@@ -24,7 +24,7 @@ module: rabbitmq_parameter
 short_description: Adds or removes parameters to RabbitMQ
 description:
   - Manage dynamic, cluster-wide parameters for RabbitMQ
-version_added: '1.1'
+version_added: "1.1"
 author: Chris Hoffman
 options:
   component:

@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: git
 author: Michael DeHaan
-version_added: 0.0.1
+version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:
     - Manage I(git) checkouts of repositories to deploy files or software.
