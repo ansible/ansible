@@ -220,7 +220,7 @@ who's successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
-       action: shell /usr/bin/somecommand && /bin/true
+       action: shell /usr/bin/somecommand || /bin/true
 
 If the action line is getting too long for comfort you can break it on
 a space and indent any continuation lines::
