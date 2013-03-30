@@ -75,8 +75,10 @@ options:
     required: false
 notes:
     - This module doesn't yet support configuration for proxies.
-# informational: requirements for nodes
+# informational: requirements for nodes (formatting I(), B() allowed)
 requirements: [ urllib2, urlparse ]
+# informational: requirements for controlling machine (formatting I(), B() allowed)
+control_requirements: [ ]
 author: Jan-Piet Mens
 '''
 
