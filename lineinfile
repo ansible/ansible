@@ -64,7 +64,7 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    version_added: 1.1
+    version_added: "1.1"
     description:
       - Used with C(state=present). If set, line can contain backreferences
         (both positional and named) that will get populated if the regexp
@@ -84,7 +84,7 @@ options:
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
-    version_added: 1.1
+    version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
