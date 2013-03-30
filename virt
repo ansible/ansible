@@ -45,11 +45,11 @@ options:
               "shutdown", "undefine", "destroy", "get_xml", "autostart",
               "freemem", "list_vms", "info", "nodeinfo", "virttype"]
 examples:
-   - code: "virt: guest=alpha state=running"
+   - code: "virt: name=alpha state=running"
      description: "Example from Ansible Playbooks"
-   - code: ansible host -m virt -a "guest=alpha command=status"
+   - code: ansible host -m virt -a "name=alpha command=status"
      description: "Example guest management with C(/usr/bin/ansible)"
-   - code: ansible host -m virt -a "guest=alpha command=get_xml"
+   - code: ansible host -m virt -a "name=alpha command=get_xml"
      description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
