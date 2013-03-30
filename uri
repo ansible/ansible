@@ -33,8 +33,8 @@ DOCUMENTATION = '''
 module: uri
 short_description: Interacts with webservices
 description:
-     - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE 
-       HTTP authentication mechanisms.
+  - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
+    HTTP authentication mechanisms.
 version_added: "1.1"
 options:
   url:
@@ -109,7 +109,10 @@ options:
     required: false
     default: 30
   HEADER_:
-    description: Any parameter starting with "HEADER_" is a sent with your request as a header. For example, HEADER_Content-Type="application/json" would send the header "Content-Type" along with your request with a value of "application/json".
+    description:
+      - Any parameter starting with "HEADER_" is a sent with your request as a header.
+        For example, HEADER_Content-Type="application/json" would send the header
+        "Content-Type" along with your request with a value of "application/json".
     required: false
     default: null
   others:

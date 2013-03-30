@@ -28,7 +28,8 @@ description:
 version_added: "1.1"
 options:
   name:
-    description: The name of the gem to be managed.
+    description:
+      - The name of the gem to be managed.
     required: true
   state:
     description: 
@@ -36,19 +37,23 @@ options:
     required: true
     choices: [present, absent, latest]
   gem_source:
-    description: The path to a local gem used as installation source.
+    description:
+      - The path to a local gem used as installation source.
     required: false
   include_dependencies:
-    description: Wheter to include dependencies or not.
+    description:
+      - Wheter to include dependencies or not.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
   repository:
-    description: The repository from which the gem will be installed
+    description:
+      - The repository from which the gem will be installed
     required: false
     aliases: [source]
   version:
-    description: Version of the gem to be installed/removed.
+    description:
+      - Version of the gem to be installed/removed.
     required: false
 author: Johan Wiren
 '''
