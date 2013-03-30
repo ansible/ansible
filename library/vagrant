@@ -20,7 +20,7 @@ module: vagrant
 short_description: create a local instance via vagrant
 description:
      - creates VM instances via vagrant and optionally waits for it to be 'running'. This module has a dependency on python-vagrant.
-version_added: "100.0"
+version_added: "1.1"
 options:
   state:
     description: Should the VMs be "present" or "absent."
