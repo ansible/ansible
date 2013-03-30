@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: user
 author: Stephen Fromm
-version_added: 0.2
+version_added: "0.2"
 short_description: Manage user accounts
 requirements: [ useradd, userdel, usermod ]
 description:
@@ -48,7 +48,7 @@ options:
         description:
             - Optionally when used with the -u option, this option allows to
               change the user ID to a non-unique value.
-              (New in 1.1)
+        version_added: "1.1"
     group:
         required: false
         description:

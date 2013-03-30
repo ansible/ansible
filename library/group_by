@@ -6,7 +6,7 @@ module: group_by
 short_description: Create Ansible groups based on facts
 description:
   - Use facts to create ad-hoc groups that can be used later in a playbook.
-version_added: 0.9
+version_added: "0.9"
 options:
   key:
     description:
