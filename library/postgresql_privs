@@ -360,7 +360,7 @@ class Connection(object):
                                  "FUNCTION") must be qualified by schema.
                                  Ignored for other Types.
         """
-        # get_acls: function to get object ACLs
+        # get_status: function to get current status
         if obj_type == 'table':
             get_status = partial(self.get_table_acls, schema_qualifier)
         elif obj_type == 'sequence':
