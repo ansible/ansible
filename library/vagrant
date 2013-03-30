@@ -23,7 +23,8 @@ description:
 version_added: "100.0"
 options:
   state:
-    description: Should the VMs be "present" or "absent."
+    description:
+      - Should the VMs be "present" or "absent."
   cmd:
     description:
       - vagrant subcommand to execute. Can be "up," "status," "config," "ssh," "halt," "destroy" or "clear." 
