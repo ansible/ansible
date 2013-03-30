@@ -164,7 +164,7 @@ def main():
     p.add_option("-t", "--type",
             action='store',
             dest='type',
-            choices=['html', 'latex', 'man', 'rst', 'json', 'markdown'],
+            choices=['html', 'latex', 'man', 'rst', 'json', 'markdown', 'js'],
             default='latex',
             help="Output type")
     p.add_option("-m", "--module",
