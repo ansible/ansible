@@ -34,11 +34,11 @@ options:
     required: true
   pvs:
     description:
-    - List of comma-separated devices to use as physical devices in this volume group.
-    required: true
+    - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
+    required: false
   pesize:
     description:
-    - The size of the physical extent in megabytes.
+    - The size of the physical extent in megabytes. Must be a power of 2.
     default: 4
     required: false
   state:
@@ -51,12 +51,14 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     description:
-    - If yes, allows to remove or reduce volume group with logical volumes.
+    - If yes, allows to remove volume group with logical volumes.
     required: false
 examples:
   - description: Create a volume group on top of /dev/sda1 with physical extent size = 32MB.
     code: lvg vg=vg.services pvs=/dev/sda1 pesize=32
-  - description: Create a volume group on top of /dev/sdb1 and /dev/sdc5.
+  - description: Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5. 
+        If, for example, we already have VG vg.services on top of /dev/sdb1, this VG will be extended by /dev/sdc5.
+        Or if vg.services was created on top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5, and then reduce by /dev/sda5.
     code: lvg vg=vg.services pvs=/dev/sdb1,/dev/sdc5
   - description: Remove a volume group with name vg.services.
     code: lvg vg=vg.services state=absent
