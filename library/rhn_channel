@@ -6,7 +6,7 @@ module: rhn_channel
 short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels
-version_added: '1.1'
+version_added: "1.1"
 author: Vincent Van der Kussen
 notes:
     - this module fetches the system id from RHN. 

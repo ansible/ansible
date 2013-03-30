@@ -28,9 +28,9 @@ options:
     required: true
     default: null
   fail_on_missing:
-    version_added: 1.1
+    version_added: "1.1"
     description:
-      - Makes it fails when the source file is missing.  (Option is new in 1.1)
+      - Makes it fails when the source file is missing.
     required: false
     choices: [ "yes", "no" ]
     default: "no"

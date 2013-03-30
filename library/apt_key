@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: apt_key
 author: Jayson Vantuyl & others
-version_added: 1.0
+version_added: "1.0"
 short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it

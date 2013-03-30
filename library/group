@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: group
 author: Stephen Fromm
-version_added: 0.0.2
+version_added: "0.0.2"
 short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]
 description:
