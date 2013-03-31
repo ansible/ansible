@@ -124,7 +124,8 @@ examples:
      description: 'Creates an entry like "@reboot /some/job.sh"'
    - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate'
 
-requirements: cron
+requirements:
+  - cron
 author: Dane Summers
 updates: Mike Grozak
 """
