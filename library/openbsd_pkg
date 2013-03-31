@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: openbsd_pkg
 author: Patrik Lundin
-version_added: 1.1
+version_added: "1.1"
 short_description: Manage packages on OpenBSD.
 description:
     - Manage packages on OpenBSD using the pkg tools.

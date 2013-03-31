@@ -50,7 +50,7 @@ options:
     required: false
     default: null
   virtualenv_site_packages:
-    version_added: 1.0
+    version_added: "1.0"
     description:
       - Whether the virtual environment will inherit packages from the
         global site-packages directory.  Note that if this setting is
@@ -61,7 +61,7 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
   virtualenv_command:
-    version_aded: 1.1
+    version_aded: "1.1"
     description:
       - The command to create the virtual environment with. For example
         C(pyvenv), C(virtualenv), C(virtualenv2).

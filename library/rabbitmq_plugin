@@ -24,7 +24,7 @@ module: rabbitmq_plugin
 short_description: Adds or removes users to RabbitMQ
 description:
   - Enables or disables RabbitMQ plugins
-version_added: 1.1
+version_added: "1.1"
 author: Chris Hoffman
 options:
   names:
