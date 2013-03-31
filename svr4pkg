@@ -29,7 +29,7 @@ description:
       as a legacy feature in Solaris 11.
     - Note that this is a very basic packaging system. It will not enforce
       dependencies on install or remove.
-version_added: 0.9
+version_added: "0.9"
 author: Boyd Adamson
 options:
   name:
