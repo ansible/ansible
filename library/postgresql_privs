@@ -181,7 +181,6 @@ requirements: [ psycopg2 ]
 author: Bernhard Weitzhofer
 """
 
-import re
 try:
     import psycopg2
 except:
