@@ -30,17 +30,17 @@ version_added: "1.0"
 options:
     name:
         description:
-            - name of package to install/remove
+            - name of package to install, upgrade or remove.
         required: true
 
     state:
         description:
-            - state of the package installed or absent. 
+            - state of the package (installed or absent).
         required: false
 
     update_cache:
         description:
-            - update the package db first (pacman -Syy)
+            - update the package database first (pacman -Syy).
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -55,7 +55,7 @@ examples:
     - code: "pacman: name=foo,bar state=absent"
       description: remove packages foo and bar 
     - code: "pacman: name=bar, state=installed, update_cache=yes"
-      description: update the package db (pacman -Syy) then install bar (bar will be the updated if a newer version exists) 
+      description: update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists) 
       
 '''
 
@@ -81,7 +81,7 @@ def query_package(module, name, state="installed"):
 
 
 def update_package_db(module):
-    rc = os.system("pacman -Syy")
+    rc = os.system("pacman -Syy > /dev/null")
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
@@ -96,7 +96,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc = os.system("pacman -R %s --noconfirm" % (package))
+        rc = os.system("pacman -R %s --noconfirm > /dev/null" % (package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -118,7 +118,7 @@ def install_packages(module, packages):
         if query_package(module, package):
             continue
 
-        rc = os.system("pacman -S %s --noconfirm" % (package))
+        rc = os.system("pacman -S %s --noconfirm > /dev/null" % (package))
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))
