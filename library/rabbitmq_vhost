@@ -36,7 +36,7 @@ options:
     aliases: [vhost]
   tracing:
     description:
-      Enable/disable tracing for a vhost
+      - Enable/disable tracing for a vhost
     default: "no"
     choices: [ "yes", "no" ]
     aliases: [trace]
