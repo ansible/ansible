@@ -36,9 +36,9 @@ options:
     default: null
     aliases: []
   content:
-    version_added: 1.1
+    version_added: "1.1"
     description:
-      - When used instead of 'src', sets the contents of a file directly to the specified value.  (New in 1.1).
+      - When used instead of 'src', sets the contents of a file directly to the specified value.
     required: false
     default: null
   dest:
