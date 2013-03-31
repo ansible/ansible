@@ -46,34 +46,42 @@ options:
     default: null
   flavor:
     description:
-      - flavor to use for the instance
+     - flavor to use for the instance
     required: false
     default: null
   image:
     description:
-       - image to use for the instance
+     - image to use for the instance
     required: false
+    default: null
+  meta:
+    description:
+     - A hash of metadata to associate with the instance
     default: null
   key_name:
     description:
-      - key pair to use on the instance
+     - key pair to use on the instance
     required: false
     default: null
     aliases: ['keypair']
+  files:
+    description:
+     - Files to insert into the instance. remotefilename:localcontent
+    default: null
   region:
     description:
-       - Region to create an instance in
+     - Region to create an instance in
     required: false
     default: null
   wait:
     description:
-      - wait for the instance to be in state 'running' before returning
+     - wait for the instance to be in state 'running' before returning
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+     - how long before wait gives up, in seconds
     default: 300
 examples:
    - code: 'local_action: rax creds_file=~/.raxpub service=cloudservers name=rax-test1 flavor=5 image=b11d9567-e412-4255-96b9-bd63ab23bcfe wait=yes state=present'
@@ -99,8 +107,8 @@ except ImportError:
 SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
                      'cloud_databases', 'cloud_loadbalancers']
 
-def cloudservers(module, state, name, flavor, image, meta, key_name, wait,
-                 wait_timeout):
+def cloudservers(module, state, name, flavor, image, meta, key_name, files,
+                 wait, wait_timeout):
     # Check our args (this could be done better)
     for arg in (state, name, flavor, image):
         if not arg:
@@ -124,14 +132,22 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, wait,
 
     # act on the state
     if state in ('active', 'present'):
-        # See if we already have any servers:
         if not servers:
+            # Handle the file contents
+            for rpath in files.keys():
+                lpath = os.path.expanduser(files[rpath])
+                try:
+                    fileobj = open(lpath, 'r')
+                    files[rpath] = fileobj
+                except Exception, e:
+                    module.fail_json(msg = 'Failed to load %s' % lpath)
             try:
                 servers = [pyrax.cloudservers.servers.create(name=name,
                                                              image=image,
                                                              flavor=flavor,
                                                              key_name=key_name,
-                                                             meta=meta)]
+                                                             meta=meta,
+                                                             files=files)]
                 changed = True
             except Exception, e:
                 module.fail_json(msg = '%s' % e.message)
@@ -188,10 +204,11 @@ def main():
                                                      'deleted', 'absent']),
             creds_file = dict(),
             name = dict(),
-            key_name = dict(aliases = ['keypair']),
             flavor = dict(),
             image = dict(),
             meta = dict(type='dict', default={}),
+            key_name = dict(aliases = ['keypair']),
+            files = dict(type='dict', default={}),
             region = dict(),
             wait = dict(type='bool', choices=BOOLEANS),
             wait_timeout = dict(default=300),
@@ -202,10 +219,11 @@ def main():
     state = module.params.get('state')
     creds_file = module.params.get('creds_file')
     name = module.params.get('name')
-    key_name = module.params.get('key_name')
     flavor = module.params.get('flavor')
     image = module.params.get('image')
     meta = module.params.get('meta')
+    key_name = module.params.get('key_name')
+    files = module.params.get('files')
     region = module.params.get('region')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
@@ -233,8 +251,8 @@ def main():
 
     # Act based on service
     if service == 'cloudservers':
-        cloudservers(module, state, name, flavor, image, meta, key_name, wait,
-                     wait_timeout)
+        cloudservers(module, state, name, flavor, image, meta, key_name, files,
+                     wait, wait_timeout)
     elif service in ['cloudfiles', 'cloud_blockstorage',
                      'cloud_databases', 'cloud_loadbalancers']:
         module.fail_json(msg = 'Service %s is not supported at this time' %
