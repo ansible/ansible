@@ -45,9 +45,21 @@ options:
     required: false
     default: 600
     aliases: []
+  overwrite:
+    description:
+      - force overwrite if a file with the same name already exists, values true/false/yes/no. If used with checksum overwrites will only occur when checksums indicate that contents of files do not match.
+    required: false
+    default: false
+  checksum
+    description:
+      - use checksum to validate if file exists (Currently NOT supported for multipart uploads), values true/false/yes/no
+    required: false
+    default: false
 examples:
    - code: 's3 bucket=mybucket path=/path/to/file state=present'
      description: "Simple playbook example"
+   - code: 's3 bucket=mybucket path=/path/to/file state=present overwrite=yes checksum=yes'
+     description: "Will overwrite only if remote and local checksums do not match. Does not support files uploaded to s3 with multipart upload."
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -58,6 +70,7 @@ import urlparse
 
 try:
     import boto
+    import hashlib
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -72,6 +85,8 @@ def main():
             s3_url = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            overwrite = dict(default="false", choices=BOOLEANS),
+            checksum = dict(default="false", choices=BOOLEANS),
         ),
         required_together=[ ['bucket', 'path', 'state'] ],
     )
@@ -83,7 +98,8 @@ def main():
     s3_url = module.params.get('s3_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
-
+    overwrite = module.boolean( module.params.get('overwrite') )
+    checksum = module.boolean( module.params.get('checksum') )
     # allow eucarc environment variables to be used if ansible vars aren't set
     
     if not s3_url and 'S3_URL' in os.environ:
@@ -144,8 +160,19 @@ def main():
         except s3.provider.storage_response_error, e:
             module.fail_json(msg= str(e))
 
+    if key_exists is True and checksum is True: 
+        # Retrieve MD5 Checksums.
+        md5_local = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        md5_remote = key_check.etag[1:-1]         # Strip Quotation marks from etag: https://code.google.com/p/boto/issues/detail?id=391
+        etag_multipart = md5_remote.find('-')!=-1   # Find out if this is a multipart upload -> etag is not md5: https://forums.aws.amazon.com/message.jspa?messageID=222158
+        md5_equal = md5_local == md5_remote
+        if etag_multipart is True:
+            module.fail_json(msg="Files uploaded with multipart to s3 are not supported with checksum. They do not contain a valid md5 checksum, use checksum=no.")
+            sys.exit(0)
+
+    # Only proceed if not overwrite
     if state == 'present':
-        if bucket_exists is True and key_exists is True:
+        if bucket_exists is True and key_exists is True and overwrite is False:
             exists = True
             changed = False
             module.exit_json(msg="Bucket and key already exist", changed=changed)
@@ -162,11 +189,13 @@ def main():
             except s3.provider.storage_create_error, e:
                 module.fail_json(msg = str(e))
     
-    # TO-DO, md5sum of key and local file to be confident that its valid.
-    # If bucket now exists but key doesn't, create the key
+    # If bucket now exists but key doesn't or overwrite is True, create the key
     if state == 'present':
-        if bucket_exists is True and key_exists is False:
+        if bucket_exists is True and (key_exists is False or overwrite is True):
             try:
+                if overwrite is True and checksum is True and md5_equal is True: # If we should do checksum and force overwrite.
+                    module.exit_json(msg="MD5 matching, remote file identical. No need to upload.", changed=False)
+                    sys.exit(0)
                 key = bucket.new_key(key_name)  
                 key.set_contents_from_filename(path)
                 url = key.generate_url(expiry)
@@ -203,7 +232,8 @@ def main():
     #                sys.exit(0)
     #            except s3.provider.storage_copy_error, e:
     #                module.fail_json(msg= str(e))
-    
+    # md5sum of key and local file to be confident that its valid.
+
     sys.exit(0)
 
 # this is magic, see lib/ansible/module_common.py
