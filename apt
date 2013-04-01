@@ -69,7 +69,7 @@ options:
     choices: [ "yes", "no" ]
   upgrade:
     description:
-      - 'If yes, performs an apt-get upgrade. If dist, performs an apt-get dist-upgrade. Note: This does not upgrade a specific package, use state=latest for that.'
+      - 'If yes, performs an aptitude safe-upgrade. If dist, performs an apt-get dist-upgrade. Note: This does not upgrade a specific package, use state=latest for that.'
     version_added: "1.1"
     required: false
     default: no
@@ -91,6 +91,7 @@ examples:
       description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
     - code: "apt: upgrade=dist"
       description: Update all packages to the latest version
+requirements: [ python-apt, aptitude ]
 '''
 
 import traceback
@@ -188,13 +189,19 @@ def remove(m, pkgspec, cache, purge=False):
 def upgrade(m, mode="yes"):
     upgrade_command = 'upgrade'
     if mode == "dist":
-        upgrade_command = 'dist-upgrade'
-    cmd = '%s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" %s' % (APT, upgrade_command)
-    rc, out, err = m.run_command(cmd)
-    if rc:
-        m.fail_json(msg="'apt-get %s' failed: %s" % (upgrade_command, err))
-    if "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded." in out :
-        m.exit_json(changed=False)
+        cmd = '%s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade' % APT
+        rc, out, err = m.run_command(cmd)
+        if rc:
+            m.fail_json(msg="'apt-get %s' failed: %s" % (upgrade_command, err))
+        if "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded." in out :
+            m.exit_json(changed=False)
+    else:
+        cmd = "/usr/bin/aptitude safe-upgrade -y"
+        rc, out, err = m.run_command(cmd)
+        if rc:
+            m.fail_json(msg="'aptitude safe-upgrade' failed: %s" % err)
+        if "No packages will be installed, upgraded, or removed." in out:
+            m.exit_json(changed=False)
     m.exit_json(changed=True)
 
 def main():
