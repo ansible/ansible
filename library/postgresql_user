@@ -86,7 +86,7 @@ options:
                     "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
   state:
     description:
-      - The database state
+      - The user (role) state
     required: false
     default: present
     choices: [ "present", "absent" ]
@@ -141,13 +141,13 @@ def user_exists(cursor, user):
 
 
 def user_add(cursor, user, password, role_attr_flags):
-    """Create a new user with write access to the database"""
+    """Create a new database user (role)."""
     query = "CREATE USER \"%(user)s\" with PASSWORD '%(password)s' %(role_attr_flags)s"
     cursor.execute(query % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
     return True
 
 def user_alter(cursor, user, password, role_attr_flags):
-    """Change user password"""
+    """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
     if user == 'PUBLIC':
