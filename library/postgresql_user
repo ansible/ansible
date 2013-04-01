@@ -43,9 +43,8 @@ options:
     default: null
   password:
     description:
-      - set the user's password
-    required: true
-    default: null
+      - If specified, set the user's password.
+    required: false
   db:
     description:
       - name of database where permissions will be granted
@@ -141,8 +140,11 @@ def user_exists(cursor, user):
 
 
 def user_add(cursor, user, password, role_attr_flags):
-    """Create a new user with write access to the database"""
-    query = "CREATE USER \"%(user)s\" with PASSWORD '%(password)s' %(role_attr_flags)s"
+    """Create a new database user (role)."""
+    if password is not None:
+        query = "CREATE USER \"%(user)s\" WITH PASSWORD '%(password)s' %(role_attr_flags)s"
+    else:
+        query = "CREATE USER \"%(user)s\" WITH %(role_attr_flags)s"
     cursor.execute(query % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
     return True
 
@@ -424,10 +426,6 @@ def main():
 
             changed = user_alter(cursor, user, password, role_attr_flags)
         else:
-            if password is None:
-                msg = "password parameter required when adding a user"
-                module.fail_json(msg=msg)
-
             if  module.check_mode:  
                 kw['changed'] = True 
                 module.exit_json(**kw)
