@@ -53,7 +53,7 @@ class Cli(object):
             output_opts=True, 
             connect_opts=True, 
             check_opts=True,
-            diff_opts=False,
+            diff_opts=True,
             usage='%prog <host-pattern> [options]'
         )
 
@@ -124,7 +124,7 @@ class Cli(object):
             sudo_pass=sudopass,sudo_user=options.sudo_user,
             transport=options.connection, subset=options.subset,
             check=options.check,
-            diff=options.check
+            diff=options.diff
         )
 
         if options.seconds:
