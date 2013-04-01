@@ -187,16 +187,20 @@ def remove(m, pkgspec, cache, purge=False):
         m.exit_json(changed=True)
 
 def upgrade(m, mode="yes"):
+    if m.check_mode:
+        check_arg = '--simulate'
+    else:
+        check_arg = ''
     upgrade_command = 'upgrade'
     if mode == "dist":
-        cmd = '%s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade' % APT
+        cmd = '%s %s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade' % (APT, check_arg)
         rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'apt-get %s' failed: %s" % (upgrade_command, err))
         if "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded." in out :
             m.exit_json(changed=False)
     else:
-        cmd = "/usr/bin/aptitude safe-upgrade -y"
+        cmd = "/usr/bin/aptitude safe-upgrade %s -y" % check_arg
         rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'aptitude safe-upgrade' failed: %s" % err)
