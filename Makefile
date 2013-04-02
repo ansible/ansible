@@ -90,7 +90,7 @@ pep8:
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
 	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" lib/ansible/library/
 
 pyflakes:
 	pyflakes lib/ansible/*.py bin/*
@@ -173,13 +173,14 @@ deb: debian
 	fakeroot debian/rules binary
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+MODLIB = lib/ansible/library
 
 modulepages:
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=$(MODLIB) --template-dir=hacking/templates
 
 modulejson:
 	mkdir -p docs/json
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=$(MODLIB) --template-dir=hacking/templates
 
 modulejs:
 	mkdir -p docs/js
