@@ -1,6 +1,11 @@
 Best Practices
 ==============
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest/
+
+
 Here are some tips for making the most of Ansible.
 
 You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
@@ -205,8 +210,8 @@ What about just the first 10, and then the next 10?::
 
 And of course just basic ad-hoc stuff is also possible.::
 
-    ansible -i hosts -m ping
-    ansible -i hosts -m command -a '/sbin/reboot' --limit boston 
+    ansible -i production -m ping
+    ansible -i production -m command -a '/sbin/reboot' --limit boston 
 
 And there are some useful commands (at least in 1.1 to know)::
 

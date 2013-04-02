@@ -114,6 +114,9 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
 
+        self.callbacks.playbook = self
+        self.runner_callbacks.playbook = self
+
         if inventory is None:
             self.inventory    = ansible.inventory.Inventory(host_list)
             self.inventory.subset(subset)
@@ -121,7 +124,10 @@ class PlayBook(object):
             self.inventory    = inventory
 
         self.basedir     = os.path.dirname(playbook) or '.'
-        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook)
+        vars = {}
+        if self.inventory.basedir() is not None:
+            vars['inventory_dir'] = self.inventory.basedir()
+        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
 
     # *****************************************************
 
@@ -171,7 +177,7 @@ class PlayBook(object):
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
                         incvars[k] = utils.template(basedir, v, incvars)
-                    included_path = utils.path_dwim(basedir, tokens[0])
+                    included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
                     (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
                     for p in plays:
                         if 'vars' not in p:
@@ -200,6 +206,10 @@ class PlayBook(object):
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
+
+            self.callbacks.play = play
+            self.runner_callbacks.play = play
+            
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
@@ -300,6 +310,9 @@ class PlayBook(object):
     def _run_task(self, play, task, is_handler):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
+        self.callbacks.task = task
+        self.runner_callbacks.task = task
+
         self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             return True
@@ -373,6 +386,9 @@ class PlayBook(object):
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
+        
+        self.callbacks.task = None
+        self.runner_callbacks.task = None
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(

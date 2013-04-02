@@ -1,6 +1,11 @@
 Playbooks
 =========
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest
+
+
 .. contents::
    :depth: 2
    :backlinks: top
@@ -215,7 +220,15 @@ who's successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
-       action: shell /usr/bin/somecommand && /bin/true
+       action: shell /usr/bin/somecommand || /bin/true
+
+Or this::
+
+   tasks:
+     - name: run this command and ignore the result
+       action: shell /usr/bin/somecommand
+       ignore_errors: True
+
 
 If the action line is getting too long for comfort you can break it on
 a space and indent any continuation lines::

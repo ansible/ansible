@@ -35,7 +35,7 @@ module: setup
 short_description: Gathers facts about remote hosts
 options:
     filter:
-        version_added: 1.1
+        version_added: "1.1"
         description:
             - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
         required: false

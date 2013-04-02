@@ -25,8 +25,8 @@ module: rabbitmq_vhost
 short_description: Manage the state of a virtual host in RabbitMQ
 description:
   - Manage the state of a virtual host in RabbitMQ
-version_added: 1.1
-author: Chris Hoffman  
+version_added: "1.1"
+author: Chris Hoffman
 options:
   name:
     description:
@@ -36,7 +36,7 @@ options:
     aliases: [vhost]
   tracing:
     description:
-      Enable/disable tracing for a vhost
+      - Enable/disable tracing for a vhost
     default: "no"
     choices: [ "yes", "no" ]
     aliases: [trace]

@@ -1,6 +1,11 @@
 Advanced Playbooks
 ==================
 
+.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
+   :alt: ansiblefest 2013
+   :target: http://ansibleworks.com/fest
+
+
 Here are some advanced features of the playbooks language.  Using all of these features
 are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
@@ -140,6 +145,8 @@ reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the 
 period, without the rest of the domain.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
+
+Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file.
 
 Variable File Separation
 ````````````````````````
@@ -881,8 +888,9 @@ a good idea::
         delegate_to: 127.0.0.1
 
 
-Here is the same playbook as above, but using the shorthand syntax,
-'local_action', for delegating to 127.0.0.1::
+These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that 
+you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand 
+syntax for delegating to 127.0.0.1::
 
     ---
     # ...
@@ -894,6 +902,18 @@ Here is the same playbook as above, but using the shorthand syntax,
 
       - name: add back to load balancer pool
         local_action: command /usr/bin/add_back_to_pool $inventory_hostname
+
+A common pattern is to use a local action to call 'rsync' to recursively copy files to the managed servers.
+Here is an example::
+
+    ---
+    # ...
+      tasks:
+      - name: recursively copy files from management server to target
+        local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
+
+Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
+will need to ask for a passphrase.
 
 Fireball Mode
 `````````````
