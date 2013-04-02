@@ -60,6 +60,7 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
+        exclude_tags     = None,
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -93,6 +94,8 @@ class PlayBook(object):
             extra_vars = {}
         if only_tags is None:
             only_tags = [ 'all' ]
+        if exclude_tags is None:
+            exclude_tags = []
 
         self.check            = check
         self.diff             = diff
@@ -113,6 +116,7 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.exclude_tags     = exclude_tags
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -455,6 +459,9 @@ class PlayBook(object):
                         if (x==y):
                             should_run = True
                             break
+                if set(self.exclude_tags).intersection(task.tags):
+                    should_run = False
+
                 if should_run:
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
