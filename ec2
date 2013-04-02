@@ -135,6 +135,14 @@ options:
     required: false
     default: null
     aliases: []
+  private_ip:
+    version_added: "?.?"
+    description:
+      - the private ip address to assign the instance (from the vpc subnet)
+    required: false
+    defualt: null
+    aliases: []
+
 examples:
    - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=yes group=webserver count=3 group=webservers'
      description: "Examples from Ansible Playbooks"
@@ -172,6 +180,7 @@ def main():
             user_data = dict(),
             instance_tags = dict(),
             vpc_subnet_id = dict(),
+            private_ip = dict(),
         )
     )
 
@@ -193,6 +202,7 @@ def main():
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
+    private_ip = module.params.get('private_ip')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -250,6 +260,7 @@ def main():
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
                                 subnet_id = vpc_subnet_id,
+                                private_ip_address = private_ip,
                                 user_data = user_data)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
