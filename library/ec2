@@ -136,8 +136,12 @@ options:
     default: null
     aliases: []
 examples:
-   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=yes group=webserver count=3 group=webservers'
-     description: "Examples from Ansible Playbooks"
+    - code: 'local_action: ec2 keypair=mykey instance_type=c1.medium image=emi-40603AD1 wait=yes group=webserver count=3'
+      description: "Basic provisioning example"
+    - code: 'local_action: ec2 keypair=mykey group=databases instance_type=m1.large image=ami-6e649707 wait=yes wait_timeout=500 count=5 instance_tags='{"db":"postgres"}' monitoring=true'
+      description: "Advanced example with tagging and CloudWatch"
+    - code: 'local_action: ec2 keypair=mykey group_id=sg-1dc53f72 instance_type=m1.small image=ami-6e649707 wait=yes vpc_subnet_id=subnet-29e63245'
+      description: "VPC example"
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
 '''
