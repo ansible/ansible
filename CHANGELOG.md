@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-1.1 "Mean Street" -- Release pending
+1.2 "Right Now" -- release pending
+
+* this is the current development branch
+
+1.1 "Mean Street" -- 4/2/2013
 
 Core Features
 
