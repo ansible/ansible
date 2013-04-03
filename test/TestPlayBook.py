@@ -135,6 +135,7 @@ class TestPlaybook(unittest.TestCase):
            runner_callbacks = self.test_callbacks
        )
        result = self.playbook.run()
+       print EVENTS
        return result
 
    def test_one(self):

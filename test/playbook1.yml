@@ -25,7 +25,7 @@
     action: command true
 
   - name: test basic shell, plus two ways to dereference a variable
-    action: shell echo $HOME $port {{ port }}
+    action: shell echo $HOME $port
 
   - name: test vars_files imports
     action: shell echo $duck $cow $testing
