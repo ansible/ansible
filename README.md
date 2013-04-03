@@ -25,7 +25,7 @@ Design Principles
 Get Involved
 ============
 
-   * [ansible-project mailing list](http://groups.google.com/group/ansible-project) [RSS](https://groups.google.com/group/ansible-project/feed/rss_v2_0_msgs.xml?num=50&pli=1)
+   * [ansible-project mailing list](http://groups.google.com/group/ansible-project) [(RSS)](https://groups.google.com/group/ansible-project/feed/rss_v2_0_msgs.xml?num=50&pli=1)
    * irc.freenode.net: #ansible
 
 Branch Info
