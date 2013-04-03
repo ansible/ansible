@@ -30,6 +30,7 @@ import pwd
 
 # TODO: refactor this file
 
+FILTER_PLUGINS = {}
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
@@ -231,6 +232,8 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
+        if '{{' in varname:
+            return template_from_string(basedir, varname, vars)
         m = _varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
             return varname
@@ -385,4 +388,31 @@ def template_from_file(basedir, path, vars):
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
     return template(basedir, res, vars)
+
+def _get_filter_plugins():
+    global FILTER_PLUGINS
+    if FILTER_PLUGINS is not None:
+        return FILTER_PLUGINS
+    environment = jinja2.Environment(trim_blocks=True)
+    FILTER_PLUGINS = {}
+    from ansible import utils
+    for filter_plugin in utils.plugins.filter_loader.all():
+        filters = filter_plugin.filters()
+        if not isinstance(filters, dict):
+            raise errors.AnsibleError("FilterModule.filters should return a dict.")
+        FILTER_PLUGINS.update(filters)
+    return FILTER_PLUGINS
+
+def template_from_string(basedir, data, vars):
+    ''' run a file through the (Jinja2) templating engine '''
+    if type(data) == str:
+        data = unicode(data, 'utf-8')
+    environment = jinja2.Environment(trim_blocks=True)
+    environment.filters.update(_get_filter_plugins())
+    # TODO: may need some way of using lookup plugins here seeing we aren't calling
+    # the legacy engine, lookup() as a function, perhaps?
+    environment.template_class = J2Template
+    t = environment.from_string(data)
+    res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+    return res
 

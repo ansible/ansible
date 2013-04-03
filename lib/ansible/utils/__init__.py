@@ -279,11 +279,12 @@ def parse_yaml_from_file(path):
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
-
     options = {}
     if args is not None:
         # attempting to split a unicode here does bad things
-        vargs = shlex.split(str(args), posix=True)
+        args = args.encode('utf-8')
+        vargs = [x.decode('utf-8') for x in shlex.split(args, posix=True)]
+        #vargs = shlex.split(str(args), posix=True)
         for x in vargs:
             if x.find("=") != -1:
                 k, v = x.split("=",1)
