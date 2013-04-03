@@ -27,10 +27,11 @@ options:
       - Should the VMs be "present" or "absent."
   cmd:
     description:
-      - vagrant subcommand to execute. Can be "up," "status," "config," "ssh," "halt," "destroy" or "clear." 
+      - vagrant subcommand to execute.
     required: false
     default: null
-    aliases: ['command'] 
+    aliases: ['command']
+    choices: [ "up", "status", "config", "ssh", "halt", "destroy", "clear" ]
   box_name:
     description:
       - vagrant boxed image to start
