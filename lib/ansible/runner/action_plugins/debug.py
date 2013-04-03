@@ -39,6 +39,6 @@ class ActionModule(object):
         if 'fail' in args and utils.boolean(args['fail']):
             result = dict(failed=True, msg=args['msg'])
         else:
-            result = dict(msg=str(args['msg']))
+            result = dict(msg=args['msg'])
 
         return ReturnData(conn=conn, result=result)
