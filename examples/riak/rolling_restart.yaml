@@ -1,26 +1,3 @@
-# This playbook assumes an inventory that looks like this:
-
-#[riakcluster_primary]
-#10.0.8.133
-#
-#[riakcluster_middle]
-#10.0.8.228
-#10.0.8.230
-#10.0.8.231
-#
-#[riakcluster_last]
-#10.0.8.233
-#
-#[riakcluster:children]
-#riakcluster_primary
-#riakcluster_middle
-#riakcluster_last
-
-# We define the different groups to ease the cluster joining process.
-# All nodes attempt to join the node defined in rirakcluster_primary.
-# The node in riakcluster_last plans and commits changes to the cluster,
-# in this case, the joining of the nodes.
-# There is no concept of node roles in traditional Riak, all are equal.
 ---
 - hosts: riakcluster
   serial: 1
@@ -29,7 +6,6 @@
   sudo: True
   tasks:
 
-#this will copy over the new config file with the changes we want
   - name: configure app.config
     copy: src=files/rr-etc_riak_app.config dest=/etc/riak/app.config
     tags: configfiles
