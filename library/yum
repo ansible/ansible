@@ -371,7 +371,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             elif "://" in spec:
                 # this might be an url spec
                 # parse the spec and check whether it is installed
-                # its not bulletproof but might prove uesful
+                # a false-negative is an option here
                 try:
                     path = urllib2.urlparse.urlparse(spec)[2]
                 except ValueError as e:
@@ -434,6 +434,14 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             module.exit_json(changed=True)
 
         rc, out, err = module.run_command(cmd)
+
+        if rc == 1 and 'Nothing to do' in err:
+            # avoid failing in the 'Nothing To Do' case
+            # happens if a URL--nevra translation yields a false-negative with
+            # regards to the installation status
+            rc = 0
+            err = ''
+            out = ''
 
         res['rc'] += rc
         res['results'].append(out)
