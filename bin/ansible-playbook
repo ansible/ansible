@@ -65,6 +65,8 @@ def main(args):
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
+    parser.add_option('--exclude-tags', dest='xtags', default='',
+        help="only run plays and tasks not tagged with these values")
     # FIXME: list hosts is a common option and can be moved to utils/__init__.py
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help="dump out a list of hosts, each play will run against, does not run playbook!")
@@ -101,6 +103,7 @@ def main(args):
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
+    exclude_tags = filter(None, options.xtags.split(","))
 
     for playbook in args:
         if not os.path.exists(playbook):
@@ -135,6 +138,7 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
+            exclude_tags=exclude_tags,
             check=options.check,
             diff=options.diff
         )
@@ -154,9 +158,10 @@ def main(args):
                     for host in hosts:
                         print '    %s' % host
                 if options.listtasks:
-                    matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
+                    all_tags = pb.only_tags + pb.exclude_tags
+                    matched_tags, unmatched_tags = play.compare_tags(all_tags)
                     unmatched_tags.discard('all')
-                    unknown_tags = set(pb.only_tags) - (matched_tags | unmatched_tags)
+                    unknown_tags = set(all_tags) - (matched_tags | unmatched_tags)
                     if unknown_tags:
                         msg = 'tag(s) not found in playbook: %s.  possible values: %s'
                         unknown = ','.join(sorted(unknown_tags))
@@ -164,7 +169,8 @@ def main(args):
                         raise errors.AnsibleError(msg % (unknown, unmatched))
                     print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
                     for task in play.tasks():
-                        if set(task.tags).intersection(pb.only_tags):
+                        if (set(task.tags).intersection(pb.only_tags) and
+                            not set(task.tags).intersection(pb.exclude_tags)):
                             print '    %s' % task.name
                 print ''
             continue
