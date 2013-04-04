@@ -37,7 +37,8 @@ options:
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
-            service.  C(reloaded) will always reload.
+            service.  C(reloaded) will always reload. At least one of state
+            and enabled are required.
     pattern:
         required: false
         version_added: "0.7"
@@ -50,7 +51,9 @@ options:
         required: false
         choices: [ "yes", "no" ]
         description:
-        - Whether the service should start on boot.
+        - Whether the service should start on boot. At least one of state and
+          enabled are required.
+
     arguments:
         description:
         - Additional arguments provided on the command line
@@ -738,7 +741,7 @@ class SunOSService(Service):
             self.module.fail_json(msg='unable to find svcs binary')
 
         self.svcadm_cmd = self.module.get_bin_path('svcadm', True)
-    
+
         if not self.svcadm_cmd:
             self.module.fail_json(msg='unable to find svcadm binary')
 
@@ -789,9 +792,9 @@ class SunOSService(Service):
                     enabled = True
                 if line.find("temporary") != -1:
                     temporary = True
-                
+
         startup_enabled = (enabled and not temporary) or (not enabled and temporary)
-        
+
         if self.enable and startup_enabled:
             return
         elif (not self.enable) and (not startup_enabled):
@@ -813,8 +816,8 @@ class SunOSService(Service):
                 self.module.fail_json(msg=stdout)
 
         self.changed = True
-        
-            
+
+
     def service_control(self):
         status = self.get_sunos_svcs_status()
 
@@ -838,7 +841,7 @@ class SunOSService(Service):
             subcmd = "restart"
         elif self.action == 'restart' and status != 'online':
             subcmd = "enable -rst"
-            
+
         return self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
 
 
@@ -856,6 +859,8 @@ def main():
         ),
         supports_check_mode=True
     )
+    if module.params['state'] is None and module.params['enabled'] is None:
+        module.fail_json(msg="Neither 'state' nor 'enabled' set")
 
     service = Service(module)
 
@@ -870,7 +875,6 @@ def main():
     err = ''
     result = {}
     result['name'] = service.name
-    result['state'] = service.state
 
     # Find service management tools
     service.get_service_tools()
@@ -880,6 +884,14 @@ def main():
         # FIXME: ideally this should detect if we need to toggle the enablement state, though
         # it's unlikely the changed handler would need to fire in this case so it's a minor thing.
         service.service_enable()
+        result['enabled'] = service.enable
+
+    if module.params['state'] is None:
+        # Not changing the running state, so bail out now.
+        result['changed'] = service.changed
+        module.exit_json(**result)
+
+    result['state'] = service.state
 
     # Collect service status
     if service.pattern:
