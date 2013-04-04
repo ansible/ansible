@@ -1,0 +1,3 @@
+---
+- include: install.yaml
+- include: form_cluster.yaml
