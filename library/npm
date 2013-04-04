@@ -24,7 +24,7 @@ module: npm
 short_description: Manage node.js packages with npm
 description:
   - Manage node.js packages with Node Package Manager (npm)
-version_added: 1.1
+version_added: 1.2
 author: Chris Hoffman
 options:
   name:
@@ -90,21 +90,21 @@ except ImportError:
     import simplejson as json
 
 class Npm(object):
-    def __init__(self, module, name, path, version, glbl, production, executable):
+    def __init__(self, module, **kwargs):
         self.module = module
-        self.glbl = glbl
-        self.name = name
-        self.version = version
-        self.path = path
-        self.production = production
+        self.glbl = kwargs['glbl']
+        self.name = kwargs['name']
+        self.version = kwargs['version']
+        self.path = kwargs['path']
+        self.production = kwargs['production']
         
-        if executable:
-            self.executable = executable
+        if kwargs['executable']:
+            self.executable = kwargs['executable']
         else:
             self.executable = module.get_bin_path('npm', True)
 
-        if version:
-            self.name_version = name + '@' + version
+        if kwargs['version']:
+            self.name_version = self.name + '@' + self.version
         else:
             self.name_version = self.name
 
@@ -193,7 +193,8 @@ def main():
     if state == 'absent' and not name:
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
-    npm = Npm(module, name, path, version, glbl, production, executable)
+    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
+              executable=executable)
 
     changed = False
     if state == 'present':
