@@ -67,6 +67,8 @@ examples:
       code: "service: name=httpd state=restarted"
     - description: Example action to reload service httpd, in all cases
       code: "service: name=httpd state=reloaded"
+    - description: Example action to enable service httpd, and not touch the running state
+      code: "service: name=httpd enabled=yes"
     - description: Example action to start service foo, based on running process /usr/bin/foo
       code: "service: name=foo pattern=/usr/bin/foo state=started"
     - description: Example action to restart network service for interface eth0
