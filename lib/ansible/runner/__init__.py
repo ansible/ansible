@@ -527,7 +527,7 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
-            executable = '/bin/sh'
+            executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
