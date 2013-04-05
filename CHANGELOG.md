@@ -3,7 +3,10 @@ Ansible Changes By Release
 
 1.2 "Right Now" -- release pending
 
-* this is the current development branch
+* capability to set 'all_errors_fatal: True' in a playbook to force any error to stop execution versus
+  a whole group or serial block needing to fail
+* when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
+  usable, without breaking the ability to override in ansible
 
 1.1 "Mean Street" -- 4/2/2013
 
