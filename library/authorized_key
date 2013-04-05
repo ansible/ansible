@@ -45,12 +45,14 @@ options:
       - Alternate path to the authorized_keys file
     required: false
     default: "/home/user/.ssh/authorized_keys"
+    version_added: "1.2"
   manage_dir:
     description:
       - Wheter this module should manage the directory of the authorized_keys file
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
+    version_added: "1.2"
   state:
     description:
       - whether the given key should or should not be in the file
@@ -203,7 +205,7 @@ def main():
            user       = dict(required=True, type='str'),
            key        = dict(required=True, type='str'),
            path       = dict(required=False, type='str'),
-           manage_dir = dict(required=False, type='bool', choices=BOOLEANS),
+           manage_dir = dict(required=False, type='bool'),
            state      = dict(default='present', choices=['absent','present'])
         )
     )
