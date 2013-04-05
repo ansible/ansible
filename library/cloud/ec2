@@ -277,11 +277,22 @@ def main():
             module.fail_json(msg = str(e))
     
     # Here we try to lookup the group name from the security group id - if group_id is set.
+    if group_id and group_name:
+        module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
+        sys.exit(1)
+        
     try:
-        if group_id:
+        # Here we try to lookup the group id from the security group name - if group is set.
+        if group_name:
+            grp_details = ec2.get_all_security_groups()
+            for grp in grp_details:
+                if str(group_name) in str(grp):
+                    group_id = str(grp.id)
+        # Now we try to lookup the group id testing if group exists.
+        elif group_id:
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             grp_item = grp_details[0]
-            group_name = grp_item.name
+            group_name = grp_item.name 
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
@@ -303,19 +314,25 @@ def main():
     
     if count_remaining > 0:
         try:
-            res = ec2.run_instances(image, key_name = key_name,
-                                client_token=id,
-                                min_count = count_remaining, 
-                                max_count = count_remaining,
-                                monitoring_enabled = monitoring,
-                                security_groups = [group_name],
-                                placement = zone,
-                                instance_type = instance_type,
-                                kernel_id = kernel,
-                                ramdisk_id = ramdisk,
-                                subnet_id = vpc_subnet_id,
-                                private_ip_address = private_ip,
-                                user_data = user_data)
+            params = {'image_id': image, 
+                      'key_name': key_name,
+                      'client_token': id,
+                      'min_count': count_remaining, 
+                      'max_count': count_remaining,
+                      'monitoring_enabled': monitoring,
+                      'instance_type': instance_type,
+                      'kernel_id': kernel,
+                      'ramdisk_id': ramdisk,
+                      'subnet_id': vpc_subnet_id,
+                      'private_ip_address': private_ip,
+                      'user_data': user_data}
+
+            if vpc_subnet_id:
+              params['security_group_ids'] = [group_id]
+            else:
+              params['security_groups'] = [group_name]
+
+            res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
