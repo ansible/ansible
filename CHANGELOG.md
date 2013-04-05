@@ -7,6 +7,7 @@ Ansible Changes By Release
   a whole group or serial block needing to fail
 * when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
   usable, without breaking the ability to override in ansible
+* new 'rax' module for creating instances in the rackspace cloud (uses pyrax)
 
 1.1 "Mean Street" -- 4/2/2013
 
