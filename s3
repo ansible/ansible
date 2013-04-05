@@ -45,9 +45,16 @@ options:
     required: false
     default: 600
     aliases: []
+  overwrite:
+    description:
+      - force overwrite if a file with the same name already exists, values true/false/yes/no. Does not support files uploaded to s3 with multipart upload.
+    required: false
+    default: false
 examples:
    - code: 's3 bucket=mybucket path=/path/to/file state=present'
      description: "Simple playbook example"
+   - code: 's3 bucket=mybucket path=/path/to/file state=present overwrite=yes'
+     description: "Will overwrite only if remote and local checksums do not match. Does not support files uploaded to s3 with multipart upload."
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -58,9 +65,20 @@ import urlparse
 
 try:
     import boto
+    import hashlib
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
+
+def upload_s3file(module, s3, bucket, key_name, path, expiry):
+    try:
+        key = bucket.new_key(key_name)  
+        key.set_contents_from_filename(path)
+        url = key.generate_url(expiry)
+        module.exit_json(msg="Put operation complete", url=url, changed=True)
+        sys.exit(0)
+    except s3.provider.storage_copy_error, e:
+        module.fail_json(msg= str(e))
 
 def main():
     module = AnsibleModule(
@@ -72,6 +90,7 @@ def main():
             s3_url = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            overwrite = dict(default="false", choices=BOOLEANS),
         ),
         required_together=[ ['bucket', 'path', 'state'] ],
     )
@@ -83,9 +102,9 @@ def main():
     s3_url = module.params.get('s3_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
+    overwrite = module.boolean( module.params.get('overwrite') )
 
     # allow eucarc environment variables to be used if ansible vars aren't set
-    
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
     if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
@@ -144,12 +163,30 @@ def main():
         except s3.provider.storage_response_error, e:
             module.fail_json(msg= str(e))
 
+    if key_exists is True and overwrite is True: 
+        # Retrieve MD5 Checksums.
+        md5_remote = key_check.etag[1:-1]           # Strip Quotation marks from etag: https://code.google.com/p/boto/issues/detail?id=391
+        etag_multipart = md5_remote.find('-')!=-1   # Find out if this is a multipart upload -> etag is not md5: https://forums.aws.amazon.com/message.jspa?messageID=222158
+        if etag_multipart is True:
+            module.fail_json(msg="Files uploaded with multipart to s3 are not supported with checksum. They do not contain a valid md5 checksum, use overwrite=no instead.")
+            sys.exit(0)
+        md5_local = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        md5_equal = md5_local == md5_remote
+        
     if state == 'present':
         if bucket_exists is True and key_exists is True:
-            exists = True
-            changed = False
-            module.exit_json(msg="Bucket and key already exist", changed=changed)
-            sys.exit(0)    
+            if overwrite is False:
+                exists = True
+                changed = False
+                module.exit_json(msg="Bucket and key already exist", changed=changed)
+            if overwrite is True: 
+                if md5_equal is True:
+                    module.exit_json(msg="Remote and local file checksums identical.", changed=False)
+                if md5_equal is False:
+                    upload_s3file(module, s3, bucket, key_name, path, expiry)
+            sys.exit(0)
+
+
 
    # If bucket exists, there cannot be a key within, lets create it ...
     if state == 'present':
@@ -162,18 +199,10 @@ def main():
             except s3.provider.storage_create_error, e:
                 module.fail_json(msg = str(e))
     
-    # TO-DO, md5sum of key and local file to be confident that its valid.
-    # If bucket now exists but key doesn't, create the key
+    # If bucket now exists but key doesn't or overwrite is True, create the key
     if state == 'present':
         if bucket_exists is True and key_exists is False:
-            try:
-                key = bucket.new_key(key_name)  
-                key.set_contents_from_filename(path)
-                url = key.generate_url(expiry)
-                module.exit_json(msg="Put operation complete", url=url, changed=True)
-                sys.exit(0)
-            except s3.provider.storage_copy_error, e:
-                module.fail_json(msg= str(e))
+            upload_s3file(module, s3, bucket, key_name, path, expiry)
 
     # If state is absent and the bucket exists (doesn't matter about key since the bucket is the container), delete it.
     if state == 'absent':
@@ -203,7 +232,7 @@ def main():
     #                sys.exit(0)
     #            except s3.provider.storage_copy_error, e:
     #                module.fail_json(msg= str(e))
-    
+
     sys.exit(0)
 
 # this is magic, see lib/ansible/module_common.py
