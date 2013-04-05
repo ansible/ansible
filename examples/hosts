@@ -42,3 +42,6 @@ db02.intranet.mydomain.net
 
 db-[99:101]-node.example.com
 
+# localhost
+# Best to have this handy for ansible-pull
+127.0.0.1
