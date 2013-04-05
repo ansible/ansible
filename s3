@@ -50,6 +50,7 @@ options:
       - force overwrite if a file with the same name already exists, values true/false/yes/no. Does not support files uploaded to s3 with multipart upload.
     required: false
     default: false
+    version_added: "1.2"
 examples:
    - code: 's3 bucket=mybucket path=/path/to/file state=present'
      description: "Simple playbook example"
