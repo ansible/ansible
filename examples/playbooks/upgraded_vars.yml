@@ -18,7 +18,7 @@
 
       - shell: echo '{{ ansible_os_family }}'
 
-      - shell: echo 'Centos'
+      - shell: echo 'RedHat'
         when: ansible_os_family == 'RedHat'
 
 
