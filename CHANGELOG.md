@@ -8,7 +8,8 @@ Core Features:
 * capability to set 'all_errors_fatal: True' in a playbook to force any error to stop execution versus
   a whole group or serial block needing to fail
   usable, without breaking the ability to override in ansible
-* ability to use variables from {{ }} syntax in mainline playbooks (work in progress)
+* ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional,
+  see examples/playbooks/upgraded_vars.yml
 * can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 
 Modules added

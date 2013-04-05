@@ -232,7 +232,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if isinstance(varname, basestring):
-        if '{{' in varname:
+        if '{{' in varname or '{%' in varname:
             return template_from_string(basedir, varname, vars)
         m = _varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
@@ -403,22 +403,20 @@ def _get_filter_plugins():
         FILTER_PLUGINS.update(filters)
     return FILTER_PLUGINS
 
-class J2Undefined(jinja2.runtime.Undefined):
-    def __str__(self):
-        return "{{ %s }}" % self._undefined_name
-    def __unicode__(self):
-        return "{{ %s }}" % self._undefined_name
-
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
-    if type(data) == str:
-        data = unicode(data, 'utf-8')
-    environment = jinja2.Environment(trim_blocks=True, undefined=J2Undefined)
-    environment.filters.update(_get_filter_plugins())
-    # TODO: may need some way of using lookup plugins here seeing we aren't calling
-    # the legacy engine, lookup() as a function, perhaps?
-    environment.template_class = J2Template
-    t = environment.from_string(data)
-    res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
-    return res
+
+    try:
+        if type(data) == str:
+            data = unicode(data, 'utf-8')
+        environment = jinja2.Environment(trim_blocks=True) # undefined=J2Undefined)
+        environment.filters.update(_get_filter_plugins())
+        # TODO: may need some way of using lookup plugins here seeing we aren't calling
+        # the legacy engine, lookup() as a function, perhaps?
+        environment.template_class = J2Template
+        t = environment.from_string(data)
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+        return res
+    except jinja2.exceptions.UndefinedError:
+        return data
 
