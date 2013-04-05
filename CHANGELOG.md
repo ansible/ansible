@@ -9,6 +9,7 @@ Core Features:
   a whole group or serial block needing to fail
   usable, without breaking the ability to override in ansible
 * ability to use variables from {{ }} syntax in mainline playbooks (work in progress)
+* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 
 Modules added
 
