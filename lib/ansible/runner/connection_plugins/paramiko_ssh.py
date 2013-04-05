@@ -43,7 +43,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file):
+    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
 
         self.ssh = None
         self.sftp = None

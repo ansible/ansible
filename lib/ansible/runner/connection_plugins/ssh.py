@@ -32,7 +32,7 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file):
+    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.port = port
