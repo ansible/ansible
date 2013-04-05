@@ -97,14 +97,20 @@ class Cli(object):
             print >>sys.stderr, "No argument passed to command module"
             sys.exit(1)
 
+        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
+        options.same_pass = options.same_pass or C.DEFAULT_SAME_PASS
         sshpass = None
         sudopass = None
-        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        if options.same_pass and (not(options.ask_pass) or options.ask_sudo_pass):
+            raise errors.AnsibleError("incompatible password options")
         if options.ask_pass:
             sshpass = getpass.getpass(prompt="SSH password: ")
-        options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         if options.ask_sudo_pass:
             sudopass = getpass.getpass(prompt="sudo password: ")
+            options.sudo = True
+        if options.same_pass:
+            sudopass = sshpass
             options.sudo = True
         if options.sudo_user:
             options.sudo = True
