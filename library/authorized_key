@@ -40,6 +40,17 @@ options:
       - the SSH public key, as a string
     required: true
     default: null
+  path:
+    description:
+      - Alternate path to the authorized_keys file
+    required: false
+    default: "/home/user/.ssh/authorized_keys"
+  manage_dir:
+    description:
+      - Wheter this module should manage the directory of the authorized_keys file
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
   state:
     description:
       - whether the given key should or should not be in the file
@@ -51,6 +62,8 @@ examples:
      description: "Example from Ansible Playbooks"
    - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)'"
      description: "Shorthand available in Ansible 0.8 and later"
+ - code: "authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)' sshdir='/etc/ssh/authorized_keys/charlie' manage_dir=no"
+     description: "Advanced usage with an alternate AuthorizedKeysFile configuration"
 author: Brad Olson
 '''
 
@@ -60,6 +73,8 @@ author: Brad Olson
 # =========
 #    user = username
 #    key = line to add to authorized_keys for user
+#    path = path to the user's authorized_keys file (default: ~/.ssh/authorized_keys)
+#    manage_dir = whether to create, and control ownership of the directory (default: true)
 #    state = absent|present (default: present)
 #
 # see example in examples/playbooks
@@ -71,13 +86,15 @@ import os.path
 import tempfile
 import shutil
 
-def keyfile(module, user, write=False):
+def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
 
     :param str user: name of user in passwd file
     :param bool write: if True, write changes to authorized_keys file (creating directories if needed)
+    :param str path: if not None, use provided path rather than default of '~user/.ssh/authorized_keys'
+    :param bool manage_dir: if True, create and set ownership of the parent dir of the authorized_keys file
     :return: full path string to authorized_keys for user
     """
 
@@ -85,9 +102,13 @@ def keyfile(module, user, write=False):
         user_entry = pwd.getpwnam(user)
     except KeyError, e:
         module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
-    homedir    = user_entry.pw_dir
-    sshdir     = os.path.join(homedir, ".ssh")
-    keysfile   = os.path.join(sshdir, "authorized_keys")
+    if path is None:
+        homedir    = user_entry.pw_dir
+        sshdir     = os.path.join(homedir, ".ssh")
+        keysfile   = os.path.join(sshdir, "authorized_keys")
+    else:
+        sshdir     = os.path.dirname(path)
+        keysfile   = path
 
     if not write:
         return keysfile
@@ -95,12 +116,13 @@ def keyfile(module, user, write=False):
     uid = user_entry.pw_uid
     gid = user_entry.pw_gid
 
-    if not os.path.exists(sshdir):
-        os.mkdir(sshdir, 0700)
-        if module.selinux_enabled():
-            module.set_default_selinux_context(sshdir, False)
-    os.chown(sshdir, uid, gid)
-    os.chmod(sshdir, 0700)
+    if manage_dir in BOOLEANS_TRUE:
+        if not os.path.exists(sshdir):
+            os.mkdir(sshdir, 0700)
+            if module.selinux_enabled():
+                module.set_default_selinux_context(sshdir, False)
+        os.chown(sshdir, uid, gid)
+        os.chmod(sshdir, 0700)
 
     if not os.path.exists( keysfile):
         try:
@@ -139,14 +161,17 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    user  = params["user"]
-    key   = params["key"]
-    state = params.get("state", "present")
+    user       = params["user"]
+    key        = params["key"]
+    path       = params.get("path", None)
+    manage_dir = params.get("manage_dir", True)
+    state      = params.get("state", "present")
 
     key = key.split('\n')
 
     # check current state -- just get the filename, don't create file
-    params["keyfile"] = keyfile(module, user, write=False)
+    write = False
+    params["keyfile"] = keyfile(module, user, write, path, manage_dir)
     keys = readkeys(params["keyfile"])
 
     # Check our new keys, if any of them exist we'll continue.
@@ -157,14 +182,16 @@ def enforce_state(module, params):
             if present:
                 continue
             keys.append(new_key)
-            writekeys(module, keyfile(module, user,write=True), keys)
+            write = True
+            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
             params['changed'] = True
 
         elif state=="absent":
             if not present:
                 continue
             keys.remove(new_key)
-            writekeys(module, keyfile(module, user,write=True), keys)
+            write = True
+            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
             params['changed'] = True
 
     return params
@@ -173,9 +200,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-           user  = dict(required=True),
-           key   = dict(required=True),
-           state = dict(default='present', choices=['absent','present'])
+           user       = dict(required=True, type='str'),
+           key        = dict(required=True, type='str'),
+           path       = dict(required=False, type='str'),
+           manage_dir = dict(required=False, type='bool', choices=BOOLEANS),
+           state      = dict(default='present', choices=['absent','present'])
         )
     )
 
