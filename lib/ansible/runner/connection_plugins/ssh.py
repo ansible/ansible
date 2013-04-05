@@ -23,6 +23,7 @@ import pipes
 import random
 import select
 import fcntl
+import pwd
 import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
@@ -62,7 +63,8 @@ class Connection(object):
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
-        self.common_args += ["-o", "User="+self.user]
+        if self.user != pwd.getpwuid(os.geteuid())[0]:
+            self.common_args += ["-o", "User="+self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
