@@ -276,7 +276,7 @@ class TestInventory(unittest.TestCase):
                         'inventory_hostname_short': 'thor'}
 
     def test_hosts_list(self):
-        """Test the case when playbook 'hosts' var is a list."""
+        # Test the case when playbook 'hosts' var is a list.
         inventory = self.script_inventory()
         host_names = sorted(['thor', 'loki', 'odin'])       # Not sure if sorting is in the contract or not
         actual_hosts = inventory.get_hosts(host_names)
