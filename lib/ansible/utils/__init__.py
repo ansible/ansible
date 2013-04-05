@@ -301,7 +301,7 @@ def merge_hash(a, b):
     for k, v in b.iteritems():
         if k in a and isinstance(a[k], dict):
             # if this key is a hash and exists in a
-            # we recursively call ourselves with 
+            # we recursively call ourselves with
             # the key value of b
             a[k] = merge_hash(a[k], v)
         else:
@@ -656,8 +656,13 @@ def get_diff(diff):
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
 def is_list_of_strings(items):
-   for x in items: 
+   for x in items:
        if not isinstance(x, basestring):
            return False
    return True
 
+def combine_vars(a, b):
+    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+        return merge_hash(a, b)
+    else:
+        return dict(a.items() + b.items())
