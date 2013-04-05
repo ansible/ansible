@@ -96,6 +96,7 @@ VAGRANT_FILE_VM_STANZA_HEAD = """
 VAGRANT_FILE_HOSTNAME_LINE     = "    %s_config.vm.hostname = \"%s\"\n"
 VAGRANT_FILE_PORT_FORWARD_LINE = "    %s_config.vm.forward_port %s, %s\n"
 VAGRANT_FILE_VIRTUALBOX        = "    %s_config.vm.provider :virtualbox do |%s_v|\n"
+VAGRANT_FILE_VB_NAME_LINE      = "        %s_v.customize [\"modifyvm\", :id, \"--name\", \"%s\"]\n" 
 VAGRANT_FILE_RAM_LINE          = "        %s_v.customize [\"modifyvm\", :id, \"--memory\", %s]\n" 
 VAGRANT_FILE_CPU_LINE          = "        %s_v.customize [\"modifyvm\", :id, \"--cpus\", %s]\n"
 VAGRANT_FILE_VIRTUALBOX_TAIL   = "    end\n"
@@ -418,15 +419,19 @@ class VagrantWrapper(object):
                 box_name = instance_dict['box_name']
                 vfile.write(VAGRANT_FILE_VM_STANZA_HEAD % 
                             (name, name, name, ip, name, box_name) )
-                if instance_dict.has_key('ram') or instance_dict.has_key('cpus'):
-                    vfile.write(VAGRANT_FILE_VIRTUALBOX  % (name, name))
+                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )       
+
+                # if instance_dict.has_key('ram') or instance_dict.has_key('cpus'):
+                #     vfile.write(VAGRANT_FILE_VIRTUALBOX  % (name, name))
+                vfile.write(VAGRANT_FILE_VIRTUALBOX  % (name, name))
+                vfile.write(VAGRANT_FILE_VB_NAME_LINE  % (name, name)  )   
                 if instance_dict.has_key('ram'):
                     vfile.write(VAGRANT_FILE_RAM_LINE  % (name, instance_dict['ram'])  )   
                 if instance_dict.has_key('cpus'):
                     vfile.write(VAGRANT_FILE_CPU_LINE  % (name, instance_dict['cpus'])  )   
-                if instance_dict.has_key('ram') or instance_dict.has_key('cpus'):
-                    vfile.write(VAGRANT_FILE_VIRTUALBOX_TAIL)
-                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )       
+                # if instance_dict.has_key('ram') or instance_dict.has_key('cpus'):
+                #     vfile.write(VAGRANT_FILE_VIRTUALBOX_TAIL)
+                vfile.write(VAGRANT_FILE_VIRTUALBOX_TAIL)
                 if instance_dict.has_key('forward_ports'):
                     for port in instance_dict['forward_ports']:
                         port = int(port)
@@ -571,13 +576,13 @@ def main():
                 module.exit_json(changed = changd, config = cnf)
 
             elif cmd == 'ssh':
-            
                 if vm_name == None:
                     module.fail_json(msg = "Error: you must specify a vm_name when calling ssh." )             
                             
-                (changd, cnf) = vgw.config(vm_name)
-                sshcmd = "ssh -i %s -p %s %s@%s" % (cnf["IdentityFile"], cnf["Port"], cnf["User"], cnf["HostName"])
-                sshmsg = "Execute the command \"vagrant ssh %s\"" % (vm_name)
+                (changd, configs) = vgw.config(vm_name)
+                for cnf in configs[vm_name]:
+                    sshcmd = "ssh -i %s -p %s %s@%s" % (cnf["IdentityFile"], cnf["Port"], cnf["User"], cnf["HostName"])
+                    sshmsg = "Execute the command \"vagrant ssh %s\"" % (vm_name)
                 module.exit_json(changed = changd, msg = sshmsg, SshCommand = sshcmd)
            
             elif cmd == 'halt':
