@@ -51,10 +51,10 @@ options:
       - ssh-key-file options
       required: false
       default: null
-    sshfrom:
+    ssh_from:
       description:
         - additional setting for from-setting in ssh-keyfile
-          example: from=[192.168.1.1,127.0.0.1]
+          example: ssh_from=[192.168.1.1,127.0.0.1]
       required: false
       default: null
 
@@ -164,7 +164,7 @@ def enforce_state(module, params):
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
         
-        key_line=make_keyline(new_key, params['options'], params['sshfrom'])
+        key_line=make_keyline(new_key, params['options'], params['ssh_from'])
     
         present = False
         for k in keys:
@@ -175,7 +175,7 @@ def enforce_state(module, params):
         # handle idempotent state=present
         if state=="present":
             if present:
-                if check_if_key_is_real_present(keys,key_line):
+                if is_key_present(keys,key_line):
                     continue
                 else:
                     keys=remove_key(keys,new_key)
@@ -193,12 +193,12 @@ def enforce_state(module, params):
 
     return params
 
-def make_keyline(key, opts=False, sshfrom=False):
+def make_keyline(key, opts=False, ssh_from=False):
     ret="" 
     if opts is not False:
 	    ret+=str(opts)
-    if sshfrom is not False:
-        tmp=sshfrom.strip()
+    if ssh_from is not False:
+        tmp=ssh_from.strip()
         tmp=tmp.strip('[')
         tmp=tmp.strip(']')
         fromhosts=tmp.split(',')
@@ -221,7 +221,7 @@ def remove_key(keys,key):
             newkeys.append(k)
     return newkeys
     
-def check_if_key_is_real_present(keys,key):
+def is_key_present(keys,key):
     for k in keys:
         if k == key:
             return True
@@ -238,7 +238,7 @@ def main():
            key   = dict(required=True),
            state = dict(default='present', choices=['absent','present']),
            options   = dict(required=False),
-           sshfrom   = dict(required=False)
+           ssh_from   = dict(required=False)
         )
     )
 
