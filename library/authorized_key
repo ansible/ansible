@@ -47,11 +47,13 @@ options:
     choices: [ "present", "absent" ]
     default: "present"
     options:
+     version_added: "1.2"
      description:
       - ssh-key-file options
       required: false
       default: null
     ssh_from:
+	  version_added: "1.2"
       description:
         - additional setting for from-setting in ssh-keyfile
           example: ssh_from=[192.168.1.1,127.0.0.1]
