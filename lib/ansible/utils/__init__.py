@@ -155,13 +155,18 @@ def check_conditional(conditional):
         return conditional
 
     def is_set(var):
-        return not var.startswith("$")
+        return not var.startswith("$") and not '{{' in var
 
     def is_unset(var):
-        return var.startswith("$")
+        return var.startswith("$") or '{{' in var
 
     try:
-        return eval(conditional.replace("\n", "\\n"))
+        conditional = conditional.replace("\n", "\\n")
+        result = eval(conditional)
+        if result not in [ True, False ]:
+            raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
+        return result
+
     except (NameError, SyntaxError):
         raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
 
@@ -545,6 +550,7 @@ def compile_when_to_only_if(expression):
     # when: int $x in $alist
     # when: float $x > 2 and $y <= $z
     # when: str $x != $y
+    # when: jinja2_compare asdf  # implies {{ asdf }} 
 
     if type(expression) not in [ str, unicode ]:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
@@ -562,8 +568,6 @@ def compile_when_to_only_if(expression):
                 tcopy[i] = t
         return " ".join(tcopy)
 
-
-
     # when_failed / when_changed
     elif tokens[0] in [ 'failed', 'changed' ]:
         tcopy = tokens[1:]
@@ -573,8 +577,6 @@ def compile_when_to_only_if(expression):
             else:
                 tcopy[i] = t
         return " ".join(tcopy)
-
-
 
     # when_integer / when_float / when_string
     elif tokens[0] in [ 'integer', 'float', 'string' ]:
@@ -602,6 +604,11 @@ def compile_when_to_only_if(expression):
                 tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
         return " ".join(tcopy)
 
+    # the stock 'when' without qualification (new in 1.2), assumes Jinja2 terms
+    elif tokens[0] == 'jinja2_compare':
+        # a Jinja2 evaluation that results in something Python can eval!
+        presented = "{% if " + " ".join(tokens[1:]).strip() + " %} True {% else %} False {% endif %}"
+        return presented
     else:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 

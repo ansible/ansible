@@ -424,6 +424,7 @@ class Runner(object):
             handler = utils.plugins.action_loader.get('async', self)
 
         conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
+
         if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))

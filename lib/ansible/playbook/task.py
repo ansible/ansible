@@ -71,6 +71,8 @@ class Task(object):
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
+            elif x == 'when':
+                ds['when'] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
