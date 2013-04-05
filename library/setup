@@ -75,7 +75,12 @@ ansible all -m setup -a 'filter=ansible_eth[0-2]'
 try:
     import selinux
     HAVE_SELINUX=True
+    HAVE_SELINUX_PYTHON_MISSING=False
 except ImportError:
+    HAVE_SELINUX_PYTHON_MISSING=False
+    import os
+    if os.path.exists("/selinux/enforce"):
+        HAVE_SELINUX_PYTHON_MISSING=True
     HAVE_SELINUX=False
 
 try:
@@ -1579,6 +1584,8 @@ def main():
         supports_check_mode = True,
     )
     data = run_setup(module)
+    if HAVE_SELINUX_PYTHON_MISSING:
+        module.fail_json(msg="Selinux is active but libselinux-python is not installed")
     module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py
