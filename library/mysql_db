@@ -109,13 +109,13 @@ def db_delete(cursor, db):
     return True
 
 def db_dump(host, user, password, db_name, target):
-    res = os.system("/usr/bin/mysqldump -q -h "+host+"-u "+user+ " -p"+password+" "
+    res = os.system("/usr/bin/mysqldump -q -h "+host+"-u "+user+ " --password="+password+" "
             +db_name+" > "
             +target)
     return (res == 0)
 
 def db_import(host, user, password, db_name, target):
-    res = os.system("/usr/bin/mysql -h "+host+" -u "+user+ " -p"+password+" "
+    res = os.system("/usr/bin/mysql -h "+host+" -u "+user+" --password="+password+" "
             +db_name+" < "
             +target)
     return (res == 0)
