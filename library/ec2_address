@@ -1,0 +1,137 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_vol
+short_description: allocate and associate elastic ips to ec2 machines 
+description:
+    - Can allocate and associate or disassociate and release elastic ips.  This module has a dependency on python-boto
+version_added: "1.1"
+options:
+  instance:
+    description:
+      - instance ID if you wish to associate the elastic ip to
+    required: true
+    default: null 
+    aliases: []
+  state:
+    description:
+      - either C(present) or C(absent) . if absent, elastic ip will be released
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+    aliases: []
+examples:
+   - code: 'local_action: ec2_address instance=XXXXXX'
+     description: "allocate and assign elastic ip"
+requirements: [ "boto" ]
+author: Kon Preyk
+'''
+
+import sys
+import time
+
+try:
+    import boto 
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            instance = dict(required=True),
+            state = dict(),
+            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
+            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+        )
+    )
+
+    instance = module.params.get('instance')
+    state = module.params.get('state')
+    ec2_url = module.params.get('ec2_url')
+    ec2_secret_key = module.params.get('ec2_secret_key')
+    ec2_access_key = module.params.get('ec2_access_key')
+
+    # allow eucarc environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    try:
+        if ec2_url: # if we have an URL set, connect to the specified endpoint 
+            ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+        else: # otherwise it's Amazon.
+            ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
+    instfilter = {'instance-id':instance}
+    addresses = ec2.get_all_addresses(filters=instfilter)
+    #only one public ip possible
+
+    if addresses == []:
+        if state == 'present': #add ip
+            #allocate
+            try:
+                new_ip_response = ec2.allocate_address()
+            except boto.exception.EC2ResponseError as e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+            #associate
+            new_ip = new_ip_response.public_ip
+            try:
+                ec2.associate_address(instance,new_ip)
+            except boto.exception.EC2ResponseError as e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            
+            module.exit_json(changed=True,public_ip=new_ip)
+        else:
+            changed = False
+            module.exit_json(changed=False)
+    else:
+        if state == 'absent': #release ip
+            #disassociate
+            try:
+                ec2.disassociate_address(public_ip=addresses[0].public_ip)
+            except boto.exception.EC2ResponseError as e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            
+            #release
+            try:
+                ec2.release_address(public_ip=addresses[0].public_ip)
+            except boto.exception.EC2ResponseError as e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+            module.exit_json(changed=True)
+        else:
+            module.exit_json(changed=False)
+
+
+    print json.dumps({
+        "public_ip": address.id,
+    })
+    sys.exit(0)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
