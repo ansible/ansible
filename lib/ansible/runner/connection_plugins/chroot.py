@@ -30,7 +30,7 @@ from ansible.callbacks import vvv
 class Connection(object):
     ''' Local chroot based connections '''
 
-    def __init__(self, runner, host, port, **kwargs):
+    def __init__(self, runner, host, port, *args, **kwargs):
         self.chroot = host
 
         if os.geteuid() != 0:
