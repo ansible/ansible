@@ -21,6 +21,8 @@ Bugfixes and Misc Changes:
 * service module happier if only enabled=yes|no specified and no state
 * mysql_db: use --password= instead of -p in dump/import so it doesn't go interactive if no pass set
 * when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
+* overwrite parameter added to the s3 module
+* private_ip parameter added to the ec2 module
 
 1.1 "Mean Street" -- 4/2/2013
 
