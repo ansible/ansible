@@ -403,11 +403,17 @@ def _get_filter_plugins():
         FILTER_PLUGINS.update(filters)
     return FILTER_PLUGINS
 
+class J2Undefined(jinja2.runtime.Undefined):
+    def __str__(self):
+        return "{{ %s }}" % self._undefined_name
+    def __unicode__(self):
+        return "{{ %s }}" % self._undefined_name
+
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
     if type(data) == str:
         data = unicode(data, 'utf-8')
-    environment = jinja2.Environment(trim_blocks=True)
+    environment = jinja2.Environment(trim_blocks=True, undefined=J2Undefined)
     environment.filters.update(_get_filter_plugins())
     # TODO: may need some way of using lookup plugins here seeing we aren't calling
     # the legacy engine, lookup() as a function, perhaps?
