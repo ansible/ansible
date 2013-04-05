@@ -9,6 +9,7 @@ Ansible Changes By Release
   usable, without breaking the ability to override in ansible
 * new 'rax' module for creating instances in the rackspace cloud (uses pyrax)
 * ability to use variables from {{ }} syntax in mainline playbooks (work in progress)
+* added npm module (nodejs)
 
 1.1 "Mean Street" -- 4/2/2013
 
