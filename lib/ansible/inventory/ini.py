@@ -69,7 +69,8 @@ class InventoryParser(object):
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
-                        self.groups[active_group_name] = Group(name=active_group_name)
+                        new_group = self.groups[active_group_name] = Group(name=active_group_name)
+                        all.add_child_group(new_group)
                     active_group_name = None
                 elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
