@@ -84,9 +84,6 @@ try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
-    if os.path.exists("/selinux/enforce"):
-        sys.stderr.write('Error: ansible requires the package libselinux-python on nodes with selinux, none found!')
-        sys.exit(1)
     pass
 
 try:
