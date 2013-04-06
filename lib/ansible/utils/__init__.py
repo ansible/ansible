@@ -414,7 +414,12 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
-####################################################################
+def duration(secs):
+    m,s = divmod(secs, 60)
+    h,m = divmod(m, 60)
+    return "%d:%02d:%02d" % (h, m, s)
+
+###################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
 
@@ -451,6 +456,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
+    parser.add_option('-r','--runtime', default=False, dest='show_runtime', action='store_true',
+        help="runtime: print task and playbook runtime durations")
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',

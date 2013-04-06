@@ -24,6 +24,7 @@ import ansible.callbacks
 import os
 import shlex
 import collections
+import time
 from play import Play
 
 SETUP_CACHE = collections.defaultdict(dict)
@@ -200,6 +201,7 @@ class PlayBook(object):
 
     def run(self):
         ''' run all patterns in the playbook '''
+        starttime = time.time()
         plays = []
         matched_tags_all = set()
         unmatched_tags_all = set()
@@ -241,6 +243,7 @@ class PlayBook(object):
         results = {}
         for host in self.stats.processed.keys():
             results[host] = self.stats.summarize(host)
+        self.runtime = utils.duration(time.time() - starttime)
         return results
 
     # *****************************************************

@@ -115,7 +115,7 @@ def main(args):
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
         if options.step:
             playbook_cb.step = options.step
-        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY, show_runtime=options.show_runtime)
 
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
@@ -196,6 +196,9 @@ def main(args):
                 stats = pb.stats.summarize(h)
                 if stats['failures'] != 0 or stats['unreachable'] != 0:
                     return 2
+
+            if options.show_runtime:
+                print "PLAY RUNTIME: %s" % pb.runtime
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
