@@ -56,6 +56,8 @@ class ActionModule(object):
             for fn in inject.get('first_available_file'):
                 fn = utils.template(self.runner.basedir, fn, inject)
                 fn = utils.path_dwim(self.runner.basedir, fn)
+                if not os.path.exists(fn) and '_original_file' in inject:
+                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn, self.runner.basedir, check=False)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -76,7 +78,11 @@ class ActionModule(object):
             source = tmp_content
         else:
             source = utils.template(self.runner.basedir, source, inject)
-            source = utils.path_dwim(self.runner.basedir, source)
+            if '_original_file' in inject:
+                source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            else:
+                source = utils.path_dwim(self.runner.basedir, source)
+
 
         local_md5 = utils.md5(source)
         if local_md5 is None:
