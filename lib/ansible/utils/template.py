@@ -176,7 +176,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             try:
                 replacement = instance.run(args, inject=vars)
                 if expand_lists:
-                    replacement = ",".join([str(x) for x in replacement])
+                    replacement = ",".join([unicode(x) for x in replacement])
             except:
                 if not lookup_fatal:
                     replacement = None
