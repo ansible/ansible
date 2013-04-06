@@ -56,6 +56,9 @@ class Play(object):
         self.vars_prompt      = ds.get('vars_prompt', {})
         self.playbook         = playbook
         self.vars             = self._get_vars()
+        self.vars_files       = ds.get('vars_files', [])
+        self.basedir          = basedir
+        self._update_vars_files_for_host(None)
         self._ds = ds         = utils.template(basedir, ds, self.vars)
 
         hosts = ds.get('hosts')
@@ -65,9 +68,7 @@ class Play(object):
             hosts = ';'.join(hosts)
 
         self.serial           = int(ds.get('serial', 0))
-        self.basedir          = basedir
         self.hosts            = hosts
-        self.vars_files       = ds.get('vars_files', [])
         self.name             = ds.get('name', self.hosts)
         self._tasks           = ds.get('tasks', [])
         self._handlers        = ds.get('handlers', [])
@@ -83,7 +84,6 @@ class Play(object):
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
         self.roles            = ds.get('roles', None)
 
-        self._update_vars_files_for_host(None)
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
