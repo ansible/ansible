@@ -166,13 +166,12 @@ class Play(object):
             handlers = []
         if type(vars_files) != list:
             vars_files = []
-        tasks.extend(new_tasks)
-        handlers.extend(new_handlers)
-
-        vars_files.extend(new_vars_files)
-        ds['tasks'] = tasks
-        ds['handlers'] = handlers
-        ds['vars_files'] = vars_files
+        new_tasks.extend(tasks)
+        new_handlers.extend(handlers)
+        new_vars_files.extend(vars_files)
+        ds['tasks'] = new_tasks
+        ds['handlers'] = new_handlers
+        ds['vars_files'] = new_vars_files
  
         return ds
 

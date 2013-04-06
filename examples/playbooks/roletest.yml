@@ -45,3 +45,10 @@
     # explicit tasks and handlers can be used, but are not required.
     # they will run after the roles if present.
 
+    tasks:
+
+        # you can still have loose tasks/handlers and they will execute after roles
+
+        - shell: echo 'this is a loose task'
+
+
