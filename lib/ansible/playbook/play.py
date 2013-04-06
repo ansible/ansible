@@ -125,7 +125,20 @@ class Play(object):
         new_tasks = []
         new_handlers = []
         new_vars_files = []
+
+        # variables if the role was parameterized (i.e. given as a hash) 
+        has_dict = {}
+
         for orig_path in roles:
+
+            if type(orig_path) == dict:
+                # what, not a path?
+                role_name = orig_path.get('role', None)
+                if role_name is None:
+                    raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
+                has_dict = orig_path
+                orig_path = role_name
+
             path = utils.path_dwim(self.basedir, orig_path)
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
                 path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
@@ -138,9 +151,9 @@ class Play(object):
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
             if os.path.isfile(task):
-                new_tasks.append(dict(include=task))
+                new_tasks.append(dict(include=task, vars=has_dict))
             if os.path.isfile(handler):
-                new_handlers.append(dict(include=handler))
+                new_handlers.append(dict(include=handler, vars=has_dict))
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
 
@@ -155,6 +168,7 @@ class Play(object):
             vars_files = []
         tasks.extend(new_tasks)
         handlers.extend(new_handlers)
+
         vars_files.extend(new_vars_files)
         ds['tasks'] = tasks
         ds['handlers'] = handlers
