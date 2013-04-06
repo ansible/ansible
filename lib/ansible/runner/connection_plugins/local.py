@@ -29,7 +29,7 @@ from ansible.callbacks import vvv
 class Connection(object):
     ''' Local based connections '''
 
-    def __init__(self, runner, host, port, **kwargs):
+    def __init__(self, runner, host, port, *args, **kwargs):
         self.runner = runner
         self.host = host
         # port is unused, since this is local

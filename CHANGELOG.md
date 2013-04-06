@@ -3,7 +3,27 @@ Ansible Changes By Release
 
 1.2 "Right Now" -- release pending
 
-* this is the current development branch
+Core Features:
+
+* capability to set 'all_errors_fatal: True' in a playbook to force any error to stop execution versus
+  a whole group or serial block needing to fail
+  usable, without breaking the ability to override in ansible
+* ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional,
+  see examples/playbooks/upgraded_vars.yml
+* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+
+Modules added
+
+* rax: module for creating instances in the rackspace cloud (uses pyrax)
+* npm: node.js package management
+
+Bugfixes and Misc Changes:
+
+* service module happier if only enabled=yes|no specified and no state
+* mysql_db: use --password= instead of -p in dump/import so it doesn't go interactive if no pass set
+* when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
+* overwrite parameter added to the s3 module
+* private_ip parameter added to the ec2 module
 
 1.1 "Mean Street" -- 4/2/2013
 

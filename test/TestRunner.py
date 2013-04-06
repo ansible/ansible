@@ -290,7 +290,7 @@ class TestRunner(unittest.TestCase):
         assert result['changed'] is False
 
     def test_lineinfile(self):
-        """Unit tests for the lineinfile module, without backref features."""
+        # Unit tests for the lineinfile module, without backref features.
         sampleroot = 'rocannon'
         sample_origin = self._get_test_file(sampleroot + '.txt')
         sample = self._get_stage_file(sampleroot + '.out' + '.txt')
@@ -447,7 +447,7 @@ class TestRunner(unittest.TestCase):
         os.unlink(sample)
 
     def test_lineinfile_backrefs(self):
-        """Unit tests for the lineinfile module, with backref features."""
+        # Unit tests for the lineinfile module, with backref features.
         sampleroot = 'rocannon'
         sample_origin = self._get_test_file(sampleroot + '.txt')
         origin_lines = [line.strip() for line in open(sample_origin)]

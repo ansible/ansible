@@ -500,11 +500,11 @@ Lookup Plugins - Accessing Outside Data
 
 .. versionadded: 0.8
 
-Various 'lookup plugins' allow additional ways to iterate over data.  Ansible will have more of these
+Various *lookup plugins* allow additional ways to iterate over data.  Ansible will have more of these
 over time.  You can write your own, as is covered in the API section.  Each typically takes a list and
 can accept more than one parameter.
 
-'with_fileglob' matches all files in a single directory, non-recursively, that match a pattern.  It can
+``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
 
     ----
@@ -520,21 +520,15 @@ be used like this::
           with_fileglob:
             - /playbooks/files/fooapp/*
 
-'with_file' loads data in from a file directly::
+``with_file`` loads data in from a file directly::
 
         - action: authorized_key user=foo key=$item
           with_file:
              - /home/foo/.ssh/id_rsa.pub
 
-As an alternative, lookup plugins can also be accessed in variables like so::
-
-        vars:
-            motd_value: $FILE(/etc/motd)
-            hosts_value: $LOOKUP(file,/etc/hosts)
-
 .. versionadded: 0.9
 
-Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the "controlling" machine::
+Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the *controlling* machine::
 
     ---
     - hosts: all
@@ -566,19 +560,23 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
            with_template:
               - ./some_template.j2
 
-You can also assign these to variables, should you wish to do this instead, that will be evaluated
-when they are used in a task (or template)::
+As an alternative you can also assign lookup plugins to variables or use them
+elsewhere.  This macros are evaluated each time they are used in a task (or
+template).  Also note that things like ``$LOOKUP(pipe,foo)`` and ``$PIPE(foo)``
+are equivalent.  Using lookup plugins as variables::
 
     vars:
-        redis_value: $LOOKUP(redis,redis://localhost:6379,info_${inventory_hostname})
-        auth_key_value: $FILE(/home/mdehaan/.ssh/id_rsa.pub)
+      motd_value: $FILE(/etc/motd)
+      auth_key_value: $FILE(/home/user/.ssh/id_rsa.pub)
+      redis_value: $LOOKUP(redis_kv,redis://localhost:6379,info_${inventory_hostname})
 
     tasks:
-        - debug: msg=Redis value for host is $redis_value
+      - debug: msg=Playbook is running on $LOOKUP(pipe,uname -a)
+      - debug: msg=Redis value for host ${inventory_hostname} is $redis_value
 
 .. versionadded: 1.0
 
-'with_sequence' generates a sequence of items in ascending numerical order. You
+``with_sequence`` generates a sequence of items in ascending numerical order. You
 can specify a start, end, and an optional step value.
 
 Arguments can be either key-value pairs or as a shortcut in the format
@@ -614,11 +612,15 @@ Negative numbers are not supported.  This works as follows::
 
 .. versionadded: 1.1
 
-'with_password' and associated macro "$PASSWORD" generate a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the file exists previously, "$PASSWORD"/'with_password' will retrieve its contents, behaving just like $FILE/'with_file'. Usage of variables like "${inventory_hostname}" in the filepath can be used to set up random passwords per host.
+``with_password`` and associated macro ``$PASSWORD`` generate a random plaintext password and store it in
+a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the
+file exists previously, ``$PASSWORD``/``with_password`` will retrieve its contents, behaving just like
+``$FILE``/``with_file``. Usage of variables like "${inventory_hostname}" in the filepath can be used to set
+up random passwords per host (what simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
-numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters. This length can be changed by passing an extra parameter::
+numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters.
+This length can be changed by passing an extra parameter::
 
     ---
     - hosts: all

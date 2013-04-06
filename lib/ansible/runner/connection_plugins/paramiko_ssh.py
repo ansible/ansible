@@ -43,7 +43,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port, user, password):
+    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
 
         self.ssh = None
         self.sftp = None
@@ -52,6 +52,7 @@ class Connection(object):
         self.port = port
         self.user = user
         self.password = password
+        self.private_key_file = private_key_file
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
@@ -79,7 +80,9 @@ class Connection(object):
         if self.password is not None:
             allow_agent = False
         try:
-            if self.runner.private_key_file:
+            if self.private_key_file:
+                key_filename = os.path.expanduser(self.private_key_file)
+            elif self.runner.private_key_file:
                 key_filename = os.path.expanduser(self.runner.private_key_file)
             else:
                 key_filename = None
