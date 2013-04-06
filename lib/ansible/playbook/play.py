@@ -30,7 +30,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal'
+       'basedir', 'any_errors_fatal', 'roles'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -39,7 +39,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal'
+       'any_errors_fatal', 'roles'
     ]
 
     # *************************************************
@@ -51,34 +51,37 @@ class Play(object):
             if not x in Play.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
 
-        # TODO: more error handling
+        # allow all playbook keys to be set by --extra-vars
+        self.vars             = ds.get('vars', {})
+        self.vars_prompt      = ds.get('vars_prompt', {})
+        self.playbook         = playbook
+        self.vars             = self._get_vars()
+        self._ds = ds         = utils.template(basedir, ds, self.vars)
 
         hosts = ds.get('hosts')
         if hosts is None:
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        self._ds          = ds
-        self.playbook     = playbook
-        self.basedir      = basedir
-        self.vars         = ds.get('vars', {})
-        self.vars_files   = ds.get('vars_files', [])
-        self.vars_prompt  = ds.get('vars_prompt', {})
-        self.vars         = self._get_vars()
-        self.hosts        = utils.template(basedir, hosts, self.vars)
-        self.name         = ds.get('name', self.hosts)
-        self._tasks       = ds.get('tasks', [])
-        self._handlers    = ds.get('handlers', [])
-        self.remote_user  = utils.template(basedir, ds.get('user', self.playbook.remote_user), self.vars)
-        self.remote_port  = ds.get('port', self.playbook.remote_port)
-        self.sudo         = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user    = utils.template(basedir, ds.get('sudo_user', self.playbook.sudo_user), self.vars)
-        self.transport    = ds.get('connection', self.playbook.transport)
-        self.tags         = ds.get('tags', None)
-        self.gather_facts = ds.get('gather_facts', None)
-        self.serial       = int(utils.template(basedir, ds.get('serial', 0), self.vars))
-        self.remote_port  = utils.template(basedir, self.remote_port, self.vars)
+
+        self.serial           = int(ds.get('serial', 0))
+        self.basedir          = basedir
+        self.hosts            = hosts
+        self.vars_files       = ds.get('vars_files', [])
+        self.name             = ds.get('name', self.hosts)
+        self._tasks           = ds.get('tasks', [])
+        self._handlers        = ds.get('handlers', [])
+        self.remote_user      = ds.get('user', self.playbook.remote_user)
+        self.remote_port      = ds.get('port', self.playbook.remote_port)
+        self.sudo             = ds.get('sudo', self.playbook.sudo)
+        self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
+        self.transport        = ds.get('connection', self.playbook.transport)
+        self.tags             = ds.get('tags', None)
+        self.gather_facts     = ds.get('gather_facts', None)
+        self.serial           = int(ds.get('serial', 0))
+        self.remote_port      = self.remote_port
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
+        self.roles            = ds.get('roles', None)
 
         self._update_vars_files_for_host(None)
 
