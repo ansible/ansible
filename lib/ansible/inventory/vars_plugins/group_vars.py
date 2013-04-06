@@ -49,11 +49,7 @@ class VarsModule(object):
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-                    # let data content override results if needed
-                    results = utils.merge_hash(results, data)
-                else:
-                    results.update(data)
+                results = utils.combine_vars(results, data);
 
         # load vars in inventory_dir/hosts_vars/name_of_host
         path = os.path.join(basedir, "host_vars/%s" % host.name)
@@ -61,10 +57,6 @@ class VarsModule(object):
             data = utils.parse_yaml_from_file(path)
             if type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-            if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-                # let data content override results if needed
-                results = utils.merge_hash(results, data)
-            else:
-                results.update(data)
+            results = utils.combine_vars(results, data);
         return results
 
