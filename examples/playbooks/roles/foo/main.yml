@@ -1,8 +1,0 @@
----
-
-- name: template operation
-  template: src=foo.j2 dest=/etc/motd
-
-- action: shell echo 'hi webserver'
-  notify:
-    - blippy
