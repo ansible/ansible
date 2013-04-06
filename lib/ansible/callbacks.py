@@ -45,14 +45,6 @@ if cowsay and noncow == 'random':
     cows.append(False)
     noncow = random.choice(cows)
 
-# ****************************************************************************
-# 1.1 DEV NOTES
-# FIXME -- in order to make an ideal callback system, all of these should have
-# access to the current task and/or play and host objects.  We need to this
-# while keeping present callbacks functionally intact and will do so.
-# ****************************************************************************
-
-
 def call_callback_module(method_name, *args, **kwargs):
 
     for callback_plugin in utils.plugins.callback_loader.all():
