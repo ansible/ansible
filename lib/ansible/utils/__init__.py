@@ -195,11 +195,27 @@ def path_dwim(basedir, given):
     '''
 
     if given.startswith("/"):
-        return given
+        return os.path.abspath(given)
     elif given.startswith("~"):
-        return os.path.expanduser(given)
+        return os.path.abspath(os.path.expanduser(given))
     else:
-        return os.path.join(basedir, given)
+        return os.path.abspath(os.path.join(basedir, given))
+
+def path_dwim_relative(original, dirname, source, playbook_base, check=True):
+    ''' find one file in a directory one level up in a dir named dirname relative to current '''
+    # (used by roles code)
+
+    basedir = os.path.dirname(original)
+    template2 = os.path.join(basedir, '..', dirname, source)
+    source2 = path_dwim(basedir, template2)
+    if os.path.exists(source2):
+        return source2
+    obvious_local_path = path_dwim(playbook_base, source)
+    if os.path.exists(obvious_local_path):
+        return obvious_local_path
+    if check:
+        raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
+    return source2 # which does not exist
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''

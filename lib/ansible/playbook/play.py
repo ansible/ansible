@@ -56,9 +56,14 @@ class Play(object):
         self.vars_prompt      = ds.get('vars_prompt', {})
         self.playbook         = playbook
         self.vars             = self._get_vars()
-        self.vars_files       = ds.get('vars_files', [])
         self.basedir          = basedir
+        self.roles            = ds.get('roles', None)
+
+        ds = self._load_roles(self.roles, ds)
+        self.vars_files       = ds.get('vars_files', [])
+
         self._update_vars_files_for_host(None)
+
         self._ds = ds         = utils.template(basedir, ds, self.vars)
 
         hosts = ds.get('hosts')
@@ -82,12 +87,11 @@ class Play(object):
         self.serial           = int(ds.get('serial', 0))
         self.remote_port      = self.remote_port
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
-        self.roles            = ds.get('roles', None)
-
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
             load_vars['inventory_dir'] = self.playbook.inventory.basedir();
+
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
@@ -100,10 +104,65 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
+        
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars={}, additional_conditions=[]):
+    def _load_roles(self, roles, ds):
+
+
+        # a role is a name that auto-includes the following if they exist
+        #    <rolename>/tasks/main.yml
+        #    <rolename>/handlers/main.yml
+        #    <rolename>/vars/main.yml
+        # and it auto-extends tasks/handlers/vars_files as appropriate if found
+
+        if roles is None:
+            return ds
+        if type(roles) != list:
+            raise errors.AnsibleError("value of 'roles:' must be a list")
+
+        new_tasks = []
+        new_handlers = []
+        new_vars_files = []
+        for orig_path in roles:
+            path = utils.path_dwim(self.basedir, orig_path)
+            if not os.path.isdir(path):
+                path2 = utils.path_dwim(self.basedir, os.path.join(self.basedir, 'roles', orig_path))
+                if not os.path.isdir(path2):
+                    raise errors.AnsibleError("cannot find role in %s or %s" % (path, path2))
+                path = path2
+            task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
+            handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
+            vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
+            if os.path.isfile(task):
+                new_tasks.append(dict(include=task))
+            if os.path.isfile(handler):
+                new_handlers.append(dict(include=handler))
+            if os.path.isfile(vars_file):
+                new_vars_files.append(vars_file)
+
+        tasks = ds.get('tasks', None)
+        handlers = ds.get('handlers', None)
+        vars_files = ds.get('vars_files', None)
+        if type(tasks) != list:
+            tasks = []
+        if type(handlers) != list:
+            handlers = []
+        if type(vars_files) != list:
+            vars_files = []
+        tasks.extend(new_tasks)
+        handlers.extend(new_handlers)
+        vars_files.extend(new_vars_files)
+        ds['tasks'] = tasks
+        ds['handlers'] = handlers
+        ds['vars_files'] = vars_files
+ 
+        return ds
+
+    # *************************************************
+
+    def _load_tasks(self, tasks, vars={}, additional_conditions=[], original_file=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -116,6 +175,9 @@ class Play(object):
                 raise errors.AnsibleError("expecting dict; got: %s" % x)
             task_vars = self.vars.copy()
             task_vars.update(vars)
+            if original_file:
+                task_vars['_original_file'] = original_file
+
             if 'include' in x:
                 tokens = shlex.split(x['include'])
                 items = ['']
@@ -147,7 +209,7 @@ class Play(object):
                         mv[k] = utils.template(self.basedir, v, mv)
                     include_file = utils.template(self.basedir, tokens[0], mv)
                     data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    results += self._load_tasks(data, mv, included_additional_conditions)
+                    results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_file)
             elif type(x) == dict:
                 results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
