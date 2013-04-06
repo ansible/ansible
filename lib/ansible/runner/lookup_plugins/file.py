@@ -17,6 +17,7 @@
 
 from ansible import utils, errors
 import os
+import codecs
 
 class LookupModule(object):
 
@@ -31,5 +32,5 @@ class LookupModule(object):
             path = utils.path_dwim(self.basedir, term)
             if not os.path.exists(path):
                 raise errors.AnsibleError("%s does not exist" % path)
-            ret.append(open(path).read().rstrip())
+            ret.append(codecs.open(path, encoding="utf8").read().rstrip())
         return ret
