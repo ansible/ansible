@@ -414,7 +414,15 @@ def template_from_string(basedir, data, vars):
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
         # the legacy engine, lookup() as a function, perhaps?
         environment.template_class = J2Template
-        t = environment.from_string(data)
+
+        try:
+            t = environment.from_string(data)
+        except RuntimeError, re:
+            if 'recursion' in str(re):
+                raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
+            else:
+                raise ree
+            
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
