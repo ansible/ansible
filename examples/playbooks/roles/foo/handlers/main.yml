@@ -1,0 +1,6 @@
+---
+
+- name: blippy
+  shell: echo notifier called, and the value of x is '{{ x }}'
+
+
