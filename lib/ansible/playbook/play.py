@@ -223,9 +223,13 @@ class Play(object):
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
                         mv[k] = utils.template(self.basedir, v, mv)
-                    include_file = utils.template(self.basedir, tokens[0], mv)
-                    data = utils.parse_yaml_from_file(utils.path_dwim(self.basedir, include_file))
-                    results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_file)
+                    dirname = self.basedir
+                    if original_file:
+                         dirname = os.path.dirname(original_file)     
+                    include_file = utils.template(dirname, tokens[0], mv)
+                    include_filename = utils.path_dwim(dirname, include_file)
+                    data = utils.parse_yaml_from_file(include_filename)
+                    results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_filename)
             elif type(x) == dict:
                 results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
