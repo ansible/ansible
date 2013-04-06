@@ -143,7 +143,11 @@ def banner(msg):
         (out, err) = cmd.communicate()
         return "%s\n" % out
     else:
-        return "\n%s ********************* " % msg
+        width = 78 - len(msg)
+        if width < 3:
+            width = 3 
+        filler = "-" * width
+        return "\n%s %s " % (msg, filler)
 
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
