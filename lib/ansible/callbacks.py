@@ -307,9 +307,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats, verbose=utils.VERBOSITY):
+    def __init__(self, stats, verbose=utils.VERBOSITY, show_runtime=False):
         self.verbose = verbose
         self.stats = stats
+        self.show_runtime = show_runtime
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
@@ -380,6 +381,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
                     msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2))
+
+        if self.show_runtime:
+            msg = "%s (%s)" % (msg, host_result2.get('runtime','00:00:00'))
 
         if msg != '':
             if not changed:
