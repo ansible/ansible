@@ -127,11 +127,13 @@ class Play(object):
         new_vars_files = []
         for orig_path in roles:
             path = utils.path_dwim(self.basedir, orig_path)
-            if not os.path.isdir(path):
-                path2 = utils.path_dwim(self.basedir, os.path.join(self.basedir, 'roles', orig_path))
+            if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
+                path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
                 if not os.path.isdir(path2):
                     raise errors.AnsibleError("cannot find role in %s or %s" % (path, path2))
                 path = path2
+            elif not os.path.isdir(path):
+                raise errors.AnsibleError("cannot find role in %s" % (path))
             task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
