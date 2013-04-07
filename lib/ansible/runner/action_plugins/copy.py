@@ -42,6 +42,7 @@ class ActionModule(object):
         source  = options.get('src', None)
         content = options.get('content', None)
         dest    = options.get('dest', None)
+        force   = utils.boolean(options.get('force', 'yes'))
 
         if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src (or content) and dest are required")
@@ -104,6 +105,10 @@ class ActionModule(object):
                 return ReturnData(conn=conn, result=result)
             dest = os.path.join(dest, os.path.basename(source))
             remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+
+        # remote_md5 == '0' would mean that the file does not exist.
+        if remote_md5 != '0' and not force:
+            return ReturnData(conn=conn, result=dict(changed=False))
 
         exec_rc = None
         if local_md5 != remote_md5:
