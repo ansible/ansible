@@ -89,7 +89,6 @@ class Connection(object):
             ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
                 key_filename=key_filename, password=self.password,
                 timeout=self.runner.timeout, port=self.port)
->>>>>>> 934029842e11179d10ee8c28419c72cac52990d7
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
