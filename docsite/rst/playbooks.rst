@@ -200,6 +200,12 @@ nice to have reasonably good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
+.. warning::
+
+   Due to the nature of YAML, if you include multiple identical actions 
+   in a task only the last one will be recognized, with the preceding actions
+   silently ignored.
+
 Here is what a basic task looks like, as with most modules,
 the service module takes key=value arguments::
 
