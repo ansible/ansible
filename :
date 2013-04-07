@@ -1,0 +1,23 @@
+# in Ansible 1.2 and later, the $foo variable syntax, which is friendly enough for simple things
+# has been upgraded to allow Jinja2 substitiutions as well, which is now the preferred Syntax.
+# here is an example.  Note that Jinja2 conditionals belong only in templates.  Use ansible conditionals
+# in playbooks.
+
+---
+
+  - hosts: all
+    vars:
+      a: '{{ ansible_os_family }}'
+      b: 'cat'
+      c: '{{ ansible_os_family }} / {{ a }}'
+      d: '{{ c }} / {{ a }}'
+      e: '{{ d }} / {{ ansible_hostname }}'
+      
+
+    tasks:
+
+      - debug: msg={{ e }}
+
+      - shell: echo '{{ e }}'
+
+
