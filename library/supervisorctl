@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: supervisorctl
 short_description: Manage the state of a program or group of programs running via Supervisord
 description:
-     - Manage the state of a program or group of programs running via I(Supervisord)
+  - Manage the state of a program or group of programs running via I(Supervisord)
 version_added: "0.7"
 options:
   name:
@@ -39,8 +39,8 @@ options:
     default: null
     choices: [ "present", "started", "stopped", "restarted" ]
 examples:
-   - code: "supervisorctl: name=my_app state=started"
-     description: Manage the state of program I(my_app) to be in I(started) state.
+  - code: "supervisorctl: name=my_app state=started"
+    description: Manage the state of program I(my_app) to be in I(started) state.
 requirements: [ ]
 author: Matt Wright
 '''

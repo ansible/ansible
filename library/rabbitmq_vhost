@@ -46,8 +46,8 @@ options:
     default: present
     choices: [present, absent]
 examples:
-   - code: 'rabbitmq_vhost: name=/test state=present'
-     description: Ensure that the vhost /test exists.
+  - code: 'rabbitmq_vhost: name=/test state=present'
+    description: Ensure that the vhost /test exists.
 '''
 
 class RabbitMqVhost(object):

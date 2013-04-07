@@ -23,25 +23,25 @@ module: homebrew
 author: Andrew Dunham
 short_description: Package manager for Homebrew
 description:
-    - Manages Homebrew packages
+  - Manages Homebrew packages
 version_added: "1.1"
 options:
-    name:
-        description:
-            - name of package to install/remove
-        required: true
-    state:
-        description:
-            - state of the package
-        choices: [ 'present', 'absent' ]
-        required: false
-        default: present
-    update_homebrew:
-        description:
-            - update homebrew itself first
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+  name:
+    description:
+      - name of package to install/remove
+    required: true
+  state:
+    description:
+      - state of the package
+    choices: [ 'present', 'absent' ]
+    required: false
+    default: present
+  update_homebrew:
+    description:
+      - update homebrew itself first
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
 notes:  []
 '''
 EXAMPLES = '''

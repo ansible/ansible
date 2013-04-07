@@ -23,11 +23,11 @@ DOCUMENTATION = '''
 module: subversion
 short_description: Deploys a subversion repository.
 description:
-   - Deploy given repository URL / revision to dest.
+  - Deploy given repository URL / revision to dest.
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
-   - Requres I(svn) to be installed on the client.
+  - Requres I(svn) to be installed on the client.
 requirements: []
 options:
   repo:
@@ -62,8 +62,8 @@ options:
     required: false
     default: null
 examples:
-   - code: "subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout"
-     description: Checkout subversion repository to specified folder.
+  - code: "subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout"
+    description: Checkout subversion repository to specified folder.
 '''
 
 import re

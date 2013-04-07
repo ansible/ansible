@@ -24,15 +24,15 @@ DOCUMENTATION = '''
 module: ohai
 short_description: Returns inventory data from I(Ohai)
 description:
-     - Similar to the M(facter) module, this runs the I(Ohai) discovery program
-       (U(http://wiki.opscode.com/display/chef/Ohai)) on the remote host and 
-       returns JSON inventory data.
-       I(Ohai) data is a bit more verbose and nested than I(facter).
+  - Similar to the M(facter) module, this runs the I(Ohai) discovery program
+    (U(http://wiki.opscode.com/display/chef/Ohai)) on the remote host and
+    returns JSON inventory data.
+    I(Ohai) data is a bit more verbose and nested than I(facter).
 version_added: "0.6"
 options: {}
 examples:
-   - code: ansible webservers -m ohai --tree=/tmp/ohaidata
-     description: "Retrieve I(ohai) data from all Web servers and store in one-file per host"
+  - code: ansible webservers -m ohai --tree=/tmp/ohaidata
+    description: "Retrieve I(ohai) data from all Web servers and store in one-file per host"
 notes: []
 requirements: [ "ohai" ]
 author: Michael DeHaan

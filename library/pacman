@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Afterburn
-# Written by Afterburn <http://github.com/afterburn> 
+# Written by Afterburn <http://github.com/afterburn>
 # Based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -24,39 +24,38 @@ DOCUMENTATION = '''
 module: pacman
 short_description: Package manager for Archlinux
 description:
-    - Manages Archlinux packages
+  - Manages Archlinux packages
 
 version_added: "1.0"
 options:
-    name:
-        description:
-            - name of package to install, upgrade or remove.
-        required: true
+  name:
+    description:
+      - name of package to install, upgrade or remove.
+    required: true
 
-    state:
-        description:
-            - state of the package (installed or absent).
-        required: false
+  state:
+    description:
+      - state of the package (installed or absent).
+    required: false
 
-    update_cache:
-        description:
-            - update the package database first (pacman -Syy).
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+  update_cache:
+    description:
+      - update the package database first (pacman -Syy).
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
 
 author: Afterburn
 notes:  []
 examples:
-    - code: "pacman: name=foo state=installed"
-      description: install package foo
-    - code: "pacman: name=foo state=absent"
-      description: remove package foo
-    - code: "pacman: name=foo,bar state=absent"
-      description: remove packages foo and bar 
-    - code: "pacman: name=bar, state=installed, update_cache=yes"
-      description: update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists) 
-      
+  - code: "pacman: name=foo state=installed"
+    description: install package foo
+  - code: "pacman: name=foo state=absent"
+    description: remove package foo
+  - code: "pacman: name=foo,bar state=absent"
+    description: remove packages foo and bar
+  - code: "pacman: name=bar, state=installed, update_cache=yes"
+    description: update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists)
 '''
 
 
@@ -85,10 +84,10 @@ def update_package_db(module):
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
-         
+
 
 def remove_packages(module, packages):
-    
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -100,7 +99,7 @@ def remove_packages(module, packages):
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -124,7 +123,7 @@ def install_packages(module, packages):
             module.fail_json(msg="failed to install %s" % (package))
 
         install_c += 1
-    
+
     if install_c > 0:
         module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
 
@@ -138,7 +137,7 @@ def main():
                 state        = dict(default="installed", choices=["installed","absent"]),
                 update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
                 name         = dict(aliases=["pkg"], required=True)))
-                
+
 
     if not os.path.exists(PACMAN_PATH):
         module.fail_json(msg="cannot find pacman, looking for %s" % (PACMAN_PATH))
@@ -159,5 +158,5 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-    
-main()        
+
+main()

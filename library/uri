@@ -105,7 +105,7 @@ options:
     default: 200
   timeout:
     description:
-      - The socket level timeout in seconds 
+      - The socket level timeout in seconds
     required: false
     default: 30
   HEADER_:
@@ -120,35 +120,35 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 examples:
-   - code: "uri: url=http://www.awesome.com"
-     description: "Check that you can connect (GET) to a page and it returns a status 200"
+  - code: "uri: url=http://www.awesome.com"
+    description: "Check that you can connect (GET) to a page and it returns a status 200"
 
-   - code: | 
-           action: uri url=http://www.awesome.com return_content=yes
-           register: webpage
+  - code: |
+          action: uri url=http://www.awesome.com return_content=yes
+          register: webpage
 
-           action: fail
-           when_string: '"AWESOME" not in "${webpage.content}"'
+          action: fail
+          when_string: '"AWESOME" not in "${webpage.content}"'
 
-     description: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents.
+    description: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents.
 
-   - code: |
-           action: >
-                   uri url=https://your.jira.server.com/rest/api/2/issue/ 
-                   method=POST user=your_username password=your_pass 
-                   body='$FILE(issue.json)' force_basic_auth=yes 
-                   status_code=201 HEADER_Content-Type="application/json"  
-     description: "Create a JIRA issue."
+  - code: |
+          action: >
+                  uri url=https://your.jira.server.com/rest/api/2/issue/
+                  method=POST user=your_username password=your_pass
+                  body='$FILE(issue.json)' force_basic_auth=yes
+                  status_code=201 HEADER_Content-Type="application/json"
+    description: "Create a JIRA issue."
 
-   - code: |
-           action: > 
-                   uri url=https://your.form.based.auth.app.com/index.php 
-                   method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-                   status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-           register: login
+  - code: |
+          action: >
+                  uri url=https://your.form.based.auth.app.com/index.php
+                  method=POST body="name=your_username&password=your_password&enter=Sign%20in"
+                  status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
+          register: login
 
-           action: uri url=https://your.form.based.auth.app.com/dashboard.php method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
-     description: "Login to a form based webpage, then use the cookie that got returned to access the app in later tasks."
+          action: uri url=https://your.form.based.auth.app.com/dashboard.php method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
+    description: "Login to a form based webpage, then use the cookie that got returned to access the app in later tasks."
 
 # informational: requirements for nodes
 requirements: [ urlparse, httplib2 ]
@@ -180,10 +180,10 @@ def write_file(module, url, dest, content):
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
- 
+
     md5sum_src   = None
     md5sum_dest  = None
- 
+
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
@@ -192,7 +192,7 @@ def write_file(module, url, dest, content):
         os.remove(tmpsrc)
         module.fail_json( msg="Source %s not readable" % (tmpsrc))
     md5sum_src = module.md5(tmpsrc)
- 
+
     # check if there is no dest file
     if os.path.exists(dest):
         # raise an error if copy has no permission on dest
@@ -207,14 +207,14 @@ def write_file(module, url, dest, content):
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
-     
+
     if md5sum_src != md5sum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
- 
+
     os.remove(tmpsrc)
 
 
@@ -241,10 +241,10 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         module.fail_json(msg="Both a username and password need to be set.")
     if user is not None and password is not None:
         h.add_credentials(user, password)
-   
+
     # Make the request, or try to :)
-    try: 
-        resp, content = h.request(url, method=method, body=body, headers=headers)     
+    try:
+        resp, content = h.request(url, method=method, body=body, headers=headers)
         return resp, content
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
@@ -313,7 +313,7 @@ def main():
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
 
-  
+
     if creates is not None:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
@@ -333,13 +333,13 @@ def main():
 
     # httplib2 only sends authentication after the server asks for it with a 401.
     # Some 'basic auth' servies fail to send a 401 and require the authentication
-    # up front. This creates the Basic authentication header and sends it immediately. 
+    # up front. This creates the Basic authentication header and sends it immediately.
     if force_basic_auth:
-        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
+        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password)))
 
-    # Redirects         
+    # Redirects
     if follow_redirects:
-        redirects = True        
+        redirects = True
     else:
         redirects = False
 
@@ -367,7 +367,7 @@ def main():
     # Transmogrify the headers, replacing '-' with '_', since variables dont work with dashes.
     uresp = {}
     for key, value in resp.iteritems():
-        ukey = key.replace("-", "_")  
+        ukey = key.replace("-", "_")
         uresp[ukey] = value
 
     if 'content_type' in uresp:
@@ -381,7 +381,7 @@ def main():
     if resp['status'] != status_code:
         module.fail_json(msg="Status code was not " + status_code, content=content, **uresp)
     elif return_content:
-        module.exit_json(changed=True, content=content, **uresp)  
+        module.exit_json(changed=True, content=content, **uresp)
     else:
         module.exit_json(changed=True, **uresp)
 

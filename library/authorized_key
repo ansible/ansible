@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: authorized_key
 short_description: Adds or removes an SSH authorized key
 description:
-     - Adds or removes an SSH authorized key for a user from a remote host.
+  - Adds or removes an SSH authorized key for a user from a remote host.
 version_added: "0.5"
 options:
   user:
@@ -59,11 +59,11 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
-description: "Advanced usage with an alternate AuthorizedKeysFile configuration"
 author: Brad Olson
 '''
 
 EXAMPLES = '''
+# Advanced usage with an alternate AuthorizedKeysFile configuration
 # Example using key data from a local file on the management machine
 authorized_key: user=charlie key='$FILE(/home/charlie/.ssh/id_rsa.pub)
 

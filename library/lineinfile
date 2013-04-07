@@ -100,16 +100,16 @@ options:
         if it does not already exist. By default it will fail if the file
         is missing.
   backup:
-     required: false
-     default: "no"
-     choices: [ "yes", "no" ]
-     description:
-       - Create a backup file including the timestamp information so you can
-         get the original file back if you somehow clobbered it incorrectly.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - Create a backup file including the timestamp information so you can
+        get the original file back if you somehow clobbered it incorrectly.
   others:
-     description:
-       - All arguments accepted by the M(file) module also work here.
-     required: false
+    description:
+      - All arguments accepted by the M(file) module also work here.
+    required: false
 """
 
 EXAMPLES = r"""

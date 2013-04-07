@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: netscaler
 short_description: Manages Citrix NetScaler entities
 description:
-     - Manages Citrix NetScaler server and service entities.
+  - Manages Citrix NetScaler server and service entities.
 options:
   nsc_host:
     description:
@@ -74,12 +74,12 @@ options:
     aliases: []
 
 examples:
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
-     description: "Disable the server"
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
-     description: "Enable the server"
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
-     description: "Disable the service local:8080"
+  - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
+    description: "Disable the server"
+  - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
+    description: "Enable the server"
+  - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
+    description: "Disable the service local:8080"
 requirements: [ "urllib", "urllib2" ]
 author: Nandor Sivok
 '''

@@ -25,42 +25,42 @@ author: Michael DeHaan
 version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:
-    - Manage I(git) checkouts of repositories to deploy files or software.
+  - Manage I(git) checkouts of repositories to deploy files or software.
 options:
-    repo:
-        required: true
-        aliases: [ name ]
-        description:
-            - git, SSH, or HTTP protocol address of the git repository.
-    dest:
-        required: true
-        description:
-            - Absolute path of where the repository should be checked out to.
-    version:
-        required: false
-        default: "HEAD"
-        description:
-            - What version of the repository to check out.  This can be the
-              git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
-    remote:
-        required: false
-        default: "origin"
-        description:
-            - Name of the remote.
-    force:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "0.7"
-        description:
-            - If C(yes), any modified files in the working
-              repository will be discarded.  Prior to 0.7, this was always
-              'yes' and could not be disabled.
+  repo:
+    required: true
+    aliases: [ name ]
+    description:
+      - git, SSH, or HTTP protocol address of the git repository.
+  dest:
+    required: true
+    description:
+      - Absolute path of where the repository should be checked out to.
+  version:
+    required: false
+    default: "HEAD"
+    description:
+      - What version of the repository to check out.  This can be the
+        git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
+  remote:
+    required: false
+    default: "origin"
+    description:
+      - Name of the remote.
+  force:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    version_added: "0.7"
+    description:
+      - If C(yes), any modified files in the working
+        repository will be discarded.  Prior to 0.7, this was always
+        'yes' and could not be disabled.
 examples:
-    - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
-      description: Example git checkout from Ansible Playbooks
-    - code: "git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello"
-      description: Example read-write git checkout from github
+  - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
+    description: Example git checkout from Ansible Playbooks
+  - code: "git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello"
+    description: Example read-write git checkout from github
 '''
 
 import re

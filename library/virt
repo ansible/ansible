@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 module: virt
 short_description: Manages virtual machines supported by libvirt
 description:
-     - Manages virtual machines supported by I(libvirt).
+  - Manages virtual machines supported by I(libvirt).
 version_added: "0.2"
 options:
   name:
@@ -45,12 +45,12 @@ options:
               "shutdown", "undefine", "destroy", "get_xml", "autostart",
               "freemem", "list_vms", "info", "nodeinfo", "virttype"]
 examples:
-   - code: "virt: name=alpha state=running"
-     description: "Example from Ansible Playbooks"
-   - code: ansible host -m virt -a "name=alpha command=status"
-     description: "Example guest management with C(/usr/bin/ansible)"
-   - code: ansible host -m virt -a "name=alpha command=get_xml"
-     description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
+  - code: "virt: name=alpha state=running"
+    description: "Example from Ansible Playbooks"
+  - code: ansible host -m virt -a "name=alpha command=status"
+    description: "Example guest management with C(/usr/bin/ansible)"
+  - code: ansible host -m virt -a "name=alpha command=get_xml"
+    description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
 '''

@@ -4,11 +4,11 @@ DOCUMENTATION = """
 module: script
 short_description: Runs a local script on a remote node
 description:
-     - The M(script) module takes the script name followed by a list of
-       space-delimited arguments.
-     - The given script will be processed through the shell environment.
-     - This module does not require python on the remote system, much like
-       the M(raw) module.
+  - The M(script) module takes the script name followed by a list of
+    space-delimited arguments.
+  - The given script will be processed through the shell environment.
+  - This module does not require python on the remote system, much like
+    the M(raw) module.
 options:
   free_form:
     description:

@@ -24,25 +24,25 @@ module: macports
 author: Jimmy Tang
 short_description: Package manager for MacPorts
 description:
-    - Manages MacPorts packages
+  - Manages MacPorts packages
 version_added: "1.1"
 options:
-    name:
-        description:
-            - name of package to install/remove
-        required: true
-    state:
-        description:
-            - state of the package
-        choices: [ 'present', 'absent', 'active', 'inactive' ]
-        required: false
-        default: present
-    update_cache:
-        description:
-            - update the package db first
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+  name:
+    description:
+      - name of package to install/remove
+    required: true
+  state:
+    description:
+      - state of the package
+    choices: [ 'present', 'absent', 'active', 'inactive' ]
+    required: false
+    default: present
+  update_cache:
+    description:
+      - update the package db first
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
 notes:  []
 '''
 EXAMPLES = '''

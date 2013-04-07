@@ -24,9 +24,9 @@ DOCUMENTATION = '''
 module: ini_file
 short_description: Tweak settings in INI files
 description:
-     - Manage (add, remove, change) individual settings in an INI-style file without having
-       to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
-       sections if they don't exist.
+  - Manage (add, remove, change) individual settings in an INI-style file without having
+    to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
+    sections if they don't exist.
 version_added: "0.9"
 options:
   dest:
@@ -63,21 +63,21 @@ options:
        - all arguments accepted by the M(file) module also work here
      required: false
 examples:
-   - code: "ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes"
-     description: Ensure C(fav=lemonade) is in section C([drinks]) in said file
-   - code: |
-           ini_file: dest=/etc/anotherconf
-                     section=drinks
-                     option=temperature
-                     value=cold
-                     backup=yes
+  - code: "ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes"
+    description: Ensure C(fav=lemonade) is in section C([drinks]) in said file
+  - code: |
+         ini_file: dest=/etc/anotherconf
+                   section=drinks
+                   option=temperature
+                   value=cold
+                   backup=yes
 notes:
-   - While it is possible to add an I(option) without specifying a I(value), this makes
-     no sense.
-   - A section named C(default) cannot be added by the module, but if it exists, individual
-     options within the section can be updated. (This is a limitation of Python's I(ConfigParser).)
-     Either use M(template) to create a base INI file with a C([default]) section, or use
-     M(lineinfile) to add the missing line.
+  - While it is possible to add an I(option) without specifying a I(value), this makes
+    no sense.
+  - A section named C(default) cannot be added by the module, but if it exists, individual
+    options within the section can be updated. (This is a limitation of Python's I(ConfigParser).)
+    Either use M(template) to create a base INI file with a C([default]) section, or use
+    M(lineinfile) to add the missing line.
 requirements: [ ConfigParser ]
 author: Jan-Piet Mens
 '''

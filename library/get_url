@@ -29,14 +29,14 @@ DOCUMENTATION = '''
 module: get_url
 short_description: Downloads files from HTTP, HTTPS, or FTP to node
 description:
-     - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
-       server I(must) have direct access to the remote resource.
-     - By default, if an environment variable C(<protocol>_proxy) is set on
-       the target host, requests will be sent through that proxy. This
-       behaviour can be overriden by setting a variable for this task
-       (see `setting the environment
-       <http://ansible.cc/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
-       or by using the use_proxy option.
+  - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
+    server I(must) have direct access to the remote resource.
+  - By default, if an environment variable C(<protocol>_proxy) is set on
+    the target host, requests will be sent through that proxy. This
+    behaviour can be overriden by setting a variable for this task
+    (see `setting the environment
+    <http://ansible.cc/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
+    or by using the use_proxy option.
 version_added: "0.6"
 options:
   url:
@@ -74,7 +74,7 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 notes:
-    - This module doesn't yet support configuration for proxies.
+  - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens
