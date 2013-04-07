@@ -103,7 +103,6 @@ DEFAULT_CONNECTION_PLUGIN_PATH = shell_expand_path(get_config(p, DEFAULTS, 'conn
 DEFAULT_LOOKUP_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', '/usr/share/ansible_plugins/lookup_plugins'))
 DEFAULT_VARS_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'vars_plugins',     'ANSIBLE_VARS_PLUGINS', '/usr/share/ansible_plugins/vars_plugins'))
 DEFAULT_FILTER_PLUGIN_PATH     = shell_expand_path(get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins'))
->>>>>>> 934029842e11179d10ee8c28419c72cac52990d7
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
