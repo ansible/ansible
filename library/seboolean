@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 module: seboolean
 short_description: Toggles SELinux booleans.
 description:
-     - Toggles SELinux booleans.
+  - Toggles SELinux booleans.
 version_added: "0.7"
 options:
   name:
@@ -43,10 +43,10 @@ options:
     default: null
     choices: [ true, false ]
 examples:
-   - code: "seboolean: name=httpd_can_network_connect state=true persistent=yes"
-     description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
+  - code: "seboolean: name=httpd_can_network_connect state=true persistent=yes"
+    description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
 notes:
-   - Not tested on any debian based system
+  - Not tested on any debian based system
 requirements: [ ]
 author: Stephen Fromm
 '''

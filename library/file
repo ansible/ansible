@@ -32,10 +32,10 @@ DOCUMENTATION = '''
 ---
 module: file
 short_description: Sets attributes of files
-description: 
-     - Sets attributes of files, symlinks, and directories, or removes
-       files/symlinks/directories. Many other modules support the same options as
-       the M(file) module - including M(copy), M(template), and M(assemble).
+description:
+  - Sets attributes of files, symlinks, and directories, or removes
+    files/symlinks/directories. Many other modules support the same options as
+    the M(file) module - including M(copy), M(template), and M(assemble).
 options:
   path:
     description:
@@ -121,11 +121,11 @@ options:
     description:
       - recursively set the specified file attributes (applies only to state=directory)
 examples:
-   - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
-     description: Example from Ansible Playbooks
-   - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
+  - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
+    description: Example from Ansible Playbooks
+  - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
 notes:
-    - See also M(copy), M(template), M(assemble)
+  - See also M(copy), M(template), M(assemble)
 requirements: [ ]
 author: Michael DeHaan
 '''
@@ -217,7 +217,7 @@ def main():
     if state == 'file':
 
         if prev_state != 'file':
-            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
+            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path)
 
         changed = module.set_file_attributes_if_different(file_args, changed)
         module.exit_json(path=path, changed=changed)

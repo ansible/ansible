@@ -25,54 +25,53 @@ author: Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services.
 description:
-    - Controls services on remote hosts.
+  - Controls services on remote hosts.
 options:
-    name:
-        required: true
-        description:
-        - Name of the service.
-    state:
-        required: false
-        choices: [ started, stopped, restarted, reloaded ]
-        description:
-          - C(started)/C(stopped) are idempotent actions that will not run
-            commands unless necessary.  C(restarted) will always bounce the
-            service.  C(reloaded) will always reload. At least one of state
-            and enabled are required.
-    pattern:
-        required: false
-        version_added: "0.7"
-        description:
-        - If the service does not respond to the status command, name a
-          substring to look for as would be found in the output of the I(ps)
-          command as a stand-in for a status result.  If the string is found,
-          the service will be assumed to be running.
-    enabled:
-        required: false
-        choices: [ "yes", "no" ]
-        description:
-        - Whether the service should start on boot. At least one of state and
-          enabled are required.
-
-    arguments:
-        description:
-        - Additional arguments provided on the command line
-        aliases: [ 'args' ]
+  name:
+    required: true
+    description:
+      - Name of the service.
+  state:
+    required: false
+    choices: [ started, stopped, restarted, reloaded ]
+    description:
+      - C(started)/C(stopped) are idempotent actions that will not run
+        commands unless necessary.  C(restarted) will always bounce the
+        service.  C(reloaded) will always reload. At least one of state
+        and enabled are required.
+  pattern:
+    required: false
+    version_added: "0.7"
+    description:
+      - If the service does not respond to the status command, name a
+        substring to look for as would be found in the output of the I(ps)
+        command as a stand-in for a status result.  If the string is found,
+        the service will be assumed to be running.
+  enabled:
+    required: false
+    choices: [ "yes", "no" ]
+    description:
+      - Whether the service should start on boot. At least one of state and
+        enabled are required.
+  arguments:
+    description:
+      - Additional arguments provided on the command line
+    aliases: [ 'args' ]
 examples:
-    - description: Example action to start service httpd, if not running
-      code: "service: name=httpd state=started"
-    - description: Example action to stop service httpd, if running
-      code: "service: name=httpd state=stopped"
-    - description: Example action to restart service httpd, in all cases
-      code: "service: name=httpd state=restarted"
-    - description: Example action to reload service httpd, in all cases
-      code: "service: name=httpd state=reloaded"
-    - description: Example action to enable service httpd, and not touch the running state
-      code: "service: name=httpd enabled=yes"
-    - description: Example action to start service foo, based on running process /usr/bin/foo
-      code: "service: name=foo pattern=/usr/bin/foo state=started"
-    - description: Example action to restart network service for interface eth0
-      code: "service: name=network state=restarted args=eth0"
+  - description: Example action to start service httpd, if not running
+    code: "service: name=httpd state=started"
+  - description: Example action to stop service httpd, if running
+    code: "service: name=httpd state=stopped"
+  - description: Example action to restart service httpd, in all cases
+    code: "service: name=httpd state=restarted"
+  - description: Example action to reload service httpd, in all cases
+    code: "service: name=httpd state=reloaded"
+  - description: Example action to enable service httpd, and not touch the running state
+    code: "service: name=httpd enabled=yes"
+  - description: Example action to start service foo, based on running process /usr/bin/foo
+    code: "service: name=foo pattern=/usr/bin/foo state=started"
+  - description: Example action to restart network service for interface eth0
+    code: "service: name=network state=restarted args=eth0"
 '''
 
 import platform

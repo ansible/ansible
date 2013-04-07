@@ -77,20 +77,20 @@ options:
 author: Matthew Williams
 notes: []
 examples:
-    - code: "apt: pkg=foo update_cache=yes"
-      description: Update repositories cache and install C(foo) package
-    - code: "apt: pkg=foo state=removed"
-      description: Remove C(foo) package
-    - code: "apt: pkg=foo state=installed"
-      description: Install the package C(foo)
-    - code: "apt: pkg=foo=1.00 state=installed"
-      description: Install the version '1.00' of package C(foo)
-    - code: "apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes"
-      description: Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)
-    - code: "apt: pkg=openjdk-6-jdk state=latest install_recommends=no"
-      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
-    - code: "apt: upgrade=dist"
-      description: Update all packages to the latest version
+  - code: "apt: pkg=foo update_cache=yes"
+    description: Update repositories cache and install C(foo) package
+  - code: "apt: pkg=foo state=removed"
+    description: Remove C(foo) package
+  - code: "apt: pkg=foo state=installed"
+    description: Install the package C(foo)
+  - code: "apt: pkg=foo=1.00 state=installed"
+    description: Install the version '1.00' of package C(foo)
+  - code: "apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes"
+    description: Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)
+  - code: "apt: pkg=openjdk-6-jdk state=latest install_recommends=no"
+    description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
+  - code: "apt: upgrade=dist"
+    description: Update all packages to the latest version
 requirements: [ python-apt, aptitude ]
 '''
 

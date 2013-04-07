@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 module: postgresql_db
 short_description: Add or remove PostgreSQL databases from a remote host.
 description:
-   - Add or remove PostgreSQL databases from a remote host.
+  - Add or remove PostgreSQL databases from a remote host.
 version_added: "0.6"
 options:
   name:
@@ -81,14 +81,14 @@ options:
     default: present
     choices: [ "present", "absent" ]
 examples:
-   - code: "postgresql_db: db=acme"
-     description: Create a new database with name C(acme)
-   - code: "postgresql_db: db=acme encoding='UTF-8' lc_collate='de_DE.UTF-8' lc_ctype='de_DE.UTF-8' template='template0'"
-     description: Create a new database with name C(acme) and specific encoding and locale settings. If a template different from C(template0) is specified, encoding and locale settings must match those of the template.
+  - code: "postgresql_db: db=acme"
+    description: Create a new database with name C(acme)
+  - code: "postgresql_db: db=acme encoding='UTF-8' lc_collate='de_DE.UTF-8' lc_ctype='de_DE.UTF-8' template='template0'"
+    description: Create a new database with name C(acme) and specific encoding and locale settings. If a template different from C(template0) is specified, encoding and locale settings must match those of the template.
 notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
+  - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
+  - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
+    the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
 requirements: [ psycopg2 ]
 author: Lorin Hochstein
 '''
@@ -162,7 +162,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         return True
     else:
         db_info = get_db_info(cursor, db)
-        if (encoding and 
+        if (encoding and
             get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
@@ -218,7 +218,7 @@ def main():
     state = module.params["state"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so 
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
@@ -227,7 +227,7 @@ def main():
         "login_password":"password",
         "port":"port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
               if k in params_map and v != '' )
     try:
         db_connection = psycopg2.connect(database="template1", **kw)

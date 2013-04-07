@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 module: fail
 short_description: Fail with custom message
 description:
-     - This module fails the progress with a custom message. It can be
-       useful for bailing out when a certain condition is met using C(only_if).
+  - This module fails the progress with a custom message. It can be
+    useful for bailing out when a certain condition is met using C(only_if).
 version_added: "0.8"
 options:
   msg:
@@ -34,11 +34,10 @@ options:
     required: false
     default: "'Failed as requested from task'"
 examples:
-    - code: |
-        fail: msg="The system may not be provisioned according to the CMDB status."
-            only_if: "'$cmdb_status' != 'to-be-staged'"
-
-      description: "Example playbook using fail and only_if together"
+  - code: |
+      fail: msg="The system may not be provisioned according to the CMDB status."
+        only_if: "'$cmdb_status' != 'to-be-staged'"
+    description: "Example playbook using fail and only_if together"
 
 author: Dag Wieers
 '''

@@ -32,49 +32,49 @@ DOCUMENTATION = '''
 module: hg
 short_description: Manages Mercurial (hg) repositories.
 description:
-    - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
+  - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
 version_added: "1.0"
 author: Yeukhon Wong
 options:
-    repo:
-        description:
-            - The repository address.
-        required: true
-        default: null
-    dest:
-        description:
-            - Absolute path of where the repository should be cloned to.
-        required: true
-        default: null
-    revision:
-        description:
-            - Equivalent C(-r) option in hg command which could be the changeset, revision number,
-              branch name or even tag. 
-        required: false
-        default: "default"
-    force:
-        description:
-            - Discards uncommited changes. Runs C(hg update -C).
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-    purge:
-        description:
-            - Delets untracked files. Runs C(hg purge). Note this requires C(purge) extension to
-              be enabled if C(purge=yes). This module will modify hgrc file on behalf of the user
-              and undo the changes before exiting the task.
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+  repo:
+    description:
+      - The repository address.
+    required: true
+    default: null
+  dest:
+    description:
+      - Absolute path of where the repository should be cloned to.
+    required: true
+    default: null
+  revision:
+    description:
+      - Equivalent C(-r) option in hg command which could be the changeset, revision number,
+        branch name or even tag.
+    required: false
+    default: "default"
+  force:
+    description:
+      - Discards uncommited changes. Runs C(hg update -C).
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+  purge:
+    description:
+      - Delets untracked files. Runs C(hg purge). Note this requires C(purge) extension to
+        be enabled if C(purge=yes). This module will modify hgrc file on behalf of the user
+        and undo the changes before exiting the task.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
 notes:
-    - If the task seems to be hanging, first verify remote host is in C(known_hosts).
-      SSH will prompt user to authorize the first contact with a remote host. One solution is to add
-      C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
-      on behalf of the user. However, if you run as a different user such as setting sudo to True),
-      for example, root will not look at the user .ssh/config setting.
+  - If the task seems to be hanging, first verify remote host is in C(known_hosts).
+    SSH will prompt user to authorize the first contact with a remote host. One solution is to add
+    C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
+    on behalf of the user. However, if you run as a different user such as setting sudo to True),
+    for example, root will not look at the user .ssh/config setting.
 examples:
-    - code: "hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes"
-      description: Ensure the current working copy is inside the stable branch and deletes untracked files if any.
+  - code: "hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes"
+    description: Ensure the current working copy is inside the stable branch and deletes untracked files if any.
 
 requirements: [ ]
 '''
@@ -89,7 +89,7 @@ def _set_hgrc(hgrc, vals):
         if not parser.has_section(section):
             parser.add_section(section)
         parser.set(section, option, value)
-    
+
     f = open(hgrc, 'w')
     parser.write(f)
     f.close()
@@ -97,7 +97,7 @@ def _set_hgrc(hgrc, vals):
 def _undo_hgrc(hgrc, vals):
     parser = ConfigParser.SafeConfigParser()
     parser.read(hgrc)
-     
+
     for each in vals:
         (section, option, value) = each
         if parser.has_section(section):
@@ -117,7 +117,7 @@ def _hg_list_untracked(module, dest):
 def get_revision(module, dest):
     """
     hg id -b -i -t returns a string in the format:
-       "<changeset>[+] <branch_name> <tag>" 
+       "<changeset>[+] <branch_name> <tag>"
     This format lists the state of the current working copy,
     and indicates whether there are uncommitted changes by the
     plus sign. Otherwise, the sign is omitted.
@@ -149,17 +149,17 @@ def hg_discard(module, dest):
     after = has_local_mods(module, dest)
     if before != after and not after:   # no more local modification
         return True
-            
+
 def hg_purge(module, dest):
     hgrc = os.path.join(dest, '.hg/hgrc')
     purge_option = [('extensions', 'purge', '')]
     _set_hgrc(hgrc, purge_option)   # enable purge extension
-    
+
     # before purge, find out if there are any untracked files
     (rc1, out1, err1) = _hg_list_untracked(module, dest)
     if rc1 != 0:
         module.fail_json(msg=err)
-    
+
     # there are some untrackd files
     if out1 != '':
         (rc2, out2, err2) = _hg_command(module, ['purge', '-R', dest])
@@ -201,7 +201,7 @@ def switch_version(module, dest, revision):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            repo = dict(required=True),	    
+            repo = dict(required=True),
             dest = dict(required=True),
             revision = dict(default="default"),
             force = dict(default='yes', type='bool'),
@@ -214,7 +214,7 @@ def main():
     force = module.params['force']
     purge = module.params['purge']
     hgrc = os.path.join(dest, '.hg/hgrc')
-   
+
     # initial states
     before = ''
     changed = False

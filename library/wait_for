@@ -28,10 +28,10 @@ DOCUMENTATION = '''
 module: wait_for
 short_description: Waits for a given port to become accessible on a server.
 description:
-     - This is useful for when services are not immediately available after
-       their init scripts return - which is true of certain Java application
-       servers. It is also useful when starting guests with the M(virt) module and
-       needing to pause until they are ready.
+  - This is useful for when services are not immediately available after
+    their init scripts return - which is true of certain Java application
+    servers. It is also useful when starting guests with the M(virt) module and
+    needing to pause until they are ready.
 version_added: "0.7"
 options:
   host:
@@ -56,13 +56,13 @@ options:
     required: true
   state:
     description:
-      - either C(started), or C(stopped) depending on whether the module should 
+      - either C(started), or C(stopped) depending on whether the module should
         poll for the port being open or closed.
     choices: [ "started", "stopped" ]
     default: "started"
 examples:
-   - code: "wait_for: port=8000 delay=10"
-     description: "Example from Ansible Playbooks"
+  - code: "wait_for: port=8000 delay=10"
+    description: "Example from Ansible Playbooks"
 notes: []
 requirements: null
 author: Jeroen Hoekx

@@ -66,20 +66,20 @@ options:
     default: present
     choices: [ "present", "absent", "latest" ]
 examples:
-   - code: "npm: name=coffee-script path=/app/location"
-     description: Install I(coffee-script) node.js package.
-   - code: "npm: name=coffee-script version=1.6.1 path=/app/location"
-     description: Install I(coffee-script) node.js package on version 1.6.1.
-   - code: "npm: name=coffee-script global=yes"
-     description: Install I(coffee-script) node.js package globally.
-   - code: "npm: name=coffee-script global=yes state=absent"
-     description: Remove the globally package I(coffee-script).
-   - code: "npm: path=/app/location"
-     description: Install packages based on package.json.
-   - code: "npm: path=/app/location state=latest"
-     description: Update packages based on package.json to their latest version.
-   - code: "npm: path=/app/location executable=/opt/nvm/v0.10.1/bin/npm state=present"
-     description: Install packages based on package.json using the npm installed with nvm v0.10.1.
+  - code: "npm: name=coffee-script path=/app/location"
+    description: Install I(coffee-script) node.js package.
+  - code: "npm: name=coffee-script version=1.6.1 path=/app/location"
+    description: Install I(coffee-script) node.js package on version 1.6.1.
+  - code: "npm: name=coffee-script global=yes"
+    description: Install I(coffee-script) node.js package globally.
+  - code: "npm: name=coffee-script global=yes state=absent"
+    description: Remove the globally package I(coffee-script).
+  - code: "npm: path=/app/location"
+    description: Install packages based on package.json.
+  - code: "npm: path=/app/location state=latest"
+    description: Update packages based on package.json to their latest version.
+  - code: "npm: path=/app/location executable=/opt/nvm/v0.10.1/bin/npm state=present"
+    description: Install packages based on package.json using the npm installed with nvm v0.10.1.
 '''
 
 import os
@@ -97,7 +97,7 @@ class Npm(object):
         self.version = kwargs['version']
         self.path = kwargs['path']
         self.production = kwargs['production']
-        
+
         if kwargs['executable']:
             self.executable = kwargs['executable']
         else:
@@ -115,7 +115,7 @@ class Npm(object):
             if self.glbl:
                 cmd.append('--global')
             if self.production:
-                cmd.append('--production')                
+                cmd.append('--production')
             if self.name:
                 cmd.append(self.name_version)
 

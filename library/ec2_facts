@@ -22,14 +22,14 @@ module: ec2_facts
 short_description: Gathers facts about remote hosts within ec2 (aws)
 options: {}
 description:
-     - This module fetches data from the metadata servers in ec2 (aws).
-       Eucalyptus cloud provides a similar service and this module should
-       work this cloud provider as well.
+  - This module fetches data from the metadata servers in ec2 (aws).
+    Eucalyptus cloud provides a similar service and this module should
+    work this cloud provider as well.
 notes:
-    - Parameters to filter on ec2_facts may be added later.
+  - Parameters to filter on ec2_facts may be added later.
 examples:
-    - code: ansible all -m ec2_facts
-      description: Obtain facts from ec2 metatdata servers. You will need to run an instance within ec2.
+  - code: ansible all -m ec2_facts
+    description: Obtain facts from ec2 metatdata servers. You will need to run an instance within ec2.
 author: "Silviu Dicu <silviudicu@gmail.com>"
 """
 
@@ -73,7 +73,7 @@ class Ec2Metadata(object):
         for pattern in filter_patterns:
             for key in new_fields.keys():
                 match = re.search(pattern, key)
-                if match: 
+                if match:
                     new_fields.pop(key)
         return new_fields
 

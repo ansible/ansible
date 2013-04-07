@@ -54,11 +54,11 @@ options:
       - The command to execute.
       - Required if state=present.
     required: false
-    default: 
+    default:
     aliases: []
   state:
     description:
-      - Whether to ensure the job is present or absent.  
+      - Whether to ensure the job is present or absent.
     required: false
     default: present
     aliases: []
@@ -116,13 +116,13 @@ options:
     aliases: []
 
 examples:
-   - code: 'cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"'
-     description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
-   - code: 'cron: name="an old job" cron job="/some/dir/job.sh" state=absent'
-     description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
-   - code: 'cron: name="a job for reboot" reboot=yes job="/some/job.sh"'
-     description: 'Creates an entry like "@reboot /some/job.sh"'
-   - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate'
+  - code: 'cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"'
+    description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
+  - code: 'cron: name="an old job" cron job="/some/dir/job.sh" state=absent'
+    description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
+  - code: 'cron: name="a job for reboot" reboot=yes job="/some/job.sh"'
+    description: 'Creates an entry like "@reboot /some/job.sh"'
+  - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate'
 
 requirements:
   - cron
@@ -138,12 +138,12 @@ def get_jobs_file(module, user, tmpfile, cron_file):
         cmd = "cp -fp /etc/cron.d/%s %s" % (cron_file, tmpfile)
     else:
         cmd = "crontab -l %s > %s" % (user,tmpfile)
-    
+
     return module.run_command(cmd)
 
 def install_jobs(module, user, tmpfile, cron_file):
     if cron_file:
-        cmd = "ln -f %s /etc/cron.d/%s" % (tmpfile, cron_file) 
+        cmd = "ln -f %s /etc/cron.d/%s" % (tmpfile, cron_file)
     else:
         cmd = "crontab %s %s" % (user, tmpfile)
 
@@ -214,7 +214,7 @@ def _update_job(name,job,tmpfile,addlinesfunction):
     if len(newlines) == 0:
         return True
     else:
-        return False # TODO add some more error testing 
+        return False # TODO add some more error testing
 
 def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
     if reboot:

@@ -26,37 +26,37 @@ author: Jayson Vantuyl & others
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:
-    - Add or remove an I(apt) key, optionally downloading it
+  - Add or remove an I(apt) key, optionally downloading it
 notes:
-    - doesn't download the key unless it really needs it
-    - as a sanity check, downloaded key id must match the one specified
-    - best practice is to specify the key id and the url
+  - doesn't download the key unless it really needs it
+  - as a sanity check, downloaded key id must match the one specified
+  - best practice is to specify the key id and the url
 options:
-    id:
-        required: false
-        default: none
-        description:
-            - identifier of key
-    url:
-        required: false
-        default: none
-        description:
-            - url to retrieve key from.
-    state:
-        required: false
-        choices: [ absent, present ]
-        default: present
-        description:
-            - used to specify if key is being added or revoked
+  id:
+    required: false
+    default: none
+    description:
+      - identifier of key
+  url:
+    required: false
+    default: none
+    description:
+      - url to retrieve key from.
+  state:
+    required: false
+    choices: [ absent, present ]
+    default: present
+    description:
+      - used to specify if key is being added or revoked
 examples:
-    - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
-      description: Add an Apt signing key, uses whichever key is at the URL
-    - code: "apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
-      description: Add an Apt signing key, will not download if present
-    - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent"
-      description: Remove an Apt signing key, uses whichever key is at the URL
-    - code: "apt_key: id=473041FA state=absent"
-      description: Remove a Apt specific signing key
+  - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
+    description: Add an Apt signing key, uses whichever key is at the URL
+  - code: "apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
+    description: Add an Apt signing key, will not download if present
+  - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent"
+    description: Remove an Apt signing key, uses whichever key is at the URL
+  - code: "apt_key: id=473041FA state=absent"
+    description: Remove a Apt specific signing key
 '''
 
 # FIXME: standardize into module_common
@@ -138,7 +138,7 @@ def main():
     data            = module.params['data']
     state           = module.params['state']
     changed         = False
-    
+
     # FIXME: I think we have a common facility for this, if not, want
     check_missing_binaries(module)
 

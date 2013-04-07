@@ -24,11 +24,11 @@ DOCUMENTATION = '''
 module: svr4pkg
 short_description: Manage Solaris SVR4 packages
 description:
-    - Manages SVR4 packages on Solaris 10 and 11.
-    - These were the native packages on Solaris <= 10 and are available
-      as a legacy feature in Solaris 11.
-    - Note that this is a very basic packaging system. It will not enforce
-      dependencies on install or remove.
+  - Manages SVR4 packages on Solaris 10 and 11.
+  - These were the native packages on Solaris <= 10 and are available
+    as a legacy feature in Solaris 11.
+  - Note that this is a very basic packaging system. It will not enforce
+    dependencies on install or remove.
 version_added: "0.9"
 author: Boyd Adamson
 options:
@@ -36,7 +36,6 @@ options:
     description:
       - Package name, e.g. C(SUNWcsr)
     required: true
-
   state:
     description:
       - Whether to install (C(present)), or remove (C(absent)) a package.
@@ -44,7 +43,6 @@ options:
       - The SVR4 package system doesn't provide an upgrade operation. You need to uninstall the old, then install the new package.
     required: true
     choices: ["present", "absent"]
-
   src:
     description:
       - Specifies the location to install the package from. Required when C(state=present).

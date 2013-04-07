@@ -26,141 +26,141 @@ version_added: "0.2"
 short_description: Manage user accounts
 requirements: [ useradd, userdel, usermod ]
 description:
-    - Manage user accounts and user attributes.
+  - Manage user accounts and user attributes.
 options:
-    name:
-        required: true
-        aliases: [ "user" ]
-        description:
-            - Name of the user to create, remove or modify.
-    comment:
-        required: false
-        description:
-            - Optionally sets the description (aka I(GECOS)) of user account.
-    uid:
-        required: false
-        description:
-            - Optionally sets the I(UID) of the user.
-    non_unique:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        description:
-            - Optionally when used with the -u option, this option allows to
-              change the user ID to a non-unique value.
-        version_added: "1.1"
-    group:
-        required: false
-        description:
-            - Optionally sets the user's primary group (takes a group name).
-    groups:
-        required: false
-        description:
-            - Puts the user in this comma-delimited list of groups. When set to
-              the empty string ('groups='), the user is removed from all groups
-              except the primary group.
-    append:
-        required: false
-        description:
-            - If C(yes), will only add groups, not set them to just the list
-              in I(groups).
-    shell:
-        required: false
-        description:
-            - Optionally set the user's shell.
-    home:
-        required: false
-        description:
-            - Optionally set the user's home directory.
-    password:
-        required: false
-        description:
-            - Optionally set the user's password to this crypted value.  See
-              the user example in the github examples directory for what this looks
-              like in a playbook.
-    state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
-        description:
-            - Whether the account should exist.  When C(absent), removes
-              the user account.
-    createhome:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        description:
-            - Unless set to C(no), a home directory will be made for the user
-              when the account is created.
-    system:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        description:
-            - When creating an account, setting this to C(yes) makes the user a
-              system account.  This setting cannot be changed on existing users.
-    force:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        description:
-            - When used with C(state=absent), behavior is as with
-              C(userdel --force).
-    remove:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        description:
-            - When used with C(state=absent), behavior is as with
-              C(userdel --remove).
-    generate_ssh_key:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        version_added: "0.9"
-        description:
-            - Whether to generate a SSH key for the user in question.
-              This will B(not) overwrite an existing SSH key.
-    ssh_key_bits:
-        required: false
-        default: 2048
-        version_added: "0.9"
-        description:
-            - Optionally specify number of bits in SSH key to create.
-    ssh_key_type:
-        required: false
-        default: rsa
-        version_added: "0.9"
-        description:
-            - Optionally specify the type of SSH key to generate. 
-              Available SSH key types will depend on implementation
-              present on target host.
-    ssh_key_file:
-        required: false
-        default: $HOME/.ssh/id_rsa
-        version_added: "0.9"
-        description:
-            - Optionally specify the SSH key filename.
-    ssh_key_comment:
-        required: false
-        default: ansible-generated
-        version_added: "0.9"
-        description:
-            - Optionally define the comment for the SSH key.
-    ssh_key_passphrase:
-        required: false
-        version_added: "0.9"
-        description:
-            - Set a passphrase for the SSH key.  If no
-              passphrase is provided, the SSH key will default to
-              having no passphrase.
+  name:
+    required: true
+    aliases: [ "user" ]
+    description:
+      - Name of the user to create, remove or modify.
+  comment:
+    required: false
+    description:
+      - Optionally sets the description (aka I(GECOS)) of user account.
+  uid:
+    required: false
+    description:
+      - Optionally sets the I(UID) of the user.
+  non_unique:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - Optionally when used with the -u option, this option allows to
+        change the user ID to a non-unique value.
+    version_added: "1.1"
+  group:
+    required: false
+    description:
+      - Optionally sets the user's primary group (takes a group name).
+  groups:
+    required: false
+    description:
+      - Puts the user in this comma-delimited list of groups. When set to
+        the empty string ('groups='), the user is removed from all groups
+        except the primary group.
+  append:
+    required: false
+    description:
+      - If C(yes), will only add groups, not set them to just the list
+        in I(groups).
+  shell:
+    required: false
+    description:
+      - Optionally set the user's shell.
+  home:
+    required: false
+    description:
+      - Optionally set the user's home directory.
+  password:
+    required: false
+    description:
+      - Optionally set the user's password to this crypted value.  See
+        the user example in the github examples directory for what this looks
+        like in a playbook.
+  state:
+    required: false
+    default: "present"
+    choices: [ present, absent ]
+    description:
+      - Whether the account should exist.  When C(absent), removes
+        the user account.
+  createhome:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    description:
+      - Unless set to C(no), a home directory will be made for the user
+        when the account is created.
+  system:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - When creating an account, setting this to C(yes) makes the user a
+        system account.  This setting cannot be changed on existing users.
+  force:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - When used with C(state=absent), behavior is as with
+        C(userdel --force).
+  remove:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - When used with C(state=absent), behavior is as with
+        C(userdel --remove).
+  generate_ssh_key:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "0.9"
+    description:
+      - Whether to generate a SSH key for the user in question.
+        This will B(not) overwrite an existing SSH key.
+  ssh_key_bits:
+    required: false
+    default: 2048
+    version_added: "0.9"
+    description:
+      - Optionally specify number of bits in SSH key to create.
+  ssh_key_type:
+    required: false
+    default: rsa
+    version_added: "0.9"
+    description:
+      - Optionally specify the type of SSH key to generate.
+        Available SSH key types will depend on implementation
+        present on target host.
+  ssh_key_file:
+    required: false
+    default: $HOME/.ssh/id_rsa
+    version_added: "0.9"
+    description:
+      - Optionally specify the SSH key filename.
+  ssh_key_comment:
+    required: false
+    default: ansible-generated
+    version_added: "0.9"
+    description:
+      - Optionally define the comment for the SSH key.
+  ssh_key_passphrase:
+    required: false
+    version_added: "0.9"
+    description:
+      - Set a passphrase for the SSH key.  If no
+        passphrase is provided, the SSH key will default to
+        having no passphrase.
 examples:
-    - code: 'user: name=johnd comment="John Doe" uid=1040'
-      description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
-    - code: "user: name=johnd state=absent remove=yes"
-      description: "Remove the user 'johnd'"
-    - code: 'user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048'
-      description: "Create a 2048-bit SSH key for user jsmith"
+  - code: 'user: name=johnd comment="John Doe" uid=1040'
+    description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
+  - code: "user: name=johnd state=absent remove=yes"
+    description: "Remove the user 'johnd'"
+  - code: 'user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048'
+    description: "Create a 2048-bit SSH key for user jsmith"
 '''
 
 import os
@@ -179,8 +179,8 @@ except:
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
-    based on platform.  
-    
+    based on platform.
+
     A subclass may wish to override the following action methods:-
       - create_user()
       - remove_user()
@@ -449,7 +449,7 @@ class User(object):
         if not os.path.exists(info[5]):
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
-        ssh_dir = os.path.dirname(ssh_key_file) 
+        ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             try:
                 os.mkdir(ssh_dir, 0700)
@@ -511,7 +511,7 @@ class FreeBsdUser(User):
     This is a FreeBSD User manipulation class - it uses the pw command
     to manipulate the user database, followed by the chpass command
     to change the password.
-    
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -539,7 +539,7 @@ class FreeBsdUser(User):
             self.module.get_bin_path('pw', True),
             'useradd',
             '-n',
-            self.name 
+            self.name
         ]
 
         if self.uid is not None:
@@ -589,7 +589,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -600,7 +600,7 @@ class FreeBsdUser(User):
             self.module.get_bin_path('pw', True),
             'usermod',
             '-n',
-            self.name 
+            self.name
         ]
         cmd_len = len(cmd)
         info = self.user_info()
@@ -631,7 +631,7 @@ class FreeBsdUser(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
-        
+
         if self.groups is not None:
             current_groups = self.user_group_membership()
             groups = self.groups.split(',')
@@ -655,7 +655,7 @@ class FreeBsdUser(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.extend(current_groups)           
+                    new_groups.extend(current_groups)
                 cmd.append(','.join(new_groups))
 
         # modify the user if cmd will do anything
@@ -672,7 +672,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -684,9 +684,9 @@ class SunOS(User):
     """
     This is a SunOS User manipulation class - The main difference between
     this class and the generic user class is that Solaris-type distros
-    don't support the concept of a "system" account and we need to 
+    don't support the concept of a "system" account and we need to
     edit the /etc/shadow file manually to set a password. (Ugh)
-    
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -749,7 +749,7 @@ class SunOS(User):
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        # we have to set the password by editing the /etc/shadow file 
+        # we have to set the password by editing the /etc/shadow file
         if self.password is not None:
             try:
                 lines = []
@@ -761,7 +761,7 @@ class SunOS(User):
                     fields[1] = self.password
                     line = ':'.join(fields)
                     lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)        
+                open(self.SHADOWFILE, 'w+').writelines(lines)
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
@@ -810,7 +810,7 @@ class SunOS(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.extend(current_groups)           
+                    new_groups.extend(current_groups)
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
@@ -834,7 +834,7 @@ class SunOS(User):
         else:
             (rc, out, err) = (None, '', '')
 
-        # we have to set the password by editing the /etc/shadow file 
+        # we have to set the password by editing the /etc/shadow file
         if self.password is not None and info[1] != self.password:
             try:
                 lines = []
@@ -846,7 +846,7 @@ class SunOS(User):
                     fields[1] = self.password
                     line = ':'.join(fields)
                     lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)        
+                open(self.SHADOWFILE, 'w+').writelines(lines)
                 rc = 0
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))

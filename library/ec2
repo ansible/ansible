@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto.
+  - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto.
 version_added: "0.9"
 options:
   key_name:
@@ -38,12 +38,12 @@ options:
     description:
       - security group to use with the instance
     required: false
-    default: null 
+    default: null
     aliases: []
   group_id:
     version_added: "1.1"
     description:
-      - security group id to use with the instance 
+      - security group id to use with the instance
     required: false
     default: null
     aliases: []
@@ -148,35 +148,35 @@ author: Seth Vidal, Tim Gerla, Lester Wade
 
 EXAMPLES = '''
 # Basic provisioning example
-local_action: 
-    module: ec2 
-    keypair: mykey 
-    instance_type: c1.medium 
-    image: emi-40603AD1 
-    wait: yes 
-    group: webserver 
+local_action:
+    module: ec2
+    keypair: mykey
+    instance_type: c1.medium
+    image: emi-40603AD1
+    wait: yes
+    group: webserver
     count: 3
 
 # Advanced example with tagging and CloudWatch
-local_action: 
-    module: ec2 
-    keypair: mykey 
-    group: databases 
-    instance_type: m1.large 
-    image: ami-6e649707 
-    wait: yes 
-    wait_timeout: 500 
-    count: 5 
+local_action:
+    module: ec2
+    keypair: mykey
+    group: databases
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    count: 5
     instance_tags: '{"db":"postgres"}' monitoring=true'
 
 # VPC example
-local_action: 
-    module: ec2 
-    keypair: mykey 
-    group_id: sg-1dc53f72 
-    instance_type: m1.small 
-    image: ami-6e649707 
-    wait: yes 
+local_action:
+    module: ec2
+    keypair: mykey
+    group_id: sg-1dc53f72
+    instance_type: m1.small
+    image: ami-6e649707
+    wait: yes
     vpc_subnet_id: subnet-29e63245'
 '''
 
@@ -199,7 +199,7 @@ def main():
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
-            count = dict(default='1'), 
+            count = dict(default='1'),
             monitoring = dict(choices=BOOLEANS, default=False),
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
@@ -220,7 +220,7 @@ def main():
     group_id = module.params.get('group_id')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
-    count = module.params.get('count') 
+    count = module.params.get('count')
     monitoring = module.params.get('monitoring')
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
@@ -243,13 +243,13 @@ def main():
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
     try:
-        if ec2_url: # if we have an URL set, connect to the specified endpoint 
+        if ec2_url: # if we have an URL set, connect to the specified endpoint
             ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
         else: # otherwise it's Amazon.
             ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
-    
+
     # Here we try to lookup the group name from the security group id - if group_id is set.
 
     try:
@@ -261,28 +261,28 @@ def main():
             module.fail_json(msg = str(e))
 
     # Lookup any instances that much our run id.
-    
+
     running_instances = []
     count_remaining = int(count)
-        
+
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
         previous_reservations = ec2.get_all_instances(None, filter_dict )
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
-        count_remaining = count_remaining - len(running_instances) 
-#        module.fail_json(msg = "known running instances: %s" % (running_instances)) 
+        count_remaining = count_remaining - len(running_instances)
+#        module.fail_json(msg = "known running instances: %s" % (running_instances))
 
-    
+
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
-    
+
     if count_remaining > 0:
         try:
             res = ec2.run_instances(image, key_name = key_name,
                                 client_token=id,
-                                min_count = count_remaining, 
+                                min_count = count_remaining,
                                 max_count = count_remaining,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group_name],
@@ -326,10 +326,10 @@ def main():
         if wait and wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
-    
+
         for inst in this_res.instances:
             running_instances.append(inst)
-        
+
     instance_dict_array = []
     for inst in running_instances:
         d = {

@@ -34,27 +34,27 @@ DOCUMENTATION = '''
 module: setup
 short_description: Gathers facts about remote hosts
 options:
-    filter:
-        version_added: "1.1"
-        description:
-            - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
-        required: false
-        default: '*'
+  filter:
+    version_added: "1.1"
+    description:
+      - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
+    required: false
+    default: '*'
 description:
-     - This module is automatically called by playbooks to gather useful
-       variables about remote hosts that can be used in playbooks. It can also be
-       executed directly by C(/usr/bin/ansible) to check what variables are
-       available to a host. Ansible provides many I(facts) about the system,
-       automatically.
+  - This module is automatically called by playbooks to gather useful
+    variables about remote hosts that can be used in playbooks. It can also be
+    executed directly by C(/usr/bin/ansible) to check what variables are
+    available to a host. Ansible provides many I(facts) about the system,
+    automatically.
 notes:
-    - More ansible facts will be added with successive releases. If I(facter) or
-      I(ohai) are installed, variables from these programs will also be snapshotted
-      into the JSON file for usage in templating. These variables are prefixed
-      with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
-      bubbled up to the caller. Using the ansible facts and choosing to not
-      install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
-      remote systems. (See also M(facter) and M(ohai).)
-    - The filter option filters only the first level subkey below ansible_facts.
+  - More ansible facts will be added with successive releases. If I(facter) or
+    I(ohai) are installed, variables from these programs will also be snapshotted
+    into the JSON file for usage in templating. These variables are prefixed
+    with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
+    bubbled up to the caller. Using the ansible facts and choosing to not
+    install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
+    remote systems. (See also M(facter) and M(ohai).)
+  - The filter option filters only the first level subkey below ansible_facts.
 author: Michael DeHaan
 '''
 
@@ -113,7 +113,7 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
-                 { 'path' : '/sbin/apk',            'name' : 'apk' }, 
+                 { 'path' : '/sbin/apk',            'name' : 'apk' },
     ]
 
     def __init__(self):
@@ -1090,7 +1090,7 @@ class GenericBsdIfconfigNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
-    It currently does not define 
+    It currently does not define
     - default_ipv4 and default_ipv6
     - type, mtu and network on interfaces
     """
@@ -1134,7 +1134,7 @@ class GenericBsdIfconfigNetwork(Network):
                 continue
             rc, out, err = module.run_command(command[v])
             if not out:
-                # v6 routing may result in 
+                # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
                 continue
             lines = out.split('\n')
