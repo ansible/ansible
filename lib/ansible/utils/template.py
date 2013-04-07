@@ -19,6 +19,7 @@ import os
 import re
 import codecs
 import jinja2
+import jinja2.meta as jinja2_meta
 import yaml
 import json
 from ansible import errors
@@ -175,7 +176,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             try:
                 replacement = instance.run(args, inject=vars)
                 if expand_lists:
-                    replacement = ",".join([str(x) for x in replacement])
+                    replacement = ",".join([unicode(x) for x in replacement])
             except:
                 if not lookup_fatal:
                     replacement = None
@@ -233,7 +234,8 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
-            return template_from_string(basedir, varname, vars)
+            res = template_from_string(basedir, varname, vars)
+            return res
         m = _varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
             return varname
@@ -409,14 +411,31 @@ def template_from_string(basedir, data, vars):
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True) # undefined=J2Undefined)
+        environment = jinja2.Environment(trim_blocks=True) 
         environment.filters.update(_get_filter_plugins())
+        environment.template_class = J2Template
+
+        # perhaps a nicer way to do this
+        ast = environment.parse(data)
+        undeclared = jinja2_meta.find_undeclared_variables(ast)
+        for x in undeclared:
+            if x not in vars:
+                return data
+
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
         # the legacy engine, lookup() as a function, perhaps?
-        environment.template_class = J2Template
-        t = environment.from_string(data)
+
+        try:
+            t = environment.from_string(data)
+        except RuntimeError, re:
+            if 'recursion' in str(re):
+                raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
+            else:
+                return data
+            
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
+        # this shouldn't happen due to undeclared check above
         return data
 

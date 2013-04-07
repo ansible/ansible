@@ -139,7 +139,6 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
-        self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
         self.module_name      = module_name
@@ -153,6 +152,7 @@ class Runner(object):
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
+        self.sudo_user        = sudo_user
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
@@ -176,7 +176,7 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
-        
+ 
     # *****************************************************
 
     def _complex_args_hack(self, complex_args, module_args):

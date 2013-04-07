@@ -45,14 +45,6 @@ if cowsay and noncow == 'random':
     cows.append(False)
     noncow = random.choice(cows)
 
-# ****************************************************************************
-# 1.1 DEV NOTES
-# FIXME -- in order to make an ideal callback system, all of these should have
-# access to the current task and/or play and host objects.  We need to this
-# while keeping present callbacks functionally intact and will do so.
-# ****************************************************************************
-
-
 def call_callback_module(method_name, *args, **kwargs):
 
     for callback_plugin in utils.plugins.callback_loader.all():
@@ -151,7 +143,11 @@ def banner(msg):
         (out, err) = cmd.communicate()
         return "%s\n" % out
     else:
-        return "\n%s ********************* " % msg
+        width = 78 - len(msg)
+        if width < 3:
+            width = 3
+        filler = "*" * width
+        return "\n%s %s " % (msg, filler)
 
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
@@ -297,7 +293,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         print host_report_msg(host, self.options.module_name, result2, self.options.one_line)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
-    
+
     def on_file_diff(self, host, diff):
         print utils.get_diff(diff)
         super(CliRunnerCallbacks, self).on_file_diff(host, diff)
@@ -469,7 +465,7 @@ class PlaybookCallbacks(object):
             resp = raw_input('Perform task: %s (y/n/c): ' % name)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
-                print banner(msg)                
+                print banner(msg)
             elif resp.lower() in ['c', 'continue']:
                 self.skip_task = False
                 self.step = False
@@ -477,8 +473,8 @@ class PlaybookCallbacks(object):
             else:
                 self.skip_task = True
         else:
-            print banner(msg)                
-        
+            print banner(msg)
+
         call_callback_module('playbook_on_task_start', name, is_conditional)
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):

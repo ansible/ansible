@@ -39,8 +39,6 @@ Branch Info
 Author
 ======
 
-Michael DeHaan -- michael.dehaan@gmail.com
+Michael DeHaan -- michael@ansibleworks.com
 
-[http://michaeldehaan.net](http://michaeldehaan.net/)
-
-
+[AnsibleWorks](http://ansibleworks.com)

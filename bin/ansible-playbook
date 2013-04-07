@@ -39,12 +39,12 @@ def colorize(lead, num, color):
 def hostcolor(host, stats):
     if ANSIBLE_COLOR:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return "%-41s" % stringc(host, 'red')
+            return "%-37s" % stringc(host, 'red')
         elif stats['changed'] != 0:
-            return "%-41s" % stringc(host, 'yellow')
+            return "%-37s" % stringc(host, 'yellow')
         else:
-            return "%-41s" % stringc(host, 'green')
-    return "%-30s" % host
+            return "%-37s" % stringc(host, 'green')
+    return "%-26s" % host
 
 
 def main(args):
@@ -184,7 +184,7 @@ def main(args):
             playbook_cb.on_stats(pb.stats)
             for h in hosts:
                 t = pb.stats.summarize(h)
-                print "%-30s : %s %s %s %s " % (
+                print "%s : %s %s %s %s" % (
                     hostcolor(h, t),
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
