@@ -49,7 +49,7 @@ class TestCallbacks(object):
     def on_failed(self, host, results, ignore_errors):
         EVENTS.append([ 'failed', [ host, results, ignore_errors ]])
 
-    def on_ok(self, host, result):
+    def on_ok(self, host, result, always_verbose):
         # delete certain info from host_result to make test comparisons easier
         host_result = result.copy()
         for k in [ 'ansible_job_id', 'results_file', 'md5sum', 'delta', 'start', 'end' ]:
@@ -58,7 +58,7 @@ class TestCallbacks(object):
         for k in host_result.keys():
             if k.startswith('facter_') or k.startswith('ohai_'):
                 del host_result[k]
-        EVENTS.append([ 'ok', [ host, host_result ]])
+        EVENTS.append([ 'ok', [ host, host_result, always_verbose ]])
 
     def on_play_start(self, pattern):
         EVENTS.append([ 'play start', [ pattern ]])

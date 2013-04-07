@@ -203,8 +203,8 @@ class DefaultRunnerCallbacks(object):
     def on_failed(self, host, res, ignore_errors=False):
         call_callback_module('runner_on_failed', host, res, ignore_errors=ignore_errors)
 
-    def on_ok(self, host, res):
-        call_callback_module('runner_on_ok', host, res)
+    def on_ok(self, host, res, always_verbose=False):
+        call_callback_module('runner_on_ok', host, res, always_verbose=always_verbose)
 
     def on_error(self, host, msg):
         call_callback_module('runner_on_error', host, msg)
@@ -244,9 +244,9 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         self._on_any(host,res)
         super(CliRunnerCallbacks, self).on_failed(host, res, ignore_errors=ignore_errors)
 
-    def on_ok(self, host, res):
+    def on_ok(self, host, res, always_verbose=False):
         self._on_any(host,res)
-        super(CliRunnerCallbacks, self).on_ok(host, res)
+        super(CliRunnerCallbacks, self).on_ok(host, res, always_verbose=always_verbose)
 
     def on_unreachable(self, host, res):
         if type(res) == dict:
@@ -351,7 +351,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             print stringc("...ignoring", 'cyan')
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
-    def on_ok(self, host, host_result):
+    def on_ok(self, host, host_result, always_verbose=False):
         item = host_result.get('item', None)
 
         host_result2 = host_result.copy()
@@ -361,9 +361,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if changed:
             ok_or_changed = 'changed'
 
+        verbose = always_verbose or self.verbose
+
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
-        if not self.verbose or host_result2.get("verbose_override",None) is not None:
+        if not verbose or host_result2.get("verbose_override", None) is not None:
             if item:
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
@@ -382,7 +384,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 print stringc(msg, 'green')
             else:
                 print stringc(msg, 'yellow')
-        super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
+        super(PlaybookRunnerCallbacks, self).on_ok(host, host_result, always_verbose=always_verbose)
 
     def on_error(self, host, err):
 
