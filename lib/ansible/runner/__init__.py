@@ -556,7 +556,11 @@ class Runner(object):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
         path = pipes.quote(path)
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % (path, path, path)
+        test = ('if [ ! -e \"%s\" ]; then rc=0;'
+                'elif [ -d \"%s\" ]; then rc=3;'
+                'elif [ ! -f \"%s\" ]; then rc=1;'
+                'elif [ ! -r \"%s\" ]; then rc=2;'
+                'else rc=0; fi') % ((path,) * 4)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?

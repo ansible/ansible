@@ -63,13 +63,14 @@ class TestRunner(unittest.TestCase):
         filename = os.path.join(self.stage_dir, filename)
         return filename
 
-    def _run(self, module_name, module_args, background=0):
+    def _run(self, module_name, module_args, background=0, check_mode=False):
         ''' run a module and get the localhost results '''
         self.runner.module_name = module_name
         args = ' '.join(module_args)
         print "DEBUG: using args=%s" % args
         self.runner.module_args = args
         self.runner.background = background
+        self.runner.check = check_mode
         results = self.runner.run()
         # when using nosetests this will only show up on failure
         # which is pretty useful
@@ -117,6 +118,12 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input_,
             "dest=%s" % output,
         ])
+        assert result['changed'] is False
+        with open(output, "a") as output_stream:
+            output_stream.write("output file now differs from input")
+        result = self._run('copy',
+                           ["src=%s" % input_, "dest=%s" % output, "force=no"],
+                           check_mode=True)
         assert result['changed'] is False
 
     def test_command(self):
