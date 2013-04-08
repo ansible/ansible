@@ -91,6 +91,8 @@ examples:
       description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
     - code: "apt: upgrade=dist"
       description: Update all packages to the latest version
+    - code: "apt: update_cache=yes"
+      description: Run the equivalent of C(apt-get update) as a separate step
 requirements: [ python-apt, aptitude ]
 '''
 
