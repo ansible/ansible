@@ -11,6 +11,9 @@ Core Features:
 * ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional,
   see examples/playbooks/upgraded_vars.yml
 * can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+* 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
+* cosmetic: "*****" banners in ansible-playbook output are now constant width
+* attempt to create an inventory file to rerun against failed hosts only, without retrying successful ones
 
 Modules added
 
@@ -24,6 +27,7 @@ Bugfixes and Misc Changes:
 * when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
 * overwrite parameter added to the s3 module
 * private_ip parameter added to the ec2 module
+* $FILE and $PIPE now tolerate unicode
 
 1.1 "Mean Street" -- 4/2/2013
 
@@ -38,7 +42,7 @@ Core Features
 * support for complex arguments to modules (within reason)
 * can specify ansible_connection=X to define the connection type in inventory variables
 * a new chroot connection type
-* module common code now has basic type checking (and casting) capability 
+* module common code now has basic type checking (and casting) capability
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
 * inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
 * added configurable crypt scheme for 'vars_prompt'
@@ -320,7 +324,7 @@ Plugin changes:
 * plugin loading code now more streamlined
 * lookup plugins for DNS text records, environment variables, and redis
 * added a template lookup plugin $TEMPLATE('filename.j2')
-* various tweaks to the EC2 inventory plugin 
+* various tweaks to the EC2 inventory plugin
 * jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
 
 0.8 "Cathedral" -- Oct 19, 2012
