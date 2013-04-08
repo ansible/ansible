@@ -431,6 +431,7 @@ class PlayBook(object):
             buf.write("%s\n" % x)
         basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
+        filename = filename.replace(".yml","")
 
         if not os.path.exists('/var/tmp/ansible'):
             try:
