@@ -363,7 +363,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         # check if pkgspec is installed (if possible for idempotence)
         # localpkg
-        if spec.endswith('.rpm'):
+        if spec.endswith('.rpm') and '://' not in spec:
             # get the pkg name-v-r.arch
             if not os.path.exists(spec):
                 res['msg'] += "No Package file matching '%s' found on system" % spec
@@ -375,6 +375,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 # if they are there, skip it
                 continue
             pkg = spec
+
+        # URL
+        elif '://' in spec:
+            pkg = spec
+
         #groups :(
         elif  spec.startswith('@'):
             # complete wild ass guess b/c it's a group
@@ -420,7 +425,17 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         if module.check_mode:
             module.exit_json(changed=True)
 
+        changed = True
+
         rc, out, err = module.run_command(cmd)
+
+        if rc != 0 and 'Nothing to do' in err:
+            # avoid failing in the 'Nothing To Do' case
+            # this may happen with an URL spec
+            rc = 0
+            err = ''
+            out = '%s: Nothing to do' % spec
+            changed = False
 
         res['rc'] += rc
         res['results'].append(out)
@@ -429,8 +444,9 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
         # look for the pkg via obsoletes
-        if not rc:
-            res['changed'] = True
+
+        # accumulate any changes
+        res['changed'] |= changed
 
     module.exit_json(**res)
 
