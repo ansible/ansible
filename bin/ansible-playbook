@@ -174,6 +174,7 @@ def main(args):
             print 'Playbook Syntax is fine'
             return 0
             
+        failed_hosts = []
 
         try:
 
@@ -182,6 +183,17 @@ def main(args):
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
+
+            for h in hosts:
+                t = pb.stats.summarize(h)
+                if t['unreachable'] > 0 or t['failures'] > 0:
+                    failed_hosts.append(h)
+
+            if len(failed_hosts) > 0:
+                filename = pb.generate_retry_inventory(failed_hosts)
+                if filename:
+                    print "           to rerun against failed hosts only, use -i %s\n" % filename
+
             for h in hosts:
                 t = pb.stats.summarize(h)
                 print "%s : %s %s %s %s" % (
@@ -190,16 +202,15 @@ def main(args):
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
                     colorize('failed', t['failures'], 'red'))
-
-            print "\n"
-            for h in hosts:
-                stats = pb.stats.summarize(h)
-                if stats['failures'] != 0 or stats['unreachable'] != 0:
-                    return 2
+ 
+            print ""
+            if len(failed_hosts) > 0:
+                return 2
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
+
 
     return 0
 

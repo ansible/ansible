@@ -13,6 +13,7 @@ Core Features:
 * can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 * 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
+* attempt to create an inventory file to rerun against failed hosts only, without retrying successful ones
 
 Modules added
 
