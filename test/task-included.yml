@@ -1,0 +1,2 @@
+---
+- action: debug msg="$internal"
