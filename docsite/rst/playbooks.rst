@@ -259,7 +259,7 @@ Rather than listing out the explicit word, "action:", like so::
 
     action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-It is also possible to say:
+It is also possible to say::
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
