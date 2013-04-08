@@ -47,6 +47,13 @@ options:
     required: false
     default: null
     aliases: []
+  zone:
+    version_added: "1.2"
+    description:
+      - availability zone in which to launch the instance
+    required: false
+    default: null
+    aliases: []
   instance_type:
     description:
       - instance type to use for the instance
@@ -196,6 +203,7 @@ def main():
             id = dict(),
             group = dict(),
             group_id = dict(),
+            zone = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
@@ -218,6 +226,7 @@ def main():
     id = module.params.get('id')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
+    zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
@@ -286,6 +295,7 @@ def main():
                                 max_count = count_remaining,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group_name],
+                                placement = zone,
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
