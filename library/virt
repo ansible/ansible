@@ -25,7 +25,8 @@ version_added: "0.2"
 options:
   name:
     description:
-      - name of the guest VM being managed
+      - name of the guest VM being managed. Note that VM must be previously
+        defined with xml.
     required: true
     default: null
     aliases: []
@@ -44,6 +45,11 @@ options:
     choices: ["create","status", "start", "stop", "pause", "unpause",
               "shutdown", "undefine", "destroy", "get_xml", "autostart",
               "freemem", "list_vms", "info", "nodeinfo", "virttype"]
+  uri:
+    description:
+      - libvirt connection uri
+    required: false
+    defaults: qemu:///
 examples:
    - code: "virt: name=alpha state=running"
      description: "Example from Ansible Playbooks"
@@ -51,6 +57,7 @@ examples:
      description: "Example guest management with C(/usr/bin/ansible)"
    - code: ansible host -m virt -a "name=alpha command=get_xml"
      description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
+   - code: ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
 '''
@@ -86,7 +93,7 @@ VIRT_STATE_NAME_MAP = {
 
 class LibvirtConnection(object):
 
-    def __init__(self):
+    def __init__(self, uri):
 
         cmd = subprocess.Popen("uname -r", shell=True, stdout=subprocess.PIPE,
                                 close_fds=True)
@@ -95,7 +102,7 @@ class LibvirtConnection(object):
         if output.find("xen") != -1:
             conn = libvirt.open(None)
         else:
-            conn = libvirt.open("qemu:///system")
+            conn = libvirt.open(uri)
 
         if not conn:
             raise Exception("hypervisor connection failure")
@@ -192,8 +199,11 @@ class LibvirtConnection(object):
 
 class Virt(object):
 
+    def __init__(self, uri):
+        self.uri = uri
+
     def __get_conn(self):
-        self.conn = LibvirtConnection()
+        self.conn = LibvirtConnection(self.uri)
         return self.conn
 
     def get_vm(self, vmid):
@@ -352,8 +362,9 @@ def core(module):
     state      = module.params.get('state', None)
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
+    uri        = module.params.get('uri', None)
 
-    v = Virt()
+    v = Virt(uri)
     res = {}
 
 
@@ -401,6 +412,7 @@ def main():
         name = dict(aliases=['guest']),
         state = dict(choices=['running', 'shutdown']),
         command = dict(choices=ALL_COMMANDS),
+        uri = dict(default='qemu:///system'),
     ))
 
     rc = VIRT_SUCCESS
