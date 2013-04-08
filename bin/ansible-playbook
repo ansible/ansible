@@ -192,7 +192,7 @@ def main(args):
             if len(failed_hosts) > 0:
                 filename = pb.generate_retry_inventory(failed_hosts)
                 if filename:
-                    print "           to rerun against failed hosts only, use -i %s\n" % filename
+                    print "           to retry, use: --limit @%s\n" % filename
 
             for h in hosts:
                 t = pb.stats.summarize(h)
