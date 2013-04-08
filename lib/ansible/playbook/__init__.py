@@ -25,6 +25,8 @@ import os
 import shlex
 import collections
 from play import Play
+import StringIO
+import pipes
 
 SETUP_CACHE = collections.defaultdict(dict)
 
@@ -129,6 +131,7 @@ class PlayBook(object):
         vars = {}
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
+        self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
 
     # *****************************************************
@@ -412,6 +415,90 @@ class PlayBook(object):
             self.SETUP_CACHE[host].update({'module_setup': True})
             self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
         return setup_results
+
+    # *****************************************************
+
+
+    def generate_retry_inventory(self, replay_hosts):
+        '''
+        called by /usr/bin/ansible when a playbook run fails. It generates a inventory 
+        that allows re-running on ONLY the failed hosts.  This may duplicate some
+        variable information in group_vars/host_vars but that is ok, and expected.
+        ''' 
+
+        # TODO: move this into an inventory.serialize() method
+
+        buf = StringIO.StringIO()
+
+        buf.write("# dynamically generated inventory file\n")
+        buf.write("# retries previously failed hosts only\n")
+        buf.write("\n")
+
+        inventory = self.inventory
+        basedir = inventory.basedir()
+        filename = ".%s.retry" % os.path.basename(self.filename)
+        filename = os.path.join(basedir, filename)
+
+        def _simple_kv_vars(host_vars):
+            buf = ""
+            for (k, v) in host_vars.items():
+                if type(v) not in [ list, dict ]:
+                   if isinstance(v,basestring):
+                       buf = buf + " %s=%s" % (k, pipes.quote(v))
+                   else:
+                       buf = buf + " %s=%s" % (k, v)
+            return buf
+ 
+        # for all group names
+        for gname in inventory.groups_list():
+
+            # write the group name
+            group = inventory.get_group(gname)
+            group_vars = inventory.get_group_variables(gname)
+
+            # but only contain hosts that we want to replay
+            hostz = [ host.name for host in group.hosts ]
+            hostz = [ hname for hname in hostz if hname in replay_hosts ] 
+            if len(hostz):
+                buf.write("[%s]\n" % group.name)
+                for hostname in hostz:
+                    host = inventory.get_host(hostname)
+                    host_vars = host.vars
+                    hostname_vars = _simple_kv_vars(host_vars)
+                    buf.write("%s %s\n" % (hostname, hostname_vars))
+                buf.write("\n")
+
+            # write out any child groups if present
+            if len(group.child_groups) and group.name not in [ 'all', 'ungrouped' ]:
+                buf.write("\n")
+                buf.write("[%s:children]\n" % gname)
+                for child_group in group.child_groups:
+                    buf.write("%s\n" % child_group.name)
+                buf.write("\n")
+
+            # we do NOT write out group variables because they will have already
+            # been blended with the host
+
+            if len(group_vars.keys()) > 0 and group.name not in [ 'all', 'ungrouped' ]:
+                buf.write("[%s:vars]\n" % gname) 
+                for (k,v) in group_vars.items():
+                    if type(v) not in [list,dict]:
+                        if isinstance(type(k), basestring):
+                            buf.write("%s='%s'\n" % (k,v))  
+                        else:  
+                            buf.write("%s=%s\n" % (k,v))
+                buf.write("\n")
+
+        # if file isn't writeable, don't do anything.
+        # TODO: allow a environment variable to pick a different destination for this file
+
+        try:
+            fd = open(filename, 'w')
+            fd.write(buf.getvalue())
+            fd.close()
+            return filename
+        except Exception, e:
+            return None
 
     # *****************************************************
 

@@ -39,6 +39,10 @@ class InventoryDirectory(object):
         for i in self.names:
             if i.endswith("~") or i.endswith(".orig") or i.endswith(".bak"):
                 continue
+            if i.endswith(".retry"):
+                # this file is generated on a failed playbook and should only be
+                # used when run specifically
+                continue
             # These are things inside of an inventory basedir
             if i in ("host_vars", "group_vars", "vars_plugins"):
                 continue
