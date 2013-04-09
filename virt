@@ -49,7 +49,7 @@ options:
     description:
       - libvirt connection uri
     required: false
-    defaults: qemu:///
+    defaults: qemu:///system
 examples:
    - code: "virt: name=alpha state=running"
      description: "Example from Ansible Playbooks"
