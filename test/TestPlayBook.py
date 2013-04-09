@@ -211,6 +211,27 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
+   def test_task_includes(self):
+       pb = os.path.join(self.test_dir, 'task-includer.yml')
+       actual = self._run(pb)
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 0,
+               "failures": 0,
+               "ok": 1,
+               "skipped": 0,
+               "unreachable": 0
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
    def test_playbook_vars(self):
        test_callbacks = TestCallbacks()
        playbook = ansible.playbook.PlayBook(

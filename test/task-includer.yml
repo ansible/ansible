@@ -1,0 +1,9 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+  - internal: xyz
+
+  tasks:
+  - include: task-included.yml internal=$internal
