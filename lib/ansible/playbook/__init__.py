@@ -172,7 +172,6 @@ class PlayBook(object):
 
                 for item in items:
                     incvars = vars.copy()
-                    incvars['item'] = item
                     if 'vars' in play:
                         if isinstance(play['vars'], dict):
                             incvars.update(play['vars'])
