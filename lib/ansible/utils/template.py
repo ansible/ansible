@@ -19,7 +19,7 @@ import os
 import re
 import codecs
 import jinja2
-import jinja2.meta as jinja2_meta
+from jinja2.runtime import StrictUndefined
 import yaml
 import json
 from ansible import errors
@@ -410,16 +410,9 @@ def template_from_string(basedir, data, vars):
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True) 
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined) 
         environment.filters.update(_get_filter_plugins())
         environment.template_class = J2Template
-
-        # perhaps a nicer way to do this
-        ast = environment.parse(data)
-        undeclared = jinja2_meta.find_undeclared_variables(ast)
-        for x in undeclared:
-            if x not in vars:
-                return data
 
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
         # the legacy engine, lookup() as a function, perhaps?
