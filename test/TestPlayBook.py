@@ -201,7 +201,7 @@ class TestPlaybook(unittest.TestCase):
            "localhost": {
                "changed": 0,
                "failures": 0,
-               "ok": 10,
+               "ok": 4,
                "skipped": 0,
                "unreachable": 0
            }

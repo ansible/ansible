@@ -11,4 +11,4 @@
   - ugly: var
   gather_facts: no
   tasks:
-  - action: debug msg="$variable"
+  - action: debug msg="$anothervariable"

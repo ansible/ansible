@@ -172,23 +172,23 @@ class PlayBook(object):
                 # to set variables
 
                 for t in tokens[1:]:
-
                     (k,v) = t.split("=", 1)
                     incvars[k] = utils.template(basedir, v, incvars)
-                    included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
-                    (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
-                    for p in plays:
-                        # support for parameterized play includes works by passing
-                        # those variables along to the subservient play
-                        if 'vars' not in p:
-                            p['vars'] = {}
-                        if isinstance(p['vars'], dict):
-                            p['vars'].update(incvars)
-                        elif isinstance(p['vars'], list):
-                            # nobody should really do this, but handle vars: a=1 b=2
-                            p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
-                    accumulated_plays.extend(plays)
-                    play_basedirs.extend(basedirs)
+
+                included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
+                (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                for p in plays:
+                    # support for parameterized play includes works by passing
+                    # those variables along to the subservient play
+                    if 'vars' not in p:
+                        p['vars'] = {}
+                    if isinstance(p['vars'], dict):
+                        p['vars'].update(incvars)
+                    elif isinstance(p['vars'], list):
+                        # nobody should really do this, but handle vars: a=1 b=2
+                        p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+                accumulated_plays.extend(plays)
+                play_basedirs.extend(basedirs)
             else:
 
                 # this is a normal (non-included play)
