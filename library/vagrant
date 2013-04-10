@@ -438,14 +438,14 @@ class VagrantWrapper(object):
                 ram      = instance_dict['ram']
 
                 vfile.write(VAGRANT_FILE_VM_HEAD % (name, name))
-                vfile.write(VAGRANT_FILE_VM_BOX_NAME % (box_name))
+                vfile.write(VAGRANT_FILE_VM_BOX_NAME % (name, box_name))
 
                 if self.version == 1:
-                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V1, (name, name))
-                    vfile.write(VAGRANT_FILE_VM_NETWORK_V1, (name, ip))
+                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V1 % (name, name))
+                    vfile.write(VAGRANT_FILE_VM_NETWORK_V1 % (name, ip))
                 else:
-                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V2, (name, name))
-                    vfile.write(VAGRANT_FILE_VM_NETWORK_V2, (name, ip))
+                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V2 % (name, name))
+                    vfile.write(VAGRANT_FILE_VM_NETWORK_V2 % (name, ip))
 
                 if instance_dict.has_key('forward_ports'):
                     for port in instance_dict['forward_ports']:
@@ -540,7 +540,7 @@ def main():
     ram = module.params.get('ram') or module.params.get('memory')
     cpus = module.params.get('cpus')
     ip = module.params.get('ip')
-    version = module.params.get('version')
+    version = int(module.params.get('version'))
 
     if forward_ports != None:
         forward_ports=forward_ports.split(',')
@@ -555,7 +555,7 @@ def main():
         ip = VAGRANT_INT_IP
 
     # Hardcoded valid versions of the VagrantFile..
-    if version != 1 or version != 2:
+    if version != 1 and version != 2:
         version = DEFAULT_VAGRANTFILE_VERSION
 
     count = module.params.get('count') 
