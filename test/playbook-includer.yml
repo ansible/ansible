@@ -1,8 +1,4 @@
 ---
 - include: playbook-included.yml variable=foobar
 - include: playbook-included.yml variable=foofoo
-- include: playbook-included.yml variable=$item
-  with_items:
-  - foo
-  - bar
-  - baz
+- include: playbook-included.yml variable=foo
