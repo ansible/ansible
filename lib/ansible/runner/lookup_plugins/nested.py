@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.utils import safe_eval
 
 def flatten(terms):
     ret = []
@@ -40,6 +41,10 @@ class LookupModule(object):
         pass
 
     def run(self, terms, **kwargs):
+        if '{' or '[' in terms:
+            # Jinja2-ified list needs to be converted back to a real type
+            # TODO: something a bit less heavy than eval
+            terms = safe_eval(terms)
         if not isinstance(terms, list):
             raise errors.AnsibleError("a list is required for with_nested")
         my_list = terms[:]
