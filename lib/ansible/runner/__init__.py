@@ -336,18 +336,22 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
         inject.update(self.setup_cache[host])
-        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
+
+        inject['hostvars']    = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups'] = self.inventory.groups_list()
-        inject['vars'] = self.module_vars
+        inject['groups']      = self.inventory.groups_list()
+        inject['vars']        = self.module_vars
         inject['environment'] = self.environment
+
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
+
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
+
             items_terms = self.module_vars.get('items_lookup_terms', '')
             items_terms = utils.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
@@ -364,8 +368,10 @@ class Runner(object):
         if items is None:
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
         elif len(items) > 0:
+
             # executing using with_items, so make multiple calls
             # TODO: refactor
+
             aggregrate = {}
             all_comm_ok = True
             all_changed = False
@@ -373,7 +379,14 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
+                result = self._executor_internal_inner(
+                     host, 
+                     self.module_name, 
+                     self.module_args, 
+                     inject, 
+                     port, 
+                     complex_args=self.complex_args
+                )
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False

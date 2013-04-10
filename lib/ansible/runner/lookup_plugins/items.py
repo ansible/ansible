@@ -31,5 +31,11 @@ class LookupModule(object):
 
     def run(self, terms, **kwargs):
         if isinstance(terms, basestring):
+            if '{' or '[' in terms:
+                # Jinja2-ified list needs to be converted back to a real type
+                # TODO: something a bit less heavy than eval
+                terms = eval(terms)
             terms = [ terms ]
         return flatten(terms)
+
+
