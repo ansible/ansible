@@ -17,6 +17,7 @@
 
 import os
 import pipes
+from ansible.utils import template
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
@@ -56,7 +57,7 @@ class ActionModule(object):
 
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
-                fnt = utils.template(self.runner.basedir, fn, inject)
+                fnt = template.template(self.runner.basedir, fn, inject)
                 fnd = utils.path_dwim(self.runner.basedir, fnt)
                 if not os.path.exists(fnd) and '_original_file' in inject:
                     fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fnd, self.runner.basedir, check=False)
@@ -68,7 +69,7 @@ class ActionModule(object):
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, comm_ok=False, result=result)
         else:
-            source = utils.template(self.runner.basedir, source, inject)
+            source = template.template(self.runner.basedir, source, inject)
                 
             if '_original_file' in inject:
                 source = utils.path_dwim_relative(inject['_original_file'], 'templates', source, self.runner.basedir)
@@ -82,7 +83,7 @@ class ActionModule(object):
 
         # template the source data locally & get ready to transfer
         try:
-            resultant = utils.template_from_file(self.runner.basedir, source, inject)
+            resultant = template.template_from_file(self.runner.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)

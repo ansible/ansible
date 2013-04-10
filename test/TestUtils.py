@@ -3,6 +3,7 @@
 import unittest
 
 import ansible.utils
+import ansible.template as template
 
 class TestUtils(unittest.TestCase):
 
@@ -268,7 +269,7 @@ class TestUtils(unittest.TestCase):
             },
         }
         template = '${x.foo}'
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
         assert res == 'result'
 
     def test_template_varReplace_iterated(self):
@@ -278,21 +279,21 @@ class TestUtils(unittest.TestCase):
             'person': 'one',
         }
 
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
 
         assert res == u'hello oh great one'
 
     def test_varReplace_include(self):
         template = 'hello $FILE(world) $LOOKUP(file, $filename)'
 
-        res = ansible.utils.template("test", template, {'filename': 'world'}, expand_lists=True)
+        res = template.template("test", template, {'filename': 'world'}, expand_lists=True)
 
         assert res == u'hello world world'
 
     def test_varReplace_include_script(self):
         template = 'hello $PIPE(echo world) $LOOKUP(pipe, echo world)'
 
-        res = ansible.utils.template("test", template, {}, expand_lists=True)
+        res = template.template("test", template, {}, expand_lists=True)
 
         assert res == u'hello world world'
 
@@ -324,19 +325,19 @@ class TestUtils(unittest.TestCase):
         }
 
         template = '${data.var}'
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['var'])
 
         template = '${data.types}'
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['types'])
 
         template = '${data.alphas}'
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
         assert sorted(res) == sorted(vars['alphas'])
 
         template = '${data.nonexisting}'
-        res = ansible.utils.template(None, template, vars)
+        res = template.template(None, template, vars)
         assert res == template
 
     #####################################
@@ -347,7 +348,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template_from_file("test", "template-basic", vars)
+        res = template.template_from_file("test", "template-basic", vars)
 
         assert res == 'hello world'
 
@@ -356,7 +357,7 @@ class TestUtils(unittest.TestCase):
             'who': 'world',
         }
 
-        res = ansible.utils.template_from_file("test", "template-whitespace", vars)
+        res = template.template_from_file("test", "template-whitespace", vars)
 
         assert res == 'hello world\n'
 
@@ -365,7 +366,7 @@ class TestUtils(unittest.TestCase):
             'who': u'wórld',
         }
 
-        res = ansible.utils.template_from_file("test", "template-basic", vars)
+        res = template.template_from_file("test", "template-basic", vars)
 
         assert res == u'hello wórld'
 

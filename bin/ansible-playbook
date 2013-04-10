@@ -24,6 +24,7 @@ import os
 
 import ansible.playbook
 import ansible.constants as C
+import ansible.utils.template 
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
@@ -180,6 +181,11 @@ def main(args):
 
             pb.run()
 
+            if ansible.utils.template.Flags.LEGACY_TEMPLATE_WARNING:
+                print callbacks.banner("Deprecation Warnings")
+                print "  legacy playbook variable references such as '$foo' will be removed in Ansible 1.4"
+                print "  update playbooks to use '{{ foo }}' instead"
+
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
@@ -202,6 +208,7 @@ def main(args):
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
                     colorize('failed', t['failures'], 'red'))
+
  
             print ""
             if len(failed_hosts) > 0:
@@ -210,7 +217,6 @@ def main(args):
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e
             return 1
-
 
     return 0
 
