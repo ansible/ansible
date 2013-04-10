@@ -254,28 +254,6 @@ def parse_json(raw_data):
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
         return results
 
-def preprocess_yaml(data):
-
-    # allow the following casual user error:
-    #    bar: {{ baz }}
-    # instead of bar: '{{ baz }}'
-    # (commander-API should auto-quote these in similar ways on save/load)
-
-    new_lines = []
-    lines = data.split("\n")
-    for line in lines:
-        if line.find("{{") != -1 and line.find(":") != -1:
-            tokens = line.split(":",1)
-            if tokens[1].strip().startswith("{{"):
-                new_line = "%s: '%s'" % (tokens[0], tokens[1])
-            else:
-                new_line = line                  
-            new_lines.append(new_line)
-        else:
-            new_lines.append(line)
-    result = "\n".join(new_lines)
-    return result
-
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
     return yaml.safe_load(data)
@@ -310,7 +288,6 @@ def parse_yaml_from_file(path):
 
     try:
         data = file(path).read()
-        data = preprocess_yaml(data)
         return parse_yaml(data)
     except IOError:
         raise errors.AnsibleError("file not found: %s" % path)
@@ -724,7 +701,12 @@ def safe_eval(str):
     # do not allow imports
     if re.search(r'import \w+', str):
         return str
-    return eval(str)
+    try:
+        return eval(str)
+    except Exception, e:
+        return str
+
+
 
 
 
