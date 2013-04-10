@@ -7,16 +7,25 @@
 
   - hosts: all
 
-    tasks:
-      - shell: echo 'hello {{ ansible_hostname.upper() }}'
+    vars:
+      a_list:
+        - a 
+        - b
+        - c
 
-      - shell: echo 'match'
+    tasks:
+      - shell: echo hello {{ ansible_hostname.upper() }}
+
+      - shell: echo match
         when: 2 == 2
 
-      - shell: echo 'no match'
+      - shell: echo no match
         when: 2 == 2 + 1
 
-      - shell: echo '{{ ansible_os_family }}'
+      - shell: echo {{ ansible_os_family }}
+
+      - shell: echo {{ item }}
+        with_items: a_list
 
       - shell: echo 'RedHat'
         when: ansible_os_family == 'RedHat'

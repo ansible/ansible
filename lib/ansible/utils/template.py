@@ -435,7 +435,12 @@ def template_from_string(basedir, data, vars):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data
-            
+           
+        def test_foo():
+            return 'test_foo!'
+        
+        t.globals['test_foo'] = test_foo 
+ 
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:

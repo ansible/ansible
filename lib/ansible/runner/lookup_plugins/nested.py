@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import ansible.utils.template as template
 from ansible.utils import safe_eval
+import ansible.errors as errors
 
 def flatten(terms):
     ret = []
@@ -37,16 +39,30 @@ def combine(a,b):
 
 class LookupModule(object):
 
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, basedir=None, **kwargs):
+        self.basedir = basedir
 
-    def run(self, terms, **kwargs):
-        if '{' or '[' in terms:
-            # Jinja2-ified list needs to be converted back to a real type
-            # TODO: something a bit less heavy than eval
-            terms = safe_eval(terms)
+    def run(self, terms, inject=None, **kwargs):
+
+        # this code is common with 'items.py' consider moving to utils if we need it again
+
+        if isinstance(terms, basestring):
+            # someone did:
+            #    with_items: alist
+            # OR
+            #    with_items: {{ alist }}
+            if not '{' in terms and not '[' in terms:
+                terms = '{{ %s }}' % terms
+                terms = template.template(self.basedir, terms, inject)
+            if '{' or '[' in terms:
+                # Jinja2 already evaluated a variable to a list.
+                # Jinja2-ified list needs to be converted back to a real type
+                # TODO: something a bit less heavy than eval
+                terms = safe_eval(terms)
+
         if not isinstance(terms, list):
             raise errors.AnsibleError("a list is required for with_nested")
+
         my_list = terms[:]
         my_list.reverse()
         result = []
