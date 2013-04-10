@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import re
 import os
 import shlex
 import yaml
@@ -24,7 +25,6 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils.template import *
 from ansible.utils.plugins import *
 import ansible.constants as C
 import time
@@ -36,6 +36,7 @@ import pipes
 import random
 import difflib
 import warnings
+import traceback
 
 VERBOSITY=0
 
@@ -163,7 +164,7 @@ def check_conditional(conditional):
         return result
 
     except (NameError, SyntaxError):
-        raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
+        raise errors.AnsibleError("Could not evaluate the expression: (%s)" % conditional)
 
 def is_executable(path):
     '''is the given path executable?'''

@@ -67,7 +67,6 @@ class TestRunner(unittest.TestCase):
         ''' run a module and get the localhost results '''
         self.runner.module_name = module_name
         args = ' '.join(module_args)
-        print "DEBUG: using args=%s" % args
         self.runner.module_args = args
         self.runner.background = background
         results = self.runner.run()

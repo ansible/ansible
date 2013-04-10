@@ -20,10 +20,10 @@ from ansible import utils
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
-    __slots__ = [ 'result', 'comm_ok', 'host', 'diff' ]
+    __slots__ = [ 'result', 'comm_ok', 'host', 'diff', 'flags' ]
 
     def __init__(self, conn=None, host=None, result=None, 
-        comm_ok=True, diff=dict()):
+        comm_ok=True, diff=dict(), flags=None):
 
         # which host is this ReturnData about?
         if conn is not None:
@@ -31,7 +31,6 @@ class ReturnData(object):
             delegate = getattr(conn, 'delegate', None)
             if delegate is not None:
                 self.host = delegate
-
 
         else:
             self.host = host
@@ -51,6 +50,10 @@ class ReturnData(object):
             raise Exception("host not set")
         if type(self.result) != dict:
             raise Exception("dictionary result expected")
+
+        if flags is None:
+            flags = []
+        self.flags = []
 
     def communicated_ok(self):
         return self.comm_ok

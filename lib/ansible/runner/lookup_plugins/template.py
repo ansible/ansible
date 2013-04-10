@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils
+from ansible.utils import template
 
 class LookupModule(object):
 
@@ -27,5 +27,5 @@ class LookupModule(object):
             terms = [ terms ]
         ret = []
         for term in terms:
-            ret.append(utils.template_from_file(self.basedir, term, inject))
+            ret.append(template.template_from_file(self.basedir, term, inject))
         return ret

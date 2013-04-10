@@ -29,13 +29,17 @@ import subprocess
 import datetime
 import pwd
 
+
+class Flags:
+   LEGACY_TEMPLATE_WARNING = False
+
 # TODO: refactor this file
 
 FILTER_PLUGINS = {}
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
-def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
+def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
     
     basically does space.get(part, None), but with
@@ -49,7 +53,7 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_l
     if part[0] == '{' and part[-1] == '}':
         part = part[1:-1]
     # Template part to resolve variables within (${var$var2})
-    part = varReplace(basedir, part, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
+    part = legacy_varReplace(basedir, part, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
 
     # Now find it
     if part in space:
@@ -72,7 +76,7 @@ def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_l
 
     return space
 
-def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
+def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
     ''' Searches for a variable in text and finds its replacement in vars
 
     The variables can have two formats;
@@ -145,7 +149,7 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             pass
         elif is_complex and text[end] == '.':
             if brace_level == 1:
-                space = _varFindLimitSpace(basedir, vars, space, text[part_start:end], lookup_fatal, depth, expand_lists)
+                space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:end], lookup_fatal, depth, expand_lists)
                 part_start = end + 1
         else:
             # This breaks out of the loop on non-variable name characters
@@ -190,10 +194,10 @@ def _varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
-    space = _varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
+    space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
     return {'replacement': space, 'start': start, 'end': end}
 
-def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
+def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
@@ -206,7 +210,7 @@ def varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=Fals
     done = [] # Completed chunks to return
 
     while raw:
-        m = _varFind(basedir, raw, vars, lookup_fatal, depth, expand_lists)
+        m = _legacy_varFind(basedir, raw, vars, lookup_fatal, depth, expand_lists)
         if not m:
             done.append(raw)
             break
@@ -235,16 +239,20 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
             varname = template_from_string(basedir, varname, vars)
-        m = _varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+
+        m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
             return varname
         if m['start'] == 0 and m['end'] == len(varname):
             if m['replacement'] is not None:
+                Flags.LEGACY_TEMPLATE_WARNING = True
                 return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
             else:
                 return varname
         else:
-            return varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+            Flags.LEGACY_TEMPLATE_WARNING = True
+            return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+
     elif isinstance(varname, (list, tuple)):
         return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
     elif isinstance(varname, dict):
