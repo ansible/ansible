@@ -674,33 +674,33 @@ def get_diff(diff):
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
 def is_list_of_strings(items):
-   for x in items: 
-       if not isinstance(x, basestring):
-           return False
-   return True
+    for x in items: 
+        if not isinstance(x, basestring):
+            return False
+    return True
 
 def safe_eval(str):
-   ''' 
-   this is intended for allowing things like:
-   with_items: {{ a_list_variable }}
-   where Jinja2 would return a string
-   but we do not want to allow it to call functions (outside of Jinja2, where
-   the env is constrained)
-   '''
-   # FIXME: is there a more native way to do this?
+    ''' 
+    this is intended for allowing things like:
+    with_items: {{ a_list_variable }}
+    where Jinja2 would return a string
+    but we do not want to allow it to call functions (outside of Jinja2, where
+    the env is constrained)
+    '''
+    # FIXME: is there a more native way to do this?
     
-   def is_set(var):
-       return not var.startswith("$") and not '{{' in var
-   def is_unset(var):
-       return var.startswith("$") or '{{' in var
+    def is_set(var):
+        return not var.startswith("$") and not '{{' in var
+    def is_unset(var):
+        return var.startswith("$") or '{{' in var
 
-   # do not allow method calls to modules
-   if re.search(r'\w\.\w+\(', str):
-       return str
-   # do not allow imports
-   if re.search(r'import \w+', str):
-       return str
-   return eval(str)
+    # do not allow method calls to modules
+    if re.search(r'\w\.\w+\(', str):
+        return str
+    # do not allow imports
+    if re.search(r'import \w+', str):
+        return str
+    return eval(str)
 
 
 

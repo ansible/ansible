@@ -505,7 +505,7 @@ class PlayBook(object):
                 host_list = self._list_available_hosts(play.hosts)
 
                 if task.any_errors_fatal and len(host_list) < hosts_count:
-                  host_list = None
+                    host_list = None
 
                 # if no hosts remain, drop out
                 if not host_list:
