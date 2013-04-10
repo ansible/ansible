@@ -345,7 +345,7 @@ class Nagios(object):
             notif_str += ";%s" % host
             
             if svc is not None:
-                notif_str += ";%s" %  svc
+                notif_str += ";%s" % svc
 
         notif_str += "\n"
 
