@@ -181,11 +181,6 @@ def main(args):
 
             pb.run()
 
-            if ansible.utils.template.Flags.LEGACY_TEMPLATE_WARNING:
-                print callbacks.banner("Deprecation Warnings")
-                print "  legacy playbook variable references such as '$foo' will be removed in Ansible 1.4"
-                print "  update playbooks to use '{{ foo }}' instead"
-
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
