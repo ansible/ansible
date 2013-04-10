@@ -154,11 +154,6 @@ def check_conditional(conditional):
     if not isinstance(conditional, basestring):
         return conditional
 
-    def is_set(var):
-        return not var.startswith("$") and not '{{' in var
-
-    def is_unset(var):
-        return var.startswith("$") or '{{' in var
 
     try:
         conditional = conditional.replace("\n", "\\n")
@@ -693,14 +688,17 @@ def safe_eval(str):
    the env is constrained)
    '''
    # FIXME: is there a more native way to do this?
+    
+   def is_set(var):
+       return not var.startswith("$") and not '{{' in var
+   def is_unset(var):
+       return var.startswith("$") or '{{' in var
 
-   # do not allow method calls
+   # do not allow method calls to modules
    if re.search(r'\w\.\w+\(', str):
-       print "C1"
        return str
    # do not allow imports
    if re.search(r'import \w+', str):
-       print "C2"
        return str
    return eval(str)
 
