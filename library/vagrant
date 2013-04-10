@@ -79,7 +79,7 @@ options:
     description:
       - Version of Vagrantfile format
     required: False
-    default: 2
+    default: 1
 
 examples:
    - code: 'local_action: vagrant cmd=up box_name=lucid32 vm_name=webserver'
@@ -120,7 +120,7 @@ VAGRANT_INT_IP = "192.168.179.10"
 DEFAULT_VM_NAME = "ansible"
 DEFAULT_VM_RAM = 1024
 DEFAULT_VM_CPU = 1
-DEFAULT_VAGRANTFILE_VERSION = 2
+DEFAULT_VAGRANTFILE_VERSION = 1
 
 import sys
 import subprocess
