@@ -382,12 +382,14 @@ def template_from_file(basedir, path, vars):
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
-                    host = vars['template_host'],
-                    uid  = vars['template_uid'],
-                    file = vars['template_path']
-                    )
-    vars['ansible_managed'] = time.strftime(managed_str,
-                                time.localtime(os.path.getmtime(realpath)))
+        host = vars['template_host'],
+        uid  = vars['template_uid'],
+        file = vars['template_path']
+    )
+    vars['ansible_managed'] = time.strftime(
+        managed_str,
+        time.localtime(os.path.getmtime(realpath))
+    )
 
     # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
     # Ideally, this could use some API where setting shared=True and the object won't get
@@ -399,6 +401,7 @@ def template_from_file(basedir, path, vars):
     return template(basedir, res, vars)
 
 def _get_filter_plugins():
+
     global FILTER_PLUGINS
     if FILTER_PLUGINS is not None:
         return FILTER_PLUGINS
