@@ -692,6 +692,7 @@ def safe_eval(str):
     
     def is_set(var):
         return not var.startswith("$") and not '{{' in var
+
     def is_unset(var):
         return var.startswith("$") or '{{' in var
 

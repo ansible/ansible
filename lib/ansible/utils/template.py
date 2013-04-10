@@ -32,7 +32,7 @@ import pwd
 
 
 class Flags:
-   LEGACY_TEMPLATE_WARNING = False
+    LEGACY_TEMPLATE_WARNING = False
 
 # TODO: refactor this file
 
