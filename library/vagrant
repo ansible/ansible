@@ -63,7 +63,7 @@ options:
     aliases: []
   ram:
     description:
-      - memory in MB
+      - memory in MB; --memory still allowed though
     required: False
   cpus:
     description:
@@ -523,6 +523,7 @@ def main():
             vm_name=dict(),
             forward_ports=dict(),
             ram=dict(),
+            memory=dict(),
             cpus=dict(),
             ip=dict(),
             count = dict(default='1'), 
@@ -536,7 +537,7 @@ def main():
     box_path = module.params.get('box_path')
     vm_name = module.params.get('vm_name')
     forward_ports = module.params.get('forward_ports')     
-    ram = module.params.get('ram')
+    ram = module.params.get('ram') or module.params.get('memory')
     cpus = module.params.get('cpus')
     ip = module.params.get('ip')
     version = module.params.get('version')
