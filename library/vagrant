@@ -17,7 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: vagrant
-short_description: create a local instance via vagrant
+short_description: create a local instance via vagrant (VirtualBox only)
 description:
   - creates VM instances via vagrant and optionally waits for it to be 'running'.
 version_added: "1.1"
@@ -61,10 +61,25 @@ options:
       - comma separated list of ports to forward to the host. If the port is under 1024, the host port will be the guest port +10000
     required: False
     aliases: []
-  memory:
+  ram:
     description:
       - memory in MB
     required: False
+  cpus:
+    description:
+      - Number of CPU core allocated to the host. Can not exceed the number of CPU cores available on the hypervisor.
+    required: False
+    default: 1
+  ip:
+    description:
+      - IP address assigned to the host, incremented by 1 for each extra server. Netmask assumed to /24.
+    required: False
+    default: 192.168.179.10
+  version:
+    description:
+      - Version of Vagrantfile format
+    required: False
+    default: 2
 
 examples:
    - code: 'local_action: vagrant cmd=up box_name=lucid32 vm_name=webserver'
@@ -77,29 +92,38 @@ VAGRANT_FILE = "./Vagrantfile"
 VAGRANT_DICT_FILE = "./Vagrantfile.json"
 VAGRANT_LOCKFILE = "./.vagrant-lock"
 
-VAGRANT_FILE_HEAD = "Vagrant::Config.run do |config|\n"
-VAGRANT_FILE_BOX_NAME = "  config.vm.box = \"%s\"\n"
-VAGRANT_FILE_VM_STANZA_HEAD = """
-  config.vm.define :%s do |%s_config|
-    %s_config.vm.network :hostonly, "%s"
-    %s_config.vm.box = "%s"
-"""
-VAGRANT_FILE_HOSTNAME_LINE     = "    %s_config.vm.host_name = \"%s\"\n"
-VAGRANT_FILE_PORT_FORWARD_LINE = "    %s_config.vm.forward_port %s, %s\n"  
-VAGRANT_FILE_MEMORY_LINE       = "    %s_config.vm.customize [\"modifyvm\", :id, \"--memory\", %s]\n" 
-VAGRANT_FILE_VM_STANZA_TAIL="  end\n"
-
-VAGRANT_FILE_TAIL = "\nend\n"
+VAGRANT_FILE_HEAD_V1         = "Vagrant::Config.run do |config|\n"
+VAGRANT_FILE_HEAD_V2         = "Vagrant.configure(\"2\") do |config|\n"
+VAGRANT_FILE_VM_HEAD         = "  config.vm.define :%s do |%s_config|\n"
+VAGRANT_FILE_VM_BOX_NAME     = "    %s_config.vm.box = \"%s\"\n"
+VAGRANT_FILE_VM_NETWORK_V1   = "    %s_config.vm.network :hostonly, \"%s\"\n"
+VAGRANT_FILE_VM_NETWORK_V2   = "    %s_config.vm.network :private_network, ip: \"%s\"\n"
+VAGRANT_FILE_VM_HOSTNAME_V1  = "    %s_config.vm.host_name = \"%s\"\n"
+VAGRANT_FILE_VM_HOSTNAME_V2  = "    %s_config.vm.hostname = \"%s\"\n"
+VAGRANT_FILE_VM_PORT_FORWARD = "    %s_config.vm.forward_port %s, %s\n"
+# V1 VirtualBox config are at the same level as the other config
+VAGRANT_FILE_VM_VB_NAME_V1   = "    %s_config.vm.customize [\"modifyvm\", :id, \"--name\", \"%s\"]\n" 
+VAGRANT_FILE_VM_VB_RAM_V1    = "    %s_config.vm.customize [\"modifyvm\", :id, \"--memory\", %s]\n" 
+VAGRANT_FILE_VM_VB_CPUS_V1   = "    %s_config.vm.customize [\"modifyvm\", :id, \"--cpus\", %s]\n"
+# V2 VirtualBox config are nested within a provider (all support for other later)
+VAGRANT_FILE_VM_VB_HEAD_V2   = "    %s_config.vm.provider :virtualbox do |%s_v|\n"
+VAGRANT_FILE_VM_VB_NAME_V2   = "        %s_v.customize [\"modifyvm\", :id, \"--name\", \"%s\"]\n" 
+VAGRANT_FILE_VM_VB_RAM_V2    = "        %s_v.customize [\"modifyvm\", :id, \"--memory\", %s]\n" 
+VAGRANT_FILE_VM_VB_CPUS_V2   = "        %s_v.customize [\"modifyvm\", :id, \"--cpus\", %s]\n"
+VAGRANT_FILE_VM_VB_TAIL_V2   = "    end\n"
+VAGRANT_FILE_VM_TAIL         = "  end\n"
+VAGRANT_FILE_TAIL            = "end\n"
 
 # If this is already a network on your machine, this may fail ... change it here.
-VAGRANT_INT_IP = "192.168.179.%s"
+VAGRANT_INT_IP = "192.168.179.10"
 
 DEFAULT_VM_NAME = "ansible"
 DEFAULT_VM_RAM = 1024
+DEFAULT_VM_CPU = 1
+DEFAULT_VAGRANTFILE_VERSION = 2
 
 import sys
 import subprocess
-#import time
 import os.path
 import json
 
@@ -116,13 +140,14 @@ except ImportError:
 
 class VagrantWrapper(object):
 
-    def __init__(self):
+    def __init__(self, version=DEFAULT_VAGRANTFILE_VERSION):
         '''
         Wrapper around the python-vagrant module for use with ansible.
         Note that Vagrant itself is non-thread safe, as is the python-vagrant lib, so we need to lock on basically all operations ...
         '''
         # Get a lock
         self.lock = None
+        self.version = version
 
         try:
             self.lock = lockfile.FileLock(VAGRANT_LOCKFILE)
@@ -164,7 +189,7 @@ class VagrantWrapper(object):
             
         return changed
              
-    def up(self, box_name, vm_name=None, count=1, box_path=None, ports=[]):    
+    def up(self, box_name, vm_name=None, count=1, box_path=None, ports=[], ram=None, cpus=1, ip=None):    
         '''Fire up a given VM and name it, using vagrant's multi-VM mode.'''
 
         changed = False
@@ -175,7 +200,11 @@ class VagrantWrapper(object):
             raise Exception("You must specify a box name for Vagrant.")
         if box_path != None: 
             changed = self.prepare_box(box_name, box_path)
-        
+
+        # Handle IP address 
+        ip_prefix = ip[0:ip.rfind('.')+1]
+        ip_suffix = ip[ip.rfind('.')+1::]
+
         for icount in range(int(count)):
             
             self._deserialize()
@@ -184,8 +213,13 @@ class VagrantWrapper(object):
             if not this_instance_dict.has_key('box_name'): 
                 this_instance_dict['box_name'] = box_name   
                      
-            this_instance_dict['forward_ports'] = ports  
-            
+            this_instance_dict['forward_ports'] = ports
+            this_instance_dict['ram'] = ram
+            this_instance_dict['cpus'] = cpus
+
+            # Build ip incrementally
+            this_instance_dict['internal_ip'] = ip_prefix + str(int(ip_suffix)+icount)
+
             # Save our changes and run
             inst_array = self._instances()[vm_name]
             inst_array[icount] = this_instance_dict    
@@ -325,9 +359,10 @@ class VagrantWrapper(object):
           N = this_instance_N,
           name = vm_name,
           vagrant_name = name_for_vagrant,
-          internal_ip = VAGRANT_INT_IP % (255-this_instance_N),
+          internal_ip = '',
           forward_ports = [],
           ram = DEFAULT_VM_RAM,
+          cpus = DEFAULT_VM_CPU
         )
 
         # Save this ...
@@ -381,32 +416,59 @@ class VagrantWrapper(object):
     # Translate the state dictionary into the Vagrantfile
     #    
     def _write_vagrantfile(self):
-
         vfile = open(VAGRANT_FILE, 'w')
-        vfile.write(VAGRANT_FILE_HEAD)
+        # Write the Vagrant file in V1 or V2 format
+        if self.version == 1:
+            vfile.write(VAGRANT_FILE_HEAD_V1)
+        else:
+            vfile.write(VAGRANT_FILE_HEAD_V2)
 
+        # instances is a dict of arrays; each array representing a collection
+        # of servers matching the name (prepanded by an index)
         instances = self._instances()
-        for vm_name in instances.keys():
-            inst_array = instances[vm_name]
+        for vm_name, inst_array in instances.iteritems():
             for index in range(len(inst_array)):
-                instance_dict = inst_array[index] 
+                instance_dict = inst_array[index]
+
+                # helpers
                 name     = instance_dict['vagrant_name']
                 ip       = instance_dict['internal_ip']
                 box_name = instance_dict['box_name']
-                vfile.write(VAGRANT_FILE_VM_STANZA_HEAD % 
-                            (name, name, name, ip, name, box_name) )
-                if instance_dict.has_key('ram'):
-                    vfile.write(VAGRANT_FILE_MEMORY_LINE  % (name, instance_dict['ram'])  )   
-                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )       
+                cpus     = instance_dict['cpus']
+                ram      = instance_dict['ram']
+
+                vfile.write(VAGRANT_FILE_VM_HEAD % (name, name))
+                vfile.write(VAGRANT_FILE_VM_BOX_NAME % (box_name))
+
+                if self.version == 1:
+                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V1, (name, name))
+                    vfile.write(VAGRANT_FILE_VM_NETWORK_V1, (name, ip))
+                else:
+                    vfile.write(VAGRANT_FILE_VM_HOSTNAME_V2, (name, name))
+                    vfile.write(VAGRANT_FILE_VM_NETWORK_V2, (name, ip))
+
                 if instance_dict.has_key('forward_ports'):
                     for port in instance_dict['forward_ports']:
                         port = int(port)
                         host_port = port
                         if port < 1024: 
                             host_port = port + 10000
-                        vfile.write(VAGRANT_FILE_PORT_FORWARD_LINE % (name, port, host_port) )
-                vfile.write(VAGRANT_FILE_VM_STANZA_TAIL)
-  
+                        vfile.write(VAGRANT_FILE_VM_PORT_FORWARD % (name, port, host_port) )
+                
+                if self.version == 1:
+                    vfile.write(VAGRANT_FILE_VM_VB_NAME_V1 % (name, name))
+                    vfile.write(VAGRANT_FILE_VM_VB_RAM_V1 % (name, ram))
+                    vfile.write(VAGRANT_FILE_VM_VB_CPUS_V1 % (name, cpus))
+                else:
+                    vfile.write(VAGRANT_FILE_VM_VB_HEAD_V2 % (name, name))
+                    vfile.write(VAGRANT_FILE_VM_VB_NAME_V2 % (name, name))
+                    vfile.write(VAGRANT_FILE_VM_VB_RAM_V2 % (name, ram))
+                    vfile.write(VAGRANT_FILE_VM_VB_CPUS_V2 % (name, cpus))
+                    vfile.write(VAGRANT_FILE_VM_VB_TAIL_V2)
+
+                # Finish iterating over one of the item in a array
+                vfile.write(VAGRANT_FILE_VM_TAIL)
+        # Finished iterating over all the instances
         vfile.write(VAGRANT_FILE_TAIL)
         vfile.close()
         
@@ -435,6 +497,8 @@ class VagrantWrapper(object):
                       id              = cnf['Host'],
                       public_ip       = cnf['HostName'],
                       internal_ip     = inst['internal_ip'],
+                      cpus            = inst['cpus'],
+                      ram             = inst['ram'],
                       public_dns_name = cnf['HostName'],
                       port            = cnf['Port'],
                       username        = cnf['User'],
@@ -458,9 +522,13 @@ def main():
             box_path=dict(),
             vm_name=dict(),
             forward_ports=dict(),
+            ram=dict(),
+            cpus=dict(),
+            ip=dict(),
             count = dict(default='1'), 
-       )
-   )
+            version = dict()
+        )
+    )
     
     state = module.params.get('state')
     cmd = module.params.get('cmd')
@@ -468,16 +536,31 @@ def main():
     box_path = module.params.get('box_path')
     vm_name = module.params.get('vm_name')
     forward_ports = module.params.get('forward_ports')     
+    ram = module.params.get('ram')
+    cpus = module.params.get('cpus')
+    ip = module.params.get('ip')
+    version = module.params.get('version')
 
     if forward_ports != None:
         forward_ports=forward_ports.split(',')
     if forward_ports == None: 
         forward_ports=[]
 
+    if ram == None:
+        ram = DEFAULT_VM_RAM
+    if cpus == None:
+        cpus = DEFAULT_VM_CPU
+    if ip == None:
+        ip = VAGRANT_INT_IP
+
+    # Hardcoded valid versions of the VagrantFile..
+    if version != 1 or version != 2:
+        version = DEFAULT_VAGRANTFILE_VERSION
+
     count = module.params.get('count') 
  
     # Initialize vagrant
-    vgw = VagrantWrapper()
+    vgw = VagrantWrapper(version)
     
     #
     # Check if we are being invoked under an idempotency idiom of "state=present" or "state=absent"
@@ -490,7 +573,7 @@ def main():
                  
             if state == 'present':
                
-                changd, insts = vgw.up(box_name, vm_name, count, box_path, forward_ports)
+                changd, insts = vgw.up(box_name, vm_name, count, box_path, forward_ports, ram, cpus, ip)
                 module.exit_json(changed = changd, instances = insts)
                  
             if state == 'absent':
@@ -508,13 +591,13 @@ def main():
             
                 if count == None: 
                     count = 1
-                (changd, insts) = vgw.up(box_name, vm_name, count, box_path, forward_ports)
+                (changd, insts) = vgw.up(box_name, vm_name, count, box_path, forward_ports, ram, cpus, ip)
                 module.exit_json(changed = changd, instances = insts)
 
             elif cmd == 'status':
 
-#            if vm_name == None:
-#                module.fail_json(msg = "Error: you must specify a vm_name when calling status." )
+                # if vm_name == None:
+                #     module.fail_json(msg = "Error: you must specify a vm_name when calling status." )
                 
                 (changd, result) = vgw.status(vm_name)
                 module.exit_json(changed = changd, status = result)
@@ -527,13 +610,15 @@ def main():
                 module.exit_json(changed = changd, config = cnf)
 
             elif cmd == 'ssh':
-            
                 if vm_name == None:
                     module.fail_json(msg = "Error: you must specify a vm_name when calling ssh." )             
                             
-                (changd, cnf) = vgw.config(vm_name)
-                sshcmd = "ssh -i %s -p %s %s@%s" % (cnf["IdentityFile"], cnf["Port"], cnf["User"], cnf["HostName"])
-                sshmsg = "Execute the command \"vagrant ssh %s\"" % (vm_name)
+                (changd, configs) = vgw.config(vm_name)
+                sshcmd = []
+                sshmsg = []
+                for cnf in configs[vm_name]:
+                    sshcmd.append("ssh -i %s -p %s %s@%s" % (cnf["IdentityFile"], cnf["Port"], cnf["User"], cnf["HostName"]))
+                    sshmsg.append("Execute the command \"vagrant ssh %s\"" % (vm_name))
                 module.exit_json(changed = changd, msg = sshmsg, SshCommand = sshcmd)
            
             elif cmd == 'halt':
