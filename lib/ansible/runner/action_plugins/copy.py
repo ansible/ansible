@@ -18,7 +18,7 @@
 import os
 
 from ansible import utils
-from ansible import template
+import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
