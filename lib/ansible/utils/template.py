@@ -40,6 +40,13 @@ FILTER_PLUGINS = {}
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
+def lookup(name, *args, **kwargs):
+    instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+    if instance is not None:
+        return ",".join(instance.run(*args, inject=vars, **kwargs))
+    else:
+        raise errors.AnsibleError("lookup plugin (%s) not found" % name)
+
 def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
     
@@ -266,6 +273,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     else:
         return varname
 
+
 class _jinja2_vars(object):
     '''
     Helper class to template all variable content before jinja2 sees it.
@@ -347,12 +355,16 @@ def template_from_file(basedir, path, vars):
         '''
         jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
 
+    def my_lookup(*args, **kwargs):
+        return lookup(*args, basedir=basedir, **kwargs)
+
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=jinja_exts)
     for filter_plugin in utils.plugins.filter_loader.all():
         filters = filter_plugin.filters()
         if not isinstance(filters, dict):
             raise errors.AnsibleError("FilterModule.filters should return a dict.")
         environment.filters.update(filters)
+        environment.globals['lookup'] = my_lookup
     try:
         data = codecs.open(realpath, encoding="utf8").read()
     except UnicodeDecodeError:
@@ -417,6 +429,7 @@ def _get_filter_plugins():
             raise errors.AnsibleError("FilterModule.filters should return a dict.")
         FILTER_PLUGINS.update(filters)
     return FILTER_PLUGINS
+        
 
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
@@ -438,15 +451,11 @@ def template_from_string(basedir, data, vars):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data
-           
-        def lookup(name, *args, **kwargs):
-            instance = utils.plugins.lookup_loader.get(name.lower(), basedir=basedir)
-            if instance is not None:
-                return ",".join(instance.run(*args, inject=vars, **kwargs))
-            else:
-                raise errors.AnsibleError("lookup plugin (%s) not found" % name)
+         
+        def my_lookup(*args, **kwargs):
+            return lookup(*args, basedir=basedir, **kwargs)
  
-        t.globals['lookup'] = lookup
+        t.globals['lookup'] = my_lookup
  
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
