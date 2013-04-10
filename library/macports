@@ -136,7 +136,7 @@ def activate_packages(module, port_path, packages):
 
     for package in packages:
         if not query_package(module, port_path, package):
-           module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
+            module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
 
         if query_package(module, port_path, package, state="active"):
             continue
@@ -161,7 +161,7 @@ def deactivate_packages(module, port_path, packages):
 
     for package in packages:
         if not query_package(module, port_path, package):
-           module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
+            module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
 
         if not query_package(module, port_path, package, state="active"):
             continue

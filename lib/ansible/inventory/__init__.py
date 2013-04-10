@@ -334,12 +334,12 @@ class Inventory(object):
             results = []
             # allow Unix style @filename data
             for x in subset_pattern:
-               if x.startswith("@"):
-                   fd = open(x[1:])
-                   results.extend(fd.read().split("\n"))
-                   fd.close()
-               else:
-                   results.append(x)
+                if x.startswith("@"):
+                    fd = open(x[1:])
+                    results.extend(fd.read().split("\n"))
+                    fd.close()
+                else:
+                    results.append(x)
             self._subset = results
 
     def lift_restriction(self):

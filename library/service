@@ -385,9 +385,9 @@ class LinuxService(Service):
 
             look_for = "%s.service" % name
             for line in out.splitlines():
-               if line.startswith(look_for):
-                   self.enable_cmd = location['systemctl']
-                   break
+                if line.startswith(look_for):
+                    self.enable_cmd = location['systemctl']
+                    break
 
         # Locate a tool for runtime service management (start, stop etc.)
         self.svc_cmd = ''

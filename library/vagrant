@@ -181,7 +181,7 @@ class VagrantWrapper(object):
             self._deserialize()
             
             this_instance_dict = self._get_instance(vm_name,icount)
-            if not this_instance_dict.has_key('box_name'): 
+            if not 'box_name' in this_instance_dict:
                 this_instance_dict['box_name'] = box_name   
                      
             this_instance_dict['forward_ports'] = ports  
@@ -205,7 +205,8 @@ class VagrantWrapper(object):
     def status(self, vm_name = None, index = -1):
         '''Return the run status of the VM instance. If no instance N is given, returns first instance.'''
         vm_names = []
-        if vm_name != None: vm_names = [vm_name]
+        if vm_name != None: 
+            vm_names = [vm_name]
         else:
             vm_names = self._instances().keys()
         
@@ -225,7 +226,8 @@ class VagrantWrapper(object):
     def config(self, vm_name, index = -1):
         '''Return info on SSH for the running instance.'''
         vm_names = []
-        if vm_name != None: vm_names = [vm_name]
+        if vm_name != None: 
+            vm_names = [vm_name]
         else:
             vm_names = self._instances().keys()
         
@@ -247,7 +249,8 @@ class VagrantWrapper(object):
         
         changed = False
         vm_names = []
-        if vm_name != None: vm_names = [vm_name]
+        if vm_name != None: 
+            vm_names = [vm_name]
         else:
             vm_names = self._instances().keys()
         
@@ -300,6 +303,7 @@ class VagrantWrapper(object):
 #
 # Helper Methods
 #
+
     def _instances(self): 
         return self.vg_data['instances']
     
@@ -308,7 +312,7 @@ class VagrantWrapper(object):
         instances = self._instances()
 
         inst_array = []        
-        if instances.has_key(vm_name):
+        if vm_name in instances:
             inst_array = instances[vm_name]
             
         if len(inst_array) > index: 
@@ -393,18 +397,17 @@ class VagrantWrapper(object):
                 name     = instance_dict['vagrant_name']
                 ip       = instance_dict['internal_ip']
                 box_name = instance_dict['box_name']
-                vfile.write(VAGRANT_FILE_VM_STANZA_HEAD % 
-                            (name, name, name, ip, name, box_name) )
-                if instance_dict.has_key('ram'):
-                    vfile.write(VAGRANT_FILE_MEMORY_LINE  % (name, instance_dict['ram'])  )   
-                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-'))  )       
-                if instance_dict.has_key('forward_ports'):
+                vfile.write(VAGRANT_FILE_VM_STANZA_HEAD % (name, name, name, ip, name, box_name))
+                if 'ram' in instance_dict:
+                    vfile.write(VAGRANT_FILE_MEMORY_LINE  % (name, instance_dict['ram']))   
+                vfile.write(VAGRANT_FILE_HOSTNAME_LINE  % (name, name.replace('_','-')))       
+                if 'forward_ports' in instance_dict:
                     for port in instance_dict['forward_ports']:
                         port = int(port)
                         host_port = port
                         if port < 1024: 
                             host_port = port + 10000
-                        vfile.write(VAGRANT_FILE_PORT_FORWARD_LINE % (name, port, host_port) )
+                        vfile.write(VAGRANT_FILE_PORT_FORWARD_LINE % (name, port, host_port))
                 vfile.write(VAGRANT_FILE_VM_STANZA_TAIL)
   
         vfile.write(VAGRANT_FILE_TAIL)
@@ -522,14 +525,15 @@ def main():
             elif cmd == "config" or cmd == "conf":
             
                 if vm_name == None:
-                    module.fail_json(msg = "Error: you must specify a vm_name when calling config." )
+                    module.fail_json(msg = "Error: a vm_name is required when calling config.")
                 (changd, cnf) = vgw.config(vm_name)
                 module.exit_json(changed = changd, config = cnf)
 
             elif cmd == 'ssh':
-            
+                # this doesn't really seem to belong here, should just manage the VM with ansible -- MPD           
+ 
                 if vm_name == None:
-                    module.fail_json(msg = "Error: you must specify a vm_name when calling ssh." )             
+                    module.fail_json(msg = "Error: a vm_name is required when calling ssh.")
                             
                 (changd, cnf) = vgw.config(vm_name)
                 sshcmd = "ssh -i %s -p %s %s@%s" % (cnf["IdentityFile"], cnf["Port"], cnf["User"], cnf["HostName"])

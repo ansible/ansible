@@ -90,7 +90,7 @@ class Play(object):
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
-            load_vars['inventory_dir'] = self.playbook.inventory.basedir();
+            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
@@ -226,7 +226,7 @@ class Play(object):
                         mv[k] = utils.template(self.basedir, v, mv)
                     dirname = self.basedir
                     if original_file:
-                         dirname = os.path.dirname(original_file)     
+                        dirname = os.path.dirname(original_file)     
                     include_file = utils.template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
