@@ -23,6 +23,7 @@ from jinja2.runtime import StrictUndefined
 import yaml
 import json
 from ansible import errors
+import ansible.utils as utils
 import ansible.constants as C
 import time
 import subprocess
@@ -174,7 +175,8 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             lookup_plugin_name, args = args.split(",", 1)
             args = args.strip()
         # args have to be templated
-        args = varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
+        args = legacy_varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
+
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
         if instance is not None:
             try:
@@ -186,6 +188,7 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
                     replacement = None
                 else:
                     raise
+
         else:
             replacement = None
         return {'replacement': replacement, 'start': start, 'end': end}
@@ -222,7 +225,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
         if expand_lists and isinstance(replacement, (list, tuple)):
             replacement = ",".join([str(x) for x in replacement])
         if isinstance(replacement, (str, unicode)):
-            replacement = varReplace(basedir, replacement, vars, lookup_fatal, depth=depth+1, expand_lists=expand_lists)
+            replacement = legacy_varReplace(basedir, replacement, vars, lookup_fatal, depth=depth+1, expand_lists=expand_lists)
         if replacement is None:
             replacement = raw[m['start']:m['end']]
 
@@ -436,10 +439,14 @@ def template_from_string(basedir, data, vars):
             else:
                 return data
            
-        def test_foo():
-            return 'test_foo!'
-        
-        t.globals['test_foo'] = test_foo 
+        def lookup(name, *args, **kwargs):
+            instance = utils.plugins.lookup_loader.get(name.lower(), basedir=basedir)
+            if instance is not None:
+                return ",".join(instance.run(*args, inject=vars, **kwargs))
+            else:
+                raise errors.AnsibleError("lookup plugin (%s) not found" % name)
+ 
+        t.globals['lookup'] = lookup
  
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
