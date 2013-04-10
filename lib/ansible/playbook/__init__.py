@@ -153,46 +153,45 @@ class PlayBook(object):
         for play in playbook_data:
             if type(play) != dict:
                 raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
+
             if 'include' in play:
+                # a playbook (list of plays) decided to include some other list of plays
+                # from another file.  The result is a flat list of plays in the end.
+
                 tokens = shlex.split(play['include'])
 
-                items = ['']
-                for k in play.keys():
-                    if not k.startswith("with_"):
-                        # These are the keys allowed to be mixed with playbook includes
-                        if k in ("include", "vars"):
-                            continue
-                        else:
-                            raise errors.AnsibleError("parse error: playbook includes cannot be used with other directives: %s" % play)
-                    plugin_name = k[5:]
-                    if plugin_name not in utils.plugins.lookup_loader:
-                        raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                    terms = utils.template(basedir, play[k], vars)
-                    items = utils.plugins.lookup_loader.get(plugin_name, basedir=basedir, runner=None).run(terms, inject=vars)
+                incvars = vars.copy()
+                if 'vars' in play:
+                    if isinstance(play['vars'], dict):
+                        incvars.update(play['vars'])
+                    elif isinstance(play['vars'], list):
+                        for v in play['vars']:
+                            incvars.update(v)
 
-                for item in items:
-                    incvars = vars.copy()
-                    if 'vars' in play:
-                        if isinstance(play['vars'], dict):
-                            incvars.update(play['vars'])
-                        elif isinstance(play['vars'], list):
-                            for v in play['vars']:
-                                incvars.update(v)
-                    for t in tokens[1:]:
-                        (k,v) = t.split("=", 1)
-                        incvars[k] = utils.template(basedir, v, incvars)
+                # allow key=value parameters to be specified on the include line
+                # to set variables
+
+                for t in tokens[1:]:
+
+                    (k,v) = t.split("=", 1)
+                    incvars[k] = utils.template(basedir, v, incvars)
                     included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
                     (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
                     for p in plays:
+                        # support for parameterized play includes works by passing
+                        # those variables along to the subservient play
                         if 'vars' not in p:
                             p['vars'] = {}
                         if isinstance(p['vars'], dict):
                             p['vars'].update(incvars)
                         elif isinstance(p['vars'], list):
+                            # nobody should really do this, but handle vars: a=1 b=2
                             p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
                     accumulated_plays.extend(plays)
                     play_basedirs.extend(basedirs)
             else:
+
+                # this is a normal (non-included play)
                 accumulated_plays.append(play)
                 play_basedirs.append(basedir)
 
