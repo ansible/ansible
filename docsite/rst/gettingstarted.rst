@@ -223,7 +223,7 @@ Tagged Releases
 
 Tarballs of releases are available on the ansible.cc page.
 
-* `Ansible/downloads <https://ansible.cc/releases>`_
+* `Ansible/downloads <http://ansible.cc/releases>`_
 
 These releases are also tagged in the git repository with the release version.
 
