@@ -162,7 +162,7 @@ def check_conditional(conditional):
 
     try:
         conditional = conditional.replace("\n", "\\n")
-        result = eval(conditional)
+        result = safe_eval(conditional)
         if result not in [ True, False ]:
             raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
         return result
@@ -683,4 +683,30 @@ def is_list_of_strings(items):
        if not isinstance(x, basestring):
            return False
    return True
+
+def safe_eval(str):
+   ''' 
+   this is intended for allowing things like:
+   with_items: {{ a_list_variable }}
+   where Jinja2 would return a string
+   but we do not want to allow it to call functions (outside of Jinja2, where
+   the env is constrained)
+   '''
+   # FIXME: is there a more native way to do this?
+
+   # do not allow method calls
+   if re.search(r'\w\.\w+\(', str):
+       print "C1"
+       return str
+   # do not allow imports
+   if re.search(r'import \w+', str):
+       print "C2"
+       return str
+   return eval(str)
+
+
+
+
+   
+
 
