@@ -37,7 +37,7 @@ JINJA2_OVERRIDE='#jinja2:'
 
 def _varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
-    
+
     basically does space.get(part, None), but with
     templating for part and a few more things
     '''
@@ -264,7 +264,7 @@ class _jinja2_vars(object):
     is avoiding duplicating the large hashes that inject tends to be.
     To facilitate using builtin jinja2 things like range, globals are handled
     here.
-    extras is a list of locals to also search for variables. 
+    extras is a list of locals to also search for variables.
     '''
 
     def __init__(self, basedir, vars, globals, *extras):
@@ -406,24 +406,18 @@ def _get_filter_plugins():
     return FILTER_PLUGINS
 
 def template_from_string(basedir, data, vars):
-    ''' run a file through the (Jinja2) templating engine '''
+    '''Run a string through the (Jinja2) templating engine.'''
 
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True) 
+        environment = jinja2.Environment(trim_blocks=True,
+                                         undefined=jinja2.StrictUndefined)
         environment.filters.update(_get_filter_plugins())
         environment.template_class = J2Template
 
-        # perhaps a nicer way to do this
-        ast = environment.parse(data)
-        undeclared = jinja2_meta.find_undeclared_variables(ast)
-        for x in undeclared:
-            if x not in vars:
-                return data
-
-        # TODO: may need some way of using lookup plugins here seeing we aren't calling
-        # the legacy engine, lookup() as a function, perhaps?
+        # TODO: may need some way of using lookup plugins here seeing we aren't
+        # calling the legacy engine, lookup() as a function, perhaps?
 
         try:
             t = environment.from_string(data)
@@ -432,10 +426,10 @@ def template_from_string(basedir, data, vars):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data
-            
+
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
-        # this shouldn't happen due to undeclared check above
+        # This means the template contained unbound variables, so we return
+        # the original template string.
         return data
-

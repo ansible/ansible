@@ -375,3 +375,49 @@ class TestUtils(unittest.TestCase):
     def test_parse_kv_basic(self):
         assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
+
+    #####################################
+    ### New playbook templating functionality (moustaches).
+
+    def test_moustache_no_vars(self):
+        template = "a template"
+        vars = {'foo': 'foovar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == template
+
+    def test_moustache_single_var(self):
+        template = "a template {{foo}}"
+        vars = {'foo': 'foovar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == "a template foovar"
+
+    def test_moustache_single_var_unbound(self):
+        template = "a template {{bar}}"
+        vars = {'foo': 'bar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == template
+
+    def test_moustache_multiple_vars(self):
+        template = "a template {{foo}} {{bar}}"
+        vars = {'foo': 'foovar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        # Not all the vars are bound, so fail.
+        assert res == template
+        vars = {'foo': 'foovar', 'bar': 'barvar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == "a template foovar barvar"
+
+    def test_moustache_multiple_vars_default_filter(self):
+        template = "a template {{foo}} {{bar|default('defbar')}}"
+
+        vars = {'foo': 'foovar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == "a template foovar defbar"
+
+        vars = {'bar': 'barvar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == template
+
+        vars = {'foo': 'foovar', 'bar': 'barvar'}
+        res = ansible.utils.template_from_string('.', template, vars)
+        assert res == "a template foovar barvar"
