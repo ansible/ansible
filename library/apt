@@ -260,7 +260,7 @@ def main():
         if p['update_cache']:
             cache.update()
             cache.open(progress=None)
-            if not p['package']:
+            if not p['package'] and not p['upgrade']:
                 module.exit_json(changed=False)
 
         force_yes = p['force']
