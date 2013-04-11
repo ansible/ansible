@@ -1,6 +1,7 @@
 ---
 - include: playbook-included.yml variable=foobar
 - include: playbook-included.yml variable=foofoo
+# The with_items below has zero effect - variable will be passed through as $item unless set as an extra_var
 - include: playbook-included.yml variable=$item
   with_items:
   - foo
