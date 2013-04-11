@@ -34,6 +34,11 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  dest_prefix:
+    description:
+      - Describes the type of path to append before the dest 
+    required: false
+    default: host_source_path
 examples:
    - code: "fetch: src=/var/log/messages dest=/home/logtree"
      description: "Example from Ansible Playbooks"
