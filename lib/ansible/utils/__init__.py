@@ -601,12 +601,18 @@ def compile_when_to_only_if(expression):
             cast = 'float'
         tcopy = tokens[1:]
         for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                # final variable substitution will happen in Runner code
-                tcopy[i] = "%s('''%s''')" % (cast, t)
+            #if re.search(t, r"^\w"):
+                # bare word will turn into Jinja2 so all the above
+                # casting is really not needed
+                #tcopy[i] = "%s('''%s''')" % (cast, t)
+            t2 = t.strip()
+            if (t2[0].isalpha() or t2[0] == '$') and cast == 'str':
+               tcopy[i] = "'%s'" % (t)
             else:
-                tcopy[i] = t
-        return " ".join(tcopy)
+               tcopy[i] = t
+        result = " ".join(tcopy)
+        return result
+
 
     # when_boolean
     elif tokens[0] in [ 'bool', 'boolean' ]:
