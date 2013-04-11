@@ -36,7 +36,7 @@ class Flags:
 
 # TODO: refactor this file
 
-FILTER_PLUGINS = {}
+FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
