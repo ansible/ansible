@@ -40,7 +40,7 @@ expressed in the 'ansible-modules' documentation.::
     {
         "dark" : {
            "web1.example.com" : "failure message"
-        }
+        },
         "contacted" : {
            "web2.example.com" : 1
         }
@@ -110,22 +110,22 @@ Each group's value should be either a hash/dictionary containing a list of each 
 simply a list of host/IP addresses, like so::
 
     {
-        'databases'   : {
-            'hosts'   : [ 'host1.example.com', 'host2.example.com' ],
-            'vars'    : {
-                'a'   : true
+        "databases"   : {
+            "hosts"   : [ "host1.example.com", "host2.example.com" ],
+            "vars"    : {
+                "a"   : true
             }
         },
-        'webservers'  : [ 'host2.example.com', 'host3.example.com' ],
-        'atlanta'     : {
-            'hosts'   : [ 'host1.example.com', 'host4.example.com', 'host5.example.com' ],
-            'vars'    : {
-                'b'   : false
+        "webservers"  : [ "host2.example.com", "host3.example.com" ],
+        "atlanta"     : {
+            "hosts"   : [ "host1.example.com", "host4.example.com", "host5.example.com" ],
+            "vars"    : {
+                "b"   : false
             },
-            'children': [ 'marietta', '5points' ],
+            "children": [ "marietta", "5points" ],
         },
-        'marietta'    : [ 'host6.example.com' ],
-        '5points'     : [ 'host7.example.com' ]
+        "marietta"    : [ "host6.example.com" ],
+        "5points"     : [ "host7.example.com" ]
     }
 
 .. versionadded: 1.0
@@ -137,9 +137,9 @@ hash/dictionary, or a hash/dictionary of variables to make available to template
 if the script does not wish to do this, returning an empty hash/dictionary is the way to go::
 
     {
-        'favcolor'   : 'red',
-        'ntpserver'  : 'wolf.example.com',
-        'monitoring' : 'pack.example.com'
+        "favcolor"   : "red",
+        "ntpserver"  : "wolf.example.com",
+        "monitoring" : "pack.example.com"
     }
 
 Example: The Cobbler External Inventory Script

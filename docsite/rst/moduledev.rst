@@ -180,7 +180,7 @@ Let's test that module::
 
 This should return something like::
 
-    {"changed": True, "time": "2012-03-14 12:23:00.000307"}
+    {"changed": true, "time": "2012-03-14 12:23:00.000307"}
 
 Module Provided 'Facts'
 ```````````````````````
