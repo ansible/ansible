@@ -420,7 +420,6 @@ def _get_filter_plugins():
     global FILTER_PLUGINS
     if FILTER_PLUGINS is not None:
         return FILTER_PLUGINS
-    environment = jinja2.Environment(trim_blocks=True)
     FILTER_PLUGINS = {}
     from ansible import utils
     for filter_plugin in utils.plugins.filter_loader.all():
