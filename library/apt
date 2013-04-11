@@ -234,7 +234,7 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
+            upgrade = dict(default='yes', choices=['yes', 'safe', 'full', 'dist'])
         ),
         mutually_exclusive = [['package', 'upgrade']],
         required_one_of = [['package', 'upgrade', 'update_cache']],
