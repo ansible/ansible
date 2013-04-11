@@ -93,8 +93,9 @@ class Cli(object):
                 print '    %s' % host
             sys.exit(0)
 
-        if options.module_name == 'command' and not options.module_args:
-            print >>sys.stderr, "No argument passed to command module"
+        if ((options.module_name == 'command' or options.module_name == 'shell')
+                and not options.module_args):
+            print >>sys.stderr, "No argument passed to %s module" % options.module_name
             sys.exit(1)
 
         sshpass = None
