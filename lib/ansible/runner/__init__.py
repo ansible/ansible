@@ -66,7 +66,6 @@ def _executor_hook(job_queue, result_queue):
             return_data = multiprocessing_runner._executor(host)
             result_queue.put(return_data)
 
-            # print "FLAGS=%s" % return_data.flags
             if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
                 # pass data back up across the multiprocessing fork boundary
                 template.Flags.LEGACY_TEMPLATE_WARNING = True
