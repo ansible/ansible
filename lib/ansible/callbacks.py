@@ -21,6 +21,7 @@ import getpass
 import os
 import subprocess
 import random
+import fnmatch
 from ansible.color import stringc
 
 cowsay = None
@@ -460,8 +461,15 @@ class PlaybookCallbacks(object):
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
+        
+        if hasattr(self, 'start_at'):
+            if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
+                # we found out match, we can get rid of this now
+                del self.start_at
 
-        if hasattr(self, 'step') and self.step:
+        if hasattr(self, 'start_at'): # we still have start_at so skip the task
+            self.skip_task = True
+        elif hasattr(self, 'step') and self.step:
             resp = raw_input('Perform task: %s (y/n/c): ' % name)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
