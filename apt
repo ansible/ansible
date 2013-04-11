@@ -69,11 +69,14 @@ options:
     choices: [ "yes", "no" ]
   upgrade:
     description:
-      - 'If yes, performs an aptitude safe-upgrade. If dist, performs an apt-get dist-upgrade. Note: This does not upgrade a specific package, use state=latest for that.'
+      - 'If yes or safe, performs an aptitude safe-upgrade.'
+      - 'If full, performs an aptitude full-upgrade.'
+      - 'If dist, performs an apt-get dist-upgrade.'
+      - 'Note: This does not upgrade a specific package, use state=latest for that.'
     version_added: "1.1"
     required: false
-    default: no
-    choices: [ "yes", "dist"]
+    default: "yes"
+    choices: [ "yes", "safe", "full", "dist"]
 author: Matthew Williams
 notes: []
 examples:
@@ -102,8 +105,12 @@ import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 # APT related constants
-APT_PATH = "/usr/bin/apt-get"
-APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
+APTITUDE_CMD = "aptitude"
+APT_GET_CMD = "apt-get"
+APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
+DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
+APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 
 def package_split(pkgspec):
     parts = pkgspec.split('=')
@@ -147,7 +154,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
         else:
             force_yes = ''
 
-        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install %s" % (APT, force_yes,packages)
+        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install %s" % (APT_GET, force_yes, packages)
         if default_release:
             cmd += " -t '%s'" % (default_release,)
         if not install_recommends:
@@ -178,7 +185,7 @@ def remove(m, pkgspec, cache, purge=False):
         purge = ''
         if purge:
             purge = '--purge'
-        cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
+        cmd = "%s -q -y %s remove %s" % (APT_GET, purge,packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -193,22 +200,29 @@ def upgrade(m, mode="yes"):
         check_arg = '--simulate'
     else:
         check_arg = ''
-    upgrade_command = 'upgrade'
     if mode == "dist":
-        cmd = '%s %s -q -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade' % (APT, check_arg)
-        rc, out, err = m.run_command(cmd)
-        if rc:
-            m.fail_json(msg="'apt-get %s' failed: %s" % (upgrade_command, err))
-        if "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded." in out :
-            m.exit_json(changed=False)
+        # apt-get dist-upgrade
+        apt_cmd = APT_GET_CMD
+        upgrade_command = "dist-upgrade"
+    elif mode == "full": 
+        # aptitude full-upgrade
+        apt_cmd = APTITUDE_CMD
+        upgrade_command = "full-upgrade"
     else:
-        cmd = "/usr/bin/aptitude safe-upgrade %s -y" % check_arg
-        rc, out, err = m.run_command(cmd)
-        if rc:
-            m.fail_json(msg="'aptitude safe-upgrade' failed: %s" % err)
-        if "No packages will be installed, upgraded, or removed." in out:
-            m.exit_json(changed=False)
-    m.exit_json(changed=True)
+        # aptitude safe-upgrade # mode=yes # default
+        apt_cmd = APTITUDE_CMD
+        upgrade_command = "safe-upgrade"
+
+    apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
+    cmd = '%s %s -y %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
+                                check_arg, upgrade_command)
+    rc, out, err = m.run_command(cmd)
+    if rc:
+        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
+        m.fail_json(msg="'aptitude safe-upgrade' failed: %s" % err)
+    if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
+        m.exit_json(changed=False, msg=out)
+    m.exit_json(changed=True, msg=out)
 
 def main():
     module = AnsibleModule(
@@ -220,7 +234,7 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'dist'])
+            upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
         ),
         mutually_exclusive = [['package', 'upgrade']],
         required_one_of = [['package', 'upgrade', 'update_cache']],
@@ -232,9 +246,6 @@ def main():
         import apt_pkg
     except:
         module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
-
-    if not os.path.exists(APT_PATH):
-        module.fail_json(msg="Cannot find apt-get")
 
     p = module.params
     install_recommends = p['install_recommends']
