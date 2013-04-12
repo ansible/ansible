@@ -140,6 +140,9 @@ class Play(object):
                 has_dict = orig_path
                 orig_path = role_name
 
+            with_items = has_dict.get('with_items', None)
+            when       = has_dict.get('when', None)
+
             path = utils.path_dwim(self.basedir, orig_path)
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
                 path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
@@ -152,9 +155,19 @@ class Play(object):
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
             if os.path.isfile(task):
-                new_tasks.append(dict(include=task, vars=has_dict))
+                nt = dict(include=task, vars=has_dict)
+                if when: 
+                    nt['when'] = when
+                if with_items:
+                    nt['with_items'] = with_items
+                new_tasks.append(nt)
             if os.path.isfile(handler):
-                new_handlers.append(dict(include=handler, vars=has_dict))
+                nt = dict(include=handler, vars=has_dict)
+                if when: 
+                    nt['when'] = when
+                if with_items:
+                    nt['with_items'] = with_items
+                new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
 
