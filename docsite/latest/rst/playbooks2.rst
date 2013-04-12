@@ -28,7 +28,7 @@ Example::
 
     tasks:
 
-        - action: yum name=$item state=installed
+        - action: yum name={{ item }} state=installed
           with_items:
              - httpd
              - memcached
@@ -78,20 +78,13 @@ Accessing Complex Variable Data
 ```````````````````````````````
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
-them a simple '$foo' is not sufficient, but it is still easy to do.   Here's how we get an IP address::
-
-    ${ansible_eth0.ipv4.address}
-
-It is also possible to access variables whose elements are arrays::
-
-    ${somelist[0]}
-
-And the array and hash reference syntaxes can be mixed.
-
-In templates, the simple access form still holds, but they can also be accessed from Jinja2 in more Python-native ways if
-that is preferred::
+them a simple {{ foo }} is not sufficient, but it is still easy to do.   Here's how we get an IP address::
 
     {{ ansible_eth0["ipv4"]["address"] }}
+
+Similarly, this is how we access the first element of an array:
+
+    {{ foo[0] }}
 
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
@@ -105,14 +98,6 @@ or set of playbooks, you can get at the variables, but you will not be able to s
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
-
-    ${hostvars.hostname.factname}
-
-Note in playbooks if your hostname contains a dash or periods in it, escape it like so::
-
-    ${hostvars.{test.example.com}.ansible_distribution}
-
-In Jinja2 templates, this can also be expressed as::
 
     {{ hostvars['test.example.com']['ansible_distribution'] }}
 
@@ -265,8 +250,8 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     -----
-    - user: $user
-      hosts: $hosts
+    - user: '{{ user }}'
+      hosts: '{{ hosts }}'
       tasks:
          - ...
 
@@ -279,30 +264,19 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `only_if` clause, which actually is a Python expression.
+This is easy to do in Ansible, with the `when` clause, which actually is a Python expression.
 Don't panic -- it's actually pretty simple::
 
-    vars:
-      favcolor: blue
-      is_favcolor_blue: "'$favcolor' == 'blue'"
-      is_centos: "'$facter_operatingsystem' == 'CentOS'"
-
     tasks:
-      - name: "shutdown if my favorite color is blue"
+      - name: "shutdown Debian flavored systems"
         action: command /sbin/shutdown -t now
-        only_if: '$is_favcolor_blue'
+        when: ansible_os_family == "Debian"
 
-Variables from tools like `facter` and `ohai` can be used here, if installed, or you can
-use variables that bubble up from ansible, which many are provided by the :ref:`setup` module.   As a reminder,
-these variables are prefixed, so it's `$facter_operatingsystem`, not `$operatingsystem`.  Ansible's
-built in variables are prefixed with `ansible_`.
+As a reminder, to see what derived variables are available, you can do::
 
-The only_if expression is actually a tiny small bit of Python, so be sure to quote variables and make something
-that evaluates to `True` or `False`.  It is a good idea to use 'vars_files' instead of 'vars' to define
-all of your conditional expressions in a way that makes them very easy to reuse between plays
-and playbooks.
+    ansible hostname.example.com -m setup
 
-You cannot use live checks here, like 'os.path.exists', so don't try.
+Variables defined in the playbooks or inventory can also be used.
 
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
@@ -311,7 +285,7 @@ there will be accessible to future tasks::
     tasks:
         - name: gather site specific fact data
           action: site_facts
-        - action: command echo ${my_custom_fact_can_be_used_now}
+        - action: command echo {{ my_custom_fact_can_be_used_now }}
 
 One common useful trick with only_if is to key off the changed result of a last command.  As an example::
 
@@ -319,101 +293,24 @@ One common useful trick with only_if is to key off the changed result of a last 
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
           register: last_result
         - action: command echo 'the file has changed'
-          only_if: '${last_result.changed}'
+          when: last_result.changed
 
-$last_result is a variable set by the register directive. This assumes Ansible 0.8 and later.
+{{ last_result }} is a variable set by the register directive. This assumes Ansible 0.8 and later.
 
-In Ansible 0.8, a few shortcuts are available for testing whether a variable is defined or not::
-
-    tasks:
-        - action: command echo hi
-          only_if: is_set('$some_variable')
-
-There is a matching 'is_unset' that works the same way.  Quoting the variable inside the function is mandatory.
-
-When combining `only_if` with `with_items`, be aware that the `only_if` statement is processed separately for each item.
+When combining `when` with `with_items`, be aware that the `when` statement is processed separately for each item.
 This is by design::
 
     tasks:
-        - action: command echo $item
-          with_item: [ 0, 2, 4, 6, 8, 10 ]
-          only_if: "$item > 5"
-
-While `only_if` is a pretty good option for advanced users, it exposes more guts than we'd like, and
-we can do better.  In 1.0, we added 'when', which is like syntactic sugar for `only_if` and hides
-this level of complexity.  See more on this below.
-
-Conditional Execution (Simplified)
-``````````````````````````````````
-
-.. versionadded: 0.8
-
-In Ansible 0.9, we realized that only_if was a bit syntactically complicated, and exposed too much Python
-to the user.  As a result, the 'when' set of keywords was added.  The 'when' statements do not have
-to be quoted or casted to specify types, but you should separate any variables used with whitespace.  In
-most cases users will be able to use 'when', but for more complex cases, only_if may still be required.
-
-Here are various examples of 'when' in use.  'when' is incompatible with 'only_if' in the same task::
-
-    - name: "do this if my favcolor is blue, and my dog is named fido"
-      action: shell /bin/false
-      when_string: $favcolor == 'blue' and $dog == 'fido'
-
-    - name: "do this if my favcolor is not blue, and my dog is named fido"
-      action: shell /bin/true
-      when_string: $favcolor != 'blue' and $dog == 'fido'
-
-    - name: "do this if my SSN is over 9000"
-      action: shell /bin/true
-      when_integer: $ssn > 9000
-
-    - name: "do this if I have one of these SSNs"
-      action: shell /bin/true
-      when_integer:  $ssn in [ 8675309, 8675310, 8675311 ]
-
-    - name: "do this if a variable named hippo is NOT defined"
-      action: shell /bin/true
-      when_unset: $hippo
-
-    - name: "do this if a variable named hippo is defined"
-      action: shell /bin/true
-      when_set: $hippo
-
-    - name: "do this if a variable named hippo is true"
-      action: shell /bin/true
-      when_boolean: $hippo
-
-The when_boolean check will look for variables that look to be true as well, such as the string 'True' or
-'true', non-zero numbers, and so on.
-
-.. versionadded: 1.0
-
-In 1.0, we also added when_changed and when_failed so users can execute tasks based on the status of previously
-registered tasks.  As an example::
-
-    - name: "register a task that might fail"
-      action: shell /bin/false
-      register: result
-      ignore_errors: True
-
-    - name: "do this if the registered task failed"
-      action: shell /bin/true
-      when_failed: $result
-
-    - name: "register a task that might change"
-      action: yum pkg=httpd state=latest
-      register: result
-
-    - name: "do this if the registered task changed"
-      action: shell /bin/true
-      when_changed: $result
+        - action: command echo {{ item }}
+          with_items: [ 0, 2, 4, 6, 8, 10 ]
+          when: item > 5
 
 Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
 to a task include statement as below.  Note this does not work with playbook includes, just task includes.  All the tasks
 get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
-      when_string: "'reticulating splines' in $output"
+      when: "'reticulating splines' in output"
 
 Conditional Imports
 ```````````````````
@@ -429,13 +326,13 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
       user: root
       vars_files:
         - "vars/common.yml"
-        - [ "vars/$facter_operatingsystem.yml", "vars/os_defaults.yml" ]
+        - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
       tasks:
       - name: make sure apache is running
-        action: service name=$apache state=running
+        action: service name={{ apache }} state=running
 
 .. note::
-   The variable (`$facter_operatingsystem`) is being interpolated into
+   The variable 'ansible_os_family' is being interpolated into
    the list of filenames being defined for vars_files.
 
 As a reminder, the various YAML files contain just keys and values::
@@ -472,14 +369,14 @@ Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      action: user name=$item state=present groups=wheel
+      action: user name={{ item }} state=present groups=wheel
       with_items:
          - testuser1
          - testuser2
 
 If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
 
-    with_items: $somelist
+    with_items: somelist
 
 The above would be the equivalent of::
 
@@ -493,7 +390,7 @@ The yum and apt modules use with_items to execute fewer package manager transact
 Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.
 If you have a list of hashes, you can reference subkeys using things like::
 
-    ${item.subKeyName}
+    {{ item.subKeyName }}
 
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````
@@ -516,13 +413,13 @@ be used like this::
         - action: file dest=/etc/fooapp state=directory
 
         # copy each file over that matches the given pattern
-        - action: copy src=$item dest=/etc/fooapp/ owner=root mode=600
+        - action: copy src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
 
 ``with_file`` loads data in from a file directly::
 
-        - action: authorized_key user=foo key=$item
+        - action: authorized_key user=foo key={{ item }}
           with_file:
              - /home/foo/.ssh/id_rsa.pub
 
@@ -535,52 +432,47 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
 
       tasks:
 
-         - action: debug msg="$item is an environment variable"
+         - action: debug msg="{{ item }} is an environment variable"
            with_env:
              - HOME
              - LANG
 
-         - action: debug msg="$item is a line from the result of this command"
+         - action: debug msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - action: debug msg="$item is the raw result of running this command"
+         - action: debug msg="{{ item }} is the raw result of running this command"
            with_pipe:
               - date
 
-         - action: debug msg="$item is value in Redis for somekey"
+         - action: debug msg="{{ item }} is value in Redis for somekey"
            with_redis_kv:
              - redis://localhost:6379,somekey
 
-         - action: debug msg="$item is a DNS TXT record for example.com"
+         - action: debug msg="{{ item }} is a DNS TXT record for example.com"
            with_dnstxt:
              - example.com
 
-         - action: debug msg="$item is a value from evaluation of this template"
+         - action: debug msg="{{ item }} is a value from evaluation of this template"
            with_template:
               - ./some_template.j2
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
-template).  Also note that things like ``$LOOKUP(pipe,foo)`` and ``$PIPE(foo)``
-are equivalent.  Using lookup plugins as variables::
+template).  
 
     vars:
-      motd_value: $FILE(/etc/motd)
-      auth_key_value: $FILE(/home/user/.ssh/id_rsa.pub)
-      redis_value: $LOOKUP(redis_kv,redis://localhost:6379,info_${inventory_hostname})
+      motd_value: "{{ lookup('file', '/etc/motd') }}"
 
     tasks:
-      - debug: msg=Playbook is running on $LOOKUP(pipe,uname -a)
-      - debug: msg=Redis value for host ${inventory_hostname} is $redis_value
+      - debug: msg="motd value is {{ motd_value }}"
 
 .. versionadded: 1.0
 
 ``with_sequence`` generates a sequence of items in ascending numerical order. You
 can specify a start, end, and an optional step value.
 
-Arguments can be either key-value pairs or as a shortcut in the format
-"[start-]end[/stride][:format]".  The format is a printf style string.
+Arguments should be specified in key=value pairs.  If supplied, the 'format' is a printf style string.
 
 Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).
 Negative numbers are not supported.  This works as follows::
@@ -594,28 +486,24 @@ Negative numbers are not supported.  This works as follows::
         - group: name=evens state=present
         - group: name=odds state=present
 
-        # create 32 test users
-        - user: name=$item state=present groups=odds
-          with_sequence: 32/2:testuser%02x
+        # create some test users
+        - user: name={{ item }} state=present groups=evens
+          with_sequence: start=0 stop=32 format=testuser%02x
 
-        - user: name=$item state=present groups=evens
-          with_sequence: 2-32/2:testuser%02x
-
-        # create a series of directories for some reason
-        - file: dest=/var/stuff/$item state=directory
-          with_sequence: start=4 end=16
+        # create a series of directories with even numbers for some reason
+        - file: dest=/var/stuff/{{ item }} state=directory
+          with_sequence: start=4 end=16 stride=2
 
         # a simpler way to use the sequence plugin
         # create 4 groups
-        - group: name=group${item} state=present
+        - group: name=group{{ item }} state=present
           with_sequence: count=4
 
 .. versionadded: 1.1
 
-``with_password`` and associated macro ``$PASSWORD`` generate a random plaintext password and store it in
+``with_password`` and associated lookup macro generate a random plaintext password and store it in
 a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the
-file exists previously, ``$PASSWORD``/``with_password`` will retrieve its contents, behaving just like
-``$FILE``/``with_file``. Usage of variables like "${inventory_hostname}" in the filepath can be used to set
+file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
@@ -628,24 +516,19 @@ This length can be changed by passing an extra parameter::
       tasks:
 
         # create a mysql user with a random password:
-        - mysql_user: name=$client
-                      password=$PASSWORD(credentials/$client/$tier/$role/mysqlpassword)
-                      priv=$client_$tier_$role.*:ALL
+        - mysql_user: name={{ client }}
+                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword') }}"
+                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
 
         # dump a mysql database with a given password (this example showing the other form).
-        - mysql_db: name=$client_$tier_$role
-                    login_user=$client
-                    login_password=$item
+        - mysql_db: name={{ client }}_{{ tier }}_{{ role }}
+                    login_user={{ client }}
+                    login_password={{ item }}
                     state=dump
-                    target=/tmp/$client_$tier_$role_backup.sql
-          with_password: credentials/$client/$tier/$role/mysqlpassword
-
-        # make a longer or shorter password by appending a length parameter:
-        - mysql_user: name=some_name
-                      password=$item
-          with_password: files/same/password/everywhere length=15
+                    target=/tmp/{{ client }}_{{ tier }}_{{ role }}_backup.sql
+          with_password: credentials/{{ client }}/{{ tier }}/{{ role }}/mysqlpassword length=15
 
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
@@ -678,7 +561,7 @@ The environment can also be stored in a variable, and accessed like so::
       tasks:
 
         - apt: name=cobbler state=installed
-          environment: $proxy_env
+          environment: "{{ proxy_env }}"
 
 While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
 to define an environment hash might be a group_vars file, like so::
@@ -703,17 +586,11 @@ is an example using the authorized_key module, which requires the actual text of
 
     tasks:
         - name: enable key-based ssh access for users
-          authorized_key: user=$item key='$FILE(/keys/$item)'
+          authorized_key: user={{ item }} key="{{ lookup('file', '/keys/' + item ) }}"
           with_items:
              - pinky
              - brain
              - snowball
-
-The "$PIPE" macro works just like file, except you would feed it a command string instead.  It executes locally, not remotely, as does $FILE.
-
-Because Ansible uses lazy evaluation, a "$PIPE" macro will be executed each time it is used. For
-example, it will be executed separately for each host, and if it is used in a variable definition,
-it will be executed each time the variable is evaluated.
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
@@ -724,9 +601,9 @@ The following construct selects the first available file appropriate for the var
 The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
 
     - name: template a file
-      action: template src=$item dest=/etc/myapp/foo.conf
+      action: template src={{ item }} dest=/etc/myapp/foo.conf
       first_available_file:
-        - /srv/templates/myapp/${ansible_distribution}.conf
+        - /srv/templates/myapp/{{ ansible_distribution }}.conf
         - /srv/templates/myapp/default.conf
 
 first_available_file is only available to the copy and template modules.
@@ -844,7 +721,7 @@ The 'register' keyword decides what variable to save a result in.  The resulting
             register: motd_contents
 
           - action: shell echo "motd contains the word hi"
-            only_if: "'${motd_contents.stdout}'.find('hi') != -1"
+            when: motd_contents.find('hi') != -1
 
 
 Rolling Updates
@@ -879,14 +756,14 @@ a good idea::
 
       tasks:
       - name: take out of load balancer pool
-        action: command /usr/bin/take_out_of_pool $inventory_hostname
+        action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
         action: yum name=acme-web-stack state=latest
 
       - name: add back to load balancer pool
-        action: command /usr/bin/add_back_to_pool $inventory_hostname
+        action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
 
@@ -898,12 +775,12 @@ syntax for delegating to 127.0.0.1::
     # ...
       tasks:
       - name: take out of load balancer pool
-        local_action: command /usr/bin/take_out_of_pool $inventory_hostname
+        local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
 
     # ...
 
       - name: add back to load balancer pool
-        local_action: command /usr/bin/add_back_to_pool $inventory_hostname
+        local_action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
 
 A common pattern is to use a local action to call 'rsync' to recursively copy files to the managed servers.
 Here is an example::
@@ -912,7 +789,7 @@ Here is an example::
     # ...
       tasks:
       - name: recursively copy files from management server to target
-        local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
+        local_action: command rsync -a /path/to/files {{ inventory_hostname }}:/path/to/target/
 
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
@@ -950,7 +827,7 @@ if you have a large number of hosts::
     - hosts: all
       connection: fireball
       tasks:
-          - action: shell echo "Hello ${item}"
+          - action: shell echo "Hello {{ item }}"
             with_items:
                 - one
                 - two
@@ -965,7 +842,7 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
       connection: ssh
       tasks:
           - action: easy_install name=pip
-          - action: pip name=$item state=present
+          - action: pip name={{ item }} state=present
             with_items:
               - pyzmq
               - pyasn1
@@ -1063,7 +940,7 @@ number of modules (the CloudFormations module is one) actually require complex a
              fish:
                - limpet
                - nemo
-               - ${other_fish_name}
+               - "{{ other_fish_name }}"
 
 You can of course use variables inside these, as noted above.
 

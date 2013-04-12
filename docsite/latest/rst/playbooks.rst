@@ -138,17 +138,12 @@ The `vars` section contains a list of variables and values that can be used in t
 
 These variables can be used later in the playbook like this::
 
-    $varname or ${varname}
+    $varname or ${varname} or {{ varname }}
 
-The later is useful in the event you need to do something like ${other}_some_string.
+If you ever want to do anything complex, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get
+in the habit of using this form.
 
-Inside templates, the full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_ templating language is also available, which looks like this::
-
-    {{ varname }}
-
-The Jinja2 documentation provides information about how to construct loops and conditionals for those
-who which to use more advanced templating.  This is optional and the $varname format still works in template
-files.
+To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
@@ -242,8 +237,8 @@ Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
    tasks:
-     - name: create a virtual host file for $vhost
-       action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost
+     - name: create a virtual host file for {{ vhost }}
+       action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
 
 Those same variables are usable in templates, which we'll get to later.
 
@@ -345,7 +340,7 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
 
 Variables passed in can then be used in the included files.  You can reference them like this::
 
-   $user
+   {{ user }}
 
 (In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.)
