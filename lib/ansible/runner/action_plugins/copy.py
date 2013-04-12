@@ -55,10 +55,11 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
+                fn_orig = fn
                 fn = template.template(self.runner.basedir, fn, inject)
                 fn = utils.path_dwim(self.runner.basedir, fn)
                 if not os.path.exists(fn) and '_original_file' in inject:
-                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn, self.runner.basedir, check=False)
+                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn_orig, self.runner.basedir, check=False)
                 if os.path.exists(fn):
                     source = fn
                     found = True
