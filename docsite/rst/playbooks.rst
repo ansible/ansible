@@ -417,6 +417,70 @@ inside another.
    play are going to get the same tasks.  ('only_if' provides some
    ability for hosts to conditionally skip tasks).
 
+<<<<<<< HEAD:docsite/rst/playbooks.rst
+=======
+Roles
+`````
+
+Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
+The short answer is to use roles!  Roles are automatic ways of automatically loading certain vars_files, tasks, and
+handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
+
+Roles are just automation around 'include' directives as redescribed above, and really don't contain much
+additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
+
+Example project structure::
+
+    site.yml
+    webservers.yml
+    fooservers.yml
+    roles/
+       common/
+         files/
+         templates/
+         tasks/
+         handlers/
+         vars/
+       webservers/
+         files/
+         templates/
+         tasks/
+         handlers/
+         vars/
+
+In a playbook, it would look like this::
+
+    ---
+    - hosts: webservers
+      roles:
+         - common
+         - webservers
+
+This designates the following behaviors, for each role 'x':
+
+- If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
+- If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
+- If roles/x/vars/main.yml exists, variables listed therein will be added to the play
+- Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
+- Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+
+If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
+for instance.
+
+Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
+but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
+the roles are evaluated first.
+
+Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
+
+    ---
+    - hosts: webservers
+      roles:
+        - common
+        - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
+        - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
+
+>>>>>>> Docs on parameterized roles, make document generation output less noisy:docsite/latest/rst/playbooks.rst
 Executing A Playbook
 ````````````````````
 
