@@ -286,7 +286,7 @@ def main():
         if fname.endswith(".swp") or fname.endswith(".orig") or fname.endswith(".rej"):
             continue
 
-        print " processing module source ---> %s" % fname
+        # print " processing module source ---> %s" % fname
 
         if options.type == 'js':
             if fname.endswith(".json"):
@@ -299,6 +299,7 @@ def main():
         doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
         if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
+            print " while processing module source ---> %s" % fname
             sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
             #sys.exit(1)
 
