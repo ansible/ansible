@@ -128,7 +128,10 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         os.chown(sshdir, uid, gid)
         os.chmod(sshdir, 0700)
 
-    if not os.path.exists( keysfile):
+    if not os.path.exists(keysfile):
+        basedir = os.path.dirname(keysfile)
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
         try:
             f = open(keysfile, "w") #touches file so we can set ownership and perms
         finally:
