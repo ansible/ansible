@@ -18,7 +18,8 @@
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import getch, template, parse_kv
+from ansible.utils import getch, parse_kv
+import ansible.utils.template as template
 from termios import tcflush, TCIFLUSH
 import datetime
 import sys
@@ -56,7 +57,8 @@ class ActionModule(object):
         args = {}
         if complex_args:
             args.update(complex_args)
-        args.update(parse_kv(template(self.runner.basedir, module_args, inject)))
+        # extra template call unneeded?
+        args.update(parse_kv(template.template(self.runner.basedir, module_args, inject)))
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in args or 'seconds' in args:
