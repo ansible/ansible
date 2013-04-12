@@ -11,7 +11,7 @@ Version: 1.2rc
 
 Group: Development/Libraries
 License: GPLv3
-Source0: https://github.com/downloads/ansible/ansible/%{name}-%{version}.tar.bz2
+Source0: http://ansible.cc/releases/%{name}-%{version}.tar.bz2
 Url: http://ansible.github.com
 
 BuildArch: noarch
