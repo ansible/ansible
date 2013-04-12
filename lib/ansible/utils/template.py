@@ -249,6 +249,8 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
             varname = template_from_string(basedir, varname, vars)
+        if not '$' in varname:
+            return varname
 
         m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
         if not m:
