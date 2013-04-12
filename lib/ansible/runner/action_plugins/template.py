@@ -54,15 +54,15 @@ class ActionModule(object):
         # look up the files and use the first one we find as src
 
         if 'first_available_file' in inject:
-
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
+                fn_orig = fn
                 fnt = template.template(self.runner.basedir, fn, inject)
                 fnd = utils.path_dwim(self.runner.basedir, fnt)
                 if not os.path.exists(fnd) and '_original_file' in inject:
-                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fnd, self.runner.basedir, check=False)
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fn_orig, self.runner.basedir, check=False)
                 if os.path.exists(fnd):
-                    source = fnt
+                    source = fnd
                     found = True
                     break
             if not found:
