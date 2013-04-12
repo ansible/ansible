@@ -178,7 +178,6 @@ modulepages:
 	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
 
 modulejson:
-<<<<<<< HEAD
 	mkdir -p docs/json
 	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
 
@@ -190,21 +189,10 @@ modulejs:
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 
 webdocs:
-	(cd docsite; make docs)
-=======
-	-(mkdir -p docs/json)
+	(cd docsite/latest; make docs)
 	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
 
 modulejs: modulejson
 	-(mkdir -p docs/json)
 	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t js -o docs/json --module-dir=library --template-dir=hacking/templates
 
-# because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
-
-webdocs: 
-	(cd docsite/latest; make docs)
->>>>>>> Docs on parameterized roles, make document generation output less noisy
-
-# just for quick testing of all the module docs
-webdocs2:
-	(cd docsite; make modules)
