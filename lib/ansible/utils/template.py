@@ -432,8 +432,18 @@ def _get_filter_plugins():
     return FILTER_PLUGINS
         
 
+def _smush_braces(data):
+    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
+    while data.find('{{ ') != -1:
+        data = data.replace('{{ ', '{{')
+    while data.find(' }}') != -1:
+        data = data.replace(' }}', '}}')
+    return data
+
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
+
+    data = _smush_braces(data)
 
     try:
         if type(data) == str:
