@@ -117,6 +117,9 @@ class Play(object):
         #    <rolename>/handlers/main.yml
         #    <rolename>/vars/main.yml
         # and it auto-extends tasks/handlers/vars_files as appropriate if found
+        #
+        # .yaml is also allowed as an extension if .yml files are not
+        # found first.
 
         if roles is None:
             return ds
@@ -153,10 +156,24 @@ class Play(object):
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
             if os.path.isfile(task):
                 new_tasks.append(dict(include=task, vars=has_dict))
+            else:
+                task = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yaml'))
+                if os.path.isfile(task):
+                    new_tasks.append(dict(include=task, vars=has_dict))
+            
             if os.path.isfile(handler):
                 new_handlers.append(dict(include=handler, vars=has_dict))
+            else:
+                handler = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yaml'))
+                if os.path.isfile(handler):
+                    new_handlers.append(dict(include=handler, vars=has_dict))
+
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            else:
+                vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yaml'))
+                if os.path.isfile(vars_file):
+                    new_vars_files.append(vars_file)
 
         tasks = ds.get('tasks', None)
         handlers = ds.get('handlers', None)
