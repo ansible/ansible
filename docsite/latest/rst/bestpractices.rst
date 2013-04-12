@@ -8,7 +8,7 @@ Best Practices
 
 Here are some tips for making the most of Ansible.
 
-You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
+You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  (NOTE: These may not use all of the features in the latest release just yet).
 
 .. contents::
    :depth: 2
@@ -20,38 +20,42 @@ Content Organization
 The following section shows one of many possible ways to organize content.   Your usage of Ansible should fit your needs,
 so feel free to modify this approach and organize as you see fit.
 
+(One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
+of the main playbooks page)
+
 Directory Layout
 ````````````````
 
 The top level of the directory would contain files and directories like so::
 
-    production            # inventory file for production servers
-    stage                 # inventory file for stage environment 
+    production                # inventory file for production servers
+    stage                     # inventory file for stage environment 
 
     group_vars/
-       group1             # here we assign variables to particular groups
-       group2             # ""
+       group1                 # here we assign variables to particular groups
+       group2                 # ""
     host_vars/
-       hostname1          # if systems need specific variables, put them here
-       hostname2          # ""
+       hostname1              # if systems need specific variables, put them here
+       hostname2              # ""
 
-    site.yml              # master playbook
-    webservers.yml        # playbook for webserver tier
-    dbservers.yml         # playbook for dbserver tier
+    site.yml                  # master playbook
+    webservers.yml            # playbook for webserver tier
+    dbservers.yml             # playbook for dbserver tier
 
-    common/               # this hierarchy represents a "role"
-        tasks/            #
-            main.yml      #  <-- tasks file can include smaller files if warranted
-        handlers/         # 
-            main.yml      #  <-- handlers file
-        templates/        #  <-- files for use with the template resource
-            ntp.conf.j2   #  <------- templates end in .j2
-        files/            #
-            bar.txt       #  <-- files for use with the copy resource
+    roles/
+        common/               # this hierarchy represents a "role"
+            tasks/            #
+                main.yml      #  <-- tasks file can include smaller files if warranted
+            handlers/         # 
+                main.yml      #  <-- handlers file
+            templates/        #  <-- files for use with the template resource
+                ntp.conf.j2   #  <------- templates end in .j2
+            files/            #
+                bar.txt       #  <-- files for use with the copy resource
 
-    webtier/              # same kind of structure as "common" was above, done for the webtier role
-    monitoring/           # ""
-    fooapp/               # "" 
+        webtier/              # same kind of structure as "common" was above, done for the webtier role
+        monitoring/           # ""
+        fooapp/               # "" 
 
 How to Arrange Inventory, Stage vs Production
 `````````````````````````````````````````````
@@ -145,20 +149,17 @@ In a file like webservers.yml (also at the top level), we simply map the configu
     ---
     # file: webservers.yml
     - hosts: webservers
-      tasks:
-        - include: common/tasks/main.yml tags=common
-        - include: webtier/tasks/main.yml tags=webtier
-      handlers:
-        - include: common/handlers/main.yml
-        - include: webtier/handlers/main.yml     
+      roles:
+        - common
+        - webtier
 
 Task And Handler Organization For A Role
 ````````````````````````````````````````
 
-This file is just mapping hosts to the roles they fulfill.  Now, below is an example tasks file, that explains how a role works.  Our common role here just sets up NTP, but it could do more if we wanted::
+Below is an example tasks file, that explains how a role works.  Our common role here just sets up NTP, but it could do more if we wanted::
 
     ---
-    # file: common/tasks/main.yml
+    # file: roles/common/tasks/main.yml
 
     - name: be sure ntp is installed
       yum: pkg=ntp state=installed
@@ -178,7 +179,7 @@ Here is an example handlers file.  As a review, handlers are only fired when cer
 of each play::
 
     ---
-    # file: common/handlers/main.yml
+    # file: roles/common/handlers/main.yml
     - name: restart ntpd
       service: name=ntpd state=restarted
 
@@ -234,8 +235,7 @@ keep the OS configuration in seperate playbooks from the app deployment.
 Stage vs Production
 +++++++++++++++++++
 
-As also mentioned above, a good way to keep your stage (or testing) and production environments seperate is to use a seperate inventory file for stage
-and production.   This way you pick with -i what you are targetting.  Keeping them all in one file can lead to surprises!
+As also mentioned above, a good way to keep your stage (or testing) and production environments seperate is to use a seperate inventory file for stage and production.   This way you pick with -i what you are targetting.  Keeping them all in one file can lead to surprises!
 
 Testing things in a stage environment before trying in production is always a great idea.  Your environments need not be the same
 size and you can use group variables to control the differences between those environments.
