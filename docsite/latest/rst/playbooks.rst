@@ -417,8 +417,6 @@ inside another.
    play are going to get the same tasks.  ('only_if' provides some
    ability for hosts to conditionally skip tasks).
 
-<<<<<<< HEAD:docsite/rst/playbooks.rst
-=======
 Roles
 `````
 
@@ -480,7 +478,6 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
         - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
         - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
 
->>>>>>> Docs on parameterized roles, make document generation output less noisy:docsite/latest/rst/playbooks.rst
 Executing A Playbook
 ````````````````````
 
