@@ -41,7 +41,7 @@ import shutil
 import subprocess
 import sys
 import datetime
-import socket
+import platform
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -75,7 +75,7 @@ def select_playbook(path, args):
             return None
         return playbook
     else:
-        hostpb = "%s/%s.yml" % (path, socket.getfqdn())
+        hostpb = "%s/%s.yml" % (path, platform.node)
         localpb = "%s/%s" % (path, DEFAULT_PLAYBOOK)
         errors = []
         for pb in [hostpb, localpb]:
@@ -115,7 +115,7 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
-    limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
+    limit_opts = 'localhost:%s:127.0.0.1' % platform.node()
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
     cmd = 'ansible all -c local --limit "%s" -m git -a "%s"' % (limit_opts, git_opts)
     rc = _run(cmd)
