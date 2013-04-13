@@ -20,7 +20,7 @@
 #
 DOCUMENTATION = '''
 ---
-module: Riak
+module: riak
 short_description: This module handles some common Riak operations
 description:
      - This module can be used to join nodes to a cluster, check
@@ -46,13 +46,6 @@ options:
     required: false
     default: 127.0.0.1:8098
     aliases: []
-  ring_ready:
-    description:
-      - Returns true if all nodes agree on the ring.
-    required: false
-    default: false
-    aliases: []
-    type: 'bool'
   target_node:
     description:
       - The target node for certain operations (join, ping)
