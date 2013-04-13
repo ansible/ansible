@@ -55,12 +55,17 @@ class ActionModule(object):
         
         dest_prefix = options.get('dest_prefix')
         if dest_prefix is None or dest_prefix == 'host_source_path':
-            # files are saved in dest dir, with a subdir for each host, then the filename
+            # files are saved in dest dir, with a subdir for each host, then the filename with their path
             dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
-        elif dest_prefix == 'no':
-            # files are saved with a direct local path
-            dest   = utils.path_dwim(self.runner.basedir, dest) 
-        
+        elif dest_prefix == 'host':
+            # files are saved in dest dir, with a subdir for each host, then the filename *without* their path
+            _, filename = os.path.split(source) 
+            dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, filename)
+        elif dest_prefix == 'simple':
+            # files are saved in dest dir, without their path
+            _, filename = os.path.split(source) 
+            dest   = "%s/%s" % (utils.path_dwim(self.runner.basedir, dest), filename)
+
         dest   = dest.replace("//","/")
         
         # calculate md5 sum for the remote file

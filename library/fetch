@@ -36,8 +36,12 @@ options:
     default: "no"
   dest_prefix:
     description:
-      - Describes the type of path to append before the dest 
+      - Defines the destination path. For dest example above, if the 
+        I(dest_prefix) is C(host), the file would be saved in 
+        C(/backup/host.example.com/profile). If the I(dest_prefix) is 
+        C(simple), the file would be saved in C(/backup/profile).
     required: false
+    choices: [ "host_source_path", "host", "simple" ]
     default: host_source_path
 examples:
    - code: "fetch: src=/var/log/messages dest=/home/logtree"
