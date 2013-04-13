@@ -193,6 +193,8 @@ def main():
         stats_raw = status_to_json()
     except urllib2.URLError, e:
         stats_raw = status_to_json()
+    except Exception, e:
+        stats_raw = status_to_json()
 
     stats = json.loads(stats_raw)
 
