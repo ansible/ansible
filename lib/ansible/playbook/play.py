@@ -65,7 +65,11 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        self._ds = ds         = template.template(basedir, ds, self.vars)
+        for key in ds:
+            if key != 'tasks':
+               ds[key] = template.template(basedir, ds[key], self.vars) 
+
+        self._ds = ds         
 
         hosts = ds.get('hosts')
         if hosts is None:
