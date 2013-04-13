@@ -21,6 +21,32 @@ from ansible import errors
 from ansible import utils
 import ansible.constants as C
 
+
+def vars_file_matches(f, name):
+    # A vars file matches if either:
+    # - the basename of the file equals the value of 'name'
+    # - the basename of the file, stripped its extension, equals 'name'
+    if os.path.basename(f) == name:
+        return True
+    elif '.'.join(os.path.basename(f).split('.')[:-1]) == name:
+        return True
+    else:
+        return False
+
+def vars_files(vars_dir, name):
+    files = []
+    try:
+        candidates = [os.path.join(vars_dir, f) for f in os.listdir(vars_dir)]
+    except OSError:
+        return files
+    for f in candidates:
+        if os.path.isfile(f) and vars_file_matches(f, name):
+            files.append(f)
+        elif os.path.isdir(f):
+            files.extend(vars_files(f, name))
+    return sorted(files)
+
+
 class VarsModule(object):
 
     def __init__(self, inventory):
@@ -44,8 +70,9 @@ class VarsModule(object):
 
         # load vars in inventory_dir/group_vars/name_of_group
         for x in groups:
-            path = os.path.join(basedir, "group_vars/%s" % x)
-            if os.path.exists(path):
+            group_vars_dir = os.path.join(basedir, "group_vars")
+            group_vars_files = vars_files(group_vars_dir, x)
+            for path in group_vars_files:
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
@@ -56,8 +83,9 @@ class VarsModule(object):
                     results.update(data)
 
         # load vars in inventory_dir/hosts_vars/name_of_host
-        path = os.path.join(basedir, "host_vars/%s" % host.name)
-        if os.path.exists(path):
+        host_vars_dir = os.path.join(basedir, "host_vars")
+        host_vars_files = vars_files(host_vars_dir, host.name)
+        for path in host_vars_files:
             data = utils.parse_yaml_from_file(path)
             if type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
