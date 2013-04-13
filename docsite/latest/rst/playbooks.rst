@@ -473,6 +473,16 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
         - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
         - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
 
+While it's probably not something you should do often, you can also conditionally apply roles like so::
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: some_role, when: "ansible_os_family == 'RedHat'" }
+   
+This works by applying the conditional to every task in the role.  Conditionals are covered later on in
+the documentation.    
+    
 Executing A Playbook
 ````````````````````
 
