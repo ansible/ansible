@@ -28,7 +28,9 @@ def vars_file_matches(f, name):
     # - the basename of the file, stripped its extension, equals 'name'
     if os.path.basename(f) == name:
         return True
-    elif '.'.join(os.path.basename(f).split('.')[:-1]) == name:
+    elif os.path.basename(f) == '.'.join([name, 'yml']):
+        return True
+    elif os.path.basename(f) == '.'.join([name, 'yaml']):
         return True
     else:
         return False
@@ -72,6 +74,9 @@ class VarsModule(object):
         for x in groups:
             group_vars_dir = os.path.join(basedir, "group_vars")
             group_vars_files = vars_files(group_vars_dir, x)
+            if len(group_vars_files) > 1:
+                raise errors.AnsibleError("Found more than one file for group '%s': %s"
+                                  % (x, group_vars_files))
             for path in group_vars_files:
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
@@ -85,6 +90,9 @@ class VarsModule(object):
         # load vars in inventory_dir/hosts_vars/name_of_host
         host_vars_dir = os.path.join(basedir, "host_vars")
         host_vars_files = vars_files(host_vars_dir, host.name)
+        if len(host_vars_files) > 1:
+            raise errors.AnsibleError("Found more than one file for host '%s': %s"
+                                  % (host.name, host_vars_files))
         for path in host_vars_files:
             data = utils.parse_yaml_from_file(path)
             if type(data) != dict:
