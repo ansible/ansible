@@ -65,10 +65,13 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        for key in ds:
-            if key != 'tasks' and key != 'handlers':
-               # we want to template these later to allow inventory-scope a chance to override
-               ds[key] = template.template(basedir, ds[key], self.vars) 
+        # template everything to be efficient, but do not pre-mature template
+        # tasks/handlers as they may have inventory scope overrides
+        _tasks    = ds.pop('tasks', [])
+        _handlers = ds.pop('handlers', [])
+        ds = template.template(basedir, ds, self.vars) 
+        ds['tasks'] = _tasks
+        ds['handlers'] = _handlers
 
         self._ds = ds         
 
