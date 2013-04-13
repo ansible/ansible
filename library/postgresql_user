@@ -142,8 +142,10 @@ def user_exists(cursor, user):
 
 def user_add(cursor, user, password, role_attr_flags):
     """Create a new database user (role)."""
-    query = "CREATE USER \"%(user)s\" with PASSWORD '%(password)s' %(role_attr_flags)s"
-    cursor.execute(query % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
+    query = 'CREATE USER "%(user)s" WITH PASSWORD %%(password)s %(role_attr_flags)s' % {
+        "user": user, "role_attr_flags": role_attr_flags
+    }
+    cursor.execute(query, {"password": password})
     return True
 
 def user_alter(cursor, user, password, role_attr_flags):
@@ -168,8 +170,10 @@ def user_alter(cursor, user, password, role_attr_flags):
 
         if password is not None:
             # Update the role attributes, including password.
-            alter = "ALTER USER \"%(user)s\" WITH PASSWORD '%(password)s' %(role_attr_flags)s"
-            cursor.execute(alter % {"user": user, "password": password, "role_attr_flags": role_attr_flags})
+            alter = 'ALTER USER "%(user)s" WITH PASSWORD %%(password)s %(role_attr_flags)s' % {
+                "user": user, "role_attr_flags": role_attr_flags
+            }
+            cursor.execute(alter, {"password": password})
         else:
             # Update the role attributes, excluding password.
             alter = "ALTER USER \"%(user)s\" WITH %(role_attr_flags)s"
