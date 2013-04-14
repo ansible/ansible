@@ -149,14 +149,11 @@ def package_from_file(m, path):
 
     return dict(record=record, debfile=None, header=None)
 
-def package_status(m, pkgname, version, cache, state):
+def package_status(m, pkgname, version, cache):
     try:
         pkg = cache[pkgname]
     except KeyError:
-        if state == 'install':
-            m.fail_json(msg="No package matching '%s' is available" % pkgname)
-        else:
-            return False, False
+        return False, False
     if version:
         try :
             return pkg.is_installed and pkg.installed.version == version, False
@@ -175,7 +172,7 @@ def install(m, record, debfile, content, cache, force=False):
     name = record['Package']
     version = record['Version']
 
-    installed, upgradable = package_status(m, name, version, cache, state='install')    
+    installed, upgradable = package_status(m, name, version, cache)    
     if not installed or upgradable:
         if m.params['url']:
             # Fetch the remaining file from url
@@ -217,7 +214,7 @@ def remove(m, record, cache, purge=False):
     name = record['Package']
     version = record['Version']
 
-    installed, upgradable = package_status(m, name, version, cache, state='remove')
+    installed, upgradable = package_status(m, name, version, cache)
     if installed:
         package = name
 
@@ -243,7 +240,7 @@ def main():
             state = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
             purge = dict(default='no', type='bool'),
             url = dict(default=None),
-            package = dict(default=None, aliases=['pkg', 'name']),
+            package = dict(default=None, aliases=['pkg', 'name', 'path']),
             force = dict(default='no', type='bool'),
         ),
         mutually_exclusive = [['package', 'url']],
