@@ -34,6 +34,7 @@ import pipes
 import ansible.constants as C
 import ansible.inventory
 from ansible import utils
+from ansible.utils import template
 from ansible import errors
 from ansible import module_common
 import poller
@@ -62,7 +63,13 @@ def _executor_hook(job_queue, result_queue):
     while not job_queue.empty():
         try:
             host = job_queue.get(block=False)
-            result_queue.put(multiprocessing_runner._executor(host))
+            return_data = multiprocessing_runner._executor(host)
+            result_queue.put(return_data)
+
+            if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
+                # pass data back up across the multiprocessing fork boundary
+                template.Flags.LEGACY_TEMPLATE_WARNING = True
+
         except Queue.Empty:
             pass
         except:
@@ -233,7 +240,7 @@ class Runner(object):
 
         if not self.environment:
             return ""
-        enviro = utils.template(self.basedir, self.environment, inject)
+        enviro = template.template(self.basedir, self.environment, inject)
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
@@ -271,7 +278,7 @@ class Runner(object):
                 # do --check mode, so to be safe we will not run it.
                 return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
 
-            args = utils.template(self.basedir, args, inject)
+            args = template.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
@@ -300,10 +307,20 @@ class Runner(object):
     def _executor(self, host):
         ''' handler for multiprocessing library '''
 
+        def get_flags():
+            # flags are a way of passing arbitrary event information
+            # back up the chain, since multiprocessing forks and doesn't
+            # allow state exchange
+            flags = []
+            if template.Flags.LEGACY_TEMPLATE_WARNING:
+                flags.append('LEGACY_TEMPLATE_WARNING')
+            return flags
+
         try:
             exec_rc = self._executor_internal(host)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
+            exec_rc.flags = get_flags()
             # redundant, right?
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
@@ -311,11 +328,11 @@ class Runner(object):
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
         except Exception:
             msg = traceback.format_exc()
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
 
     # *****************************************************
 
@@ -336,20 +353,24 @@ class Runner(object):
         inject.update(host_variables)
         inject.update(self.module_vars)
         inject.update(self.setup_cache[host])
-        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
+
+        inject['hostvars']    = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups'] = self.inventory.groups_list()
-        inject['vars'] = self.module_vars
+        inject['groups']      = self.inventory.groups_list()
+        inject['vars']        = self.module_vars
         inject['environment'] = self.environment
+
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
+
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
+
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.template(self.basedir, items_terms, inject)
+            items_terms = template.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
@@ -364,8 +385,10 @@ class Runner(object):
         if items is None:
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
         elif len(items) > 0:
+
             # executing using with_items, so make multiple calls
             # TODO: refactor
+
             aggregrate = {}
             all_comm_ok = True
             all_changed = False
@@ -373,7 +396,14 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
+                result = self._executor_internal_inner(
+                     host, 
+                     self.module_name, 
+                     self.module_args, 
+                     inject, 
+                     port, 
+                     complex_args=self.complex_args
+                )
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -410,9 +440,9 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
-        module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject)
-        complex_args = utils.template(self.basedir, complex_args, inject)
+        module_name  = template.template(self.basedir, module_name, inject)
+        module_args  = template.template(self.basedir, module_args, inject)
+        complex_args = template.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -423,7 +453,7 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
+        conditional = template.template(self.basedir, self.conditional, inject, expand_lists=False)
 
         if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
@@ -444,7 +474,7 @@ class Runner(object):
         # and we need to transfer those, and only those, variables
         delegate_to = inject.get('delegate_to', None)
         if delegate_to is not None:
-            delegate_to = utils.template(self.basedir, delegate_to, inject)
+            delegate_to = template.template(self.basedir, delegate_to, inject)
             inject = inject.copy()
             interpreters = []
             for i in inject:
@@ -468,8 +498,8 @@ class Runner(object):
                 actual_host = delegate_to
                 actual_port = port
 
-        actual_user = utils.template(self.basedir, actual_user, inject)
-        actual_pass = utils.template(self.basedir, actual_pass, inject)
+        actual_user = template.template(self.basedir, actual_user, inject)
+        actual_pass = template.template(self.basedir, actual_pass, inject)
 
         try:
             if actual_port is not None:

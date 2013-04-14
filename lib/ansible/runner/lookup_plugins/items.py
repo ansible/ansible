@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.utils import safe_eval
+import ansible.utils.template as template
+
 def flatten(terms):
     ret = []
     for term in terms:
@@ -26,10 +29,24 @@ def flatten(terms):
 
 class LookupModule(object):
 
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, basedir=None, **kwargs):
+        self.basedir = basedir
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, inject=None, **kwargs):
         if isinstance(terms, basestring):
+            # somewhat did:
+            #    with_items: alist
+            # OR
+            #    with_items: {{ alist }}
+            if not '{' in terms and not '[' in terms:
+                terms = '{{ %s }}' % terms
+                terms = template.template(self.basedir, terms, inject)
+            if '{' or '[' in terms:
+                # Jinja2 already evaluated a variable to a list.
+                # Jinja2-ified list needs to be converted back to a real type
+                # TODO: something a bit less heavy than eval
+                terms = safe_eval(terms)
             terms = [ terms ]
         return flatten(terms)
+
+

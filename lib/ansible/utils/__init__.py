@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import re
 import os
 import shlex
 import yaml
@@ -24,7 +25,6 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils.template import *
 from ansible.utils.plugins import *
 import ansible.constants as C
 import time
@@ -36,6 +36,7 @@ import pipes
 import random
 import difflib
 import warnings
+import traceback
 
 VERBOSITY=0
 
@@ -154,21 +155,15 @@ def check_conditional(conditional):
     if not isinstance(conditional, basestring):
         return conditional
 
-    def is_set(var):
-        return not var.startswith("$") and not '{{' in var
-
-    def is_unset(var):
-        return var.startswith("$") or '{{' in var
-
     try:
         conditional = conditional.replace("\n", "\\n")
-        result = eval(conditional)
+        result = safe_eval(conditional)
         if result not in [ True, False ]:
             raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
         return result
 
     except (NameError, SyntaxError):
-        raise errors.AnsibleError("Could not evaluate the expression: " + conditional)
+        raise errors.AnsibleError("Could not evaluate the expression: (%s)" % conditional)
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -605,12 +600,18 @@ def compile_when_to_only_if(expression):
             cast = 'float'
         tcopy = tokens[1:]
         for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                # final variable substitution will happen in Runner code
-                tcopy[i] = "%s('''%s''')" % (cast, t)
+            #if re.search(t, r"^\w"):
+                # bare word will turn into Jinja2 so all the above
+                # casting is really not needed
+                #tcopy[i] = "%s('''%s''')" % (cast, t)
+            t2 = t.strip()
+            if (t2[0].isalpha() or t2[0] == '$') and cast == 'str' and t2 != 'in':
+               tcopy[i] = "'%s'" % (t)
             else:
-                tcopy[i] = t
-        return " ".join(tcopy)
+               tcopy[i] = t
+        result = " ".join(tcopy)
+        return result
+
 
     # when_boolean
     elif tokens[0] in [ 'bool', 'boolean' ]:
@@ -679,8 +680,43 @@ def get_diff(diff):
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
 def is_list_of_strings(items):
-   for x in items: 
-       if not isinstance(x, basestring):
-           return False
-   return True
+    for x in items: 
+        if not isinstance(x, basestring):
+            return False
+    return True
+
+def safe_eval(str):
+    ''' 
+    this is intended for allowing things like:
+    with_items: {{ a_list_variable }}
+    where Jinja2 would return a string
+    but we do not want to allow it to call functions (outside of Jinja2, where
+    the env is constrained)
+    '''
+    # FIXME: is there a more native way to do this?
+    
+    def is_set(var):
+        return not var.startswith("$") and not '{{' in var
+
+    def is_unset(var):
+        return var.startswith("$") or '{{' in var
+
+    # do not allow method calls to modules
+    if re.search(r'\w\.\w+\(', str):
+        return str
+    # do not allow imports
+    if re.search(r'import \w+', str):
+        return str
+    try:
+        return eval(str)
+    except Exception, e:
+        return str
+
+
+
+
+
+
+   
+
 

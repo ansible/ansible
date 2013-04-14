@@ -267,13 +267,11 @@ def main():
         
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
-        previous_reservations = ec2.get_all_instances(None, filter_dict )
+        previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
         count_remaining = count_remaining - len(running_instances) 
-#        module.fail_json(msg = "known running instances: %s" % (running_instances)) 
-
     
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 

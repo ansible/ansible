@@ -17,6 +17,7 @@
 
 #############################################
 
+from ansible.utils import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
@@ -64,7 +65,15 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
-        self._ds = ds         = utils.template(basedir, ds, self.vars)
+        # template everything to be efficient, but do not pre-mature template
+        # tasks/handlers as they may have inventory scope overrides
+        _tasks    = ds.pop('tasks', [])
+        _handlers = ds.pop('handlers', [])
+        ds = template.template(basedir, ds, self.vars) 
+        ds['tasks'] = _tasks
+        ds['handlers'] = _handlers
+
+        self._ds = ds         
 
         hosts = ds.get('hosts')
         if hosts is None:
@@ -90,7 +99,7 @@ class Play(object):
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
-            load_vars['inventory_dir'] = self.playbook.inventory.basedir();
+            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
@@ -139,6 +148,9 @@ class Play(object):
                 has_dict = orig_path
                 orig_path = role_name
 
+            with_items = has_dict.get('with_items', None)
+            when       = has_dict.get('when', None)
+
             path = utils.path_dwim(self.basedir, orig_path)
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
                 path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
@@ -151,9 +163,19 @@ class Play(object):
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
             if os.path.isfile(task):
-                new_tasks.append(dict(include=task, vars=has_dict))
+                nt = dict(include=task, vars=has_dict)
+                if when: 
+                    nt['when'] = when
+                if with_items:
+                    nt['with_items'] = with_items
+                new_tasks.append(nt)
             if os.path.isfile(handler):
-                new_handlers.append(dict(include=handler, vars=has_dict))
+                nt = dict(include=handler, vars=has_dict)
+                if when: 
+                    nt['when'] = when
+                if with_items:
+                    nt['with_items'] = with_items
+                new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
 
@@ -202,7 +224,7 @@ class Play(object):
                         plugin_name = k[5:]
                         if plugin_name not in utils.plugins.lookup_loader:
                             raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                        terms = utils.template(self.basedir, x[k], task_vars)
+                        terms = template.template(self.basedir, x[k], task_vars)
                         items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
                     elif k.startswith("when_"):
                         included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
@@ -223,11 +245,11 @@ class Play(object):
                     mv['item'] = item
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
-                        mv[k] = utils.template(self.basedir, v, mv)
+                        mv[k] = template.template(self.basedir, v, mv)
                     dirname = self.basedir
                     if original_file:
-                         dirname = os.path.dirname(original_file)     
-                    include_file = utils.template(dirname, tokens[0], mv)
+                        dirname = os.path.dirname(original_file)     
+                    include_file = template.template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
                     results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_filename)
@@ -369,10 +391,10 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = utils.template(self.basedir, real_filename, self.vars)
+                    filename2 = template.template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = utils.template(self.basedir, filename2, inject)
+                        filename3 = template.template(self.basedir, filename2, inject)
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -402,10 +424,10 @@ class Play(object):
             else:
                 # just one filename supplied, load it!
 
-                filename2 = utils.template(self.basedir, filename, self.vars)
+                filename2 = template.template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = utils.template(self.basedir, filename2, inject)
+                    filename3 = template.template(self.basedir, filename2, inject)
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue

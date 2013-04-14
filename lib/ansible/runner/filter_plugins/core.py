@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 import json
 import yaml
 
@@ -31,6 +32,10 @@ class FilterModule(object):
 
     def filters(self):
         return {
+            # base 64
+            'b64decode': base64.b64decode,
+            'b64encode': base64.b64encode,
+
             # json
             'to_json': json.dumps,
             'to_nice_json': to_nice_json,

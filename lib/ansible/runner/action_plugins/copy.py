@@ -18,6 +18,7 @@
 import os
 
 from ansible import utils
+import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
@@ -54,10 +55,11 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
-                fn = utils.template(self.runner.basedir, fn, inject)
+                fn_orig = fn
+                fn = template.template(self.runner.basedir, fn, inject)
                 fn = utils.path_dwim(self.runner.basedir, fn)
                 if not os.path.exists(fn) and '_original_file' in inject:
-                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn, self.runner.basedir, check=False)
+                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn_orig, self.runner.basedir, check=False)
                 if os.path.exists(fn):
                     source = fn
                     found = True
@@ -77,7 +79,7 @@ class ActionModule(object):
             f.close()
             source = tmp_content
         else:
-            source = utils.template(self.runner.basedir, source, inject)
+            source = template.template(self.runner.basedir, source, inject)
             if '_original_file' in inject:
                 source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
             else:

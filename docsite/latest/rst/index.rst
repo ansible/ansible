@@ -7,8 +7,8 @@ Ansible Documentation
    :alt: ansiblefest 2013
    :target: http://ansibleworks.com/fest
 
-
-This page contains documentation about how to use `Ansible <http://ansible.cc>`_.  You may also be interested in taking a class:
+This page contains documentation about how to use `Ansible <http://ansible.cc>`_ and covers the latest version.  For the current
+released version, see `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_.  You may also be interested in taking a class:
 
 .. image:: http://www.ansibleworks.com.s3-website-us-east-1.amazonaws.com/img/banners/training.png
    :alt: ansibleworks training

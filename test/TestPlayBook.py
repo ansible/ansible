@@ -201,7 +201,7 @@ class TestPlaybook(unittest.TestCase):
            "localhost": {
                "changed": 0,
                "failures": 0,
-               "ok": 10,
+               "ok": 6,
                "skipped": 0,
                "unreachable": 0
            }
@@ -257,3 +257,31 @@ class TestPlaybook(unittest.TestCase):
        play = ansible.playbook.Play(playbook, playbook.playbook[0], os.getcwd())
        assert play.hosts == ';'.join(('host1', 'host2', 'host3'))
 
+   def test_playbook_when(self):
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'playbook-when.yml'),
+           host_list='test/ansible_hosts',
+           extra_vars={ 'external' : 'xyz', 'identity': 'identity' },
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       actual = playbook.run()
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 0,
+               "failures": 0,
+               "ok": 3,
+               "skipped": 3,
+               "unreachable": 0
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)

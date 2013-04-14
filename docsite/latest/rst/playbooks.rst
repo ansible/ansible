@@ -138,17 +138,12 @@ The `vars` section contains a list of variables and values that can be used in t
 
 These variables can be used later in the playbook like this::
 
-    $varname or ${varname}
+    $varname or ${varname} or {{ varname }}
 
-The later is useful in the event you need to do something like ${other}_some_string.
+If you ever want to do anything complex, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get
+in the habit of using this form.
 
-Inside templates, the full power of the `Jinja2 <http://jinja.pocoo.org/docs/>`_ templating language is also available, which looks like this::
-
-    {{ varname }}
-
-The Jinja2 documentation provides information about how to construct loops and conditionals for those
-who which to use more advanced templating.  This is optional and the $varname format still works in template
-files.
+To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
@@ -242,8 +237,8 @@ Variables can be used in action lines.   Suppose you defined
 a variable called 'vhost' in the 'vars' section, you could do this::
 
    tasks:
-     - name: create a virtual host file for $vhost
-       action: template src=somefile.j2 dest=/etc/httpd/conf.d/$vhost
+     - name: create a virtual host file for {{ vhost }}
+       action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
 
 Those same variables are usable in templates, which we'll get to later.
 
@@ -345,7 +340,7 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
 
 Variables passed in can then be used in the included files.  You can reference them like this::
 
-   $user
+   {{ user }}
 
 (In addition to the explicitly passed in parameters, all variables from
 the vars section are also available for use here as well.)
@@ -417,6 +412,77 @@ inside another.
    play are going to get the same tasks.  ('only_if' provides some
    ability for hosts to conditionally skip tasks).
 
+Roles
+`````
+
+Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
+The short answer is to use roles!  Roles are automatic ways of automatically loading certain vars_files, tasks, and
+handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
+
+Roles are just automation around 'include' directives as redescribed above, and really don't contain much
+additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
+
+Example project structure::
+
+    site.yml
+    webservers.yml
+    fooservers.yml
+    roles/
+       common/
+         files/
+         templates/
+         tasks/
+         handlers/
+         vars/
+       webservers/
+         files/
+         templates/
+         tasks/
+         handlers/
+         vars/
+
+In a playbook, it would look like this::
+
+    ---
+    - hosts: webservers
+      roles:
+         - common
+         - webservers
+
+This designates the following behaviors, for each role 'x':
+
+- If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
+- If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
+- If roles/x/vars/main.yml exists, variables listed therein will be added to the play
+- Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
+- Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+
+If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
+for instance.
+
+Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
+but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
+the roles are evaluated first.
+
+Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
+
+    ---
+    - hosts: webservers
+      roles:
+        - common
+        - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
+        - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
+
+While it's probably not something you should do often, you can also conditionally apply roles like so::
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: some_role, when: "ansible_os_family == 'RedHat'" }
+   
+This works by applying the conditional to every task in the role.  Conditionals are covered later on in
+the documentation.    
+    
 Executing A Playbook
 ````````````````````
 

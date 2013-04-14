@@ -18,6 +18,7 @@
 import ansible.inventory
 import ansible.runner
 import ansible.constants as C
+from ansible.utils import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
@@ -174,21 +175,24 @@ class PlayBook(object):
                 for t in tokens[1:]:
 
                     (k,v) = t.split("=", 1)
-                    incvars[k] = utils.template(basedir, v, incvars)
-                    included_path = utils.path_dwim(basedir, utils.template(basedir, tokens[0], incvars))
-                    (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
-                    for p in plays:
-                        # support for parameterized play includes works by passing
-                        # those variables along to the subservient play
-                        if 'vars' not in p:
-                            p['vars'] = {}
-                        if isinstance(p['vars'], dict):
-                            p['vars'].update(incvars)
-                        elif isinstance(p['vars'], list):
-                            # nobody should really do this, but handle vars: a=1 b=2
-                            p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
-                    accumulated_plays.extend(plays)
-                    play_basedirs.extend(basedirs)
+                    incvars[k] = template.template(basedir, v, incvars)
+
+                included_path = utils.path_dwim(basedir, template.template(basedir, tokens[0], incvars))
+                (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                for p in plays:
+                    # support for parameterized play includes works by passing
+                    # those variables along to the subservient play
+                    if 'vars' not in p:
+                        p['vars'] = {}
+                    if isinstance(p['vars'], dict):
+                        p['vars'].update(incvars)
+                    elif isinstance(p['vars'], list):
+                        # nobody should really do this, but handle vars: a=1 b=2
+                        p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+
+                accumulated_plays.extend(plays)
+                play_basedirs.extend(basedirs)
+
             else:
 
                 # this is a normal (non-included play)
@@ -316,7 +320,7 @@ class PlayBook(object):
         self.callbacks.task = task
         self.runner_callbacks.task = task
 
-        self.callbacks.on_task_start(utils.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
+        self.callbacks.on_task_start(template.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             return True
         
@@ -351,7 +355,7 @@ class PlayBook(object):
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
-                        self._flag_handler(play, utils.template(play.basedir, handler_name, task.module_vars), host)
+                        self._flag_handler(play, template.template(play.basedir, handler_name, task.module_vars), host)
 
         return hosts_remaining
 
@@ -366,7 +370,7 @@ class PlayBook(object):
 
         found = False
         for x in play.handlers():
-            if handler_name == utils.template(play.basedir, x.name, x.module_vars):
+            if handler_name == template.template(play.basedir, x.name, x.module_vars):
                 found = True
                 self.callbacks.on_notify(host, x.name)
                 x.notified_by.append(host)
@@ -502,7 +506,7 @@ class PlayBook(object):
                 host_list = self._list_available_hosts(play.hosts)
 
                 if task.any_errors_fatal and len(host_list) < hosts_count:
-                  host_list = None
+                    host_list = None
 
                 # if no hosts remain, drop out
                 if not host_list:

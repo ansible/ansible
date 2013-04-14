@@ -492,6 +492,16 @@ class User(object):
 
         return self.execute_command(cmd)
 
+    def get_ssh_public_key(self):
+        ssh_public_key_file = '%s.pub' % self.get_ssh_key_path()
+        try:
+            f = open(ssh_public_key_file)
+            ssh_public_key = f.read().strip()
+            f.close()
+        except IOError:
+            return None
+        return ssh_public_key
+
     def create_user(self):
         # by default we use the create_user_useradd method
         return self.create_user_useradd()
@@ -1130,6 +1140,7 @@ def main():
             else:
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
+            result['ssh_public_key'] = user.get_ssh_public_key()
 
 
     module.exit_json(**result)

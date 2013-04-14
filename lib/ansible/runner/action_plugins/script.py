@@ -19,6 +19,7 @@ import os
 import shlex
 
 import ansible.constants as C
+from ansible.utils import template
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
@@ -39,7 +40,7 @@ class ActionModule(object):
         source  = tokens[0]
         # FIXME: error handling
         args    = " ".join(tokens[1:])
-        source  = utils.template(self.runner.basedir, source, inject)
+        source  = template.template(self.runner.basedir, source, inject)
         source  = utils.path_dwim(self.runner.basedir, source)
 
         # transfer the file to a remote tmp location

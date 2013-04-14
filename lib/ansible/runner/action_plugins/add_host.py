@@ -20,7 +20,7 @@ import ansible
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv, template
+from ansible.utils import parse_kv
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 
