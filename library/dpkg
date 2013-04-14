@@ -141,6 +141,7 @@ def package_from_file(m, path):
         - empty debfile and header (just to remain compliant with package_from_url return)
     '''
     import apt
+    from apt import debfile
 
     try:
         pkg = debfile.DebPackage(path)
