@@ -170,14 +170,14 @@ def package_status(m, pkgname, version, cache, state):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
-def install(m, record, debfile, content, cache, install_recommends=True, force=False):
+def install(m, record, debfile, content, cache, force=False):
     package = ""
     name = record['Package']
     version = record['Version']
 
     installed, upgradable = package_status(m, name, version, cache, state='install')    
     if not installed or upgradable:
-        if content:
+        if m.params['url']:
             # Fetch the remaining file from url
             try: 
                 content += debfile.read()
@@ -195,13 +195,11 @@ def install(m, record, debfile, content, cache, install_recommends=True, force=F
 
     if len(package) != 0:
         if force:
-            force_yes = '--force-yes'
+            force_all = '--force-all'
         else:
-            force_yes = ''
+            force_all = ''
 
-        cmd = "%s --install --force-confold %s %s" % (DPKG, force_yes, package)
-        if not install_recommends:
-            cmd += " --no-install-recommends"
+        cmd = "%s --install --force-confold %s %s" % (DPKG, force_all, package)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -214,21 +212,22 @@ def install(m, record, debfile, content, cache, install_recommends=True, force=F
     else:
         m.exit_json(changed=False)
 
-def remove(m, pkgspec, cache, purge=False):
-    packages = ""
-    for package in pkgspec:
-        name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache, state='remove')
-        if installed:
-            packages += "'%s' " % package
+def remove(m, record, cache, purge=False):
+    package = ""
+    name = record['Package']
+    version = record['Version']
 
-    if len(packages) == 0:
+    installed, upgradable = package_status(m, name, version, cache, state='remove')
+    if installed:
+        package = name
+
+    if len(package) == 0:
         m.exit_json(changed=False)
     else:
         purge = ''
         if purge:
             purge = '--purge'
-        cmd = "%s -q -y %s remove %s" % (APT, purge,packages)
+        cmd = "%s -q -y %s remove %s" % (APT, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -245,7 +244,6 @@ def main():
             purge = dict(default='no', type='bool'),
             url = dict(default=None),
             package = dict(default=None, aliases=['pkg', 'name']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
         ),
         mutually_exclusive = [['package', 'url']],
@@ -264,12 +262,11 @@ def main():
         module.fail_json(msg="Cannot find apt-get")
 
     p = module.params
-    install_recommends = p['install_recommends']
 
     try:
         cache = apt.Cache()
 
-        force_yes = p['force']
+        force_all = p['force']
 
         if p['url']:
             record, debfile, header = package_from_url(module, p['url'])
@@ -277,8 +274,7 @@ def main():
             record, debfile, header = package_from_file(module, p['package'])
 
         if p['state'] in [ 'installed', 'present' ]:
-            install(module, record, debfile, header, cache, install_recommends=install_recommends,
-                      force=force_yes, )
+            install(module, record, debfile, header, cache, force=force_all)
         elif p['state'] in [ 'removed', 'absent' ]:
             remove(module, record, cache, p['purge'])
 
