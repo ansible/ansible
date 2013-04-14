@@ -94,6 +94,7 @@ def package_from_url(m, url):
     import tarfile
     import io
     import re
+    import apt
 
     try:
         debfile = urllib.urlopen(url)
@@ -130,7 +131,7 @@ def package_from_url(m, url):
         # Failed to populate Record; bad format of the control
         m.fail_json(msg="Invalid control file's content format from url '%s'" % url)
 
-    return dict(record=record, debfile=debfile, header=header)
+    return (record, debfile, header)
 
 def package_from_file(m, path):
     '''
@@ -139,6 +140,8 @@ def package_from_file(m, path):
         - package record (apt.package.Record) to query package_status
         - empty debfile and header (just to remain compliant with package_from_url return)
     '''
+    import apt
+
     try:
         pkg = debfile.DebPackage(path)
     except: 
@@ -147,7 +150,7 @@ def package_from_file(m, path):
     control = pkg.control_content('control')
     record = apt.package.Record(control)
 
-    return dict(record=record, debfile=None, header=None)
+    return (record, None, None)
 
 def package_status(m, pkgname, version, cache):
     try:
@@ -167,10 +170,84 @@ def package_status(m, pkgname, version, cache):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
+def missing_dependencies(m, depends, cache):
+    """
+    Check the dependencies against apt cache
+    Returns:
+    - True + [] if dependencies are matched (or none)
+    - False + missing [] dependencies if dependencies are not matched
+    """
+    if not depends or len(depends) == 0:
+        return (False, [])
+
+    missing = False
+    missing_deps = []
+
+    from distutils.version import StrictVersion
+    import operator
+    operator_dict = {
+        '>': operator.gt,
+        '>=': operator.ge,
+        '=': operator.eq,
+        '<': operator.lt,
+        '<=': operator.le
+    }
+
+    dependencies = [ dep.strip() for dep in depends.split(',') ]
+    for dep in dependencies:
+        try:
+            pkg = cache[dep.split()[0]]
+        except KeyError:
+            missing = True
+            missing_deps.append(dep)
+            continue
+
+        # Package is missing if .. not installed
+        try:
+            if not pkg.is_installed:
+                missing = True
+                missing_deps.append(dep)
+                continue
+        except AttributeError:
+            if not pkg.isInstalled:
+                missing = True
+                missing_deps.append(dep)
+                continue
+
+        # Check version
+        version = None
+        try:
+            versionSpec = dep.split('(')[1].split(')')[0]
+            version = versionSpec.split(None, 1)
+        except:
+            pass
+
+        if version:
+            op = '='
+            if len(version) == 2:
+                op = version[0]
+                version = version[1]
+
+            # Version needs to be a string of integers - debian / ubuntu doesn't always comply...
+            m_pkg_version = re.search('([a-zA-Z0-9\.]*)', pkg.installed.version)
+            if m:
+                pkg_version = m_pkg_version.groups()[0]
+            else:
+                m.exit_json(msg="Error while parsing package (dependency) version: '%s" % pkg.installed.version)
+
+            match_version = operator_dict[op](StrictVersion(pkg_version), StrictVersion(version))
+            if not match_version:
+                missing = True
+                missing_deps.append(dep)
+                continue
+
+    return (missing, missing_deps)
+
 def install(m, record, debfile, content, cache, force=False):
     package = ""
     name = record['Package']
     version = record['Version']
+    depends = record['Depends']
 
     installed, upgradable = package_status(m, name, version, cache)    
     if not installed or upgradable:
@@ -194,8 +271,14 @@ def install(m, record, debfile, content, cache, force=False):
         if force:
             force_all = '--force-all'
         else:
-            force_all = ''
-
+            # Look for missing dependencies
+            missing, missing_deps = missing_dependencies(m, depends, cache)
+            if missing:
+                m.exit_json(msg="Not installing, missing dependencies: '%s', use --force to install" 
+                              % ', '.join(missing_deps))
+            else: 
+                force_all = ''
+    
         cmd = "%s --install --force-confold %s %s" % (DPKG, force_all, package)
 
         if m.check_mode:
@@ -224,14 +307,14 @@ def remove(m, record, cache, purge=False):
         purge = ''
         if purge:
             purge = '--purge'
-        cmd = "%s -q -y %s remove %s" % (APT, purge, packages)
+        cmd = "%s -q -y %s remove %s" % (APT, purge, package)
 
         if m.check_mode:
             m.exit_json(changed=True)
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (package, err))
         m.exit_json(changed=True)
 
 def main():
@@ -250,13 +333,13 @@ def main():
 
     try:
         import apt
-        import apt_pkg
-        from apt import debfile
     except:
-        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+        module.fail_json(msg="Could not import python modules: apt. Please install python-apt package.")
 
     if not os.path.exists(APT_PATH):
         module.fail_json(msg="Cannot find apt-get")
+    if not os.path.exists(DPKG_PATH):
+        module.fail_json(msg="Cannot find dpkg")
 
     p = module.params
 
