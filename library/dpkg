@@ -71,18 +71,14 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 # APT related constants
 APT_PATH = "/usr/bin/apt-get"
+DPKG_PATH = "/usr/bin/dpkg"
 APT = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % APT_PATH
+DPKG = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical %s" % DPKG_PATH
 
 # Empirical size in bytes to fetch .deb header and extract package info
 # without downloading the entire file
+# 5Kb is more that enough, could be reduced down to ~2-3Kb - remain safe
 HEADER_SIZE = 5000
-
-# def package_split(pkgspec):
-#     parts = pkgspec.split('=')
-#     if len(parts) > 1:
-#         return parts[0], parts[1]
-#     else:
-#         return parts[0], None
 
 # Get package from URL, fetching 
 def package_from_url(m, url):
@@ -108,7 +104,11 @@ def package_from_url(m, url):
     # - extract the control.tar.gz file that holds the package info (done via regex)
     # - untar and extract the './control' file
     # - populate a apt.package.Record with the content of the 'control' file
-    header = debfile.read(HEADER_SIZE)
+    try: 
+        header = debfile.read(HEADER_SIZE)
+    except:
+        m.fail_json(msg="Failed to fetch package from url '%s'" % m.params['url'])
+
     match = re.search(b'control\.tar\.gz[^\n]*\n(.*)data\.tar\.gz', header, re.DOTALL)
     if match:
         match_data = match.groups()[0]
@@ -137,6 +137,7 @@ def package_from_file(m, path):
     Open the file at path with debfile.DebPackage and attempt to read its info
     Returns 
         - package record (apt.package.Record) to query package_status
+        - empty debfile and header (just to remain compliant with package_from_url return)
     '''
     try:
         pkg = debfile.DebPackage(path)
@@ -146,7 +147,7 @@ def package_from_file(m, path):
     control = pkg.control_content('control')
     record = apt.package.Record(control)
 
-    return dict(record=record)
+    return dict(record=record, debfile=None, header=None)
 
 def package_status(m, pkgname, version, cache, state):
     try:
@@ -169,23 +170,36 @@ def package_status(m, pkgname, version, cache, state):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable
 
-def install(m, pkgspec, cache, install_recommends=True, force=False):
-    packages = ""
-    for package in pkgspec:
-        name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache, state='install')
-        if not installed or (upgrade and upgradable):
-            packages += "'%s' " % package
+def install(m, record, debfile, content, cache, install_recommends=True, force=False):
+    package = ""
+    name = record['Package']
+    version = record['Version']
 
-    if len(packages) != 0:
+    installed, upgradable = package_status(m, name, version, cache, state='install')    
+    if not installed or upgradable:
+        if content:
+            # Fetch the remaining file from url
+            try: 
+                content += debfile.read()
+            except:
+                m.fail_json(msg="Failed to fetch package from url '%s'" % m.params['url'])
+
+            # Save file locally to be processed by dpkg
+            pkg_file_name = "%s_%s_%s.deb" % (name, version, record['Architecture'])
+            pkg_file = open(pkg_file_name, 'wb')
+            pkg_file.write(content)
+            pkg_file.close()
+            package = pkg_file_name
+        else:
+            package = m.params['package']
+
+    if len(package) != 0:
         if force:
             force_yes = '--force-yes'
         else:
             force_yes = ''
 
-        cmd = "%s --option Dpkg::Options::=--force-confold -q -y %s install %s" % (APT, force_yes,packages)
-        if default_release:
-            cmd += " -t '%s'" % (default_release,)
+        cmd = "%s --install --force-confold %s %s" % (DPKG, force_yes, package)
         if not install_recommends:
             cmd += " --no-install-recommends"
 
@@ -194,7 +208,7 @@ def install(m, pkgspec, cache, install_recommends=True, force=False):
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
+            m.fail_json(msg="'dpkg --install %s' failed: %s" % (package, err))
         else:
             m.exit_json(changed=True)
     else:
@@ -257,15 +271,16 @@ def main():
 
         force_yes = p['force']
 
-        urls = p['url'].split(',')
-        packages = p['package'].split(',')
-        latest = p['state'] == 'latest'
+        if p['url']:
+            record, debfile, header = package_from_url(module, p['url'])
+        else:
+            record, debfile, header = package_from_file(module, p['package'])
 
         if p['state'] in [ 'installed', 'present' ]:
-            install(module, packages, cache, install_recommends=install_recommends,
-                      force=force_yes)
+            install(module, record, debfile, header, cache, install_recommends=install_recommends,
+                      force=force_yes, )
         elif p['state'] in [ 'removed', 'absent' ]:
-            remove(module, packages, cache, p['purge'])
+            remove(module, record, cache, p['purge'])
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
