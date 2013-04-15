@@ -44,7 +44,24 @@ class VarsModule(object):
 
         # load vars in inventory_dir/group_vars/name_of_group
         for x in groups:
-            path = os.path.join(basedir, "group_vars/%s" % x)
+            p = os.path.join(basedir, "group_vars/%s" % x)
+            paths = [p, '.'.join([p, 'yml']), '.'.join([p, 'yaml'])]
+            for path in paths:
+                if os.path.exists(path):
+                    data = utils.parse_yaml_from_file(path)
+                    if type(data) != dict:
+                        raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
+                    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+                        # let data content override results if needed
+                        results = utils.merge_hash(results, data)
+                    else:
+                        results.update(data)
+                    break
+
+        # load vars in inventory_dir/hosts_vars/name_of_host
+        p = os.path.join(basedir, "host_vars/%s" % host.name)
+        paths = [p, '.'.join([p, 'yml']), '.'.join([p, 'yaml'])]
+        for path in paths:
             if os.path.exists(path):
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
@@ -54,17 +71,6 @@ class VarsModule(object):
                     results = utils.merge_hash(results, data)
                 else:
                     results.update(data)
-
-        # load vars in inventory_dir/hosts_vars/name_of_host
-        path = os.path.join(basedir, "host_vars/%s" % host.name)
-        if os.path.exists(path):
-            data = utils.parse_yaml_from_file(path)
-            if type(data) != dict:
-                raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-            if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-                # let data content override results if needed
-                results = utils.merge_hash(results, data)
-            else:
-                results.update(data)
+                break
         return results
 
