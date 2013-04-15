@@ -78,6 +78,7 @@ More links:
 .. toctree::
    :maxdepth: 1
 
+   faq
    contrib
    glossary
 
