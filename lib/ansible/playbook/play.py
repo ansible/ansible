@@ -321,7 +321,7 @@ class Play(object):
 
         elif type(self.vars_prompt) == dict:
             for (vname, prompt) in self.vars_prompt.iteritems():
-                prompt_msg = "%s: " % prompt
+                prompt_msg = "%s" % prompt
                 if vname not in self.playbook.extra_vars:
                     vars[vname] = self.playbook.callbacks.on_vars_prompt(
                                      varname=vname, private=False, prompt=prompt_msg, default=None
