@@ -797,7 +797,11 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
                 self.set_context_if_different(src, context, False)
-        os.rename(src, dest)
+        try:
+            shutil.copy2(src, dest)
+        except shutil.Error, e:
+            self.fail_json(msg='Could not atomic_replace file: %s to %s: %s' % (src, dest, e))
+            
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''
