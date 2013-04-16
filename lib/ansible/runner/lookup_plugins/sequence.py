@@ -73,9 +73,9 @@ class LookupModule(object):
     calculating the number of entries in a sequence when a stride is specified.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, basedir, **kwargs):
         """absorb any keyword args"""
-        pass
+        self.basedir = basedir
 
     def reset(self):
         """set sensible defaults"""
@@ -170,11 +170,10 @@ class LookupModule(object):
                     "problem formatting %r with %r" % self.format
                 )
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, inject=None, **kwargs):
         results = []
 
-        if isinstance(terms, basestring):
-            terms = [terms]
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
         for term in terms:
             try:

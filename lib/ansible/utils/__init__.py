@@ -725,7 +725,11 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
         if not '{' in terms and not '[' in terms and not terms.strip().startswith("/"):
             try:
-                terms = template.template(basedir, "{{ %s }}" % terms, inject)
+                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
+                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
+                    pass
+                else:
+                    terms = new_terms  
             except:
                 pass
 

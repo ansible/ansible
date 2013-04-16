@@ -66,10 +66,6 @@
 
 # this will include the tasks in the file generic where it is found first (staging or production)
 
-
-
-
-
 from ansible import utils, errors
 import os
 
@@ -78,8 +74,12 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, inject=None, **kwargs):
+
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
         result = None
+
         for term in terms:
             if isinstance(term, dict):
                 files = term.get('files', [])
