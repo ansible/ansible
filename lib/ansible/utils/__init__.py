@@ -717,7 +717,6 @@ def safe_eval(str):
 def listify_lookup_plugin_terms(terms, basedir, inject):
 
     if isinstance(terms, basestring):
-        print "A0"
         # somewhat did:
         #    with_items: alist
         # OR
