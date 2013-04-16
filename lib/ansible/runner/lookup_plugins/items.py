@@ -16,7 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.utils import safe_eval
-import ansible.utils.template as template
+import ansible.utils as utils
+import ansible.errors as errors
 
 def flatten(terms):
     ret = []
@@ -33,20 +34,11 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        if isinstance(terms, basestring):
-            # somewhat did:
-            #    with_items: alist
-            # OR
-            #    with_items: {{ alist }}
-            if not '{' in terms and not '[' in terms:
-                terms = '{{ %s }}' % terms
-                terms = template.template(self.basedir, terms, inject)
-            if '{' or '[' in terms:
-                # Jinja2 already evaluated a variable to a list.
-                # Jinja2-ified list needs to be converted back to a real type
-                # TODO: something a bit less heavy than eval
-                terms = safe_eval(terms)
-            terms = [ terms ]
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
+        if not isinstance(terms, list):
+            raise errors.AnsibleError("with_items expects a list")
+
         return flatten(terms)
 
 

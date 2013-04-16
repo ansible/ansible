@@ -24,13 +24,21 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
-        if isinstance(terms, basestring):
-            terms = [ terms ]
+    def run(self, terms, inject=None, **kwargs):
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
         ret = []
+
+        # this can happen if the variable contains a string, strictly not desired for lookup
+        # plugins, but users may try it, so make it work.
+        if not isinstance(terms, list):
+            terms = [ terms ]
+
         for term in terms:
             path = utils.path_dwim(self.basedir, term)
             if not os.path.exists(path):
                 raise errors.AnsibleError("%s does not exist" % path)
+
             ret.append(codecs.open(path, encoding="utf8").read().rstrip())
+
+
         return ret

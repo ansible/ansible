@@ -24,18 +24,16 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
-        if isinstance(terms, basestring):
-            terms = [ terms ]
+    def run(self, terms, inject=None, **kwargs):
+
+        utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+
         ret = []
+
         for term in terms:
-            dwimterms = utils.path_dwim(self.basedir, term)
-            # This skips whatever prefix the dwim added, leaving just the filename for the item
-            i = -1
-            while dwimterms[i] == term[i] and -i < len(term) and -i < len(dwimterms):
-                i = i - 1
-            orig_prefix_len = i + 1
-            dwim_prefix_len = len(dwimterms) + i + 1
-            ret.extend([ term[:orig_prefix_len] + f[dwim_prefix_len:]
-                         for f in glob.glob(dwimterms) if os.path.isfile(f) ])
+
+            dwimmed = utils.path_dwim(self.basedir, term)
+            globbed = glob.glob(dwimmed)
+            ret.extend(os.path.basename(g) for g in globbed if os.path.isfile(g))
+
         return ret
