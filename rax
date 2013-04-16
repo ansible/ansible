@@ -105,8 +105,10 @@ except ImportError:
     print("failed=True msg='pyrax required for this module'")
     sys.exit(1)
 
-SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
-                     'cloud_databases', 'cloud_loadbalancers']
+# These are possible services, but only cloudservers is supported at this time
+#SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
+#                     'cloud_databases', 'cloud_loadbalancers']
+SUPPORTEDSERVICES = ['cloudservers']
 
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout):
