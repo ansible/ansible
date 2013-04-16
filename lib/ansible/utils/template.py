@@ -23,7 +23,6 @@ from jinja2.runtime import StrictUndefined
 import yaml
 import json
 from ansible import errors
-import ansible.utils as utils
 import ansible.constants as C
 import time
 import subprocess
@@ -41,6 +40,7 @@ _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE='#jinja2:'
 
 def lookup(name, *args, **kwargs):
+    from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
     if instance is not None:
         return ",".join(instance.run(*args, inject=vars, **kwargs))
