@@ -1,0 +1,52 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2013 Dag Wieers <dag@wieers.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Dag Wieers
+module: set
+short_description: Set local variables (for this play)
+description:
+     - This module sets one or more local variables (scope of the play).
+     - In comparison to playbook variables, using the C(set) module can
+       create variables using conditions, but these variables are only
+       set for the local scope (the play itself).
+     - If you would like to create global variables (host facts) you can
+       use the C(global) module.
+options:
+  key_value:
+    description:
+      - The C(set) module takes key=value pairs as variables to set in the
+        local (play) scope. Or alternatively, accepts complex arguments using the
+        C(args:) statement.
+    required: true
+    default: null
+version_added: "1.2"
+examples:
+    - description: "Example setting local variables using key=value pairs"
+      code: |
+            action: set var1="something" var2="${password}"'
+    - description: "Example setting local variables using complex arguments"
+      code: |
+            action: set
+            args:
+              var1: something
+              var2: ${password}
+'''

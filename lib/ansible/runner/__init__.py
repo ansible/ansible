@@ -115,6 +115,7 @@ class Runner(object):
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
+        play=None,                          # a plays internals thing
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
@@ -138,6 +139,7 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.play             = play
         self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
@@ -331,6 +333,8 @@ class Runner(object):
             port = self.remote_port
 
         inject = {}
+        if self.play:
+            inject.update(self.play.vars)
         inject.update(host_variables)
         inject.update(self.module_vars)
         inject.update(self.setup_cache[host])

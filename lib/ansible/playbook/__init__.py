@@ -256,7 +256,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_task_internal(self, task):
+    def _run_task_internal(self, play, task):
         ''' run a particular module step in a playbook '''
 
         hosts = self._list_available_hosts()
@@ -268,7 +268,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=task.play.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
-            private_key_file=self.private_key_file,
+            play=play, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
@@ -305,7 +305,7 @@ class PlayBook(object):
             return True
         
         # load up an appropriate ansible runner to run the task in parallel
-        results = self._run_task_internal(task)
+        results = self._run_task_internal(play, task)
 
         # if no hosts are matched, carry on
         hosts_remaining = True
@@ -316,11 +316,13 @@ class PlayBook(object):
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
-        # add facts to the global setup cache
+        # add facts to the global setup cache and play variables
         for host, result in contacted.iteritems():
             # Skip register variable if host is skipped
             if result.get('skipped', False):
                 continue
+            vars = result.get('ansible_vars', {})
+            play.vars.update(vars)
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
             # extra vars need to always trump - so update  again following the facts
@@ -380,7 +382,7 @@ class PlayBook(object):
             forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
-            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
+            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars, play=play,
             check=self.check, diff=self.diff
         ).run()
         self.stats.compute(setup_results, setup=True)
