@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.utils import template
+import ansible.utils as utils
 
 class LookupModule(object):
 
