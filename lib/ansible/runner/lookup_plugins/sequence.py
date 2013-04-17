@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.errors import AnsibleError
-from ansible.utils import parse_kv
+import ansible.utils as utils
 from re import compile as re_compile, IGNORECASE
 
 # shortcut format
@@ -181,7 +181,7 @@ class LookupModule(object):
 
                 try:
                     if not self.parse_simple_args(term):
-                        self.parse_kv_args(parse_kv(term))
+                        self.parse_kv_args(utils.parse_kv(term))
                 except Exception:
                     raise AnsibleError(
                         "unknown error parsing with_sequence arguments: %r"

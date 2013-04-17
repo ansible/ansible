@@ -26,7 +26,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         ret = []
 
