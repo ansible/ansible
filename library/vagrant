@@ -527,7 +527,7 @@ def main():
             cpus=dict(),
             ip=dict(),
             count = dict(default='1'), 
-            version = dict()
+            version = dict(default='2')
         )
     )
     
