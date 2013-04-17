@@ -20,6 +20,7 @@ DOCUMENTATION="""
 ---
 module: ec2_facts
 short_description: Gathers facts about remote hosts within ec2 (aws)
+version_added: "1.0"
 options: {}
 description:
      - This module fetches data from the metadata servers in ec2 (aws).
