@@ -27,6 +27,9 @@ class LookupModule(object):
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
+        if isinstance(basestring, terms):
+            terms = [ terms ]
+
         ret = []
         for term in terms:
             var = term.split()[0]
