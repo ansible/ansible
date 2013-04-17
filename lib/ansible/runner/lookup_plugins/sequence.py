@@ -173,7 +173,10 @@ class LookupModule(object):
     def run(self, terms, inject=None, **kwargs):
         results = []
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+
+        if isinstance(terms, basestring):
+            terms = [ terms ]
 
         for term in terms:
             try:
