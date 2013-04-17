@@ -142,6 +142,13 @@ options:
     required: false
     defualt: null
     aliases: []
+  zone:
+    version_added: "1.2"
+    description:
+      - availability zone to place the instance into
+    required: false
+    defualt: null
+    aliases: []
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
 '''
@@ -211,6 +218,7 @@ def main():
             instance_tags = dict(),
             vpc_subnet_id = dict(),
             private_ip = dict(),
+            zone = dict(),
         )
     )
 
@@ -233,6 +241,7 @@ def main():
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
     private_ip = module.params.get('private_ip')
+    zone = module.params.get('zone')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -289,6 +298,7 @@ def main():
                                 ramdisk_id = ramdisk,
                                 subnet_id = vpc_subnet_id,
                                 private_ip_address = private_ip,
+                                placement = zone,
                                 user_data = user_data)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
