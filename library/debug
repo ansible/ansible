@@ -27,8 +27,8 @@ description:
        for debugging variables or expressions without necessarily halting
        the playbook. Useful for debugging together with the only_if directive.
 
-       In order to see the debug message, you need to run ansible in verbose
-       mode (using the C(-v) option).
+       Since Ansible version 1.2, the verbose mode is activated by default on
+       this module so C(-v) is not needed anymore.
 version_added: "0.8"
 options:
   msg:

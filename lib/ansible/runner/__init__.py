@@ -549,7 +549,7 @@ class Runner(object):
             else:
                 if self.diff:
                     self.callbacks.on_file_diff(conn.host, result.diff)
-                self.callbacks.on_ok(host, data)
+                self.callbacks.on_ok(host, data, result.always_verbose)
         return result
 
     # *****************************************************

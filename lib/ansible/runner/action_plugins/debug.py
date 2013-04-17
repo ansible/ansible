@@ -46,4 +46,4 @@ class ActionModule(object):
         else:
             result = dict(msg=args['msg'])
 
-        return ReturnData(conn=conn, result=result)
+        return ReturnData(conn=conn, result=result, always_verbose=True)

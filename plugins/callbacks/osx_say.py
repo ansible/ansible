@@ -37,7 +37,7 @@ class CallbackModule(object):
     def runner_on_failed(self, host, res, ignore_errors=False):
         say("Failure on host %s" % host, FAILED_VOICE)
 
-    def runner_on_ok(self, host, res):
+    def runner_on_ok(self, host, res, always_verbose=False):
         say("pew", LASER_VOICE)
 
     def runner_on_error(self, host, msg):

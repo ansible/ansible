@@ -54,7 +54,7 @@ class CallbackModule(object):
     def runner_on_failed(self, host, res, ignore_errors=False):
         log(host, 'FAILED', res)
 
-    def runner_on_ok(self, host, res):
+    def runner_on_ok(self, host, res, always_verbose=False):
         log(host, 'OK', res)
 
     def runner_on_error(self, host, msg):
