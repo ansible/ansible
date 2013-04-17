@@ -89,7 +89,7 @@ import json
 import urllib
 import urllib2
 import base64
-import socket
+import platform
 
 
 class netscaler(object):
@@ -153,7 +153,7 @@ def main():
             user = dict(required=True),
             password = dict(required=True),
             action = dict(default='enable', choices=['enable','disable']),
-            name = dict(default=socket.gethostname()),
+            name = dict(default=platform.node()),
             type = dict(default='server', choices=['service', 'server'])
         )
     )

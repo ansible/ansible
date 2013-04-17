@@ -138,7 +138,7 @@ class Facts(object):
         self.facts['kernel'] = platform.release()
         self.facts['machine'] = platform.machine()
         self.facts['python_version'] = platform.python_version()
-        self.facts['fqdn'] = socket.getfqdn()
+        self.facts['fqdn'] = platform.node()
         self.facts['hostname'] = self.facts['fqdn'].split('.')[0]
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         if self.facts['machine'] == 'x86_64':
