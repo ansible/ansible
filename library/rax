@@ -17,42 +17,36 @@
 DOCUMENTATION = '''
 ---
 module: rax
-short_description: create an instance in Rackspace Public Cloud, return instanceid
+short_description: create / delete an instance in Rackspace Public Cloud
 description:
-     - creates Rackspace Public Cloud instances and optionally waits for it to be 'running'.
+     - creates / deletes Rackspace Public Cloud instances and optionally waits for it to be 'running'.
 version_added: "1.2"
 options:
   service:
     description:
      - Cloud service to interact with
-    required: false
-    choices: ['cloudservers', 'cloudfiles', 'cloud_databases', 'cloud_loadbalancers']
+    choices: ['cloudservers']
     default: cloudservers
   state:
     description:
      - Indicate desired state of the resource
-    required: false
     choices: ['present', 'active', 'absent', 'deleted']
     default: present
   creds_file:
     description:
      - File to find the Rackspace Public Cloud credentials in
-    required: false
     default: null
   name:
     description:
      - Name to give the instance
-    required: false
     default: null
   flavor:
     description:
      - flavor to use for the instance
-    required: false
     default: null
   image:
     description:
      - image to use for the instance
-    required: false
     default: null
   meta:
     description:
@@ -61,7 +55,6 @@ options:
   key_name:
     description:
      - key pair to use on the instance
-    required: false
     default: null
     aliases: ['keypair']
   files:
@@ -71,12 +64,10 @@ options:
   region:
     description:
      - Region to create an instance in
-    required: false
     default: null
   wait:
     description:
      - wait for the instance to be in state 'running' before returning
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -84,8 +75,18 @@ options:
      - how long before wait gives up, in seconds
     default: 300
 examples:
-   - code: 'local_action: rax creds_file=~/.raxpub service=cloudservers name=rax-test1 flavor=5 image=b11d9567-e412-4255-96b9-bd63ab23bcfe wait=yes state=present'
-     description: "Examples from Ansible Playbooks"
+   - code: |
+           - name: Create a server
+             local_action:
+               module: rax
+               creds_file: ~/.raxpub
+               service: cloudservers
+               name: rax-test1
+               flavor: 5
+               image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+               wait: yes
+               state: present
+     description: "Example from Ansible Playbooks"
 requirements: [ "pyrax" ]
 author: Jesse Keating
 notes:
@@ -104,8 +105,10 @@ except ImportError:
     print("failed=True msg='pyrax required for this module'")
     sys.exit(1)
 
-SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
-                     'cloud_databases', 'cloud_loadbalancers']
+# These are possible services, but only cloudservers is supported at this time
+#SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
+#                     'cloud_databases', 'cloud_loadbalancers']
+SUPPORTEDSERVICES = ['cloudservers']
 
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout):

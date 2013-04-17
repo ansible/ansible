@@ -10,6 +10,7 @@ import ansible.utils as utils
 import ansible.callbacks as ans_callbacks
 import os
 import shutil
+import ansible.constants as C
 
 EVENTS = []
 
@@ -93,6 +94,8 @@ class TestPlaybook(unittest.TestCase):
            os.unlink('/tmp/ansible_test_data_copy.out')
        if os.path.exists('/tmp/ansible_test_data_template.out'):
            os.unlink('/tmp/ansible_test_data_template.out')
+       if os.path.exists('/tmp/ansible_test_messages.out'):
+           os.unlink('/tmp/ansible_test_messages.out')
 
    def _prepare_stage_dir(self):
        stage_path = os.path.join(self.test_dir, 'test_data')
@@ -285,3 +288,70 @@ class TestPlaybook(unittest.TestCase):
        print utils.jsonify(expected, format=True)
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
+   def test_playbook_hash_replace(self):
+      # save default hash behavior so we can restore it in the end of the test
+      saved_hash_behavior = C.DEFAULT_HASH_BEHAVIOUR
+      C.DEFAULT_HASH_BEHAVIOUR = "replace"
+
+      test_callbacks = TestCallbacks()
+      playbook = ansible.playbook.PlayBook(
+          playbook=os.path.join(self.test_dir, 'test_hash_behavior', 'playbook.yml'),
+          host_list='test/ansible_hosts',
+          stats=ans_callbacks.AggregateStats(),
+          callbacks=test_callbacks,
+          runner_callbacks=test_callbacks
+      )
+      playbook.run()
+
+      with open('/tmp/ansible_test_messages.out') as f:
+        actual = [l.strip() for l in f.readlines()]
+
+      print "**ACTUAL**"
+      print actual
+
+      expected = [
+        "goodbye: Goodbye World!"
+      ]
+
+      print "**EXPECTED**"
+      print expected
+
+      assert actual == expected
+
+      # restore default hash behavior
+      C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior
+
+   def test_playbook_hash_merge(self):
+      # save default hash behavior so we can restore it in the end of the test
+      saved_hash_behavior = C.DEFAULT_HASH_BEHAVIOUR
+      C.DEFAULT_HASH_BEHAVIOUR = "merge"
+
+      test_callbacks = TestCallbacks()
+      playbook = ansible.playbook.PlayBook(
+          playbook=os.path.join(self.test_dir, 'test_hash_behavior', 'playbook.yml'),
+          host_list='test/ansible_hosts',
+          stats=ans_callbacks.AggregateStats(),
+          callbacks=test_callbacks,
+          runner_callbacks=test_callbacks
+      )
+      playbook.run()
+
+      with open('/tmp/ansible_test_messages.out') as f:
+        actual = [l.strip() for l in f.readlines()]
+
+      print "**ACTUAL**"
+      print actual
+
+      expected = [
+        "hello: Hello World!",
+        "goodbye: Goodbye World!"
+      ]
+
+      print "**EXPECTED**"
+      print expected
+
+      assert actual == expected
+
+      # restore default hash behavior
+      C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior

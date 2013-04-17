@@ -3,7 +3,7 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
-# This file is part of Ansible
+#n This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,7 +139,7 @@ class Facts(object):
         self.facts['machine'] = platform.machine()
         self.facts['python_version'] = platform.python_version()
         self.facts['fqdn'] = socket.getfqdn()
-        self.facts['hostname'] = self.facts['fqdn'].split('.')[0]
+        self.facts['hostname'] = platform.node()
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         if self.facts['machine'] == 'x86_64':
             self.facts['architecture'] = self.facts['machine']

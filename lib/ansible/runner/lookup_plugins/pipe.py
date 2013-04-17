@@ -23,9 +23,13 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, inject=None, **kwargs):
+
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [ terms ] 
+
         ret = []
         for term in terms:
             p = subprocess.Popen(term, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)

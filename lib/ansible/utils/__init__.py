@@ -26,6 +26,7 @@ import operator
 from ansible import errors
 from ansible import __version__
 from ansible.utils.plugins import *
+from ansible.utils import template
 import ansible.constants as C
 import time
 import StringIO
@@ -317,7 +318,7 @@ def merge_hash(a, b):
     for k, v in b.iteritems():
         if k in a and isinstance(a[k], dict):
             # if this key is a hash and exists in a
-            # we recursively call ourselves with 
+            # we recursively call ourselves with
             # the key value of b
             a[k] = merge_hash(a[k], v)
         else:
@@ -713,10 +714,39 @@ def safe_eval(str):
         return str
 
 
+def listify_lookup_plugin_terms(terms, basedir, inject):
 
+    if isinstance(terms, basestring):
+        # somewhat did:
+        #    with_items: alist
+        # OR
+        #    with_items: {{ alist }}
 
+        if not '{' in terms and not '[' in terms and not terms.strip().startswith("/"):
+            try:
+                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
+                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
+                    pass
+                else:
+                    terms = new_terms  
+            except:
+                pass
 
+        if '{' or '[' in terms:
+            # Jinja2 already evaluated a variable to a list.
+            # Jinja2-ified list needs to be converted back to a real type
+            # TODO: something a bit less heavy than eval
+            return safe_eval(terms)
 
-   
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+
+    return terms
+
+def combine_vars(a, b):
+    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+        return merge_hash(a, b)
+    else:
+        return dict(a.items() + b.items())
 
 

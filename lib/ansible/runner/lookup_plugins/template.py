@@ -23,8 +23,9 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        if isinstance(terms, basestring):
-            terms = [ terms ]
+
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
         ret = []
         for term in terms:
             ret.append(template.template_from_file(self.basedir, term, inject))
