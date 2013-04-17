@@ -182,7 +182,6 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
- 
     # *****************************************************
 
     def _complex_args_hack(self, complex_args, module_args):
@@ -350,11 +349,10 @@ class Runner(object):
             port = self.remote_port
 
         inject = {}
-        inject.update(host_variables)
-        inject.update(self.module_vars)
-        inject.update(self.setup_cache[host])
-
-        inject['hostvars']    = HostVars(self.setup_cache, self.inventory)
+        inject = utils.combine_vars(inject, host_variables)
+        inject = utils.combine_vars(inject, self.module_vars)
+        inject = utils.combine_vars(inject, self.setup_cache[host])
+        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
@@ -522,7 +520,7 @@ class Runner(object):
         # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
-        
+
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
         conn.close()
@@ -655,8 +653,8 @@ class Runner(object):
             module_data = f.read()
             if module_common.REPLACER in module_data:
                 is_new_style=True
- 
-            complex_args_json = utils.jsonify(complex_args) 
+
+            complex_args_json = utils.jsonify(complex_args)
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
             encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json.replace("\\", "\\\\")
@@ -665,7 +663,7 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
             module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
-            
+
             if is_new_style:
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
@@ -767,7 +765,7 @@ class Runner(object):
         # run once per hostgroup, rather than pausing once per each
         # host.
         p = utils.plugins.action_loader.get(self.module_name, self)
-        
+
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
 
             # Expose the current hostgroup to the bypassing plugins
