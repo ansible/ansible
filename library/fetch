@@ -36,13 +36,17 @@ options:
     default: "no"
   dest_prefix:
     description:
-      - Defines the destination path. For dest example above, if the 
+      - Defines the destination additional path. For example, if the I(dest)
+        directory is C(/backup) and I(dest_prefix) is set to C(simple), a 
+        I(src) file named C(/etc/profile) on host C(host.example.com) if the 
         I(dest_prefix) is C(host), the file would be saved in 
-        C(/backup/host.example.com/profile). If the I(dest_prefix) is 
-        C(simple), the file would be saved in C(/backup/profile).
+        C(/backup/profile). If I(dest_prefix) is set to "host", the file would
+        be saved in C(/backup/host.example.com/host). If I(dest_prefix) is set
+        to C(host_source_path) (default value), the file would be saved into
+        C(/backup/host.example.com/etc/profile).
     required: false
     choices: [ "host_source_path", "host", "simple" ]
-    default: host_source_path
+    default: "host_source_path"
 examples:
    - code: "fetch: src=/var/log/messages dest=/home/logtree"
      description: "Example from Ansible Playbooks"
