@@ -44,7 +44,7 @@ options:
     required: false
     choices: ["create","status", "start", "stop", "pause", "unpause",
               "shutdown", "undefine", "destroy", "get_xml", "autostart",
-              "freemem", "list_vms", "info", "nodeinfo", "virttype"]
+              "freemem", "list_vms", "info", "nodeinfo", "virttype", "define"]
   uri:
     description:
       - libvirt connection uri
@@ -58,6 +58,9 @@ examples:
    - code: ansible host -m virt -a "name=alpha command=get_xml"
      description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
    - code: ansible host -m virt -a "name=alpha command=create uri=lxc:///"
+     description: "Create a alpha guest using lxc"
+   - code: ansible host -m virt -a "name=/tmp/alpha.xml command=define"
+     description: "Define a persistent guest"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
 '''
@@ -76,7 +79,8 @@ except ImportError:
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
+                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart',
+                'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
@@ -195,7 +199,8 @@ class LibvirtConnection(object):
         vm = self.conn.lookupByName(vmid)
         return vm.setAutostart(val)
 
-
+    def define(self, xml):
+        return self.conn.defineXML(xml)
 
 class Virt(object):
 
@@ -356,6 +361,23 @@ class Virt(object):
 
         self.__get_conn()
         return self.conn.get_MaxMemory(vmid)
+
+    def define(self, xml):
+        """
+        Define a persistent VM
+        """
+
+        with open(xml, 'r') as f:
+            definition = f.read()
+
+        self.__get_conn()
+        try:
+            res = self.conn.define(definition)
+            return {'msg': "Domain defined", 'changed': True}
+        except:
+            return {'msg': "Domain already defined", 'changed': False}
+
+        return res
 
 def core(module):
 
