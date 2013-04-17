@@ -488,7 +488,7 @@ Negative numbers are not supported.  This works as follows::
 
         # create some test users
         - user: name={{ item }} state=present groups=evens
-          with_sequence: start=0 stop=32 format=testuser%02x
+          with_sequence: start=0 end=32 format=testuser%02x
 
         # create a series of directories with even numbers for some reason
         - file: dest=/var/stuff/{{ item }} state=directory
