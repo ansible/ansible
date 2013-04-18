@@ -24,6 +24,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible import utils
 from ansible import errors
+import sys
 
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
@@ -41,9 +42,9 @@ class InventoryScript(object):
             raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
         self.data = stdout
-        self.groups = self._parse()
+        self.groups = self._parse(stderr)
 
-    def _parse(self):
+    def _parse(self, err):
 
         all_hosts = {}
         self.raw  = utils.parse_json(self.data)
@@ -52,7 +53,8 @@ class InventoryScript(object):
         group     = None
 
         if 'failed' in self.raw:
-            raise errors.AnsibleError("failed to parse executable inventory script results")
+            sys.stderr.write(err + "\n")
+            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
 

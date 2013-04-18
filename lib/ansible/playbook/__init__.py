@@ -350,6 +350,14 @@ class PlayBook(object):
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
+        # also have to register some failed, but ignored, tasks
+        if task.ignore_errors and task.register:
+            failed = results.get('failed', {})
+            for host, result in failed.iteritems():
+                if 'stdout' in result:
+                    result['stdout_lines'] = result['stdout'].splitlines()
+                self.SETUP_CACHE[host][task.register] = result
+
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
             for host, results in results.get('contacted',{}).iteritems():
