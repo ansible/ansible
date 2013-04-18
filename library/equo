@@ -80,7 +80,7 @@ def query_package(module, name, state="installed"):
 
 
 def update_package_db(module):
-	rc = os.system("equo update > /dev/null")
+    rc = os.system("equo update > /dev/null")
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
