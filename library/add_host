@@ -21,7 +21,7 @@ options:
 author: Seth Vidal
 examples:
   - description: add host to group 'just_created' with variable foo=42
-    code: add_host hostname=${ip_from_ec2create} groups=just_created foo=42
+    code: add_host hostname=${ip_from_ec2} groups=just_created foo=42
   - description: add a host with a non-standard port local to your machines
     code: add_host hostname='${new_ip}:${new_port}' 
   - description: add a host alias that we reach through a tunnel
