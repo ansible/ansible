@@ -63,8 +63,45 @@
 #    with_first_found:
 #     - files: generic
 #       paths: tasks/staging tasks/production
-
 # this will include the tasks in the file generic where it is found first (staging or production)
+
+# example simple file lists
+#tasks:
+#- name: first found file
+#  action: copy src=$item dest=/etc/file.cfg
+#  with_first_found:
+#  - files: foo.${inventory_hostname} foo
+
+
+# example skipping if no matched files
+# First_found also offers the ability to control whether or not failing
+# to find a file returns an error or not
+#
+#- name: first found file - or skip
+#  action: copy src=$item dest=/etc/file.cfg
+#  with_first_found:
+#  - files: foo.${inventory_hostname}
+#    skip: true
+
+# the above will return an empty list if the files cannot be found at all
+# if skip is unspecificed or if it is set to false then it will return a list 
+# error which can be caught bye ignore_errors: true for that action.
+
+# finally - if you want you can use it, in place to replace first_available_file:
+# you simply cannot use the - files, path or skip options. simply replace
+# first_available_file with with_first_found and leave the file listing in place
+#
+#
+#  - name: with_first_found like first_available_file
+#    action: copy src=$item dest=/tmp/faftest
+#    with_first_found:
+#     - ../files/foo
+#     - ../files/bar
+#     - ../files/baz
+#    ignore_errors: true
+  
+
+
 
 from ansible import utils, errors
 import os
@@ -79,45 +116,59 @@ class LookupModule(object):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
         result = None
+        anydict = False
+        skip = False
 
         for term in terms:
             if isinstance(term, dict):
-                files = term.get('files', [])
-                paths = term.get('paths', [])
-            
-                filelist = files
-                if isinstance(files, basestring):
-                    files = files.replace(',', ' ')
-                    files = files.replace(';', ' ')
-                    filelist = files.split(' ')
+                anydict = True
+        
+        if anydict:
+            for term in terms:
+                if isinstance(term, dict):
+                    files = term.get('files', [])
+                    paths = term.get('paths', [])
+                    skip  = utils.boolean(term.get('skip', False))
+                
+                    filelist = files
+                    if isinstance(files, basestring):
+                        files = files.replace(',', ' ')
+                        files = files.replace(';', ' ')
+                        filelist = files.split(' ')
 
-                pathlist = paths
-                if paths:
-                    if isinstance(paths, basestring):
-                        paths = paths.replace(',', ' ')
-                        paths = paths.replace(':', ' ')
-                        paths = paths.replace(';', ' ')
-                        pathlist = paths.split(' ')
-                    
-                total_search = []
-            
+                    pathlist = paths
+                    if paths:
+                        if isinstance(paths, basestring):
+                            paths = paths.replace(',', ' ')
+                            paths = paths.replace(':', ' ')
+                            paths = paths.replace(';', ' ')
+                            pathlist = paths.split(' ')
+                        
+                    total_search = []
+                
 
-                if not pathlist:
-                    total_search = filelist
+                    if not pathlist:
+                        total_search = filelist
+                    else:
+                        for path in pathlist:
+                            for fn in filelist:
+                                f = path + '/' + fn
+                                total_search.append(f)
                 else:
-                    for path in pathlist:
-                        for fn in filelist:
-                            f = path + '/' + fn
-                            total_search.append(f)
-            else:
-                total_search = [term]
+                    total_search = [term]
+        else:
+            total_search = terms
 
-            result = None
-            for fn in total_search:
-                path = utils.path_dwim(self.basedir, fn)
-                if os.path.exists(path):
-                    return [path]
+        result = None
+        for fn in total_search:
+            path = utils.path_dwim(self.basedir, fn)
+            if os.path.exists(path):
+                return [path]
 
 
         if not result:
-            raise errors.AnsibleError("no match found: %s, %s" % (pathlist, filelist))
+            if skip:
+                return []
+            else:
+                return [None]
+
