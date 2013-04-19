@@ -44,7 +44,7 @@ options:
     description:
       - Alternate path to the authorized_keys file
     required: false
-    default: "/home/user/.ssh/authorized_keys"
+    default: "(homedir)+/.ssh/authorized_keys"
     version_added: "1.2"
   manage_dir:
     description:
@@ -59,7 +59,8 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
-description: "Advanced usage with an alternate AuthorizedKeysFile configuration"
+description: 
+    - "adds or removes authorized keys for particular user accounts"
 author: Brad Olson
 '''
 
