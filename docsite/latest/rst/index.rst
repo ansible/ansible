@@ -7,15 +7,15 @@ Ansible Documentation
    :alt: ansiblefest 2013
    :target: http://ansibleworks.com/fest
 
-This page contains documentation about how to use `Ansible <http://ansible.cc>`_ and covers the latest version.  For the current
-released version, see `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_.  You may also be interested in taking a class:
+NOTE: This page contains documentation about how to use `Ansible <http://ansible.cc>`_ and covers the latest DEVELOPMENT version (1.2).  For the current
+released version, see `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ instead. You might be one of them.  We hope you find what you are looking for in the documentation, and would like to point out that you may also be interested in taking a class:
 
 .. image:: http://www.ansibleworks.com.s3-website-us-east-1.amazonaws.com/img/banners/training.png
    :alt: ansibleworks training
    :target: http://www.ansibleworks.com/training/
 
 Before we dive into playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some
-basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see 
+basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see
 what sort of modules are available in Ansible's core (though you can also write your own, which we'll also show later).
 
 
@@ -31,7 +31,7 @@ Overview
 ````````
 
 .. image:: http://ansible.cc/img/ansible_arch.png
-   :alt: ansible architecture diagram  
+   :alt: ansible architecture diagram
    :width: 566px
    :height: 439px
 
@@ -41,7 +41,7 @@ Playbooks
 
 Playbooks are Ansible's orchestration language.  At a basic level, playbooks can be used to manage configurations and deployments
 of remote machines.  At a more advanced level, they can sequence multi-tier rollouts involving rolling updates, and can delegate actions
-to other hosts, interacting with monitoring servers and load balancers along the way.  You can start small and pick up more features 
+to other hosts, interacting with monitoring servers and load balancers along the way.  You can start small and pick up more features
 over time as you need them.  Playbooks are designed to be human-readable and are developed in a basic text language.  There are multiple
 ways to organize playbooks and the files they include, and we'll offer up some suggestions on that and making the most out of Ansible.
 
