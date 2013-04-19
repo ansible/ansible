@@ -48,7 +48,7 @@ options:
     version_added: "1.2"
   manage_dir:
     description:
-      - Wheter this module should manage the directory of the authorized_keys file
+      - Whether this module should manage the directory of the authorized_keys file
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
