@@ -19,7 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import time
 
 DOCUMENTATION = '''
@@ -135,15 +134,14 @@ def main():
             if os.path.islink(dest):
                 os.unlink(dest)
                 open(dest, 'w').close()
-            # TODO:pid + epoch should avoid most collisions, hostname/mac for those using nfs?
-            # might be an issue with exceeding path length
-            dest_tmp = "%s.%s.%s.tmp" % (dest,os.getpid(),time.time())
-            shutil.copyfile(src, dest_tmp)
-            module.atomic_replace(dest_tmp, dest)
-        except shutil.Error:
-            module.fail_json(msg="failed to copy: %s and %s are the same" % (src, dest))
-        except IOError:
-            module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
+        except (OSError, IOError), e:
+            module.fail_json(msg="failed to copy: %s to %s cause:%s" % (src, dest, e))
+
+        if not module.atomic_move(src, dest):
+            try:
+                os.unlink(src) # cleanup tmp files on failure
+            except OSError, e:
+                sys.stderr.write("failed to clean up tmp file %s: %s\n" % (src, e))
         changed = True
     else:
         changed = False

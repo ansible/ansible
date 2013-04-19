@@ -780,8 +780,10 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def atomic_replace(self, src, dest):
-        '''atomically replace dest with src, copying attributes from dest'''
+    def atomic_move(self, src, dest):
+        '''atomically move src to dest, copying attributes from dest, returns
+        true on success'''
+        rc = False
         if os.path.exists(dest):
             st = os.stat(dest)
             os.chmod(src, st.st_mode & 07777)
@@ -797,11 +799,26 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
                 self.set_context_if_different(src, context, False)
+
+        # Ensure file is on same partition to make replacement atomic
+        dest_dir = os.path.dirname(dest)
+        dest_file = os.path.basename(dest)
+        tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
         try:
-            shutil.copy2(src, dest)
-        except shutil.Error, e:
-            self.fail_json(msg='Could not atomic_replace file: %s to %s: %s' % (src, dest, e))
-            
+            shutil.move(src, tmp_dest)
+            os.rename(tmp_dest, dest)
+            rc = True
+        except (shutil.Error, OSError, IOError), e:
+            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+        finally:
+            # Clean up in case of failure (don't leave nasty temps around)
+            if os.path.exists(tmp_dest):
+                try:
+                    #TODO: would be nice to respect 'keep_remote_files'
+                    os.unlink(tmp_dest)
+                except OSError, e:
+                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
+        return rc
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''
