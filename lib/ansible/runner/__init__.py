@@ -293,6 +293,8 @@ class Runner(object):
             raise errors.AnsibleError("module is missing interpreter line")
 
         cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = cmd.strip()
+
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
@@ -677,7 +679,7 @@ class Runner(object):
         lines = module_data.split("\n")
         shebang = None
         if lines[0].startswith("#!"):
-            shebang = lines[0]
+            shebang = lines[0].strip()
             args = shlex.split(str(shebang[2:]))
             interpreter = args[0]
             interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
