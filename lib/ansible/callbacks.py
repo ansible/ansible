@@ -23,9 +23,10 @@ import subprocess
 import random
 import fnmatch
 from ansible.color import stringc
+import ansible.constants as C
 
 cowsay = None
-if os.getenv("ANSIBLE_NOCOWS") is not None:
+if C.ANSIBLE_NOCOWS is not None:
     cowsay = None
 elif os.path.exists("/usr/bin/cowsay"):
     cowsay = "/usr/bin/cowsay"
@@ -38,7 +39,7 @@ elif os.path.exists("/opt/local/bin/cowsay"):
     # MacPorts path for cowsay
     cowsay = "/opt/local/bin/cowsay"
 
-noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+noncow = C.ANSIBLE_COW_SELECTION
 if cowsay and noncow == 'random':
     cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
