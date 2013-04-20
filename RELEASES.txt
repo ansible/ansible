@@ -1,7 +1,8 @@
 Ansible Releases at a Glance
 ============================
 
-1.1 "Mean Street" ----- pending 
+1.2 "Right Now" ------- pending
+1.1 "Mean Street" ----- 04-02-2013
 1.0 "Eruption" -------- 02-01-2013
 0.9 "Dreams" ---------- 11-30-2012
 0.8 "Cathedral" ------- 10-19-2012
