@@ -139,7 +139,11 @@ class Facts(object):
         self.facts['machine'] = platform.machine()
         self.facts['python_version'] = platform.python_version()
         self.facts['fqdn'] = socket.getfqdn()
+<<<<<<< HEAD
         self.facts['hostname'] = platform.node().partition('.')[0]
+=======
+        self.facts['hostname'] = platform.node().split('.')[0]
+>>>>>>> fix2721
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         if self.facts['machine'] == 'x86_64':
             self.facts['architecture'] = self.facts['machine']
