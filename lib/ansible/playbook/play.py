@@ -40,7 +40,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles'
+       'any_errors_fatal', 'roles', 'set_up', 'tear_down'
     ]
 
     # *************************************************
@@ -135,6 +135,12 @@ class Play(object):
         new_handlers = []
         new_vars_files = []
 
+        set_up = ds.get('set_up', None)
+        if type(set_up) != list:
+            set_up = []
+        for x in set_up:
+            new_tasks.append(x)
+
         # variables if the role was parameterized (i.e. given as a hash) 
         has_dict = {}
 
@@ -180,15 +186,22 @@ class Play(object):
                 new_vars_files.append(vars_file)
 
         tasks = ds.get('tasks', None)
+        tear_down = ds.get('tear_down', None)
+
         handlers = ds.get('handlers', None)
         vars_files = ds.get('vars_files', None)
+
         if type(tasks) != list:
             tasks = []
         if type(handlers) != list:
             handlers = []
         if type(vars_files) != list:
             vars_files = []
+        if type(tear_down) != list:
+            tear_down = []
+
         new_tasks.extend(tasks)
+        new_tasks.extend(tear_down)
         new_handlers.extend(handlers)
         new_vars_files.extend(vars_files)
         ds['tasks'] = new_tasks
