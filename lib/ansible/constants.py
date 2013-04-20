@@ -110,4 +110,6 @@ DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
 
 ANSIBLE_SSH_ARGS          = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
+ANSIBLE_NOCOWS            = get_config(p, 'cowsay', 'nocows', 'ANSIBLE_NOCOWS', None)
+ANSIBLE_COW_SELECTION     = get_config(p, 'cowsay', 'cow_selection', 'ANSIBLE_COW_SELECTION', None)
 ZEROMQ_PORT               = int(get_config(p, 'fireball', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099))
