@@ -45,10 +45,25 @@ if cowsay and noncow == 'random':
     cows = out.split()
     cows.append(False)
     noncow = random.choice(cows)
+    
+callback_plugins = [x for x in utils.plugins.callback_loader.all()]
+
+def set_play(callback, play):
+    ''' used to notify callback plugins of context '''
+    callback.play = play
+    for callback_plugin in callback_plugins:
+        callback_plugin.play = play
+
+def set_task(callback, task):
+    ''' used to notify callback plugins of context '''
+    callback.task = task
+    for callback_plugin in callback_plugins:
+        callback_plugin.task = task
+
 
 def call_callback_module(method_name, *args, **kwargs):
 
-    for callback_plugin in utils.plugins.callback_loader.all():
+    for callback_plugin in callback_plugins:
         methods = [
             getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
