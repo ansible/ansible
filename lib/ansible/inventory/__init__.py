@@ -37,7 +37,8 @@ class Inventory(object):
     """
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list']
+                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
+                  '_vars_plugins']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -96,6 +97,9 @@ class Inventory(object):
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
+
+        self._vars_plugins = [ x for x in utils.plugins.vars_loader.all(self) ]
+
 
     def _match(self, str, pattern_str):
         if pattern_str.startswith('~'):
@@ -277,7 +281,8 @@ class Inventory(object):
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-        for updated in map(lambda x: x.run(host), utils.plugins.vars_loader.all(self)):
+        vars_results = [ plugin.run(host) for plugin in self._vars_plugins ] 
+        for updated in vars_results:
             if updated is not None:
                 vars.update(updated)
 
