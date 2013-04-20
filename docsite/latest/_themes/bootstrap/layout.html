@@ -1,0 +1,155 @@
+{% extends "basic/layout.html" %}
+{% set script_files = script_files + ['_static/bootstrap-dropdown.js', '_static/bootstrap-scrollspy.js'] %}
+{% set css_files = ['_static/bootstrap.css', '_static/bootstrap-sphinx.css', '_static/ansible-local.css'] + css_files %}
+
+{# Sidebar: Rework into our Boostrap nav section. #}
+{% macro navBar() %}
+  <div class="topbar" data-scrollspy="scrollspy" >
+    <div class="topbar-inner">
+      <div class="container">
+        <!-- <a class="brand" href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a> -->
+        <ul class="nav">
+          {% block sidebartoc %}
+            <li><a href="/">Home</A>
+	    {% include "globaltoc.html" %}
+            {% include "localtoc.html" %}
+          {% endblock %}
+        </ul>
+        <ul class="nav secondary-nav">
+          {% block sidebarsearch %}
+            {% include "searchbox.html" %}
+          {% endblock %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+<p></p>
+
+{%- block extrahead %}
+<script type="text/javascript">
+(function () {
+  /**
+   * Patch TOC list.
+   *
+   * Will mutate the underlying span to have a correct ul for nav.
+   *
+   * @param $span: Span containing nested UL's to mutate.
+   * @param minLevel: Starting level for nested lists. (1: global, 2: local).
+   */
+  var patchToc = function ($span, minLevel) {
+    var $tocList = $("<ul/>").attr('class', "dropdown-menu"),
+      findA;
+
+    // Find all a "internal" tags, traversing recursively.
+    findA = function ($elem, level) {
+      var level = level || 0,
+        $items = $elem.find("> li > a.internal, > ul, > li > ul");
+
+      // Iterate everything in order.
+      $items.each(function (index, item) {
+        var $item = $(item),
+          tag = item.tagName.toLowerCase(),
+          pad = 10 + ((level - minLevel) * 10);
+
+        if (tag === 'a' && level >= minLevel) {
+          // Add to existing padding.
+          $item.css('padding-left', pad + "px");
+          // Add list element.
+          $tocList.append($("<li/>").append($item));
+        } else if (tag === 'ul') {
+          // Recurse.
+          findA($item, level + 1);
+        }
+      });
+    };
+
+    // Start construction and return.
+    findA($span);
+
+    // Wipe out old list and patch in new one.
+    return $span.empty("ul").append($tocList);
+  };
+
+  $(document).ready(function () {
+    // Patch the global and local TOC's to be bootstrap-compliant.
+    patchToc($("span.globaltoc"), 1);
+    patchToc($("span.localtoc"), 2);
+
+    // Activate.
+    $('#topbar').dropdown();
+  });
+}());
+</script>
+
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-29861888-1']);
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type =
+'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0];
+s.parentNode.insertBefore(ga, s);
+ })();
+
+</script>
+<script type="text/javascript">
+// Set the maximum height of drop down menus to just less than the height
+// of the viewport.
+var set_max_menu_height = function () {
+
+  // set menu max height to 75 less than viewport height
+  $('.dropdown-menu').css('max-height', $(window).height() - 75); 
+}
+
+// Set this when we set the page up and on each resize.
+$(window).resize(set_max_menu_height);
+$(window).ready(set_max_menu_height);
+
+</script>
+
+{% endblock %}
+
+{% block header %}{{ navBar() }}{% endblock %}
+
+{# Silence the sidebar's, relbar's #}
+{% block sidebar1 %}{% endblock %}
+{% block sidebar2 %}{% endblock %}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+
+{%- block content %}
+
+<div class="container">
+   {% block body %} {% endblock %}
+<br/>
+</div>
+
+{%- endblock %}
+
+{%- block footer %}
+<footer class="footer">
+<center>
+<a href="http://ansibleworks.com"><img src="http://ansible.cc/img/AnsibleWorks.png" alt="AnsibleWorks"></a>
+<p>
+    {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}<br/>
+      {%- else %}
+        {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}.{% endtrans %}<br/>
+      {%- endif %}
+    {%- endif %}
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
+    {%- endif %}
+    </p>
+</div>
+</center>
+</footer>
+{%- endblock %}
+

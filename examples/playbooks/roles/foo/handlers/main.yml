@@ -1,0 +1,10 @@
+---
+
+- name: blippy
+  shell: echo notifier called, and the value of x is '{{ x }}'
+
+# within a role, it's possible to include other task files as well.  By default, we
+# can reference files in the same directory without doing anything special:
+
+# - include: other.yml
+

@@ -117,6 +117,8 @@ clean:
 	rm -rf deb-build
 	rm -rf docs/json
 	rm -rf docs/js
+	@echo "Cleaning up authors file"
+	rm -f AUTHORS.TXT
 
 python:
 	$(PYTHON) setup.py build
@@ -175,20 +177,8 @@ deb: debian
 modulepages:
 	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
 
-modulejson:
-	mkdir -p docs/json
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t json -o docs/json --module-dir=library --template-dir=hacking/templates
-
-modulejs:
-	mkdir -p docs/js
-	make modulejson
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t js -o docs/js --module-dir=docs/json --template-dir=hacking/templates
-
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 
 webdocs:
-	(cd docsite; make docs)
+	(cd docsite/latest; make docs)
 
-# just for quick testing of all the module docs
-webdocs2:
-	(cd docsite; make modules)

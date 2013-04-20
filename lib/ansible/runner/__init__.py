@@ -34,6 +34,7 @@ import pipes
 import ansible.constants as C
 import ansible.inventory
 from ansible import utils
+from ansible.utils import template
 from ansible import errors
 from ansible import module_common
 import poller
@@ -62,7 +63,13 @@ def _executor_hook(job_queue, result_queue):
     while not job_queue.empty():
         try:
             host = job_queue.get(block=False)
-            result_queue.put(multiprocessing_runner._executor(host))
+            return_data = multiprocessing_runner._executor(host)
+            result_queue.put(return_data)
+
+            if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
+                # pass data back up across the multiprocessing fork boundary
+                template.Flags.LEGACY_TEMPLATE_WARNING = True
+
         except Queue.Empty:
             pass
         except:
@@ -138,7 +145,6 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
-        self.sudo_user        = sudo_user
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
         self.module_name      = module_name
@@ -152,10 +158,13 @@ class Runner(object):
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
+        self.sudo_user        = sudo_user
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
         self.complex_args     = complex_args
+
+        self.callbacks.runner = self
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -173,7 +182,6 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
-        
     # *****************************************************
 
     def _complex_args_hack(self, complex_args, module_args):
@@ -231,7 +239,7 @@ class Runner(object):
 
         if not self.environment:
             return ""
-        enviro = utils.template(self.basedir, self.environment, inject)
+        enviro = template.template(self.basedir, self.environment, inject)
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
@@ -269,7 +277,7 @@ class Runner(object):
                 # do --check mode, so to be safe we will not run it.
                 return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
 
-            args = utils.template(self.basedir, args, inject)
+            args = template.template(self.basedir, args, inject)
             argsfile = self._transfer_str(conn, tmp, 'arguments', args)
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
@@ -285,6 +293,8 @@ class Runner(object):
             raise errors.AnsibleError("module is missing interpreter line")
 
         cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = cmd.strip()
+
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
             cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
@@ -298,10 +308,20 @@ class Runner(object):
     def _executor(self, host):
         ''' handler for multiprocessing library '''
 
+        def get_flags():
+            # flags are a way of passing arbitrary event information
+            # back up the chain, since multiprocessing forks and doesn't
+            # allow state exchange
+            flags = []
+            if template.Flags.LEGACY_TEMPLATE_WARNING:
+                flags.append('LEGACY_TEMPLATE_WARNING')
+            return flags
+
         try:
             exec_rc = self._executor_internal(host)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
+            exec_rc.flags = get_flags()
             # redundant, right?
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
@@ -309,11 +329,11 @@ class Runner(object):
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
         except Exception:
             msg = traceback.format_exc()
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
 
     # *****************************************************
 
@@ -331,19 +351,26 @@ class Runner(object):
             port = self.remote_port
 
         inject = {}
-        inject.update(host_variables)
-        inject.update(self.module_vars)
-        inject.update(self.setup_cache[host])
+        inject = utils.combine_vars(inject, host_variables)
+        inject = utils.combine_vars(inject, self.module_vars)
+        inject = utils.combine_vars(inject, self.setup_cache[host])
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups'] = self.inventory.groups_list()
+        inject['groups']      = self.inventory.groups_list()
+        inject['vars']        = self.module_vars
+        inject['environment'] = self.environment
+
+        if self.inventory.basedir() is not None:
+            inject['inventory_dir'] = self.inventory.basedir()
 
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
+
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
+
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = utils.template(self.basedir, items_terms, inject)
+            items_terms = template.template(self.basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
@@ -358,8 +385,10 @@ class Runner(object):
         if items is None:
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
         elif len(items) > 0:
+
             # executing using with_items, so make multiple calls
             # TODO: refactor
+
             aggregrate = {}
             all_comm_ok = True
             all_changed = False
@@ -367,7 +396,14 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
-                result = self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
+                result = self._executor_internal_inner(
+                     host, 
+                     self.module_name, 
+                     self.module_args, 
+                     inject, 
+                     port, 
+                     complex_args=self.complex_args
+                )
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -404,9 +440,9 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
-        module_name = utils.template(self.basedir, module_name, inject)
-        module_args = utils.template(self.basedir, module_args, inject)
-        complex_args = utils.template(self.basedir, complex_args, inject)
+        module_name  = template.template(self.basedir, module_name, inject)
+        module_args  = template.template(self.basedir, module_args, inject)
+        complex_args = template.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -417,8 +453,9 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        conditional = utils.template(self.basedir, self.conditional, inject, expand_lists=False)
-        if not getattr(handler, 'BYPASS_HOST_LOOP', False) and not utils.check_conditional(conditional):
+        conditional = template.template(self.basedir, self.conditional, inject, expand_lists=False)
+
+        if not utils.check_conditional(conditional):
             result = utils.jsonify(dict(skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
@@ -429,6 +466,7 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
+        actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         if actual_transport in [ 'paramiko', 'ssh' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
@@ -436,7 +474,7 @@ class Runner(object):
         # and we need to transfer those, and only those, variables
         delegate_to = inject.get('delegate_to', None)
         if delegate_to is not None:
-            delegate_to = utils.template(self.basedir, delegate_to, inject)
+            delegate_to = template.template(self.basedir, delegate_to, inject)
             inject = inject.copy()
             interpreters = []
             for i in inject:
@@ -451,6 +489,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
+                actual_private_key_file = delegate_info.get('private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
@@ -459,8 +498,8 @@ class Runner(object):
                 actual_host = delegate_to
                 actual_port = port
 
-        actual_user = utils.template(self.basedir, actual_user, inject)
-        actual_pass = utils.template(self.basedir, actual_pass, inject)
+        actual_user = template.template(self.basedir, actual_user, inject)
+        actual_pass = template.template(self.basedir, actual_pass, inject)
 
         try:
             if actual_port is not None:
@@ -470,7 +509,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
@@ -483,7 +522,7 @@ class Runner(object):
         # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
-        
+
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
         conn.close()
@@ -521,7 +560,7 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
-            executable = '/bin/sh'
+            executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
@@ -547,7 +586,11 @@ class Runner(object):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
         path = pipes.quote(path)
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % (path, path, path)
+        test = ('if [ ! -e \"%s\" ]; then rc=0;'
+                'elif [ -d \"%s\" ]; then rc=3;'
+                'elif [ ! -f \"%s\" ]; then rc=1;'
+                'elif [ ! -r \"%s\" ]; then rc=2;'
+                'else rc=0; fi') % ((path,) * 4)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
@@ -616,8 +659,8 @@ class Runner(object):
             module_data = f.read()
             if module_common.REPLACER in module_data:
                 is_new_style=True
- 
-            complex_args_json = utils.jsonify(complex_args) 
+
+            complex_args_json = utils.jsonify(complex_args)
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
             encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
             encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json.replace("\\", "\\\\")
@@ -626,7 +669,7 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
             module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
-            
+
             if is_new_style:
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
@@ -636,7 +679,7 @@ class Runner(object):
         lines = module_data.split("\n")
         shebang = None
         if lines[0].startswith("#!"):
-            shebang = lines[0]
+            shebang = lines[0].strip()
             args = shlex.split(str(shebang[2:]))
             interpreter = args[0]
             interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
@@ -728,7 +771,7 @@ class Runner(object):
         # run once per hostgroup, rather than pausing once per each
         # host.
         p = utils.plugins.action_loader.get(self.module_name, self)
-        
+
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
 
             # Expose the current hostgroup to the bypassing plugins

@@ -25,7 +25,7 @@ Design Principles
 Get Involved
 ============
 
-   * [ansible-project mailing list](http://groups.google.com/group/ansible-project)
+   * [ansible-project mailing list](http://groups.google.com/group/ansible-project), rss: [here](https://groups.google.com/group/ansible-project/feed/rss_v2_0_msgs.xml?num=50&pli=1)
    * irc.freenode.net: #ansible
 
 Branch Info
@@ -39,8 +39,6 @@ Branch Info
 Author
 ======
 
-Michael DeHaan -- michael.dehaan@gmail.com
+Michael DeHaan -- michael@ansibleworks.com
 
-[http://michaeldehaan.net](http://michaeldehaan.net/)
-
-
+[AnsibleWorks](http://ansibleworks.com)

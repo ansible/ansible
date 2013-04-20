@@ -1,0 +1,14 @@
+---
+
+- name: copy operation
+  copy: src=foo.txt dest=/tmp/roles_test1.txt
+
+- name: template operation
+  template: src=foo.j2 dest=/tmp/roles_test2.txt
+  notify:
+    - blippy
+
+- name: demo that parameterized roles work
+  shell: echo just FYI, param1={{ param1 }}, param2 ={{ param2 }}
+
+

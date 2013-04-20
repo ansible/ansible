@@ -17,7 +17,7 @@
 
 from ansible import errors
 from ansible import utils
-
+import ansible.utils.template as template
 
 class Task(object):
 
@@ -27,7 +27,8 @@ class Task(object):
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args'
+        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
+        'any_errors_fatal'
     ]
 
     # to prevent typos and such
@@ -35,7 +36,8 @@ class Task(object):
          'name', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment', 'args'
+         'sudo_pass', 'when', 'connection', 'environment', 'args',
+         'any_errors_fatal'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -69,6 +71,8 @@ class Task(object):
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
+            elif x == 'when':
+                ds['when'] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
@@ -94,7 +98,9 @@ class Task(object):
         self.args         = ds.get('args', {})
 
         if self.sudo:
-            self.sudo_user    = utils.template(play.basedir, ds.get('sudo_user', play.sudo_user), play.vars)
+            # this extra template call shouldn't be needed due to play template
+            # TODO: verify that this is true
+            self.sudo_user    = template.template(play.basedir, ds.get('sudo_user', play.sudo_user), play.vars)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
         else:
             self.sudo_user    = None
@@ -151,6 +157,7 @@ class Task(object):
      
 
         self.ignore_errors = ds.get('ignore_errors', False)
+        self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
 
         # action should be a string
         if not isinstance(self.action, basestring):

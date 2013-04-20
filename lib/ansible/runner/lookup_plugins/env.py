@@ -23,9 +23,13 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def run(self, terms, **kwargs):
-        if isinstance(terms, basestring):
+    def run(self, terms, inject=None, **kwargs):
+
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
+        if isinstance(basestring, terms):
             terms = [ terms ]
+
         ret = []
         for term in terms:
             var = term.split()[0]

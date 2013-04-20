@@ -47,6 +47,13 @@ options:
     required: false
     default: null
     aliases: []
+  zone:
+    version_added: "1.2"
+    description:
+      - availability zone in which to launch the instance
+    required: false
+    default: null
+    aliases: []
   instance_type:
     description:
       - instance type to use for the instance
@@ -135,11 +142,49 @@ options:
     required: false
     default: null
     aliases: []
-examples:
-   - code: 'local_action: ec2 keypair=admin instance_type=m1.large image=emi-40603AD1 wait=yes group=webserver count=3 group=webservers'
-     description: "Examples from Ansible Playbooks"
+  private_ip:
+    version_added: "1.2"
+    description:
+      - the private ip address to assign the instance (from the vpc subnet)
+    required: false
+    defualt: null
+    aliases: []
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
+'''
+
+EXAMPLES = '''
+# Basic provisioning example
+local_action: 
+    module: ec2 
+    keypair: mykey 
+    instance_type: c1.medium 
+    image: emi-40603AD1 
+    wait: yes 
+    group: webserver 
+    count: 3
+
+# Advanced example with tagging and CloudWatch
+local_action: 
+    module: ec2 
+    keypair: mykey 
+    group: databases 
+    instance_type: m1.large 
+    image: ami-6e649707 
+    wait: yes 
+    wait_timeout: 500 
+    count: 5 
+    instance_tags: '{"db":"postgres"}' monitoring=true'
+
+# VPC example
+local_action: 
+    module: ec2 
+    keypair: mykey 
+    group_id: sg-1dc53f72 
+    instance_type: m1.small 
+    image: ami-6e649707 
+    wait: yes 
+    vpc_subnet_id: subnet-29e63245'
 '''
 
 import sys
@@ -158,6 +203,7 @@ def main():
             id = dict(),
             group = dict(),
             group_id = dict(),
+            zone = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
             kernel = dict(),
@@ -172,6 +218,7 @@ def main():
             user_data = dict(),
             instance_tags = dict(),
             vpc_subnet_id = dict(),
+            private_ip = dict(),
         )
     )
 
@@ -179,6 +226,7 @@ def main():
     id = module.params.get('id')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
+    zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
     count = module.params.get('count') 
@@ -193,6 +241,7 @@ def main():
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
+    private_ip = module.params.get('private_ip')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -227,13 +276,11 @@ def main():
         
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
-        previous_reservations = ec2.get_all_instances(None, filter_dict )
+        previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
         count_remaining = count_remaining - len(running_instances) 
-#        module.fail_json(msg = "known running instances: %s" % (running_instances)) 
-
     
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
@@ -246,10 +293,12 @@ def main():
                                 max_count = count_remaining,
                                 monitoring_enabled = monitoring,
                                 security_groups = [group_name],
+                                placement = zone,
                                 instance_type = instance_type,
                                 kernel_id = kernel,
                                 ramdisk_id = ramdisk,
                                 subnet_id = vpc_subnet_id,
+                                private_ip_address = private_ip,
                                 user_data = user_data)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
@@ -293,8 +342,26 @@ def main():
     for inst in running_instances:
         d = {
            'id': inst.id,
+           'ami_launch_index': inst.ami_launch_index,
+           'private_ip': inst.private_ip_address,
+           'private_dns_name': inst.private_dns_name,
            'public_ip': inst.ip_address,
-           'public_dns_name': inst.public_dns_name
+           'dns_name': inst.dns_name,
+           'public_dns_name': inst.public_dns_name,
+           'state_code': inst.state_code,
+           'architecture': inst.architecture,
+           'image_id': inst.image_id,
+           'key_name': inst.key_name,
+           'virtualization_type': inst.virtualization_type,
+           'placement': inst.placement,
+           'kernel': inst.kernel,
+           'ramdisk': inst.ramdisk,
+           'launch_time': inst.launch_time,
+           'instance_type': inst.instance_type,
+           'root_device_type': inst.root_device_type,
+           'root_device_name': inst.root_device_name,
+           'state': inst.state,
+           'hypervisor': inst.hypervisor
             }
         instance_dict_array.append(d)
 

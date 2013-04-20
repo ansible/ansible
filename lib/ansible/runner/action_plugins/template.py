@@ -17,6 +17,7 @@
 
 import os
 import pipes
+from ansible.utils import template
 from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
@@ -55,17 +56,26 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in self.runner.module_vars.get('first_available_file'):
-                fnt = utils.template(self.runner.basedir, fn, inject)
+                fn_orig = fn
+                fnt = template.template(self.runner.basedir, fn, inject)
                 fnd = utils.path_dwim(self.runner.basedir, fnt)
+                if not os.path.exists(fnd) and '_original_file' in inject:
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fn_orig, self.runner.basedir, check=False)
                 if os.path.exists(fnd):
-                    source = fnt
+                    source = fnd
                     found = True
                     break
             if not found:
                 result = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, comm_ok=False, result=result)
         else:
-            source = utils.template(self.runner.basedir, source, inject)
+            source = template.template(self.runner.basedir, source, inject)
+                
+            if '_original_file' in inject:
+                source = utils.path_dwim_relative(inject['_original_file'], 'templates', source, self.runner.basedir)
+            else:
+                source = utils.path_dwim(self.runner.basedir, source)
+
 
         if dest.endswith("/"):
             base = os.path.basename(source)
@@ -73,7 +83,7 @@ class ActionModule(object):
 
         # template the source data locally & get ready to transfer
         try:
-            resultant = utils.template_from_file(self.runner.basedir, source, inject)
+            resultant = template.template_from_file(self.runner.basedir, source, inject)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
@@ -105,7 +115,7 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(source)))
 
             if self.runner.check:
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))

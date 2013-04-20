@@ -24,6 +24,7 @@ import os
 
 import ansible.playbook
 import ansible.constants as C
+import ansible.utils.template 
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
@@ -39,12 +40,12 @@ def colorize(lead, num, color):
 def hostcolor(host, stats):
     if ANSIBLE_COLOR:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return "%-41s" % stringc(host, 'red')
+            return "%-37s" % stringc(host, 'red')
         elif stats['changed'] != 0:
-            return "%-41s" % stringc(host, 'yellow')
+            return "%-37s" % stringc(host, 'yellow')
         else:
-            return "%-41s" % stringc(host, 'green')
-    return "%-30s" % host
+            return "%-37s" % stringc(host, 'green')
+    return "%-26s" % host
 
 
 def main(args):
@@ -74,6 +75,8 @@ def main(args):
         help="do list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
+    parser.add_option('--start-at-task', dest='start_at', 
+        help="start the playbook with a task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -115,6 +118,8 @@ def main(args):
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
         if options.step:
             playbook_cb.step = options.step
+        if options.start_at:
+            playbook_cb.start_at = options.start_at
         runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
 
         pb = ansible.playbook.PlayBook(
@@ -174,6 +179,7 @@ def main(args):
             print 'Playbook Syntax is fine'
             return 0
             
+        failed_hosts = []
 
         try:
 
@@ -182,20 +188,30 @@ def main(args):
             hosts = sorted(pb.stats.processed.keys())
             print callbacks.banner("PLAY RECAP")
             playbook_cb.on_stats(pb.stats)
+
             for h in hosts:
                 t = pb.stats.summarize(h)
-                print "%-30s : %s %s %s %s " % (
+                if t['unreachable'] > 0 or t['failures'] > 0:
+                    failed_hosts.append(h)
+
+            if len(failed_hosts) > 0:
+                filename = pb.generate_retry_inventory(failed_hosts)
+                if filename:
+                    print "           to retry, use: --limit @%s\n" % filename
+
+            for h in hosts:
+                t = pb.stats.summarize(h)
+                print "%s : %s %s %s %s" % (
                     hostcolor(h, t),
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
                     colorize('failed', t['failures'], 'red'))
 
-            print "\n"
-            for h in hosts:
-                stats = pb.stats.summarize(h)
-                if stats['failures'] != 0 or stats['unreachable'] != 0:
-                    return 2
+ 
+            print ""
+            if len(failed_hosts) > 0:
+                return 2
 
         except errors.AnsibleError, e:
             print >>sys.stderr, "ERROR: %s" % e

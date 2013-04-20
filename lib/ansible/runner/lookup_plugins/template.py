@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils
+from ansible.utils import template
+import ansible.utils as utils
 
 class LookupModule(object):
 
@@ -23,9 +24,10 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        if isinstance(terms, basestring):
-            terms = [ terms ]
+
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+
         ret = []
         for term in terms:
-            ret.append(utils.template_from_file(self.basedir, term, inject))
+            ret.append(template.template_from_file(self.basedir, term, inject))
         return ret

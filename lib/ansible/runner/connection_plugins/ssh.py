@@ -23,6 +23,7 @@ import pipes
 import random
 import select
 import fcntl
+import pwd
 import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
@@ -31,12 +32,13 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password):
+    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.private_key_file = private_key_file
 
     def connect(self):
         ''' connect to the remote host '''
@@ -54,7 +56,9 @@ class Connection(object):
         self.common_args += ["-o", "StrictHostKeyChecking=no"]
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
-        if self.runner.private_key_file is not None:
+        if self.private_key_file is not None:
+            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.private_key_file)]
+        elif self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
         if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
@@ -62,7 +66,8 @@ class Connection(object):
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PasswordAuthentication=no"]
-        self.common_args += ["-o", "User="+self.user]
+        if self.user != pwd.getpwuid(os.geteuid())[0]:
+            self.common_args += ["-o", "User="+self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self

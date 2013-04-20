@@ -1,7 +1,36 @@
 Ansible Changes By Release
 ==========================
 
-1.1 "Mean Street" -- Release pending
+1.2 "Right Now" -- release pending
+
+Core Features:
+
+* capability to set 'all_errors_fatal: True' in a playbook to force any error to stop execution versus
+  a whole group or serial block needing to fail
+  usable, without breaking the ability to override in ansible
+* ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional,
+  see examples/playbooks/upgraded_vars.yml
+* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+* 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
+* cosmetic: "*****" banners in ansible-playbook output are now constant width
+* --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
+* failed playbook runs will create a retry file in /var/tmp/ansible usable with --limit
+
+Modules added
+
+* rax: module for creating instances in the rackspace cloud (uses pyrax)
+* npm: node.js package management
+
+Bugfixes and Misc Changes:
+
+* service module happier if only enabled=yes|no specified and no state
+* mysql_db: use --password= instead of -p in dump/import so it doesn't go interactive if no pass set
+* when using -c ssh and the ansible user is the current user, don't pass a -o to allow SSH config to be
+* overwrite parameter added to the s3 module
+* private_ip parameter added to the ec2 module
+* $FILE and $PIPE now tolerate unicode
+
+1.1 "Mean Street" -- 4/2/2013
 
 Core Features
 
@@ -14,7 +43,7 @@ Core Features
 * support for complex arguments to modules (within reason)
 * can specify ansible_connection=X to define the connection type in inventory variables
 * a new chroot connection type
-* module common code now has basic type checking (and casting) capability 
+* module common code now has basic type checking (and casting) capability
 * module common now supports a 'no_log' attribute to mark a field as not to be syslogged
 * inventory can now point to a directory containing multiple scripts/hosts files, if using this, put group_vars/host_vars directories inside this directory
 * added configurable crypt scheme for 'vars_prompt'
@@ -23,27 +52,27 @@ Core Features
 
 Modules Added:
 
-* rabbit_mq plugin module
-* rabbit_mq user module
-* rabbit_mq vhost module
-* rabbit_mq parameter module
-* mongodb_user module
-* new uri module -- can get/put/post/etc
-* CloudFormation module
-* zfs
-* okg
-* macports
-* homebrew
-* gem
-* lvol (LVM logical volumes)
-* django-manage
-* openbsd_pkg
-* netscaler
 * bzr (bazaar version control)
+* cloudformation
+* django-manage
+* gem (ruby gems)
+* homebrew
 * lvg (logical volume groups)
-* s3 (allows putting file contents in buckets for sharing over s3)
-* vagrant (launching VMs with vagrant, this is different from existing vagrant plugin)
-
+* lvol (LVM logical volumes)
+* macports
+* mongodb_user
+* netscaler
+* okg
+* openbsd_pkg
+* rabbit_mq_plugin
+* rabbit_mq_user
+* rabbit_mq_vhost
+* rabbit_mq_parameter
+* rhn_channel
+* s3 -- allows putting file contents in buckets for sharing over s3
+* uri module -- can get/put/post/etc
+* vagrant -- launching VMs with vagrant, this is different from existing vagrant plugin
+* zfs
 
 Bugfixes and Misc Changes:
 
@@ -66,6 +95,10 @@ Bugfixes and Misc Changes:
 * cowsay able to run out of macports (very important!)
 * improved logging for fireball mode
 * nicer error message when talking to an older system that needs a JSON module installed
+* 'magic' variable 'inventory_basedir' now gives path to inventory file
+* 'magic' variable 'vars' works like 'hostvars' but gives global scope variables, useful for debugging in templates mostly
+* conditionals can be used on plugins like add_host
+* developers: all callbacks now have access to a ".runner" and ".playbook", ".play", and ".task" object (use getattr, they may not always be set!)
 
 Facts:
 
@@ -125,6 +158,10 @@ Module Changes/Fixes:
 * fix default logins when no my.conf for MySQL module
 * option to create users with non-unique UIDs (user module)
 * macports module can enable/disable packages
+* quotes in my.cnf are stripped by the MySQL modules
+* Solaris Service management added
+* service module will attempt to auto-add unmanaged chkconfig services when needed
+* service module supports systemd service unit files
 
 Plugins:
 
@@ -288,7 +325,7 @@ Plugin changes:
 * plugin loading code now more streamlined
 * lookup plugins for DNS text records, environment variables, and redis
 * added a template lookup plugin $TEMPLATE('filename.j2')
-* various tweaks to the EC2 inventory plugin 
+* various tweaks to the EC2 inventory plugin
 * jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
 
 0.8 "Cathedral" -- Oct 19, 2012
