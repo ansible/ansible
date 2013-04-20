@@ -77,13 +77,13 @@ options:
     default: null
     aliases: []
 
-  gpg_check:
+  disable_gpg_check:
     description:
-      - Whether to check the GPG signatures of packages being installed. Has
-        an effect only if state is I(present) or I(latest).
+      - Whether to disable the GPG checking of signatures of packages being
+        installed. Has an effect only if state is I(present) or I(latest).
     required: false
     version_added: "1.2"
-    default: "yes"
+    default: "no"
     choices: ["yes", "no"]
     aliases: []
 
@@ -567,7 +567,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     module.exit_json(**res)
 
 def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
-           gpg_check):
+           disable_gpg_check):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -617,13 +617,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
             module.fail_json(msg="Error accessing repos: %s" % e)
 
     if state in ['installed', 'present']:
-        if not gpg_check:
+        if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
         install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
         remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
-        if not gpg_check:
+        if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
         latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
 
@@ -652,7 +652,8 @@ def main():
             disablerepo=dict(),
             list=dict(),
             conf_file=dict(default=None),
-            gpg_check=dict(required=False, default="yes", choices=BOOLEANS, type='bool'),
+            disable_gpg_check=dict(required=False, default="no",
+                                   choices=BOOLEANS, type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
@@ -672,9 +673,9 @@ def main():
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
-        gpg_check = params['gpg_check']
+        disable_gpg_check = params['disable_gpg_check']
         res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, gpg_check)
+                     disablerepo, disable_gpg_check)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # this is magic, see lib/ansible/module_common.py
