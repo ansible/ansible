@@ -61,6 +61,16 @@ class PluginLoader(object):
 
         self._extra_dirs = []
 
+    def print_paths(self):
+        ''' Returns a string suitable for printing of the search path '''
+
+        # Uses a list to get the order right
+        ret = []
+        for i in self._get_paths():
+            if i not in ret:
+                ret.append(i)
+        return os.pathsep.join(ret)
+
     def _get_package_path(self):
         ''' Gets the path of a Python package '''
 

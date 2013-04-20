@@ -25,6 +25,12 @@
 ---
 
   - hosts: all
+
+    set_up:
+
+        # set up tasks are executed prior to roles.
+        - local_action: shell echo "hi this is a setup step about {{ inventory_hostname }}"
+
     roles:
 
     # a role can be listed flat like this: 
@@ -50,5 +56,12 @@
         # you can still have loose tasks/handlers and they will execute after roles
 
         - shell: echo 'this is a loose task'
+
+    tear_down:
+
+        # just to provide a syntactic mirroring to 'set_up', tear_down runs dead last in the play.
+
+        - local_action: shell echo 'this is a teardown task about {{ inventory_hostname }}'
+
 
 
