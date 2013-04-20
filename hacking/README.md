@@ -21,18 +21,6 @@ can install them from pip
 
 From there, follow ansible instructions on ansible.cc/docs as normal.
 
-Module-formatter
-----------------
-
-The module formatter is a script used to generate manpages and online
-module documentation.
-
-Authors
--------
-
-'authors' is a simple script that generates a list of everyone who has
-contributed code to the ansible repository.
-
 Test-module
 -----------
 
@@ -44,5 +32,17 @@ Example:
     $ ./hacking/test-module -m library/shell -a "echo hi"
 
 This is a good way to insert a breakpoint into a module, for instance.
+
+Module-formatter
+----------------
+
+The module formatter is a script used to generate manpages and online
+module documentation.  This is used by the system makefiles and rarely
+needs to be run directly.
+
+Authors
+-------
+'authors' is a simple script that generates a list of everyone who has
+contributed code to the ansible repository.
 
 
