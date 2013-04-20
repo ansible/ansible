@@ -175,7 +175,13 @@ class Ec2Inventory(object):
         ''' Reads the settings from the ec2.ini file '''
 
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
+        # compatibility with /etc/ansible/hosts/ec2.py and ec2.ini in /etc/ansible/
+        # or with ec2.py and ec2.ini in the same dir.
+        # Checks current directory first.
+        if os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini'):
+            config.read(os.path.dirname(os.path.realpath(__file)) + '/ec2.ini')
+        else:
+            config.read(os.path.dirname(os.path.realpath(__file__)) + '/../ec2.ini')
 
         # is eucalyptus?
         self.eucalyptus_host = None
