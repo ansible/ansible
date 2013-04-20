@@ -352,7 +352,6 @@ def main():
            'architecture': inst.architecture,
            'image_id': inst.image_id,
            'key_name': inst.key_name,
-           'virtualization_type': inst.virtualization_type,
            'placement': inst.placement,
            'kernel': inst.kernel,
            'ramdisk': inst.ramdisk,
