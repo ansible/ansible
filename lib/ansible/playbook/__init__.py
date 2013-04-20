@@ -496,15 +496,35 @@ class PlayBook(object):
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
+
+                if task.meta is not None:
+
+                    # meta tasks are an internalism and are not valid for end-user playbook usage
+                    # here a meta task is a placeholder that signals handlers should be run
+ 
+                    if task.meta == 'flush_handlers':
+                        for handler in play.handlers():
+                            if len(handler.notified_by) > 0:
+                                self.inventory.restrict_to(handler.notified_by)
+                                self._run_task(play, handler, True)
+                                self.inventory.lift_restriction()
+                                for host in handler.notified_by:
+                                    handler.notified_by.remove(host)
+
+                        continue
+
                 hosts_count = len(self._list_available_hosts(play.hosts))
 
                 # only run the task if the requested tags match
                 should_run = False
                 for x in self.only_tags:
+
+
                     for y in task.tags:
                         if (x==y):
                             should_run = True
                             break
+
                 if should_run:
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
@@ -523,12 +543,13 @@ class PlayBook(object):
                     return False
 
             # run notify actions
-            for handler in play.handlers():
-                if len(handler.notified_by) > 0:
-                    self.inventory.restrict_to(handler.notified_by)
-                    self._run_task(play, handler, True)
-                    self.inventory.lift_restriction()
-                    handler.notified_by = []
+            #for handler in play.handlers():
+            #    if len(handler.notified_by) > 0:
+            #        self.inventory.restrict_to(handler.notified_by)
+            #        self._run_task(play, handler, True)
+            #        self.inventory.lift_restriction()
+            #        handler.notified_by = []
+            #    handler.notified_by = []
 
             self.inventory.lift_also_restriction()
 
