@@ -16,8 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import ansible.inventory
-import ansible.runner
 import ansible.constants as C
+import ansible.runner
 from ansible.utils import template
 from ansible import utils
 from ansible import errors
@@ -214,8 +214,9 @@ class PlayBook(object):
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
 
-            self.callbacks.play = play
-            self.runner_callbacks.play = play
+            assert play is not None
+            ansible.callbacks.set_play(self.callbacks, play)
+            ansible.callbacks.set_play(self.runner_callbacks, play)
             
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
@@ -317,8 +318,8 @@ class PlayBook(object):
     def _run_task(self, play, task, is_handler):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
-        self.callbacks.task = task
-        self.runner_callbacks.task = task
+        ansible.callbacks.set_task(self.callbacks, task)
+        ansible.callbacks.set_task(self.runner_callbacks, task)
 
         self.callbacks.on_task_start(template.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
@@ -402,8 +403,8 @@ class PlayBook(object):
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
         
-        self.callbacks.task = None
-        self.runner_callbacks.task = None
+        ansible.callbacks.set_task(self.callbacks, None)
+        ansible.callbacks.set_task(self.runner_callbacks, None)
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(

@@ -22,6 +22,7 @@ import imp
 import ansible.constants as C
 from ansible import errors
 
+MODULE_CACHE = {}
 _basedirs = []
 
 def push_basedir(basedir):
@@ -41,7 +42,11 @@ class PluginLoader(object):
         self.config = config
         self.subdir = subdir
         self.aliases = aliases
-        self._module_cache = {}
+ 
+        if not class_name in MODULE_CACHE:
+            MODULE_CACHE[class_name] = {}
+
+        self._module_cache = MODULE_CACHE[class_name]
         self._extra_dirs = []
 
     def _get_package_path(self):
@@ -111,6 +116,7 @@ class PluginLoader(object):
         return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
     def all(self, *args, **kwargs):
+       
         for i in self._get_paths():
             for path in glob.glob(os.path.join(i, "*.py")):
                 name, ext = os.path.splitext(os.path.basename(path))
@@ -120,10 +126,54 @@ class PluginLoader(object):
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
                 yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
-action_loader     = PluginLoader('ActionModule',   'ansible.runner.action_plugins',     C.DEFAULT_ACTION_PLUGIN_PATH,     'action_plugins')
-callback_loader   = PluginLoader('CallbackModule', 'ansible.callback_plugins',          C.DEFAULT_CALLBACK_PLUGIN_PATH,   'callback_plugins')
-connection_loader = PluginLoader('Connection',     'ansible.runner.connection_plugins', C.DEFAULT_CONNECTION_PLUGIN_PATH, 'connection_plugins', aliases={'paramiko': 'paramiko_ssh'})
-module_finder     = PluginLoader('',               '',                                  C.DEFAULT_MODULE_PATH,            'library')
-lookup_loader     = PluginLoader('LookupModule',   'ansible.runner.lookup_plugins',     C.DEFAULT_LOOKUP_PLUGIN_PATH,     'lookup_plugins')
-vars_loader       = PluginLoader('VarsModule',     'ansible.inventory.vars_plugins',    C.DEFAULT_VARS_PLUGIN_PATH,       'vars_plugins')
-filter_loader     = PluginLoader('FilterModule',   'ansible.runner.filter_plugins',     C.DEFAULT_FILTER_PLUGIN_PATH,     'filter_plugins')
+action_loader = PluginLoader(
+    'ActionModule',   
+    'ansible.runner.action_plugins',
+    C.DEFAULT_ACTION_PLUGIN_PATH,
+    'action_plugins'
+)
+
+callback_loader = PluginLoader(
+    'CallbackModule', 
+    'ansible.callback_plugins', 
+    C.DEFAULT_CALLBACK_PLUGIN_PATH, 
+    'callback_plugins'
+)
+
+connection_loader = PluginLoader(
+    'Connection', 
+    'ansible.runner.connection_plugins', 
+    C.DEFAULT_CONNECTION_PLUGIN_PATH, 
+    'connection_plugins', 
+    aliases={'paramiko': 'paramiko_ssh'}
+)
+
+module_finder = PluginLoader(
+    '', 
+    '', 
+    C.DEFAULT_MODULE_PATH, 
+    'library'
+)
+
+lookup_loader = PluginLoader(
+    'LookupModule',   
+    'ansible.runner.lookup_plugins', 
+    C.DEFAULT_LOOKUP_PLUGIN_PATH, 
+    'lookup_plugins'
+)
+
+vars_loader = PluginLoader(
+    'VarsModule', 
+    'ansible.inventory.vars_plugins', 
+    C.DEFAULT_VARS_PLUGIN_PATH, 
+    'vars_plugins'
+)
+
+filter_loader = PluginLoader(
+    'FilterModule', 
+    'ansible.runner.filter_plugins', 
+    C.DEFAULT_FILTER_PLUGIN_PATH, 
+    'filter_plugins'
+)
+
+
