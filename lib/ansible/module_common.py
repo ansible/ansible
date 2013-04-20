@@ -271,13 +271,26 @@ class AnsibleModule(object):
             context.append(None)
         return context
 
+    def _to_filesystem_str(self, path):
+        '''Returns filesystem path as a str, if it wasn't already.
+
+        Used in selinux interactions because it cannot accept unicode
+        instances, and specifying complex args in a playbook leaves
+        you with unicode instances.  This method currently assumes
+        that your filesystem encoding is UTF-8.
+
+        '''
+        if isinstance(path, unicode):
+            path = path.encode("utf-8")
+        return path
+
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = self.selinux_initial_context()
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.matchpathcon(path, mode)
+            ret = selinux.matchpathcon(self._to_filesystem_str(path), mode)
         except OSError:
             return context
         if ret[0] == -1:
@@ -290,7 +303,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.lgetfilecon(path)
+            ret = selinux.lgetfilecon(self._to_filesystem_str(path))
         except OSError, e:
             if e.errno == errno.ENOENT:
                 self.fail_json(path=path, msg='path %s does not exist' % path)
@@ -340,7 +353,8 @@ class AnsibleModule(object):
             try:
                 if self.check_mode:
                     return True
-                rc = selinux.lsetfilecon(path, ':'.join(new_context))
+                rc = selinux.lsetfilecon(self._to_filesystem_str(path),
+                                         str(':'.join(new_context)))
             except OSError:
                 self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
