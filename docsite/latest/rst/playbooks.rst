@@ -482,6 +482,19 @@ While it's probably not something you should do often, you can also conditionall
    
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
 the documentation.    
+
+If the play still has a 'tasks' section, those tasks are executed after roles are applied.
+
+If you want to define certain tasks to happen before AND after roles are applied, you can do this::    
+
+    ---
+    - hosts: webservers
+      pre_tasks:
+        - shell: echo 'hello'
+      roles:
+        - { role: some_role }
+      post_tasks:
+        - shell: echo 'goodbye'
     
 Executing A Playbook
 ````````````````````
