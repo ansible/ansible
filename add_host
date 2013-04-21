@@ -16,7 +16,7 @@ options:
   groups:
     aliases: [ 'groupname' ]
     description:
-    - The groups to add the hostname to, comma seperated.
+    - The groups to add the hostname to, comma separated.
     required: false
 author: Seth Vidal
 examples:
