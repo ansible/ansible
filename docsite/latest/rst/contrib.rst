@@ -8,7 +8,8 @@ Ansible Resources
 
 User contributed playbooks, modules, and articles. This is a small
 curated list, but growing. Everyone is encouraged to add to this
-document, just send in a github pull request to docsite/rst/contrib.rst!
+document, just `edit it on Github <https://github.com/ansible/ansible/blob/devel/docsite/latest/rst/contrib.rst>`_
+and send a pull request!
 
 Ansible Modules
 ```````````````
