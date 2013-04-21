@@ -40,7 +40,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles'
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks'
     ]
 
     # *************************************************
@@ -127,13 +127,20 @@ class Play(object):
         # and it auto-extends tasks/handlers/vars_files as appropriate if found
 
         if roles is None:
-            return ds
+            roles = []
         if type(roles) != list:
             raise errors.AnsibleError("value of 'roles:' must be a list")
 
         new_tasks = []
         new_handlers = []
         new_vars_files = []
+
+        pre_tasks = ds.get('pre_tasks', None)
+        if type(pre_tasks) != list:
+            pre_tasks = []
+        for x in pre_tasks:
+            new_tasks.append(x)
+        new_tasks.append(dict(meta='flush_handlers'))
 
         # variables if the role was parameterized (i.e. given as a hash) 
         has_dict = {}
@@ -180,21 +187,31 @@ class Play(object):
                 new_vars_files.append(vars_file)
 
         tasks = ds.get('tasks', None)
+        post_tasks = ds.get('post_tasks', None)
+
         handlers = ds.get('handlers', None)
         vars_files = ds.get('vars_files', None)
+
         if type(tasks) != list:
             tasks = []
         if type(handlers) != list:
             handlers = []
         if type(vars_files) != list:
             vars_files = []
+        if type(post_tasks) != list:
+            post_tasks = []
+
+        new_tasks.append(dict(meta='flush_handlers'))
         new_tasks.extend(tasks)
+        new_tasks.append(dict(meta='flush_handlers'))
+        new_tasks.extend(post_tasks)
+        new_tasks.append(dict(meta='flush_handlers'))
         new_handlers.extend(handlers)
         new_vars_files.extend(vars_files)
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
- 
+
         return ds
 
     # *************************************************
@@ -210,6 +227,12 @@ class Play(object):
         for x in tasks:
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s" % x)
+
+            if 'meta' in x:
+                if x['meta'] == 'flush_handlers':
+                    results.append(Task(self,x))
+                    continue
+ 
             task_vars = self.vars.copy()
             task_vars.update(vars)
             if original_file:
@@ -356,7 +379,8 @@ class Play(object):
         # gather all the tags in all the tasks into one list
         all_tags = []
         for task in self._tasks:
-            all_tags.extend(task.tags)
+            if not task.meta:
+                all_tags.extend(task.tags)
 
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)

@@ -25,6 +25,14 @@
 ---
 
   - hosts: all
+
+    pre_tasks:
+
+        # these tasks are executed prior to roles.
+        # this might be a good time to signal an outage window or take a host out of a load balanced pool
+
+        - local_action: shell echo "hi this is a pre_task step about {{ inventory_hostname }}"
+
     roles:
 
     # a role can be listed flat like this: 
@@ -47,8 +55,16 @@
 
     tasks:
 
-        # you can still have loose tasks/handlers and they will execute after roles
+        # you can still have loose tasks/handlers and they will execute after roles are applied
 
         - shell: echo 'this is a loose task'
+
+    post_tasks:
+
+        # just to provide a syntactic mirroring to 'pre_tasks', these run absolute last in the play.
+        # this might be a good time to put a host back in a load balanced pool or end an outage window
+
+        - local_action: shell echo 'this is a post_task about {{ inventory_hostname }}'
+
 
 

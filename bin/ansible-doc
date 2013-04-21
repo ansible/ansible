@@ -170,13 +170,23 @@ def main():
 
     if len(args) == 0:
         p.print_help()
-    
+   
+    def print_paths(finder):
+        ''' Returns a string suitable for printing of the search path '''
+
+        # Uses a list to get the order right
+        ret = []
+        for i in finder._get_paths():
+            if i not in ret:
+                ret.append(i)
+        return os.pathsep.join(ret)
+ 
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
         if filename is None:
             sys.stderr.write("module %s not found in %s\n" % (module,
-                    utils.plugins.module_finder.print_paths()))
+                    print_paths(utils.plugins.module_finder)))
             continue
 
         if any(filename.endswith(x) for x in BLACKLIST_EXTS):

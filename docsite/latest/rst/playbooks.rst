@@ -269,9 +269,12 @@ As we've mentioned, modules are written to be 'idempotent' and can relay  when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
-These 'notify' actions are triggered at the end of each 'play' in a playbook, and
-trigger only once each.  For instance, multiple resources may indicate
-that apache needs to be restarted, but apache will only be bounced once.
+These 'notify' actions are triggered at the end of each block of tasks in a playbook, and will only be
+triggered once even if notified by multiple different tasks.  
+
+For instance, multiple resources may indicate
+that apache needs to be restarted because they have changed a config file, 
+but apache will only be bounced once to avoid unneccessary restarts.
 
 Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
@@ -305,6 +308,19 @@ won't need them for much else.
 .. note::
    Notify handlers are always run in the order written.
 
+Roles are described later on.  It's worth while to point out that handlers are
+automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
+sections.  If you ever want to flush all the handler commands immediately though,
+in 1.2 and later, you can::
+
+    tasks:
+       - shell: some tasks go here
+       - meta: flush_handlers
+       - shell: some other tasks
+
+In the above example any queued up handlers would be processed early when the 'meta'
+statement was reached.  This is a bit of a niche case but can come in handy from
+time to time.
 
 Task Include Files And Encouraging Reuse
 ````````````````````````````````````````
@@ -482,6 +498,19 @@ While it's probably not something you should do often, you can also conditionall
    
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
 the documentation.    
+
+If the play still has a 'tasks' section, those tasks are executed after roles are applied.
+
+If you want to define certain tasks to happen before AND after roles are applied, you can do this::    
+
+    ---
+    - hosts: webservers
+      pre_tasks:
+        - shell: echo 'hello'
+      roles:
+        - { role: some_role }
+      post_tasks:
+        - shell: echo 'goodbye'
     
 Executing A Playbook
 ````````````````````

@@ -459,7 +459,7 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
-template).  
+template)::
 
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
@@ -857,30 +857,31 @@ Also see the module documentation section.
 Understanding Variable Precedence
 `````````````````````````````````
 
-You have already learned about inventory host and group variables, 'vars', and 'vars_files'.
+You have already learned about inventory variables, 'vars', and 'vars_files'.  In the
+event the same variable name occurs in more than one place, what happens?  There are really three tiers
+of precedence, and within those tiers, some minor ordering rules that you probably won't even need to remember.
+We'll explain them anyway though.
 
-If a variable name is defined in more than one place with the same name, priority is as follows
-to determine which place sets the value of the variable.  Lower numbered items have the highest
-priority.
+Variables that are set during the execution of the play have highest priority. This includes registered 
+variables and facts, which are discovered pieces of information about remote hosts.  
 
-1.  Any variables specified with --extra-vars (-e) on the ansible-playbook command line.
+Descending in priority are variables defined in the playbook.  'vars_files' as defined in the playbook are next up,
+followed by variables as passed to ansible-playbook via --extra-vars (-e), then variables defined in the 'vars' section.  These
+should all be taken to be basically the same thing -- good places to define constants about what the play does to all hosts
+in the play. 
 
-2.  Variables loaded from YAML files mentioned in 'vars_files' in a playbook.
+Finally, inventory variables have the least priority.  Variables about hosts override those about groups.
+If a variable is defined in multiple groups and one group is a child of the other, the child group variable 
+will override the variable set in the parent.  
 
-3.  facts, whether built in or custom, or variables assigned from the 'register' keyword.
+This makes the 'group_vars/all' file the best place to define a default value you wish to override in another
+group, or even in a playbook.  For example, your organization might set a default ntp server in group_vars/all
+and then override it based on a group based on a geographic region.  However if you type 'ntpserver: asdf.example.com'
+in a vars section of a playbook, you know from reading the playbook that THAT specific value is definitely the one
+that is going to be used.  You won't be fooled by some variable from inventory sneaking up on you.
 
-4.  variables passed to parameterized task include statements.
-
-5.  'vars' as defined in the playbook.
-
-6.  Host variables from inventory.
-
-7.  Group variables from inventory in inheritance order.  This means if a group includes a sub-group, the variables
-    in the subgroup have higher precedence.
-
-Therefore, if you want to set a default value for something you wish to override somewhere else, the best
-place to set such a default is in a group variable.  The 'group_vars/all' file makes an excellent place to put global
-variables that are true across your entire site, since everything has higher priority than these values.
+So, in short, if you want something easy to remember: facts beat playbook definitions, and 
+playbook definitions beat inventory variables.  
 
 
 Check Mode ("Dry Run") --check
