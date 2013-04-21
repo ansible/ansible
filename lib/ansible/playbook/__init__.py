@@ -509,7 +509,7 @@ class PlayBook(object):
                                 self._run_task(play, handler, True)
                                 self.inventory.lift_restriction()
                                 for host in handler.notified_by:
-                                    handler.notified_by.remove(host)
+                                    handler.notified_by[:] = [h for h in handler.notified_by if h != host]
 
                         continue
 
