@@ -459,7 +459,7 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
-template).  
+template)::
 
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
