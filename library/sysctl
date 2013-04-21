@@ -89,7 +89,7 @@ def reload_sysctl(**sysctl_args):
         return 0, ''
 
     # do it
-    cmd = [ '/sbin/sysctl', '-p' ]
+    cmd = [ '/sbin/sysctl', '-p', sysctl_args['sysctl_file']]
     call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = call.communicate()
     if call.returncode == 0:
