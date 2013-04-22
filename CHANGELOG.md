@@ -16,7 +16,7 @@ Core Features:
 * --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
 * failed playbook runs will create a retry file in /var/tmp/ansible usable with --limit
 * roles allow easy arrangement of reusable tasks/handlers/files/templates
-* pre_tasks and post_tasks allow for seperating tasks into blocks where handlers will fire around them automatically
+* pre_tasks and post_tasks allow for separating tasks into blocks where handlers will fire around them automatically
 * "meta: flush_handler" task capability added for when you really need to force handlers to run
 * new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
 
@@ -172,7 +172,7 @@ Module Changes/Fixes:
 * more OS X facts
 * added a 'fail_on_missing' (default no) option to fetch
 * added timeout to the uri module (default 30 seconds, adjustable)
-* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for seperate wait_for call.
+* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for separate wait_for call.
 * allow regex backreferences in lineinfile
 * id attribute on ec2 module can be used to set idempotent-do-not-recreate launches
 * icinga support for nagios module

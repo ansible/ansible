@@ -224,7 +224,9 @@ class PlayBook(object):
 
             # if we have matched_tags, the play must be run.
             # if the play contains no tasks, assume we just want to gather facts
-            if (len(matched_tags) > 0 or len(play.tasks()) == 0):
+            # in this case there are actually 4 meta tasks (handler flushes) not 0
+            # tasks, so that's why there's a check against 4.
+            if (len(matched_tags) > 0 or len(play.tasks()) == 4):
                 plays.append(play)
 
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
@@ -509,7 +511,7 @@ class PlayBook(object):
                                 self._run_task(play, handler, True)
                                 self.inventory.lift_restriction()
                                 for host in handler.notified_by:
-                                    handler.notified_by.remove(host)
+                                    handler.notified_by[:] = [h for h in handler.notified_by if h != host]
 
                         continue
 
@@ -518,7 +520,6 @@ class PlayBook(object):
                 # only run the task if the requested tags match
                 should_run = False
                 for x in self.only_tags:
-
 
                     for y in task.tags:
                         if (x==y):
