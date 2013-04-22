@@ -19,9 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import shutil
-import stat
-import grp
-import pwd
 try:
     import selinux
     HAVE_SELINUX=True
