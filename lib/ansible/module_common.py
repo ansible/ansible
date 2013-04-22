@@ -56,16 +56,19 @@ import re
 import shlex
 import subprocess
 import sys
-import syslog
 import types
 import time
 import shutil
 import stat
 import traceback
-import grp
-import pwd
 import platform
 import errno
+
+try:
+    import grp
+    import pwd
+except ImportError:
+    pass
 
 try:
     import json
@@ -95,8 +98,14 @@ try:
   from systemd import journal
   has_journal = True
 except ImportError:
-  import syslog
   has_journal = False
+
+try:
+    import syslog
+    has_syslog = True
+except ImportError:
+    has_syslog = False
+
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
@@ -112,6 +121,276 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
 )
+
+def is_windows():
+    return sys.platform == 'win32'
+
+if is_windows():
+    import ctypes
+    from ctypes import wintypes
+
+    _PSECURITY_DESCRIPTOR = ctypes.POINTER(wintypes.BYTE)
+    _PSID = ctypes.POINTER(wintypes.BYTE)
+    _PACL = ctypes.POINTER(wintypes.BYTE)
+    _LPDWORD = ctypes.POINTER(wintypes.DWORD)
+    _LPBOOL = ctypes.POINTER(wintypes.BOOL)
+    _SECURITY_INFORMATION = wintypes.DWORD
+
+    #privilege constants
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/bb530716
+    _SE_TAKE_OWNERSHIP_NAME = 'SeTakeOwnershipPrivilege'
+    _SE_RESTORE_NAME = 'SeRestorePrivilege'
+    _SE_SECURITY_NAME = 'SeSecurityPrivilege'
+    _SE_BACKUP_NAME = 'SeBackupPrivilege'
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261
+    class _LUID(ctypes.Structure):
+        _fields_ = [
+            ('LowPart', wintypes.DWORD),
+            ('HighPart', wintypes.LONG)
+        ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263
+    class _LUID_AND_ATTRIBUTES(ctypes.Structure):
+        _fields_ = [
+            ('Luid', _LUID),
+            ('Attributes', wintypes.DWORD)
+        ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630
+    _ANYSIZE_ARRAY = 1
+    class _TOKEN_PRIVILEGES(ctypes.Structure):
+        _fields_ = [
+            ('PrivilegeCount', wintypes.DWORD),
+            ('Privileges', _LUID_AND_ATTRIBUTES * _ANYSIZE_ARRAY)
+        ]
+
+    #http://msdn.microsoft.com/en-us/library/cc234251.aspx
+    _OWNER_SECURITY_INFORMATION = 0x00000001
+    _GROUP_SECURITY_INFORMATION = 0x00000002
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379593
+    _SE_FILE_OBJECT = 1
+    #winerror.h
+    _ERROR_SUCCESS = 0
+    #winnt.h
+    _TOKEN_ADJUST_PRIVILEGES = 0x0020
+    _SE_PRIVILEGE_ENABLED = 0x00000002L
+
+    _advapi32 = ctypes.windll.advapi32
+    _kernel32 = ctypes.windll.kernel32
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179
+    _GetCurrentProcess = _kernel32.GetCurrentProcess
+    _GetCurrentProcess.restype = wintypes.HANDLE
+    _GetCurrentProcess.argtypes = []
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379166
+    _LookupAccountSid = _advapi32.LookupAccountSidW
+    _LookupAccountSid.restype = wintypes.BOOL
+    _LookupAccountSid.argtypes = [
+        wintypes.LPCWSTR, #System Name (in opt)
+        _PSID, #SID (in)
+        wintypes.LPCWSTR, #Name (out)
+        _LPDWORD, #Name Size (in out)
+        wintypes.LPCWSTR, #Domain(out_opt)
+        _LPDWORD, #Domain Size (in out)
+        _LPDWORD, #SID Type (out)
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379159
+    _LookupAccountName = _advapi32.LookupAccountNameW
+    _LookupAccountName.restype = wintypes.BOOL
+    _LookupAccountName.argtypes =[
+        wintypes.LPCWSTR, #System Name (in opt)
+        wintypes.LPCWSTR, #Account Name (in)
+        _PSID, #sid (out opt)
+        _LPDWORD, # sid size (in out)
+        wintypes.LPCWSTR, #Domain Name (out opt)
+        _LPDWORD, #Domain size (in out)
+        _LPDWORD, #SID type (out)
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa446645
+    _GetNamedSecurityInfo = _advapi32.GetNamedSecurityInfoW
+    _GetNamedSecurityInfo.restype = wintypes.DWORD
+    _GetNamedSecurityInfo.argtypes = [
+        wintypes.LPCWSTR, # object name (in)
+        wintypes.DWORD, # object type
+        _SECURITY_INFORMATION, # requested information
+        ctypes.POINTER(_PSID), # owner (in opt)
+        ctypes.POINTER(_PSID), # group (in opt)
+        ctypes.POINTER(_PACL), # DACL (in opt)
+        ctypes.POINTER(_PACL), # SACL (in opt)
+        ctypes.POINTER(_PSECURITY_DESCRIPTOR), # security descriptor
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379579
+    _SetNamedSecurityInfo = _advapi32.SetNamedSecurityInfoW
+    _SetNamedSecurityInfo.restype = wintypes.DWORD
+    _SetNamedSecurityInfo.argtypes = [
+        wintypes.LPCWSTR, # object name (in)
+        wintypes.DWORD, # Object type (in)
+        _SECURITY_INFORMATION, # security information that will be set
+        _PSID, # owner (out opt)
+        _PSID, # primary group (out opt)
+        _PACL, # DACL (out opt)
+        _PACL, # SACL (out opt)
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202
+    _AdjustTokenPrivileges = _advapi32.AdjustTokenPrivileges
+    _AdjustTokenPrivileges.restype = wintypes.BOOL
+    _AdjustTokenPrivileges.argtypes = [
+        wintypes.HANDLE, #token handle (in)
+        wintypes.BOOL, #disabe all (in)
+        ctypes.POINTER(_TOKEN_PRIVILEGES), #new state (ino pt)
+        wintypes.DWORD, # buffer length
+        ctypes.POINTER(_TOKEN_PRIVILEGES), # previous state (out opt)
+        ctypes.POINTER(wintypes.DWORD), #return length (out opt)
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379180
+    _LookupPrivilegeValue = _advapi32.LookupPrivilegeValueW
+    _LookupPrivilegeValue.restype = wintypes.BOOL #nonzero if succeeds
+    _LookupPrivilegeValue.argtypes = [
+        wintypes.LPCWSTR, # system name, null for local system
+        wintypes.LPCWSTR, # privilege name (in)
+        ctypes.POINTER(_LUID) # result luid (out)
+    ]
+
+    #http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295
+    _OpenProcessToken = _advapi32.OpenProcessToken
+    _OpenProcessToken.restype = wintypes.BOOL
+    _OpenProcessToken.argtypes = [
+        wintypes.HANDLE, # process handle (in)
+        wintypes.DWORD, # desired access (in)
+        ctypes.POINTER(wintypes.HANDLE) # token handle (out)
+    ]
+
+    def _look_up_account_sid(sid):
+        SIZE = 256
+        name = ctypes.create_unicode_buffer(SIZE)
+        domain = ctypes.create_unicode_buffer(SIZE)
+        cch_name = wintypes.DWORD(SIZE)
+        cch_domain = wintypes.DWORD(SIZE)
+        sid_type = wintypes.DWORD()
+
+        if _LookupAccountSid(None, sid, name, ctypes.byref(cch_name),
+                             domain, ctypes.byref(cch_domain),
+                             ctypes.byref(sid_type)):
+            return name.value, domain.value, sid_type.value
+        else:
+            err, msg = wintypes.WinError()
+            raise Exception('LookupAccountSid: {0}, {1}'.format(err, msg))
+
+    def _look_up_account_name(name):
+        SIZE = 256
+        sid_array_type = wintypes.BYTE * SIZE
+        sid = sid_array_type()
+        sid = ctypes.cast(sid, _PSID)
+        domain = ctypes.create_unicode_buffer(SIZE)
+        cb_sid = wintypes.DWORD(SIZE)
+        cch_domain = wintypes.DWORD(SIZE)
+        sid_type = wintypes.DWORD()
+
+        if _LookupAccountName(None, name, sid, ctypes.byref(cb_sid),
+                              domain, ctypes.byref(cch_domain),
+                              ctypes.byref(sid_type)):
+            return sid, domain.value, sid_type.value
+        else:
+            err, msg = wintypes.WinError()
+            raise Exception('_LookupAccountName: {0}, {1}'.format(err, msg))
+
+    def _win_get_user_and_group(filename):
+        _request = _OWNER_SECURITY_INFORMATION | _GROUP_SECURITY_INFORMATION
+        owner_sid = _PSID()
+        group_sid = _PSID()
+        sd = _PSECURITY_DESCRIPTOR()
+        ret = _GetNamedSecurityInfo(
+            filename,
+            _SE_FILE_OBJECT,
+            _request,
+            ctypes.byref(owner_sid),
+            ctypes.byref(group_sid),
+            None,
+            None,
+            ctypes.byref(sd)
+        )
+        if ret != _ERROR_SUCCESS:
+            err, msg = wintypes.WinError()
+            raise Exception('GetNamedSecurityInfo: {0}, {1}'.format(err, msg))
+        uid_data = _look_up_account_sid(owner_sid)
+        gid_data = _look_up_account_sid(group_sid)
+        return uid_data, gid_data
+
+    def _win_get_process_token():
+        token = wintypes.HANDLE()
+        ret = _OpenProcessToken(_GetCurrentProcess(),
+                                _TOKEN_ADJUST_PRIVILEGES,
+                                ctypes.byref(token))
+        if ret == 0:
+            err, msg = wintypes.WinError()
+            raise Exception('OpenProcessToken: {0}, {1}'.format(err, msg))
+        return token
+
+    def _win_set_privilege(handle, privilege_name, enable):
+        privilege_name = ctypes.create_unicode_buffer(privilege_name)
+        tp = _TOKEN_PRIVILEGES()
+        luid = _LUID()
+
+        ret = _LookupPrivilegeValue(None, privilege_name, ctypes.byref(luid))
+        if ret == 0:
+            err, msg = wintypes.WinError()
+            raise Exception('LookupPrivilegeValue: {0}, {1}'.format(err, msg))
+        tp.PrivilegeCount = 1
+        tp.Privileges[0].Luid = luid
+        if enable:
+            tp.Privileges[0].Attributes = _SE_PRIVILEGE_ENABLED
+        else:
+            tp.Privileges[0].Attributes = 0
+
+        ret = _AdjustTokenPrivileges(handle, 0, ctypes.byref(tp), 0, None, None)
+        if ret == 0:
+            err, msg = wintypes.WinError()
+            raise Exception('AdjustTokenPrivileges: {0}, {1}'.format(err, msg))
+        #the call may succeed, but this check really reveals the results
+        rc, msg = ctypes.wintypes.WinError()
+        if rc != 0:
+            raise Exception('AdjustTokenPrivileges GLE: {0}, {1}'.format(rc, msg))
+        return True
+
+    def _win_set_owner(filename, owner_sid):
+        token = _win_get_process_token()
+        _win_set_privilege(token, _SE_TAKE_OWNERSHIP_NAME, True)
+        _win_set_privilege(token, _SE_RESTORE_NAME, True)
+        res = _SetNamedSecurityInfo(
+            filename,
+            _SE_FILE_OBJECT,
+            _OWNER_SECURITY_INFORMATION,
+            owner_sid,
+            None,
+            None,
+            None
+        )
+        if res != _ERROR_SUCCESS:
+            err, msg = wintypes.WinError()
+            raise Exception('SetNamedSecurityInfo: {0}, {1}'.format(err, msg))
+
+    def _win_set_group(filename, group_sid):
+        token = _win_get_process_token()
+        res = _SetNamedSecurityInfo(
+            filename,
+            _SE_FILE_OBJECT,
+            _GROUP_SECURITY_INFORMATION,
+            None,
+            group_sid,
+            None,
+            None
+        )
+        if res != _ERROR_SUCCESS:
+            err, msg = wintypes.WinError()
+            raise Exception('SetNamedSecurityInfo: {0}, {1}'.format(err, msg))
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -314,7 +593,20 @@ class AnsibleModule(object):
         context = ret[1].split(':')
         return context
 
+    def windows_log(self, module, msg):
+            self.run_command(['eventcreate', '/ID', '1000',
+                              '/T', 'INFORMATION',
+                              '/L', 'APPLICATION',
+                              '/D', msg,
+                              '/SO', module])
+
     def user_and_group(self, filename):
+        if is_windows():
+            return self._win_user_and_group(filename)
+        else:
+            return self._nix_user_and_group(filename)
+
+    def _nix_user_and_group(self, filename):
         filename = os.path.expanduser(filename)
         st = os.stat(filename)
         uid = st.st_uid
@@ -328,6 +620,11 @@ class AnsibleModule(object):
         except KeyError:
             group = str(gid)
         return (user, group)
+
+    def _win_user_and_group(self, filename):
+        filename = os.path.expanduser(filename)
+        uid_data, gid_data = _win_get_user_and_group(filename)
+        return uid_data[0], gid_data[0]
 
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
@@ -362,6 +659,39 @@ class AnsibleModule(object):
             changed = True
         return changed
 
+    def get_uid_by_name(self, name):
+        if is_windows():
+            return self._win_get_uid_by_name(name)
+        else:
+            return self._nix_get_uid_by_name(name)
+
+    def get_gid_by_name(self, name):
+        if is_windows():
+            return self._win_get_gid_by_name(name)
+        else:
+            return self._nix_get_gid_by_name(name)
+
+    def _nix_get_uid_by_name(self, name):
+        return pwd.getpwnam(name).pw_uid
+
+    def _nix_get_gid_by_name(self, name):
+        return grp.getgrnam(name).gr_gid
+
+    def chown(self, path, uid, gid):
+        if is_windows():
+            if uid != -1:
+                _win_set_owner(path, uid)
+            if gid != -1:
+                _win_set_group(path, gid)
+        else:
+            os.chown(path, uid, gid)
+
+    #on windows a file can be owned by a group and
+    #have group set to user, so...
+    def _win_get_uid_by_name(self, name):
+        return _look_up_account_name(name)[0]
+    _win_get_gid_by_name = _win_get_uid_by_name
+
     def set_owner_if_different(self, path, owner, changed):
         path = os.path.expanduser(path)
         if owner is None:
@@ -369,13 +699,13 @@ class AnsibleModule(object):
         user, group = self.user_and_group(path)
         if owner != user:
             try:
-                uid = pwd.getpwnam(owner).pw_uid
+                uid = self.get_uid_by_name(owner)
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
             if self.check_mode:
                 return True
             try:
-                os.chown(path, uid, -1)
+                self.chown(path, uid, -1)
             except OSError:
                 self.fail_json(path=path, msg='chown failed')
             changed = True
@@ -390,11 +720,11 @@ class AnsibleModule(object):
             if self.check_mode:
                 return True
             try:
-                gid = grp.getgrnam(group).gr_gid
+                gid = self.get_gid_by_name(group)
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
             try:
-                os.chown(path, -1, gid)
+                self.chown(path, -1, gid)
             except OSError:
                 self.fail_json(path=path, msg='chgrp failed')
             changed = True
@@ -693,9 +1023,11 @@ class AnsibleModule(object):
             for arg in log_args:
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
             journal.sendv(*journal_args)
-        else:
+        elif has_syslog:
             syslog.openlog(module, 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
+        elif is_windows():
+            self.windows_log(module, msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -795,6 +1127,24 @@ class AnsibleModule(object):
         return backupdest
 
     def atomic_replace(self, src, dest):
+        if is_windows():
+            self._win_atomic_replace(src, dest)
+        else:
+            self._nix_atomic_replace(src, dest)
+
+    def _win_atomic_replace(self, src, dest):
+        if os.path.exists(dest):
+            st = os.stat(dest)
+            os.chmod(src, st.st_mode & 07777)
+            owner, group = self._win_user_and_group(dest)
+            owner_sid = self._win_get_uid_by_name(owner)
+            group_sid = self._win_get_gid_by_name(group)
+            self.chown(src, owner_sid, group_sid)
+            #no easy atomic replace on windows
+            os.remove(dest)
+        os.rename(src, dest)
+
+    def _nix_atomic_replace(self, src, dest):
         '''atomically replace dest with src, copying attributes from dest'''
         if os.path.exists(dest):
             st = os.stat(dest)
