@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto.
+     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
 version_added: "0.9"
 options:
   key_name:
@@ -44,6 +44,13 @@ options:
     version_added: "1.1"
     description:
       - security group id to use with the instance 
+    required: false
+    default: null
+    aliases: []
+  region:
+    version_added: "1.2"
+    description:
+      - the EC2 region to use
     required: false
     default: null
     aliases: []
@@ -191,7 +198,7 @@ import sys
 import time
 
 try:
-    import boto
+    import boto.ec2
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -203,6 +210,7 @@ def main():
             id = dict(),
             group = dict(),
             group_id = dict(),
+            region = dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
             zone = dict(),
             instance_type = dict(aliases=['type']),
             image = dict(required=True),
@@ -226,6 +234,7 @@ def main():
     id = module.params.get('id')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
+    region = module.params.get('region')
     zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
@@ -251,16 +260,23 @@ def main():
     if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
-    try:
-        if ec2_url: # if we have an URL set, connect to the specified endpoint 
-            ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-        else: # otherwise it's Amazon.
-            ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-    except boto.exception.NoAuthHandlerFound, e:
-        module.fail_json(msg = str(e))
+    # If we have a region specified, connect to its endpoint.
+    if region: 
+        try:
+          ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+          module.fail_json(msg = str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    else: 
+        try:
+            if ec2_url: # if we have an URL set, connect to the specified endpoint 
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else: # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
     
     # Here we try to lookup the group name from the security group id - if group_id is set.
-
     try:
         if group_id:
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
