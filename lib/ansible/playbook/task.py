@@ -48,6 +48,7 @@ class Task(object):
         # normally.
         if 'meta' in ds:
             self.meta = ds['meta']
+            self.tags = []
             return
         else:
             self.meta = None
