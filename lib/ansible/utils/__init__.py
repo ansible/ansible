@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import sys
 import re
 import os
@@ -111,12 +113,10 @@ def decrypt(key, msg):
 
 def err(msg):
     ''' print an error message to stderr '''
-
-    print >> sys.stderr, msg
+    print(msg, file=sys.stderr)
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
-
     err(msg)
     sys.exit(rc)
 
@@ -137,18 +137,15 @@ def write_tree_file(tree, hostname, buf):
     # TODO: might be nice to append playbook runs per host in a similar way
     # in which case, we'd want append mode.
     path = os.path.join(tree, hostname)
-    fd = open(path, "w+")
-    fd.write(buf)
-    fd.close()
+    with open(path, "w+") as fd:
+        fd.write(buf)
 
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
-
     return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
 
 def is_changed(result):
     ''' is a given JSON result a changed result? '''
-
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
 def check_conditional(conditional):
@@ -180,7 +177,7 @@ def prepare_writeable_dir(tree):
     if not os.path.exists(tree):
         try:
             os.makedirs(tree)
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             exit("Could not make dir %s: %s" % (tree, e))
     if not os.access(tree, os.W_OK):
         exit("Cannot write to path %s" % tree)
@@ -235,11 +232,11 @@ def parse_json(raw_data):
         try:
             tokens = shlex.split(data)
         except:
-            print "failed to parse json: "+ data
+            err("failed to parse json:" + data)
             raise
 
         for t in tokens:
-            if t.find("=") == -1:
+            if "=" not in t:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
@@ -287,7 +284,8 @@ def parse_yaml_from_file(path):
     ''' convert a yaml file to a data structure '''
 
     try:
-        data = file(path).read()
+        with open(path) as f:
+            data = f.read()
         return parse_yaml(data)
     except IOError:
         raise errors.AnsibleError("file not found: %s" % path)
@@ -303,9 +301,9 @@ def parse_kv(args):
         vargs = [x.decode('utf-8') for x in shlex.split(args, posix=True)]
         #vargs = shlex.split(str(args), posix=True)
         for x in vargs:
-            if x.find("=") != -1:
-                k, v = x.split("=",1)
-                options[k]=v
+            if "=" in x:
+                k, v = x.split("=", 1)
+                options[k] = v
     return options
 
 def merge_hash(a, b):
@@ -493,7 +491,6 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
             help="when changing (small) files and templates, show the differences in those files, works great with --check"
         )
 
-
     return parser
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
@@ -515,11 +512,10 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     return result
 
 def last_non_blank_line(buf):
-
     all_lines = buf.splitlines()
     all_lines.reverse()
     for line in all_lines:
-        if (len(line) > 0):
+        if line:
             return line
     # shouldn't occur unless there's no output
     return ""
@@ -532,21 +528,17 @@ def filter_leading_non_json_lines(buf):
     need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
     filter only leading lines since multiline JSON is valid.
     '''
-
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
-    for line in buf.splitlines():
-        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+    for line in buf.splitlines(True):
+        if stop_filtering or "=" in line or line.startswith(('{', '[')):
             stop_filtering = True
-            filtered_lines.write(line + '\n')
+            filtered_lines.write(line)
     return filtered_lines.getvalue()
 
 def boolean(value):
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
-        return True
-    else:
-        return False
+    return val.lower() in [ "true", "t", "y", "1", "yes" ]
 
 def compile_when_to_only_if(expression):
     '''

@@ -376,3 +376,13 @@ class TestUtils(unittest.TestCase):
     def test_parse_kv_basic(self):
         assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
+
+    #####################################
+    ### other tests
+
+    def test_boolean(self):
+        assert ansible.utils.boolean("True")
+        assert not ansible.utils.boolean("ture")
+        assert not ansible.utils.boolean("n")
+        assert ansible.utils.boolean("1")
+        assert ansible.utils.boolean("Y")
