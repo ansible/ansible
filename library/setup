@@ -19,7 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import array
-import fcntl
 import fnmatch
 import glob
 import platform
@@ -325,13 +324,14 @@ class Facts(object):
         self.facts['date_time'] = {}
 
         now = datetime.datetime.now()
+        epoch = datetime.datetime(1970, 1, 1)
         self.facts['date_time']['year'] = now.strftime('%Y')
         self.facts['date_time']['month'] = now.strftime('%m')
         self.facts['date_time']['day'] = now.strftime('%d')
         self.facts['date_time']['hour'] = now.strftime('%H')
         self.facts['date_time']['minute'] = now.strftime('%M')
         self.facts['date_time']['second'] = now.strftime('%S')
-        self.facts['date_time']['epoch'] = now.strftime('%s')
+        self.facts['date_time']['epoch'] = int((now - epoch).total_seconds())
         self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
         self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
         self.facts['date_time']['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
