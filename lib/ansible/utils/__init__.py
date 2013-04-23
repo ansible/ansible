@@ -38,6 +38,7 @@ import random
 import difflib
 import warnings
 import traceback
+import getpass
 
 VERBOSITY=0
 
@@ -495,6 +496,22 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
 
     return parser
+
+def ask_passwords(ask_pass=False, ask_sudo_pass=False):
+    sshpass = None
+    sudopass = None
+    sudo_prompt = "sudo password: "
+
+    if ask_pass:
+        sshpass = getpass.getpass(prompt="SSH password: ")
+        sudo_prompt = "sudo password [defaults to SSH password]: "
+
+    if ask_sudo_pass:
+        sudopass = getpass.getpass(prompt=sudo_prompt)
+        if ask_pass and sudopass == '':
+            sudopass = sshpass
+
+    return (sshpass, sudopass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
