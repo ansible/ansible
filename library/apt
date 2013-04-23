@@ -44,6 +44,11 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
+  cache_valid_time:
+    description:
+      - If C(update_cache) is specified and the last run is less or equal than I(cache_valid_time) seconds ago, the C(update_cache) gets skipped.
+    required: false
+    default: "no"
   purge:
     description:
      - Will force purging of configuration files if the module state is set to I(absent).
@@ -96,6 +101,8 @@ examples:
       description: Update all packages to the latest version
     - code: "apt: update_cache=yes"
       description: Run the equivalent of C(apt-get update) as a separate step
+    - code: "apt: update_cache=yes cache_valid_time=3600"
+      description: Only run C(apt-get update) if the last one is more than more than 3600 seconds ago
 requirements: [ python-apt, aptitude ]
 '''
 
