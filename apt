@@ -104,6 +104,9 @@ import traceback
 import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
+import os
+import datetime
+
 # APT related constants
 APTITUDE_CMD = "aptitude"
 APT_GET_CMD = "apt-get"
@@ -111,6 +114,7 @@ APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+APT_LISTS_PATH = "/var/lib/apt/lists"
 
 def package_split(pkgspec):
     parts = pkgspec.split('=')
@@ -229,6 +233,7 @@ def main():
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
             update_cache = dict(aliases=['update-cache'], type='bool'),
+            cache_valid_time = dict(type='int'),
             purge = dict(default='no', type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
@@ -258,8 +263,20 @@ def main():
             cache.open(progress=None)
 
         if p['update_cache']:
-            cache.update()
-            cache.open(progress=None)
+            # Default is: always update the cache
+            cache_valid = False
+            if p['cache_valid_time']:
+                tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
+                mtime = os.stat(APT_LISTS_PATH).st_mtime
+                mtimestamp = datetime.datetime.fromtimestamp(mtime)
+                if mtimestamp + tdelta >= datetime.datetime.now():
+                    # dont update the cache
+                    # the old cache is less than cache_valid_time seconds old - so still valid
+                    cache_valid = True
+
+            if cache_valid is not True:
+                cache.update()
+                cache.open(progress=None)
             if not p['package'] and not p['upgrade']:
                 module.exit_json(changed=False)
 
