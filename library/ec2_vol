@@ -40,6 +40,12 @@ options:
     required: false
     default: null
     aliases: []
+  region:
+    description:
+      - region in which to create the volume
+    required: false
+    default: null
+    aliases: []
   zone:
     description:
       - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
@@ -71,7 +77,7 @@ import sys
 import time
 
 try:
-    import boto 
+    import boto.ec2
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -82,6 +88,7 @@ def main():
             instance = dict(),
             volume_size = dict(required=True),
             device_name = dict(),
+            region = dict(),
             zone = dict(),
             ec2_url = dict(aliases=['EC2_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
@@ -92,6 +99,7 @@ def main():
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
     device_name = module.params.get('device_name')
+    region = module.params.get('region')
     zone = module.params.get('zone')
     ec2_url = module.params.get('ec2_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
@@ -104,14 +112,22 @@ def main():
         ec2_secret_key = os.environ['EC2_SECRET_KEY']
     if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
         ec2_access_key = os.environ['EC2_ACCESS_KEY']
-
-    try:
-        if ec2_url: # if we have an URL set, connect to the specified endpoint 
-            ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-        else: # otherwise it's Amazon.
-            ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-    except boto.exception.NoAuthHandlerFound, e:
-        module.fail_json(msg = str(e))
+    
+    # If we have a region specified, connect to its endpoint.
+    if region: 
+        try:
+          ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+          module.fail_json(msg = str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    else: 
+        try:
+            if ec2_url: # if we have an URL set, connect to the specified endpoint 
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else: # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
 
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
