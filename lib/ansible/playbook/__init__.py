@@ -18,7 +18,7 @@
 import ansible.inventory
 import ansible.constants as C
 import ansible.runner
-from ansible.utils import template
+from ansible.utils.template import template, smush_braces
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
@@ -159,7 +159,7 @@ class PlayBook(object):
                 # a playbook (list of plays) decided to include some other list of plays
                 # from another file.  The result is a flat list of plays in the end.
 
-                tokens = shlex.split(play['include'])
+                tokens = shlex.split(smush_braces(play['include']))
 
                 incvars = vars.copy()
                 if 'vars' in play:
@@ -175,9 +175,9 @@ class PlayBook(object):
                 for t in tokens[1:]:
 
                     (k,v) = t.split("=", 1)
-                    incvars[k] = template.template(basedir, v, incvars)
+                    incvars[k] = template(basedir, v, incvars)
 
-                included_path = utils.path_dwim(basedir, template.template(basedir, tokens[0], incvars))
+                included_path = utils.path_dwim(basedir, template(basedir, tokens[0], incvars))
                 (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
                 for p in plays:
                     # support for parameterized play includes works by passing
@@ -323,7 +323,7 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        self.callbacks.on_task_start(template.template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
+        self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             return True
         
@@ -366,7 +366,7 @@ class PlayBook(object):
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
-                        self._flag_handler(play, template.template(play.basedir, handler_name, task.module_vars), host)
+                        self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
 
         return hosts_remaining
 
@@ -381,7 +381,7 @@ class PlayBook(object):
 
         found = False
         for x in play.handlers():
-            if handler_name == template.template(play.basedir, x.name, x.module_vars):
+            if handler_name == template(play.basedir, x.name, x.module_vars):
                 found = True
                 self.callbacks.on_notify(host, x.name)
                 x.notified_by.append(host)

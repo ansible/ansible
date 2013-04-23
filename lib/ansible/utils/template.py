@@ -437,7 +437,7 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars)
 
-def _smush_braces(data):
+def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
     while data.find('{{ ') != -1:
         data = data.replace('{{ ', '{{')
@@ -448,7 +448,7 @@ def _smush_braces(data):
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
 
-    data = _smush_braces(data)
+    data = smush_braces(data)
 
     try:
         if type(data) == str:
@@ -462,8 +462,9 @@ def template_from_string(basedir, data, vars):
 
         try:
             t = environment.from_string(data)
-        except RuntimeError, re:
-            if 'recursion' in str(re):
+        except Exception, e:
+            print "DEBUG: data = %s" % data
+            if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data

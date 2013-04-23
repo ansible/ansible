@@ -57,6 +57,10 @@ class Task(object):
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+
+                if 'include' in ds and isinstance(ds, basestring):
+                    ds['include'] = template.smush_braces(ds['include'])
+
                 if 'action' in ds:
                     raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
                 if isinstance(ds[x], dict):
