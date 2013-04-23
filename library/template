@@ -35,6 +35,12 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  validate:
+    description:
+      - validation to run before copying into place
+    required: false
+    default: ""
+    version_added: "1.2"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -42,6 +48,8 @@ options:
 examples:
    - code: "template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644"
      description: "Example from Ansible Playbooks"
+   - code: "action: temlpate src=/mine/sudoers dest=/etc/sudoers validate='visudo -c %s'"
+     description: "Copy a new C(sudoers) file into place, after passing validation with visudo"
 notes:
   - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
   - 'You can override jinja2 settings by adding a special header to template file. 
