@@ -25,6 +25,12 @@ Modules added
 * rax: module for creating instances in the rackspace cloud (uses pyrax)
 * npm: node.js package management
 * postgresql_priv: manages postgresql priveledges
+* set_fact: sets a variable, which can be the result of a template evaluation
+
+Modules removed
+
+* vagrant -- can't be compatible with both versions at once, just run things though the vagrant provisioner in vagrant core
+
 
 Bugfixes and Misc Changes:
 
@@ -50,6 +56,13 @@ Bugfixes and Misc Changes:
 * libvirt module can now work with multiple different libvirt connecton URIs
 * fix for postgresql password escaping
 * unicode fix for shlex.split in some cases
+* apt module upgrade logic improved
+* URI module now can follow redirects
+* yum module can now install off http URLs
+* sudo password now defaults to ssh password if you ask for both and just hit enter on the second prompt
+* validate feature on copy and template module, for example, running visudo prior to copying the file over
+* network facts upgraded to return advanced configs (bonding, etc)
+* region support added to ec2 module
 
 1.1 "Mean Street" -- 4/2/2013
 
