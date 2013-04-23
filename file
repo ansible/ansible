@@ -140,7 +140,8 @@ def main():
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
-            diff_peek = dict(default=None)
+            diff_peek = dict(default=None),
+            validate = dict(required=False, default=None),
         ),
         add_file_common_args=True,
         supports_check_mode=True
