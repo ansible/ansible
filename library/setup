@@ -1057,7 +1057,7 @@ class LinuxNetwork(Network):
                     iface = words[-1]
                     if iface != device:
                         interfaces[iface] = {}
-                        interfaces[iface].update(facts[device])
+                        interfaces[iface].update(interfaces[device])
                     interfaces[iface]['ipv4'] = {'address': address,
                                                  'netmask': netmask,
                                                  'network': network}
