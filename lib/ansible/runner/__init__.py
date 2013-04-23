@@ -240,6 +240,8 @@ class Runner(object):
         if not self.environment:
             return ""
         enviro = template.template(self.basedir, self.environment, inject)
+        if isinstance(enviro, basestring) and enviro in inject:
+            enviro = inject[enviro]
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
@@ -292,7 +294,7 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
