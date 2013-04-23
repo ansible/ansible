@@ -163,14 +163,13 @@ def main(args):
                     unmatched_tags.discard('all')
                     unknown_tags = set(pb.only_tags) - (matched_tags | unmatched_tags)
                     if unknown_tags:
-                        msg = 'tag(s) not found in playbook: %s.  possible values: %s'
-                        unknown = ','.join(sorted(unknown_tags))
-                        unmatched = ','.join(sorted(unmatched_tags))
-                        raise errors.AnsibleError(msg % (unknown, unmatched))
+                        continue
                     print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
                     for task in play.tasks():
                         if set(task.tags).intersection(pb.only_tags):
-                            print '    %s' % task.name
+                            if getattr(task, 'name', None) is not None:
+                                # meta tasks have no names
+                                print '    %s' % task.name
                 print ''
             continue
 
