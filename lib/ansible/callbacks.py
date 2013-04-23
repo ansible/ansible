@@ -23,9 +23,10 @@ import subprocess
 import random
 import fnmatch
 from ansible.color import stringc
+import ansible.constants as C
 
 cowsay = None
-if os.getenv("ANSIBLE_NOCOWS") is not None:
+if C.ANSIBLE_NOCOWS is not None:
     cowsay = None
 elif os.path.exists("/usr/bin/cowsay"):
     cowsay = "/usr/bin/cowsay"
