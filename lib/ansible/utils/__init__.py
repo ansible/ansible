@@ -703,6 +703,9 @@ def safe_eval(str):
         return var.startswith("$") or '{{' in var
 
     # do not allow method calls to modules
+    if not isinstance(str, basestring):
+        # already templated to a datastructure, perhaps?
+        return str
     if re.search(r'\w\.\w+\(', str):
         return str
     # do not allow imports

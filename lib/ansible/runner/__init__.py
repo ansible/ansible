@@ -382,10 +382,18 @@ class Runner(object):
                 inject['item'] = ",".join(items)
                 items = None
 
-        # logic to decide how to run things depends on whether with_items is used
+        # logic to replace complex args if possible
+        complex_args = self.complex_args
+        if isinstance(complex_args, basestring):
+            if complex_args in inject:
+                complex_args = inject[complex_args]
+            else:
+                complex_args = template.template(self.basedir, complex_args, inject)
+                complex_args = utils.safe_eval(complex_args)
 
+        # logic to decide how to run things depends on whether with_items is used
         if items is None:
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
             # executing using with_items, so make multiple calls
@@ -404,7 +412,7 @@ class Runner(object):
                      self.module_args, 
                      inject, 
                      port, 
-                     complex_args=self.complex_args
+                     complex_args=complex_args
                 )
                 results.append(result.result)
                 if result.comm_ok == False:
