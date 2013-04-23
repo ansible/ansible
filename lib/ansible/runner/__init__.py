@@ -298,8 +298,18 @@ class Runner(object):
         cmd = cmd.strip()
 
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
-            cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
+            if not self.sudo or self.sudo_user == 'root':
+                # not sudoing or sudoing to root, so can cleanup files in the same step
+                cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        if self.sudo and self.sudo_user != 'root':
+            # not sudoing to root, so maybe can't delete files as that other user
+            # have to clean up temp files as original user in a second step
+            if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
+                cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
+                self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
+
         data = utils.parse_json(res['stdout'])
         if 'parsed' in data and data['parsed'] == False:
             data['msg'] += res['stderr']
