@@ -125,6 +125,9 @@ class Play(object):
         #    <rolename>/handlers/main.yml
         #    <rolename>/vars/main.yml
         # and it auto-extends tasks/handlers/vars_files as appropriate if found
+        #
+        # .yaml is also allowed as an extension if .yml files are not
+        # found first.
 
         if roles is None:
             roles = []
@@ -176,6 +179,16 @@ class Play(object):
                 if with_items:
                     nt['with_items'] = with_items
                 new_tasks.append(nt)
+            else:
+                task = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yaml'))
+                if os.path.isfile(task):
+                    nt = dict(include=task, vars=has_dict)
+                    if when: 
+                        nt['when'] = when
+                    if with_items:
+                        nt['with_items'] = with_items
+                    new_tasks.append(nt)
+
             if os.path.isfile(handler):
                 nt = dict(include=handler, vars=has_dict)
                 if when: 
@@ -183,8 +196,22 @@ class Play(object):
                 if with_items:
                     nt['with_items'] = with_items
                 new_handlers.append(nt)
+            else:
+                handler = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yaml'))
+                if os.path.isfile(handler):
+                    nt = dict(include=handler, vars=has_dict)
+                    if when: 
+                        nt['when'] = when
+                    if with_items:
+                        nt['with_items'] = with_items
+                    new_handlers.append(nt)
+
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            else:
+                vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yaml'))
+                if os.path.isfile(vars_file):
+                    new_vars_files.append(vars_file)
 
         tasks = ds.get('tasks', None)
         post_tasks = ds.get('post_tasks', None)
