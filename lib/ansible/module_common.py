@@ -369,9 +369,12 @@ class AnsibleModule(object):
         user, group = self.user_and_group(path)
         if owner != user:
             try:
-                uid = pwd.getpwnam(owner).pw_uid
-            except KeyError:
-                self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
+                uid = int(owner)
+            except ValueError:
+                try:
+                    uid = pwd.getpwnam(owner).pw_uid
+                except KeyError:
+                    self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
             if self.check_mode:
                 return True
             try:
@@ -390,9 +393,12 @@ class AnsibleModule(object):
             if self.check_mode:
                 return True
             try:
-                gid = grp.getgrnam(group).gr_gid
-            except KeyError:
-                self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+                gid = int(group)
+            except ValueError:
+                try:
+                    gid = grp.getgrnam(group).gr_gid
+                except KeyError:
+                    self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
             try:
                 os.chown(path, -1, gid)
             except OSError:
