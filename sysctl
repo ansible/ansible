@@ -110,10 +110,10 @@ def write_sysctl(module, lines, **sysctl_args):
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.flush()
     f.close()
-    
+
     # replace the real one
-    module.atomic_replace(tmp_path, sysctl_args['sysctl_file']) 
-    
+    module.atomic_move(tmp_path, sysctl_args['sysctl_file']) 
+
     # end
     return sysctl_args
 
