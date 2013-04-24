@@ -262,7 +262,7 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
+        (remote_module_path, module_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
 
         environment_string = self._compute_environment_string(inject)
 
@@ -273,14 +273,26 @@ class Runner(object):
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
 
         cmd = ""
-        if not is_new_style:
+        if module_style != 'new':
             if 'CHECKMODE=True' in args:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
-                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
+                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot yet run check mode against old-style modules"))
 
             args = template.template(self.basedir, args, inject)
-            argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+
+            # decide whether we need to transfer JSON or key=value
+            argsfile = None
+            if module_style == 'non_native_want_json':
+                if complex_args:
+                    complex_args.update(utils.parse_kv(args))
+                    argsfile = self._transfer_str(conn, tmp, 'arguments', utils.jsonify(complex_args))
+                else:
+                    argsfile = self._transfer_str(conn, tmp, 'arguments', utils.jsonify(utils.parse_kv(args)))
+
+            else:
+                argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
             else:
@@ -671,12 +683,14 @@ class Runner(object):
         out_path = os.path.join(tmp, module_name)
 
         module_data = ""
-        is_new_style=False
+        module_style = 'old'
 
         with open(in_path) as f:
             module_data = f.read()
             if module_common.REPLACER in module_data:
-                is_new_style=True
+                module_style = 'new'
+            if 'WANT_JSON' in module_data:
+                module_style = 'non_native_want_json'
 
             complex_args_json = utils.jsonify(complex_args)
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
@@ -688,7 +702,7 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
             module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
 
-            if is_new_style:
+            if module_style == 'new':
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
                     facility = inject['ansible_syslog_facility']
@@ -708,7 +722,7 @@ class Runner(object):
 
         self._transfer_str(conn, tmp, module_name, module_data)
 
-        return (out_path, is_new_style, shebang)
+        return (out_path, module_style, shebang)
 
     # *****************************************************
 
