@@ -122,6 +122,7 @@ DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APT_LISTS_PATH = "/var/lib/apt/lists"
+APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
 def package_split(pkgspec):
     parts = pkgspec.split('=')
@@ -274,12 +275,27 @@ def main():
             cache_valid = False
             if p['cache_valid_time']:
                 tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
-                mtime = os.stat(APT_LISTS_PATH).st_mtime
-                mtimestamp = datetime.datetime.fromtimestamp(mtime)
-                if mtimestamp + tdelta >= datetime.datetime.now():
-                    # dont update the cache
-                    # the old cache is less than cache_valid_time seconds old - so still valid
-                    cache_valid = True
+                try:
+                    mtime = os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
+                except:
+                    mtime = False
+                if mtime is False:
+                    # Looks like the update-success-stamp is not available
+                    # Fallback: Checking the mtime of the lists
+                    try:
+                        mtime = os.stat(APT_LISTS_PATH).st_mtime
+                    except:
+                        mtime = False
+                if mtime is False:
+                    # No mtime could be read - looks like lists are not there
+                    # We update the cache to be safe
+                    cache_valid = False
+                else:
+                    mtimestamp = datetime.datetime.fromtimestamp(mtime)
+                    if mtimestamp + tdelta >= datetime.datetime.now():
+                        # dont update the cache
+                        # the old cache is less than cache_valid_time seconds old - so still valid
+                        cache_valid = True
 
             if cache_valid is not True:
                 cache.update()
