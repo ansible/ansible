@@ -176,7 +176,7 @@ def main():
 
     if device_name is None and instance:
         try:
-            if inst.get_password_data == '':
+            if not ec2.get_password_data(inst.id):
                 device_name = '/dev/sdf'
                 attach = volume.attach(inst.id, device_name)
                 while volume.attachment_state() != 'attached':
