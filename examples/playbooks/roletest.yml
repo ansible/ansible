@@ -50,6 +50,11 @@
     # these paths can be qualified, but if bare, it will look from them in
     # roles/$rolename relative to the playbook
 
+    # you can also tag roles if you only want to run certain roles
+    # (see tags.yml for more details)
+      - { role: foo, param1: 9090, param2: 'only foo tag', tags: 'foo' }
+      - { role: foo, param1: 90, param2: 'foo and bar tags', tags: [ 'foo', 'bar' ] }
+
     # explicit tasks and handlers can be used, but are not required.
     # they will run after the roles if present.
 
