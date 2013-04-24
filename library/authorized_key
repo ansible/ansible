@@ -162,7 +162,7 @@ def writekeys(module, filename, keys):
     except IOError, e:
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
-    module.atomic_replace(tmp_path, filename)
+    module.atomic_move(tmp_path, filename)
 
 def enforce_state(module, params):
     """

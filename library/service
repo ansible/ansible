@@ -334,7 +334,7 @@ class Service(object):
             os.close(TMP_RCCONF)
 
             # Replace previous rc.conf.
-            self.module.atomic_replace(tmp_rcconf_file, self.rcconf_file)
+            self.module.atomic_move(tmp_rcconf_file, self.rcconf_file)
 
 # ===========================================
 # Subclass: Linux
