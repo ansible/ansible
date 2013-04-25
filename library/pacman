@@ -115,10 +115,7 @@ def install_packages(module, packages):
     install_c = 0
 
     for package in packages:
-        if query_package(module, package):
-            continue
-
-        rc = os.system("pacman -S %s --noconfirm > /dev/null" % (package))
+        rc = os.system("pacman -S %s --noconfirm --needed > /dev/null" % (package))
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))
