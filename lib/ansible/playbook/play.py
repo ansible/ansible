@@ -140,6 +140,8 @@ class Play(object):
             pre_tasks = []
         for x in pre_tasks:
             new_tasks.append(x)
+
+        # flush handlers after pre_tasks
         new_tasks.append(dict(meta='flush_handlers'))
 
         # variables if the role was parameterized (i.e. given as a hash) 
@@ -201,10 +203,11 @@ class Play(object):
         if type(post_tasks) != list:
             post_tasks = []
 
-        new_tasks.append(dict(meta='flush_handlers'))
         new_tasks.extend(tasks)
+        # flush handlers after tasks + role tasks
         new_tasks.append(dict(meta='flush_handlers'))
         new_tasks.extend(post_tasks)
+        # flush handlers after post tasks
         new_tasks.append(dict(meta='flush_handlers'))
         new_handlers.extend(handlers)
         new_vars_files.extend(vars_files)

@@ -224,9 +224,9 @@ class PlayBook(object):
 
             # if we have matched_tags, the play must be run.
             # if the play contains no tasks, assume we just want to gather facts
-            # in this case there are actually 4 meta tasks (handler flushes) not 0
-            # tasks, so that's why there's a check against 4.
-            if (len(matched_tags) > 0 or len(play.tasks()) == 4):
+            # in this case there are actually 3 meta tasks (handler flushes) not 0
+            # tasks, so that's why there's a check against 3
+            if (len(matched_tags) > 0 or len(play.tasks()) == 3):
                 plays.append(play)
 
         # if the playbook is invoked with --tags that don't exist at all in the playbooks
