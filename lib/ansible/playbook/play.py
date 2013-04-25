@@ -17,7 +17,7 @@
 
 #############################################
 
-from ansible.utils.template import template, smush_braces
+from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
@@ -239,7 +239,7 @@ class Play(object):
                 task_vars['_original_file'] = original_file
 
             if 'include' in x:
-                tokens = shlex.split(smush_braces(str(x['include'])))
+                tokens = shlex.split(str(x['include']))
                 items = ['']
                 included_additional_conditions = list(additional_conditions)
                 for k in x:
