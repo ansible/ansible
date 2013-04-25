@@ -20,7 +20,7 @@ DOCUMENTATION = """
 ---
 module: ec2_elb_facts
 short_description: Creates a fact with instance to ELB mappings
-version_added: "1.0"
+version_added: "1.2"
 options: {}
 description:
      - This module fetches data from AWS using the boto api and returns
