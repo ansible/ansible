@@ -18,7 +18,7 @@
 import ansible.inventory
 import ansible.constants as C
 import ansible.runner
-from ansible.utils.template import template, smush_braces
+from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
@@ -159,7 +159,7 @@ class PlayBook(object):
                 # a playbook (list of plays) decided to include some other list of plays
                 # from another file.  The result is a flat list of plays in the end.
 
-                tokens = shlex.split(smush_braces(play['include']))
+                tokens = shlex.split(play['include'])
 
                 incvars = vars.copy()
                 if 'vars' in play:

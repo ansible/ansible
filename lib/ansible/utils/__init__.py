@@ -255,9 +255,31 @@ def parse_json(raw_data):
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
         return results
 
+def smush_braces(data):
+    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
+    while data.find('{{ ') != -1:
+        data = data.replace('{{ ', '{{')
+    while data.find(' }}') != -1:
+        data = data.replace(' }}', '}}')
+    return data
+
+def smush_ds(data):
+    # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
+    # so we do not have to call smush elsewhere
+    if type(data) == list:
+        return [ smush_ds(x) for x in data ]
+    elif type(data) == dict:
+        for (k,v) in data.items():
+            data[k] = smush_ds(v)
+        return data
+    elif isinstance(data, basestring):
+        return smush_braces(data)
+    else:
+        return data
+
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
-    return yaml.safe_load(data)
+    return smush_ds(yaml.safe_load(data))
 
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
