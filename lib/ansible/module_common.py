@@ -692,7 +692,12 @@ class AnsibleModule(object):
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
             for arg in log_args:
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
-            journal.sendv(*journal_args)
+            try:
+                journal.sendv(*journal_args)
+            except IOError, e:
+                # fall back to syslog since logging to journal failed
+                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
             syslog.openlog(module, 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
