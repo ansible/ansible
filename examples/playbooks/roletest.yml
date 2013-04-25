@@ -41,10 +41,11 @@
     #   - webservers
 
     # but you can also pass variables to them, so they can be parameterized.  You can call
-    # a role more than once with different parameters too.  It might look like this:
+    # a role more than once with different parameters too.  It might look like the section
+    # below.  Note I can also declare tags at this time.
 
-      - { role: foo, param1: 1000, param2: 2000 }
-      - { role: foo, param1: 8000, param2: 9000 }
+      - { role: foo, param1: 1000, param2: 2000, tags: [ 'foo', 'bar' ] }
+      - { role: foo, param1: 8000, param2: 9000, tags: [ 'baz' ]  }
 
     # add as many roles as you like, roles takes a list of roles names
     # these paths can be qualified, but if bare, it will look from them in
