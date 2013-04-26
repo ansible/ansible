@@ -510,8 +510,12 @@ class PlayBook(object):
                                 self.inventory.restrict_to(handler.notified_by)
                                 self._run_task(play, handler, True)
                                 self.inventory.lift_restriction()
+                                new_list = handler.notified_by[:]
                                 for host in handler.notified_by:
-                                    handler.notified_by[:] = [h for h in handler.notified_by if h != host]
+                                    if host in on_hosts:
+                                        while host in new_list:
+                                            new_list.remove(host)
+                                handler.notified_by = new_list
 
                         continue
 
