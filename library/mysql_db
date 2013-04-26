@@ -104,7 +104,7 @@ def db_exists(cursor, db):
     return bool(res)
 
 def db_delete(cursor, db):
-    query = "DROP DATABASE %s" % db
+    query = "DROP DATABASE `%s`" % db
     cursor.execute(query)
     return True
 
@@ -125,7 +125,7 @@ def db_create(cursor, db, encoding, collation):
         encoding = " CHARACTER SET %s" % encoding
     if collation:
         collation = " COLLATE %s" % collation
-    query = "CREATE DATABASE %s%s%s" % (db, encoding, collation)
+    query = "CREATE DATABASE `%s`%s%s" % (db, encoding, collation)
     res = cursor.execute(query)
     return True
 
