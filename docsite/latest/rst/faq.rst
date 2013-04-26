@@ -42,8 +42,8 @@ Native OpenSSH for connections instead of the python paramiko library.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
-older clients.  If you are using RHEL 6 or CentOS 6, the version of OpenSSH is still a bit old, so consider managing
-from a Fedora client even though you are managing older nodes, or just use paramiko.
+older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so 
+consider managing from a Fedora or openSUSE client even though you are managing older nodes, or just use paramiko.
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
 for new users.
