@@ -266,8 +266,15 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     return ''.join(done)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True):
+# TODO: varname is misnamed here
+
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False):
     ''' templates a data structure by traversing it and substituting for other data structures '''
+
+    if convert_bare and isinstance(varname, basestring):
+        first_part = varname.split(".")[0].split("[")[0]
+        if first_part in vars and '{{' not in varname and '$' not in varname:
+            varname = "{{%s}}" % varname
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
@@ -439,7 +446,7 @@ def template_from_file(basedir, path, vars):
 
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
-
+    
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')

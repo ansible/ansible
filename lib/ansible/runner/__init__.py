@@ -239,9 +239,8 @@ class Runner(object):
 
         if not self.environment:
             return ""
-        enviro = template.template(self.basedir, self.environment, inject)
-        if isinstance(enviro, basestring) and enviro in inject:
-            enviro = inject[enviro]
+        enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
+        enviro = utils.safe_eval(enviro)
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
@@ -406,15 +405,14 @@ class Runner(object):
 
         # logic to replace complex args if possible
         complex_args = self.complex_args
-        if isinstance(complex_args, basestring):
-            if complex_args in inject:
-                complex_args = inject[complex_args]
-            else:
-                complex_args = template.template(self.basedir, complex_args, inject)
-                complex_args = utils.safe_eval(complex_args)
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
+            if isinstance(complex_args, basestring):
+                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                complex_args = utils.safe_eval(complex_args)
+                if type(complex_args) != dict:
+                    raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
@@ -428,6 +426,14 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
+
+                # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
+                if isinstance(complex_args, basestring):
+                    complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                    complex_args = utils.safe_eval(complex_args)
+                    if type(complex_args) != dict:
+                        raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
+
                 result = self._executor_internal_inner(
                      host, 
                      self.module_name, 
