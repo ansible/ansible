@@ -91,7 +91,7 @@ Magic Variables, and How To Access Information About Other Hosts
 
 Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
 The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
-these names themselves as they are reserved.
+these names themselves as they are reserved.  'environment' is also reserved.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
@@ -433,30 +433,19 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
 
       tasks:
 
-         - action: debug msg="{{ item }} is an environment variable"
-           with_env:
-             - HOME
-             - LANG
+         - action: debug msg="{{ lookup('env','HOME') }} is an environment variable"
 
          - action: debug msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - action: debug msg="{{ item }} is the raw result of running this command"
-           with_pipe:
-              - date
+         - action: debug msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         - action: debug msg="{{ item }} is value in Redis for somekey"
-           with_redis_kv:
-             - redis://localhost:6379,somekey
+         - action: debug msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
-         - action: debug msg="{{ item }} is a DNS TXT record for example.com"
-           with_dnstxt:
-             - example.com
+         - action: debug msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
-         - action: debug msg="{{ item }} is a value from evaluation of this template"
-           with_template:
-              - ./some_template.j2
+         - action: debug msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
