@@ -69,7 +69,7 @@ options:
       - Used with C(state=present). If set, line can contain backreferences
         (both positional and named) that will get populated if the regexp
         matches. This flag changes the operation of the module slightly;
-        insertbefore) and insertafter will be ignored, and if the regexp
+        insertbefore and insertafter will be ignored, and if the regexp
         doesn't match anywhere in the file, the file will be left unchanged.
         If the regexp does match, the last matching line will be replaced by
         the expanded line parameter.
