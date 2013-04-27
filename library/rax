@@ -124,7 +124,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
     for server in pyrax.cloudservers.list():
         if  name != server.name:
             continue
-        if flavor != server.flavor['id']:
+        if int(flavor) != int(server.flavor['id']):
             continue
         if image != server.image['id']:
             continue
@@ -246,7 +246,6 @@ def main():
             module.fail_json(msg = 'Unable to load %s' % e.message)
 
     # setup the auth
-    sys.stderr.write('region is %s' % region)
     try:
         pyrax.set_credential_file(creds_file, region=region)
     except Exception, e:
