@@ -55,16 +55,26 @@ options:
       - XML document used with the define command
     required: false
     default: null
-examples:
-   - code: "virt: name=alpha state=running"
-     description: "Example from Ansible Playbooks"
-   - code: ansible host -m virt -a "name=alpha command=status"
-     description: "Example guest management with C(/usr/bin/ansible)"
-   - code: ansible host -m virt -a "name=alpha command=get_xml"
-     description: "Use C(/usr/bin/ansible) to get the xml of the guest machine alpha"
-   - code: ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 requirements: [ "libvirt" ]
 author: Michael DeHaan, Seth Vidal
+'''
+
+EXAMPLES = '''
+# a playbook task line:
+tasks:
+  - virt: name=alpha state=running
+
+# /usr/bin/ansible invocations
+ansible host -m virt -a "name=alpha command=status"
+ansible host -m virt -a "name=alpha command=get_xml"
+ansible host -m virt -a "name=alpha command=create uri=lxc:///"
+
+# a playbook example of defining and launching an LXC guest
+tasks:
+  - name: define vm
+    virt: name=foo command=define xml="{{ lookup('template', 'container-template.xml.j2') }}" uri=lxc:///
+  - name: start vm
+    virt: name=foo state=running uri=lxc:///
 '''
 
 VIRT_FAILED = 1
