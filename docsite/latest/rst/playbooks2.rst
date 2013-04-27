@@ -90,7 +90,8 @@ Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
 Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
-The most important of these are 'hostvars', 'group_names', and 'groups'.
+The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
+these names themselves as they are reserved.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
