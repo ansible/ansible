@@ -160,9 +160,9 @@ class Play(object):
             with_items = has_dict.get('with_items', None)
             when       = has_dict.get('when', None)
 
-            path = utils.path_dwim(self.basedir, orig_path)
+            path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
-                path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
+                path2 = utils.path_dwim(self.basedir, orig_path)
                 if not os.path.isdir(path2):
                     raise errors.AnsibleError("cannot find role in %s or %s" % (path, path2))
                 path = path2
@@ -171,6 +171,8 @@ class Play(object):
             task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
+            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s" % (path, task, handler, vars_file))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
                 if when: 
