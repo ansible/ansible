@@ -59,6 +59,14 @@ class Play(object):
         self.vars             = self._get_vars()
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
+        self.tags             = ds.get('tags', None)
+
+        if self.tags is None:
+            self.tags = []
+        elif type(self.tags) in [ str, unicode ]:
+            self.tags = self.tags.split(",")
+        elif type(self.tags) != list:
+            self.tags = []
 
         ds = self._load_roles(self.roles, ds)
         self.vars_files       = ds.get('vars_files', [])
@@ -91,7 +99,6 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.tags             = ds.get('tags', None)
         self.gather_facts     = ds.get('gather_facts', None)
         self.serial           = int(ds.get('serial', 0))
         self.remote_port      = self.remote_port
@@ -104,12 +111,6 @@ class Play(object):
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
-        if self.tags is None:
-            self.tags = []
-        elif type(self.tags) in [ str, unicode ]:
-            self.tags = [ self.tags ]
-        elif type(self.tags) != list:
-            self.tags = []
 
         if self.sudo_user != 'root':
             self.sudo = True
