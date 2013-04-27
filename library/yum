@@ -68,7 +68,25 @@ options:
     version_added: "0.9"
     default: null
     aliases: []
-    
+
+  conf_file:
+    description:
+      - The remote yum configuration file to use for the transaction.
+    required: false
+    version_added: "0.6"
+    default: null
+    aliases: []
+
+  disable_gpg_check:
+    description:
+      - Whether to disable the GPG checking of signatures of packages being
+        installed. Has an effect only if state is I(present) or I(latest).
+    required: false
+    version_added: "1.2"
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+
 examples:
    - code: yum name=httpd state=latest
    - code: yum name=httpd state=removed
@@ -564,7 +582,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     module.exit_json(**res)
 
-def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo):
+def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
+           disable_gpg_check):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -614,10 +633,14 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo):
             module.fail_json(msg="Error accessing repos: %s" % e)
 
     if state in ['installed', 'present']:
+        if disable_gpg_check:
+            yum_basecmd.append('--nogpgcheck')
         install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
         remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
+        if disable_gpg_check:
+            yum_basecmd.append('--nogpgcheck')
         latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
 
     # should be caught by AnsibleModule argument_spec
@@ -645,6 +668,8 @@ def main():
             disablerepo=dict(),
             list=dict(),
             conf_file=dict(default=None),
+            disable_gpg_check=dict(required=False, default="no",
+                                   choices=BOOLEANS, type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
@@ -664,7 +689,9 @@ def main():
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
-        res = ensure(module, state, pkg, params['conf_file'], enablerepo, disablerepo)
+        disable_gpg_check = params['disable_gpg_check']
+        res = ensure(module, state, pkg, params['conf_file'], enablerepo,
+                     disablerepo, disable_gpg_check)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # this is magic, see lib/ansible/module_common.py
