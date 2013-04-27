@@ -44,12 +44,17 @@ options:
     required: false
     choices: ["create","status", "start", "stop", "pause", "unpause",
               "shutdown", "undefine", "destroy", "get_xml", "autostart",
-              "freemem", "list_vms", "info", "nodeinfo", "virttype"]
+              "freemem", "list_vms", "info", "nodeinfo", "virttype", "define"]
   uri:
     description:
       - libvirt connection uri
     required: false
     defaults: qemu:///system
+  xml:
+    description:
+      - XML document used with the define command
+    required: false
+    default: null
 examples:
    - code: "virt: name=alpha state=running"
      description: "Example from Ansible Playbooks"
@@ -76,7 +81,7 @@ except ImportError:
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart']
+                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart', 'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
@@ -90,6 +95,8 @@ VIRT_STATE_NAME_MAP = {
    5 : "shutdown",
    6 : "crashed"
 }
+
+class VMNotFound(Exception): pass
 
 class LibvirtConnection(object):
 
@@ -136,7 +143,7 @@ class LibvirtConnection(object):
             if vm.name() == vmid:
                 return vm
 
-        raise Exception("virtual machine %s not found" % vmid)
+        raise VMNotFound("virtual machine %s not found" % vmid)
 
     def shutdown(self, vmid):
         return self.find_vm(vmid).shutdown()
@@ -195,6 +202,8 @@ class LibvirtConnection(object):
         vm = self.conn.lookupByName(vmid)
         return vm.setAutostart(val)
 
+    def define_from_xml(self, xml):
+        return self.conn.defineXML(xml)
 
 
 class Virt(object):
@@ -357,12 +366,20 @@ class Virt(object):
         self.__get_conn()
         return self.conn.get_MaxMemory(vmid)
 
+    def define(self, xml):
+        """
+        Define a guest with the given xml
+        """
+        self.__get_conn()
+        return self.conn.define_from_xml(xml)
+
 def core(module):
 
     state      = module.params.get('state', None)
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
     uri        = module.params.get('uri', None)
+    xml        = module.params.get('xml', None)
 
     v = Virt(uri)
     res = {}
@@ -390,6 +407,15 @@ def core(module):
         if command in VM_COMMANDS:
             if not guest:
                 module.fail_json(msg = "%s requires 1 argument: guest" % command)
+            if command == 'define':
+                if not xml:
+                    module.fail_json(msg = "define requires xml argument")
+                try:
+                    v.get_vm(guest)
+                except VMNotFound:
+                    v.define(xml)
+                    res = {'changed': True, 'created': guest}
+                return VIRT_SUCCESS, res
             res = getattr(v, command)(guest)
             if type(res) != dict:
                 res = { command: res }
@@ -413,6 +439,7 @@ def main():
         state = dict(choices=['running', 'shutdown']),
         command = dict(choices=ALL_COMMANDS),
         uri = dict(default='qemu:///system'),
+        xml = dict(),
     ))
 
     rc = VIRT_SUCCESS
