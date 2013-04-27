@@ -19,6 +19,7 @@ Core Features:
 * pre_tasks and post_tasks allow for separating tasks into blocks where handlers will fire around them automatically
 * "meta: flush_handler" task capability added for when you really need to force handlers to run
 * new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
+* added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
 
 Modules added
 
