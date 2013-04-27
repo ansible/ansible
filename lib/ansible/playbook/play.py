@@ -125,7 +125,8 @@ class Play(object):
         #    <rolename>/tasks/main.yml
         #    <rolename>/handlers/main.yml
         #    <rolename>/vars/main.yml
-        # and it auto-extends tasks/handlers/vars_files as appropriate if found
+        #    <rolename>/library
+        # and it auto-extends tasks/handlers/vars_files/module paths as appropriate if found
 
         if roles is None:
             roles = []
@@ -172,8 +173,9 @@ class Play(object):
             task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
-            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s" % (path, task, handler, vars_file))
+            library   = utils.path_dwim(self.basedir, os.path.join(path, 'library'))
+            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
                 if when: 
@@ -190,6 +192,8 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            if os.path.isdir(library):
+                utils.plugins.module_finder.add_directory(library)
 
         tasks = ds.get('tasks', None)
         post_tasks = ds.get('post_tasks', None)
