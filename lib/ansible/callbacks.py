@@ -24,7 +24,12 @@ import random
 import fnmatch
 import tempfile
 import fcntl
+import constants
 from ansible.color import stringc
+
+import logging
+if constants.DEFAULT_LOG_PATH != '':
+    logging.basicConfig(filename=constants.DEFAULT_LOG_PATH, level=logging.DEBUG, format='%(asctime)s %(message)s')
 
 callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
@@ -83,16 +88,25 @@ def set_task(callback, task):
     for callback_plugin in callback_plugins:
         callback_plugin.task = task
 
-def display(msg, color=None, stderr=False):
+def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
     # prevent a very rare case of interlaced multiprocess I/O
     log_flock()
     msg2 = msg
     if color:
         msg2 = stringc(msg, color)
-    if not stderr:
-        print msg2
-    else:
-        print >>sys.stderr, msg2
+    if not log_only:
+        if not stderr:
+            print msg2
+        else:
+            print >>sys.stderr, msg2
+    if constants.DEFAULT_LOG_PATH != '':
+        while msg.startswith("\n"):
+            msg = msg.replace("\n","")
+        if not screen_only:
+            if color == 'red':
+                logging.error(msg)
+            else:
+                logging.info(msg)
     log_unflock()
 
 def call_callback_module(method_name, *args, **kwargs):
@@ -301,7 +315,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_unreachable(self, host, res):
         if type(res) == dict:
             res = res.get('msg','')
-        display("%s | FAILED => %s" % (host, res))
+        display("%s | FAILED => %s" % (host, res), stderr=True, color='red')
         if self.options.tree:
             utils.write_tree_file(
                 self.options.tree, host,
@@ -334,7 +348,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)))
+        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True)
         super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def _on_any(self, host, result):
@@ -475,8 +489,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        msg = "<job %s> FAILED on %s"%(jid, host)
-        display(msg, color='red')
+        msg = "<job %s> FAILED on %s" % (jid, host)
+        display(msg, color='red', stderr=True)
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def on_file_diff(self, host, diff):
