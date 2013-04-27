@@ -246,7 +246,6 @@ def main():
             module.fail_json(msg = 'Unable to load %s' % e.message)
 
     # setup the auth
-    sys.stderr.write('region is %s' % region)
     try:
         pyrax.set_credential_file(creds_file, region=region)
     except Exception, e:
