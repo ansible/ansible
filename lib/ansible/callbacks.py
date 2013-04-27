@@ -200,6 +200,10 @@ def regular_generic_msg(hostname, result, oneline, caption):
 def banner(msg):
 
     if cowsay:
+        if msg.find(": [") != -1:
+            msg = msg.replace("[","")
+            if msg.endswith("]"):
+                msg = msg[:-1]
         runcmd = [cowsay,"-W", "60"]
         if noncow:
             runcmd.append('-f')
