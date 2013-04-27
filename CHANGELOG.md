@@ -64,6 +64,9 @@ Bugfixes and Misc Changes:
 * validate feature on copy and template module, for example, running visudo prior to copying the file over
 * network facts upgraded to return advanced configs (bonding, etc)
 * region support added to ec2 module
+* riak module gets a wait for ring option
+* improved check mode support in the file module
+* exception handling added to handle scenario when attempt to log to systemd journal fails
 
 1.1 "Mean Street" -- 4/2/2013
 
