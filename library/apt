@@ -102,7 +102,7 @@ examples:
     - code: "apt: update_cache=yes"
       description: Run the equivalent of C(apt-get update) as a separate step
     - code: "apt: update_cache=yes cache_valid_time=3600"
-      description: Only run C(apt-get update) if the last one is more than more than 3600 seconds ago
+      description: Only run C(update_cache=yes) if the last one is more than more than 3600 seconds ago
 requirements: [ python-apt, aptitude ]
 '''
 
