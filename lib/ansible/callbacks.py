@@ -34,6 +34,8 @@ if constants.DEFAULT_LOG_PATH != '':
 callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
+    if constants.ANSIBLE_NOCOWS is not None:
+        return (None, None)
     cowsay = None
     if os.getenv("ANSIBLE_NOCOWS") is not None:
         cowsay = None
