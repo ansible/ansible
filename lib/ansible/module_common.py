@@ -319,15 +319,7 @@ class AnsibleModule(object):
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
-        try:
-            user = pwd.getpwuid(uid)[0]
-        except KeyError:
-            user = str(uid)
-        try:
-            group = grp.getgrgid(gid)[0]
-        except KeyError:
-            group = str(gid)
-        return (user, group)
+        return (uid, gid)
 
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
@@ -366,14 +358,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if owner is None:
             return changed
-        user, group = self.user_and_group(path)
-        if owner != user:
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            uid = int(owner)
+        except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-            if self.check_mode:
-                return True
+        if self.check_mode:
+            return True
+        if orig_uid != uid:
             try:
                 os.chown(path, uid, -1)
             except OSError:
@@ -385,14 +380,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if group is None:
             return changed
-        old_user, old_group = self.user_and_group(path)
-        if old_group != group:
-            if self.check_mode:
-                return True
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            gid = int(group)
+        except ValueError:
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+        if self.check_mode:
+            return True
+        if orig_gid != gid:
             try:
                 os.chown(path, -1, gid)
             except OSError:
@@ -472,8 +470,18 @@ class AnsibleModule(object):
         if path is None:
             return kwargs
         if os.path.exists(path):
-            (user, group) = self.user_and_group(path)
-            kwargs['owner']  = user
+            (uid, gid) = self.user_and_group(path)
+            kwargs['uid'] = uid
+            kwargs['gid'] = gid
+            try:
+                user = pwd.getpwuid(uid)[0]
+            except KeyError:
+                user = str(uid)
+            try:
+                group = grp.getgrgid(gid)[0]
+            except KeyError:
+                group = str(gid)
+            kwargs['owner'] = user
             kwargs['group'] = group
             st = os.stat(path)
             kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
