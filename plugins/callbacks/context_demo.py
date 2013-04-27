@@ -1,5 +1,5 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
+# (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -16,24 +16,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import glob
-from ansible import utils
+import time
+import json
 
-class LookupModule(object):
+class CallbackModule(object):
+    """
+    This is a very trivial example of how any callback function can get at play and task objects.
+    play will be 'None' for runner invocations, and task will be None for 'setup' invocations.
+    """
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-
-        ret = []
-
-        for term in terms:
-
-            dwimmed = utils.path_dwim(self.basedir, term)
-            globbed = glob.glob(dwimmed)
-            ret.extend(g for g in globbed if os.path.isfile(g))
-
-        return ret
+    def on_any(self, *args, **kwargs):
+        play = getattr(self, 'play', None)
+        task = getattr(self, 'task', None)
+        print "play = %s, task = %s, args = %s, kwargs = %s" % (play,task,args,kwargs)

@@ -133,7 +133,7 @@ We can define specific hardware variance in systems in a host_vars file, but avo
     foo_agent_port: 86
     bar_agent_port: 99
 
-Top Level Playbooks Are Seperated By Role
+Top Level Playbooks Are Separated By Role
 `````````````````````````````````````````
 
 In site.yml, we include a playbook that defines our entire infrastructure.  Note this is SUPER short, because it's just including
@@ -230,12 +230,12 @@ to be some additional playbooks that hop between tiers to roll out an applicatio
 may be augmented by playbooks like 'deploy_exampledotcom.yml' but the general concepts can still apply.
 
 Ansible allows you to deploy and configure using the same tool, so you would likely reuse groups and just
-keep the OS configuration in seperate playbooks from the app deployment.
+keep the OS configuration in separate playbooks from the app deployment.
 
 Stage vs Production
 +++++++++++++++++++
 
-As also mentioned above, a good way to keep your stage (or testing) and production environments seperate is to use a seperate inventory file for stage and production.   This way you pick with -i what you are targetting.  Keeping them all in one file can lead to surprises!
+As also mentioned above, a good way to keep your stage (or testing) and production environments separate is to use a separate inventory file for stage and production.   This way you pick with -i what you are targetting.  Keeping them all in one file can lead to surprises!
 
 Testing things in a stage environment before trying in production is always a great idea.  Your environments need not be the same
 size and you can use group variables to control the differences between those environments.

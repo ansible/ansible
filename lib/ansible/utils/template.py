@@ -29,6 +29,25 @@ import subprocess
 import datetime
 import pwd
 
+class Globals(object):
+    FILTERS = None
+    def __init__(self):
+        pass    
+
+def _get_filters():
+   ''' return filter plugin instances '''
+
+   if Globals.FILTERS is not None:
+       return Globals.FILTERS
+
+   from ansible import utils
+   plugins = [ x for x in utils.plugins.filter_loader.all()]
+   filters = {}
+   for fp in plugins:
+       filters.update(fp.filters())
+   Globals.FILTERS = filters
+ 
+   return Globals.FILTERS
 
 class Flags:
     LEGACY_TEMPLATE_WARNING = False
@@ -247,8 +266,15 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     return ''.join(done)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True):
+# TODO: varname is misnamed here
+
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False):
     ''' templates a data structure by traversing it and substituting for other data structures '''
+
+    if convert_bare and isinstance(varname, basestring):
+        first_part = varname.split(".")[0].split("[")[0]
+        if first_part in vars and '{{' not in varname and '$' not in varname:
+            varname = "{{%s}}" % varname
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
@@ -365,12 +391,9 @@ def template_from_file(basedir, path, vars):
         return lookup(*args, basedir=basedir, **kwargs)
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=jinja_exts)
-    for filter_plugin in utils.plugins.filter_loader.all():
-        filters = filter_plugin.filters()
-        if not isinstance(filters, dict):
-            raise errors.AnsibleError("FilterModule.filters should return a dict.")
-        environment.filters.update(filters)
-        environment.globals['lookup'] = my_lookup
+    environment.filters.update(_get_filters())
+    environment.globals['lookup'] = my_lookup
+
     try:
         data = codecs.open(realpath, encoding="utf8").read()
     except UnicodeDecodeError:
@@ -421,39 +444,14 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars)
 
-def _get_filter_plugins():
-
-    global FILTER_PLUGINS
-    if FILTER_PLUGINS is not None:
-        return FILTER_PLUGINS
-    FILTER_PLUGINS = {}
-    from ansible import utils
-    for filter_plugin in utils.plugins.filter_loader.all():
-        filters = filter_plugin.filters()
-        if not isinstance(filters, dict):
-            raise errors.AnsibleError("FilterModule.filters should return a dict.")
-        FILTER_PLUGINS.update(filters)
-    return FILTER_PLUGINS
-        
-
-def _smush_braces(data):
-    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while data.find('{{ ') != -1:
-        data = data.replace('{{ ', '{{')
-    while data.find(' }}') != -1:
-        data = data.replace(' }}', '}}')
-    return data
-
 def template_from_string(basedir, data, vars):
     ''' run a file through the (Jinja2) templating engine '''
-
-    data = _smush_braces(data)
-
+    
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
         environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined) 
-        environment.filters.update(_get_filter_plugins())
+        environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
@@ -461,8 +459,8 @@ def template_from_string(basedir, data, vars):
 
         try:
             t = environment.from_string(data)
-        except RuntimeError, re:
-            if 'recursion' in str(re):
+        except Exception, e:
+            if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data

@@ -51,13 +51,22 @@ options:
     required: false
     default: false
     version_added: "1.2"
-examples:
-   - code: 's3 bucket=mybucket path=/path/to/file state=present'
-     description: "Simple playbook example"
-   - code: 's3 bucket=mybucket path=/path/to/file state=present overwrite=yes'
-     description: "Will overwrite only if remote and local checksums do not match. Does not support files uploaded to s3 with multipart upload."
 requirements: [ "boto" ]
 author: Lester Wade
+'''
+
+EXAMPLES = '''
+# Simple PUT operation
+   module: s3 
+   bucket: mybucket 
+   path: /path/to/file 
+   state: present
+# Force and overwrite if checksums don't match
+   module: s3
+   bucket: mybucket
+   path: /path/to/file
+   state: present
+   overwrite: yes
 '''
 
 import sys

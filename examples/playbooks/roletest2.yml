@@ -25,14 +25,6 @@
 ---
 
   - hosts: all
-
-    pre_tasks:
-
-        # these tasks are executed prior to roles.
-        # this might be a good time to signal an outage window or take a host out of a load balanced pool
-
-        - local_action: shell echo "hi this is a pre_task step about {{ inventory_hostname }}"
-
     roles:
 
     # a role can be listed flat like this: 
@@ -41,11 +33,13 @@
     #   - webservers
 
     # but you can also pass variables to them, so they can be parameterized.  You can call
-    # a role more than once with different parameters too.  It might look like the section
-    # below.  Note I can also declare tags at this time.
+    # a role more than once with different parameters too.  It might look like this:
 
-      - { role: foo, param1: 1000, param2: 2000, tags: [ 'foo', 'bar' ] }
-      - { role: foo, param1: 8000, param2: 9000, tags: [ 'baz' ]  }
+      - role: foo
+        param1: '{{ item }}'
+        param2: '{{ item + "/" + item }}'
+        with_items: ['a','b','c']
+        when: ansible_os_family == 'RedHat'
 
     # add as many roles as you like, roles takes a list of roles names
     # these paths can be qualified, but if bare, it will look from them in
@@ -56,16 +50,8 @@
 
     tasks:
 
-        # you can still have loose tasks/handlers and they will execute after roles are applied
+        # you can still have loose tasks/handlers and they will execute after roles
 
         - shell: echo 'this is a loose task'
-
-    post_tasks:
-
-        # just to provide a syntactic mirroring to 'pre_tasks', these run absolute last in the play.
-        # this might be a good time to put a host back in a load balanced pool or end an outage window
-
-        - local_action: shell echo 'this is a post_task about {{ inventory_hostname }}'
-
 
 

@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright 2013 Dag Wieers <dag@wieers.com>
 #
 # This file is part of Ansible
 #
@@ -15,25 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import glob
 from ansible import utils
+from ansible.runner.return_data import ReturnData
 
-class LookupModule(object):
+class ActionModule(object):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+    NEEDS_TMPPATH = False
 
-    def run(self, terms, inject=None, **kwargs):
+    def __init__(self, runner):
+        self.runner = runner
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
+        ''' handler for running operations on master '''
 
-        ret = []
+        # load up options
+        options  = {}
+        if complex_args:
+            options.update(complex_args)
+        options.update(utils.parse_kv(module_args))
 
-        for term in terms:
-
-            dwimmed = utils.path_dwim(self.basedir, term)
-            globbed = glob.glob(dwimmed)
-            ret.extend(g for g in globbed if os.path.isfile(g))
-
-        return ret
+        return ReturnData(conn=conn, result=dict(ansible_facts=options))

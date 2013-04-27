@@ -271,13 +271,26 @@ class AnsibleModule(object):
             context.append(None)
         return context
 
+    def _to_filesystem_str(self, path):
+        '''Returns filesystem path as a str, if it wasn't already.
+
+        Used in selinux interactions because it cannot accept unicode
+        instances, and specifying complex args in a playbook leaves
+        you with unicode instances.  This method currently assumes
+        that your filesystem encoding is UTF-8.
+
+        '''
+        if isinstance(path, unicode):
+            path = path.encode("utf-8")
+        return path
+
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = self.selinux_initial_context()
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.matchpathcon(path, mode)
+            ret = selinux.matchpathcon(self._to_filesystem_str(path), mode)
         except OSError:
             return context
         if ret[0] == -1:
@@ -290,7 +303,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
         try:
-            ret = selinux.lgetfilecon(path)
+            ret = selinux.lgetfilecon(self._to_filesystem_str(path))
         except OSError, e:
             if e.errno == errno.ENOENT:
                 self.fail_json(path=path, msg='path %s does not exist' % path)
@@ -306,15 +319,7 @@ class AnsibleModule(object):
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
-        try:
-            user = pwd.getpwuid(uid)[0]
-        except KeyError:
-            user = str(uid)
-        try:
-            group = grp.getgrgid(gid)[0]
-        except KeyError:
-            group = str(gid)
-        return (user, group)
+        return (uid, gid)
 
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
@@ -340,7 +345,8 @@ class AnsibleModule(object):
             try:
                 if self.check_mode:
                     return True
-                rc = selinux.lsetfilecon(path, ':'.join(new_context))
+                rc = selinux.lsetfilecon(self._to_filesystem_str(path),
+                                         str(':'.join(new_context)))
             except OSError:
                 self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
@@ -352,14 +358,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if owner is None:
             return changed
-        user, group = self.user_and_group(path)
-        if owner != user:
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            uid = int(owner)
+        except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-            if self.check_mode:
-                return True
+        if self.check_mode:
+            return True
+        if orig_uid != uid:
             try:
                 os.chown(path, uid, -1)
             except OSError:
@@ -371,14 +380,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if group is None:
             return changed
-        old_user, old_group = self.user_and_group(path)
-        if old_group != group:
-            if self.check_mode:
-                return True
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            gid = int(group)
+        except ValueError:
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+        if self.check_mode:
+            return True
+        if orig_gid != gid:
             try:
                 os.chown(path, -1, gid)
             except OSError:
@@ -458,8 +470,18 @@ class AnsibleModule(object):
         if path is None:
             return kwargs
         if os.path.exists(path):
-            (user, group) = self.user_and_group(path)
-            kwargs['owner']  = user
+            (uid, gid) = self.user_and_group(path)
+            kwargs['uid'] = uid
+            kwargs['gid'] = gid
+            try:
+                user = pwd.getpwuid(uid)[0]
+            except KeyError:
+                user = str(uid)
+            try:
+                group = grp.getgrgid(gid)[0]
+            except KeyError:
+                group = str(gid)
+            kwargs['owner'] = user
             kwargs['group'] = group
             st = os.stat(path)
             kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
@@ -678,7 +700,12 @@ class AnsibleModule(object):
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
             for arg in log_args:
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
-            journal.sendv(*journal_args)
+            try:
+                journal.sendv(*journal_args)
+            except IOError, e:
+                # fall back to syslog since logging to journal failed
+                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
             syslog.openlog(module, 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -780,8 +807,9 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def atomic_replace(self, src, dest):
-        '''atomically replace dest with src, copying attributes from dest'''
+    def atomic_move(self, src, dest):
+        '''atomically move src to dest, copying attributes from dest, returns true on success'''
+        rc = False
         if os.path.exists(dest):
             st = os.stat(dest)
             os.chmod(src, st.st_mode & 07777)
@@ -797,7 +825,25 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
                 self.set_context_if_different(src, context, False)
-        os.rename(src, dest)
+        # Ensure file is on same partition to make replacement atomic
+        dest_dir = os.path.dirname(dest)
+        dest_file = os.path.basename(dest)
+        tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+        try:
+            shutil.move(src, tmp_dest)
+            os.rename(tmp_dest, dest)
+            rc = True
+        except (shutil.Error, OSError, IOError), e:
+            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+        finally:
+            # Clean up in case of failure (don't leave nasty temps around)
+            if os.path.exists(tmp_dest):
+                try:
+                    #TODO: would be nice to respect 'keep_remote_files'
+                    os.unlink(tmp_dest)
+                except OSError, e:
+                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
+        return rc
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''

@@ -23,6 +23,7 @@
 import shutil
 import tempfile
 import base64
+import datetime
 try:
     import json
 except ImportError:
@@ -206,7 +207,7 @@ def write_file(module, url, dest, content):
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
+            module.fail_json( msg="Destination dir %s not writable" % (os.path.dirname(dest)))
      
     if md5sum_src != md5sum_dest:
         try:
@@ -241,11 +242,44 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         module.fail_json(msg="Both a username and password need to be set.")
     if user is not None and password is not None:
         h.add_credentials(user, password)
-   
+
+    # is dest is set and is a directory, let's check if we get redirected and
+    # set the filename from that url
+    redirected = False
+    resp_redir = {}
+    r = {}
+    if dest is not None:
+        dest = os.path.expanduser(dest)
+        if os.path.isdir(dest):
+            # first check if we are redirected to a file download
+            h.follow_redirects=False
+            # Try the request
+            try:
+                resp_redir, content_redir = h.request(url, method=method, body=body, headers=headers)
+                # if we are redirected, update the url with the location header,
+                # and update dest with the new url filename
+            except:
+                pass
+            if resp_redir['status'] in ["301", "302", "303", "307"]:
+                url = resp_redir['location']
+                redirected = True
+            dest = os.path.join(dest, url_filename(url))
+        # if destination file already exist, only download if file newer
+        if os.path.exists(dest):
+            t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+            tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
+            headers['If-Modified-Since'] = tstamp
+
+    # do safe redirects now, including 307
+    h.follow_redirects=True
+
     # Make the request, or try to :)
     try: 
         resp, content = h.request(url, method=method, body=body, headers=headers)     
-        return resp, content
+        r['redirected'] = redirected
+        r.update(resp_redir)
+        r.update(resp)
+        return r, content, dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
@@ -343,26 +377,23 @@ def main():
     else:
         redirects = False
 
-    # If there is a dest, expand it and get the filename if one not explicitly set.
-    if dest is not None:
-        dest = os.path.expanduser(dest)
-        if os.path.isdir(dest):
-            dest = os.path.join(dest, url_filename(url))
-
     # Make the request
-    resp, content = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
+    resp, content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
 
     # Write the file out if requested
     if dest is not None:
-        write_file(module, url, dest, content)
-
-        # allow file attribute changes
-        changed = True
-        module.params['path'] = dest
-        file_args = module.load_file_common_arguments(module.params)
-        file_args['path'] = dest
-        changed = module.set_file_attributes_if_different(file_args, changed)
-
+        if resp['status'] == "304":
+            status_code = "304"
+            changed = False
+        else:
+            write_file(module, url, dest, content)
+            # allow file attribute changes
+            changed = True
+            module.params['path'] = dest
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = dest
+            changed = module.set_file_attributes_if_different(file_args, changed)
+        resp['path'] = dest
 
     # Transmogrify the headers, replacing '-' with '_', since variables dont work with dashes.
     uresp = {}
@@ -377,13 +408,12 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-
     if resp['status'] != status_code:
         module.fail_json(msg="Status code was not " + status_code, content=content, **uresp)
     elif return_content:
-        module.exit_json(changed=True, content=content, **uresp)  
+        module.exit_json(changed=changed, content=content, **uresp)
     else:
-        module.exit_json(changed=True, **uresp)
+        module.exit_json(changed=changed, **uresp)
 
 
 # this is magic, see lib/ansible/module_common.py

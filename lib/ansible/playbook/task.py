@@ -22,7 +22,7 @@ import ansible.utils.template as template
 class Task(object):
 
     __slots__ = [
-        'name', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
+        'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
@@ -33,7 +33,7 @@ class Task(object):
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'action', 'only_if', 'async', 'poll', 'notify',
+         'name', 'meta', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
@@ -43,10 +43,21 @@ class Task(object):
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
         ''' constructor loads from a task or handler datastructure '''
 
+        # meta directives are used to tell things like ansible/playbook to run
+        # operations like handler execution.  Meta tasks are not executed
+        # normally.
+        if 'meta' in ds:
+            self.meta = ds['meta']
+            self.tags = []
+            return
+        else:
+            self.meta = None
+
         for x in ds.keys():
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+
                 if 'action' in ds:
                     raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
                 if isinstance(ds[x], dict):

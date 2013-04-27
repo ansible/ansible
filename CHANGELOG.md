@@ -15,11 +15,23 @@ Core Features:
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
 * --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
 * failed playbook runs will create a retry file in /var/tmp/ansible usable with --limit
+* roles allow easy arrangement of reusable tasks/handlers/files/templates
+* pre_tasks and post_tasks allow for separating tasks into blocks where handlers will fire around them automatically
+* "meta: flush_handler" task capability added for when you really need to force handlers to run
+* new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
+* added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
 
 Modules added
 
 * rax: module for creating instances in the rackspace cloud (uses pyrax)
 * npm: node.js package management
+* postgresql_priv: manages postgresql priveledges
+* set_fact: sets a variable, which can be the result of a template evaluation
+
+Modules removed
+
+* vagrant -- can't be compatible with both versions at once, just run things though the vagrant provisioner in vagrant core
+
 
 Bugfixes and Misc Changes:
 
@@ -29,6 +41,32 @@ Bugfixes and Misc Changes:
 * overwrite parameter added to the s3 module
 * private_ip parameter added to the ec2 module
 * $FILE and $PIPE now tolerate unicode
+* various plugin loading operations have been made more efficient
+* hostname now uses platform.node versus socket.gethostname to be more consistant with Unix 'hostname'
+* fix for SELinux operations on Unicode path names
+* inventory directory locations now ignore files with .ini extensions, making hybrid inventory easier
+* copy module in check-mode now reports back correct changed status when used with force=no
+* added avail. zone to ec2 module
+* fixes to the hash variable merging logic if so enabled in the main settings file (default is to replace, not merge hashes)
+* group_vars and host_vars files can now end in a .yaml or .yml extension, (previously required no extension, still favored)
+* ec2vol module improvements
+* if the user module is told to generate the ssh key, the key generated is now returned in the results
+* misc fixes to the Riak module
+* make template module slightly more efficient
+* base64encode / decode filters are now available to templates
+* libvirt module can now work with multiple different libvirt connecton URIs
+* fix for postgresql password escaping
+* unicode fix for shlex.split in some cases
+* apt module upgrade logic improved
+* URI module now can follow redirects
+* yum module can now install off http URLs
+* sudo password now defaults to ssh password if you ask for both and just hit enter on the second prompt
+* validate feature on copy and template module, for example, running visudo prior to copying the file over
+* network facts upgraded to return advanced configs (bonding, etc)
+* region support added to ec2 module
+* riak module gets a wait for ring option
+* improved check mode support in the file module
+* exception handling added to handle scenario when attempt to log to systemd journal fails
 
 1.1 "Mean Street" -- 4/2/2013
 
@@ -151,7 +189,7 @@ Module Changes/Fixes:
 * more OS X facts
 * added a 'fail_on_missing' (default no) option to fetch
 * added timeout to the uri module (default 30 seconds, adjustable)
-* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for seperate wait_for call.
+* ec2 now has a 'wait' parameter to wait for the instance to be active, eliminates need for separate wait_for call.
 * allow regex backreferences in lineinfile
 * id attribute on ec2 module can be used to set idempotent-do-not-recreate launches
 * icinga support for nagios module

@@ -63,10 +63,13 @@ def parse():
     else:
         return options, args
 
-def write_argsfile(argstring):
+def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
+    if json:
+        args = utils.parse_kv(argstring)
+        argstring = utils.jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
     return argspath
@@ -97,10 +100,16 @@ def boilerplate_module(modfile, args):
         modfile2.write(module_data)
         modfile2.close()
         modfile = modfile2_path
-        return (modfile2_path, included_boilerplate)
+
+        return (modfile2_path, included_boilerplate, False)
     else:
+
+        old_style_but_json = False
+        if 'WANT_JSON' in module_data:
+           old_style_but_json = True
+
         print "* module boilerplate substitution not requested in module, line numbers will be unaltered"
-        return (modfile, included_boilerplate)
+        return (modfile, included_boilerplate, old_style_but_json)
 
 def runtest( modfile, argspath):
     """Test run a module, piping it's output for reporting."""
@@ -142,10 +151,14 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, is_new_style) = boilerplate_module(options.module_path, options.module_args)
+    (modfile, is_new_style, old_style_but_json) = boilerplate_module(options.module_path, options.module_args)
+
     argspath=None
     if not is_new_style:
-        argspath = write_argsfile(options.module_args)
+        if old_style_but_json:
+            argspath = write_argsfile(options.module_args, json=True)
+        else:
+            argspath = write_argsfile(options.module_args, json=False)
     if options.debugger: 
         rundebug(options.debugger, modfile, argspath)
     else:
