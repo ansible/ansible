@@ -907,10 +907,16 @@ def main():
     (rc, out, err) = service.modify_service_state()
 
     if rc != 0:
-        if err:
-            module.fail_json(msg=err)
+        if err and err.find("is already") != -1:
+            # upstart got confused, one such possibility is MySQL on Ubuntu 12.04
+            # where status may report it has no start/stop links and we could
+            # not get accurate status
+            pass
         else:
-            module.fail_json(msg=out)
+            if err:
+                module.fail_json(msg=err)
+            else:
+                module.fail_json(msg=out)
 
     result['changed'] = service.changed
     if service.module.params['enabled'] is not None:
