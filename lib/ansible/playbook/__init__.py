@@ -341,9 +341,6 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
-            # Skip register variable if host is skipped
-            if result.get('skipped', False):
-                continue
             facts = result.get('ansible_facts', {})
             self.SETUP_CACHE[host].update(facts)
             # extra vars need to always trump - so update  again following the facts

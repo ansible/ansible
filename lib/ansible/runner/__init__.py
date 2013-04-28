@@ -462,7 +462,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=all_comm_ok, result=rd_result)
         else:
             self.callbacks.on_skipped(host, None)
-            return ReturnData(host=host, comm_ok=True, result=dict(skipped=True))
+            return ReturnData(host=host, comm_ok=True, result=dict(changed=False, skipped=True))
 
     # *****************************************************
 
@@ -494,7 +494,7 @@ class Runner(object):
         conditional = template.template(self.basedir, self.conditional, inject, expand_lists=False)
 
         if not utils.check_conditional(conditional):
-            result = utils.jsonify(dict(skipped=True))
+            result = utils.jsonify(dict(changed=False, skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
 
