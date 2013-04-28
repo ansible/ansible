@@ -21,7 +21,7 @@ Core Features:
 * new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
 * added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
 
-Modules added
+Modules added:
 
 * rax: module for creating instances in the rackspace cloud (uses pyrax)
 * npm: node.js package management
@@ -67,6 +67,9 @@ Bugfixes and Misc Changes:
 * riak module gets a wait for ring option
 * improved check mode support in the file module
 * exception handling added to handle scenario when attempt to log to systemd journal fails
+* fix for upstart handling when toggling the enablement and running bits at the same time
+* when registering a task with a conditional attached, and the task is skipped by the conditional,
+the variable is still registered for the host, with the attribute skipped: True.
 
 1.1 "Mean Street" -- 4/2/2013
 
