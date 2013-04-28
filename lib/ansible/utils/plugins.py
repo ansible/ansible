@@ -92,8 +92,15 @@ class PluginLoader(object):
         ret += self._extra_dirs
         for basedir in _basedirs:
             fullpath = os.path.join(basedir, self.subdir)
-            if fullpath not in ret:
-                ret.append(fullpath)
+            if os.path.isdir(fullpath):
+                files = glob.glob("%s/*" % fullpath)
+                for file in files:
+                    if os.path.isdir(file):
+                        ret.append(file)    
+            else:
+                if fullpath not in ret:
+                    ret.append(fullpath)
+                
         ret += self.config.split(os.pathsep)
         ret += self._get_package_path()
 

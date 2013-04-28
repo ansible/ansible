@@ -18,6 +18,7 @@
 #
 
 import os
+import glob
 import sys
 import yaml
 import codecs
@@ -137,6 +138,20 @@ def boilerplate():
         print >>sys.stderr, "Missing example boiler plate: %S" % EXAMPLE_YAML
     print file(EXAMPLE_YAML).read()
 
+def list_modules(module_dir):
+    categories = {}
+    files = glob.glob("%s/*" % module_dir)
+    for d in files:
+        if os.path.isdir(d):
+            files2 = glob.glob("%s/*" % d)
+            for f in files2:
+                tokens = f.split("/")
+                module = tokens[-1]
+                category = tokens[-2]
+                if not category in categories:
+                    categories[category] = {}
+                categories[category][module] = f
+    return categories
 
 def main():
 
@@ -274,75 +289,104 @@ def main():
 
     # Temporary variable required to genrate aggregated content in 'js' format.
     js_data = []
-    for module in sorted(os.listdir(options.module_dir)):
-        if len(options.module_list):
-            if not module in options.module_list:
+
+    categories = list_modules(options.module_dir)
+    last_category = None
+    category_names = categories.keys()
+    category_names.sort()
+ 
+    for category in category_names:
+        module_map = categories[category]
+ 
+        category = category.replace("_"," ")
+        category = category.title()
+
+        modules = module_map.keys()
+        modules.sort()
+
+        for module in modules:
+            fname = module_map[module]
+
+            if len(options.module_list):
+                if not module in options.module_list:
+                    continue
+
+            # fname = os.path.join(options.module_dir, module)
+
+            extra = os.path.join("inc", "%s.tex" % module)
+
+            # probably could just throw out everything with extensions
+            if fname.endswith(".swp") or fname.endswith(".orig") or fname.endswith(".rej"):
                 continue
 
-        fname = os.path.join(options.module_dir, module)
-        extra = os.path.join("inc", "%s.tex" % module)
+            # print " processing module source ---> %s" % fname
 
-        # probably could just throw out everything with extensions
-        if fname.endswith(".swp") or fname.endswith(".orig") or fname.endswith(".rej"):
-            continue
+            if options.type == 'js':
+                if fname.endswith(".json"):
+                    f = open(fname)
+                    j = json.load(f)
+                    f.close()
+                    js_data.append(j)
+                continue
 
-        # print " processing module source ---> %s" % fname
+            doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+
+            if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
+                print " while processing module source ---> %s" % fname
+                sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
+                #sys.exit(1)
+
+            if not doc is None:
+ 
+                all_keys = []
+                for (k,v) in doc['options'].iteritems():
+                    all_keys.append(k)
+                all_keys = sorted(all_keys)
+                doc['option_keys'] = all_keys 
+
+                doc['filename']         = fname
+                doc['docuri']           = doc['module'].replace('_', '-')
+                doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
+                doc['ansible_version']  = options.ansible_version
+                doc['plainexamples']    = examples  #plain text
+
+                # BOOKMARK: here is where we build the table of contents...
+
+                if options.includes_file is not None and includefmt != "":
+
+                    if last_category != category:
+                         incfile.write("\n\n")
+                         incfile.write(category)
+                         incfile.write("\n")
+                         incfile.write('=' * len(category))
+                         incfile.write("\n\n")
+                         last_category = category
+
+                    incfile.write(includefmt % module)
+
+                if options.verbose:
+                    print json.dumps(doc, indent=4)
+
+
+                if options.type == 'latex':
+                    if os.path.exists(extra):
+                        f = open(extra)
+                        extradata = f.read()
+                        f.close()
+                        doc['extradata'] = extradata
+
+                if options.type == 'json':
+                    text = json.dumps(doc, indent=2)
+                else:
+                    text = template.render(doc)
+
+                return_data(text, options, outputname, module)
 
         if options.type == 'js':
-            if fname.endswith(".json"):
-                f = open(fname)
-                j = json.load(f)
-                f.close()
-                js_data.append(j)
-            continue
-
-        doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
-
-        if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-            print " while processing module source ---> %s" % fname
-            sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
-            #sys.exit(1)
-
-        if not doc is None:
-
-            all_keys = []
-            for (k,v) in doc['options'].iteritems():
-                all_keys.append(k)
-            all_keys = sorted(all_keys)
-            doc['option_keys'] = all_keys 
-
-            doc['filename']         = fname
-            doc['docuri']           = doc['module'].replace('_', '-')
-            doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-            doc['ansible_version']  = options.ansible_version
-            doc['plainexamples']    = examples  #plain text
-
-            if options.includes_file is not None and includefmt != "":
-                incfile.write(includefmt % module)
-
-            if options.verbose:
-                print json.dumps(doc, indent=4)
-
-
-            if options.type == 'latex':
-                if os.path.exists(extra):
-                    f = open(extra)
-                    extradata = f.read()
-                    f.close()
-                    doc['extradata'] = extradata
-
-            if options.type == 'json':
-                text = json.dumps(doc, indent=2)
-            else:
-                text = template.render(doc)
-
-            return_data(text, options, outputname, module)
-
-    if options.type == 'js':
-        docs = {}
-        docs['json'] = json.dumps(js_data, indent=2)
-        text = template.render(docs)
-        return_data(text, options, outputname, 'modules')
+            docs = {}
+            docs['json'] = json.dumps(js_data, indent=2)
+            text = template.render(docs)
+            return_data(text, options, outputname, 'modules')
 
 if __name__ == '__main__':
     main()
