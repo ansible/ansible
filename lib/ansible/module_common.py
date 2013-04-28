@@ -829,20 +829,21 @@ class AnsibleModule(object):
         dest_dir = os.path.dirname(dest)
         dest_file = os.path.basename(dest)
         tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+
+        def cleanup():
+            if os.path.exists(tmp_dest):
+                try:
+                    os.unlink(tmp_dest)
+                except OSError, e:
+                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
+
         try:
             shutil.move(src, tmp_dest)
             os.rename(tmp_dest, dest)
             rc = True
         except (shutil.Error, OSError, IOError), e:
+            cleanup()
             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-        finally:
-            # Clean up in case of failure (don't leave nasty temps around)
-            if os.path.exists(tmp_dest):
-                try:
-                    #TODO: would be nice to respect 'keep_remote_files'
-                    os.unlink(tmp_dest)
-                except OSError, e:
-                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
         return rc
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
