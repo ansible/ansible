@@ -1,0 +1,152 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module for reconfiguring debian packages.
+(c) 2013, Sebastien Bocahu <sebastien.bocahu@nuxit.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: dpkg_reconfigure
+short_description: Reconfigure a Debian package.
+description:
+     - Reconfigure a Debian package using dpkg-reconfigure.
+version_added: "1.2"
+notes:
+    - A number of questions has to be answered (depending on the package).
+      Use 'DEBIAN_FRONTED=editor dpkg-reconfigure $pkg' for finding them.
+options:
+  pkg:
+    description:
+      - Package to configure.
+    required: true
+    default: null
+    aliases: []
+  answers:
+    description:
+      - Debconf configuration answer(s)/question(s).
+    required: true
+    default: null
+    aliases: []
+author: Sebastien Bocahu
+'''
+
+EXAMPLES = '''
+# Set default locale to fr_FR.UTF-8, and generate en_US.UTF-8 as well:
+dpkg_reconfigure: pkg=locales answers="locales/default_environment_locale fr_FR.UTF-8\n
+                                    locales/locales_to_be_generated en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8"
+
+# Reconfigure roundcube, using configuration answers stored in a file:
+dpkg_reconfigure: pkg=roundcube answers='$FILE(/path/dpkg-reconfigure/roundcube)'"
+'''
+
+import sys
+import os
+import pwd
+import os.path
+import re
+import tempfile
+
+def get_selections(module, pkg):
+    cmd = [module.get_bin_path('debconf-show', True)]
+    cmd.append(' %s' % pkg)
+    rc, out, err = module.run_command(' '.join(cmd))
+
+    if rc == 0:
+        selections = {}
+        for answer in out.split('\n'):
+            item = re.search('^[* ] ([^:]+): (.*)$', answer)
+            if item:
+                selections[ item.group(1).strip() ] = item.group(2).strip()
+        return selections
+    else:
+        module.fail_json(msg=err)
+
+
+def dpkg_reconfigure(module, pkg, wanted_config):
+    editor_script = [ '#!/bin/sh', 'cat > $1 <<EOF' ]
+    for answer in wanted_config:
+        editor_script.append('%s="%s"' % (answer, wanted_config[answer]))
+    editor_script.append('EOF')
+
+    outfd, outsock_path = tempfile.mkstemp()
+    tmp = os.fdopen(outfd,'w')
+    tmp.write('\n'.join(editor_script))
+    tmp.close()
+    os.chmod(outsock_path, stat.S_IEXEC)
+
+    cmd = [ 'EDITOR=%s DEBIAN_FRONTEND=editor' % outsock_path ]
+    cmd.append(module.get_bin_path('dpkg-reconfigure', True))
+    cmd.append(pkg)
+    rc, out, err = module.run_command(' '.join(cmd))
+    os.unlink(outsock_path)
+
+    if rc == 0:
+        return True, err
+    else:
+        return False, err
+
+
+def enforce_state(module, params):
+
+    pkg   = params["pkg"]
+    answers  = params["answers"]
+
+    wanted_config = {}
+    for answer in answers.split('\n'):
+        item = re.findall(r"[^\s]+", answer)
+        if len(item) > 1:
+             wanted_config[ item[0].strip() ] = ' '.join(item[1:])
+        else:
+             wanted_config[ item[0].strip() ] = ''
+
+    current_config = get_selections(module, params["pkg"])
+
+    already_configured = 1
+    for answer in wanted_config:
+        if not answer in current_config or current_config[answer] != wanted_config[answer]:
+            already_configured = 0
+
+    if already_configured:
+        module.exit_json(changed=False, msg="Already configured")
+    else:
+        rc, msg = dpkg_reconfigure(module, pkg, wanted_config)
+        if not rc:
+            module.fail_json(msg=msg)
+
+    params['changed'] = True
+    params['msg'] = msg
+    return params
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           pkg   = dict(required=True),
+           answers  = dict(required=True),
+        )
+    )
+
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
