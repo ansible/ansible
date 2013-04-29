@@ -24,12 +24,9 @@ author: Dag Wieers
 module: set_fact
 short_description: Set host facts from a task
 description:
-     - This module allows you to set host facts from a task. This can be
-       useful for setting facts conditionally or allows to 'export' play
-       variables set by 'vars:' or 'vars_files:' to the playbook scope .
-     - In comparison to variables defined in the playbook, global variables
-       can be set conditionally (like any module) and are available in other
-       plays.
+     - This module allows setting new variables.  Variables are set on a host-by-host basis
+       just like facts discovered by the setup module.
+     - These variables will survive between plays.
 options:
   key_value:
     description:
@@ -42,13 +39,13 @@ version_added: "1.2"
 examples:
     - description: "Example setting host facts using key=value pairs"
       code: |
-            action: set_fact fact="something" global_fact="${local_var}"'
+            action: set_fact one_fact="something" other_fact="{{ local_var * 2 }}"'
     - description: "Example setting host facts using complex arguments"
       code: |
             action: set_fact
             args:
-              fact: something
-              global_fact: ${local_var}
+              one_fact: something
+              other_fact: "{{ local_var * 2 }}"
 notes:
     - You can set play variables using the C(set_var) module.
 '''
