@@ -17,6 +17,7 @@
 
 from ansible import errors
 from ansible import utils
+import os
 import ansible.utils.template as template
 
 class Task(object):
@@ -52,6 +53,11 @@ class Task(object):
             return
         else:
             self.meta = None
+
+
+        library = os.path.join(play.basedir, 'library')
+        if os.path.exists(library):
+            utils.plugins.module_finder.add_directory(library)
 
         for x in ds.keys():
 
