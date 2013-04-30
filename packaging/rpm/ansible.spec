@@ -108,7 +108,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc examples/playbooks
 
 %files fireball
-%{_datadir}/ansible/fireball
+%{_datadir}/ansible/utilities/fireball
 %doc %{_mandir}/man3/ansible.fireball.*
 
 %files node-fireball
