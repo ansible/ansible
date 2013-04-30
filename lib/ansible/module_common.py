@@ -400,17 +400,23 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed):
         path = os.path.expanduser(path)
-        if mode is None:
-            return changed
-        try:
-            # FIXME: support English modes
-            if not isinstance(mode, int):
-                mode = int(mode, 8)
-        except Exception, e:
-            self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
         st = os.stat(path)
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
+
+        if mode is None:
+            return changed
+
+        if not isinstance(mode, int):
+            try:
+                mode = int(mode, 8)
+            except Exception:
+                try:
+                    mode = self._symbolic_mode_to_octal(path, mode, prev_mode)
+                except Exception, e:
+                    self.fail_json(path=path,
+                                   msg="mode must be in octal or symbolic form",
+                                   details=str(e))
 
         if prev_mode != mode:
             if self.check_mode:
@@ -459,6 +465,117 @@ class AnsibleModule(object):
             file_args['path'], file_args['mode'], changed
         )
         return changed
+
+    def _symbolic_mode_to_octal(self, path, symbolic_mode, prev_mode):
+        prev_perms = {'u': set(),
+                     'g': set(),
+                     'o': set()}
+
+        # Convert 'prev_mode' to octal and strip leading 0 if there are
+        # four digits (which is the case whenever setuid/setguid/sticky
+        # is set).
+        prev_oct_mode = str(oct(prev_mode))
+        if len(prev_oct_mode) == 5:
+            prev_oct_mode = prev_oct_mode[1:]
+
+        special_bit, user, group, other = prev_oct_mode
+
+        for w, mode in [('u', user), ('g', group), ('o', other)]:
+            if mode == '7':
+                prev_perms[w].add('r')
+                prev_perms[w].add('w')
+                prev_perms[w].add('x')
+            elif mode == '6':
+                prev_perms[w].add('r')
+                prev_perms[w].add('w')
+            elif mode == '5':
+                prev_perms[w].add('r')
+                prev_perms[w].add('x')
+            elif mode == '4':
+                prev_perms[w].add('r')
+            elif mode == '3':
+                prev_perms[w].add('w')
+                prev_perms[w].add('x')
+            elif mode == '2':
+                prev_perms[w].add('w')
+            elif mode == '1':
+                prev_perms[w].add('x')
+
+        if special_bit == '7':
+            prev_perms['u'].add('s')
+            prev_perms['g'].add('s')
+            prev_perms['o'].add('t')
+        elif special_bit == '6':
+            prev_perms['u'].add('s')
+            prev_perms['g'].add('s')
+        elif special_bit == '5':
+            prev_perms['u'].add('s')
+            prev_perms['o'].add('t')
+        elif special_bit == '4':
+            prev_perms['u'].add('s')
+        elif special_bit == '3':
+            prev_perms['g'].add('s')
+            prev_perms['o'].add('t')
+        elif special_bit == '2':
+            prev_perms['g'].add('s')
+        elif special_bit == '1':
+            prev_perms['o'].add('t')
+
+        new_perms = dict((w, set(perms)) for w, perms in prev_perms.items())
+
+        mode_re = re.compile(r'(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst]*|[ugo])')
+        for mode in symbolic_mode.split(','):
+            match = mode_re.match(mode)
+            if match:
+                users = match.group('users')
+                operator = match.group('operator')
+                perms = match.group('perms')
+
+                if users == 'a':
+                    users = 'ugo'
+
+                for user in users:
+                    if operator == '=':
+                        new_perms[user] = set([perm for perm in perms])
+                    elif operator == '+':
+                        for perm in perms:
+                            new_perms[user].add(perm)
+                    elif operator == '-':
+                        for perm in perms:
+                            if perm in new_perms[user]:
+                                new_perms[user].remove(perm)
+
+                    if user == 'o' and 's' in new_perms[user]:
+                        new_perms[user].remove('s')
+                    if user != 'o' and 't' in new_perms[user]:
+                        new_perms[user].remove('t')
+            else:
+                raise ValueError("bad symbolic permission for 'mode'")
+
+        new_perms_oct_digits = [0, 0, 0, 0]
+        for i, w in enumerate(['s', 'u', 'g', 'o']):
+            if w == 's':
+                if 's' in new_perms['u']:
+                    new_perms_oct_digits[i] += 4
+                if 's' in new_perms['g']:
+                    new_perms_oct_digits[i] += 2
+                if 't' in new_perms['o']:
+                    new_perms_oct_digits[i] += 1
+            else:
+                if 'r' in new_perms[w]:
+                    new_perms_oct_digits[1] += 4
+                if 'w' in new_perms[w]:
+                    new_perms_oct_digits[i] += 2
+                if 'x' in new_perms[w]:
+                    new_perms_oct_digits[i] += 1
+                elif 'X' in new_perms[w]:
+                    if os.path.isdir(path):
+                        new_perms_oct_digitx[i] += 1
+                    elif ('x' in prev_perms['u'] or 'x' in prev_perms['g'] or
+                          'x' in prev_perms['o']):
+                        new_perms_oct_digits[i] += 1
+
+        return int(''.join([str(c) for c in new_perms_oct_digits]), 8)
 
     def add_path_info(self, kwargs):
         '''
