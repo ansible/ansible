@@ -320,6 +320,7 @@ def main():
                       'min_count': count_remaining, 
                       'max_count': count_remaining,
                       'monitoring_enabled': monitoring,
+					  'placement': zone, 
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
