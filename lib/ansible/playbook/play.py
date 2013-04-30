@@ -59,6 +59,14 @@ class Play(object):
         self.vars             = self._get_vars()
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
+        self.tags             = ds.get('tags', None)
+
+        if self.tags is None:
+            self.tags = []
+        elif type(self.tags) in [ str, unicode ]:
+            self.tags = self.tags.split(",")
+        elif type(self.tags) != list:
+            self.tags = []
 
         ds = self._load_roles(self.roles, ds)
         self.vars_files       = ds.get('vars_files', [])
@@ -91,7 +99,6 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.tags             = ds.get('tags', None)
         self.gather_facts     = ds.get('gather_facts', None)
         self.serial           = int(ds.get('serial', 0))
         self.remote_port      = self.remote_port
@@ -104,12 +111,6 @@ class Play(object):
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
-        if self.tags is None:
-            self.tags = []
-        elif type(self.tags) in [ str, unicode ]:
-            self.tags = [ self.tags ]
-        elif type(self.tags) != list:
-            self.tags = []
 
         if self.sudo_user != 'root':
             self.sudo = True
@@ -124,7 +125,8 @@ class Play(object):
         #    <rolename>/tasks/main.yml
         #    <rolename>/handlers/main.yml
         #    <rolename>/vars/main.yml
-        # and it auto-extends tasks/handlers/vars_files as appropriate if found
+        #    <rolename>/library
+        # and it auto-extends tasks/handlers/vars_files/module paths as appropriate if found
 
         if roles is None:
             roles = []
@@ -171,8 +173,9 @@ class Play(object):
             task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
-            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s" % (path, task, handler, vars_file))
+            library   = utils.path_dwim(self.basedir, os.path.join(path, 'library'))
+            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
                 if when: 
@@ -189,6 +192,8 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            if os.path.isdir(library):
+                utils.plugins.module_finder.add_directory(library)
 
         tasks = ds.get('tasks', None)
         post_tasks = ds.get('post_tasks', None)

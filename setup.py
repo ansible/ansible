@@ -10,7 +10,10 @@ from distutils.core import setup
 
 # find library modules
 from ansible.constants import DIST_MODULE_PATH
-data_files = [ (DIST_MODULE_PATH, glob('./library/*')) ]
+dirs=os.listdir("./library/")
+data_files = []
+for i in dirs:
+    data_files.append((DIST_MODULE_PATH + i, glob('./library/' + i + '/*')))
 
 print "DATA FILES=%s" % data_files
 

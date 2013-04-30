@@ -1,5 +1,4 @@
-%if 0%{?rhel} <= 5
-%define __python /usr/bin/python26
+%if 0%{?rhel} && 0%{?rhel} <= 5
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %endif
@@ -7,15 +6,15 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Name: ansible
 Release: 1%{?dist}
 Summary: SSH-based configuration management, deployment, and task execution system
-Version: 1.2rc
+Version: 1.2
 
 Group: Development/Libraries
 License: GPLv3
-Source0: http://ansible.cc/releases/%{name}-%{version}.tar.bz2
-Url: http://ansible.github.com
+Source0: http://ansible.cc/releases/%{name}-%{version}.tar.gz
+Url: http://ansible.cc
 
 BuildArch: noarch
-%if 0%{?rhel} <= 5
+%if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
 
 Requires: python26-PyYAML
@@ -37,13 +36,17 @@ over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
 
-%if 0%{?rhel} >= 6
 %package fireball
 Summary: Ansible fireball transport support
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
+%if 0%{?rhel} && 0%{?rhel} <= 5
+Requires: python26-keyczar
+Requires: python26-zmq
+%else
 Requires: python-keyczar
 Requires: python-zmq
+%endif
 
 %description fireball
 
@@ -54,15 +57,19 @@ multiple actions, but requires additional supporting packages.
 %package node-fireball
 Summary: Ansible fireball transport - node end support
 Group: Development/Libraries
+%if 0%{?rhel} && 0%{?rhel} <= 5
+Requires: python26-keyczar
+Requires: python26-zmq
+%else
 Requires: python-keyczar
 Requires: python-zmq
+%endif
 
 %description node-fireball
 
 Ansible can optionally use a 0MQ based transport mechanism, which has
 additional requirements for nodes to use.  This package includes those
 requirements.
-%endif
 
 %prep
 %setup -q
@@ -77,8 +84,9 @@ cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
 cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
+cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ansible
-cp -v library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
+cp -rv library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -88,25 +96,23 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
-%{_datadir}/ansible/[a-eg-z]*
-%{_datadir}/ansible/f[a-hj-z]*
-%{_datadir}/ansible/file
+%{_datadir}/ansible/*/[a-eg-z]*
+%{_datadir}/ansible/*/f[a-hj-z]*
+%{_datadir}/ansible/*/file
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md COPYING
+%doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
+%doc %{_mandir}/man3/ansible.[a-eg-z]*
+%doc %{_mandir}/man3/ansible.f[a-hj-z]*
+%doc %{_mandir}/man3/ansible.file*
 %doc examples/playbooks
 
-%if 0%{?rhel} <= 5
-%exclude %{_datadir}/ansible/fireball
-%endif
-
-%if 0%{?rhel} >= 6
 %files fireball
-%{_datadir}/ansible/fireball
+%{_datadir}/ansible/utilities/fireball
+%doc %{_mandir}/man3/ansible.fireball.*
 
 %files node-fireball
-%doc README.md COPYING
-%endif
+%doc README.md PKG-INFO COPYING
 
 %changelog
 

@@ -394,6 +394,8 @@ def main():
             file_args['path'] = dest
             changed = module.set_file_attributes_if_different(file_args, changed)
         resp['path'] = dest
+    else:
+        changed = False
 
     # Transmogrify the headers, replacing '-' with '_', since variables dont work with dashes.
     uresp = {}

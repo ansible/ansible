@@ -71,16 +71,20 @@ class PluginLoader(object):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    def _get_package_path(self):
+    def _get_package_paths(self):
         ''' Gets the path of a Python package '''
 
+        paths = []
         if not self.package:
             return []
         if not hasattr(self, 'package_path'):
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-        return [self.package_path]
+            paths.append(self.package_path)
+            return paths
+        else:
+            return [ self.package_path ]
 
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
@@ -92,10 +96,26 @@ class PluginLoader(object):
         ret += self._extra_dirs
         for basedir in _basedirs:
             fullpath = os.path.join(basedir, self.subdir)
-            if fullpath not in ret:
-                ret.append(fullpath)
-        ret += self.config.split(os.pathsep)
-        ret += self._get_package_path()
+            if os.path.isdir(fullpath):
+                files = glob.glob("%s/*" % fullpath)
+                for file in files:
+                    if os.path.isdir(file) and file not in ret:
+                        ret.append(file)    
+            else:
+                if fullpath not in ret:
+                    ret.append(fullpath)
+        
+        # look in any configured plugin paths, allow one level deep for subcategories 
+        configured_paths = self.config.split(os.pathsep)
+        for path in configured_paths:
+            ret.append(path)
+            contents = glob.glob("%s/*" % path)
+            for c in contents:
+                if os.path.isdir(c):
+                    ret.append(c)       
+
+        # look for any plugins installed in the package subtree
+        ret.extend(self._get_package_paths())
 
         self._paths = ret
 

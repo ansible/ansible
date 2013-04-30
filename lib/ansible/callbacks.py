@@ -25,11 +25,15 @@ import fnmatch
 import tempfile
 import fcntl
 import constants
+import getpass
 from ansible.color import stringc
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
-    logging.basicConfig(filename=constants.DEFAULT_LOG_PATH, level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename=constants.DEFAULT_LOG_PATH, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+    mypid = str(os.getpid())
+    user = getpass.getuser()
+    logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
 
 callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
@@ -106,9 +110,9 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
             msg = msg.replace("\n","")
         if not screen_only:
             if color == 'red':
-                logging.error(msg)
+                logger.error(msg)
             else:
-                logging.info(msg)
+                logger.info(msg)
     log_unflock()
 
 def call_callback_module(method_name, *args, **kwargs):

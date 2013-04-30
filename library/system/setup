@@ -1096,7 +1096,9 @@ class LinuxNetwork(Network):
                 primary = open(os.path.join(path, 'bonding', 'primary')).read()
                 if primary:
                     interfaces[device]['primary'] = primary
-                    interfaces[device]['all_slaves_active'] = open(os.path.join(path, 'bonding', 'all_slaves_active')).read() == '1'
+                    path = os.path.join(path, 'bonding', 'all_slaves_active')
+                    if os.path.exists(path):
+                        interfaces[device]['all_slaves_active'] = open(path).read() == '1'
             output = subprocess.Popen(['/sbin/ip', 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
 
@@ -1128,7 +1130,7 @@ class LinuxNetwork(Network):
                         default_ipv4['network'] = network
                         default_ipv4['macaddress'] = macaddress
                         default_ipv4['mtu'] = interfaces[device]['mtu']
-                        default_ipv4['type'] = interfaces[device]['type']
+                        default_ipv4['type'] = interfaces[device].get("type", "unknown")
                         default_ipv4['alias'] = words[-1]
 
                     if not address.startswith('127.'):
